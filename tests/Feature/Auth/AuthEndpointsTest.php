@@ -47,4 +47,30 @@ class AuthEndpointsTest extends TestCase
         $response->assertStatus(401);
         $this->assertGuest();
     }
+
+    public function test_me_endpoint_returns_authenticated_user_and_requires_auth()
+    {
+        // unauthenticated JSON request should return 401
+        $response = $this->getJson('/auth/me');
+        $response->assertStatus(401); // unauthorized
+
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->getJson('/auth/me');
+
+        $response->assertOk()
+            ->assertJsonPath('data.email', $user->email)
+            ->assertJsonMissing(['password']);
+    }
+
+    public function test_logout_endpoint_invalidates_session()
+    {
+        $user = User::factory()->create(['password' => 'hunter2']);
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/auth/logout');
+
+        $response->assertStatus(204);
+        $this->assertGuest();
+    }
 }

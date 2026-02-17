@@ -49,4 +49,22 @@ class AuthServiceTest extends TestCase
 
         $service->login('no-such-user@example.com', 'bad-password');
     }
+
+    public function test_register_respects_explicit_role_and_hashes_password(): void
+    {
+        $repo = new UserRepository();
+        $service = new AuthService($repo);
+
+        $user = $service->register([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'password' => 'super-secret',
+            'role' => \App\Enums\UserRole::ADMIN->value,
+        ]);
+
+        $this->assertEquals(\App\Enums\UserRole::ADMIN, $user->role);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('super-secret', $user->password));
+        $this->assertDatabaseHas('users', ['email' => 'admin@example.com']);
+    }
 }
+
