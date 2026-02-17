@@ -1,0 +1,259 @@
+# Sprint 7 — OT Isolation, Catalog, Compliance & Admin Dashboard
+**Weeks 13–14 | 34 Story Points | Stories: US-32–35, US-40–50**
+
+---
+
+## Sprint Goal
+Complete all remaining features: OT/SCADA network isolation with Purdue model enforcement, AI-assisted self-service environment catalog, tamper-proof audit engine with IEC 62443 compliance reports, and the full admin infrastructure dashboard with quota management.
+
+By end of sprint: **Every feature in the system is implemented. Admin can manage everything from one interface.**
+
+---
+
+## Copilot Setup for This Sprint
+
+```php
+// Sprint 7 — OT Isolation, Compliance, Admin
+// OT zone: VMs on VLAN 20 CANNOT communicate with VLAN 10 (enforce at Proxmox level)
+// Audit log: SHA-256 hash chain — each row hashes its own content + previous row's hash
+// Compliance report: generated as PDF via Browsershot or FPDF — never HTML-only
+// Template catalog: LLM API key in config('ai.llm_api_key') — never hardcoded
+// Admin routes: ALL protected by role:admin middleware — double-check every route
+```
+
+---
+
+## Task Checklist
+
+### Backend Tasks
+
+#### TASK 7.1 — OT/SCADA Network Zone Isolation
+**Branch:** `feature/US-40-US-41-US-42-ot-isolation`
+
+Tables to update:
+- Add `network_zone` (enum: it, ot) to `vm_templates` and `proxmox_nodes`
+- Add `ot_access_granted` (bool, default false) to `users`
+
+What to build:
+- `OTZonePolicy`: Laravel Gate — `access-ot-zone`
+- `OTAccessMiddleware`: applied to OT-zone VM template routes
+- `OTAccessLogService`: records every OT zone session start/end/command
+- `GET /api/v1/admin/ot-access-log`: paginated OT access events
+
+Copilot prompt:
+```php
+// OTAccessMiddleware: check $user->ot_access_granted === true
+// If false: abort 403 with JSON {message: 'OT zone access not authorized', contact: 'admin'}
+// Applied to: any session creation where template->network_zone === 'ot'
+// OTAccessLogService::record(User, VMSession, string $event_type): void
+// event_type: 'session_started' | 'session_ended' | 'command_sent' | 'file_transferred'
+// Log to dedicated ot_access_logs table (separate from general audit_logs for compliance)
+// Log format: user_id, session_id, event_type, metadata(json), ip_address, timestamp
+```
+
+Acceptance criteria:
+- [ ] Non-OT user gets 403 when launching OT-zone template
+- [ ] Admin can grant/revoke `ot_access_granted` via API
+- [ ] All OT session events logged in `ot_access_logs`
+- [ ] Feature test verifies OT zone access enforcement
+
+---
+
+#### TASK 7.2 — Tamper-Proof Audit Log
+**Branch:** `feature/US-43-US-45-audit-log`
+
+Tables to create:
+- `audit_logs`: id (bigint auto), user_id (nullable), session_id (nullable), action, resource_type, resource_id, metadata (json), ip_address, previous_hash (char 64), row_hash (char 64), created_at (NO timestamps — only created_at)
+
+What to build:
+- `AuditLogger` service: `log(string $action, array $context): void`
+- Hash chain: `row_hash = SHA256(id + user_id + action + metadata_json + previous_hash)`
+- `AuditIntegrityChecker`: `verify(): bool` — walks entire chain, verifies each hash
+- `GET /api/v1/security/audit/verify` — returns integrity check result
+- `AuditLogObserver` on key models: VMSession, RobotSession, User
+
+Copilot prompt:
+```php
+// AuditLogger::log(string $action, array $context = []): void
+// Steps:
+// 1. Get last row's row_hash from audit_logs (or '0000...0000' if empty)
+// 2. Build row data: action, context, timestamp, previous_hash
+// 3. Compute row_hash = hash('sha256', json_encode($rowData) . $previousHash)
+// 4. Insert row (never use Eloquent create — use DB::table()->insert() to avoid any hooks)
+// NEVER allow UPDATE or DELETE on audit_logs — create DB-level trigger if possible
+// AuditIntegrityChecker: cursor through all rows, recompute each hash, compare
+// Return false immediately on first mismatch, with {failed_at_id: int}
+```
+
+Acceptance criteria:
+- [ ] Modifying any audit log row breaks the integrity check
+- [ ] Adding a row continues the chain correctly
+- [ ] `GET /api/v1/security/audit/verify` returns 200 `{valid: true}` on clean log
+- [ ] No Eloquent events fired when writing to audit_logs
+
+---
+
+#### TASK 7.3 — Compliance Report Generator
+**Branch:** `feature/US-44-US-46-compliance-reports`
+
+What to build:
+- `ComplianceReportService`: `generate(Carbon $from, Carbon $to, string $type): string` (returns file path)
+- Report types: `full_audit`, `ot_zone_only`, `user_activity`
+- PDF generation via Browsershot (headless Chrome) — renders Blade view to PDF
+- `GenerateComplianceReportJob`: queued, notifies user when ready
+- `GET /api/v1/compliance/reports`: list generated reports
+- `POST /api/v1/compliance/reports`: trigger generation
+- `GET /api/v1/compliance/reports/{id}/download`: signed URL download
+
+Copilot prompt:
+```php
+// ComplianceReportService::generate(): returns path to PDF in storage/reports/
+// Report structure (IEC 62443 aligned):
+// Section 1: Report metadata (date range, generated by, generated at)
+// Section 2: Summary statistics (total sessions, unique users, OT accesses)
+// Section 3: User access log table (timestamp, user, action, resource, risk_level)
+// Section 4: Security events (anomalies, high-risk terminations, new devices)
+// Section 5: Audit log integrity status
+// Footer: Hash chain verification result
+// Append report generation itself to audit_log
+```
+
+Acceptance criteria:
+- [ ] PDF generated with all 5 sections
+- [ ] Download via signed URL works (expires in 1 hour)
+- [ ] Report generation logged in audit_log
+- [ ] Empty date range generates report with "No events" message (not an error)
+
+---
+
+#### TASK 7.4 — Self-Service Environment Catalog
+**Branch:** `feature/US-32-US-33-US-34-US-35-catalog`
+
+Tables to create:
+- `template_requests`: id, user_id, description, suggested_template_ids (json), status (enum: pending/approved/rejected), admin_notes, timestamps
+
+What to build:
+- `TemplateSuggestionService`: calls LLM API with user description + template list → returns top 3 matches
+- `TemplateRequestController`: store (user), update status (admin), index (admin)
+- `POST /api/v1/template-requests`
+- `PATCH /api/v1/admin/template-requests/{id}` — approve/reject
+
+Copilot prompt:
+```php
+// TemplateSuggestionService::suggest(string $description, Collection $templates): array
+// Build prompt: "User needs: {$description}\n\nAvailable templates:\n{$templateList}\n\nReturn top 3 best matches as JSON array of template IDs with match_reason"
+// Call LLM API (config('ai.llm_api_key'), model: claude-haiku or gpt-4o-mini)
+// Parse JSON response safely — wrap in try/catch, fall back to keyword matching
+// Return: [{template_id: int, match_reason: string, confidence: float}]
+// Cache result in Redis for 10 min keyed by hash of description
+```
+
+Acceptance criteria:
+- [ ] Template suggestion returns 3 results with reasons
+- [ ] Admin approve/reject sends email notification to requester
+- [ ] Approved template becomes available in user's catalog immediately
+- [ ] LLM failure falls back to keyword matching (never errors out)
+
+---
+
+#### TASK 7.5 — Admin Dashboard: Quotas, Logs, Migration
+**Branch:** `feature/US-47-US-48-US-49-US-50-admin-dashboard`
+
+What to build:
+- `UserQuotaService`: `setQuota(User, int $maxVMs, int $weeklyHours)`, `checkQuota(User)`
+- `user_quotas` table: user_id, max_concurrent_vms, max_weekly_hours, current_weekly_hours_used
+- `GET /api/v1/admin/users` with quota info
+- `PATCH /api/v1/admin/users/{id}/quota`
+- `POST /api/v1/admin/vms/{vmId}/migrate` — trigger live migration to target node
+- `GET /api/v1/admin/activity-log` — searchable, paginated, CSV export
+
+Copilot prompt:
+```php
+// PATCH /api/v1/admin/vms/{session}/migrate
+// Request body: {target_node_id: int}
+// Validate: target node is online, has enough RAM
+// Call ProxmoxClient::migrateVM($sourceNode, $targetNode, $vmId, $onlineMode = true)
+// Update VMSession->node_id to target node on success
+// If migration fails: return 422 with Proxmox error message
+// ActivityLog export: stream CSV response — never load all rows into memory
+// Use Laravel cursor() for large dataset iteration
+```
+
+Acceptance criteria:
+- [ ] VM migrated without session interruption (live migration)
+- [ ] Quota enforcement tested: 429 when user exceeds concurrent VM limit
+- [ ] CSV export streams correctly for 10,000+ rows
+- [ ] Activity log searchable by user, action, date range
+
+---
+
+### Frontend Tasks
+
+#### TASK 7.6 — Self-Service Catalog UI
+**Branch:** `feature/US-32-frontend-catalog`
+
+What to build:
+- `src/pages/CatalogPage.tsx`: template request form + AI suggestions
+- `src/components/TemplateRequestForm.tsx`: textarea + submit
+- `src/components/AISuggestions.tsx`: 3 suggestion cards with reasons
+- `src/pages/admin/TemplateRequestsPage.tsx`: approve/reject interface
+
+Copilot prompt:
+```typescript
+// TemplateRequestForm: textarea for description (min 20 chars)
+// On submit: POST /api/v1/template-requests, show loading state
+// After API response: render AISuggestions with 3 cards
+// AISuggestion card: template name, OS icon, match reason, confidence bar
+// "Request This Template" button on each card: updates the request with selection
+// AdminTemplateRequests: table with description, user, AI suggestions, approve/reject buttons
+// Approve/reject updates status inline (optimistic update then confirm from API)
+```
+
+Acceptance criteria:
+- [ ] Form validates minimum description length before submit
+- [ ] AI suggestions render with reasons and confidence
+- [ ] Admin approve/reject works without page reload
+- [ ] Approved template immediately visible in user's template browser
+
+---
+
+#### TASK 7.7 — Full Admin Dashboard
+**Branch:** `feature/US-47-frontend-admin`
+
+What to build:
+- `src/pages/admin/DashboardPage.tsx`: cluster overview + recent alerts
+- `src/components/ClusterTopology.tsx`: visual node + VM layout
+- `src/pages/admin/ActivityLogPage.tsx`: searchable log + CSV export button
+- `src/pages/admin/UserManagementPage.tsx`: user list + quota management
+
+Acceptance criteria:
+- [ ] Cluster topology shows all 7 nodes with VM counts
+- [ ] Activity log has working date range filter + search
+- [ ] CSV export triggers file download
+- [ ] Quota management form saves and enforces in real-time
+
+---
+
+## Sprint 7 — Definition of Done
+
+- [ ] All features implemented and merged to `develop`
+- [ ] OT zone access tested: unauthorized user blocked, authorized user logs visible
+- [ ] Audit log integrity check returns `{valid: true}` on unmodified log
+- [ ] Compliance PDF generated and downloadable
+- [ ] AI catalog suggestions working (even with LLM API fallback)
+- [ ] All 50 user stories across all sprints complete
+- [ ] CI green, all tests green
+- [ ] Sprint Review: `docs/sprint-reviews/sprint-7.md`
+- [ ] `develop` tagged: `git tag sprint-7-complete`
+
+---
+
+## Common Mistakes in Sprint 7
+
+| Mistake | Correct Approach |
+|---|---|
+| Using Eloquent `create()` for audit_logs | Use `DB::table()->insert()` to bypass model events |
+| Allowing audit log updates | DB-level constraint or model `updating()` hook that aborts |
+| Loading 100k audit rows into memory for export | Use Laravel `cursor()` to stream CSV |
+| LLM API call timing out during request | Call LLM in a queued job, return suggestions async |
+| Migration failing midway | Always wrap VM migration in try/catch, update DB only on success |
