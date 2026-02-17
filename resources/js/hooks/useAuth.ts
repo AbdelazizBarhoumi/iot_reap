@@ -3,15 +3,14 @@ import { useAuthStore } from '../store/authStore';
 
 export function useAuth() {
   const user = useAuthStore((s) => s.user);
-  const token = useAuthStore((s) => s.token);
   const setUser = useAuthStore((s) => s.setUser);
-  const setToken = useAuthStore((s) => s.setToken);
   const clear = useAuthStore((s) => s.clear);
 
   const logout = useCallback(() => {
-    setToken(null);
+    // session cookie will be cleared by backend; clear UI state only
     setUser(null);
-  }, [setToken, setUser]);
+    clear();
+  }, [setUser, clear]);
 
-  return { user, token, setUser, setToken, logout, clear };
+  return { user, setUser, logout, clear };
 }

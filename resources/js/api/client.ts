@@ -2,35 +2,36 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const client = axios.create({
-  // session-based endpoints will still send cookies; token (if set) is sent as Bearer
+  // session-based auth: cookies are sent automatically
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 
-// Attach Authorization header automatically when token exists in the auth store
-client.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) {
-    // axios types are strict — mutate header field instead of replacing headers object
-    const headers = (config.headers ?? {}) as Record<string, string>;
-    headers.Authorization = `Bearer ${token}`;
-    // eslint-disable-next-line no-param-reassign
-    config.headers = headers as any;
-  }
-  return config;
-});
-
-// On 401: clear auth state (logout) so UI reacts immediately
+// Response interceptor: handle auth errors
 client.interceptors.response.use(
   (res) => res,
   (error) => {
     const status = error?.response?.status;
+    
+    // 401: Clear auth state (session expired or unauthenticated)
     if (status === 401) {
       useAuthStore.getState().clear();
+      // Redirect to login if not already there
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
+    
+    // 419: CSRF token mismatch - refresh the page to get new token
+    if (status === 419) {
+      useAuthStore.getState().clear();
+      window.location.reload();
+    }
+    
     return Promise.reject(error);
   },
 );

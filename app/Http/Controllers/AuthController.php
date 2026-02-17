@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidCredentialsException;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -15,33 +18,25 @@ class AuthController
     {
     }
 
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
-        ]);
+        $user = $this->authService->register($request->validated());
 
-        $user = $this->authService->register($data);
-
-        return response()->json(['data' => $user], 201);
+        return response()->json(['data' => new UserResource($user)], 201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
         try {
-            $user = $this->authService->login($data['email'], $data['password']);
+            $user = $this->authService->login(
+                $request->validated('email'),
+                $request->validated('password')
+            );
         } catch (InvalidCredentialsException $e) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
-        return response()->json(['data' => $user], 200);
+        return response()->json(['data' => new UserResource($user)], 200);
     }
 
     public function logout(Request $request): JsonResponse
@@ -56,7 +51,7 @@ class AuthController
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()]);
+        return response()->json(['data' => new UserResource($request->user())]);
     }
 
     /**

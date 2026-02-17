@@ -59,4 +59,34 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    /**
+     * Set the user role to engineer (default).
+     */
+    public function engineer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::ENGINEER->value,
+        ]);
+    }
+
+    /**
+     * Set the user role to admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::ADMIN->value,
+        ]);
+    }
+
+    /**
+     * Set the user role to security officer.
+     */
+    public function securityOfficer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::SECURITY_OFFICER->value,
+        ]);
+    }
 }

@@ -12,15 +12,40 @@ class GatesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_isAdmin_gate_and_role_gate_work_as_expected(): void
+    public function test_admin_only_gate_works(): void
     {
-        $engineer = User::factory()->create();
-        $admin = User::factory()->create(['role' => UserRole::ADMIN->value]);
+        $engineer = User::factory()->engineer()->create();
+        $admin = User::factory()->admin()->create();
 
-        $this->assertFalse(Gate::forUser($engineer)->allows('isAdmin'));
-        $this->assertTrue(Gate::forUser($admin)->allows('isAdmin'));
+        $this->assertFalse(Gate::forUser($engineer)->allows('admin-only'));
+        $this->assertTrue(Gate::forUser($admin)->allows('admin-only'));
+    }
 
-        $this->assertFalse(Gate::forUser($engineer)->allows('role', UserRole::ADMIN->value));
+    public function test_security_officer_only_gate_works(): void
+    {
+        $engineer = User::factory()->engineer()->create();
+        $officer = User::factory()->securityOfficer()->create();
+
+        $this->assertFalse(Gate::forUser($engineer)->allows('security-officer-only'));
+        $this->assertTrue(Gate::forUser($officer)->allows('security-officer-only'));
+    }
+
+    public function test_provision_vm_gate_allows_engineer_and_admin(): void
+    {
+        $engineer = User::factory()->engineer()->create();
+        $admin = User::factory()->admin()->create();
+        $officer = User::factory()->securityOfficer()->create();
+
+        $this->assertTrue(Gate::forUser($engineer)->allows('provision-vm'));
+        $this->assertTrue(Gate::forUser($admin)->allows('provision-vm'));
+        $this->assertFalse(Gate::forUser($officer)->allows('provision-vm'));
+    }
+
+    public function test_generic_role_gate_works(): void
+    {
+        $admin = User::factory()->admin()->create();
+
         $this->assertTrue(Gate::forUser($admin)->allows('role', UserRole::ADMIN->value));
+        $this->assertFalse(Gate::forUser($admin)->allows('role', UserRole::ENGINEER->value));
     }
 }
