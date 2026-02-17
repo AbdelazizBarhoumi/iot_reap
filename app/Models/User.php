@@ -13,6 +13,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    // Role constants (DB enum values)
+    public const ROLE_ENGINEER = 'engineer';
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_SECURITY_OFFICER = 'security_officer';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
