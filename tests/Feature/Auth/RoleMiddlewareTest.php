@@ -16,9 +16,10 @@ class RoleMiddlewareTest extends TestCase
     {
         parent::setUp();
 
-        Route::middleware('role:admin,security_officer')->get('/admin-only', function () {
-            return 'ok';
-        });
+        Route::middleware('role:' . \App\Enums\UserRole::ADMIN->value . ',' . \App\Enums\UserRole::SECURITY_OFFICER->value)
+            ->get('/admin-only', function () {
+                return 'ok';
+            });
     }
 
     public function test_engineer_cannot_access_admin_route(): void

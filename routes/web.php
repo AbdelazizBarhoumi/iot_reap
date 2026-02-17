@@ -17,4 +17,10 @@ Route::get('dashboard', function () {
 
 Route::post('/browser-log', [BrowserLogController::class, 'store']);
 
+// auth endpoints (session-based JSON)
+Route::post('/auth/register', [\App\Http\Controllers\AuthController::class, 'register']);
+Route::post('/auth/login', [\App\Http\Controllers\AuthController::class, 'login']);
+Route::post('/auth/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->middleware('auth');
+Route::get('/auth/me', [\App\Http\Controllers\AuthController::class, 'me'])->middleware('auth');
+
 require __DIR__.'/settings.php';
