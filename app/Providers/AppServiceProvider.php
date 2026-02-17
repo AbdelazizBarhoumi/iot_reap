@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Gate;
+use App\Enums\UserRole;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
         //model strict
         Model::shouldBeStrict();
         $this->configureDefaults();
+
+        // register `role:` route middleware alias
+        $this->app->make(Router::class)->aliasMiddleware('role', \App\Http\Middleware\RoleMiddleware::class);
+
+        // convenience gates based on UserRole enum
+        Gate::define('isAdmin', fn(User $user) => $user->hasAnyRole([UserRole::ADMIN->value]));
+        Gate::define('isSecurityOfficer', fn(User $user) => $user->hasAnyRole([UserRole::SECURITY_OFFICER->value]));
     }
 
     /**
