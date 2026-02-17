@@ -3,15 +3,23 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Enums\UserRole;
 
+/**
+ * App user model.
+ *
+ * @property string $id
+ * @property \App\Enums\UserRole $role
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasUlids, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +30,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -47,6 +56,32 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Check whether the user has the given role.
+     */
+    public function hasRole(UserRole|string $role): bool
+    {
+        $current = $this->role instanceof UserRole ? $this->role->value : (string) $this->role;
+        $check = $role instanceof UserRole ? $role->value : $role;
+
+        return $current === $check;
+    }
+
+    /**
+     * Check whether the user has any of the supplied roles.
+     *
+     * @param array<string|UserRole> $roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        $current = $this->role instanceof UserRole ? $this->role->value : (string) $this->role;
+
+        $allowed = array_map(fn ($r) => $r instanceof UserRole ? $r->value : $r, $roles);
+
+        return in_array($current, $allowed, true);
     }
 }
