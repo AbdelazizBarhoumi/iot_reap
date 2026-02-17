@@ -32,12 +32,16 @@ class AppServiceProvider extends ServiceProvider
         Model::shouldBeStrict();
         $this->configureDefaults();
 
-        // register `role:` route middleware alias
+        // register `role:` and `ensure.role:` route middleware aliases
         $this->app->make(Router::class)->aliasMiddleware('role', \App\Http\Middleware\RoleMiddleware::class);
+        $this->app->make(Router::class)->aliasMiddleware('ensure.role', \App\Http\Middleware\EnsureRole::class);
 
         // convenience gates based on UserRole enum
         Gate::define('isAdmin', fn(User $user) => $user->hasAnyRole([UserRole::ADMIN->value]));
         Gate::define('isSecurityOfficer', fn(User $user) => $user->hasAnyRole([UserRole::SECURITY_OFFICER->value]));
+
+        // generic role gate for programmatic checks: Gate::allows('role', 'admin')
+        Gate::define('role', fn(User $user, string $role) => $user->hasRole($role));
     }
 
     /**
