@@ -22,5 +22,7 @@ Route::post('/auth/register', [\App\Http\Controllers\AuthController::class, 'reg
 Route::post('/auth/login', [\App\Http\Controllers\AuthController::class, 'login']);
 Route::post('/auth/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->middleware('auth');
 Route::get('/auth/me', [\App\Http\Controllers\AuthController::class, 'me'])->middleware('auth');
+Route::post('/auth/forgot-password', [\App\Http\Controllers\AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [\App\Http\Controllers\AuthController::class, 'resetPassword']);
 
 require __DIR__.'/settings.php';
