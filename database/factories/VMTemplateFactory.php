@@ -19,7 +19,7 @@ class VMTemplateFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->word() . '-template',
+            'name' => fake()->unique()->word() . '-' . fake()->unique()->numberBetween(1000, 9999),
             'os_type' => fake()->randomElement([VMTemplateOSType::WINDOWS, VMTemplateOSType::LINUX])->value,
             'protocol' => VMTemplateProtocol::RDP->value,
             'template_vmid' => fake()->unique()->numberBetween(100, 199),
@@ -79,5 +79,11 @@ class VMTemplateFactory extends Factory
             'is_active' => false,
         ]);
     }
-}
 
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => true,
+        ]);
+    }
+}

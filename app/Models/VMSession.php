@@ -27,6 +27,8 @@ class VMSession extends Model
 {
     use HasFactory, HasUlids;
 
+    protected $table = 'vm_sessions';
+
     protected $fillable = [
         'user_id',
         'template_id',

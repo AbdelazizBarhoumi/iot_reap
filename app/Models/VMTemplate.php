@@ -26,6 +26,8 @@ class VMTemplate extends Model
 {
     use HasFactory;
 
+    protected $table = 'vm_templates';
+
     protected $fillable = [
         'name',
         'os_type',

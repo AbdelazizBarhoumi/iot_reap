@@ -17,12 +17,14 @@ class ProxmoxNodeFactory extends Factory
      */
     public function definition(): array
     {
-        $nodeNumber = fake()->numberBetween(1, 7);
+        static $nodeCounter = 1;
+
+        $nodeNumber = $nodeCounter++;
 
         return [
             'name' => "pve-node-{$nodeNumber}",
             'hostname' => "pve-node-{$nodeNumber}.lab.local",
-            'api_url' => "https://192.168.1.1{$nodeNumber}0:8006",
+            'api_url' => "https://192.168.1." . (100 + $nodeNumber) . ":8006",
             'status' => ProxmoxNodeStatus::ONLINE->value,
             'max_vms' => 50,
         ];

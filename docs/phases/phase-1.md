@@ -218,16 +218,16 @@ What to build:
 Copilot prompt:
 ```php
 // ForgotPasswordController
-// POST /api/v1/auth/forgot-password
+// POST /auth/forgot-password
 // Sends reset link via Laravel Password::sendResetLink()
 // Always returns 200 (don't leak whether email exists)
 // ResetPasswordController
-// POST /api/v1/auth/reset-password
+// POST /auth/reset-password
 // Validates token + email + password, resets via Password::reset()
 ```
 
 Acceptance criteria:
-- [ ] `POST /api/v1/auth/forgot-password` always returns 200
+- [ ] `POST /auth/forgot-password` always returns 200
 - [ ] Reset token works once and expires after 60 minutes
 - [ ] New password is bcrypt-hashed in DB
 
@@ -302,7 +302,7 @@ What to build:
 Copilot prompt:
 ```typescript
 // LoginPage: form with email + password
-// On submit: call POST /api/v1/auth/login
+// On submit: call POST /auth/login
 // On success: setAuth() in store, redirect to /dashboard
 // On error: show inline error message (not alert())
 // ProtectedRoute: wrapper that checks authStore.isAuthenticated
@@ -325,7 +325,7 @@ Before closing this sprint, verify every item:
 - [ ] All 2 frontend tasks complete and merged to `develop`
 - [ ] `php artisan test` — 0 failures, coverage > 80% on auth layer
 - [ ] CI pipeline green on `develop` branch
-- [ ] `POST /api/v1/auth/login` tested in Postman — documented in collection
+- [ ] `POST /auth/login` tested in Postman — documented in collection
 - [ ] `.env.example` has all new keys added
 - [ ] No secrets committed to git (`git log --all --full-history -- .env` is clean)
 - [ ] Sprint Review written in `docs/sprint-reviews/sprint-1.md`
