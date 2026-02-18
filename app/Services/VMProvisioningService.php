@@ -3,114 +3,80 @@
 namespace App\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Exceptions\ProxmoxApiException;
+use App\Enums\VMSessionType;
 use App\Jobs\ProvisionVMJob;
+use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Models\VMTemplate;
 use App\Repositories\VMSessionRepository;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service for provisioning new VM sessions.
+ * Orchestrates node selection, session creation, and job dispatch.
+ */
 class VMProvisioningService
 {
+    /**
+     * Create a new VMProvisioningService instance.
+     */
     public function __construct(
         private readonly VMSessionRepository $sessionRepository,
-        private readonly ProxmoxLoadBalancer $loadBalancer,
-        private readonly ProxmoxClientInterface $proxmoxClient,
-    ) {
-    }
+        private readonly ProxmoxServer $server,
+    ) {}
 
     /**
      * Provision a new VM session for a user.
      *
-     * This method creates a pending session and dispatches an async job
-     * to handle the actual VM cloning and startup.
-     *
-     * @throws \Exception
+     * @throws \App\Exceptions\NoAvailableNodeException
      */
     public function provision(
         User $user,
         int $templateId,
         int $durationMinutes,
-        string $sessionType = 'ephemeral',
+        VMSessionType $sessionType = VMSessionType::EPHEMERAL,
     ): VMSession {
-        // Verify template exists
-        $template = VMTemplate::find($templateId);
-        if (! $template || ! $template->is_active) {
-            throw new \Exception("VM template {$templateId} not found or inactive");
-        }
-
-        // Select a node for this session
-        $node = $this->loadBalancer->selectNode();
-
-        // Create the session record in pending state
-        $session = $this->sessionRepository->create([
+        Log::info('Starting VM provisioning', [
             'user_id' => $user->id,
             'template_id' => $templateId,
+            'duration_minutes' => $durationMinutes,
+            'session_type' => $sessionType->value,
+        ]);
+
+        // Validate template exists
+        $template = VMTemplate::findOrFail($templateId);
+
+        // Use load balancer to select best node
+        $client = new ProxmoxClient($this->server);
+        $balancer = new ProxmoxLoadBalancer($client, $this->server);
+        $node = $balancer->selectNode();
+
+        // Create the session record in pending status
+        $session = $this->sessionRepository->create([
+            'user_id' => $user->id,
+            'template_id' => $template->id,
             'node_id' => $node->id,
-            'status' => VMSessionStatus::PENDING->value,
+            'status' => VMSessionStatus::PENDING,
             'session_type' => $sessionType,
             'expires_at' => now()->addMinutes($durationMinutes),
         ]);
 
-        Log::info("VM session created", [
+        Log::info('Created VM session record', [
             'session_id' => $session->id,
-            'user_id' => $user->id,
-            'template_id' => $templateId,
-            'node' => $node->name,
-            'duration_minutes' => $durationMinutes,
+            'node_id' => $node->id,
         ]);
 
         // Dispatch the provisioning job
-        ProvisionVMJob::dispatch($session);
+        ProvisionVMJob::dispatch($session)
+            ->onQueue('default');
 
-        return $session;
-    }
-
-    /**
-     * Poll a VM until it reaches the running state.
-     *
-     * @throws ProxmoxApiException
-     */
-    public function pollVMStatus(VMSession $session, string $targetStatus = 'running'): bool
-    {
-        $maxAttempts = ceil(config('proxmox.clone_timeout') / config('proxmox.clone_poll_interval'));
-        $pollInterval = config('proxmox.clone_poll_interval', 5);
-
-        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-            try {
-                $status = $this->proxmoxClient->getVMStatus($session->node->name, $session->vm_id);
-
-                Log::debug("VM status poll", [
-                    'session_id' => $session->id,
-                    'vm_id' => $session->vm_id,
-                    'attempt' => $attempt,
-                    'status' => $status['status'] ?? 'unknown',
-                ]);
-
-                if (($status['status'] ?? null) === $targetStatus) {
-                    return true;
-                }
-
-                if ($attempt < $maxAttempts) {
-                    sleep($pollInterval);
-                }
-            } catch (ProxmoxApiException $e) {
-                if ($attempt === $maxAttempts) {
-                    throw $e;
-                }
-
-                Log::warning("VM status poll failed, retrying", [
-                    'session_id' => $session->id,
-                    'vm_id' => $session->vm_id,
-                    'attempt' => $attempt,
-                    'error' => $e->getMessage(),
-                ]);
-
-                sleep($pollInterval);
-            }
+        if ($sessionType === VMSessionType::EPHEMERAL) {
+            // For ephemeral sessions, schedule cleanup job for when it expires
+            CleanupVMJob::dispatch($session)
+                ->delay($session->expires_at);
         }
 
-        return false;
+        return $session;
     }
 }

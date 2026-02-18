@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrowserLogController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VMSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,12 +27,9 @@ Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
-// VM session API endpoints (protected by auth middleware)
-Route::middleware('auth')->group(function () {
-    Route::get('/sessions', [VMSessionController::class, 'index']);
-    Route::post('/sessions', [VMSessionController::class, 'store']);
-    Route::get('/sessions/{id}', [VMSessionController::class, 'show']);
-    Route::delete('/sessions/{id}', [VMSessionController::class, 'destroy']);
+// VM session API endpoints
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::apiResource('sessions', VMSessionController::class);
 });
 
 require __DIR__.'/settings.php';

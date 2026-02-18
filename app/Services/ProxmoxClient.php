@@ -3,80 +3,77 @@
 namespace App\Services;
 
 use App\Exceptions\ProxmoxApiException;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\Cache;
+use App\Models\ProxmoxServer;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
-class ProxmoxClient implements ProxmoxClientInterface
+/**
+ * Service for interacting with Proxmox API.
+ * Handles all API calls, retries, error handling, and logging.
+ */
+class ProxmoxClient
 {
-    private HttpClient $httpClient;
+    private const MAX_RETRIES = 3;
+    private const RETRY_DELAYS = [10, 30, 60]; // seconds
+    private const TIMEOUT = 30;
 
-    private string $baseUrl;
-
-    private string $tokenId;
-
-    private string $tokenSecret;
-
-    private bool $verifySsl;
-
-    private int $timeout;
-
-    public function __construct()
-    {
-        $this->baseUrl = 'https://' . config('proxmox.host') . ':' . config('proxmox.port') . '/api2/json';
-        $this->tokenId = config('proxmox.token_id');
-        $this->tokenSecret = config('proxmox.token_secret');
-        $this->verifySsl = config('proxmox.verify_ssl', true);
-        $this->timeout = config('proxmox.timeout', 30);
-
-        $this->httpClient = new HttpClient([
-            'base_uri' => $this->baseUrl,
-            'timeout' => $this->timeout,
-            'verify' => $this->verifySsl,
-        ]);
-    }
+    /**
+     * Create a new ProxmoxClient instance.
+     */
+    public function __construct(
+        private readonly ProxmoxServer $server,
+    ) {}
 
     /**
      * Get all nodes in the cluster.
+     *
+     * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
      */
     public function getNodes(): array
     {
-        return $this->get('/nodes');
+        $response = $this->request('GET', '/nodes');
+
+        return $response['data'] ?? [];
     }
 
     /**
-     * Get status and statistics for a specific node.
+     * Get the status of a specific node.
+     *
+     * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
      */
-    public function getNodeStatus(string $node): array
+    public function getNodeStatus(string $nodeName): array
     {
-        return $this->get("/nodes/{$node}/status");
+        $response = $this->request('GET', "/nodes/{$nodeName}/status");
+
+        return $response['data'] ?? [];
     }
 
     /**
-     * Clone a VM template to create a new VM.
+     * Clone a template to create a new VM.
      *
      * @throws ProxmoxApiException
      */
-    public function cloneTemplate(int $templateVmid, string $node, string $newVmid, string $newName = null): int
+    public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int
     {
-        $data = [
+        $newVmid = $newVmid ?? $this->findNextAvailableVmid($nodeName);
+
+        $response = $this->request('POST', "/nodes/{$nodeName}/qemu/{$templateVmid}/clone", [
             'newid' => $newVmid,
-            'name' => $newName ?? "clone-{$newVmid}",
-        ];
+            'full' => 1,
+        ]);
 
-        $result = $this->post("/nodes/{$node}/qemu/{$templateVmid}/clone", $data);
-
-        // The clone operation returns a task ID; we need to get the actual VMID
-        if (isset($result['data'])) {
-            return (int) $newVmid;
+        // Wait for the clone task to complete
+        $taskId = $response['data'] ?? null;
+        if ($taskId) {
+            $this->pollTaskCompletion($nodeName, $taskId, 120);
         }
 
-        throw ProxmoxApiException::fromProxmoxError('Clone operation failed to return expected data', $result);
+        return $newVmid;
     }
 
     /**
@@ -84,19 +81,26 @@ class ProxmoxClient implements ProxmoxClientInterface
      *
      * @throws ProxmoxApiException
      */
-    public function startVM(string $node, int $vmid): void
+    public function startVM(string $nodeName, int $vmid): bool
     {
-        $this->post("/nodes/{$node}/qemu/{$vmid}/status/start", []);
+        $response = $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/status/start");
+
+        // Once started, poll until it's actually running
+        $this->pollVMStatus($nodeName, $vmid, 'running', 120);
+
+        return true;
     }
 
     /**
-     * Stop a VM gracefully.
+     * Stop a VM.
      *
      * @throws ProxmoxApiException
      */
-    public function stopVM(string $node, int $vmid): void
+    public function stopVM(string $nodeName, int $vmid): bool
     {
-        $this->post("/nodes/{$node}/qemu/{$vmid}/status/stop", []);
+        $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/status/stop");
+
+        return true;
     }
 
     /**
@@ -104,159 +108,212 @@ class ProxmoxClient implements ProxmoxClientInterface
      *
      * @throws ProxmoxApiException
      */
-    public function deleteVM(string $node, int $vmid): void
+    public function deleteVM(string $nodeName, int $vmid): bool
     {
-        $this->delete("/nodes/{$node}/qemu/{$vmid}");
+        $this->request('DELETE', "/nodes/{$nodeName}/qemu/{$vmid}");
+
+        return true;
     }
 
     /**
-     * Get the status of a VM.
+     * Get VM status.
+     *
+     * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
      */
-    public function getVMStatus(string $node, int $vmid): array
+    public function getVMStatus(string $nodeName, int $vmid): array
     {
-        return $this->get("/nodes/{$node}/qemu/{$vmid}/status/current");
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu/{$vmid}/status/current");
+
+        return $response['data'] ?? [];
     }
 
     /**
-     * Get current VM stats (CPU, memory, network).
+     * Execute an HTTP request to the Proxmox API with retry logic.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
      */
-    public function getVMStats(string $node, int $vmid): array
+    private function request(string $method, string $endpoint, array $data = []): array
     {
-        return $this->get("/nodes/{$node}/qemu/{$vmid}/status/current");
-    }
+        $url = $this->server->getApiUrl() . $endpoint;
+        $token = "{$this->server->token_id}:{$this->server->token_secret}";
 
-    /**
-     * Perform a GET request with retry logic.
-     *
-     * @throws ProxmoxApiException
-     */
-    private function get(string $endpoint): array
-    {
-        return $this->request('GET', $endpoint);
-    }
+        Log::debug("ProxmoxClient request", [
+            'method' => $method,
+            'endpoint' => $endpoint,
+            'server' => $this->server->name,
+        ]);
 
-    /**
-     * Perform a POST request with retry logic.
-     *
-     * @throws ProxmoxApiException
-     */
-    private function post(string $endpoint, array $data): mixed
-    {
-        return $this->request('POST', $endpoint, $data);
-    }
-
-    /**
-     * Perform a DELETE request with retry logic.
-     *
-     * @throws ProxmoxApiException
-     */
-    private function delete(string $endpoint): void
-    {
-        $this->request('DELETE', $endpoint);
-    }
-
-    /**
-     * Execute HTTP request with exponential backoff retry logic.
-     *
-     * @throws ProxmoxApiException
-     */
-    private function request(string $method, string $endpoint, array $data = []): mixed
-    {
-        $maxAttempts = config('proxmox.retry_attempts', 3);
-        $delayInitial = config('proxmox.retry_delay_initial', 10);
-        $delayMultiplier = config('proxmox.retry_delay_multiplier', 3);
-
-        $lastException = null;
-
-        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        for ($attempt = 0; $attempt < self::MAX_RETRIES; $attempt++) {
             try {
-                $startTime = microtime(true);
+                $response = Http::withToken($token)
+                    ->timeout(self::TIMEOUT)
+                    ->verifyPeer(false) // Ignore self-signed certs (consider config option)
+                    ->when($method === 'POST' || $method === 'PUT', function ($http) use ($data) {
+                        return $http->asForm()->with($data);
+                    })
+                    ->when($method === 'DELETE', function ($http) {
+                        return $http->asForm();
+                    })
+                    ->{strtolower($method)}($url);
 
-                $options = [
-                    'headers' => $this->getAuthHeaders(),
-                ];
-
-                if (! empty($data)) {
-                    $options['form_params'] = $data;
-                }
-
-                $response = $this->httpClient->request($method, $endpoint, $options);
-                $duration = microtime(true) - $startTime;
-
-                $body = json_decode($response->getBody()->getContents(), true);
-
-                Log::debug("Proxmox API request", [
-                    'method' => $method,
-                    'endpoint' => $endpoint,
-                    'attempt' => $attempt,
-                    'duration' => round($duration, 3),
-                ]);
-
-                // Check for errors in response (Proxmox returns 200 with errors in body)
-                if (isset($body['errors']) || isset($body['error'])) {
-                    throw ProxmoxApiException::fromProxmoxError(
-                        $body['error'] ?? $body['errors'],
-                        $body
+                if (!$response->successful()) {
+                    throw new ProxmoxApiException(
+                        "Proxmox API error: {$response->status()} - {$response->body()}"
                     );
                 }
 
-                return $body['data'] ?? $body;
+                return $response->json();
+            } catch (Throwable $e) {
+                $isTransient = $this->isTransientError($e);
 
-            } catch (GuzzleException $e) {
-                $lastException = $e;
+                Log::debug("ProxmoxClient attempt failed", [
+                    'attempt' => $attempt + 1,
+                    'max_retries' => self::MAX_RETRIES,
+                    'error' => $e->getMessage(),
+                    'transient' => $isTransient,
+                ]);
 
-                $statusCode = $e->getResponse()?->getStatusCode();
-                $isRetryable = $statusCode && in_array($statusCode, [429, 503, 504, 408]);
-
-                if (! $isRetryable || $attempt === $maxAttempts) {
-                    Log::error("Proxmox API failed after {$maxAttempts} attempts", [
-                        'method' => $method,
-                        'endpoint' => $endpoint,
-                        'status_code' => $statusCode,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    throw ProxmoxApiException::fromNetworkError(
-                        $e->getMessage(),
-                        $e
+                // If not transient or this is the last attempt, throw immediately
+                if (!$isTransient || $attempt === self::MAX_RETRIES - 1) {
+                    throw new ProxmoxApiException(
+                        "Failed to call Proxmox API at {$endpoint}: {$e->getMessage()}",
+                        previous: $e
                     );
                 }
 
-                // Exponential backoff before retry
-                $delay = $delayInitial * pow($delayMultiplier, $attempt - 1);
-                Log::warning("Proxmox API attempt {$attempt} failed, retrying in {$delay}s", [
-                    'status_code' => $statusCode,
-                ]);
-                sleep($delay);
-
-            } catch (ProxmoxApiException $e) {
-                $lastException = $e;
-
-                if (! $e->isRetryable() || $attempt === $maxAttempts) {
-                    throw $e;
-                }
-
-                // Exponential backoff before retry
-                $delay = $delayInitial * pow($delayMultiplier, $attempt - 1);
-                Log::warning("Proxmox API attempt {$attempt} failed, retrying in {$delay}s");
+                // Wait before retrying
+                $delay = self::RETRY_DELAYS[$attempt];
+                Log::debug("ProxmoxClient retrying", ['delay_seconds' => $delay]);
                 sleep($delay);
             }
         }
 
-        throw $lastException ?? ProxmoxApiException::fromNetworkError('Unknown error');
+        throw new ProxmoxApiException("Proxmox API request failed after " . self::MAX_RETRIES . " attempts");
     }
 
     /**
-     * Get authorization headers for Proxmox API.
+     * Check if an error is transient (should trigger a retry).
      */
-    private function getAuthHeaders(): array
+    private function isTransientError(Throwable $e): bool
     {
-        return [
-            'Authorization' => "PVEAPIToken={$this->tokenId}:{$this->tokenSecret}",
-        ];
+        $message = strtolower($e->getMessage());
+
+        // Connection timeouts are transient
+        if (str_contains($message, 'timeout') || str_contains($message, 'connection')) {
+            return true;
+        }
+
+        // HTTP 5XX errors are transient
+        if (str_contains($message, '50') || str_contains($message, '503')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Poll a task until it completes.
+     *
+     * @throws ProxmoxApiException
+     */
+    private function pollTaskCompletion(string $nodeName, string $taskId, int $timeoutSeconds): void
+    {
+        $endTime = now()->addSeconds($timeoutSeconds);
+
+        while (now()->isBefore($endTime)) {
+            try {
+                $status = $this->request('GET', "/nodes/{$nodeName}/tasks/{$taskId}/status");
+                $data = $status['data'] ?? [];
+
+                if (($data['exitstatus'] ?? null) === 'OK') {
+                    Log::debug("ProxmoxClient task completed", ['task_id' => $taskId]);
+
+                    return;
+                }
+
+                if (!empty($data['exitstatus']) && $data['exitstatus'] !== 'OK') {
+                    throw new ProxmoxApiException(
+                        "Proxmox task {$taskId} failed: {$data['exitstatus']}"
+                    );
+                }
+
+                // Still running, wait and retry
+                sleep(5);
+            } catch (ProxmoxApiException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                Log::warning("Error polling task status", ['error' => $e->getMessage()]);
+                sleep(5);
+            }
+        }
+
+        throw new ProxmoxApiException("Proxmox task {$taskId} did not complete within {$timeoutSeconds} seconds");
+    }
+
+    /**
+     * Poll VM status until it reaches the desired state.
+     *
+     * @throws ProxmoxApiException
+     */
+    private function pollVMStatus(string $nodeName, int $vmid, string $desiredStatus, int $timeoutSeconds): void
+    {
+        $endTime = now()->addSeconds($timeoutSeconds);
+
+        while (now()->isBefore($endTime)) {
+            try {
+                $status = $this->getVMStatus($nodeName, $vmid);
+                $currentStatus = $status['status'] ?? null;
+
+                if ($currentStatus === $desiredStatus) {
+                    Log::debug("ProxmoxClient VM reached desired status", [
+                        'vmid' => $vmid,
+                        'status' => $desiredStatus,
+                    ]);
+
+                    return;
+                }
+
+                // Still transitioning, wait and retry
+                sleep(5);
+            } catch (Throwable $e) {
+                Log::warning("Error polling VM status", ['error' => $e->getMessage()]);
+                sleep(5);
+            }
+        }
+
+        throw new ProxmoxApiException(
+            "VM {$vmid} did not reach status '{$desiredStatus}' within {$timeoutSeconds} seconds"
+        );
+    }
+
+    /**
+     * Find the next available VMID for the node.
+     */
+    private function findNextAvailableVmid(string $nodeName): int
+    {
+        try {
+            $vms = $this->request('GET', "/nodes/{$nodeName}/qemu");
+            $vmids = array_map(fn($vm) => $vm['vmid'] ?? 0, $vms['data'] ?? []);
+
+            // Start searching from 200 (user VMs), avoid templates (100-199)
+            $nextId = 200;
+            while (in_array($nextId, $vmids, true)) {
+                $nextId++;
+            }
+
+            Log::debug("Found next available VMID", ['node' => $nodeName, 'vmid' => $nextId]);
+
+            return $nextId;
+        } catch (Throwable $e) {
+            Log::error("Failed to find next available VMID", ['error' => $e->getMessage()]);
+
+            throw new ProxmoxApiException("Cannot determine available VMID: {$e->getMessage()}");
+        }
     }
 }

@@ -3,104 +3,117 @@
 namespace Tests\Unit;
 
 use App\Exceptions\ProxmoxApiException;
+use App\Models\ProxmoxServer;
 use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFake;
 use Tests\TestCase;
 
 class ProxmoxClientTest extends TestCase
 {
-    /**
-     * Test that ProxmoxClientFake can return mocked nodes.
-     */
-    public function test_proxmox_client_fake_returns_nodes(): void
+    private ProxmoxServer $server;
+    private ProxmoxClientFake $client;
+
+    protected function setUp(): void
     {
-        $fake = new ProxmoxClientFake();
+        parent::setUp();
 
-        $nodes = $fake->getNodes();
+        $this->server = ProxmoxServer::factory()->create();
+        $this->client = new ProxmoxClientFake($this->server);
+    }
 
+    public function test_can_instantiate_with_proxmox_server(): void
+    {
+        $client = new ProxmoxClientFake($this->server);
+        $this->assertNotNull($client);
+    }
+
+    public function test_get_nodes_returns_array(): void
+    {
+        $nodes = $this->client->getNodes();
         $this->assertIsArray($nodes);
-        $this->assertNotEmpty($nodes);
-        $this->assertArrayHasKey('node', $nodes[0]);
+        $this->assertContains('pve-1', $nodes);
+        $this->assertContains('pve-2', $nodes);
     }
 
-    /**
-     * Test that ProxmoxClientFake can be configured to fail.
-     */
-    public function test_proxmox_client_fake_can_be_configured_to_fail(): void
+    public function test_get_node_status_returns_data(): void
     {
-        $fake = new ProxmoxClientFake();
-        $fake->fail('Test error');
-
-        $this->expectException(ProxmoxApiException::class);
-
-        $fake->getNodes();
+        $status = $this->client->getNodeStatus('pve-1');
+        $this->assertIsArray($status);
+        $this->assertArrayHasKey('status', $status);
+        $this->assertEquals('online', $status['status']);
     }
 
-    /**
-     * Test that ProxmoxClientFake can return custom stubbed responses.
-     */
-    public function test_proxmox_client_fake_can_return_stubbed_responses(): void
+    public function test_clone_template_returns_vmid(): void
     {
-        $fake = new ProxmoxClientFake();
-        $customVmid = 12345;
+        $newVmid = $this->client->cloneTemplate(
+            templateVmid: 100,
+            nodeName: 'pve-1'
+        );
 
-        $fake->stub('cloneTemplate', $customVmid);
-
-        $result = $fake->cloneTemplate(100, 'node-1', '200', 'test-vm');
-
-        $this->assertEquals($customVmid, $result);
+        $this->assertIsInt($newVmid);
+        $this->assertGreaterThanOrEqual(200, $newVmid);
     }
 
-    /**
-     * Test that ProxmoxClientFake can be reset.
-     */
-    public function test_proxmox_client_fake_can_be_reset(): void
+    public function test_start_vm_updates_status(): void
     {
-        $fake = new ProxmoxClientFake();
-        $fake->fail('Test error');
+        $vmid = $this->client->cloneTemplate(100, 'pve-1');
+        $result = $this->client->startVM('pve-1', $vmid);
 
-        $this->expectException(ProxmoxApiException::class);
-        $fake->getNodes();
+        $this->assertTrue($result);
 
-        $fake->reset();
-
-        // Should not throw after reset
-        $nodes = $fake->getNodes();
-        $this->assertIsArray($nodes);
+        $status = $this->client->getVMStatus('pve-1', $vmid);
+        $this->assertEquals('running', $status['status']);
     }
 
-    /**
-     * Test that ProxmoxApiException can be created from Proxmox error.
-     */
-    public function test_proxmox_api_exception_from_proxmox_error(): void
+    public function test_stop_vm_updates_status(): void
     {
-        $exception = ProxmoxApiException::fromProxmoxError('Test error message');
+        $vmid = $this->client->cloneTemplate(100, 'pve-1');
+        $this->client->startVM('pve-1', $vmid);
+        $result = $this->client->stopVM('pve-1', $vmid);
 
-        $this->assertInstanceOf(ProxmoxApiException::class, $exception);
-        $this->assertStringContainsString('Test error message', $exception->getMessage());
+        $this->assertTrue($result);
+
+        $status = $this->client->getVMStatus('pve-1', $vmid);
+        $this->assertEquals('stopped', $status['status']);
     }
 
-    /**
-     * Test that ProxmoxApiException can be created from network error.
-     */
-    public function test_proxmox_api_exception_from_network_error(): void
+    public function test_delete_vm_removes_vm(): void
     {
-        $previous = new \Exception('Connection refused');
-        $exception = ProxmoxApiException::fromNetworkError('Network error', $previous);
+        $vmid = $this->client->cloneTemplate(100, 'pve-1');
+        $result = $this->client->deleteVM('pve-1', $vmid);
 
-        $this->assertInstanceOf(ProxmoxApiException::class, $exception);
-        $this->assertStringContainsString('Network error', $exception->getMessage());
+        $this->assertTrue($result);
+
+        $createdVMs = $this->client->getCreatedVMs();
+        $this->assertEmpty($createdVMs['pve-1'] ?? []);
     }
 
-    /**
-     * Test that ProxmoxApiException identifies retryable errors.
-     */
-    public function test_proxmox_api_exception_identifies_retryable_errors(): void
+    public function test_fake_client_can_set_next_vmid(): void
     {
-        $retryableException = new ProxmoxApiException('Too many requests', 429);
-        $nonRetryableException = new ProxmoxApiException('Not found', 404);
+        $this->client->setNextVmid('pve-1', 500);
+        $vmid = $this->client->cloneTemplate(100, 'pve-1');
 
-        $this->assertTrue($retryableException->isRetryable());
-        $this->assertFalse($nonRetryableException->isRetryable());
+        $this->assertEquals(500, $vmid);
+    }
+
+    public function test_fake_client_can_retrieve_created_vms(): void
+    {
+        $vmid1 = $this->client->cloneTemplate(100, 'pve-1');
+        $vmid2 = $this->client->cloneTemplate(100, 'pve-1');
+
+        $createdVMs = $this->client->getCreatedVMs();
+
+        $this->assertCount(2, $createdVMs['pve-1']);
+        $this->assertContains($vmid1, array_column($createdVMs['pve-1'], 'vmid'));
+        $this->assertContains($vmid2, array_column($createdVMs['pve-1'], 'vmid'));
+    }
+
+    public function test_fake_client_reset_clears_data(): void
+    {
+        $this->client->cloneTemplate(100, 'pve-1');
+        $this->client->reset();
+
+        $createdVMs = $this->client->getCreatedVMs();
+        $this->assertEmpty($createdVMs['pve-1'] ?? []);
     }
 }

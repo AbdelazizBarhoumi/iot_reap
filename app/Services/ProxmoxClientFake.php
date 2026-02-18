@@ -2,148 +2,208 @@
 
 namespace App\Services;
 
-use App\Exceptions\ProxmoxApiException;
+use App\Models\ProxmoxServer;
 
-class ProxmoxClientFake implements ProxmoxClientInterface
+/**
+ * Fake ProxmoxClient for testing.
+ * Provides deterministic responses without hitting the real Proxmox API.
+ */
+class ProxmoxClientFake extends ProxmoxClient
 {
-    private array $responses = [];
-
-    private bool $shouldFail = false;
-
-    private string $failureMessage = 'Simulated Proxmox API failure';
+    private array $nextVmid = [];
+    private array $createdVMs = [];
+    private array $nodeStatuses = [];
 
     /**
-     * Set up a fake response for a method.
+     * Create a new fake ProxmoxClient instance.
      */
-    public function stub(string $method, mixed $response): self
+    public function __construct(ProxmoxServer $server)
     {
-        $this->responses[$method] = $response;
-
-        return $this;
+        parent::__construct($server);
+        $this->initializeDefaults();
     }
 
     /**
-     * Configure the fake to throw an exception.
+     * Initialize default fake data.
      */
-    public function fail(string $message = 'Simulated Proxmox API failure'): self
+    private function initializeDefaults(): void
     {
-        $this->shouldFail = true;
-        $this->failureMessage = $message;
-
-        return $this;
-    }
-
-    /**
-     * Reset the fake to default state.
-     */
-    public function reset(): self
-    {
-        $this->responses = [];
-        $this->shouldFail = false;
-        $this->failureMessage = 'Simulated Proxmox API failure';
-
-        return $this;
-    }
-
-    public function getNodes(): array
-    {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
-        }
-
-        return $this->responses['getNodes'] ?? [
-            [
-                'node' => 'pve-node-1',
+        // Default nodes
+        $this->nodeStatuses = [
+            'pve-1' => [
                 'status' => 'online',
                 'uptime' => 86400,
-                'cpu' => 0.5,
+                'cpus' => 16,
                 'maxcpu' => 16,
-                'mem' => 32000000000,
-                'maxmem' => 64000000000,
+                'cpu' => 0.25,
+                'maxmem' => 68719476736,
+                'mem' => 17179869184,
+            ],
+            'pve-2' => [
+                'status' => 'online',
+                'uptime' => 86400,
+                'cpus' => 16,
+                'maxcpu' => 16,
+                'cpu' => 0.15,
+                'maxmem' => 68719476736,
+                'mem' => 8589934592,
             ],
         ];
+
+        foreach ($this->nodeStatuses as $nodeName => $status) {
+            $this->nextVmid[$nodeName] = 200;
+        }
     }
 
-    public function getNodeStatus(string $node): array
+    /**
+     * Get all nodes in the cluster.
+     *
+     * @return array<string, mixed>
+     */
+    public function getNodes(): array
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
-        }
+        return array_keys($this->nodeStatuses);
+    }
 
-        return $this->responses['getNodeStatus'] ?? [
-            'node' => $node,
-            'status' => 'online',
-            'uptime' => 86400,
-            'cpu' => 0.5,
-            'maxcpu' => 16,
-            'mem' => 32000000000,
-            'maxmem' => 64000000000,
+    /**
+     * Get the status of a specific node.
+     *
+     * @return array<string, mixed>
+     */
+    public function getNodeStatus(string $nodeName): array
+    {
+        return $this->nodeStatuses[$nodeName] ?? [];
+    }
+
+    /**
+     * Clone a template to create a new VM.
+     */
+    public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int
+    {
+        $newVmid = $newVmid ?? $this->nextVmid[$nodeName] ?? 200;
+
+        $this->createdVMs[$nodeName][] = [
+            'vmid' => $newVmid,
+            'status' => 'stopped',
+            'template' => $templateVmid,
         ];
+
+        $this->nextVmid[$nodeName] = $newVmid + 1;
+
+        return $newVmid;
     }
 
-    public function cloneTemplate(int $templateVmid, string $node, string $newVmid, string $newName = null): int
+    /**
+     * Start a VM.
+     */
+    public function startVM(string $nodeName, int $vmid): bool
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
+        if (isset($this->createdVMs[$nodeName])) {
+            foreach ($this->createdVMs[$nodeName] as &$vm) {
+                if ($vm['vmid'] === $vmid) {
+                    $vm['status'] = 'running';
+
+                    return true;
+                }
+            }
         }
 
-        return $this->responses['cloneTemplate'] ?? (int) $newVmid;
+        return false;
     }
 
-    public function startVM(string $node, int $vmid): void
+    /**
+     * Stop a VM.
+     */
+    public function stopVM(string $nodeName, int $vmid): bool
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
+        if (isset($this->createdVMs[$nodeName])) {
+            foreach ($this->createdVMs[$nodeName] as &$vm) {
+                if ($vm['vmid'] === $vmid) {
+                    $vm['status'] = 'stopped';
+
+                    return true;
+                }
+            }
         }
+
+        return false;
     }
 
-    public function stopVM(string $node, int $vmid): void
+    /**
+     * Delete a VM.
+     */
+    public function deleteVM(string $nodeName, int $vmid): bool
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
+        if (isset($this->createdVMs[$nodeName])) {
+            $this->createdVMs[$nodeName] = array_filter(
+                $this->createdVMs[$nodeName],
+                fn($vm) => $vm['vmid'] !== $vmid
+            );
+
+            return true;
         }
+
+        return false;
     }
 
-    public function deleteVM(string $node, int $vmid): void
+    /**
+     * Get VM status.
+     *
+     * @return array<string, mixed>
+     */
+    public function getVMStatus(string $nodeName, int $vmid): array
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
+        if (isset($this->createdVMs[$nodeName])) {
+            foreach ($this->createdVMs[$nodeName] as $vm) {
+                if ($vm['vmid'] === $vmid) {
+                    return [
+                        'status' => $vm['status'],
+                        'vmid' => $vmid,
+                        'uptime' => 3600,
+                    ];
+                }
+            }
         }
+
+        return ['status' => 'stopped', 'vmid' => $vmid];
     }
 
-    public function getVMStatus(string $node, int $vmid): array
+    /**
+     * Set the status of a node for testing.
+     */
+    public function setNodeStatus(string $nodeName, array $status): self
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
-        }
+        $this->nodeStatuses[$nodeName] = $status;
 
-        return $this->responses['getVMStatus'] ?? [
-            'vmid' => $vmid,
-            'node' => $node,
-            'status' => 'running',
-            'uptime' => 3600,
-            'cpu' => 0.3,
-            'maxcpu' => 4,
-            'mem' => 2000000000,
-            'maxmem' => 4000000000,
-        ];
+        return $this;
     }
 
-    public function getVMStats(string $node, int $vmid): array
+    /**
+     * Set the next VMID to use for a node.
+     */
+    public function setNextVmid(string $nodeName, int $vmid): self
     {
-        if ($this->shouldFail) {
-            throw ProxmoxApiException::fromProxmoxError($this->failureMessage);
-        }
+        $this->nextVmid[$nodeName] = $vmid;
 
-        return $this->responses['getVMStats'] ?? [
-            'vmid' => $vmid,
-            'node' => $node,
-            'status' => 'running',
-            'uptime' => 3600,
-            'cpu' => 0.3,
-            'maxcpu' => 4,
-            'mem' => 2000000000,
-            'maxmem' => 4000000000,
-        ];
+        return $this;
+    }
+
+    /**
+     * Get all created VMs for testing assertions.
+     *
+     * @return array<string, array>
+     */
+    public function getCreatedVMs(): array
+    {
+        return $this->createdVMs;
+    }
+
+    /**
+     * Reset all fake data.
+     */
+    public function reset(): void
+    {
+        $this->createdVMs = [];
+        $this->initializeDefaults();
     }
 }

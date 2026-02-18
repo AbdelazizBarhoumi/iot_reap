@@ -6,6 +6,10 @@ use App\Enums\VMSessionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Form request for creating a new VM session.
+ * Validates user input and enforces authorization.
+ */
 class CreateVMSessionRequest extends FormRequest
 {
     /**
@@ -13,11 +17,13 @@ class CreateVMSessionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create-vm-session');
+        return $this->user() !== null;
     }
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
      */
     public function rules(): array
     {
@@ -26,38 +32,32 @@ class CreateVMSessionRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:vm_templates,id',
-                // Additional validation: template must be active
-                Rule::exists('vm_templates', 'id')->where('is_active', true),
             ],
             'duration_minutes' => [
                 'required',
                 'integer',
                 'min:30',
-                'max:480', // Maximum 8 hours
+                'max:240',
             ],
             'session_type' => [
                 'required',
-                Rule::in([
-                    VMSessionType::EPHEMERAL->value,
-                    VMSessionType::PERSISTENT->value,
-                ]),
+                Rule::enum(VMSessionType::class),
             ],
         ];
     }
 
     /**
-     * Get custom messages for validator errors.
+     * Get custom messages for validation errors.
+     *
+     * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'template_id.required' => 'A VM template must be selected',
-            'template_id.exists' => 'The selected template does not exist or is inactive',
-            'duration_minutes.required' => 'A session duration must be specified',
-            'duration_minutes.min' => 'Session duration must be at least 30 minutes',
-            'duration_minutes.max' => 'Session duration cannot exceed 480 minutes (8 hours)',
-            'session_type.required' => 'A session type must be specified',
-            'session_type.in' => 'Invalid session type',
+            'template_id.exists' => 'The selected template does not exist.',
+            'duration_minutes.min' => 'Session duration must be at least 30 minutes.',
+            'duration_minutes.max' => 'Session duration cannot exceed 240 minutes.',
+            'session_type.enum' => 'Session type must be either "ephemeral" or "persistent".',
         ];
     }
 }

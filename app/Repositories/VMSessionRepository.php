@@ -7,10 +7,15 @@ use App\Models\User;
 use App\Models\VMSession;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Repository for VM session database access.
+ */
 class VMSessionRepository
 {
     /**
-     * Create a new VM session.
+     * Create a new VM session record.
+     *
+     * @param array<string, mixed> $data
      */
     public function create(array $data): VMSession
     {
@@ -22,8 +27,7 @@ class VMSessionRepository
      */
     public function findById(string $id): ?VMSession
     {
-        return VMSession::with(['template', 'node', 'user'])
-            ->find($id);
+        return VMSession::find($id);
     }
 
     /**
@@ -32,14 +36,13 @@ class VMSessionRepository
     public function findActiveByUser(User $user): Collection
     {
         return VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE->value)
+            ->where('status', VMSessionStatus::ACTIVE)
             ->with(['template', 'node'])
-            ->orderByDesc('created_at')
             ->get();
     }
 
     /**
-     * Find all sessions for a user, regardless of status.
+     * Find all sessions for a user (all statuses).
      */
     public function findByUser(User $user): Collection
     {
@@ -50,89 +53,65 @@ class VMSessionRepository
     }
 
     /**
-     * Find all pending sessions waiting to be provisioned.
+     * Update a session's status and other fields.
+     *
+     * @param array<string, mixed> $data
      */
-    public function findPending(): Collection
+    public function update(VMSession $session, array $data): VMSession
     {
-        return VMSession::where('status', VMSessionStatus::PENDING->value)
-            ->with(['template', 'node', 'user'])
-            ->orderBy('created_at')
-            ->get();
-    }
-
-    /**
-     * Find all expired sessions that need cleanup.
-     */
-    public function findExpired(): Collection
-    {
-        return VMSession::whereIn('status', [
-            VMSessionStatus::ACTIVE->value,
-            VMSessionStatus::EXPIRING->value,
-        ])
-            ->where('expires_at', '<', now())
-            ->with(['template', 'node', 'user'])
-            ->get();
-    }
-
-    /**
-     * Find all failed sessions.
-     */
-    public function findFailed(): Collection
-    {
-        return VMSession::where('status', VMSessionStatus::FAILED->value)
-            ->with(['template', 'node', 'user'])
-            ->get();
-    }
-
-    /**
-     * Update a session's status.
-     */
-    public function updateStatus(VMSession $session, VMSessionStatus $status): VMSession
-    {
-        $session->update(['status' => $status->value]);
+        $session->update($data);
 
         return $session->fresh();
     }
 
     /**
-     * Update a session with provisioning data after successful clone.
+     * Expire sessions that have passed their expiration time.
+     *
+     * @return int Number of sessions expired
      */
-    public function updateWithVMData(VMSession $session, int $vmId, string $ipAddress = null): VMSession
+    public function expireOverdueSessions(): int
     {
-        $session->update([
-            'vm_id' => $vmId,
-            'ip_address' => $ipAddress,
-            'status' => VMSessionStatus::ACTIVE->value,
-        ]);
-
-        return $session->fresh();
+        return VMSession::where('status', VMSessionStatus::ACTIVE)
+            ->where('expires_at', '<=', now())
+            ->update(['status' => VMSessionStatus::EXPIRED]);
     }
 
     /**
-     * Mark a session as failed with error details.
-     */
-    public function markFailed(VMSession $session, string $reason): VMSession
-    {
-        $session->update([
-            'status' => VMSessionStatus::FAILED->value,
-        ]);
-
-        // Could store reason in a separate column or in logs
-        // For now, we'll just log it
-        \Illuminate\Support\Facades\Log::error("VM session failed", [
-            'session_id' => $session->id,
-            'user_id' => $session->user_id,
-            'reason' => $reason,
-        ]);
-
-        return $session->fresh();
-    }
-
-    /**
-     * Delete a session and its associated VM.
+     * Delete a session.
      */
     public function delete(VMSession $session): bool
     {
-        return $session->delete();
+        return (bool) $session->delete();
+    }
+
+    /**
+     * Count active sessions for a user.
+     */
+    public function countActiveByUser(User $user): int
+    {
+        return VMSession::where('user_id', $user->id)
+            ->where('status', VMSessionStatus::ACTIVE)
+            ->count();
+    }
+
+    /**
+     * Find pending sessions (not yet started).
+     */
+    public function findPending(): Collection
+    {
+        return VMSession::where('status', VMSessionStatus::PENDING)
+            ->with(['user', 'template', 'node'])
+            ->get();
+    }
+
+    /**
+     * Find sessions that failed to provision.
+     */
+    public function findFailed(): Collection
+    {
+        return VMSession::where('status', VMSessionStatus::FAILED)
+            ->with(['user', 'template', 'node'])
+            ->orderByDesc('created_at')
+            ->get();
     }
 }

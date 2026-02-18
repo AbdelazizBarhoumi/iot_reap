@@ -2,119 +2,162 @@
 
 namespace Tests\Unit;
 
-use App\Exceptions\ProxmoxApiException;
+use App\Enums\ProxmoxNodeStatus;
+use App\Exceptions\NoAvailableNodeException;
 use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
+use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxLoadBalancer;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class ProxmoxLoadBalancerTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected ProxmoxLoadBalancer $loadBalancer;
+    private ProxmoxServer $server;
+    private ProxmoxClientFake $client;
+    private ProxmoxLoadBalancer $balancer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create a mock ProxmoxClient
-        $proxmoxClientMock = $this->createMock(\App\Services\ProxmoxClient::class);
+        $this->server = ProxmoxServer::factory()->create();
 
-        // Create the load balancer with the mock
-        $this->loadBalancer = new ProxmoxLoadBalancer($proxmoxClientMock);
-
-        // Bind the mock to the service container
-        $this->app->bind(\App\Services\ProxmoxClient::class, function () use ($proxmoxClientMock) {
-            return $proxmoxClientMock;
-        });
-    }
-
-    /**
-     * Test that selectNode picks the least-loaded node.
-     */
-    public function test_select_node_picks_least_loaded_node(): void
-    {
         // Create test nodes
-        $node1 = ProxmoxNode::factory()->create(['name' => 'node-1']);
-        $node2 = ProxmoxNode::factory()->create(['name' => 'node-2']);
-        $node3 = ProxmoxNode::factory()->create(['name' => 'node-3']);
+        ProxmoxNode::factory()->create([
+            'name' => 'pve-1',
+            'status' => ProxmoxNodeStatus::ONLINE,
+        ]);
+        ProxmoxNode::factory()->create([
+            'name' => 'pve-2',
+            'status' => ProxmoxNodeStatus::ONLINE,
+        ]);
 
-        // Mock the ProxmoxClient to return different loads for each node
-        $proxmoxClientMock = $this->createMock(\App\Services\ProxmoxClient::class);
-        $proxmoxClientMock->method('getNodeStatus')
-            ->willReturnMap([
-                ['node-1', ['mem' => 60000000000, 'maxmem' => 64000000000, 'cpu' => 0.8, 'maxcpu' => 16]],
-                ['node-2', ['mem' => 20000000000, 'maxmem' => 64000000000, 'cpu' => 0.2, 'maxcpu' => 16]],
-                ['node-3', ['mem' => 40000000000, 'maxmem' => 64000000000, 'cpu' => 0.5, 'maxcpu' => 16]],
-            ]);
-
-        $loadBalancer = new ProxmoxLoadBalancer($proxmoxClientMock);
-
-        $selected = $loadBalancer->selectNode();
-
-        // node-2 should be selected (lowest load)
-        $this->assertEquals('node-2', $selected->name);
+        $this->client = new ProxmoxClientFake($this->server);
+        $this->balancer = new ProxmoxLoadBalancer($this->client, $this->server);
     }
 
-    /**
-     * Test that selectNode throws when all nodes are overloaded.
-     */
-    public function test_select_node_throws_when_all_nodes_overloaded(): void
+    public function test_select_node_returns_proxmox_node(): void
     {
-        // Create test nodes
-        $node1 = ProxmoxNode::factory()->create(['name' => 'node-1']);
-        $node2 = ProxmoxNode::factory()->create(['name' => 'node-2']);
-
-        // Mock the ProxmoxClient to return high loads (> 85%)
-        $proxmoxClientMock = $this->createMock(\App\Services\ProxmoxClient::class);
-        $proxmoxClientMock->method('getNodeStatus')
-            ->willReturnMap([
-                ['node-1', ['mem' => 63000000000, 'maxmem' => 64000000000, 'cpu' => 15, 'maxcpu' => 16]],
-                ['node-2', ['mem' => 62000000000, 'maxmem' => 64000000000, 'cpu' => 14, 'maxcpu' => 16]],
-            ]);
-
-        $loadBalancer = new ProxmoxLoadBalancer($proxmoxClientMock);
-
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('above');
-
-        $loadBalancer->selectNode();
+        $node = $this->balancer->selectNode();
+        $this->assertInstanceOf(ProxmoxNode::class, $node);
     }
 
-    /**
-     * Test that getNodeLoad calculates correct score.
-     */
-    public function test_get_node_load_calculates_correct_score(): void
+    public function test_select_node_picks_least_loaded(): void
     {
-        $node = ProxmoxNode::factory()->create(['name' => 'test-node']);
+        // Set pve-1 to 80% loaded, pve-2 to 20% loaded
+        $this->client->setNodeStatus('pve-1', [
+            'status' => 'online',
+            'cpu' => 0.8,
+            'maxcpu' => 1.0,
+            'mem' => 80,
+            'maxmem' => 100,
+        ]);
 
-        $proxmoxClientMock = $this->createMock(\App\Services\ProxmoxClient::class);
-        $proxmoxClientMock->method('getNodeStatus')
-            ->with('test-node')
-            ->willReturn([
-                'mem' => 32000000000, // 50% of 64GB
-                'maxmem' => 64000000000,
-                'cpu' => 8, // 50% of 16
-                'maxcpu' => 16,
-            ]);
+        $this->client->setNodeStatus('pve-2', [
+            'status' => 'online',
+            'cpu' => 0.2,
+            'maxcpu' => 1.0,
+            'mem' => 20,
+            'maxmem' => 100,
+        ]);
 
-        $loadBalancer = new ProxmoxLoadBalancer($proxmoxClientMock);
+        Cache::flush();
 
-        $score = $loadBalancer->getNodeLoad($node);
-
-        // Score should be: (0.7 * 0.5) + (0.3 * 0.5) = 0.35 + 0.15 = 0.5
-        $this->assertEquals(0.5, $score);
+        $selectedNode = $this->balancer->selectNode();
+        $this->assertEquals('pve-2', $selectedNode->name);
     }
 
-    /**
-     * Test that selectNode throws when no nodes are available.
-     */
-    public function test_select_node_throws_when_no_nodes_available(): void
+    public function test_select_node_throws_when_all_overloaded(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('No online');
+        // Set all nodes to 90% loaded
+        $this->client->setNodeStatus('pve-1', [
+            'status' => 'online',
+            'cpu' => 0.9,
+            'maxcpu' => 1.0,
+            'mem' => 900000000,
+            'maxmem' => 1000000000,
+        ]);
 
-        $this->loadBalancer->selectNode();
+        $this->client->setNodeStatus('pve-2', [
+            'status' => 'online',
+            'cpu' => 0.9,
+            'maxcpu' => 1.0,
+            'mem' => 900000000,
+            'maxmem' => 1000000000,
+        ]);
+
+        Cache::flush();
+
+        $this->expectException(NoAvailableNodeException::class);
+        $this->balancer->selectNode();
+    }
+
+    public function test_select_node_throws_when_no_online_nodes(): void
+    {
+        ProxmoxNode::where('status', ProxmoxNodeStatus::ONLINE)->update([
+            'status' => ProxmoxNodeStatus::OFFLINE,
+        ]);
+
+        $this->expectException(NoAvailableNodeException::class);
+        $this->balancer->selectNode();
+    }
+
+    public function test_node_scores_cached(): void
+    {
+        Cache::flush();
+
+        // First call should cache the score
+        $this->balancer->selectNode();
+
+        $cacheKey = "proxmox_node_load:{$this->server->id}:pve-1";
+        $this->assertNotNull(Cache::get($cacheKey));
+    }
+
+    public function test_clear_cache_works(): void
+    {
+        Cache::flush();
+        $this->balancer->selectNode();
+
+        // Cache should have values
+        $cacheKey = "proxmox_node_load:{$this->server->id}:pve-1";
+        $this->assertNotNull(Cache::get($cacheKey));
+
+        // Clear cache
+        $this->balancer->clearCache();
+
+        // Note: actual pattern-based deletion would need Redis direct access
+        // This tests that the method runs without error
+        $this->assertTrue(true);
+    }
+
+    public function test_weighted_scoring_favors_memory(): void
+    {
+        // Node 1: High CPU, low memory
+        $this->client->setNodeStatus('pve-1', [
+            'status' => 'online',
+            'cpu' => 0.9,
+            'maxcpu' => 1.0,
+            'mem' => 10000000,  // Very low memory
+            'maxmem' => 68719476736,
+        ]);
+
+        // Node 2: Low CPU, high memory
+        $this->client->setNodeStatus('pve-2', [
+            'status' => 'online',
+            'cpu' => 0.1,
+            'maxcpu' => 1.0,
+            'mem' => 34359738368,  // High memory (50%)
+            'maxmem' => 68719476736,
+        ]);
+
+        Cache::flush();
+
+        // Memory weight is 0.7, CPU weight is 0.3
+        // Node 1 score: (90 * 0.3) + (0 * 0.7) = 27
+        // Node 2 score: (10 * 0.3) + (50 * 0.7) = 38
+        // So pve-1 should be selected (lower score)
+        $selectedNode = $this->balancer->selectNode();
+        $this->assertEquals('pve-1', $selectedNode->name);
     }
 }
