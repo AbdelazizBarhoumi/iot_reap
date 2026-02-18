@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\VMSessionStatus;
+use App\Events\VMSessionCreated;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\ProxmoxServer;
 use App\Models\VMSession;
@@ -26,14 +27,23 @@ class ProvisionVMJob implements ShouldQueue
     use Dispatchable, Queueable, InteractsWithQueue;
 
     /**
+     * The number of times the job may be attempted.
+     */
+    public int $tries = 3;
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var array<int, int>
+     */
+    public array $backoff = [10, 30, 60];
+
+    /**
      * Create a new job instance.
      */
     public function __construct(
         private readonly VMSession $session,
-    ) {
-        $this->tries = 3;
-        $this->backoff = [10, 30, 60]; // seconds
-    }
+    ) {}
 
     /**
      * Get the middleware the job should pass through.
@@ -52,7 +62,7 @@ class ProvisionVMJob implements ShouldQueue
      */
     public function handle(
         VMSessionRepository $sessionRepository,
-        ProxmoxServer $server,
+        ProxmoxClientInterface $client,
     ): void {
         Log::info('Starting ProvisionVMJob', [
             'session_id' => $this->session->id,
@@ -64,9 +74,6 @@ class ProvisionVMJob implements ShouldQueue
             $session = $this->session->fresh();
             $template = $session->template;
             $node = $session->node;
-
-            // Initialize Proxmox client for this server
-            $client = new ProxmoxClient($server);
 
             // Clone the template VM
             $vmId = $client->cloneTemplate(
@@ -101,7 +108,8 @@ class ProvisionVMJob implements ShouldQueue
                 'status' => VMSessionStatus::ACTIVE->value,
             ]);
 
-            // TODO: Emit VMSessionCreated event for downstream processors (Guacamole setup, etc.)
+            // Emit VMSessionCreated event for downstream processors (Guacamole setup, etc.)
+            event(new VMSessionCreated($session->fresh()));
         } catch (ProxmoxApiException $e) {
             Log::warning('Proxmox API error during provisioning', [
                 'session_id' => $this->session->id,

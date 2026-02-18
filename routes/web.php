@@ -3,6 +3,8 @@
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VMSessionController;
+use App\Http\Controllers\Admin\ProxmoxNodeController;
+use App\Http\Controllers\Admin\VMTemplateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -30,6 +32,18 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 // VM session API endpoints
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('sessions', VMSessionController::class);
+});
+
+// Admin API endpoints (admin-only)
+Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->group(function () {
+    Route::get('/nodes', [ProxmoxNodeController::class, 'index'])->name('admin.nodes.index');
+    Route::apiResource('templates', VMTemplateController::class)->names([
+        'index' => 'admin.templates.index',
+        'store' => 'admin.templates.store',
+        'show' => 'admin.templates.show',
+        'update' => 'admin.templates.update',
+        'destroy' => 'admin.templates.destroy',
+    ]);
 });
 
 require __DIR__.'/settings.php';

@@ -34,7 +34,7 @@ class CleanupVMJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(ProxmoxServer $server): void
+    public function handle(ProxmoxClientInterface $client): void
     {
         Log::info('Starting CleanupVMJob', [
             'session_id' => $this->session->id,
@@ -68,7 +68,6 @@ class CleanupVMJob implements ShouldQueue
             }
 
             // Delete the VM
-            $client = new ProxmoxClient($server);
             $client->deleteVM(
                 nodeName: $session->node->name,
                 vmid: $session->vm_id,

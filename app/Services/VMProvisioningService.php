@@ -23,7 +23,8 @@ class VMProvisioningService
      */
     public function __construct(
         private readonly VMSessionRepository $sessionRepository,
-        private readonly ProxmoxServer $server,
+        private readonly ProxmoxLoadBalancer $loadBalancer,
+        private readonly ProxmoxClientInterface $proxmoxClient,
     ) {}
 
     /**
@@ -47,10 +48,11 @@ class VMProvisioningService
         // Validate template exists
         $template = VMTemplate::findOrFail($templateId);
 
-        // Use load balancer to select best node
-        $client = new ProxmoxClient($this->server);
-        $balancer = new ProxmoxLoadBalancer($client, $this->server);
-        $node = $balancer->selectNode();
+        // Use configured/active Proxmox server
+        $server = ProxmoxServer::where('is_active', true)->firstOrFail();
+
+        // Use injected load balancer (it uses the injected Proxmox client)
+        $node = $this->loadBalancer->selectNode($server);
 
         // Create the session record in pending status
         $session = $this->sessionRepository->create([

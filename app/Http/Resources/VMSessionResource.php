@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Route;
 
 /**
  * API resource for VM session responses.
@@ -31,15 +32,27 @@ class VMSessionResource extends JsonResource
                 'ram_mb' => $this->template->ram_mb,
                 'disk_gb' => $this->template->disk_gb,
             ],
-            'node' => [
-                'id' => $this->node->id,
-                'name' => $this->node->name,
-                'hostname' => $this->node->hostname,
-            ],
+            'node_name' => $this->node->name,
             'expires_at' => $this->expires_at->toIso8601String(),
             'time_remaining_seconds' => max(0, $this->expires_at->diffInSeconds(now())),
-            'guacamole_url' => $this->status->value === 'active' ? route('guacamole.session', $this->id) : null,
+            'guacamole_url' => $this->getGuacamoleUrl(),
             'created_at' => $this->created_at->toIso8601String(),
         ];
+    }
+
+    /**
+     * Get the Guacamole URL for this session if active.
+     * Returns null if session is not active or route is not configured.
+     */
+    private function getGuacamoleUrl(): ?string
+    {
+        if ($this->status->value !== 'active') {
+            return null;
+        }
+
+        // Guacamole integration is implemented in a later sprint. Return a placeholder
+        // URL for UI/tests so callers can link to the session page. Real implementation
+        // will replace this with the one-time Guacamole token URL.
+        return url("/guacamole/sessions/{$this->id}");
     }
 }

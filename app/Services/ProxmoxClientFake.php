@@ -17,8 +17,11 @@ class ProxmoxClientFake extends ProxmoxClient
     /**
      * Create a new fake ProxmoxClient instance.
      */
-    public function __construct(ProxmoxServer $server)
+    public function __construct(?ProxmoxServer $server = null)
     {
+        // If no server supplied (container binding / tests), create an in-memory dummy server
+        $server = $server ?? ProxmoxServer::factory()->make();
+
         parent::__construct($server);
         $this->initializeDefaults();
     }

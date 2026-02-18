@@ -57,7 +57,7 @@ class VMSessionControllerTest extends TestCase
                              'status',
                              'session_type',
                              'template',
-                             'node',
+                             'node_name',
                              'expires_at',
                              'time_remaining_seconds',
                              'guacamole_url',
@@ -161,7 +161,7 @@ class VMSessionControllerTest extends TestCase
                      'status',
                      'session_type',
                      'template',
-                     'node',
+                     'node_name',
                  ]);
     }
 
