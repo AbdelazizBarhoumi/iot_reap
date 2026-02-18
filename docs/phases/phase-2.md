@@ -253,7 +253,7 @@ What to build:
 - `CreateVMSessionRequest`: validate template_id, duration_minutes, session_type
 - `VMSessionController`: `index()`, `store()`, `show()`, `destroy()`
 - `VMSessionResource`: format response
-- Routes: `GET /api/v1/sessions`, `POST /api/v1/sessions`, `GET /api/v1/sessions/{id}`, `DELETE /api/v1/sessions/{id}`
+- Routes: `GET /sessions`, `POST /sessions`, `GET /sessions/{id}`, `DELETE /sessions/{id}`
 
 Copilot prompt:
 ```php
@@ -269,9 +269,9 @@ Copilot prompt:
 ```
 
 Acceptance criteria:
-- [ ] `POST /api/v1/sessions` returns 201 with session data
-- [ ] `GET /api/v1/sessions` returns only authenticated user's sessions
-- [ ] `DELETE /api/v1/sessions/{id}` from different user returns 403
+- [ ] `POST /sessions` returns 201 with session data
+- [ ] `GET /sessions` returns only authenticated user's sessions
+- [ ] `DELETE /sessions/{id}` from different user returns 403
 - [ ] `guacamole_url` is null while status is `pending`
 
 ---
@@ -348,7 +348,7 @@ Copilot prompt:
 // VMTemplateCard props: template: VMTemplate, onLaunch: (template) => void
 // Show: OS icon (Windows/Linux/Kali), name, cpu_cores, ram_gb, tags
 // LaunchVMModal: duration slider (30/60/120/240 min), ephemeral vs persistent toggle
-// On confirm: call POST /api/v1/sessions, show loading state
+// On confirm: call POST /sessions, show loading state
 // On success: redirect to /sessions/{id}
 // On error: show error message inline
 ```

@@ -345,7 +345,7 @@
           ->andReturn(201);
 
      $response = $this->actingAs($user)
-          ->postJson('/api/v1/sessions', [
+          ->postJson('/sessions', [
               'template_id'      => $template->id,
               'duration_minutes' => 60,
           ]);
@@ -356,7 +356,7 @@
 
  public function test_unauthenticated_user_cannot_provision_vm(): void
  {
-     $response = $this->postJson('/api/v1/sessions', []);
+     $response = $this->postJson('/sessions', []);
      $response->assertUnauthorized();
  }
  ```

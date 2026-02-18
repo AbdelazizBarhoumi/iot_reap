@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Proxmox node model.
+ * App Proxmox node model.
  *
  * @property int $id
  * @property string $name
@@ -16,26 +16,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $api_url
  * @property ProxmoxNodeStatus $status
  * @property int $max_vms
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
  */
 class ProxmoxNode extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProxmoxNodeFactory> */
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'proxmox_nodes';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'hostname',
@@ -44,21 +29,11 @@ class ProxmoxNode extends Model
         'max_vms',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'status' => ProxmoxNodeStatus::class,
-        ];
-    }
+    protected $casts = [
+        'status' => ProxmoxNodeStatus::class,
+        'max_vms' => 'integer',
+    ];
 
-    /**
-     * Get the VM sessions on this node.
-     */
     public function vmSessions(): HasMany
     {
         return $this->hasMany(VMSession::class, 'node_id');

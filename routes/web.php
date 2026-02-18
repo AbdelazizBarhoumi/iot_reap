@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\VMSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -25,5 +26,10 @@ Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth
 Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
+// VM session API endpoints
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::apiResource('sessions', VMSessionController::class);
+});
 
 require __DIR__.'/settings.php';
