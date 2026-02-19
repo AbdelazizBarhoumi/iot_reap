@@ -49,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/sessions/{session}', [VMSessionController::class, 'show'])->name('api.sessions.show');
     Route::delete('/api/sessions/{session}', [VMSessionController::class, 'destroy'])->name('api.sessions.destroy');
     
+    // Guacamole remote desktop token
+    Route::get('/api/sessions/{session}/guacamole-token', [\App\Http\Controllers\GuacamoleTokenController::class, 'generate'])->name('api.sessions.guacamole-token');
+    
     // Templates API (public for engineers)
     Route::get('/api/templates', [\App\Http\Controllers\Admin\VMTemplateController::class, 'index'])->name('api.templates.index');
     Route::get('/api/templates/{template}', [\App\Http\Controllers\Admin\VMTemplateController::class, 'show'])->name('api.templates.show');

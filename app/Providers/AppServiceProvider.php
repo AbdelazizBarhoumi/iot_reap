@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\ProxmoxServerRepository;
+use App\Services\GuacamoleClient;
+use App\Services\GuacamoleClientInterface;
+use App\Services\GuacamoleClientFake;
 use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientInterface;
@@ -85,6 +88,23 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(ProxmoxLoadBalancer::class)
             );
         });
+
+        // Bind GuacamoleClientInterface as singleton
+        // In testing without proper config, use the fake
+        $this->app->singleton(GuacamoleClientInterface::class, function ($app) {
+            $username = config('guacamole.username');
+            $password = config('guacamole.password');
+
+            // If no credentials configured, use the fake client (tests / local dev)
+            if (!$username || !$password) {
+                return new GuacamoleClientFake();
+            }
+
+            return new GuacamoleClient();
+        });
+
+        // For backward compatibility, bind concrete GuacamoleClient to the interface
+        $this->app->singleton(GuacamoleClient::class, fn($app) => $app->make(GuacamoleClientInterface::class));
     }
 
     /**

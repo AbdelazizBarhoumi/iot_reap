@@ -6,8 +6,8 @@
 
 import { ChevronRight, Server } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ProxmoxNode, ProxmoxVM } from '../types/vm.types';
 import { adminApi } from '../api/vm.api';
+import type { ProxmoxNode, ProxmoxVM } from '../types/vm.types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';

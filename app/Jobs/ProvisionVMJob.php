@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionCreated;
+use App\Events\VMSessionActivated;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
@@ -107,8 +108,14 @@ class ProvisionVMJob implements ShouldQueue
                 'status' => VMSessionStatus::ACTIVE->value,
             ]);
 
-            // Emit VMSessionCreated event for downstream processors (Guacamole setup, etc.)
-            event(new VMSessionCreated($session->fresh()));
+            // Refresh session from DB to get updated state
+            $freshSession = $session->fresh();
+
+            // Emit VMSessionCreated event for downstream processors (notifications, etc.)
+            event(new VMSessionCreated($freshSession));
+
+            // Emit VMSessionActivated event to trigger Guacamole connection creation
+            event(new VMSessionActivated($freshSession));
         } catch (ProxmoxApiException $e) {
             Log::warning('Proxmox API error during provisioning', [
                 'session_id' => $this->session->id,

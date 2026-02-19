@@ -42,7 +42,8 @@ class VMSessionResource extends JsonResource
 
     /**
      * Get the Guacamole URL for this session if active.
-     * Returns null if session is not active or route is not configured.
+     * Returns the endpoint URL to fetch the token, not the token itself.
+     * Returns null if session is not active.
      */
     private function getGuacamoleUrl(): ?string
     {
@@ -50,9 +51,8 @@ class VMSessionResource extends JsonResource
             return null;
         }
 
-        // Guacamole integration is implemented in a later sprint. Return a placeholder
-        // URL for UI/tests so callers can link to the session page. Real implementation
-        // will replace this with the one-time Guacamole token URL.
-        return url("/guacamole/sessions/{$this->id}");
+        // Return the API endpoint that the frontend will call to get the actual token
+        // The token endpoint will handle rate limiting, authorization, and token generation
+        return url("/api/sessions/{$this->id}/guacamole-token");
     }
 }

@@ -73,6 +73,16 @@ class VMTemplateFactory extends Factory
         ]);
     }
 
+    public function windows(): static
+    {
+        return $this->windows11();
+    }
+
+    public function linux(): static
+    {
+        return $this->ubuntu2204();
+    }
+
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
