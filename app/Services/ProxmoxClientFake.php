@@ -162,13 +162,56 @@ class ProxmoxClientFake extends ProxmoxClient
                     return [
                         'status' => $vm['status'],
                         'vmid' => $vmid,
-                        'uptime' => 3600,
+                        'uptime' => $vm['status'] === 'running' ? 3600 : 0,
+                        'cpu' => $vm['status'] === 'running' ? 0.05 : 0,
+                        'mem' => $vm['status'] === 'running' ? 1073741824 : 0, // 1 GB
+                        'maxmem' => 4294967296, // 4 GB
                     ];
                 }
             }
         }
 
-        return ['status' => 'stopped', 'vmid' => $vmid];
+        return ['status' => 'stopped', 'vmid' => $vmid, 'uptime' => 0];
+    }
+
+    /**
+     * Get all VMs on a node (running + stopped).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getVMs(string $nodeName): array
+    {
+        $vms = $this->createdVMs[$nodeName] ?? [];
+
+        return array_map(function ($vm) {
+            return [
+                'vmid' => $vm['vmid'],
+                'name' => $vm['name'] ?? "vm-{$vm['vmid']}",
+                'status' => $vm['status'],
+                'cpu_usage' => $vm['status'] === 'running' ? 5.0 : 0,
+                'mem_usage' => $vm['status'] === 'running' ? 1073741824 : 0,
+                'maxmem' => 4294967296,
+                'uptime' => $vm['status'] === 'running' ? 3600 : 0,
+                'template' => $vm['template'] ?? 0,
+            ];
+        }, $vms);
+    }
+
+    /**
+     * Reboot a VM.
+     */
+    public function rebootVM(string $nodeName, int $vmid): bool
+    {
+        // For fake, reboot is a no-op - VM stays running
+        return true;
+    }
+
+    /**
+     * Shutdown a VM gracefully.
+     */
+    public function shutdownVM(string $nodeName, int $vmid): bool
+    {
+        return $this->stopVM($nodeName, $vmid);
     }
 
     /**

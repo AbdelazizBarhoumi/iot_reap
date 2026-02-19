@@ -37,18 +37,24 @@ class ProxmoxConnection
         try {
             $protocol = 'https';
             $url = "{$protocol}://{$host}:{$port}/api2/json/nodes";
-            $token = "{$tokenId}:{$tokenSecret}";
+            $tokenAuth = "{$tokenId}={$tokenSecret}";
 
             Log::debug('ProxmoxConnection: Testing connection', [
                 'host' => $host,
                 'port' => $port,
             ]);
 
-            // Make the test request
-            $response = Http::withToken($token)
-                ->timeout(self::TIMEOUT)
-                ->verifyPeer($verifySsl)
-                ->get($url);
+            // Make the test request using PVEAPIToken header (required for token-based auth)
+            $httpClient = Http::withHeaders([
+                'Authorization' => "PVEAPIToken={$tokenAuth}",
+            ])->timeout(self::TIMEOUT);
+            
+            // Handle SSL verification based on flag
+            if (!$verifySsl) {
+                $httpClient = $httpClient->withoutVerifying();
+            }
+            
+            $response = $httpClient->get($url);
 
             // Check if successful
             if (!$response->successful()) {

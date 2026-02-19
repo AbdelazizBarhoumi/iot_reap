@@ -259,7 +259,7 @@ class VMSessionControllerTest extends TestCase
             'node_id' => $this->node->id,
             'vm_id' => 12345,
             'ip_address' => '192.168.1.50',
-            'guacamole_connection_id' => 'secret-connection-id',
+            'guacamole_connection_id' => 99999,
         ]);
 
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");

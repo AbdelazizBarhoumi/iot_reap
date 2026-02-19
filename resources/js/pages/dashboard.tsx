@@ -36,12 +36,13 @@ export default function Dashboard() {
   }, []);
 
   const handleLaunchVM = useCallback(
-    async (templateId: number, durationMinutes: number, sessionType: VMSessionType) => {
+    async (templateId: number, durationMinutes: number, sessionType: VMSessionType, proxmoxServerId?: number) => {
       try {
         const session = await createSession({
           template_id: templateId,
           duration_minutes: durationMinutes,
           session_type: sessionType,
+          proxmox_server_id: proxmoxServerId,
         });
 
         // Redirect to session detail page

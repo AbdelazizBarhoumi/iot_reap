@@ -1,11 +1,12 @@
 /**
  * Launch VM Modal component.
  * Allows user to configure and launch a VM session.
- * Sprint 2 - Phase 2
+ * Sprint 2.5 - Updated with multi-server support
  */
 
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Loader2, Server } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useProxmoxServers } from '../hooks/useProxmoxServers';
 import type { VMTemplate, VMSessionType } from '../types/vm.types';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
@@ -24,7 +25,7 @@ interface LaunchVMModalProps {
   template: VMTemplate | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLaunch: (templateId: number, durationMinutes: number, sessionType: VMSessionType) => Promise<void>;
+  onLaunch: (templateId: number, durationMinutes: number, sessionType: VMSessionType, proxmoxServerId?: number) => Promise<void>;
 }
 
 const DURATION_OPTIONS = [
@@ -37,8 +38,20 @@ const DURATION_OPTIONS = [
 export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: LaunchVMModalProps) {
   const [duration, setDuration] = useState<number>(60);
   const [sessionType, setSessionType] = useState<VMSessionType>('ephemeral');
+  const [selectedServerId, setSelectedServerId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { servers, loading: serversLoading, error: serversError } = useProxmoxServers();
+
+  // Auto-select server when only one is available
+  useEffect(() => {
+    if (servers.length === 1) {
+      setSelectedServerId(servers[0].id);
+    } else if (servers.length === 0) {
+      setSelectedServerId(undefined);
+    }
+  }, [servers]);
 
   const handleLaunch = async () => {
     if (!template) return;
@@ -47,7 +60,7 @@ export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: Launch
     setError(null);
 
     try {
-      await onLaunch(template.id, duration, sessionType);
+      await onLaunch(template.id, duration, sessionType, selectedServerId);
       onOpenChange(false);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to launch VM';
@@ -66,6 +79,9 @@ export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: Launch
 
   if (!template) return null;
 
+  const showServerSelector = servers.length > 1;
+  const noServersAvailable = servers.length === 0 && !serversLoading;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -77,6 +93,52 @@ export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: Launch
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          {/* Server Selector - only shown when multiple servers available */}
+          {showServerSelector && (
+            <div className="grid gap-2">
+              <Label htmlFor="server">Proxmox Cluster</Label>
+              <Select
+                value={selectedServerId?.toString() ?? ''}
+                onValueChange={(value) => setSelectedServerId(Number(value))}
+                disabled={loading || serversLoading}
+              >
+                <SelectTrigger id="server">
+                  <SelectValue placeholder="Select cluster" />
+                </SelectTrigger>
+                <SelectContent>
+                  {servers.map((server) => (
+                    <SelectItem key={server.id} value={server.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <Server className="h-4 w-4" />
+                        <span>{server.name}</span>
+                        {server.description && (
+                          <span className="text-muted-foreground text-xs">({server.description})</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Show selected server info when only one server (auto-selected) */}
+          {servers.length === 1 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Server className="h-4 w-4" />
+              <span>Cluster: {servers[0].name}</span>
+            </div>
+          )}
+
+          {/* No servers warning */}
+          {noServersAvailable && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                No Proxmox servers are available. Please contact an administrator.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid gap-2">
             <Label htmlFor="duration">Session Duration</Label>
             <Select
@@ -131,9 +193,9 @@ export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: Launch
             </div>
           </div>
 
-          {error && (
+          {(error || serversError) && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{error || serversError}</AlertDescription>
             </Alert>
           )}
         </div>
@@ -142,7 +204,7 @@ export function LaunchVMModal({ template, open, onOpenChange, onLaunch }: Launch
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleLaunch} disabled={loading}>
+          <Button onClick={handleLaunch} disabled={loading || noServersAvailable || serversLoading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? 'Launching...' : 'Launch VM'}
           </Button>
