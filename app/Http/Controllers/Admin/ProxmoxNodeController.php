@@ -40,8 +40,13 @@ class ProxmoxNodeController extends Controller
                 $resource = new ProxmoxNodeResource($node);
 
                 if ($node->proxmoxServer) {
-                    $stats = $this->getNodeStats($node->proxmoxServer, $node->name);
-                    $resource->setStats($stats);
+                    // Do NOT call Proxmox API for servers that are inactive — keep node stats empty.
+                    if ($node->proxmoxServer->is_active === false) {
+                        // leave stats unset so the resource omits real-time fields
+                    } else {
+                        $stats = $this->getNodeStats($node->proxmoxServer, $node->name);
+                        $resource->setStats($stats);
+                    }
                 }
 
                 return $resource;
@@ -66,6 +71,14 @@ class ProxmoxNodeController extends Controller
                 return response()->json([
                     'data' => [],
                     'error' => 'Node has no associated Proxmox server',
+                ], 422);
+            }
+
+            // Disallow VM listing for nodes whose server is inactive
+            if ($node->proxmoxServer->is_active === false) {
+                return response()->json([
+                    'data' => [],
+                    'error' => 'Proxmox server is inactive',
                 ], 422);
             }
 
@@ -98,6 +111,10 @@ class ProxmoxNodeController extends Controller
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
+            if ($node->proxmoxServer->is_active === false) {
+                return response()->json(['error' => 'Proxmox server is inactive'], 422);
+            }
+
             $client = $this->clientFactory->make($node->proxmoxServer);
             $client->startVM($node->name, $vmid);
 
@@ -126,6 +143,10 @@ class ProxmoxNodeController extends Controller
         try {
             if (!$node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
+            }
+
+            if ($node->proxmoxServer->is_active === false) {
+                return response()->json(['error' => 'Proxmox server is inactive'], 422);
             }
 
             $client = $this->clientFactory->make($node->proxmoxServer);
@@ -157,6 +178,10 @@ class ProxmoxNodeController extends Controller
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
+            if ($node->proxmoxServer->is_active === false) {
+                return response()->json(['error' => 'Proxmox server is inactive'], 422);
+            }
+
             $client = $this->clientFactory->make($node->proxmoxServer);
             $client->rebootVM($node->name, $vmid);
 
@@ -184,6 +209,10 @@ class ProxmoxNodeController extends Controller
         try {
             if (!$node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
+            }
+
+            if ($node->proxmoxServer->is_active === false) {
+                return response()->json(['error' => 'Proxmox server is inactive'], 422);
             }
 
             $client = $this->clientFactory->make($node->proxmoxServer);

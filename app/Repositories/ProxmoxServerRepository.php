@@ -13,20 +13,32 @@ use Illuminate\Database\Eloquent\Collection;
 class ProxmoxServerRepository
 {
     /**
-     * Find all active Proxmox servers.
+     * Find all active Proxmox servers using the scopeActive() scope.
      *
      * @return Collection<int, ProxmoxServer>
      */
     public function findActive(): Collection
     {
-        return ProxmoxServer::where('is_active', true)
+        return ProxmoxServer::active()
             ->with('nodes')
             ->orderBy('name')
             ->get();
     }
 
     /**
-     * Find a Proxmox server by ID.
+     * Find an active Proxmox server by ID.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findActiveById(int $id): ProxmoxServer
+    {
+        return ProxmoxServer::active()
+            ->with('nodes')
+            ->findOrFail($id);
+    }
+
+    /**
+     * Find a Proxmox server by ID (regardless of active status).
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
@@ -55,26 +67,71 @@ class ProxmoxServerRepository
         $defaultServerId = config('proxmox.default_server_id');
 
         if ($defaultServerId) {
-            return ProxmoxServer::find($defaultServerId);
+            return ProxmoxServer::active()->find($defaultServerId);
         }
 
-        return ProxmoxServer::where('is_active', true)
+        return ProxmoxServer::active()
             ->orderBy('created_at')
             ->first();
     }
 
     /**
-     * Get all servers with online node counts.
+     * Get all active servers with node stats and resource information.
      *
      * @return Collection<int, ProxmoxServer>
      */
     public function findActiveWithNodeStats(): Collection
     {
-        return ProxmoxServer::where('is_active', true)
+        return ProxmoxServer::active()
             ->with([
                 'nodes' => fn($query) => $query->where('status', 'online'),
             ])
             ->get()
-            ->map(fn($server) => $server->setAttribute('online_node_count', $server->nodes->count()));
+            ->map(function ($server) {
+                $onlineNodes = $server->nodes->count();
+                $totalActiveSessions = $server->vmSessions()
+                    ->where('status', 'active')
+                    ->where('expires_at', '>', now())
+                    ->count();
+
+                return $server
+                    ->setAttribute('online_node_count', $onlineNodes)
+                    ->setAttribute('active_sessions', $totalActiveSessions)
+                    ->setAttribute('sessions_remaining', $server->max_concurrent_sessions - $totalActiveSessions);
+            });
+    }
+
+    /**
+     * Get all active servers with full resource information for admin dashboard.
+     *
+     * @return Collection<int, ProxmoxServer>
+     */
+    public function allActiveWithResourceStats(): Collection
+    {
+        return ProxmoxServer::active()
+            ->with([
+                'nodes' => fn($query) => $query->where('status', 'online'),
+                'vmSessions' => fn($query) => $query
+                    ->where('status', 'active')
+                    ->where('expires_at', '>', now()),
+            ])
+            ->get()
+            ->map(function ($server) {
+                $activeVmsPerNode = [];
+                $totalActiveVms = 0;
+
+                foreach ($server->nodes as $node) {
+                    $activeCount = $node->countActiveVMs();
+                    $activeVmsPerNode[$node->id] = $activeCount;
+                    $totalActiveVms += $activeCount;
+                }
+
+                return $server
+                    ->setAttribute('total_active_vms', $totalActiveVms)
+                    ->setAttribute('active_sessions', $server->vmSessions->count())
+                    ->setAttribute('sessions_remaining', $server->max_concurrent_sessions - $server->vmSessions->count())
+                    ->setAttribute('online_node_count', $server->nodes->count())
+                    ->setAttribute('vms_per_node', $activeVmsPerNode);
+            });
     }
 }

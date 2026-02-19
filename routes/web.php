@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
     Route::post('/proxmox-servers', [ProxmoxServerController::class, 'store'])->name('admin.proxmox-servers.store');
     Route::get('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'show'])->name('admin.proxmox-servers.show');
     Route::patch('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'update'])->name('admin.proxmox-servers.update');
+    Route::post('/proxmox-servers/{proxmox_server}/inactivate', [ProxmoxServerController::class, 'inactivate'])->name('admin.proxmox-servers.inactivate');
     Route::delete('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'destroy'])->name('admin.proxmox-servers.destroy');
     Route::post('/proxmox-servers/{proxmox_server}/sync-nodes', [ProxmoxServerController::class, 'syncNodes'])->name('admin.proxmox-servers.sync-nodes');
 });

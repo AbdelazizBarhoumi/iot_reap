@@ -5,7 +5,9 @@
  */
 
 import { ChevronRight, Server } from 'lucide-react';
-import type { ProxmoxNode } from '../types/vm.types';
+import { useEffect, useState } from 'react';
+import type { ProxmoxNode, ProxmoxVM } from '../types/vm.types';
+import { adminApi } from '../api/vm.api';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -63,6 +65,45 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
 }
 
 export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardProps) {
+  const disabled = node.server_active === false;
+
+  const [vms, setVms] = useState<ProxmoxVM[] | null>(null);
+  const [vmsLoading, setVmsLoading] = useState(false);
+  const [vmsError, setVmsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadVMs() {
+      if (node.server_active === false) {
+        setVms([]);
+        setVmsLoading(false);
+        setVmsError(null);
+        return;
+      }
+
+      try {
+        setVmsLoading(true);
+        const data = await adminApi.getNodeVMs(node.id);
+        if (!mounted) return;
+        setVms(data);
+        setVmsError(null);
+      } catch (e) {
+        if (!mounted) return;
+        setVms([]);
+        setVmsError(e instanceof Error ? e.message : 'Failed to load VMs');
+      } finally {
+        if (mounted) setVmsLoading(false);
+      }
+    }
+
+    loadVMs();
+
+    return () => {
+      mounted = false;
+    };
+  }, [node.id, node.server_active]);
+
   return (
     <Card className={isSelected ? 'ring-2 ring-primary' : ''}>
       <CardHeader className="pb-2">
@@ -71,13 +112,18 @@ export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardPr
             <Server className="h-5 w-5 text-muted-foreground" />
             <CardTitle className="text-base">{node.name}</CardTitle>
           </div>
-          <Badge
-            variant="outline"
-            className={`${STATUS_TEXT_COLORS[node.status]} border-current capitalize`}
-          >
-            <span className={`w-2 h-2 rounded-full mr-1.5 ${STATUS_COLORS[node.status]}`} />
-            {node.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {disabled && (
+              <Badge variant="outline" className="text-muted-foreground">Server inactive</Badge>
+            )}
+            <Badge
+              variant="outline"
+              className={`${STATUS_TEXT_COLORS[node.status]} border-current capitalize`}
+            >
+              <span className={`w-2 h-2 rounded-full mr-1.5 ${STATUS_COLORS[node.status]}`} />
+              {node.status}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,9 +143,17 @@ export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardPr
         )}
 
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="text-muted-foreground">Active VMs:</div>
-          <div className="font-medium">{node.active_vm_count} / {node.max_vms}</div>
-          
+          <div className="text-muted-foreground">VMs:</div>
+          <div className="font-medium">
+            {vmsLoading ? (
+              <span className="text-sm text-muted-foreground">Loading…</span>
+            ) : vmsError ? (
+              <span className="text-sm text-destructive">—</span>
+            ) : (
+              <span>{(vms ? vms.length : node.active_vm_count ?? 0)}</span>
+            )}
+          </div>
+
           {node.status === 'online' && node.uptime_seconds !== undefined && (
             <>
               <div className="text-muted-foreground">Uptime:</div>
@@ -114,6 +168,7 @@ export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardPr
             size="sm"
             className="w-full"
             onClick={() => onViewVMs(node.id)}
+            disabled={disabled}
           >
             View VMs
             <ChevronRight className="h-4 w-4 ml-1" />

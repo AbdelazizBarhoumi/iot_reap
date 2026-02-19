@@ -36,6 +36,7 @@ class ProxmoxServerController extends Controller
     /**
      * List all Proxmox servers.
      * Returns JSON for API/XHR requests, Inertia page for browser visits.
+     * Never exposes decrypted host/port in JSON.
      *
      * @return JsonResponse|InertiaResponse
      */
@@ -43,6 +44,7 @@ class ProxmoxServerController extends Controller
     {
         // If the client expects JSON (XHR / API), return the resource collection
         if ($request->wantsJson()) {
+            // Fetch all servers (including inactive for admin review)
             $servers = ProxmoxServer::with(['createdBy', 'nodes', 'vmSessions', 'credentialLogs'])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -380,14 +382,14 @@ class ProxmoxServerController extends Controller
     /**
      * Get all active Proxmox servers for engineer UI dropdown.
      * Public endpoint (auth required, no admin role required).
-     * Returns minimal info: id, name only (no credentials).
+     * Returns minimal info: id, name only (no credentials or host/port).
      *
      * @return JsonResponse
      */
     public function listActive(): JsonResponse
     {
-        $servers = ProxmoxServer::where('is_active', true)
-            ->select(['id', 'name', 'description', 'host'])
+        $servers = ProxmoxServer::active()
+            ->select(['id', 'name', 'description'])
             ->orderBy('name')
             ->get();
 
@@ -397,7 +399,6 @@ class ProxmoxServerController extends Controller
                     'id' => $server->id,
                     'name' => $server->name,
                     'description' => $server->description,
-                    'host' => $server->host,
                 ];
             }),
         ]);
@@ -438,6 +439,87 @@ class ProxmoxServerController extends Controller
 
             return response()->json([
                 'message' => 'Failed to sync nodes',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Inactivate a Proxmox server and close all active sessions.
+     * This is a soft delete — records remain in database but marked inactive.
+     *
+     * @return JsonResponse
+     */
+    public function inactivate(ProxmoxServer $proxmox_server): JsonResponse
+    {
+        try {
+            Log::debug('Inactivate start', ['server_id' => $proxmox_server->id]);
+
+            // Count active sessions that will be closed
+            $activeSessions = VMSession::where('proxmox_server_id', $proxmox_server->id)
+                ->where('status', '!=', 'terminated')
+                ->where('status', '!=', 'expired')
+                ->where('expires_at', '>', now())
+                ->count();
+
+            Log::debug('Active sessions count', ['server_id' => $proxmox_server->id, 'count' => $activeSessions]);
+
+            // Find all active sessions
+            $sessionsToTerminate = VMSession::where('proxmox_server_id', $proxmox_server->id)
+                ->where('status', '!=', 'terminated')
+                ->where('status', '!=', 'expired')
+                ->where('expires_at', '>', now())
+                ->get();
+
+            Log::debug('Sessions to terminate retrieved', ['server_id' => $proxmox_server->id, 'sessions' => $sessionsToTerminate->pluck('id')]);
+
+            // Terminate each session (in production, dispatch TerminateVMJob)
+            foreach ($sessionsToTerminate as $session) {
+                // Update status to terminated
+                $session->update(['status' => 'terminated']);
+                // In production: TerminateVMJob::dispatch($session);
+            }
+
+            Log::debug('Sessions terminated', ['server_id' => $proxmox_server->id]);
+
+            // Mark server as inactive
+            $proxmox_server->update(['is_active' => false]);
+
+            Log::debug('Server marked inactive', ['server_id' => $proxmox_server->id, 'is_active' => $proxmox_server->is_active]);
+
+            // Log the inactivation
+            NodeCredentialsLog::create([
+                'proxmox_server_id' => $proxmox_server->id,
+                'action' => 'updated',
+                'ip_address' => request()->ip(),
+                'changed_by' => Auth::id(),
+                'details' => [
+                    'server_name' => $proxmox_server->name,
+                    'sessions_closed' => $activeSessions,
+                ],
+            ]);
+
+            Log::info('Proxmox server inactivated', [
+                'server_id' => $proxmox_server->id,
+                'sessions_closed' => $activeSessions,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'message' => "Server inactivated. {$activeSessions} active session(s) closed.",
+                'data' => new ProxmoxServerResource($proxmox_server),
+                'sessions_closed' => $activeSessions,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to inactivate Proxmox server', [
+                'server_id' => $proxmox_server->id,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to inactivate server',
                 'error' => $e->getMessage(),
             ], 500);
         }

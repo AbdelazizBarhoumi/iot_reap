@@ -53,6 +53,33 @@ class VMSessionRepository
     }
 
     /**
+     * Find all sessions for a user ensuring their server is active.
+     *
+     * Excludes sessions on inactive servers.
+     */
+    public function allUserSessions(User $user): Collection
+    {
+        return VMSession::where('user_id', $user->id)
+            ->whereHas('proxmoxServer', fn($q) => $q->active())
+            ->with(['template', 'node', 'proxmoxServer'])
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    /**
+     * Find all active sessions for a user on active servers.
+     */
+    public function findActiveByUserOnActiveServers(User $user): Collection
+    {
+        return VMSession::where('user_id', $user->id)
+            ->where('status', VMSessionStatus::ACTIVE)
+            ->where('expires_at', '>', now())
+            ->whereHas('proxmoxServer', fn($q) => $q->active())
+            ->with(['template', 'node', 'proxmoxServer'])
+            ->get();
+    }
+
+    /**
      * Update a session's status and other fields.
      *
      * @param array<string, mixed> $data

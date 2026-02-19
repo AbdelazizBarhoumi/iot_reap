@@ -37,6 +37,44 @@ class ProxmoxNodePageTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name', 'status', 'max_vms', 'active_vm_count']]]);
     }
 
+    public function test_index_skips_node_stats_for_inactive_server(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $server = \App\Models\ProxmoxServer::create([
+            'name' => 'Inactive Cluster',
+            'host' => '10.0.0.5',
+            'port' => 8006,
+            'token_id' => 't',
+            'token_secret' => 's',
+            'is_active' => false,
+        ]);
+
+        $node = \App\Models\ProxmoxNode::create([
+            'proxmox_server_id' => $server->id,
+            'name' => 'inactive-node',
+            'hostname' => 'inactive.example',
+            'api_url' => 'https://inactive.example:8006/api2/json',
+            'status' => 'online',
+            'max_vms' => 10,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/admin/nodes');
+
+        $response->assertOk();
+
+        $nodeData = collect($response->json('data'))->firstWhere('id', $node->id);
+
+        $this->assertNotNull($nodeData);
+        $this->assertFalse($nodeData['server_active']);
+
+        // Stats should be omitted for nodes whose server is inactive
+        $this->assertArrayNotHasKey('cpu_percent', $nodeData);
+        $this->assertArrayNotHasKey('ram_used_mb', $nodeData);
+        $this->assertArrayNotHasKey('ram_total_mb', $nodeData);
+        $this->assertArrayNotHasKey('uptime_seconds', $nodeData);
+    }
+
     public function test_engineer_cannot_access_admin_nodes_route(): void
     {
         $user = User::factory()->engineer()->create();

@@ -151,11 +151,15 @@ class ProxmoxServerControllerTest extends TestCase
             ])
             ->assertJsonPath('message', 'Proxmox server registered successfully');
 
+        // Verify server record exists and model decrypts host/port
         $this->assertDatabaseHas('proxmox_servers', [
             'name' => 'Production Cluster',
-            'host' => '192.168.1.100',
             'is_active' => true,
         ]);
+
+        $server = ProxmoxServer::where('name', 'Production Cluster')->first();
+        $this->assertEquals('192.168.1.100', $server->host);
+        $this->assertEquals(8006, $server->port);
     }
 
     /**
@@ -565,9 +569,10 @@ class ProxmoxServerControllerTest extends TestCase
             ->assertJsonCount(2, 'data')
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'name', 'host'],
+                    '*' => ['id', 'name'],
                 ],
-            ]);
+            ])
+            ->assertJsonMissing(['host']);
 
         // Verify only active servers returned
         $ids = $response->json('data.*.id');

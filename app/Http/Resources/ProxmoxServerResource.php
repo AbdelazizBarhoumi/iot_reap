@@ -14,7 +14,7 @@ class ProxmoxServerResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     * Never expose token_id or token_secret in API responses!
+     * Never expose token_id, token_secret, encrypted host, or encrypted port in API responses!
      *
      * @return array<string, mixed>
      */
@@ -24,11 +24,16 @@ class ProxmoxServerResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'host' => $this->host,
-            'port' => $this->port,
+            // Expose host/port only to admin users (do NOT return to engineers/public)
             'realm' => $this->realm,
+            'host' => $request->user()?->can('admin-only') ? $this->host : null,
+            'port' => $request->user()?->can('admin-only') ? $this->port : null,
             'verify_ssl' => $this->verify_ssl,
             'is_active' => $this->is_active,
+            'max_vms_per_node' => $this->max_vms_per_node,
+            'max_concurrent_sessions' => $this->max_concurrent_sessions,
+            'cpu_overcommit_ratio' => $this->cpu_overcommit_ratio,
+            'memory_overcommit_ratio' => $this->memory_overcommit_ratio,
             'api_url' => $this->getApiUrl(),
             'created_by_user' => $this->whenLoaded('createdBy', function () {
                 return [
@@ -40,9 +45,13 @@ class ProxmoxServerResource extends JsonResource
             'nodes_count' => $this->whenLoaded('nodes', function () {
                 return $this->nodes->count();
             }),
+            'online_nodes_count' => $this->whenLoaded('nodes', function () {
+                return $this->nodes->where('status', 'online')->count();
+            }),
             'active_sessions_count' => $this->whenLoaded('vmSessions', function () {
                 return $this->vmSessions()
                     ->where('status', 'active')
+                    ->where('expires_at', '>', now())
                     ->count();
             }),
             'total_sessions_count' => $this->whenLoaded('vmSessions', function () {

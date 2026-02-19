@@ -92,9 +92,10 @@ class ProxmoxServerComprehensiveTest extends TestCase
             ->assertJsonCount(2, 'data')
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'name', 'description', 'host'],
+                    '*' => ['id', 'name', 'description'],
                 ],
-            ]);
+            ])
+            ->assertJsonMissing(['host']);
 
         // Verify no credentials are exposed
         $response->assertJsonMissing(['token_id'])

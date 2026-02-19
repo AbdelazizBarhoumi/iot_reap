@@ -53,7 +53,106 @@ This is the sprint your supervisor will watch. The MVP demo (end of week 6) is t
 
 ### Backend Tasks
 
-#### TASK 3.1 — Guacamole Client Service
+#### TASK 3.0 — Server Inactivation, Resource Control & Encryption
+**Branch:** `feature/US-XX-server-inactivation`
+
+What to build:
+- Migration: add columns to `proxmox_servers` table:
+  - `is_active` boolean (default true)
+  - `host` → encrypted (using Laravel encryption)
+  - `port` → encrypted (using Laravel encryption)
+  - `max_vms_per_node` int (default 5)
+  - `max_concurrent_sessions` int (default 20)
+  - `cpu_overcommit_ratio` decimal (default 2.0)
+  - `memory_overcommit_ratio` decimal (default 1.5)
+- `ProxmoxServer` model: encrypted accessors/mutators for host & port
+- `ProxmoxNode::activeVMs()` scope — only counts non-terminated, non-expired sessions
+- Resource capability checking before VM provisioning
+- Update all queries with active() scope and proper resource validation
+- Frontend: Inactive servers hidden; resource exhaustion warnings shown
+
+Copilot prompt:
+```php
+// ProxmoxServer migration:
+// - is_active: boolean default true
+// - host: string encrypted (Crypt::encryptString / Crypt::decryptString)
+// - port: integer encrypted
+// - max_vms_per_node: int default 5
+// - max_concurrent_sessions: int default 20
+// - cpu_overcommit_ratio: decimal 8,2 default 2.0
+// - memory_overcommit_ratio: decimal 8,2 default 1.5
+
+// ProxmoxServer model:
+// - add $encrypted = ['host', 'port'] for automatic encryption/decryption
+// - add scope: scopeActive($query) => $query->where('is_active', true)
+// - add method: canProvisionsMore(ProxmoxNode $node): bool
+//   - count active VMs on node < max_vms_per_node
+//   - total active sessions across all nodes < max_concurrent_sessions
+//   - available CPU > (template_cpu / cpu_overcommit_ratio)
+//   - available memory > (template_memory / memory_overcommit_ratio)
+// - add method: inactivate() => $this->closeAllSessions(); $this->update(['is_active' => false])
+// - add method: getDecryptedHost(): string
+// - add method: getDecryptedPort(): int
+
+// ProxmoxNode model & scope:
+// - scopeActiveVMs($query) => join to vm_sessions where status='active' AND not expired
+// - add method: countActiveVMs(): int (sessions where expires_at > now() AND status='active')
+// - add method: getAvailableCPU(): float (max_cpu - used_cpu * server.cpu_overcommit_ratio)
+// - add method: getAvailableMemory(): float (max_memory - used_memory * server.memory_overcommit_ratio)
+
+// ProxmoxServerRepository:
+// - findActive($id): return ProxmoxServer::active()->findOrFail($id) — decrypt host/port on read
+// - allActive(): return ProxmoxServer::active()->get() — NEVER expose raw decrypted host/port in API response
+// - findByDecryptedHost($host, $port): decrypt in-db lookup (use whereRaw with DB::raw decryption if needed)
+// - getCapableNode(VMTemplate $template): finds node that canProvision(template) == true
+
+// ProxmoxNodeRepository:
+// - findActiveByServer($serverId): return ProxmoxNode::whereHas('server', fn($q) => $q->active()->get()
+// - listWithResourceStats(): includes countActiveVMs, availableCPU, availableMemory
+
+// VMSessionRepository:
+// - allUserSessions($userId): 
+//   include 'with' check: whereHas('vmTemplate.proxmoxNode.server', fn($q) => $q->active())
+//   filter: where('status', '<>', 'terminated') and (expires_at is null or expires_at > now())
+// - activeSessionsOnNode($nodeId): count sessions where expires_at > now() and status='active'
+
+// ProxmoxServerController::list():
+// - retrieve: ProxmoxServer::active()->with(['nodes.stats'])->get()
+// - NEVER include raw host/port in JSON response
+// - return: { id, name, is_online, nodes_count, active_vms, max_concurrent, resource_usage }
+
+// AdminServerController::register() (registration with encryption):
+// - validate: host (required, ip|hostname), port (required, integer, 1-65535)
+// - encrypt host & port before storing: ProxmoxServer::create(['host' => Crypt::encryptString($host), ...])
+// - test connection with decrypt before saving: ProxmoxClient::testConnection(Crypt::decryptString($server->host))
+
+// AdminServerController::inactivate(ProxmoxServer $server):
+// - can('admin') required
+// - close all active sessions on that server
+// - set is_active = false
+// - return 200: { message, affected_sessions, message: 'All active sessions terminated. Server marked inactive.' }
+```
+
+Acceptance criteria:
+- [ ] Migration: is_active, encrypted host/port, resource limit columns created
+- [ ] Host and port encrypted at rest in database
+- [ ] ProxmoxServer::active() scope filters correctly
+- [ ] `canProvisionsMore()` checks max VMs, max sessions, and overcommit ratios
+- [ ] Node resource stats (CPU, memory available) calculated correctly
+- [ ] All repository queries use active() scope
+- [ ] Active VMs counted correctly (expires_at > now, status='active')
+- [ ] Inactive server nodes never appear in "Select Node" dropdown
+- [ ] Provisioning fails (422) if not enough resources on node
+- [ ] API never exposes decrypted host/port to frontend
+- [ ] Server registration encrypts host/port before storage
+- [ ] Connection test uses decrypted values (never stored unencrypted)
+- [ ] Unit test: resource exhaustion prevents provisioning
+- [ ] Feature test: inactive server hides all nodes and sessions
+- [ ] Feature test: encrypted host/port never exposed in responses
+
+---
+
+#### TASK 3.2 — Guacamole Client Service
 **Branch:** `feature/US-12-guacamole-client`
 
 What to build (wrapping your existing Guacamole API file):
@@ -82,7 +181,7 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.2 — Connection Parameters Builder
+#### TASK 3.3 — Connection Parameters Builder
 **Branch:** (continue)
 
 What to build:
@@ -108,7 +207,7 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.3 — Session Activation Flow (Event Listener)
+#### TASK 3.4 — Session Activation Flow (Event Listener)
 **Branch:** `feature/US-12-session-activation`
 
 What to build:
@@ -137,11 +236,11 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.4 — Guacamole Token Endpoint
+#### TASK 3.5 — Guacamole Token Endpoint
 **Branch:** `feature/US-12-guacamole-token`
 
 What to build:
-- `GET /api/v1/sessions/{id}/guacamole-token` endpoint
+- `GET /sessions/{id}/guacamole-token` endpoint
 - Returns one-time token valid for 5 minutes
 - Rate limited: max 10 requests per minute per user
 - Only session owner can get token
@@ -167,12 +266,12 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.5 — Session Extension & Termination
+#### TASK 3.6 — Session Extension & Termination
 **Branch:** `feature/US-08-US-09-session-lifecycle`
 
 What to build:
-- `POST /api/v1/sessions/{id}/extend` — adds 30 min, enforces quota
-- `DELETE /api/v1/sessions/{id}` — triggers immediate cleanup
+- `POST /sessions/{id}/extend` — adds 30 min, enforces quota
+- `DELETE /sessions/{id}` — triggers immediate cleanup
 - `TerminateVMJob`: stop VM, delete VM, delete Guacamole connection, update status
 - `ExtendSessionService::extend(VMSession, int $minutes): VMSession`
 
@@ -200,7 +299,7 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.6 — Persistent Sessions & Snapshots
+#### TASK 3.7 — Persistent Sessions & Snapshots
 **Branch:** `feature/US-10-snapshots`
 
 What to build:
@@ -231,7 +330,7 @@ Acceptance criteria:
 
 ### Frontend Tasks
 
-#### TASK 3.7 — Guacamole Viewer Component
+#### TASK 3.8 — Guacamole Viewer Component
 **Branch:** `feature/US-12-frontend-viewer`
 
 What to build:
@@ -243,7 +342,7 @@ What to build:
 Copilot prompt:
 ```typescript
 // GuacamoleViewer: receives sessionId prop
-// On mount: fetch token from GET /api/v1/sessions/{id}/guacamole-token
+// On mount: fetch token from GET /sessions/{id}/guacamole-token
 // Render iframe with src = viewer_url from response
 // Handle token expiry: re-fetch token before 5min expiry (at 4:30)
 // Show loading skeleton while fetching token
@@ -261,7 +360,7 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.8 — Session Dashboard & Countdown
+#### TASK 3.9 — Session Dashboard & Countdown
 **Branch:** (continue frontend)
 
 What to build:
@@ -279,7 +378,7 @@ Copilot prompt:
 // Turn red when < 5 minutes remaining
 // Cleanup interval on unmount
 // SessionExtendButton: on click show confirmation modal
-// Call POST /api/v1/sessions/{id}/extend
+// Call POST /sessions/{id}/extend
 // On success: update expiresAt in parent state
 // On error: show inline error (quota exceeded message)
 ```

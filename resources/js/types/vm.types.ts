@@ -48,6 +48,10 @@ export interface ProxmoxNode {
   status: 'online' | 'offline' | 'maintenance';
   max_vms: number;
   active_vm_count: number;
+  // Indicates whether the parent Proxmox server/cluster is active (admin-only flag)
+  server_active?: boolean;
+  // Human-friendly name of the server/cluster (if available)
+  server_name?: string | null;
   cpu_percent?: number;
   ram_used_mb?: number;
   ram_total_mb?: number;

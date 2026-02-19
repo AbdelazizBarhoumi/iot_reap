@@ -44,6 +44,8 @@ class ProxmoxNodeResource extends JsonResource
             'status' => $this->status->value,
             'max_vms' => $this->max_vms,
             'active_vm_count' => $this->vmSessions()->where('status', 'active')->count(),
+            'server_active' => $this->proxmoxServer?->is_active ?? false,
+            'server_name' => $this->proxmoxServer?->name,
             'created_at' => $this->created_at->toIso8601String(),
         ];
 

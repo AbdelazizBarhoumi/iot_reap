@@ -66,6 +66,7 @@ export default function ProxmoxServersPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<ProxmoxServerAdmin | null>(null);
   const [formData, setFormData] = useState<ProxmoxServerFormData>(initialFormData);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -91,12 +92,21 @@ export default function ProxmoxServersPage() {
     fetchServers();
   }, [fetchServers]);
 
-  const handleCreateServer = async () => {
+  const handleSaveServer = async () => {
     setFormLoading(true);
     setFormError(null);
+
     try {
-      await client.post('/admin/proxmox-servers', formData);
+      if (editingServer) {
+        // Update existing server
+        await client.patch(`/admin/proxmox-servers/${editingServer.id}`, formData);
+      } else {
+        // Create new server
+        await client.post('/admin/proxmox-servers', formData);
+      }
+
       setIsDialogOpen(false);
+      setEditingServer(null);
       setFormData(initialFormData);
       fetchServers();
     } catch (err: unknown) {
@@ -104,7 +114,7 @@ export default function ProxmoxServersPage() {
       if (axiosErr.response?.data?.error) {
         setFormError(axiosErr.response.data.error);
       } else {
-        setFormError(err instanceof Error ? err.message : 'Failed to create server');
+        setFormError(err instanceof Error ? err.message : (editingServer ? 'Failed to update server' : 'Failed to create server'));
       }
     } finally {
       setFormLoading(false);
@@ -162,7 +172,7 @@ export default function ProxmoxServersPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+            <Button size="sm" onClick={() => { setEditingServer(null); setFormData(initialFormData); setIsDialogOpen(true); }}>
               <PlusCircle className="h-4 w-4 mr-2" />
               Add Server
             </Button>
@@ -209,6 +219,24 @@ export default function ProxmoxServersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        // Open modal in edit mode
+                        setEditingServer(server);
+                        setFormData({
+                          name: server.name ?? '',
+                          description: server.description ?? '',
+                          host: server.host ?? '',
+                          port: server.port ?? 8006,
+                          realm: server.realm ?? 'pam',
+                          token_id: '',
+                          token_secret: '',
+                          verify_ssl: server.verify_ssl ?? true,
+                        });
+                        setIsDialogOpen(true);
+                      }}>
+                        <Check className="h-4 w-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+
                       <DropdownMenuItem onClick={() => handleToggleActive(server)}>
                         {server.is_active ? (
                           <>
@@ -274,9 +302,9 @@ export default function ProxmoxServersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add Proxmox Server</DialogTitle>
+            <DialogTitle>{editingServer ? 'Edit Proxmox Server' : 'Add Proxmox Server'}</DialogTitle>
             <DialogDescription>
-              Register a new Proxmox VE cluster. Connection will be tested before saving.
+              {editingServer ? 'Update server configuration. Connection will be tested before saving.' : 'Register a new Proxmox VE cluster. Connection will be tested before saving.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -359,12 +387,12 @@ export default function ProxmoxServersPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={formLoading}>
+            <Button variant="outline" onClick={() => { setIsDialogOpen(false); setEditingServer(null); setFormData(initialFormData); }} disabled={formLoading}>
               Cancel
             </Button>
-            <Button onClick={handleCreateServer} disabled={formLoading}>
+            <Button onClick={handleSaveServer} disabled={formLoading}>
               {formLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {formLoading ? 'Testing Connection...' : 'Add Server'}
+              {formLoading ? (editingServer ? 'Testing Connection...' : 'Testing Connection...') : (editingServer ? 'Save Changes' : 'Add Server')}
             </Button>
           </DialogFooter>
         </DialogContent>
