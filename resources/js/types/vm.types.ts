@@ -87,6 +87,22 @@ export interface ProxmoxServerAdmin extends ProxmoxServer {
   updated_at: string;
 }
 
+/**
+ * Proxmox VM from direct API (not our VMSession).
+ * Represents actual VMs on a Proxmox node.
+ */
+export interface ProxmoxVM {
+  vmid: number;
+  name: string;
+  status: 'running' | 'stopped' | 'paused';
+  cpu_usage: number;          // percentage (0-100)
+  mem_usage: number;          // bytes used
+  maxmem: number;             // total bytes
+  uptime: number;             // seconds
+  template?: number;          // template VMID if cloned
+  pid?: number | null;        // process ID if running
+}
+
 export interface CreateVMSessionRequest {
   template_id: number;
   duration_minutes: number;

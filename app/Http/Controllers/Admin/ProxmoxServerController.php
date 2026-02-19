@@ -11,6 +11,7 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\VMSession;
 use App\Services\ProxmoxConnection;
+use App\Services\ProxmoxNodeSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,7 @@ class ProxmoxServerController extends Controller
      */
     public function __construct(
         private readonly ProxmoxConnection $connectionService,
+        private readonly ProxmoxNodeSyncService $nodeSyncService,
     ) {}
 
     /**
@@ -125,6 +127,15 @@ class ProxmoxServerController extends Controller
                 'server_name' => $server->name,
                 'host' => $server->host,
                 'user_id' => Auth::id(),
+            ]);
+
+            // Auto-sync nodes from Proxmox API
+            $syncResult = $this->nodeSyncService->syncNodes($server);
+            Log::info('Nodes synced after server registration', [
+                'server_id' => $server->id,
+                'synced' => $syncResult['synced'],
+                'created' => $syncResult['created'],
+                'updated' => $syncResult['updated'],
             ]);
 
             $server->load(['createdBy', 'nodes']);
@@ -390,5 +401,45 @@ class ProxmoxServerController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Sync nodes from a Proxmox server.
+     * Fetches nodes from Proxmox API and creates/updates database records.
+     *
+     * @return JsonResponse
+     */
+    public function syncNodes(ProxmoxServer $proxmox_server): JsonResponse
+    {
+        try {
+            $result = $this->nodeSyncService->syncNodes($proxmox_server);
+
+            if (!empty($result['errors'])) {
+                return response()->json([
+                    'message' => 'Node sync completed with errors',
+                    'data' => $result,
+                ], 422);
+            }
+
+            // Reload the server with fresh nodes
+            $proxmox_server->load('nodes');
+
+            return response()->json([
+                'message' => "Synced {$result['synced']} nodes ({$result['created']} new, {$result['updated']} updated)",
+                'data' => new ProxmoxServerResource($proxmox_server),
+                'sync_result' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to sync nodes', [
+                'server_id' => $proxmox_server->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to sync nodes',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

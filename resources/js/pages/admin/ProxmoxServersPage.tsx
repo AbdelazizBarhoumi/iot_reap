@@ -3,15 +3,16 @@
  * Sprint 2.5 - Multi-server support
  */
 
+import { Head } from '@inertiajs/react';
 import { Check, Loader2, MoreVertical, PlusCircle, RefreshCw, Server, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
-import { AppContent } from '../../components/app-content';
-import Heading from '../../components/heading';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import client from '@/api/client';
+import AppLayout from '@/layouts/app-layout';
+import Heading from '@/components/heading';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -19,17 +20,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../components/ui/dialog';
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Checkbox } from '../../components/ui/checkbox';
-import type { ProxmoxServerAdmin } from '../../types/vm.types';
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { ProxmoxServerAdmin } from '@/types/vm.types';
+import type { BreadcrumbItem } from '@/types';
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Admin', href: '/admin/proxmox-servers' },
+  { title: 'Proxmox Servers', href: '/admin/proxmox-servers' },
+];
 
 interface ProxmoxServerFormData {
   name: string;
@@ -70,7 +77,7 @@ export default function ProxmoxServersPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get<{ data: ProxmoxServerAdmin[] }>('/admin/proxmox-servers');
+      const response = await client.get<{ data: ProxmoxServerAdmin[] }>('/admin/proxmox-servers');
       setServers(response.data.data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch servers';
@@ -88,13 +95,14 @@ export default function ProxmoxServersPage() {
     setFormLoading(true);
     setFormError(null);
     try {
-      await axios.post('/admin/proxmox-servers', formData);
+      await client.post('/admin/proxmox-servers', formData);
       setIsDialogOpen(false);
       setFormData(initialFormData);
       fetchServers();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setFormError(err.response.data.error);
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      if (axiosErr.response?.data?.error) {
+        setFormError(axiosErr.response.data.error);
       } else {
         setFormError(err instanceof Error ? err.message : 'Failed to create server');
       }
@@ -105,7 +113,7 @@ export default function ProxmoxServersPage() {
 
   const handleToggleActive = async (server: ProxmoxServerAdmin) => {
     try {
-      await axios.patch(`/admin/proxmox-servers/${server.id}`, {
+      await client.patch(`/admin/proxmox-servers/${server.id}`, {
         is_active: !server.is_active,
       });
       fetchServers();
@@ -119,12 +127,13 @@ export default function ProxmoxServersPage() {
     if (!deleteServer) return;
     setDeleteLoading(true);
     try {
-      await axios.delete(`/admin/proxmox-servers/${deleteServer.id}`);
+      await client.delete(`/admin/proxmox-servers/${deleteServer.id}`);
       setDeleteServer(null);
       fetchServers();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data?.nodes_count) {
-        setError(`Cannot delete: server has ${err.response.data.nodes_count} associated nodes`);
+      const axiosErr = err as { response?: { data?: { nodes_count?: number } } };
+      if (axiosErr.response?.data?.nodes_count) {
+        setError(`Cannot delete: server has ${axiosErr.response.data.nodes_count} associated nodes`);
       } else {
         setError(err instanceof Error ? err.message : 'Failed to delete server');
       }
@@ -136,27 +145,29 @@ export default function ProxmoxServersPage() {
   const activeCount = servers.filter((s) => s.is_active).length;
 
   return (
-    <AppContent>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Heading title="Proxmox Servers" description="Manage Proxmox VE clusters" />
-          {!loading && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {activeCount} of {servers.length} servers active
-            </p>
-          )}
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Proxmox Servers" />
+      <div className="flex h-full flex-1 flex-col gap-6 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Heading title="Proxmox Servers" description="Manage Proxmox VE clusters" />
+            {!loading && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {activeCount} of {servers.length} servers active
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => fetchServers()} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Server
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchServers()} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Server
-          </Button>
-        </div>
-      </div>
 
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -379,6 +390,7 @@ export default function ProxmoxServersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppContent>
+      </div>
+    </AppLayout>
   );
 }

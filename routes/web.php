@@ -32,20 +32,18 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// VM session pages (Inertia)
+// VM session pages and API (unified routing)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/sessions', function () {
-        return Inertia::render('sessions/index');
-    })->name('sessions.index');
-    
-    Route::get('/sessions/{session}', function ($session) {
-        return Inertia::render('sessions/show', ['session' => ['id' => $session]]);
-    })->name('sessions.show');
+    // Sessions - controller handles both JSON and Inertia responses
+    Route::get('/sessions', [VMSessionController::class, 'index'])->name('sessions.index');
+    Route::post('/sessions', [VMSessionController::class, 'store'])->name('sessions.store');
+    Route::get('/sessions/{session}', [VMSessionController::class, 'show'])->name('sessions.show');
+    Route::delete('/sessions/{session}', [VMSessionController::class, 'destroy'])->name('sessions.destroy');
 });
 
 // VM session & template API endpoints (engineers can access)
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Sessions API
+    // Sessions API (aliases for backwards compatibility)
     Route::get('/api/sessions', [VMSessionController::class, 'index'])->name('api.sessions.index');
     Route::post('/api/sessions', [VMSessionController::class, 'store'])->name('api.sessions.store');
     Route::get('/api/sessions/{session}', [VMSessionController::class, 'show'])->name('api.sessions.show');
@@ -63,6 +61,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->group(function () {
     // Nodes page (handles both page render and JSON)
     Route::get('/nodes', [ProxmoxNodeController::class, 'index'])->name('admin.nodes.index');
+    
+    // Node VMs API (list, control)
+    Route::get('/nodes/{node}/vms', [ProxmoxNodeController::class, 'getVMs'])->name('admin.nodes.vms');
+    Route::post('/nodes/{node}/vms/{vmid}/start', [ProxmoxNodeController::class, 'startVM'])->name('admin.nodes.vms.start');
+    Route::post('/nodes/{node}/vms/{vmid}/stop', [ProxmoxNodeController::class, 'stopVM'])->name('admin.nodes.vms.stop');
+    Route::post('/nodes/{node}/vms/{vmid}/reboot', [ProxmoxNodeController::class, 'rebootVM'])->name('admin.nodes.vms.reboot');
+    Route::post('/nodes/{node}/vms/{vmid}/shutdown', [ProxmoxNodeController::class, 'shutdownVM'])->name('admin.nodes.vms.shutdown');
     
     // Templates page placeholder
     Route::get('/templates', function () {
@@ -82,6 +87,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
     Route::get('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'show'])->name('admin.proxmox-servers.show');
     Route::patch('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'update'])->name('admin.proxmox-servers.update');
     Route::delete('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'destroy'])->name('admin.proxmox-servers.destroy');
+    Route::post('/proxmox-servers/{proxmox_server}/sync-nodes', [ProxmoxServerController::class, 'syncNodes'])->name('admin.proxmox-servers.sync-nodes');
 });
 
 require __DIR__.'/settings.php';
