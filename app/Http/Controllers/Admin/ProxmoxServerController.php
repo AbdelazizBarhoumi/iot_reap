@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Controller for admin Proxmox server management.
@@ -31,18 +33,25 @@ class ProxmoxServerController extends Controller
 
     /**
      * List all Proxmox servers.
+     * Returns JSON for API/XHR requests, Inertia page for browser visits.
      *
-     * @return JsonResponse
+     * @return JsonResponse|InertiaResponse
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
-        $servers = ProxmoxServer::with(['createdBy', 'nodes', 'vmSessions', 'credentialLogs'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // If the client expects JSON (XHR / API), return the resource collection
+        if ($request->wantsJson()) {
+            $servers = ProxmoxServer::with(['createdBy', 'nodes', 'vmSessions', 'credentialLogs'])
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        return response()->json([
-            'data' => ProxmoxServerResource::collection($servers),
-        ]);
+            return response()->json([
+                'data' => ProxmoxServerResource::collection($servers),
+            ]);
+        }
+
+        // Normal HTML request — render the Inertia React page
+        return Inertia::render('admin/ProxmoxServersPage');
     }
 
     /**
@@ -50,12 +59,12 @@ class ProxmoxServerController extends Controller
      *
      * @return JsonResponse
      */
-    public function show(ProxmoxServer $server): JsonResponse
+    public function show(ProxmoxServer $proxmox_server): JsonResponse
     {
-        $server->load(['createdBy', 'nodes', 'vmSessions', 'credentialLogs']);
+        $proxmox_server->load(['createdBy', 'nodes', 'vmSessions', 'credentialLogs']);
 
         return response()->json([
-            'data' => new ProxmoxServerResource($server),
+            'data' => new ProxmoxServerResource($proxmox_server),
         ]);
     }
 
@@ -143,7 +152,7 @@ class ProxmoxServerController extends Controller
      *
      * @return JsonResponse
      */
-    public function update(UpdateProxmoxServerRequest $request, ProxmoxServer $server): JsonResponse
+    public function update(UpdateProxmoxServerRequest $request, ProxmoxServer $proxmox_server): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -155,12 +164,12 @@ class ProxmoxServerController extends Controller
 
             if ($hasConnectionFields) {
                 $testResult = $this->connectionService->testConnection(
-                    host: $validated['host'] ?? $server->host,
-                    port: $validated['port'] ?? $server->port,
+                    host: $validated['host'] ?? $proxmox_server->host,
+                    port: $validated['port'] ?? $proxmox_server->port,
                     realmPassword: $validated['realm_password'] ?? null,
-                    tokenId: $validated['token_id'] ?? $server->token_id,
-                    tokenSecret: $validated['token_secret'] ?? $server->token_secret,
-                    verifySsl: $validated['verify_ssl'] ?? $server->verify_ssl,
+                    tokenId: $validated['token_id'] ?? $proxmox_server->token_id,
+                    tokenSecret: $validated['token_secret'] ?? $proxmox_server->token_secret,
+                    verifySsl: $validated['verify_ssl'] ?? $proxmox_server->verify_ssl,
                 );
 
                 if (!$testResult['success']) {
@@ -173,51 +182,51 @@ class ProxmoxServerController extends Controller
 
             // Update the server
             $oldValues = [
-                'name' => $server->name,
-                'host' => $server->host,
+                'name' => $proxmox_server->name,
+                'host' => $proxmox_server->host,
             ];
 
-            $server->update([
-                'name' => $validated['name'] ?? $server->name,
-                'description' => $validated['description'] ?? $server->description,
-                'host' => $validated['host'] ?? $server->host,
-                'port' => $validated['port'] ?? $server->port,
-                'realm' => $validated['realm'] ?? $server->realm,
-                'token_id' => $validated['token_id'] ?? $server->token_id,
-                'token_secret' => $validated['token_secret'] ?? $server->token_secret,
-                'verify_ssl' => $validated['verify_ssl'] ?? $server->verify_ssl,
-                'is_active' => $validated['is_active'] ?? $server->is_active,
+            $proxmox_server->update([
+                'name' => $validated['name'] ?? $proxmox_server->name,
+                'description' => $validated['description'] ?? $proxmox_server->description,
+                'host' => $validated['host'] ?? $proxmox_server->host,
+                'port' => $validated['port'] ?? $proxmox_server->port,
+                'realm' => $validated['realm'] ?? $proxmox_server->realm,
+                'token_id' => $validated['token_id'] ?? $proxmox_server->token_id,
+                'token_secret' => $validated['token_secret'] ?? $proxmox_server->token_secret,
+                'verify_ssl' => $validated['verify_ssl'] ?? $proxmox_server->verify_ssl,
+                'is_active' => $validated['is_active'] ?? $proxmox_server->is_active,
             ]);
 
             // Log the update
             NodeCredentialsLog::create([
-                'proxmox_server_id' => $server->id,
+                'proxmox_server_id' => $proxmox_server->id,
                 'action' => 'updated',
                 'ip_address' => $request->ip(),
                 'changed_by' => Auth::id(),
                 'details' => [
                     'old_values' => $oldValues,
                     'new_values' => [
-                        'name' => $server->name,
-                        'host' => $server->host,
+                        'name' => $proxmox_server->name,
+                        'host' => $proxmox_server->host,
                     ],
                 ],
             ]);
 
             Log::info('Proxmox server updated', [
-                'server_id' => $server->id,
+                'server_id' => $proxmox_server->id,
                 'user_id' => Auth::id(),
             ]);
 
-            $server->load(['createdBy', 'nodes']);
+            $proxmox_server->load(['createdBy', 'nodes']);
 
             return response()->json([
-                'data' => new ProxmoxServerResource($server),
+                'data' => new ProxmoxServerResource($proxmox_server),
                 'message' => 'Proxmox server updated successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update Proxmox server', [
-                'server_id' => $server->id,
+                'server_id' => $proxmox_server->id,
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -238,16 +247,16 @@ class ProxmoxServerController extends Controller
      *
      * @return JsonResponse
      */
-    public function destroy(Request $request, ProxmoxServer $server): JsonResponse
+    public function destroy(Request $request, ProxmoxServer $proxmox_server): JsonResponse
     {
         try {
             $force = $request->query('force') === 'true';
 
             // Check for associated nodes
-            $nodeCount = ProxmoxNode::where('proxmox_server_id', $server->id)->count();
+            $nodeCount = ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)->count();
 
             if ($nodeCount > 0 && !$force) {
-                $nodes = ProxmoxNode::where('proxmox_server_id', $server->id)
+                $nodes = ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)
                     ->select(['id', 'name', 'hostname', 'status'])
                     ->get();
 
@@ -261,11 +270,11 @@ class ProxmoxServerController extends Controller
 
             // If force is true, orphan the nodes
             if ($force && $nodeCount > 0) {
-                ProxmoxNode::where('proxmox_server_id', $server->id)
+                ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)
                     ->update(['proxmox_server_id' => null]);
 
                 Log::warning('Proxmox server nodes orphaned during deletion', [
-                    'server_id' => $server->id,
+                    'server_id' => $proxmox_server->id,
                     'nodes_count' => $nodeCount,
                     'user_id' => Auth::id(),
                 ]);
@@ -273,22 +282,22 @@ class ProxmoxServerController extends Controller
 
             // Log the deletion
             NodeCredentialsLog::create([
-                'proxmox_server_id' => $server->id,
+                'proxmox_server_id' => $proxmox_server->id,
                 'action' => 'deleted',
                 'ip_address' => $request->ip(),
                 'changed_by' => Auth::id(),
                 'details' => [
-                    'server_name' => $server->name,
-                    'host' => $server->host,
+                    'server_name' => $proxmox_server->name,
+                    'host' => $proxmox_server->host,
                     'force_flag' => $force,
                     'nodes_orphaned' => $force ? $nodeCount : 0,
                 ],
             ]);
 
-            $server->delete();
+            $proxmox_server->delete();
 
             Log::info('Proxmox server deleted', [
-                'server_id' => $server->id,
+                'server_id' => $proxmox_server->id,
                 'force' => $force,
                 'user_id' => Auth::id(),
             ]);
@@ -298,7 +307,7 @@ class ProxmoxServerController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to delete Proxmox server', [
-                'server_id' => $server->id,
+                'server_id' => $proxmox_server->id,
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);

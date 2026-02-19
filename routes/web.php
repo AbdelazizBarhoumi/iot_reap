@@ -59,25 +59,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('api.proxmox-servers.active');
 });
 
-// Admin API endpoints (admin-only)
+// Admin pages (Inertia) and API endpoints
 Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->group(function () {
+    // Nodes page (handles both page render and JSON)
     Route::get('/nodes', [ProxmoxNodeController::class, 'index'])->name('admin.nodes.index');
-    Route::apiResource('templates', VMTemplateController::class)->names([
-        'index' => 'admin.templates.index',
-        'store' => 'admin.templates.store',
-        'show' => 'admin.templates.show',
-        'update' => 'admin.templates.update',
-        'destroy' => 'admin.templates.destroy',
-    ]);
-    // Proxmox server management with custom test action
+    
+    // Templates page placeholder
+    Route::get('/templates', function () {
+        return \Inertia\Inertia::render('admin/TemplatesPage');
+    })->name('admin.templates.page');
+    
+    // Templates API routes
+    Route::post('/templates', [VMTemplateController::class, 'store'])->name('admin.templates.store');
+    Route::get('/templates/{template}', [VMTemplateController::class, 'show'])->name('admin.templates.show');
+    Route::patch('/templates/{template}', [VMTemplateController::class, 'update'])->name('admin.templates.update');
+    Route::delete('/templates/{template}', [VMTemplateController::class, 'destroy'])->name('admin.templates.destroy');
+    
+    // Proxmox servers - index handles both page and JSON
+    Route::get('/proxmox-servers', [ProxmoxServerController::class, 'index'])->name('admin.proxmox-servers.index');
     Route::post('/proxmox-servers/test', [ProxmoxServerController::class, 'test'])->name('admin.proxmox-servers.test');
-    Route::apiResource('proxmox-servers', ProxmoxServerController::class)->names([
-        'index' => 'admin.proxmox-servers.index',
-        'store' => 'admin.proxmox-servers.store',
-        'show' => 'admin.proxmox-servers.show',
-        'update' => 'admin.proxmox-servers.update',
-        'destroy' => 'admin.proxmox-servers.destroy',
-    ]);
+    Route::post('/proxmox-servers', [ProxmoxServerController::class, 'store'])->name('admin.proxmox-servers.store');
+    Route::get('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'show'])->name('admin.proxmox-servers.show');
+    Route::patch('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'update'])->name('admin.proxmox-servers.update');
+    Route::delete('/proxmox-servers/{proxmox_server}', [ProxmoxServerController::class, 'destroy'])->name('admin.proxmox-servers.destroy');
 });
 
 require __DIR__.'/settings.php';

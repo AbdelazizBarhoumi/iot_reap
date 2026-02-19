@@ -153,7 +153,7 @@ class ProxmoxClient implements ProxmoxClientInterface
             try {
                 $response = Http::withToken($token)
                     ->timeout(self::TIMEOUT)
-                    ->verifyPeer(false) // Ignore self-signed certs (consider config option)
+                    ->withoutVerifying() // Ignore self-signed certs
                     ->when($method === 'POST' || $method === 'PUT', function ($http) use ($data) {
                         return $http->asForm()->with($data);
                     })

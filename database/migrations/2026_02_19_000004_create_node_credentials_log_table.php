@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('node_credentials_log', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('proxmox_server_id')
-                ->constrained('proxmox_servers')
-                ->onDelete('cascade');
+            $table->unsignedBigInteger('proxmox_server_id')->nullable();
+            $table->foreign('proxmox_server_id')
+                ->references('id')
+                ->on('proxmox_servers')
+                ->onDelete('set null');
             $table->enum('action', ['registered', 'updated', 'tested', 'deleted'])->default('registered');
             $table->ipAddress()->nullable();
             $table->foreignUlid('changed_by')

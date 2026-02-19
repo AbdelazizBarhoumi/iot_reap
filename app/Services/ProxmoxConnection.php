@@ -45,10 +45,15 @@ class ProxmoxConnection
             ]);
 
             // Make the test request
-            $response = Http::withToken($token)
-                ->timeout(self::TIMEOUT)
-                ->verifyPeer($verifySsl)
-                ->get($url);
+            $httpClient = Http::withToken($token)
+                ->timeout(self::TIMEOUT);
+            
+            // Handle SSL verification based on flag
+            if (!$verifySsl) {
+                $httpClient = $httpClient->withoutVerifying();
+            }
+            
+            $response = $httpClient->get($url);
 
             // Check if successful
             if (!$response->successful()) {

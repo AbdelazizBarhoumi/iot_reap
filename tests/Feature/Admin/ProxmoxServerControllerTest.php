@@ -347,7 +347,7 @@ class ProxmoxServerControllerTest extends TestCase
     public function test_tokens_reencrypted_on_update(): void
     {
         $server = ProxmoxServer::factory()->create();
-        $oldEncryptedValue = $server->getAttributes()['token_id'];
+        $oldEncryptedSecretValue = $server->getAttributes()['token_secret'];
 
         $newTokenSecret = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
@@ -363,10 +363,10 @@ class ProxmoxServerControllerTest extends TestCase
         $server->refresh();
         $this->assertEquals($newTokenSecret, $server->token_secret);
 
-        // Verify encrypted value changed
+        // Verify encrypted value changed (token_secret was updated)
         $this->assertNotEquals(
-            $oldEncryptedValue,
-            $server->getAttributes()['token_id'] ?? null
+            $oldEncryptedSecretValue,
+            $server->getAttributes()['token_secret'] ?? null
         );
     }
 
@@ -457,14 +457,17 @@ class ProxmoxServerControllerTest extends TestCase
     public function test_deletion_logged_in_credentials_log(): void
     {
         $server = ProxmoxServer::factory()->create();
+        $serverId = $server->id;
 
         $response = $this->actingAs($this->admin)
             ->deleteJson("/admin/proxmox-servers/{$server->id}");
 
         $response->assertOk();
 
+        // After deletion, proxmox_server_id is set to NULL via onDelete('set null')
+        // but the audit log entry should still exist
         $this->assertDatabaseHas('node_credentials_log', [
-            'proxmox_server_id' => $server->id,
+            'proxmox_server_id' => null,
             'action' => 'deleted',
             'changed_by' => $this->admin->id,
         ]);
@@ -556,7 +559,7 @@ class ProxmoxServerControllerTest extends TestCase
         $inactive = ProxmoxServer::factory()->create(['is_active' => false]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/proxmox-servers/active');
+            ->getJson('/api/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')
@@ -581,7 +584,7 @@ class ProxmoxServerControllerTest extends TestCase
         ProxmoxServer::factory()->create(['is_active' => true]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/proxmox-servers/active');
+            ->getJson('/api/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonMissing(['token_id'])
@@ -593,7 +596,7 @@ class ProxmoxServerControllerTest extends TestCase
      */
     public function test_unauthenticated_cannot_access_active_servers(): void
     {
-        $response = $this->getJson('/proxmox-servers/active');
+        $response = $this->getJson('/api/proxmox-servers/active');
 
         $response->assertUnauthorized();
     }
@@ -606,7 +609,7 @@ class ProxmoxServerControllerTest extends TestCase
         ProxmoxServer::factory(3)->create(['is_active' => false]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/proxmox-servers/active');
+            ->getJson('/api/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(0, 'data');
@@ -658,7 +661,7 @@ class ProxmoxServerControllerTest extends TestCase
 
         // Verify engineer can see both for selection
         $response = $this->actingAs($this->engineer)
-            ->getJson('/proxmox-servers/active');
+            ->getJson('/api/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');
@@ -671,7 +674,7 @@ class ProxmoxServerControllerTest extends TestCase
 
         // Engineer now sees only active (second) server
         $response = $this->actingAs($this->engineer)
-            ->getJson('/proxmox-servers/active');
+            ->getJson('/api/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
