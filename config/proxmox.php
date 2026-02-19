@@ -13,6 +13,10 @@ return [
     // SSL verification
     'verify_ssl' => env('PROXMOX_VERIFY_SSL', true),
 
+    // Multi-server support: default server ID for single-cluster mode
+    // If null, uses first active server. Set to server ID for explicit default.
+    'default_server_id' => env('PROXMOX_DEFAULT_SERVER_ID', null),
+
     // Request timeout in seconds
     'timeout' => env('PROXMOX_TIMEOUT', 30),
 
