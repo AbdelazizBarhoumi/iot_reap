@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Enums\ProxmoxNodeStatus;
-use App\Models\ProxmoxNode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,30 +17,19 @@ class ProxmoxNodeFactory extends Factory
      */
     public function definition(): array
     {
-        $nodeName = 'pve-' . $this->faker->unique()->numberBetween(1, 20);
+        static $nodeCounter = 1;
+
+        $nodeNumber = $nodeCounter++;
 
         return [
-            'name' => $nodeName,
-            'hostname' => $nodeName . '.local',
-            'api_url' => 'https://proxmox.example.com:8006',
-            'status' => ProxmoxNodeStatus::OFFLINE->value,
+            'name' => "pve-node-{$nodeNumber}",
+            'hostname' => "pve-node-{$nodeNumber}.lab.local",
+            'api_url' => "https://192.168.1." . (100 + $nodeNumber) . ":8006",
+            'status' => ProxmoxNodeStatus::ONLINE->value,
             'max_vms' => 50,
         ];
     }
 
-    /**
-     * Indicate the node is online.
-     */
-    public function online(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'status' => ProxmoxNodeStatus::ONLINE->value,
-        ]);
-    }
-
-    /**
-     * Indicate the node is offline.
-     */
     public function offline(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -49,9 +37,6 @@ class ProxmoxNodeFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate the node is in maintenance.
-     */
     public function maintenance(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -59,3 +44,4 @@ class ProxmoxNodeFactory extends Factory
         ]);
     }
 }
+

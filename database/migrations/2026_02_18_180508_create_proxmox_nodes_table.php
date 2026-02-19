@@ -13,15 +13,14 @@ return new class extends Migration
     {
         Schema::create('proxmox_nodes', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // e.g., 'pve-1', 'pve-2'
-            $table->string('hostname');
-            $table->string('api_url');
-            $table->string('status')->default('offline'); // 'online', 'offline', 'maintenance'
-            $table->integer('max_vms')->default(50);
+            $table->string('name', 100)->unique();
+            $table->string('hostname', 255)->unique();
+            $table->string('api_url', 255);
+            $table->enum('status', ['online', 'offline', 'maintenance'])->default('offline');
+            $table->unsignedInteger('max_vms')->default(50);
             $table->timestamps();
 
             $table->index('status');
-            $table->index('hostname');
         });
     }
 

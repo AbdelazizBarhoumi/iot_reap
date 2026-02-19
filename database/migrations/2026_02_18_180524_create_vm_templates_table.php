@@ -13,20 +13,19 @@ return new class extends Migration
     {
         Schema::create('vm_templates', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // 'Windows 11', 'Ubuntu 22.04', 'Kali Linux'
-            $table->string('os_type'); // 'windows', 'linux', 'kali'
-            $table->string('protocol'); // 'rdp', 'vnc', 'ssh'
-            $table->integer('template_vmid'); // Proxmox template VM ID
-            $table->integer('cpu_cores')->default(4);
-            $table->integer('ram_mb')->default(4096);
-            $table->integer('disk_gb')->default(50);
-            $table->json('tags')->nullable(); // ['security-lab', 'kali']
+            $table->string('name', 255)->unique();
+            $table->enum('os_type', ['windows', 'linux'])->default('linux');
+            $table->enum('protocol', ['rdp', 'vnc', 'ssh'])->default('vnc');
+            $table->unsignedInteger('template_vmid')->unique();
+            $table->unsignedSmallInteger('cpu_cores')->default(2);
+            $table->unsignedInteger('ram_mb')->default(2048);
+            $table->unsignedSmallInteger('disk_gb')->default(40);
+            $table->json('tags')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index('os_type');
             $table->index('is_active');
-            $table->index('protocol');
         });
     }
 

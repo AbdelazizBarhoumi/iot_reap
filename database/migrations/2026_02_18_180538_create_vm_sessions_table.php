@@ -12,23 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vm_sessions', function (Blueprint $table) {
-            $table->ulid('id')->primary(); // ULID primary key
-            $table->foreignUlid('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('template_id')->constrained('vm_templates')->onDelete('restrict');
-            $table->foreignId('node_id')->constrained('proxmox_nodes')->onDelete('restrict');
-            $table->integer('vm_id')->nullable(); // Proxmox VMID, populated after clone
-            $table->string('status')->default('pending'); // 'pending', 'active', 'expired', 'failed'
-            $table->string('ip_address')->nullable();
-            $table->string('session_type')->default('ephemeral'); // 'ephemeral', 'persistent'
-            $table->timestamp('expires_at');
-            $table->string('guacamole_connection_id')->nullable();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('template_id')->constrained('vm_templates')->cascadeOnDelete();
+            $table->foreignId('node_id')->constrained('proxmox_nodes')->restrictOnDelete();
+            $table->unsignedInteger('vm_id')->unique()->nullable();
+            $table->enum('status', ['pending', 'provisioning', 'active', 'expiring', 'expired', 'failed', 'terminated'])->default('pending');
+            $table->enum('session_type', ['ephemeral', 'persistent'])->default('ephemeral');
+            $table->ipAddress()->nullable();
+            $table->unsignedBigInteger('guacamole_connection_id')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
             $table->index('user_id');
             $table->index('status');
             $table->index('expires_at');
             $table->index('node_id');
-            $table->index('created_at');
+            $table->index('template_id');
         });
     }
 
