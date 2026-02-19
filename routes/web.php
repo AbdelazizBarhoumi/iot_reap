@@ -32,11 +32,31 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// VM session API endpoints
+// VM session pages (Inertia)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::apiResource('sessions', VMSessionController::class);
-    // Public endpoint for engineer UI: list active Proxmox servers for cluster selection
-    Route::get('/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('proxmox-servers.active');
+    Route::get('/sessions', function () {
+        return Inertia::render('sessions/index');
+    })->name('sessions.index');
+    
+    Route::get('/sessions/{session}', function ($session) {
+        return Inertia::render('sessions/show', ['session' => ['id' => $session]]);
+    })->name('sessions.show');
+});
+
+// VM session & template API endpoints (engineers can access)
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Sessions API
+    Route::get('/api/sessions', [VMSessionController::class, 'index'])->name('api.sessions.index');
+    Route::post('/api/sessions', [VMSessionController::class, 'store'])->name('api.sessions.store');
+    Route::get('/api/sessions/{session}', [VMSessionController::class, 'show'])->name('api.sessions.show');
+    Route::delete('/api/sessions/{session}', [VMSessionController::class, 'destroy'])->name('api.sessions.destroy');
+    
+    // Templates API (public for engineers)
+    Route::get('/api/templates', [\App\Http\Controllers\Admin\VMTemplateController::class, 'index'])->name('api.templates.index');
+    Route::get('/api/templates/{template}', [\App\Http\Controllers\Admin\VMTemplateController::class, 'show'])->name('api.templates.show');
+    
+    // Proxmox servers (public for engineers to see available clusters)
+    Route::get('/api/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('api.proxmox-servers.active');
 });
 
 // Admin API endpoints (admin-only)
