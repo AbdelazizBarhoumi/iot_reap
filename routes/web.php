@@ -4,6 +4,7 @@ use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VMSessionController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
+use App\Http\Controllers\Admin\ProxmoxServerController;
 use App\Http\Controllers\Admin\VMTemplateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,8 @@ Route::prefix('auth')->group(function () {
 // VM session API endpoints
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('sessions', VMSessionController::class);
+    // Public endpoint for engineer UI: list active Proxmox servers for cluster selection
+    Route::get('/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('proxmox-servers.active');
 });
 
 // Admin API endpoints (admin-only)
@@ -45,6 +48,15 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         'show' => 'admin.templates.show',
         'update' => 'admin.templates.update',
         'destroy' => 'admin.templates.destroy',
+    ]);
+    // Proxmox server management with custom test action
+    Route::post('/proxmox-servers/test', [ProxmoxServerController::class, 'test'])->name('admin.proxmox-servers.test');
+    Route::apiResource('proxmox-servers', ProxmoxServerController::class)->names([
+        'index' => 'admin.proxmox-servers.index',
+        'store' => 'admin.proxmox-servers.store',
+        'show' => 'admin.proxmox-servers.show',
+        'update' => 'admin.proxmox-servers.update',
+        'destroy' => 'admin.proxmox-servers.destroy',
     ]);
 });
 
