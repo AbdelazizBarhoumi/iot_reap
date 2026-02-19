@@ -6,11 +6,11 @@
 import { Head, router } from '@inertiajs/react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useVMTemplates } from '@/hooks/useVMTemplates';
-import { useVMSessions } from '@/hooks/useVMSessions';
-import { VMTemplateCard } from '@/components/VMTemplateCard';
 import { LaunchVMModal } from '@/components/LaunchVMModal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { VMTemplateCard } from '@/components/VMTemplateCard';
+import { useVMSessions } from '@/hooks/useVMSessions';
+import { useVMTemplates } from '@/hooks/useVMTemplates';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';

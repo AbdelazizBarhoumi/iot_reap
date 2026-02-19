@@ -9,7 +9,6 @@ import {
   MonitorOff,
   Play,
   Power,
-  PowerOff,
   RefreshCw,
   Square,
 } from 'lucide-react';

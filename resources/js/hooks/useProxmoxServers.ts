@@ -3,9 +3,9 @@
  * Sprint 2.5 - Multi-server support
  */
 
+import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import type { ProxmoxServer } from '../types/vm.types';
-import axios from 'axios';
 
 interface UseProxmoxServersReturn {
   servers: ProxmoxServer[];

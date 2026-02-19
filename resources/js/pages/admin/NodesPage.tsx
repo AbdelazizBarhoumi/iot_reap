@@ -6,15 +6,15 @@
 import { Head } from '@inertiajs/react';
 import { ArrowLeft, RefreshCw, Server } from 'lucide-react';
 import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
 import Heading from '@/components/heading';
 import { NodeHealthCard } from '@/components/NodeHealthCard';
-import { VMListCard } from '@/components/VMListCard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VMListCard } from '@/components/VMListCard';
 import { useNodeHealth } from '@/hooks/useNodeHealth';
 import { useNodeVMs } from '@/hooks/useNodeVMs';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [

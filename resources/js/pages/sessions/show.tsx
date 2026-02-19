@@ -19,7 +19,6 @@ import {
   Zap,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { useVMSession } from '@/hooks/useVMSessions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useVMSession } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { VMSessionStatus } from '@/types/vm.types';
@@ -101,13 +101,13 @@ export default function SessionShowPage({ session: initialSession }: SessionShow
     try {
       // await vmSessionApi.terminate(sessionId);
       // navigate to sessions list
-    } catch (e) {
+    } catch {
       // Handle error
     } finally {
       setIsTerminating(false);
       setShowTerminateDialog(false);
     }
-  }, [sessionId]);
+  }, []);
 
   if (loading) {
     return (

@@ -7,15 +7,15 @@ import { Head } from '@inertiajs/react';
 import { FileBox, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import client from '@/api/client';
-import AppLayout from '@/layouts/app-layout';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import type { VMTemplate } from '@/types/vm.types';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import type { VMTemplate } from '@/types/vm.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Admin', href: '/admin/templates' },

@@ -7,12 +7,12 @@ import { Head } from '@inertiajs/react';
 import { Check, Loader2, MoreVertical, PlusCircle, RefreshCw, Server, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import client from '@/api/client';
-import AppLayout from '@/layouts/app-layout';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -29,9 +29,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import type { ProxmoxServerAdmin } from '@/types/vm.types';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import type { ProxmoxServerAdmin } from '@/types/vm.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Admin', href: '/admin/proxmox-servers' },
