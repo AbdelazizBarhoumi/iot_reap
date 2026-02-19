@@ -12,7 +12,7 @@ use Throwable;
  * Service for interacting with Proxmox API.
  * Handles all API calls, retries, error handling, and logging.
  */
-class ProxmoxClient
+class ProxmoxClient implements ProxmoxClientInterface
 {
     private const MAX_RETRIES = 3;
     private const RETRY_DELAYS = [10, 30, 60]; // seconds

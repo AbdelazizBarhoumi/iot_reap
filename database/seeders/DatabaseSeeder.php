@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProxmoxNodeStatus;
 use App\Models\ProxmoxNode;
 use App\Models\User;
-use App\Models\VMSession;
 use App\Models\VMTemplate;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,42 +15,49 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Create test user
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // default admin
+        // Create admin user
         $this->call(\Database\Seeders\AdminUserSeeder::class);
 
         // Seed 7 Proxmox nodes
-        ProxmoxNode::factory()
-            ->count(7)
-            ->online()
-            ->create();
+        $this->seedProxmoxNodes();
 
-        // Seed 3 VM templates
-        $windows11 = VMTemplate::factory()->windows11()->create();
-        $ubuntu = VMTemplate::factory()->ubuntu2204()->create();
-        $kali = VMTemplate::factory()->kaliLinux()->create();
+        // Seed 3 VM templates (Windows 11, Ubuntu 22.04, Kali Linux)
+        $this->seedVMTemplates();
+    }
 
-        // Seed 2 demo sessions
-        $user = User::where('email', 'test@example.com')->first();
-        $node = ProxmoxNode::first();
+    /**
+     * Seed 7 Proxmox nodes.
+     */
+    private function seedProxmoxNodes(): void
+    {
+        $nodes = [
+            ['name' => 'pve-1', 'hostname' => 'pve-1.lab.local', 'api_url' => 'https://192.168.1.101:8006', 'status' => ProxmoxNodeStatus::ONLINE],
+            ['name' => 'pve-2', 'hostname' => 'pve-2.lab.local', 'api_url' => 'https://192.168.1.102:8006', 'status' => ProxmoxNodeStatus::ONLINE],
+            ['name' => 'pve-3', 'hostname' => 'pve-3.lab.local', 'api_url' => 'https://192.168.1.103:8006', 'status' => ProxmoxNodeStatus::ONLINE],
+            ['name' => 'pve-4', 'hostname' => 'pve-4.lab.local', 'api_url' => 'https://192.168.1.104:8006', 'status' => ProxmoxNodeStatus::ONLINE],
+            ['name' => 'pve-5', 'hostname' => 'pve-5.lab.local', 'api_url' => 'https://192.168.1.105:8006', 'status' => ProxmoxNodeStatus::ONLINE],
+            ['name' => 'pve-6', 'hostname' => 'pve-6.lab.local', 'api_url' => 'https://192.168.1.106:8006', 'status' => ProxmoxNodeStatus::MAINTENANCE],
+            ['name' => 'pve-7', 'hostname' => 'pve-7.lab.local', 'api_url' => 'https://192.168.1.107:8006', 'status' => ProxmoxNodeStatus::OFFLINE],
+        ];
 
-        VMSession::factory()
-            ->for($user)
-            ->for($windows11, 'template')
-            ->for($node, 'node')
-            ->active()
-            ->create();
+        foreach ($nodes as $nodeData) {
+            ProxmoxNode::factory()->create($nodeData);
+        }
+    }
 
-        VMSession::factory()
-            ->for($user)
-            ->for($ubuntu, 'template')
-            ->for($node, 'node')
-            ->create();
+    /**
+     * Seed Windows 11, Ubuntu 22.04, and Kali Linux templates.
+     */
+    private function seedVMTemplates(): void
+    {
+        VMTemplate::factory()->windows11()->create();
+        VMTemplate::factory()->ubuntu2204()->create();
+        VMTemplate::factory()->kaliLinux()->create();
     }
 }

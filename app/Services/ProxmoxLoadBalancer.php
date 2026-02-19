@@ -24,8 +24,7 @@ class ProxmoxLoadBalancer
      * Create a new ProxmoxLoadBalancer instance.
      */
     public function __construct(
-        private readonly ProxmoxClient $client,
-        private readonly ProxmoxServer $server,
+        private readonly ProxmoxClientInterface $client,
     ) {}
 
     /**
@@ -33,8 +32,10 @@ class ProxmoxLoadBalancer
      *
      * @throws NoAvailableNodeException
      */
-    public function selectNode(): ProxmoxNode
+    public function selectNode(?\App\Models\ProxmoxServer $server = null): ProxmoxNode
     {
+        $server ??= ProxmoxServer::where('is_active', true)->first();
+
         $online_nodes = ProxmoxNode::where('status', 'online')
             ->get()
             ->map(fn($node) => $node->name)
@@ -42,17 +43,17 @@ class ProxmoxLoadBalancer
 
         if (empty($online_nodes)) {
             Log::warning('No online nodes available for provisioning', [
-                'server' => $this->server->name,
+                'server' => $server?->name ?? 'unknown',
             ]);
 
             throw new NoAvailableNodeException(
-                "No online Proxmox nodes available on server '{$this->server->name}'"
+                "No online Proxmox nodes available on server '" . ($server?->name ?? 'unknown') . "'"
             );
         }
 
         $scores = [];
         foreach ($online_nodes as $nodeName) {
-            $scores[$nodeName] = $this->computeNodeScore($nodeName);
+            $scores[$nodeName] = $this->computeNodeScore($nodeName, $server);
         }
 
         // Find node with lowest score (least loaded)
@@ -63,18 +64,18 @@ class ProxmoxLoadBalancer
         // Check if all nodes are overloaded
         if ($selectedScore > self::OVERLOAD_THRESHOLD) {
             Log::warning('All nodes are overloaded', [
-                'server' => $this->server->name,
+                'server' => $server?->name ?? 'unknown',
                 'scores' => $scores,
                 'threshold' => self::OVERLOAD_THRESHOLD,
             ]);
 
             throw new NoAvailableNodeException(
-                "All Proxmox nodes on server '{$this->server->name}' are overloaded (>{self::OVERLOAD_THRESHOLD}%)"
+                "All Proxmox nodes on server '" . ($server?->name ?? 'unknown') . "' are overloaded (>" . self::OVERLOAD_THRESHOLD . "%)"
             );
         }
 
         Log::debug('Load balancer selected node', [
-            'server' => $this->server->name,
+            'server' => $server?->name ?? 'unknown',
             'node' => $selectedNodeName,
             'score' => $selectedScore,
         ]);
@@ -86,9 +87,10 @@ class ProxmoxLoadBalancer
      * Compute a composite load score for a node.
      * Lower score = less loaded. Returns 0-100 (percent).
      */
-    private function computeNodeScore(string $nodeName): float
+    private function computeNodeScore(string $nodeName, ?\App\Models\ProxmoxServer $server = null): float
     {
-        $cacheKey = "proxmox_node_load:{$this->server->id}:{$nodeName}";
+        $serverPart = $server?->id ?? 'default';
+        $cacheKey = "proxmox_node_load:{$serverPart}:{$nodeName}";
 
         // Try to get from cache
         $cached = Cache::get($cacheKey);
@@ -153,11 +155,12 @@ class ProxmoxLoadBalancer
     /**
      * Clear the cache for this server's nodes [testing/admin purposes].
      */
-    public function clearCache(): void
+    public function clearCache(?\App\Models\ProxmoxServer $server = null): void
     {
-        $pattern = "proxmox_node_load:{$this->server->id}:*";
+        $serverPart = $server?->id ?? 'default';
+        $pattern = "proxmox_node_load:{$serverPart}:*";
         // Note: Redis pattern deletion is not directly available in Laravel Cache
-        // This is a simplified version; in production, track keys or use direct Redis
+        // This is a simplified/diagnostic method; in production, use Redis keys or tag-based cache.
         Log::debug('Load balancer cache cleared', ['pattern' => $pattern]);
     }
 }

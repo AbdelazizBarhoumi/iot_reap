@@ -6,6 +6,7 @@ enum VMTemplateOSType: string
 {
     case WINDOWS = 'windows';
     case LINUX = 'linux';
+    case KALI = 'kali';
 
     public static function values(): array
     {

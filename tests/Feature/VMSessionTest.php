@@ -95,7 +95,7 @@ class VMSessionTest extends TestCase
                 'expires_at',
                 'time_remaining_seconds',
                 'template' => ['id', 'name', 'os_type', 'protocol'],
-                'node' => ['id', 'name', 'hostname', 'status'],
+                'node_name',
                 'guacamole_url',
             ],
         ]);

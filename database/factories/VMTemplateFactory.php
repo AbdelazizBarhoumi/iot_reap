@@ -63,7 +63,7 @@ class VMTemplateFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'name' => 'Kali Linux Rolling',
-            'os_type' => VMTemplateOSType::LINUX->value,
+            'os_type' => VMTemplateOSType::KALI->value,
             'protocol' => VMTemplateProtocol::VNC->value,
             'template_vmid' => 130,
             'cpu_cores' => 4,

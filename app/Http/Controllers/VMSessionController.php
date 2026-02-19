@@ -25,6 +25,7 @@ class VMSessionController extends Controller
      */
     public function __construct(
         private readonly VMSessionRepository $sessionRepository,
+        private readonly \App\Services\VMProvisioningService $provisioningService,
     ) {}
 
     /**
@@ -51,13 +52,7 @@ class VMSessionController extends Controller
             'template_id' => $request->validated('template_id'),
         ]);
 
-        // Use the default/primary Proxmox server
-        // TODO: Allow users/admins to select which server
-        $server = ProxmoxServer::where('is_active', true)->firstOrFail();
-
-        $provisioner = new VMProvisioningService($this->sessionRepository, $server);
-
-        $session = $provisioner->provision(
+        $session = $this->provisioningService->provision(
             user: $request->user(),
             templateId: $request->validated('template_id'),
             durationMinutes: $request->validated('duration_minutes'),
