@@ -50,4 +50,21 @@ interface ProxmoxClientInterface
      * @return array<string, mixed>
      */
     public function getVMStatus(string $nodeName, int $vmid): array;
+
+    /**
+     * Get all VMs on a node (running + stopped).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getVMs(string $nodeName): array;
+
+    /**
+     * Reboot a VM.
+     */
+    public function rebootVM(string $nodeName, int $vmid): bool;
+
+    /**
+     * Shutdown a VM gracefully.
+     */
+    public function shutdownVM(string $nodeName, int $vmid): bool;
 }

@@ -4,13 +4,16 @@
  * Sprint 2 - Phase 2
  */
 
-import { Server } from 'lucide-react';
+import { ChevronRight, Server } from 'lucide-react';
 import type { ProxmoxNode } from '../types/vm.types';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface NodeHealthCardProps {
   node: ProxmoxNode;
+  onViewVMs?: (nodeId: number) => void;
+  isSelected?: boolean;
 }
 
 const STATUS_COLORS = {
@@ -59,9 +62,9 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
   );
 }
 
-export function NodeHealthCard({ node }: NodeHealthCardProps) {
+export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardProps) {
   return (
-    <Card>
+    <Card className={isSelected ? 'ring-2 ring-primary' : ''}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -104,6 +107,18 @@ export function NodeHealthCard({ node }: NodeHealthCardProps) {
             </>
           )}
         </div>
+
+        {node.status === 'online' && onViewVMs && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => onViewVMs(node.id)}
+          >
+            View VMs
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

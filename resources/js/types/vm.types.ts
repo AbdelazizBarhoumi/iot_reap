@@ -55,10 +55,59 @@ export interface ProxmoxNode {
   created_at: string;
 }
 
+/**
+ * Proxmox Server (Cluster) interface.
+ * Sprint 2.5 - Multi-server support
+ */
+export interface ProxmoxServer {
+  id: number;
+  name: string;
+  description: string | null;
+  host: string;
+}
+
+/**
+ * Full Proxmox Server response for admin views.
+ */
+export interface ProxmoxServerAdmin extends ProxmoxServer {
+  port: number;
+  realm: string;
+  verify_ssl: boolean;
+  is_active: boolean;
+  api_url: string;
+  nodes_count?: number;
+  active_sessions_count?: number;
+  total_sessions_count?: number;
+  created_by_user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Proxmox VM from direct API (not our VMSession).
+ * Represents actual VMs on a Proxmox node.
+ */
+export interface ProxmoxVM {
+  vmid: number;
+  name: string;
+  status: 'running' | 'stopped' | 'paused';
+  cpu_usage: number;          // percentage (0-100)
+  mem_usage: number;          // bytes used
+  maxmem: number;             // total bytes
+  uptime: number;             // seconds
+  template?: number;          // template VMID if cloned
+  pid?: number | null;        // process ID if running
+}
+
 export interface CreateVMSessionRequest {
   template_id: number;
   duration_minutes: number;
   session_type: VMSessionType;
+  proxmox_server_id?: number;
 }
 
 export interface CreateVMTemplateRequest {

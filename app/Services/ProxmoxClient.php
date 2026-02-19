@@ -130,6 +130,66 @@ class ProxmoxClient implements ProxmoxClientInterface
     }
 
     /**
+     * Get all VMs on a node (running + stopped).
+     *
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getVMs(string $nodeName): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu");
+        $vms = $response['data'] ?? [];
+
+        // Enrich each VM with additional status info
+        return array_map(function ($vm) use ($nodeName) {
+            $vmid = $vm['vmid'] ?? 0;
+
+            // Get detailed status for each VM
+            try {
+                $status = $this->getVMStatus($nodeName, $vmid);
+                $vm['cpu_usage'] = isset($status['cpu']) ? round($status['cpu'] * 100, 2) : 0;
+                $vm['mem_usage'] = $status['mem'] ?? 0;
+                $vm['maxmem'] = $status['maxmem'] ?? 0;
+                $vm['uptime'] = $status['uptime'] ?? 0;
+                $vm['pid'] = $status['pid'] ?? null;
+            } catch (\Throwable $e) {
+                // VM might be stopped, keep basic info
+                $vm['cpu_usage'] = 0;
+                $vm['mem_usage'] = 0;
+                $vm['maxmem'] = $vm['maxmem'] ?? 0;
+                $vm['uptime'] = 0;
+            }
+
+            return $vm;
+        }, $vms);
+    }
+
+    /**
+     * Reboot a VM.
+     *
+     * @throws ProxmoxApiException
+     */
+    public function rebootVM(string $nodeName, int $vmid): bool
+    {
+        $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/status/reboot");
+
+        return true;
+    }
+
+    /**
+     * Shutdown a VM gracefully.
+     *
+     * @throws ProxmoxApiException
+     */
+    public function shutdownVM(string $nodeName, int $vmid): bool
+    {
+        $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/status/shutdown");
+
+        return true;
+    }
+
+    /**
      * Execute an HTTP request to the Proxmox API with retry logic.
      *
      * @param array<string, mixed> $data
@@ -141,7 +201,7 @@ class ProxmoxClient implements ProxmoxClientInterface
     private function request(string $method, string $endpoint, array $data = []): array
     {
         $url = $this->server->getApiUrl() . $endpoint;
-        $token = "{$this->server->token_id}:{$this->server->token_secret}";
+        $tokenAuth = "{$this->server->token_id}={$this->server->token_secret}";
 
         Log::debug("ProxmoxClient request", [
             'method' => $method,
@@ -151,16 +211,25 @@ class ProxmoxClient implements ProxmoxClientInterface
 
         for ($attempt = 0; $attempt < self::MAX_RETRIES; $attempt++) {
             try {
-                $response = Http::withToken($token)
+                $http = Http::withHeaders([
+                    'Authorization' => "PVEAPIToken={$tokenAuth}",
+                ])
                     ->timeout(self::TIMEOUT)
-                    ->verifyPeer(false) // Ignore self-signed certs (consider config option)
-                    ->when($method === 'POST' || $method === 'PUT', function ($http) use ($data) {
-                        return $http->asForm()->with($data);
-                    })
-                    ->when($method === 'DELETE', function ($http) {
-                        return $http->asForm();
-                    })
-                    ->{strtolower($method)}($url);
+                    ->withoutVerifying(); // Ignore self-signed certs
+
+                // Use asForm for POST/PUT/DELETE requests
+                if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
+                    $http = $http->asForm();
+                }
+
+                // Execute the request with data for POST/PUT, without for GET/DELETE
+                $response = match (strtoupper($method)) {
+                    'GET' => $http->get($url, $data),
+                    'POST' => $http->post($url, $data),
+                    'PUT' => $http->put($url, $data),
+                    'DELETE' => $http->delete($url, $data),
+                    default => throw new ProxmoxApiException("Unsupported HTTP method: {$method}"),
+                };
 
                 if (!$response->successful()) {
                     throw new ProxmoxApiException(

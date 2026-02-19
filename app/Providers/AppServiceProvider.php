@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Repositories\ProxmoxServerRepository;
 use App\Services\ProxmoxClient;
+use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxLoadBalancer;
+use App\Services\ProxmoxServerSelector;
 use App\Services\VMProvisioningService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +72,17 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Repositories\VMSessionRepository::class),
                 $app->make(ProxmoxLoadBalancer::class),
                 $app->make(ProxmoxClientInterface::class)
+            );
+        });
+
+        // Bind new multi-server support services
+        $this->app->singleton(ProxmoxServerRepository::class);
+        $this->app->singleton(ProxmoxClientFactory::class);
+        $this->app->singleton(ProxmoxServerSelector::class, function ($app) {
+            return new ProxmoxServerSelector(
+                $app->make(ProxmoxServerRepository::class),
+                $app->make(ProxmoxClientFactory::class),
+                $app->make(ProxmoxLoadBalancer::class)
             );
         });
     }

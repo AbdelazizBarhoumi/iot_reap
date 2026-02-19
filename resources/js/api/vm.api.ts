@@ -8,6 +8,7 @@ import type {
   CreateVMSessionRequest,
   CreateVMTemplateRequest,
   ProxmoxNode,
+  ProxmoxVM,
   VMSession,
   VMTemplate,
 } from '../types/vm.types';
@@ -21,7 +22,7 @@ export const vmSessionApi = {
    * Get all sessions for the current user.
    */
   async list(): Promise<VMSession[]> {
-    const response = await client.get<ApiResponse<VMSession[]>>('/sessions');
+    const response = await client.get<ApiResponse<VMSession[]>>('/api/sessions');
     return response.data.data;
   },
 
@@ -29,23 +30,23 @@ export const vmSessionApi = {
    * Get a specific session by ID.
    */
   async get(sessionId: string): Promise<VMSession> {
-    const response = await client.get<VMSession>(`/sessions/${sessionId}`);
-    return response.data;
+    const response = await client.get<ApiResponse<VMSession>>(`/api/sessions/${sessionId}`);
+    return response.data.data;
   },
 
   /**
    * Create a new VM session.
    */
   async create(data: CreateVMSessionRequest): Promise<VMSession> {
-    const response = await client.post<VMSession>('/sessions', data);
-    return response.data;
+    const response = await client.post<ApiResponse<VMSession>>('/api/sessions', data);
+    return response.data.data;
   },
 
   /**
    * Terminate/delete a session.
    */
   async terminate(sessionId: string): Promise<void> {
-    await client.delete(`/sessions/${sessionId}`);
+    await client.delete(`/api/sessions/${sessionId}`);
   },
 };
 
@@ -57,7 +58,7 @@ export const vmTemplateApi = {
    * Get all active templates.
    */
   async list(): Promise<VMTemplate[]> {
-    const response = await client.get<ApiResponse<VMTemplate[]>>('/admin/templates');
+    const response = await client.get<ApiResponse<VMTemplate[]>>('/api/templates');
     return response.data.data;
   },
 
@@ -65,8 +66,8 @@ export const vmTemplateApi = {
    * Get a specific template by ID.
    */
   async get(templateId: number): Promise<VMTemplate> {
-    const response = await client.get<VMTemplate>(`/admin/templates/${templateId}`);
-    return response.data;
+    const response = await client.get<ApiResponse<VMTemplate>>(`/api/templates/${templateId}`);
+    return response.data.data;
   },
 };
 
@@ -111,5 +112,41 @@ export const adminApi = {
    */
   async deleteTemplate(templateId: number): Promise<void> {
     await client.delete(`/admin/templates/${templateId}`);
+  },
+
+  /**
+   * Get all VMs on a node (running + stopped).
+   */
+  async getNodeVMs(nodeId: number): Promise<ProxmoxVM[]> {
+    const response = await client.get<ApiResponse<ProxmoxVM[]>>(`/admin/nodes/${nodeId}/vms`);
+    return response.data.data;
+  },
+
+  /**
+   * Start a VM on a node.
+   */
+  async startVM(nodeId: number, vmid: number): Promise<void> {
+    await client.post(`/admin/nodes/${nodeId}/vms/${vmid}/start`);
+  },
+
+  /**
+   * Stop a VM on a node (hard stop).
+   */
+  async stopVM(nodeId: number, vmid: number): Promise<void> {
+    await client.post(`/admin/nodes/${nodeId}/vms/${vmid}/stop`);
+  },
+
+  /**
+   * Reboot a VM on a node.
+   */
+  async rebootVM(nodeId: number, vmid: number): Promise<void> {
+    await client.post(`/admin/nodes/${nodeId}/vms/${vmid}/reboot`);
+  },
+
+  /**
+   * Shutdown a VM gracefully.
+   */
+  async shutdownVM(nodeId: number, vmid: number): Promise<void> {
+    await client.post(`/admin/nodes/${nodeId}/vms/${vmid}/shutdown`);
   },
 };
