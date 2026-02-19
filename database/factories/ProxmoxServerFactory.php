@@ -21,9 +21,12 @@ class ProxmoxServerFactory extends Factory
             'description' => $this->faker->sentence(),
             'host' => $this->faker->ipv4(),
             'port' => 8006,
-            'token_id' => 'user@pam!test',
+            'realm' => 'pam',
+            'token_id' => 'PVEAPIToken=user@pam!token='.$this->faker->sha256(),
             'token_secret' => $this->faker->sha256(),
+            'verify_ssl' => true,
             'is_active' => true,
+            'created_by' => null,
         ];
     }
 }

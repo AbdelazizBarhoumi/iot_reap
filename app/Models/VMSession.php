@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $user_id
  * @property int $template_id
+ * @property int|null $proxmox_server_id
  * @property int $node_id
  * @property int|null $vm_id
  * @property VMSessionStatus $status
@@ -32,6 +33,7 @@ class VMSession extends Model
     protected $fillable = [
         'user_id',
         'template_id',
+        'proxmox_server_id',
         'node_id',
         'vm_id',
         'status',
@@ -46,6 +48,7 @@ class VMSession extends Model
         'session_type' => VMSessionType::class,
         'expires_at' => 'datetime',
         'template_id' => 'integer',
+        'proxmox_server_id' => 'integer',
         'node_id' => 'integer',
         'vm_id' => 'integer',
         'guacamole_connection_id' => 'integer',
@@ -59,6 +62,11 @@ class VMSession extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(VMTemplate::class);
+    }
+
+    public function proxmoxServer(): BelongsTo
+    {
+        return $this->belongsTo(ProxmoxServer::class, 'proxmox_server_id');
     }
 
     public function node(): BelongsTo
