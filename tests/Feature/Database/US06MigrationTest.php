@@ -202,10 +202,10 @@ class US06MigrationTest extends TestCase
         // The seeder should create 3 templates
         $this->assertGreaterThanOrEqual(3, VMTemplate::count());
         
-        // Should have Windows 11, Ubuntu, and Kali
+        // Should have Windows 11, Ubuntu 22.04 LTS, and Kali Linux Rolling
         $this->assertTrue(VMTemplate::where('name', 'Windows 11')->exists());
-        $this->assertTrue(VMTemplate::where('name', 'Ubuntu 22.04')->exists());
-        $this->assertTrue(VMTemplate::where('name', 'Kali Linux')->exists());
+        $this->assertTrue(VMTemplate::where('name', 'Ubuntu 22.04 LTS')->exists());
+        $this->assertTrue(VMTemplate::where('name', 'Kali Linux Rolling')->exists());
     }
 
     public function test_seeder_creates_vm_sessions(): void

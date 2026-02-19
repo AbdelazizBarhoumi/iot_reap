@@ -3,7 +3,6 @@
  * Sprint 2 - Phase 2
  */
 
-import client from './client';
 import type {
   ApiResponse,
   CreateVMSessionRequest,
@@ -12,6 +11,7 @@ import type {
   VMSession,
   VMTemplate,
 } from '../types/vm.types';
+import client from './client';
 
 /**
  * VM Session API

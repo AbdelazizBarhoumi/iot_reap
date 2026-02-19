@@ -5,9 +5,9 @@
  */
 
 import { Server } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
 import type { ProxmoxNode } from '../types/vm.types';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface NodeHealthCardProps {
   node: ProxmoxNode;
@@ -60,10 +60,6 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
 }
 
 export function NodeHealthCard({ node }: NodeHealthCardProps) {
-  const ramPercent = node.ram_total_mb && node.ram_total_mb > 0
-    ? Math.round((node.ram_used_mb ?? 0) / node.ram_total_mb * 100)
-    : 0;
-
   return (
     <Card>
       <CardHeader className="pb-2">

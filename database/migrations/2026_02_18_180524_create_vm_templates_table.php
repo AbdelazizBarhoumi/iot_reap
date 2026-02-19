@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('vm_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255)->unique();
-            $table->enum('os_type', ['windows', 'linux'])->default('linux');
+            $table->enum('os_type', ['windows', 'linux', 'kali'])->default('linux');
             $table->enum('protocol', ['rdp', 'vnc', 'ssh'])->default('vnc');
             $table->unsignedInteger('template_vmid')->unique();
             $table->unsignedSmallInteger('cpu_cores')->default(2);

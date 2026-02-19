@@ -10,6 +10,9 @@ use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Models\VMTemplate;
+use App\Services\ProxmoxClientFake;
+use App\Services\ProxmoxClientInterface;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class VMSessionControllerTest extends TestCase
@@ -22,6 +25,14 @@ class VMSessionControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Fake the queue to prevent actual job execution
+        Queue::fake();
+
+        // Bind the fake ProxmoxClient
+        $this->app->bind(ProxmoxClientInterface::class, function () {
+            return new ProxmoxClientFake();
+        });
 
         $this->user = User::factory()->create();
         $this->server = ProxmoxServer::factory()->create();
@@ -97,7 +108,7 @@ class VMSessionControllerTest extends TestCase
                      'status',
                      'session_type',
                      'template',
-                     'node',
+                     'node_name',
                      'expires_at',
                      'time_remaining_seconds',
                  ]);

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ProxmoxNodeStatus;
 use App\Models\ProxmoxNode;
 use App\Models\User;
+use App\Models\VMSession;
 use App\Models\VMTemplate;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create test user
-        User::factory()->create([
+        $testUser = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
@@ -29,6 +30,9 @@ class DatabaseSeeder extends Seeder
 
         // Seed 3 VM templates (Windows 11, Ubuntu 22.04, Kali Linux)
         $this->seedVMTemplates();
+
+        // Seed 2 demo VM sessions
+        $this->seedVMSessions($testUser);
     }
 
     /**
@@ -59,5 +63,30 @@ class DatabaseSeeder extends Seeder
         VMTemplate::factory()->windows11()->create();
         VMTemplate::factory()->ubuntu2204()->create();
         VMTemplate::factory()->kaliLinux()->create();
+    }
+
+    /**
+     * Seed demo VM sessions for testing.
+     */
+    private function seedVMSessions(User $user): void
+    {
+        $template = VMTemplate::where('name', 'Windows 11')->first();
+        $node = ProxmoxNode::where('status', ProxmoxNodeStatus::ONLINE)->first();
+
+        if ($template && $node) {
+            // Create an active demo session
+            VMSession::factory()->active()->create([
+                'user_id' => $user->id,
+                'template_id' => $template->id,
+                'node_id' => $node->id,
+            ]);
+
+            // Create a pending demo session
+            VMSession::factory()->pending()->create([
+                'user_id' => $user->id,
+                'template_id' => $template->id,
+                'node_id' => $node->id,
+            ]);
+        }
     }
 }

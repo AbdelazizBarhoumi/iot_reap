@@ -22,12 +22,14 @@ Route::get('dashboard', function () {
 Route::post('/browser-log', [BrowserLogController::class, 'store']);
 
 // auth endpoints (session-based JSON)
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
-Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
+    Route::get('/me', [AuthController::class, 'me'])->middleware('auth');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+});
 
 // VM session API endpoints
 Route::middleware(['auth', 'verified'])->group(function () {

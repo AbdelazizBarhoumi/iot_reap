@@ -5,10 +5,10 @@
  */
 
 import { Monitor, Terminal, Skull } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import type { VMTemplate } from '../types/vm.types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import type { VMTemplate } from '../types/vm.types';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 interface VMTemplateCardProps {
   template: VMTemplate;

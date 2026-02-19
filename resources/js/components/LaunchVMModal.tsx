@@ -4,8 +4,11 @@
  * Sprint 2 - Phase 2
  */
 
-import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import type { VMTemplate, VMSessionType } from '../types/vm.types';
+import { Alert, AlertDescription } from './ui/alert';
+import { Button } from './ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Alert, AlertDescription } from './ui/alert';
-import type { VMTemplate, VMSessionType } from '../types/vm.types';
 
 interface LaunchVMModalProps {
   template: VMTemplate | null;

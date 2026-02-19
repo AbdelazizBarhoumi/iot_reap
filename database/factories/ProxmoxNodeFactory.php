@@ -43,5 +43,12 @@ class ProxmoxNodeFactory extends Factory
             'status' => ProxmoxNodeStatus::MAINTENANCE->value,
         ]);
     }
+
+    public function online(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ProxmoxNodeStatus::ONLINE->value,
+        ]);
+    }
 }
 

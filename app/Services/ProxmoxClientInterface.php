@@ -2,21 +2,52 @@
 
 namespace App\Services;
 
+/**
+ * Interface for Proxmox API clients.
+ * Enables mocking/faking in tests without hitting real Proxmox API.
+ */
 interface ProxmoxClientInterface
 {
+    /**
+     * Get all nodes in the cluster.
+     *
+     * @return array<string, mixed>
+     */
     public function getNodes(): array;
 
-    public function getNodeStatus(string $node): array;
+    /**
+     * Get the status of a specific node.
+     *
+     * @return array<string, mixed>
+     */
+    public function getNodeStatus(string $nodeName): array;
 
-    public function cloneTemplate(int $templateVmid, string $node, string $newVmid, string $newName = null): int;
+    /**
+     * Clone a template to create a new VM.
+     *
+     * @return int The new VM ID
+     */
+    public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int;
 
-    public function startVM(string $node, int $vmid): void;
+    /**
+     * Start a VM.
+     */
+    public function startVM(string $nodeName, int $vmid): bool;
 
-    public function stopVM(string $node, int $vmid): void;
+    /**
+     * Stop a VM.
+     */
+    public function stopVM(string $nodeName, int $vmid): bool;
 
-    public function deleteVM(string $node, int $vmid): void;
+    /**
+     * Delete a VM.
+     */
+    public function deleteVM(string $nodeName, int $vmid): bool;
 
-    public function getVMStatus(string $node, int $vmid): array;
-
-    public function getVMStats(string $node, int $vmid): array;
+    /**
+     * Get VM status.
+     *
+     * @return array<string, mixed>
+     */
+    public function getVMStatus(string $nodeName, int $vmid): array;
 }

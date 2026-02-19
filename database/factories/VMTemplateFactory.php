@@ -34,7 +34,7 @@ class VMTemplateFactory extends Factory
     public function windows11(): static
     {
         return $this->state(fn (array $attributes) => [
-            'name' => 'Windows 11 Enterprise',
+            'name' => 'Windows 11',
             'os_type' => VMTemplateOSType::WINDOWS->value,
             'protocol' => VMTemplateProtocol::RDP->value,
             'template_vmid' => 110,

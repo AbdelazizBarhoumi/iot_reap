@@ -3,9 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\VMSessionStatus;
-use App\Models\ProxmoxServer;
 use App\Models\VMSession;
-use App\Services\ProxmoxClient;
+use App\Services\ProxmoxClientInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;

@@ -30,12 +30,27 @@ class AppServiceProvider extends ServiceProvider
             $tokenId = config('proxmox.token_id');
             $tokenSecret = config('proxmox.token_secret');
 
-            // If running in test mode without proper config, use fake
+            // If no credentials configured, use the fake client (tests / local dev)
             if (! $tokenId || ! $tokenSecret) {
                 return new \App\Services\ProxmoxClientFake();
             }
 
-            return new ProxmoxClient();
+            // Prefer an active ProxmoxServer record from the database
+            $server = \App\Models\ProxmoxServer::where('is_active', true)->first();
+
+            // If no DB server exists, build an in-memory server model from config
+            if (! $server) {
+                $server = new \App\Models\ProxmoxServer([
+                    'name' => 'config-default',
+                    'host' => config('proxmox.host'),
+                    'port' => config('proxmox.port'),
+                    'token_id' => $tokenId,
+                    'token_secret' => $tokenSecret,
+                    'is_active' => true,
+                ]);
+            }
+
+            return new ProxmoxClient($server);
         });
 
         // For backward compatibility, bind concrete ProxmoxClient to the interface

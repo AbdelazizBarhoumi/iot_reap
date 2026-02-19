@@ -6,10 +6,10 @@
 import { RefreshCw, Server } from 'lucide-react';
 import { AppContent } from '../../components/app-content';
 import Heading from '../../components/heading';
+import { NodeHealthCard } from '../../components/NodeHealthCard';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { NodeHealthCard } from '../../components/NodeHealthCard';
 import { useNodeHealth } from '../../hooks/useNodeHealth';
 
 export default function NodesPage() {
