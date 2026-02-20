@@ -215,6 +215,25 @@ class ProxmoxClientFake extends ProxmoxClient
     }
 
     /**
+     * Get the DHCP-assigned IPv4 address for a running VM.
+     * Returns the fake IP when the VM is in 'running' state, null otherwise.
+     */
+    public function getVMNetworkIP(string $nodeName, int $vmid): ?string
+    {
+        if (isset($this->createdVMs[$nodeName])) {
+            foreach ($this->createdVMs[$nodeName] as $vm) {
+                if ($vm['vmid'] === $vmid && $vm['status'] === 'running') {
+                    // Return a deterministic fake IP based on VMID for testability
+                    return $vm['ip_address'] ?? '192.168.1.' . ($vmid % 254 ?: 10);
+                }
+            }
+        }
+
+        // VM not running or not found — guest agent not ready yet
+        return null;
+    }
+
+    /**
      * Set the status of a node for testing.
      */
     public function setNodeStatus(string $nodeName, array $status): self
@@ -251,5 +270,55 @@ class ProxmoxClientFake extends ProxmoxClient
     {
         $this->createdVMs = [];
         $this->initializeDefaults();
+    }
+
+    /**
+     * Set a specific IP address for a VM (used in tests to control IP resolution).
+     */
+    public function setVMIPAddress(string $nodeName, int $vmid, string $ip): self
+    {
+        if (isset($this->createdVMs[$nodeName])) {
+            foreach ($this->createdVMs[$nodeName] as &$vm) {
+                if ($vm['vmid'] === $vmid) {
+                    $vm['ip_address'] = $ip;
+
+                    return $this;
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Register a VM (as if it were already cloned) with a given status and optional IP.
+     * Useful in tests that need a VM to exist without going through cloneTemplate().
+     */
+    public function registerVM(string $nodeName, int $vmid, string $status = 'stopped', ?string $ip = null): self
+    {
+        if (! isset($this->createdVMs[$nodeName])) {
+            $this->createdVMs[$nodeName] = [];
+        }
+
+        // Update existing entry if present
+        foreach ($this->createdVMs[$nodeName] as &$vm) {
+            if ($vm['vmid'] === $vmid) {
+                $vm['status'] = $status;
+                if ($ip !== null) {
+                    $vm['ip_address'] = $ip;
+                }
+
+                return $this;
+            }
+        }
+
+        // Add new entry
+        $this->createdVMs[$nodeName][] = [
+            'vmid'       => $vmid,
+            'status'     => $status,
+            'ip_address' => $ip,
+        ];
+
+        return $this;
     }
 }

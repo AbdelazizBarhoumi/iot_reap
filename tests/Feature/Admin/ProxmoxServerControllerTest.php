@@ -397,6 +397,54 @@ class ProxmoxServerControllerTest extends TestCase
         ]);
     }
 
+    /**
+     * Update with empty token credentials should not fail validation.
+     * Frontend sends empty strings when credentials not being updated.
+     */
+    public function test_update_with_empty_credentials_should_not_fail(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+
+        // Frontend sends empty strings for credentials when editing but not changing them
+        $payload = [
+            'name' => 'Updated Server',
+            'token_id' => '',
+            'token_secret' => '',
+            'verify_ssl' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/admin/proxmox-servers/{$server->id}", $payload);
+
+        $response->assertOk();
+        $server->refresh();
+        $this->assertEquals('Updated Server', $server->name);
+    }
+
+    /**
+     * Update with same name should not fail unique validation.
+     * The unique rule should properly ignore the current server's ID.
+     */
+    public function test_update_with_same_name_should_not_fail(): void
+    {
+        $server = ProxmoxServer::factory()->create(['name' => 'Original Name']);
+
+        // Try to update with the same name (should pass)
+        $payload = [
+            'name' => 'Original Name',
+            'description' => 'Updated description',
+        ];
+
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/admin/proxmox-servers/{$server->id}", $payload);
+
+        $response->assertOk();
+        $server->refresh();
+        $this->assertEquals('Original Name', $server->name);
+        $this->assertEquals('Updated description', $server->description);
+    }
+
+
     // ===== DELETE ENDPOINT (DESTROY) =====
 
     /**

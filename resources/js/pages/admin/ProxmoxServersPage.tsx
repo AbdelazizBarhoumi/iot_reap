@@ -110,9 +110,17 @@ export default function ProxmoxServersPage() {
       setFormData(initialFormData);
       fetchServers();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string } } };
+      const axiosErr = err as { response?: { data?: { error?: string; errors?: Record<string, string[]>; message?: string } } };
       if (axiosErr.response?.data?.error) {
         setFormError(axiosErr.response.data.error);
+      } else if (axiosErr.response?.data?.errors) {
+        // Laravel validation errors
+        const errorMessages = Object.entries(axiosErr.response.data.errors)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages[0] : messages}`)
+          .join('\n');
+        setFormError(errorMessages);
+      } else if (axiosErr.response?.data?.message) {
+        setFormError(axiosErr.response.data.message);
       } else {
         setFormError(err instanceof Error ? err.message : (editingServer ? 'Failed to update server' : 'Failed to create server'));
       }

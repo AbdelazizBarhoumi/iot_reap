@@ -20,23 +20,29 @@ class VMSessionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'status' => $this->status->value,
+            'id'           => $this->id,
+            'status'       => $this->status->value,
             'session_type' => $this->session_type->value,
-            'template' => [
-                'id' => $this->template->id,
-                'name' => $this->template->name,
-                'os_type' => $this->template->os_type->value,
-                'protocol' => $this->template->protocol->value,
+            'template'     => [
+                'id'        => $this->template->id,
+                'name'      => $this->template->name,
+                'os_type'   => $this->template->os_type->value,
+                'protocol'  => $this->template->protocol->value,
                 'cpu_cores' => $this->template->cpu_cores,
-                'ram_mb' => $this->template->ram_mb,
-                'disk_gb' => $this->template->disk_gb,
+                'ram_mb'    => $this->template->ram_mb,
+                'disk_gb'   => $this->template->disk_gb,
             ],
-            'node_name' => $this->node->name,
-            'expires_at' => $this->expires_at->toIso8601String(),
+            'node_name'             => $this->node->name,
+            'expires_at'            => $this->expires_at->toIso8601String(),
             'time_remaining_seconds' => max(0, $this->expires_at->diffInSeconds(now())),
-            'guacamole_url' => $this->getGuacamoleUrl(),
-            'created_at' => $this->created_at->toIso8601String(),
+            // The VM's dynamically resolved DHCP IP address (null until ProxmoxIPResolver completes)
+            'vm_ip_address'         => $this->ip_address,
+            // Cached Guacamole connection ID — reused for the entire session.
+            // Frontend must call the guacamole-token endpoint using this value; a new token
+            // is generated per viewer session but the connection itself is never duplicated.
+            'guacamole_connection_id' => $this->guacamole_connection_id,
+            'guacamole_url'         => $this->getGuacamoleUrl(),
+            'created_at'            => $this->created_at->toIso8601String(),
         ];
     }
 

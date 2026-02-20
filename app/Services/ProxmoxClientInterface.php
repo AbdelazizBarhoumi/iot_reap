@@ -67,4 +67,12 @@ interface ProxmoxClientInterface
      * Shutdown a VM gracefully.
      */
     public function shutdownVM(string $nodeName, int $vmid): bool;
+
+    /**
+     * Get the dynamically assigned IPv4 address of a running VM via the guest agent.
+     * Returns null when the guest agent is not ready or DHCP has not yet assigned an IP.
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getVMNetworkIP(string $nodeName, int $vmid): ?string;
 }

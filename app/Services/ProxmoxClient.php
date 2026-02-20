@@ -190,6 +190,46 @@ class ProxmoxClient implements ProxmoxClientInterface
     }
 
     /**
+     * Get the DHCP-assigned IPv4 address of a running VM via the QEMU guest agent.
+     * Returns null when the guest agent is unavailable or DHCP has not yet responded.
+     *
+     * Proxmox endpoint: GET /nodes/{node}/qemu/{vmid}/agent/network-get-interfaces
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getVMNetworkIP(string $nodeName, int $vmid): ?string
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu/{$vmid}/agent/network-get-interfaces");
+        $interfaces = $response['data']['result'] ?? [];
+
+        foreach ($interfaces as $iface) {
+            // Skip loopback
+            if (($iface['name'] ?? '') === 'lo') {
+                continue;
+            }
+
+            foreach ($iface['ip-addresses'] ?? [] as $addrEntry) {
+                if (($addrEntry['ip-address-type'] ?? '') !== 'ipv4') {
+                    continue;
+                }
+
+                $ip = $addrEntry['ip-address'] ?? '';
+
+                // Skip link-local (169.254.x.x) and loopback (127.x.x.x)
+                if (str_starts_with($ip, '169.254.') || str_starts_with($ip, '127.')) {
+                    continue;
+                }
+
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                    return $ip;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Execute an HTTP request to the Proxmox API with retry logic.
      *
      * @param array<string, mixed> $data

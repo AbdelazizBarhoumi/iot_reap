@@ -27,7 +27,7 @@ class UpdateProxmoxServerRequest extends FormRequest
      */
     public function rules(): array
     {
-        $serverId = $this->route('server')?->id;
+        $serverId = $this->route('proxmox_server')?->id;
 
         return [
             'name' => [
@@ -62,11 +62,13 @@ class UpdateProxmoxServerRequest extends FormRequest
                 'string',
             ],
             'token_id' => [
+                'nullable',
                 'sometimes',
                 'string',
                 'max:255',
             ],
             'token_secret' => [
+                'nullable',
                 'sometimes',
                 'string',
                 'min:20',

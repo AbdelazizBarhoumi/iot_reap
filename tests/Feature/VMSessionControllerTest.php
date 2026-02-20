@@ -264,11 +264,16 @@ class VMSessionControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");
 
-        // Verify internal fields are NOT exposed
+        // Verify internal fields that should NOT be exposed
         $this->assertArrayNotHasKey('vm_id', $response->json());
-        // ip_address is internal
-        $this->assertArrayNotHasKey('ip_address', $response->json());
-        // guacamole_connection_id is internal
-        $this->assertArrayNotHasKey('guacamole_connection_id', $response->json());
+        
+        // Per US-52: vm_ip_address and guacamole_connection_id ARE exposed in the API response
+        $this->assertArrayHasKey('vm_ip_address', $response->json());
+        $this->assertArrayHasKey('guacamole_connection_id', $response->json());
+        
+        // Verify values are correct
+        $this->assertEquals('192.168.1.50', $response->json('vm_ip_address'));
+        $this->assertEquals(99999, $response->json('guacamole_connection_id'));
     }
 }
+

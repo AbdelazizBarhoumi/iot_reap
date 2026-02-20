@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ConnectionPreferencesController;
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VMSessionController;
@@ -51,6 +52,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Guacamole remote desktop token
     Route::get('/api/sessions/{session}/guacamole-token', [\App\Http\Controllers\GuacamoleTokenController::class, 'generate'])->name('api.sessions.guacamole-token');
+
+    // Guacamole connection preferences (user-saved display/auth/performance settings)
+    Route::get('/api/vm-sessions/{session}/connection-preferences', [ConnectionPreferencesController::class, 'show'])->name('api.sessions.connection-preferences.show');
+    Route::patch('/api/vm-sessions/{session}/connection-preferences', [ConnectionPreferencesController::class, 'update'])->name('api.sessions.connection-preferences.update');
     
     // Templates API (public for engineers)
     Route::get('/api/templates', [\App\Http\Controllers\Admin\VMTemplateController::class, 'index'])->name('api.templates.index');
