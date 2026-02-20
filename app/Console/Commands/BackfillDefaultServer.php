@@ -35,10 +35,10 @@ class BackfillDefaultServer extends Command
             return self::FAILURE;
         }
 
-        // Check if default server already exists
-        $defaultServer = ProxmoxServer::where('host', config('proxmox.host'))
-            ->where('port', config('proxmox.port'))
-            ->first();
+        // Check if default server already exists (host is stored encrypted; compare decrypted values)
+        $defaultServer = ProxmoxServer::get()->first(function (ProxmoxServer $s) {
+            return $s->host === config('proxmox.host') && (int) $s->port === (int) config('proxmox.port');
+        });
 
         if ($defaultServer) {
             $this->info("✓ Default Proxmox server already exists: {$defaultServer->name}");
@@ -51,6 +51,7 @@ class BackfillDefaultServer extends Command
                     $this->info("✓ Linked {$orphanedNodes} orphaned nodes");
                 }
             }
+
             return self::SUCCESS;
         }
 

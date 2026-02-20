@@ -55,10 +55,12 @@ return [
     */
     'protocols' => [
         'rdp' => [
-            'port' => 3389,
-            'security' => 'nla',
-            'ignore_cert' => true,
-            'resize_method' => 'reconnect',
+            'port'          => 3389,
+            // 'any' allows NLA, TLS, and classic RDP — works with any Windows/Debian VM
+            // without requiring specific NLA configuration on the guest.
+            'security'      => 'any',
+            'ignore_cert'   => true,
+            'resize_method' => 'display-update',
         ],
         'vnc' => [
             'port' => 5900,

@@ -73,7 +73,7 @@ class GuacamoleConnectionParamsBuilder
             'password'                   => '',
             'domain'                     => '',
             'security'                   => $rdpConfig['security'] ?? 'nla',
-            'ignore-cert'                => 'true',
+            'ignore-cert'                => filter_var($rdpConfig['ignore_cert'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
             'resize-method'              => $rdpConfig['resize_method'] ?? 'display-update',
             // Display
             'width'                      => '1280',

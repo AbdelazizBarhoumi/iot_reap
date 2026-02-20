@@ -26,6 +26,7 @@ class AuthEndpointsTest extends TestCase
             ->assertJsonPath('data.role', UserRole::ENGINEER->value);
 
         $this->assertDatabaseHas('users', ['email' => 'api@example.com']);
+        $this->assertAuthenticated();
     }
 
     public function test_register_endpoint_returns_422_on_duplicate_email(): void

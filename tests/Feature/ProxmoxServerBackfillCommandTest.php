@@ -25,8 +25,8 @@ class ProxmoxServerBackfillCommandTest extends TestCase
         $this->artisan('proxmox:backfill-default-server', ['--force' => true])
             ->assertExitCode(0);
 
-        // Verify server was created
-        $server = ProxmoxServer::where('host', '192.168.1.100')->first();
+        // Verify server was created (host is encrypted in DB so query collection and compare decrypted attribute)
+        $server = ProxmoxServer::get()->firstWhere('host', '192.168.1.100');
         $this->assertNotNull($server);
         $this->assertEquals('Default Cluster', $server->name);
         $this->assertEquals(8006, $server->port);
@@ -59,7 +59,7 @@ class ProxmoxServerBackfillCommandTest extends TestCase
         $this->assertEquals(0, $orphanedNodes);
 
         // Verify nodes are linked to default server
-        $server = ProxmoxServer::where('host', '192.168.1.100')->first();
+        $server = ProxmoxServer::get()->firstWhere('host', '192.168.1.100');
         $this->assertEquals(3, $server->nodes()->count());
     }
 
@@ -89,8 +89,8 @@ class ProxmoxServerBackfillCommandTest extends TestCase
         $this->artisan('proxmox:backfill-default-server', ['--force' => true])
             ->assertExitCode(0);
 
-        // Verify only one server exists with that host
-        $count = ProxmoxServer::where('host', '192.168.1.100')->count();
+        // Verify only one server exists with that host (compare decrypted host values)
+        $count = ProxmoxServer::get()->where('host', '192.168.1.100')->count();
         $this->assertEquals(1, $count);
 
         // Verify existing server wasn't modified

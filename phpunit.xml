@@ -31,5 +31,18 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+
+        <!-- Guacamole live-integration settings (only enabled when provided) -->
+        <env name="GUACAMOLE_URL" value="http://192.168.1.161:8080/guacamole"/>
+        <env name="GUACAMOLE_USERNAME" value="guacadmin"/>
+        <env name="GUACAMOLE_PASSWORD" value="guacadmin"/>
+        <env name="GUACAMOLE_DATA_SOURCE" value="MySQL"/>
+        <env name="GUACAMOLE_IDLE_TIMEOUT" value="30"/>
+        <env name="GUACAMOLE_TOKEN_EXPIRATION" value="300"/>
+        <!-- Enable running the guarded live Guacamole test when true -->
+        <env name="GUACAMOLE_LIVE_TEST" value="true"/>
+
+        <!-- Proxmox live-integration toggle (set to true to allow real Proxmox calls) -->
+        <env name="PROXMOX_LIVE_TEST" value="true"/>
     </php>
 </phpunit>

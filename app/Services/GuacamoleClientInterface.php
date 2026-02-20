@@ -46,4 +46,19 @@ interface GuacamoleClientInterface
      * @throws GuacamoleApiException
      */
     public function getConnection(string $connectionId): array;
+
+    /**
+     * Return the resolved Guacamole data source name.
+     *
+     * Guacamole returns the real data source name (e.g. 'mysql') from
+     * /api/tokens — it may differ in case from what is configured (e.g. 'MySQL').
+     * This value is used when building viewer client IDs and API URLs.
+     */
+    public function getDataSource(): string;
+
+    /**
+     * Invalidate the cached auth token and resolved data source.
+     * Useful for testing or when credentials change at runtime.
+     */
+    public function clearAuthToken(): void;
 }

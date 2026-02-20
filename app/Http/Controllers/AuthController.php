@@ -14,13 +14,12 @@ use Illuminate\Support\Facades\Password;
 
 class AuthController
 {
-    public function __construct(private readonly AuthService $authService)
-    {
-    }
+    public function __construct(private readonly AuthService $authService) {}
 
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = $this->authService->register($request->validated());
+        $request->session()->regenerate();
 
         return response()->json(['data' => new UserResource($user)], 201);
     }
@@ -32,6 +31,7 @@ class AuthController
                 $request->validated('email'),
                 $request->validated('password')
             );
+            $request->session()->regenerate();
         } catch (InvalidCredentialsException $e) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
@@ -95,4 +95,3 @@ class AuthController
         return response()->json(['message' => 'Invalid or expired token.'], 400);
     }
 }
-

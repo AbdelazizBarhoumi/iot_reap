@@ -16,7 +16,7 @@ class AuthService
     }
 
     /**
-     * Register a new user (returns the created User).
+     * Register a new user (returns the created User) and signs them in.
      */
     public function register(array $data): User
     {
@@ -24,7 +24,13 @@ class AuthService
         $data['role'] = $data['role'] ?? UserRole::ENGINEER->value;
 
         // creation relies on User model for password hashing
-        return $this->users->create($data);
+        $user = $this->users->create($data);
+
+        // Log the newly created user into the session
+        Auth::login($user);
+    
+
+        return $user;
     }
 
     /**

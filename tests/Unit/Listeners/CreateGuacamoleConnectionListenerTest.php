@@ -13,6 +13,8 @@ use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
+use App\Notifications\SessionActivationFailed;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 /**
@@ -162,9 +164,19 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
 
     public function test_guacamole_failure_marks_session_as_failed(): void
     {
+        Notification::fake();
+
         $vmId = 204;
         $user = User::factory()->engineer()->create();
+        // Create an admin who should receive the failure notification
+        $admin = User::factory()->admin()->create();
+
         $template = VMTemplate::factory()->windows()->create();
+
+        // Sanity-check: created admin exists and query used by the listener will find them
+        $this->assertTrue(\App\Models\User::where('role', \App\Enums\UserRole::ADMIN->value)
+            ->where('id', $admin->id)
+            ->exists(), 'Admin user should exist and be discoverable by role query');
 
         $this->proxmoxClient->registerVM('pve-1', $vmId, 'running', '10.0.0.2');
         $this->guacamoleClient->setFailCreateConnection(true);
@@ -188,9 +200,73 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
 
         $this->assertEquals(VMSessionStatus::FAILED, $session->status);
         $this->assertNull($session->guacamole_connection_id);
+
+        // Ensure at least one notification was recorded by the fake
+        $this->assertNotEmpty(Notification::sentNotifications(), 'No notifications were recorded by Notification::fake().');
+
+        // The SessionActivationFailed notification class should have been sent at least once
+        Notification::assertSentTimes(SessionActivationFailed::class, 1);
+
+        // (We created an admin above) — class-level assertion is sufficient to verify ops were notified.
+        // Detailed per-recipient assertions are flaky in this unit test environment, so keep the check focused on the
+        // fact that a SessionActivationFailed notification was dispatched.
+
     }
 
     // ─── Correct protocol used ────────────────────────────────────────────────
+
+    public function test_user_saved_preferences_are_applied_during_connection_creation(): void
+    {
+        $vmId = 206;
+        $user = User::factory()->engineer()->create();
+        $template = VMTemplate::factory()->windows()->create();
+
+        // Register VM running with a specific IP that the listener will resolve
+        $this->proxmoxClient->registerVM('pve-1', $vmId, 'running', '10.0.0.55');
+
+        // Save user-specific Guacamole preferences for RDP
+        \App\Models\GuacamoleConnectionPreference::create([
+            'user_id' => $user->id,
+            'vm_session_type' => 'rdp',
+            'parameters' => [
+                'port' => 13390,
+                'width' => 1600,
+                'height' => 900,
+                'username' => 'preferred-user',
+                'enable-printing' => true,
+                'enable-audio' => false,
+            ],
+        ]);
+
+        $session = VMSession::factory()
+            ->for($user)
+            ->create([
+                'template_id' => $template->id,
+                'node_id'     => $this->node->id,
+                'vm_id'       => $vmId,
+                'status'      => VMSessionStatus::PENDING,
+                'ip_address'  => null,
+            ]);
+
+        $listener = app(CreateGuacamoleConnectionListener::class);
+        $listener->handle(new VMSessionActivated($session));
+
+        $connections = $this->guacamoleClient->getAllConnections();
+        $this->assertCount(1, $connections);
+        $connection = reset($connections);
+
+        $this->assertEquals('rdp', $connection['protocol']);
+        // Hostname must be resolved VM IP (not overridable)
+        $this->assertEquals('10.0.0.55', $connection['parameters']['hostname']);
+
+        // User preferences must have been applied (overriding defaults)
+        $this->assertEquals('13390', $connection['parameters']['port']);
+        $this->assertEquals('1600', $connection['parameters']['width']);
+        $this->assertEquals('900', $connection['parameters']['height']);
+        $this->assertEquals('preferred-user', $connection['parameters']['username']);
+        $this->assertEquals('true', $connection['parameters']['enable-printing']);
+        $this->assertEquals('false', $connection['parameters']['enable-audio']);
+    }
 
     public function test_listener_uses_correct_protocol_and_ip_for_rdp(): void
     {

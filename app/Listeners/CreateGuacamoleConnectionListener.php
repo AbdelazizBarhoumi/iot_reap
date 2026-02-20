@@ -163,6 +163,7 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
      */
     private function handleFailure($session, string $context, \Throwable $e): void
     {
+        // Mark session failed and log the error
         $session->update(['status' => VMSessionStatus::FAILED]);
 
         Log::error("CreateGuacamoleConnectionListener: {$context}", [
@@ -172,7 +173,22 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
             'error'      => $e->getMessage(),
         ]);
 
-        // TODO: Notify admin of session activation failure (alert ops team)
+        // Notify admins so ops can investigate (non-blocking)
+        try {
+            $admins = \App\Models\User::where('role', \App\Enums\UserRole::ADMIN->value)->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send(
+                    $admins,
+                    new \App\Notifications\SessionActivationFailed($session, $context, $e->getMessage())
+                );
+            }
+        } catch (\Throwable $notifyEx) {
+            // Swallow notification errors but log them — do not mask original failure
+            Log::error('Failed to notify admins about session activation failure', [
+                'session_id' => $session->id,
+                'error' => $notifyEx->getMessage(),
+            ]);
+        }
 
         $this->fail($e);
     }

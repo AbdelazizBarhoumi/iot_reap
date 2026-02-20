@@ -47,7 +47,9 @@ class GuacamoleClientFake implements GuacamoleClientInterface
             throw new GuacamoleApiException('Simulated connection creation failure');
         }
 
-        $connectionId = (string) count($this->connections) + 1;
+        // Parentheses required: (string) binds tighter than + so without them
+        // PHP would evaluate (string)count() then do numeric promotion on + 1.
+        $connectionId = (string) (count($this->connections) + 1);
         $this->connections[$connectionId] = [
             'identifier' => $connectionId,
             'name' => $params['name'] ?? 'Unnamed Connection',
@@ -179,6 +181,22 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     /**
      * Clear all in-memory data (useful for tests).
      */
+    /**
+     * Return the data source name (fake always returns the configured value).
+     */
+    public function getDataSource(): string
+    {
+        return config('guacamole.data_source', 'MySQL');
+    }
+
+    /**
+     * No-op for the fake — there is no real auth token to clear.
+     */
+    public function clearAuthToken(): void
+    {
+        // nothing to clear in the fake
+    }
+
     public function resetAll(): void
     {
         $this->connections = [];

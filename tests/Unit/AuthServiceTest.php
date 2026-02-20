@@ -28,6 +28,7 @@ class AuthServiceTest extends TestCase
 
         $this->assertDatabaseHas('users', ['email' => 'new@example.com']);
         $this->assertEquals(UserRole::ENGINEER, $user->role);
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_login_initializes_session_on_success(): void
