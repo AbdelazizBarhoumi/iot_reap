@@ -34,12 +34,12 @@ class CreateVMSessionRequest extends FormRequest
                 'exists:vm_templates,id',
             ],
             'duration_minutes' => [
-                'required',
+                'nullable',
                 'integer',
-                'min:30',
-                'max:240',
+                'min:' . config('sessions.min_duration_minutes', 30),
+                'max:' . config('sessions.max_duration_minutes', 240),
             ],
-            'session_type' => [
+            'session_ty pe' => [
                 'required',
                 Rule::enum(VMSessionType::class),
             ],
@@ -55,9 +55,17 @@ class CreateVMSessionRequest extends FormRequest
     {
         return [
             'template_id.exists' => 'The selected template does not exist.',
-            'duration_minutes.min' => 'Session duration must be at least 30 minutes.',
-            'duration_minutes.max' => 'Session duration cannot exceed 240 minutes.',
+            'duration_minutes.min' => 'Session duration must be at least ' . config('sessions.min_duration_minutes', 30) . ' minutes.',
+            'duration_minutes.max' => 'Session duration cannot exceed ' . config('sessions.max_duration_minutes', 240) . ' minutes.',
             'session_type.enum' => 'Session type must be either "ephemeral" or "persistent".',
         ];
     }
-}
+
+    /**
+     * Get the session duration in minutes, using config default if not provided.
+     */
+    public function getDurationMinutes(): int
+    {
+        return $this->validated('duration_minutes')
+            ?? config('sessions.default_duration_minutes', 120);
+    }}

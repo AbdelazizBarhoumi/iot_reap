@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sessions', [VMSessionController::class, 'index'])->name('sessions.index');
     Route::post('/sessions', [VMSessionController::class, 'store'])->name('sessions.store');
     Route::get('/sessions/{session}', [VMSessionController::class, 'show'])->name('sessions.show');
+    Route::post('/sessions/{session}/extend', [VMSessionController::class, 'extend'])->name('sessions.extend');
     Route::delete('/sessions/{session}', [VMSessionController::class, 'destroy'])->name('sessions.destroy');
 });
 
@@ -39,6 +40,7 @@ Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
     Route::get('/sessions', [VMSessionController::class, 'index'])->name('api.sessions.index');
     Route::post('/sessions', [VMSessionController::class, 'store'])->name('api.sessions.store');
     Route::get('/sessions/{session}', [VMSessionController::class, 'show'])->name('api.sessions.show');
+    Route::post('/sessions/{session}/extend', [VMSessionController::class, 'extend'])->name('api.sessions.extend');
     Route::delete('/sessions/{session}', [VMSessionController::class, 'destroy'])->name('api.sessions.destroy');
 
     // Guacamole remote desktop token

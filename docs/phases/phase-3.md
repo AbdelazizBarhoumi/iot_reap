@@ -1,13 +1,13 @@
 # Sprint 3 — Guacamole Remote Desktop Access
-**Weeks 5–6 | 34 Story Points | Stories: US-08, US-09, US-09B, US-10, US-12, US-13, US-14**
+**Weeks 5–6 | 34 Story Points | Stories: US-08, US-09, US-09B, US-12, US-13, US-14**
 **⚠️ This is the MVP sprint. By end of week 6, a full demo must be possible.**
 
 ---
 
 ## Sprint Goal
-Deploy Apache Guacamole and guacd. Integrate Guacamole API with Laravel to create connections and one-time tokens. Implement user-preferred connection parameters (display, performance, device redirection) and session-based connection preservation (reuse connection across page refreshes). Embed the Guacamole viewer in React. Implement session extension, manual termination, and VM snapshots for persistent sessions.
+Deploy Apache Guacamole and guacd. Integrate Guacamole API with Laravel to create connections and one-time tokens. Implement user-preferred connection parameters (display, performance, device redirection) and session-based connection preservation (reuse connection across page refreshes). Embed the Guacamole viewer in React. Implement session extension (with configurable increments), custom launch durations, manual termination with optional VM stop/delete and snapshot rollback, and VM snapshots for persistent sessions.
 
-By end of sprint: **User logs in → clicks Launch → VM desktop appears in browser with preferred settings → user refreshes page and same connection persists → session auto-expires and VM is deleted.**
+By end of sprint: **User logs in → selects duration or accepts default → clicks Launch → VM desktop appears in browser with preferred settings → user can extend the session as needed → termination cleans up Guacamole and optionally stops/deletes or rolls back the VM → refreshing the page reuses the same connection → session auto-expires and VM is deleted.**
 
 ---
 
@@ -443,65 +443,44 @@ Acceptance criteria:
 
 ---
 
-#### TASK 3.6 — Session Extension & Termination
+#### TASK 3.6 — Session Lifecycle: Custom Duration, Extension & Termination
 **Branch:** `feature/US-08-US-09-session-lifecycle`
 
 What to build:
-- `POST /api/v1/sessions/{id}/extend` — adds 30 min, enforces quota
-- `DELETE /api/v1/sessions/{id}` — triggers immediate cleanup
-- `TerminateVMJob`: stop VM, delete VM, delete Guacamole connection, update status
+- Accept a `duration_minutes` parameter when creating a session; fall back to the default value stored in the database/config
+- `POST /api/v1/sessions/{id}/extend` — extends by a requested number of minutes (30 min default) and enforces quota
+- `DELETE /api/v1/sessions/{id}` — triggers immediate cleanup with optional flags
 - `ExtendSessionService::extend(VMSession, int $minutes): VMSession`
+- `TerminateVMJob`: delete Guacamole connection first, optionally revert VM to snapshot, then stop or delete VM depending on session type and request flags
 
 Copilot prompt:
 ```php
 // ExtendSessionService::extend(VMSession $session, int $minutes): VMSession
-// Validate: session is active, user has quota remaining for extra minutes
-// Update: expires_at += $minutes, re-dispatch CleanupVMJob with new delay
-// Cancel old CleanupVMJob using job ID stored on session record
-// TerminateVMJob steps:
-// 1. Delete Guacamole connection
-// 2. Stop VM via ProxmoxClient::stopVM()
-// 3. If ephemeral: delete VM via ProxmoxClient::deleteVM()
-// 4. If persistent: take snapshot, then stop
-// 5. Update session status to 'terminated'
-// 6. Release node capacity in ProxmoxNode record
+// Validate: session is active, user has quota remaining for the additional minutes
+// Update: expires_at += $minutes, cancel previous CleanupVMJob (use stored job ID) and dispatch new one with updated delay
+// TerminateVMJob steps (parameters: $stopVm = true, $returnSnapshot = null):
+// 1. Delete Guacamole connection via GuacamoleClient
+// 2. If $returnSnapshot provided and session is persistent: call SnapshotService::restoreSnapshot($session, $returnSnapshot)
+// 3. If $stopVm true:
+//      a. If session is ephemeral: delete VM via ProxmoxClient::deleteVM()
+//      b. If persistent and no returnSnapshot: take snapshot then stop VM via ProxmoxClient::stopVM()
+// 4. If $stopVm false: leave VM running
+// 5. Update session status to 'terminated' and release node capacity
 ```
 
 Acceptance criteria:
-- [ ] Extension adds exactly 30 minutes to `expires_at`
-- [ ] Extension fails (422) if user quota would be exceeded
-- [ ] Termination deletes Guacamole connection before stopping VM
-- [ ] Ephemeral session: VM deleted from Proxmox after termination
-- [ ] Persistent session: snapshot taken before VM stopped
+- [ ] Session creation accepts a duration parameter or uses default from config/db
+- [ ] Extend endpoint adds exactly the requested minutes (30 min default) to `expires_at`
+- [ ] Extend fails (422) if user quota would be exceeded by the additional minutes
+- [ ] Calling extend cancels the previously dispatched `CleanupVMJob` and schedules a new one for the updated expiry
+- [ ] Terminate endpoint always deletes the Guacamole connection before any VM action
+- [ ] Terminate accepts options: `stop_vm` (bool) and `return_snapshot` (nullable snapshot id/name)
+- [ ] If `stop_vm` is true and the session is ephemeral, the VM is deleted; if persistent and `return_snapshot` supplied, the VM is reverted before stopping
+- [ ] VM stopping/deletion remains optional based on request flags
+- [ ] Feature test verifies quota enforcement, extend behaviour, and proper cleanup actions according to the flags
 
 ---
 
-#### TASK 3.7 — Persistent Sessions & Snapshots
-**Branch:** `feature/US-10-snapshots`
-
-What to build:
-- `SnapshotService`: `takeSnapshot(VMSession): string`, `restoreSnapshot(VMSession): void`
-- `vm_snapshots` table: session_id, snapshot_name, created_at
-- On session end (persistent type): take snapshot via Proxmox API
-- On next session start (persistent type): restore from last snapshot
-
-Copilot prompt:
-```php
-// SnapshotService::takeSnapshot(VMSession $session): string (snapshot name)
-// snapshot name format: "snap-{session_id}-{timestamp}"
-// Calls ProxmoxClient to create snapshot on the VM
-// Stores snapshot record in vm_snapshots table
-// SnapshotService::restoreSnapshot(VMSession $session): void
-// Fetches latest snapshot for this user+template combination
-// Restores via Proxmox API before starting VM
-// Returns early (no-op) if no previous snapshot exists
-```
-
-Acceptance criteria:
-- [ ] Persistent session: snapshot taken on `TerminateVMJob`
-- [ ] Next persistent session for same user+template restores last snapshot
-- [ ] Snapshot name stored in `vm_snapshots` table
-- [ ] Ephemeral sessions: snapshot logic never runs
 
 ---
 
