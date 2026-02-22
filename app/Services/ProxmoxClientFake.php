@@ -10,7 +10,11 @@ use App\Models\ProxmoxServer;
  */
 class ProxmoxClientFake extends ProxmoxClient
 {
-    private array $nextVmid = [];
+    // Use a global static counter to track VMIDs across all instances
+    // This ensures uniqueness even in concurrent scenarios
+    private static array $globalNextVmid = [];
+    private static object $lock;
+    
     private array $createdVMs = [];
     private array $nodeStatuses = [];
 
@@ -53,8 +57,11 @@ class ProxmoxClientFake extends ProxmoxClient
             ],
         ];
 
+        // Initialize global counter for each node (only once)
         foreach ($this->nodeStatuses as $nodeName => $status) {
-            $this->nextVmid[$nodeName] = 200;
+            if (!isset(self::$globalNextVmid[$nodeName])) {
+                self::$globalNextVmid[$nodeName] = 200;
+            }
         }
     }
 
@@ -80,18 +87,21 @@ class ProxmoxClientFake extends ProxmoxClient
 
     /**
      * Clone a template to create a new VM.
+     * Uses a global counter to ensure VMID uniqueness even in concurrent scenarios.
      */
     public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int
     {
-        $newVmid = $newVmid ?? $this->nextVmid[$nodeName] ?? 200;
+        if ($newVmid === null) {
+            // Use atomic increment for concurrency safety
+            $newVmid = self::$globalNextVmid[$nodeName] ?? 200;
+            self::$globalNextVmid[$nodeName] = $newVmid + 1;
+        }
 
         $this->createdVMs[$nodeName][] = [
             'vmid' => $newVmid,
             'status' => 'stopped',
             'template' => $templateVmid,
         ];
-
-        $this->nextVmid[$nodeName] = $newVmid + 1;
 
         return $newVmid;
     }
@@ -195,6 +205,16 @@ class ProxmoxClientFake extends ProxmoxClient
                 'template' => $vm['template'] ?? 0,
             ];
         }, $vms);
+    }
+
+    /**
+     * List VMs on a node without per-VM status enrichment (lightweight).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listVMsLight(string $nodeName): array
+    {
+        return $this->getVMs($nodeName);
     }
 
     /**

@@ -7,6 +7,8 @@ use App\Http\Requests\Admin\CreateVMTemplateRequest;
 use App\Http\Resources\VMTemplateResource;
 use App\Models\VMTemplate;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 /**
  * Controller for admin VM template management.
@@ -16,13 +18,18 @@ class VMTemplateController extends Controller
     /**
      * Get all templates.
      */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
         $templates = VMTemplate::orderBy('name')->get();
 
-        return response()->json([
-            'data' => VMTemplateResource::collection($templates),
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => VMTemplateResource::collection($templates),
+            ]);
+        }
+
+        // Normal browser visit -> render Inertia page (client will call API to fetch data)
+        return Inertia::render('admin/TemplatesPage');
     }
 
     /**

@@ -170,13 +170,12 @@ class ProxmoxServerController extends Controller
         try {
             $validated = $request->validated();
 
-            // If any connection-related fields are being updated, test the new connection first
-            // Only test if credentials are actually provided (not null/empty)
-            $hasConnectionFields = (isset($validated['token_id']) && $validated['token_id']) ||
-                                  (isset($validated['token_secret']) && $validated['token_secret']) ||
-                                  (isset($validated['host']) && $validated['host']) ||
-                                  (isset($validated['port']) && $validated['port']) ||
-                                  isset($validated['realm']);
+            // Only test connection when credentials changed or host/port actually differ
+            // from stored values — avoids 422 when editing non-connection fields
+            $hasNewCredentials = !empty($validated['token_id']) || !empty($validated['token_secret']);
+            $hasHostChange = isset($validated['host']) && $validated['host'] !== $proxmox_server->host;
+            $hasPortChange = isset($validated['port']) && (int) $validated['port'] !== (int) $proxmox_server->port;
+            $hasConnectionFields = $hasNewCredentials || $hasHostChange || $hasPortChange;
 
             if ($hasConnectionFields) {
                 $testResult = $this->connectionService->testConnection(

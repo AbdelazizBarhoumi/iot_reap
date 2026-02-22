@@ -3,6 +3,7 @@
 use App\Http\Controllers\ConnectionPreferencesController;
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProxmoxVMBrowserController;
 use App\Http\Controllers\VMSessionController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
@@ -32,30 +33,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sessions/{session}', [VMSessionController::class, 'show'])->name('sessions.show');
     Route::post('/sessions/{session}/extend', [VMSessionController::class, 'extend'])->name('sessions.extend');
     Route::delete('/sessions/{session}', [VMSessionController::class, 'destroy'])->name('sessions.destroy');
-});
-
-// VM session & template API endpoints (engineers can access)
-Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
-    // Sessions API (aliases for backwards compatibility)
-    Route::get('/sessions', [VMSessionController::class, 'index'])->name('api.sessions.index');
-    Route::post('/sessions', [VMSessionController::class, 'store'])->name('api.sessions.store');
-    Route::get('/sessions/{session}', [VMSessionController::class, 'show'])->name('api.sessions.show');
-    Route::post('/sessions/{session}/extend', [VMSessionController::class, 'extend'])->name('api.sessions.extend');
-    Route::delete('/sessions/{session}', [VMSessionController::class, 'destroy'])->name('api.sessions.destroy');
 
     // Guacamole remote desktop token
-    Route::get('/sessions/{session}/guacamole-token', [\App\Http\Controllers\GuacamoleTokenController::class, 'generate'])->name('api.sessions.guacamole-token');
+    Route::get('/sessions/{session}/guacamole-token', [\App\Http\Controllers\GuacamoleTokenController::class, 'generate'])->name('sessions.guacamole-token');
+
+    // VM snapshots for a session
+    Route::get('/sessions/{session}/snapshots', [VMSessionController::class, 'snapshots'])->name('sessions.snapshots');
 
     // Guacamole connection preferences (user-saved display/auth/performance settings)
-    Route::get('/vm-sessions/{session}/connection-preferences', [ConnectionPreferencesController::class, 'show'])->name('api.sessions.connection-preferences.show');
-    Route::patch('/vm-sessions/{session}/connection-preferences', [ConnectionPreferencesController::class, 'update'])->name('api.sessions.connection-preferences.update');
+    // Global preferences per protocol (not tied to a session) - Now supports multiple named profiles
+    Route::get('/connection-preferences', [ConnectionPreferencesController::class, 'index'])->name('connection-preferences.index');
+    Route::get('/connection-preferences/{protocol}', [ConnectionPreferencesController::class, 'show'])->name('connection-preferences.show');
+    Route::post('/connection-preferences/{protocol}', [ConnectionPreferencesController::class, 'store'])->name('connection-preferences.store');
+    Route::put('/connection-preferences/{protocol}/{profile?}', [ConnectionPreferencesController::class, 'update'])->name('connection-preferences.update');
+    Route::delete('/connection-preferences/{protocol}/{profile}', [ConnectionPreferencesController::class, 'destroy'])->name('connection-preferences.destroy');
+    Route::patch('/connection-preferences/{protocol}/{profile}/default', [ConnectionPreferencesController::class, 'setDefault'])->name('connection-preferences.set-default');
 
-    // Templates API (public for engineers)
-    Route::get('/templates', [VMTemplateController::class, 'index'])->name('api.templates.index');
-    Route::get('/templates/{template}', [VMTemplateController::class, 'show'])->name('api.templates.show');
+    // Proxmox VM browser — lists VMs from all active servers for launching sessions
+    Route::get('/proxmox-vms', [ProxmoxVMBrowserController::class, 'index'])->name('proxmox-vms.index');
+    Route::get('/proxmox-vms/{server}/{node}/{vmid}/snapshots', [ProxmoxVMBrowserController::class, 'snapshots'])->name('proxmox-vms.snapshots');
 
-    // Proxmox servers (public for engineers to see available clusters)
-    Route::get('/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('api.proxmox-servers.active');
+    // Proxmox servers (active, for engineers to see available clusters)
+    Route::get('/proxmox-servers/active', [\App\Http\Controllers\Admin\ProxmoxServerController::class, 'listActive'])->name('proxmox-servers.active');
 });
 
 // Admin pages (Inertia) and API endpoints
@@ -69,12 +68,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::post('/{node}/vms/{vmid}/reboot', [ProxmoxNodeController::class, 'rebootVM'])->name('admin.nodes.vms.reboot');
         Route::post('/{node}/vms/{vmid}/shutdown', [ProxmoxNodeController::class, 'shutdownVM'])->name('admin.nodes.vms.shutdown');
     });
-    // Templates page placeholder
-    Route::get('/templates', function () {
-        return Inertia::render('admin/TemplatesPage');
-    })->name('admin.templates.page');
-
-    // Templates API routes
+    // Templates API & page routes. index() handles both Inertia and JSON.
     Route::prefix('/templates')->group(function () {
         Route::get('/', [VMTemplateController::class, 'index'])->name('admin.templates.index');
         Route::post('/', [VMTemplateController::class, 'store'])->name('admin.templates.store');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\VMSessionStatus;
 use App\Enums\VMSessionType;
+use App\Enums\VMTemplateProtocol;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $vm_id
  * @property VMSessionStatus $status
  * @property VMSessionType $session_type
+ * @property string|null $protocol_override
  * @property string|null $ip_address
  * @property int|null $guacamole_connection_id
  * @property \DateTime $expires_at
@@ -38,7 +40,10 @@ class VMSession extends Model
         'vm_id',
         'status',
         'session_type',
+        'protocol_override',
         'ip_address',
+        'credentials',
+        'return_snapshot',
         'guacamole_connection_id',
         'expires_at',
     ];
@@ -52,7 +57,21 @@ class VMSession extends Model
         'node_id' => 'integer',
         'vm_id' => 'integer',
         'guacamole_connection_id' => 'integer',
+        'credentials' => 'encrypted:array',
     ];
+
+    /**
+     * Get the effective protocol for this session.
+     * Uses protocol_override if set, otherwise falls back to template protocol.
+     */
+    public function getEffectiveProtocol(): VMTemplateProtocol
+    {
+        if ($this->protocol_override) {
+            return VMTemplateProtocol::from($this->protocol_override);
+        }
+
+        return $this->template->protocol;
+    }
 
     public function user(): BelongsTo
     {

@@ -107,9 +107,28 @@ class GuacamoleTokenController extends Controller
                 'token_expiration_seconds' => $tokenExpirationSeconds,
             ]);
 
+            // Build the WebSocket tunnel URL for guacamole-common-js client.
+            // Format: ws(s)://host/guacamole/websocket-tunnel
+            $guacUrl = rtrim(config('guacamole.url'), '/');
+            $wsScheme = str_starts_with($guacUrl, 'https') ? 'wss' : 'ws';
+            $wsHost = preg_replace('#^https?://#', '', $guacUrl);
+            $tunnelUrl = "{$wsScheme}://{$wsHost}/websocket-tunnel";
+
+            // TRACE: log full viewer/tunnel URLs so we can inspect what the
+            // frontend is attempting to open when the user reports a "black
+            // screen". this does not affect any control flow.
+            Log::debug('Guacamole token details', [
+                'session_id' => $session->id,
+                'viewer_url' => $viewerUrl,
+                'tunnel_url' => $tunnelUrl,
+            ]);
+
             return response()->json([
                 'token' => $token,
                 'viewer_url' => $viewerUrl,
+                'tunnel_url' => $tunnelUrl,
+                'connection_id' => (string) $session->guacamole_connection_id,
+                'data_source' => $dataSource,
                 'expires_in' => $tokenExpirationSeconds,
                 'guacamole_url' => config('guacamole.url'),
             ], 200);

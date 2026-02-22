@@ -61,6 +61,11 @@ class ProxmoxServerModelTest extends TestCase
         // Tokens in database should NOT match the original plaintext values
         $this->assertNotEquals($originalTokenId, $rawData->token_id);
         $this->assertNotEquals($originalSecret, $rawData->token_secret);
+
+        // Host and port columns are also encrypted; they should not contain
+        // the plain values either.
+        $this->assertNotEquals('192.168.1.100', $rawData->host);
+        $this->assertNotEquals('8006', (string) $rawData->port);
     }
 
     public function test_proxmox_server_has_nodes_relationship(): void

@@ -194,6 +194,17 @@ class ProxmoxServerControllerTest extends TestCase
             $tokenId,
             $server->getAttributes()['token_id'] ?? null
         );
+
+        // Host/port should also be encrypted at rest so raw database values
+        // don't equal the plaintext input.
+        $this->assertNotEquals(
+            '192.168.1.50',
+            $server->getAttributes()['host'] ?? null
+        );
+        $this->assertNotEquals(
+            '8006',
+            (string) ($server->getAttributes()['port'] ?? '')
+        );
     }
 
     /**

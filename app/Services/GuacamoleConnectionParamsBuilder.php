@@ -42,7 +42,8 @@ class GuacamoleConnectionParamsBuilder
             );
         }
 
-        $protocol = $session->template->protocol;
+        // Use session's effective protocol (override or template default)
+        $protocol = $session->getEffectiveProtocol();
 
         // Load user's saved preferences for this protocol (null if none saved)
         $preference    = $this->preferenceRepository->findByUser($user, $protocol->value);
@@ -54,6 +55,16 @@ class GuacamoleConnectionParamsBuilder
             VMTemplateProtocol::SSH => $this->buildSSHParams($session->ip_address, $session, $userSettings),
             default => throw new RuntimeException("Unsupported protocol: {$protocol->value}"),
         };
+    }
+
+    /**
+     * Get session-level credentials (username/password stored on the session).
+     *
+     * @return array{username?: string, password?: string}
+     */
+    private function getSessionCredentials(VMSession $session): array
+    {
+        return $session->credentials ?? [];
     }
 
     /**
@@ -100,6 +111,15 @@ class GuacamoleConnectionParamsBuilder
         $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname; // Always the VM's dynamic IP — never overridable by user
 
+        // Override with session-level credentials if provided
+        $creds = $this->getSessionCredentials($session);
+        if (!empty($creds['username'])) {
+            $merged['username'] = $creds['username'];
+        }
+        if (!empty($creds['password'])) {
+            $merged['password'] = $creds['password'];
+        }
+
         return [
             'name'       => "session-{$session->id}",
             'protocol'   => 'rdp',
@@ -132,6 +152,12 @@ class GuacamoleConnectionParamsBuilder
 
         $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname;
+
+        // Override with session-level credentials if provided (VNC uses password only)
+        $creds = $this->getSessionCredentials($session);
+        if (!empty($creds['password'])) {
+            $merged['password'] = $creds['password'];
+        }
 
         return [
             'name'       => "session-{$session->id}",
@@ -166,6 +192,15 @@ class GuacamoleConnectionParamsBuilder
 
         $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname;
+
+        // Override with session-level credentials if provided
+        $creds = $this->getSessionCredentials($session);
+        if (!empty($creds['username'])) {
+            $merged['username'] = $creds['username'];
+        }
+        if (!empty($creds['password'])) {
+            $merged['password'] = $creds['password'];
+        }
 
         return [
             'name'       => "session-{$session->id}",

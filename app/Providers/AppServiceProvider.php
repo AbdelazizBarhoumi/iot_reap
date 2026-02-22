@@ -31,30 +31,34 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Bind ProxmoxClientInterface as singleton
-        // In testing without proper config, use the fake
+        // Priority: DB server credentials > env credentials > fake client
         $this->app->singleton(ProxmoxClientInterface::class, function ($app) {
+            // First, try to get an active ProxmoxServer from the database
+            $server = \App\Models\ProxmoxServer::where('is_active', true)->first();
+
+            if ($server) {
+                // Database server has encrypted credentials - use it
+                return new ProxmoxClient($server);
+            }
+
+            // Fall back to env config if no DB server exists
             $tokenId = config('proxmox.token_id');
             $tokenSecret = config('proxmox.token_secret');
 
-            // If no credentials configured, use the fake client (tests / local dev)
+            // If no credentials anywhere, use the fake client (tests / local dev)
             if (! $tokenId || ! $tokenSecret) {
                 return new \App\Services\ProxmoxClientFake();
             }
 
-            // Prefer an active ProxmoxServer record from the database
-            $server = \App\Models\ProxmoxServer::where('is_active', true)->first();
-
-            // If no DB server exists, build an in-memory server model from config
-            if (! $server) {
-                $server = new \App\Models\ProxmoxServer([
-                    'name' => 'config-default',
-                    'host' => config('proxmox.host'),
-                    'port' => config('proxmox.port'),
-                    'token_id' => $tokenId,
-                    'token_secret' => $tokenSecret,
-                    'is_active' => true,
-                ]);
-            }
+            // Build an in-memory server model from config
+            $server = new \App\Models\ProxmoxServer([
+                'name' => 'config-default',
+                'host' => config('proxmox.host'),
+                'port' => config('proxmox.port'),
+                'token_id' => $tokenId,
+                'token_secret' => $tokenSecret,
+                'is_active' => true,
+            ]);
 
             return new ProxmoxClient($server);
         });

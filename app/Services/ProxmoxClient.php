@@ -15,8 +15,8 @@ use Throwable;
 class ProxmoxClient implements ProxmoxClientInterface
 {
     private const MAX_RETRIES = 3;
-    private const RETRY_DELAYS = [10, 30, 60]; // seconds
-    private const TIMEOUT = 30;
+    private const RETRY_DELAYS = [2, 5, 10]; // seconds — total worst-case ~45 s, under PHP's 60 s max_execution_time
+    private const TIMEOUT = 10;
 
     /**
      * Create a new ProxmoxClient instance.
@@ -230,6 +230,64 @@ class ProxmoxClient implements ProxmoxClientInterface
     }
 
     /**
+     * List all snapshots of a VM.
+     *
+     * Proxmox endpoint: GET /nodes/{node}/qemu/{vmid}/snapshot
+     *
+     * @return array<int, array{name: string, description: string, snaptime?: int, parent?: string}>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function listSnapshots(string $nodeName, int $vmid): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu/{$vmid}/snapshot");
+        $snapshots = $response['data'] ?? [];
+
+        // Filter out the 'current' pseudo-snapshot that Proxmox always returns
+        return array_values(array_filter($snapshots, function ($snap) {
+            return ($snap['name'] ?? '') !== 'current';
+        }));
+    }
+
+    /**
+     * Revert a VM to a named snapshot.
+     *
+     * Proxmox endpoint: POST /nodes/{node}/qemu/{vmid}/snapshot/{snapname}/rollback
+     *
+     * @throws ProxmoxApiException
+     */
+    public function revertSnapshot(string $nodeName, int $vmid, string $snapshotName): bool
+    {
+        $response = $this->request(
+            'POST',
+            "/nodes/{$nodeName}/qemu/{$vmid}/snapshot/{$snapshotName}/rollback",
+        );
+
+        // Wait for the rollback task to complete
+        $taskId = $response['data'] ?? null;
+        if ($taskId) {
+            $this->pollTaskCompletion($nodeName, $taskId, 120);
+        }
+
+        return true;
+    }
+
+    /**
+     * List VMs on a node without per-VM status enrichment (lightweight).
+     * Uses only the /nodes/{node}/qemu list — no N+1 status calls.
+     *
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function listVMsLight(string $nodeName): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu");
+
+        return $response['data'] ?? [];
+    }
+
+    /**
      * Execute an HTTP request to the Proxmox API with retry logic.
      *
      * @param array<string, mixed> $data
@@ -308,18 +366,33 @@ class ProxmoxClient implements ProxmoxClientInterface
 
     /**
      * Check if an error is transient (should trigger a retry).
+     *
+     * Connection-refused / unreachable errors are NOT retried because the server
+     * is down and retrying will only waste time until PHP's max_execution_time is
+     * exceeded.  Only request timeouts and HTTP 5xx responses are considered transient.
      */
     private function isTransientError(Throwable $e): bool
     {
         $message = strtolower($e->getMessage());
 
-        // Connection timeouts are transient
-        if (str_contains($message, 'timeout') || str_contains($message, 'connection')) {
+        // Connection refused / unreachable — server is down, don't retry
+        if (str_contains($message, 'connection refused')
+            || str_contains($message, 'could not resolve')
+            || str_contains($message, 'network is unreachable')
+            || str_contains($message, 'no route to host')
+        ) {
+            return false;
+        }
+
+        // Request timeouts are transient (server alive but slow)
+        if (str_contains($message, 'timeout') || str_contains($message, 'timed out')) {
             return true;
         }
 
-        // HTTP 5XX errors are transient
-        if (str_contains($message, '50') || str_contains($message, '503')) {
+        // HTTP 5xx errors are transient
+        if (str_contains($message, '500') || str_contains($message, '502')
+            || str_contains($message, '503') || str_contains($message, '504')
+        ) {
             return true;
         }
 

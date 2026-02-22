@@ -156,6 +156,59 @@ class VMSessionControllerTest extends TestCase
                  ->assertJsonValidationErrors(['session_type']);
     }
 
+    public function test_authenticated_user_can_create_direct_session(): void
+    {
+        Queue::fake();
+
+        $vmid = 555;
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            'vmid' => $vmid,
+            'node_id' => $node->id,
+            'vm_name' => 'Actual VM',
+            'duration_minutes' => 30,
+            'session_type' => VMSessionType::EPHEMERAL->value,
+            'use_existing' => true,
+        ]);
+
+        $response->assertCreated()
+                 ->assertJsonPath('vm_ip_address', null)
+                 ->assertJsonPath('status', VMSessionStatus::PENDING->value);
+
+        // session record should contain the vm_id we supplied
+        $this->assertDatabaseHas('vm_sessions', [
+            'user_id' => $this->user->id,
+            'vm_id' => $vmid,
+            'node_id' => $node->id,
+        ]);
+
+        // protocol_override must be null for direct connections
+        $this->assertDatabaseHas('vm_sessions', [
+            'id' => $response->json('id'),
+            'protocol_override' => null,
+        ]);
+
+        // provisioning job should NOT have been dispatched
+        Queue::assertNotPushed(\App\Jobs\ProvisionVMJob::class);
+    }
+
+    public function test_create_direct_session_validates_use_existing_boolean(): void
+    {
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            'vmid' => 123,
+            'node_id' => $node->id,
+            'duration_minutes' => 30,
+            'session_type' => VMSessionType::EPHEMERAL->value,
+            'use_existing' => 'notabool',
+        ]);
+
+        $response->assertUnprocessable()
+                 ->assertJsonValidationErrors(['use_existing']);
+    }
+
     public function test_authenticated_user_can_get_session(): void
     {
         $session = VMSession::factory()->create([
@@ -193,6 +246,8 @@ class VMSessionControllerTest extends TestCase
 
     public function test_authenticated_user_can_delete_session(): void
     {
+        Queue::fake();
+
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
             'template_id' => $this->template->id,
@@ -201,11 +256,11 @@ class VMSessionControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->deleteJson("/sessions/{$session->id}");
 
-        $response->assertOk();
+        // 202 Accepted - termination is async via job
+        $response->assertAccepted();
 
-        $this->assertDatabaseMissing('vm_sessions', [
-            'id' => $session->id,
-        ]);
+        // Verify termination job was dispatched
+        Queue::assertPushed(\App\Jobs\TerminateVMJob::class);
     }
 
     public function test_user_cannot_delete_other_users_session(): void

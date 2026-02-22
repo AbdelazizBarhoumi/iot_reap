@@ -166,7 +166,7 @@ class ServerInactivationFeatureTest extends TestCase
 
         $payload = [
             'name' => 'New Cluster',
-            'host' => '192.168.1.200',
+            'host' => 'fix',
             'port' => 8006,
             'realm' => 'pam',
             'token_id' => 'test_token',

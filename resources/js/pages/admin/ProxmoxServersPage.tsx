@@ -98,8 +98,12 @@ export default function ProxmoxServersPage() {
 
     try {
       if (editingServer) {
-        // Update existing server
-        await client.patch(`/admin/proxmox-servers/${editingServer.id}`, formData);
+        // Only include token fields if user actually entered new values
+        const payload: Record<string, unknown> = { ...formData };
+        if (!formData.token_id) delete payload.token_id;
+        if (!formData.token_secret) delete payload.token_secret;
+
+        await client.patch(`/admin/proxmox-servers/${editingServer.id}`, payload);
       } else {
         // Create new server
         await client.post('/admin/proxmox-servers', formData);

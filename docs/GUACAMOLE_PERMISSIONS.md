@@ -15,9 +15,9 @@ This happens because the `guacadmin` user doesn't have the "Administer system" p
 ### Option 1: Grant Admin Permissions (Recommended)
 
 1. **Log in to Guacamole web interface** as `guacadmin`:
-   - URL: `http://192.168.1.175:8080/guacamole/`
+   - URL: `http://192.168.50.5:8080/guacamole/`
    - Username: `guacadmin`
-   - Password: `guacadmin`
+   - Password: (your guacadmin password)
 
 2. **Go to Settings** (click on your username → Settings)
 

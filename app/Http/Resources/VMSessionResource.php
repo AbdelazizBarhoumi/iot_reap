@@ -19,6 +19,9 @@ class VMSessionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Get the effective protocol (session's override or template default)
+        $effectiveProtocol = $this->resource->getEffectiveProtocol();
+
         return [
             'id'           => $this->id,
             'status'       => $this->status->value,
@@ -27,14 +30,15 @@ class VMSessionResource extends JsonResource
                 'id'        => $this->template->id,
                 'name'      => $this->template->name,
                 'os_type'   => $this->template->os_type->value,
-                'protocol'  => $this->template->protocol->value,
+                'protocol'  => $effectiveProtocol->value,  // Use effective protocol
                 'cpu_cores' => $this->template->cpu_cores,
                 'ram_mb'    => $this->template->ram_mb,
                 'disk_gb'   => $this->template->disk_gb,
             ],
+            'protocol_override' => $this->protocol_override,
             'node_name'             => $this->node->name,
             'expires_at'            => $this->expires_at->toIso8601String(),
-            'time_remaining_seconds' => max(0, $this->expires_at->diffInSeconds(now())),
+            'time_remaining_seconds' => max(0, now()->diffInSeconds($this->expires_at, false)),
             // The VM's dynamically resolved DHCP IP address (null until ProxmoxIPResolver completes)
             'vm_ip_address'         => $this->ip_address,
             // Cached Guacamole connection ID — reused for the entire session.
@@ -59,6 +63,6 @@ class VMSessionResource extends JsonResource
 
         // Return the API endpoint that the frontend will call to get the actual token
         // The token endpoint will handle rate limiting, authorization, and token generation
-        return url("/api/sessions/{$this->id}/guacamole-token");
+        return url("/sessions/{$this->id}/guacamole-token");
     }
 }

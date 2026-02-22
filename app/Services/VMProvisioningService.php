@@ -31,6 +31,8 @@ class VMProvisioningService
     /**
      * Provision a new VM session for a user.
      *
+     * @param  array{username?: string, password?: string}|null  $credentials
+     * @param  string|null  $protocolOverride  Protocol to use instead of template default (rdp/vnc/ssh)
      * @throws \App\Exceptions\NoAvailableNodeException
      */
     public function provision(
@@ -38,12 +40,16 @@ class VMProvisioningService
         int $templateId,
         int $durationMinutes,
         VMSessionType $sessionType = VMSessionType::EPHEMERAL,
+        ?array $credentials = null,
+        ?string $returnSnapshot = null,
+        ?string $protocolOverride = null,
     ): VMSession {
         Log::info('Starting VM provisioning', [
             'user_id' => $user->id,
             'template_id' => $templateId,
             'duration_minutes' => $durationMinutes,
             'session_type' => $sessionType->value,
+            'protocol_override' => $protocolOverride,
         ]);
 
         // Validate template exists
@@ -59,10 +65,14 @@ class VMProvisioningService
         $session = $this->sessionRepository->create([
             'user_id' => $user->id,
             'template_id' => $template->id,
+            'proxmox_server_id' => $server->id,
             'node_id' => $node->id,
             'status' => VMSessionStatus::PENDING,
             'session_type' => $sessionType,
+            'protocol_override' => $protocolOverride,
             'expires_at' => now()->addMinutes($durationMinutes),
+            'credentials' => $credentials,
+            'return_snapshot' => $returnSnapshot,
         ]);
 
         Log::info('Created VM session record', [
@@ -75,9 +85,10 @@ class VMProvisioningService
             ->onQueue('default');
 
         if ($sessionType === VMSessionType::EPHEMERAL) {
-            // For ephemeral sessions, schedule cleanup job for when it expires
+            // For ephemeral sessions, schedule cleanup job to run after the session expires
+            // Use minutes relative from now, not an absolute datetime
             CleanupVMJob::dispatch($session)
-                ->delay($session->expires_at);
+                ->delay(now()->addMinutes($durationMinutes));
         }
 
         return $session;

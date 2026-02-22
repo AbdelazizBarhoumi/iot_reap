@@ -1,15 +1,21 @@
 /**
  * VM Session and Template API module.
- * Sprint 2 - Phase 2
+ * Sprint 2 - Phase 2 (Updated: removed /api/ prefix, uses web routes)
  */
 
 import type {
   ApiResponse,
+  ConnectionProfile,
   CreateVMSessionRequest,
   CreateVMTemplateRequest,
+  ExtendSessionRequest,
+  GuacamoleTokenResponse,
   ProxmoxNode,
   ProxmoxVM,
+  ProxmoxVMInfo,
+  TerminateSessionRequest,
   VMSession,
+  VMSnapshot,
   VMTemplate,
 } from '../types/vm.types';
 import client from './client';
@@ -18,11 +24,25 @@ import client from './client';
  * VM Session API
  */
 export const vmSessionApi = {
+  // helper for endpoint responses that sometimes wrap return values in
+  // `{ data: ... }` and sometimes return the resource directly.  the
+  // backend historically was inconsistent (index wraps, show/create do
+  // not), so be forgiving here so the frontend never receives `undefined`.
+  async unwrap<T>(axiosPromise: Promise<any>): Promise<T> {
+    const res = await axiosPromise;
+    const payload = res.data;
+    if (payload && typeof payload === 'object' && payload.data !== undefined) {
+      return payload.data as T;
+    }
+    return payload as T;
+  },
+
   /**
    * Get all sessions for the current user.
+   * `index` returns a wrapped payload, so we still access `.data` directly.
    */
   async list(): Promise<VMSession[]> {
-    const response = await client.get<ApiResponse<VMSession[]>>('/api/sessions');
+    const response = await client.get<ApiResponse<VMSession[]>>('/sessions');
     return response.data.data;
   },
 
@@ -30,23 +50,84 @@ export const vmSessionApi = {
    * Get a specific session by ID.
    */
   async get(sessionId: string): Promise<VMSession> {
-    const response = await client.get<ApiResponse<VMSession>>(`/api/sessions/${sessionId}`);
-    return response.data.data;
+    return this.unwrap<VMSession>(client.get(`/sessions/${sessionId}`));
   },
 
   /**
    * Create a new VM session.
    */
   async create(data: CreateVMSessionRequest): Promise<VMSession> {
-    const response = await client.post<ApiResponse<VMSession>>('/api/sessions', data);
-    return response.data.data;
+    return this.unwrap<VMSession>(client.post('/sessions', data));
   },
 
   /**
    * Terminate/delete a session.
    */
-  async terminate(sessionId: string): Promise<void> {
-    await client.delete(`/api/sessions/${sessionId}`);
+  async terminate(sessionId: string, options?: TerminateSessionRequest): Promise<void> {
+    await client.delete(`/sessions/${sessionId}`, { data: options });
+  },
+
+  /**
+   * Extend a session by a number of minutes.
+   */
+  async extend(sessionId: string, data?: ExtendSessionRequest): Promise<VMSession> {
+    return this.unwrap<VMSession>(
+      client.post(`/sessions/${sessionId}/extend`, data ?? { minutes: 30 }),
+    );
+  },
+
+  /**
+   * Fetch a one-time Guacamole auth token for an active session.
+   */
+  async getGuacamoleToken(sessionId: string): Promise<GuacamoleTokenResponse> {
+    const response = await client.get<GuacamoleTokenResponse>(
+      `/sessions/${sessionId}/guacamole-token`,
+    );
+    return response.data;
+  },
+
+  /**
+   * List available VM snapshots for a session.
+   */
+  async listSnapshots(sessionId: string): Promise<VMSnapshot[]> {
+    const response = await client.get<ApiResponse<VMSnapshot[]>>(
+      `/sessions/${sessionId}/snapshots`,
+    );
+    return response.data.data;
+  },
+};
+
+/**
+ * Connection Preferences API
+ */
+export const connectionPreferencesApi = {
+  /**
+   * Get all connection profiles for the current user, grouped by protocol.
+   */
+  async getAll(): Promise<{ rdp: ConnectionProfile[]; vnc: ConnectionProfile[]; ssh: ConnectionProfile[] }> {
+    const response = await client.get<ApiResponse<{ rdp: ConnectionProfile[]; vnc: ConnectionProfile[]; ssh: ConnectionProfile[] }>>('/connection-preferences');
+    return response.data.data;
+  },
+
+  /**
+   * Get connection preferences for a specific protocol.
+   */
+  async getByProtocol(protocol: string): Promise<{ protocol: string; parameters: Record<string, string> }> {
+    const response = await client.get<ApiResponse<{ protocol: string; parameters: Record<string, string> }>>(
+      `/connection-preferences/${protocol}`,
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Save connection preferences for a specific protocol.
+   */
+  async save(protocol: string, parameters: Record<string, string | boolean | number>): Promise<{ protocol: string; parameters: Record<string, string> }> {
+    const response = await client.put<ApiResponse<{ protocol: string; parameters: Record<string, string> }>>(
+      `/connection-preferences/${protocol}`,
+      { parameters },
+    );
+    return response.data.data;
   },
 };
 
@@ -58,7 +139,7 @@ export const vmTemplateApi = {
    * Get all active templates.
    */
   async list(): Promise<VMTemplate[]> {
-    const response = await client.get<ApiResponse<VMTemplate[]>>('/api/templates');
+    const response = await client.get<ApiResponse<VMTemplate[]>>('/admin/templates');
     return response.data.data;
   },
 
@@ -66,7 +147,30 @@ export const vmTemplateApi = {
    * Get a specific template by ID.
    */
   async get(templateId: number): Promise<VMTemplate> {
-    const response = await client.get<ApiResponse<VMTemplate>>(`/api/templates/${templateId}`);
+    const response = await client.get<ApiResponse<VMTemplate>>(`/admin/templates/${templateId}`);
+    return response.data.data;
+  },
+};
+
+/**
+ * Proxmox VM Browser API (available to all authenticated users)
+ */
+export const proxmoxVMApi = {
+  /**
+   * List all VMs from active Proxmox servers with node/server context.
+   */
+  async list(): Promise<ProxmoxVMInfo[]> {
+    const response = await client.get<ApiResponse<ProxmoxVMInfo[]>>('/proxmox-vms');
+    return response.data.data;
+  },
+
+  /**
+   * List snapshots for a specific Proxmox VM (before session creation).
+   */
+  async listSnapshots(serverId: number, nodeId: number, vmid: number): Promise<VMSnapshot[]> {
+    const response = await client.get<ApiResponse<VMSnapshot[]>>(
+      `/proxmox-vms/${serverId}/${nodeId}/${vmid}/snapshots`,
+    );
     return response.data.data;
   },
 };

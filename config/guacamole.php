@@ -13,7 +13,7 @@ return [
     | Public URL where Guacamole is accessible. Used to construct viewer URLs.
     | E.g., 'https://guacamole.example.com' or 'https://app.example.com/guacamole'
     */
-    'url' => env('GUACAMOLE_URL', 'http://192.168.1.161:8080/guacamole'),
+    'url' => env('GUACAMOLE_URL', 'http://192.168.50.5:8080/guacamole'),
 
     /*
     |--------------------------------------------------------------------------

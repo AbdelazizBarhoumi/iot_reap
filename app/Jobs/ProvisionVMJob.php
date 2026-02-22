@@ -95,11 +95,11 @@ class ProvisionVMJob implements ShouldQueue
                 'vm_id' => $vmId,
             ]);
 
-            // Update session as active
+            // Update session with vm_id and mark as provisioning (waiting for Guacamole connection setup)
+            // The CreateGuacamoleConnectionListener will then resolve IP and mark as ACTIVE
             $sessionRepository->update($session, [
                 'vm_id' => $vmId,
-                'status' => VMSessionStatus::ACTIVE,
-                'ip_address' => '0.0.0.0', // TODO: Get actual IP from Proxmox or Guacamole
+                'status' => VMSessionStatus::PROVISIONING,
             ]);
 
             Log::info('VM provisioning successful', [

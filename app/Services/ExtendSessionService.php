@@ -93,8 +93,10 @@ class ExtendSessionService
         ]);
 
         // Dispatch new cleanup job with updated expiration
+        // Calculate delay as the difference between expires_at and now, ensuring it's always in the future
+        $delayUntil = $session->expires_at->isFuture() ? $session->expires_at : now()->addMinutes(1);
         CleanupVMJob::dispatch($session)
-            ->delay($session->expires_at);
+            ->delay($delayUntil);
     }
 
     /**

@@ -24,7 +24,7 @@ export function useProxmoxServers(): UseProxmoxServersReturn {
     setError(null);
     
     try {
-      const response = await axios.get<{ data: ProxmoxServer[] }>('/api/proxmox-servers/active');
+      const response = await axios.get<{ data: ProxmoxServer[] }>('/proxmox-servers/active');
       setServers(response.data.data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch Proxmox servers';

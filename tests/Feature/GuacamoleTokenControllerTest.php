@@ -9,6 +9,8 @@ use App\Models\VMTemplate;
 use App\Models\ProxmoxNode;
 use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\TestCase;
 
 class GuacamoleTokenControllerTest extends TestCase
@@ -25,6 +27,8 @@ class GuacamoleTokenControllerTest extends TestCase
 
     public function test_user_can_get_token_for_their_active_session(): void
     {
+        Log::spy();
+
         $user = User::factory()->engineer()->create();
         $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
@@ -44,7 +48,7 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/sessions/{$session->id}/guacamole-token");
+            ->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -55,6 +59,16 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $this->assertStringContainsString('token=', $response->json('viewer_url'));
+
+        // ensure our trace/debug log was written
+        Log::shouldHaveReceived('debug')
+            ->with('Guacamole token details', 
+                Mockery::on(fn($arr) =>
+                    isset($arr['session_id']) && $arr['session_id'] === $session->id &&
+                    isset($arr['viewer_url']) && str_contains($arr['viewer_url'], 'token=') &&
+                    isset($arr['tunnel_url']) && str_starts_with($arr['tunnel_url'], 'ws://')
+                )
+            );
     }
 
     public function test_returns_403_for_non_session_owner(): void
@@ -74,7 +88,7 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($otherUser)
-            ->getJson("/api/sessions/{$session->id}/guacamole-token");
+            ->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertForbidden()
             ->assertJsonPath('message', 'Unauthorized: You do not own this session.');
@@ -95,7 +109,7 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/sessions/{$session->id}/guacamole-token");
+            ->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertStatus(422)
             ->assertJsonPath('message', 'Session not yet active. Please wait for VM to start.');
@@ -116,7 +130,7 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/sessions/{$session->id}/guacamole-token");
+            ->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertStatus(422)
             ->assertJsonPath('message', 'Session not yet active. Please wait for VM to start.');
@@ -139,7 +153,7 @@ class GuacamoleTokenControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/sessions/{$session->id}/guacamole-token");
+            ->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertStatus(422)
             ->assertJsonPath('message', 'Session has expired.');
@@ -170,13 +184,13 @@ class GuacamoleTokenControllerTest extends TestCase
         // First 10 requests should succeed
         for ($i = 0; $i < 10; $i++) {
             $response = $this->actingAs($user)
-                ->getJson("/api/sessions/{$sessions[$i]->id}/guacamole-token");
+                ->getJson("/sessions/{$sessions[$i]->id}/guacamole-token");
             $response->assertOk();
         }
 
         // 11th request should be rate limited
         $response = $this->actingAs($user)
-            ->getJson("/api/sessions/{$sessions[10]->id}/guacamole-token");
+            ->getJson("/sessions/{$sessions[10]->id}/guacamole-token");
 
         $response->assertStatus(429)
             ->assertJsonPath('message', 'Too many token requests. Please wait before trying again.');
@@ -196,7 +210,7 @@ class GuacamoleTokenControllerTest extends TestCase
                 'status' => VMSessionStatus::ACTIVE,
             ]);
 
-        $response = $this->getJson("/api/sessions/{$session->id}/guacamole-token");
+        $response = $this->getJson("/sessions/{$session->id}/guacamole-token");
 
         $response->assertUnauthorized();
     }

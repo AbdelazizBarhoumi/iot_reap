@@ -75,4 +75,28 @@ interface ProxmoxClientInterface
      * @throws ProxmoxApiException
      */
     public function getVMNetworkIP(string $nodeName, int $vmid): ?string;
+
+    /**
+     * List all snapshots of a VM.
+     *
+     * @return array<int, array{name: string, description: string, snaptime?: int, parent?: string}>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function listSnapshots(string $nodeName, int $vmid): array;
+
+    /**
+     * Revert a VM to a named snapshot.
+     *
+     * @throws ProxmoxApiException
+     */
+    public function revertSnapshot(string $nodeName, int $vmid, string $snapshotName): bool;
+
+    /**
+     * List VMs on a node without per-VM status enrichment (lightweight).
+     * Returns basic data from /nodes/{node}/qemu directly.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listVMsLight(string $nodeName): array;
 }

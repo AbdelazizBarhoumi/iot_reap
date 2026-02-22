@@ -6,31 +6,24 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Validates incoming preference settings before saving to the database.
- *
- * Only the session owner may update their preferences (enforced via authorize()).
- * All Guacamole parameter values are validated to be strings, numbers, or booleans.
+ * Validates requests to create a new connection profile.
  */
-class UpdateConnectionPreferencesRequest extends FormRequest
+class StoreConnectionProfileRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
+            'profile_name'                          => ['required', 'string', 'max:50', 'regex:/^[\w\s\-\.]+$/'],
             'is_default'                            => ['sometimes', 'boolean'],
-            'parameters'                            => ['required', 'array'],
+            'parameters'                            => ['sometimes', 'array'],
             // Network
             'parameters.port'                       => ['sometimes', 'integer', 'between:1,65535'],
             'parameters.connection-timeout'         => ['sometimes', 'integer', 'min:1', 'max:300'],
@@ -73,15 +66,12 @@ class UpdateConnectionPreferencesRequest extends FormRequest
     }
 
     /**
-     * Custom error messages.
-     *
      * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'parameters.required' => 'The parameters object is required.',
-            'parameters.array'    => 'Parameters must be an object.',
+            'profile_name.regex' => 'Profile name may only contain letters, numbers, spaces, hyphens, underscores, and dots.',
         ];
     }
 }

@@ -75,10 +75,11 @@ class TerminateVMJob implements ShouldQueue
 
             // Only proceed with VM operations if we have a VM ID
             if ($session->vm_id) {
-                // Step 2: Revert to snapshot if persistent and snapshot provided
-                if ($session->session_type === VMSessionType::PERSISTENT &&
-                    $this->returnSnapshot) {
-                    $this->revertSnapshot($session, $proxmoxClient);
+                // Step 2: Revert to snapshot if requested
+                // Use explicitly provided snapshot, or the one stored on the session
+                $snapshotToRevert = $this->returnSnapshot ?? $session->return_snapshot;
+                if ($snapshotToRevert) {
+                    $this->revertSnapshot($session, $proxmoxClient, $snapshotToRevert);
                 }
 
                 // Step 3: Stop or delete the VM
@@ -135,7 +136,21 @@ class TerminateVMJob implements ShouldQueue
                 'session_id' => $session->id,
                 'connection_id' => $session->guacamole_connection_id,
             ]);
+
+            // Clear the connection ID to prevent retry issues
+            $session->update(['guacamole_connection_id' => null]);
         } catch (Throwable $e) {
+            // Check if connection was already deleted (404)
+            if (str_contains($e->getMessage(), '404') || str_contains($e->getMessage(), 'Not found')) {
+                Log::info('Guacamole connection already deleted', [
+                    'session_id' => $session->id,
+                    'connection_id' => $session->guacamole_connection_id,
+                ]);
+                // Clear the connection ID since it no longer exists
+                $session->update(['guacamole_connection_id' => null]);
+                return; // Continue with VM cleanup
+            }
+
             Log::error('Failed to delete Guacamole connection', [
                 'session_id' => $session->id,
                 'connection_id' => $session->guacamole_connection_id,
@@ -149,40 +164,33 @@ class TerminateVMJob implements ShouldQueue
 
     /**
      * Revert the VM to a specific snapshot.
-     *
-     * Only called for persistent sessions when a snapshot name is provided.
      */
     private function revertSnapshot(
         VMSession $session,
         ProxmoxClientInterface $client,
+        string $snapshotName,
     ): void {
-        if (!$this->returnSnapshot) {
-            return;
-        }
-
         try {
             Log::info('Reverting VM to snapshot', [
                 'session_id' => $session->id,
                 'vm_id' => $session->vm_id,
-                'snapshot_name' => $this->returnSnapshot,
+                'snapshot_name' => $snapshotName,
             ]);
 
-            // TODO: Implement snapshot revert in ProxmoxClient when snapshot support is added
-            // For now, this method must be added to ProxmoxClientInterface
-            // $client->revertSnapshot(
-            //     nodeName: $session->node->name,
-            //     vmid: $session->vm_id,
-            //     snapshotName: $this->returnSnapshot,
-            // );
+            $client->revertSnapshot(
+                nodeName: $session->node->name,
+                vmid: $session->vm_id,
+                snapshotName: $snapshotName,
+            );
 
             Log::info('VM reverted to snapshot', [
                 'session_id' => $session->id,
-                'snapshot_name' => $this->returnSnapshot,
+                'snapshot_name' => $snapshotName,
             ]);
         } catch (Throwable $e) {
             Log::warning('Failed to revert to snapshot', [
                 'session_id' => $session->id,
-                'snapshot_name' => $this->returnSnapshot,
+                'snapshot_name' => $snapshotName,
                 'error' => $e->getMessage(),
             ]);
 
@@ -203,7 +211,30 @@ class TerminateVMJob implements ShouldQueue
     ): void {
         try {
             if ($session->session_type === VMSessionType::EPHEMERAL) {
-                // Delete ephemeral VMs
+                // For ephemeral VMs: Stop first, then delete
+                // Proxmox won't delete a running VM
+                Log::info('Stopping VM before deletion', [
+                    'session_id' => $session->id,
+                    'vm_id' => $session->vm_id,
+                ]);
+
+                try {
+                    $client->stopVM(
+                        nodeName: $session->node->name,
+                        vmid: $session->vm_id,
+                    );
+                    // Wait for VM to stop (up to 30 seconds)
+                    $this->waitForVMStopped($client, $session->node->name, $session->vm_id, 30);
+                } catch (Throwable $e) {
+                    // If stop fails (e.g., VM already stopped), try to proceed with delete
+                    Log::warning('VM stop failed, attempting delete anyway', [
+                        'session_id' => $session->id,
+                        'vm_id' => $session->vm_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                // Now delete the stopped VM
                 $client->deleteVM(
                     nodeName: $session->node->name,
                     vmid: $session->vm_id,
@@ -235,6 +266,47 @@ class TerminateVMJob implements ShouldQueue
 
             throw $e; // Will trigger retry
         }
+    }
+
+    /**
+     * Wait for a VM to reach stopped state.
+     */
+    private function waitForVMStopped(
+        ProxmoxClientInterface $client,
+        string $nodeName,
+        int $vmid,
+        int $timeoutSeconds
+    ): void {
+        $startTime = time();
+        $checkInterval = 2; // seconds
+
+        while (time() - $startTime < $timeoutSeconds) {
+            try {
+                $status = $client->getVMStatus($nodeName, $vmid);
+                // Proxmox returns status in the 'status' key of the response array
+                $vmState = $status['status'] ?? null;
+                if ($vmState === 'stopped') {
+                    Log::info('VM stopped successfully', [
+                        'vmid' => $vmid,
+                        'elapsed_seconds' => time() - $startTime,
+                    ]);
+                    return;
+                }
+            } catch (Throwable $e) {
+                // VM might not exist anymore, which is fine
+                Log::warning('Could not get VM status', [
+                    'vmid' => $vmid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            sleep($checkInterval);
+        }
+
+        Log::warning('VM did not stop within timeout, proceeding anyway', [
+            'vmid' => $vmid,
+            'timeout_seconds' => $timeoutSeconds,
+        ]);
     }
 
     /**
