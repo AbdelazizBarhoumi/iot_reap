@@ -279,7 +279,8 @@ export function GuacamoleViewer({
       console.debug('[GuacamoleViewer] tunnel url', tokenData.tunnel_url);
       console.debug('[GuacamoleViewer] connect params', connectParams);
       // Expose full URL for quick console inspection during development.
-      (window as Record<string, unknown>).lastGuacTunnelUrl =
+      // cast through unknown because TS thinks `window` is not indexable
+      ((window as unknown) as Record<string, unknown>).lastGuacTunnelUrl =
         `${tokenData.tunnel_url}?${connectParams}`;
     }
 

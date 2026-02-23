@@ -92,18 +92,28 @@ export function TerminateSessionButton({
 
     try {
       await vmSessionApi.terminate(sessionId, {
-        stop_vm: true,
-        return_snapshot: selectedSnapshot || null,
+        // we intentionally leave the VM running by default
+        stop_vm: false,
       });
-      setOpen(false);
+
+      // notify parent that the session is gone so they can refresh list
       onTerminated();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Failed to terminate session.';
+    } catch (err: unknown) {
+      interface AxiosErrorLike {
+        response?: { data?: { message?: string } };
+        message?: string;
+      }
+      const axiosErr = err as AxiosErrorLike;
+      const message =
+        axiosErr.response?.data?.message ||
+        axiosErr.message ||
+        "Failed to terminate session";
+
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, [sessionId, onTerminated, selectedSnapshot]);
+  }, [sessionId, onTerminated]);
 
   return (
     <>
@@ -126,8 +136,9 @@ export function TerminateSessionButton({
           <DialogHeader>
             <DialogTitle>Terminate Session?</DialogTitle>
             <DialogDescription>
-              This will immediately end your remote desktop connection, stop the VM,
-              and clean up all resources. This action cannot be undone.
+              This will immediately end your remote desktop connection and clear
+              Guacamole resources. <strong>The VM itself will continue running</strong> so you
+              can reconnect later if needed. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 

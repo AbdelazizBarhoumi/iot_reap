@@ -23,15 +23,10 @@ import {
   AlertCircle,
   ArrowLeft,
   Copy,
-  Cpu,
-  HardDrive,
   Loader2,
   Monitor,
-  Skull,
-  Terminal,
-  Zap,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { SessionCountdown } from '@/components/SessionCountdown';
 import { SessionExtendButton } from '@/components/SessionExtendButton';
@@ -47,17 +42,6 @@ import type { VMSessionStatus, VMSession } from '@/types/vm.types';
 
 // ---------- Constants ----------
 
-const OS_ICONS: Record<string, typeof Monitor> = {
-  windows: Monitor,
-  linux: Terminal,
-  kali: Skull,
-};
-
-const OS_COLORS: Record<string, string> = {
-  windows: 'bg-blue-500',
-  linux: 'bg-orange-500',
-  kali: 'bg-purple-500',
-};
 
 const STATUS_COLORS: Record<VMSessionStatus, string> = {
   pending: 'bg-yellow-500',
@@ -75,15 +59,32 @@ const STATUS_COLORS: Record<VMSessionStatus, string> = {
 // delivers a JsonResource wrapper (`{ data: {...} }`) instead of the raw
 // session.  We'll unwrap it in the component logic below.
 interface SessionPageProps {
-  session: any;
+  session: unknown;
 }
 
 export default function SessionPage({ session: initialSession }: SessionPageProps) {
   const page = usePage();
   // initialSession may be a JsonResource wrapper ({ data: { … } }) when rendered
-  // by Inertia, so we unwrap it to get the raw VMSession object.
-  const rawInitial: any = initialSession ?? (page.props.session as any);
-  const unwrapped = rawInitial?.data ?? rawInitial;
+  // by Inertia, so we unwrap it to get the raw VMSession object.  we use
+  // `unknown` here and perform a type guard rather than relying on `any`.
+  const rawInitial: unknown = initialSession ?? page.props.session;
+
+  function unwrap(raw: unknown): VMSession | null {
+    if (!raw) {
+      return null;
+    }
+    if (
+      typeof raw === 'object' &&
+      raw !== null &&
+      'data' in (raw as Record<string, unknown>)
+    ) {
+      return (raw as { data: VMSession }).data;
+    }
+    return raw as VMSession;
+  }
+
+  const unwrapped = unwrap(rawInitial);
+
   // fall back to pathname so we can still fetch data when Inertia props are
   // missing (full page refresh or direct URL entry)
   const urlId = window.location.pathname.split('/').pop() || undefined;
@@ -98,14 +99,15 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
     error,
     refetch,
   } = useSessionStatus(sessionId, {
-    onReady: (s) => {
-    },
-    onExpiring: (s) => {
+    onReady: () => {},
+    onExpiring: () => {
       setExpiringAlert(true);
     },
-    onEnded: (s) => {
-      // session no longer available – send user back to list
-      router.visit('/sessions');
+    onEnded: () => {
+      // by the time we hear the 'ended' event the record may already be
+      // expired/terminated. the user should return to dashboard rather than
+      // stay on a dead session.
+      router.visit('/dashboard');
     },
   });
 
@@ -113,6 +115,19 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
   // hook performs its first HTTP request. otherwise `session` will be null
   // until the client response arrives and the UI would render nothing.
   const displaySession = session ?? unwrapped; // use unwrapped prop from above
+
+  // If the initial data we got from server is already expired/failed/terminated
+  // then we shouldn't render the viewer at all. perform a client redirect back
+  // to dashboard immediately (this can happen when the user manually types the
+  // URL after the backend has marked the session ended).
+  useEffect(() => {
+    if (
+      displaySession &&
+      ['expired', 'terminated', 'failed'].includes(displaySession.status)
+    ) {
+      router.visit('/dashboard');
+    }
+  }, [displaySession]);
 
   // Track the live expires_at (may differ from server after extend)
   const [overrideExpiresAt, setOverrideExpiresAt] = useState<string | null>(null);
@@ -189,26 +204,9 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
   // clarity in the rest of this function.
   const ds = displaySession as VMSession;
 
-  // Occasionally the prop or API may return a session object that hasn't been
-  // hydrated with its `template` relation yet (this was happening during the
-  // Inertia visit in the browser, causing a crash).  Treat that as a
-  // transitional loading state and log for investigation.
-  if (!ds.template) {
-    return (
-      <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Loading Session…" />
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Loading session details…</p>
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
 
-  const OSIcon = OS_ICONS[ds.template.os_type] ?? Monitor;
-  const osColor = OS_COLORS[ds.template.os_type] ?? 'bg-gray-500';
+  const OSIcon = Monitor;
+  const osColor = 'bg-gray-500';
   const statusColor = STATUS_COLORS[ds.status as VMSessionStatus];
   const isActive = ds.status === 'active';
   const isAlive = isActive || ds.status === 'expiring';
@@ -237,7 +235,7 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
               <OSIcon className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{ds.template.name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Session {ds.id.substring(0,8)}</h1>
               <div className="mt-2 flex items-center gap-2">
                 <code className="rounded bg-muted px-2 py-1 text-sm text-muted-foreground">
                   {ds.id}
@@ -310,17 +308,12 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
                 <CardDescription>Configuration and timing</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <InfoRow label="Session Type">
-                  <Badge variant="outline" className="capitalize">
-                    {ds.session_type}
-                  </Badge>
-                </InfoRow>
 
                 <InfoRow label="Node">{ds.node_name}</InfoRow>
 
                 <InfoRow label="Protocol">
                   <Badge variant="outline" className="uppercase">
-                    {ds.template.protocol}
+                    {ds.protocol}
                   </Badge>
                 </InfoRow>
 
@@ -343,22 +336,6 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
             </Card>
 
             {/* Template Specs */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Specifications</CardTitle>
-                <CardDescription>Template resources</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <SpecRow icon={Cpu} label="CPU Cores" value={`${ds.template.cpu_cores}`} />
-                <SpecRow icon={Zap} label="RAM" value={`${ds.template.ram_mb / 1024} GB`} />
-                <SpecRow icon={HardDrive} label="Disk" value={`${ds.template.disk_gb} GB`} />
-                <SpecRow
-                  label="OS Type"
-                  value={ds.template.os_type}
-                  capitalize
-                />
-              </CardContent>
-            </Card>
           </div>
 
           {/* Main — Guacamole viewer */}
@@ -377,7 +354,7 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
               <GuacamoleViewer
                 sessionId={ds.id}
                 isActive={isAlive}
-                protocol={ds.template.protocol}
+                protocol={ds.protocol}
                 vmIpAddress={ds.vm_ip_address}
               />
             </CardContent>
@@ -395,25 +372,6 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
     <div>
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="mt-1 font-medium">{children}</div>
-    </div>
-  );
-}
-
-interface SpecRowProps {
-  icon?: typeof Cpu;
-  label: string;
-  value: string;
-  capitalize?: boolean;
-}
-
-function SpecRow({ icon: Icon, label, value, capitalize = false }: SpecRowProps) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        {Icon && <Icon className="h-4 w-4" />}
-        {label}
-      </span>
-      <span className={`font-medium ${capitalize ? 'capitalize' : ''}`}>{value}</span>
     </div>
   );
 }

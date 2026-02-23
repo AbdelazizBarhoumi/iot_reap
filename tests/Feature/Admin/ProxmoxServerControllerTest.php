@@ -54,6 +54,7 @@ class ProxmoxServerControllerTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->getJson('/admin/proxmox-servers');
 
+
         $response->assertOk()
             ->assertJsonStructure([
                 'data' => [
@@ -622,7 +623,7 @@ class ProxmoxServerControllerTest extends TestCase
         $inactive = ProxmoxServer::factory()->create(['is_active' => false]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')
@@ -648,7 +649,7 @@ class ProxmoxServerControllerTest extends TestCase
         ProxmoxServer::factory()->create(['is_active' => true]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonMissing(['token_id'])
@@ -660,7 +661,7 @@ class ProxmoxServerControllerTest extends TestCase
      */
     public function test_unauthenticated_cannot_access_active_servers(): void
     {
-        $response = $this->getJson('/api/proxmox-servers/active');
+        $response = $this->getJson('/proxmox-servers/active');
 
         $response->assertUnauthorized();
     }
@@ -673,7 +674,7 @@ class ProxmoxServerControllerTest extends TestCase
         ProxmoxServer::factory(3)->create(['is_active' => false]);
 
         $response = $this->actingAs($this->engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(0, 'data');
@@ -725,7 +726,7 @@ class ProxmoxServerControllerTest extends TestCase
 
         // Verify engineer can see both for selection
         $response = $this->actingAs($this->engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');
@@ -738,7 +739,7 @@ class ProxmoxServerControllerTest extends TestCase
 
         // Engineer now sees only active (second) server
         $response = $this->actingAs($this->engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');

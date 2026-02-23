@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\VMSessionType;
 use App\Enums\VMSessionStatus;
 use App\Http\Requests\CreateVMSessionRequest;
 use App\Http\Requests\ExtendVMSessionRequest;
@@ -12,12 +11,10 @@ use App\Events\VMSessionActivated;
 use App\Events\VMSessionCreated;
 use App\Jobs\TerminateVMJob;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Repositories\VMSessionRepository;
 use App\Services\ExtendSessionService;
 use App\Services\ProxmoxClient;
 use App\Services\QuotaService;
-use App\Services\VMProvisioningService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,7 +33,6 @@ class VMSessionController extends Controller
      */
     public function __construct(
         private readonly VMSessionRepository $sessionRepository,
-        private readonly VMProvisioningService $provisioningService,
         private readonly ExtendSessionService $extendSessionService,
         private readonly QuotaService $quotaService,
     ) {}
@@ -69,102 +65,46 @@ class VMSessionController extends Controller
         $durationMinutes = $request->getDurationMinutes();
 
         try {
-            // if the caller explicitly requested to use the existing VM instead
-            // of cloning a template, handle that as a special case. the
-            // frontend only enables this flag for non-template VMs coming from
-            // the dashboard browser.
-            if ($request->validated('use_existing') && $request->validated('vmid')) {
-                // we still need a template_id to satisfy the non-null column
-                // so either use the value provided or auto-register one based
-                // on the vmid. this does **not** trigger a clone.
-                $templateId = $request->validated('template_id')
-                    ?? $this->findOrCreateTemplate($request)->id;
+// always create a session for the supplied existing VM
+        $node = \App\Models\ProxmoxNode::findOrFail($request->validated('node_id'));
+        $serverId = $node->proxmox_server_id;
 
-                $node = \App\Models\ProxmoxNode::findOrFail($request->validated('node_id'));
-                $serverId = $node->proxmox_server_id;
+        Log::info('Creating session for existing VM', [
+            'user_id' => $request->user()->id,
+            'vmid' => $request->validated('vmid'),
+            'node_id' => $node->id,
+            'duration_minutes' => $durationMinutes,
+        ]);
 
-                Log::info('Creating direct session to existing VM', [
-                    'user_id' => $request->user()->id,
-                    'vmid' => $request->validated('vmid'),
-                    'node_id' => $node->id,
-                    'template_id' => $templateId,
-                    'duration_minutes' => $durationMinutes,
-                ]);
+        $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
 
-                // direct connections still count against quota
-                $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
+        // Determine protocol order: explicit param, connection preference override,
+        // or fallback default (rdp) to avoid null values that would break the resource.
+        $protocol = $request->validated('protocol')
+            ?? $request->validated('connection_preference_protocol')
+            ?? 'rdp';
 
-                $sessionData = [
-                    'user_id' => $request->user()->id,
-                    'template_id' => $templateId,
-                    'proxmox_server_id' => $serverId,
-                    'node_id' => $node->id,
-                    'vm_id' => $request->validated('vmid'),
-                    'status' => VMSessionStatus::PENDING,
-                    'session_type' => VMSessionType::from($request->validated('session_type')),
-                    // do NOT override protocol for direct connections; use template default
-                    'protocol_override' => null,
-                    'expires_at' => now()->addMinutes($durationMinutes),
-                    'credentials' => array_filter([
-                        'username' => $request->validated('username'),
-                        'password' => $request->validated('password'),
-                    ]),
-                    'return_snapshot' => $request->validated('return_snapshot'),
-                ];
+        $sessionData = [
+            'user_id' => $request->user()->id,
+            'proxmox_server_id' => $serverId,
+            'node_id' => $node->id,
+            'vm_id' => $request->validated('vmid'),
+            'status' => VMSessionStatus::PENDING,
+            'protocol' => $protocol,
+            'expires_at' => now()->addMinutes($durationMinutes),
+            'credentials' => array_filter([
+                'username' => $request->validated('username'),
+                'password' => $request->validated('password'),
+            ]),
+            'return_snapshot' => $request->validated('return_snapshot'),
+        ];
 
-                $session = $this->sessionRepository->create($sessionData);
+        $session = $this->sessionRepository->create($sessionData);
 
-                // fire the usual events so the Guacamole listener will pick up the
-                // vm_id and start the machine / create a connection.
-                event(new VMSessionCreated($session));
-                event(new VMSessionActivated($session));
+        event(new VMSessionCreated($session));
+        event(new VMSessionActivated($session));
 
-                return response()->json(new VMSessionResource($session), 201);
-            }
-
-            // Resolve template_id: either directly provided or auto-registered from vmid
-            $templateId = $request->validated('template_id');
-
-            if (!$templateId && $request->validated('vmid')) {
-                $templateId = $this->findOrCreateTemplate($request)->id;
-            }
-
-            Log::info('Creating new VM session', [
-                'user_id' => $request->user()->id,
-                'template_id' => $templateId,
-                'duration_minutes' => $durationMinutes,
-            ]);
-
-            // Check quota before provisioning
-            $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
-
-            // Build credentials from request (if provided)
-            $credentials = null;
-            if ($request->validated('username') || $request->validated('password')) {
-                $credentials = array_filter([
-                    'username' => $request->validated('username'),
-                    'password' => $request->validated('password'),
-                ]);
-            }
-
-            // Protocol override - use request protocol or connection_preference_protocol
-            $protocolOverride = $request->validated('protocol')
-                ?? $request->validated('connection_preference_protocol');
-
-            $session = $this->provisioningService->provision(
-                user: $request->user(),
-                templateId: $templateId,
-                durationMinutes: $durationMinutes,
-                sessionType: VMSessionType::from($request->validated('session_type')),
-                credentials: $credentials,
-                returnSnapshot: $request->validated('return_snapshot'),
-                protocolOverride: $protocolOverride,
-            );
-
-            return response()->json(
-                new VMSessionResource($session),
-                201
-            );
+        return response()->json(new VMSessionResource($session), 201);
         } catch (\Exception $e) {
             Log::warning('Failed to create VM session', [
                 'user_id' => $request->user()->id,
@@ -181,28 +121,6 @@ class VMSessionController extends Controller
         }
     }
 
-    /**
-     * Find or auto-register a VMTemplate from a Proxmox VMID.
-     * Called when launching a session directly from the VM browser.
-     */
-    private function findOrCreateTemplate(CreateVMSessionRequest $request): VMTemplate
-    {
-        $vmid = $request->validated('vmid');
-
-        return VMTemplate::firstOrCreate(
-            ['template_vmid' => $vmid],
-            [
-                'name'      => $request->validated('vm_name') ?? "VM-{$vmid}",
-                'os_type'   => $request->validated('os_type') ?? 'linux',
-                'protocol'  => $request->validated('protocol') ?? 'vnc',
-                'cpu_cores' => 2,
-                'ram_mb'    => 2048,
-                'disk_gb'   => 40,
-                'tags'      => [],
-                'is_active' => true,
-            ],
-        );
-    }
 
     /**
      * List available snapshots for a session's VM.
@@ -244,13 +162,32 @@ class VMSessionController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function show(Request $request, string $sessionId): JsonResponse|InertiaResponse
+    public function show(Request $request, string $sessionId): JsonResponse|InertiaResponse|
+        \Illuminate\Http\RedirectResponse
     {
         $session = VMSession::findOrFail($sessionId);
 
         // Ensure user can only see their own sessions
         if ($session->user_id !== $request->user()->id) {
             Gate::authorize('admin-only');
+        }
+
+        // once the session has ended we no longer allow the browser page to
+        // render. users should be sent back to the dashboard (or API clients
+        // should receive a 404 so they can handle it however they like).
+        if (in_array($session->status, [
+            VMSessionStatus::EXPIRED,
+            VMSessionStatus::TERMINATED,
+            VMSessionStatus::FAILED,
+        ], true)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Session is no longer available',
+                ], 404);
+            }
+
+            return redirect()->route('dashboard')
+                ->with('error', 'The requested session has expired or ended.');
         }
 
         if ($request->wantsJson()) {

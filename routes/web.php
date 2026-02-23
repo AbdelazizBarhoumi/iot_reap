@@ -7,7 +7,6 @@ use App\Http\Controllers\ProxmoxVMBrowserController;
 use App\Http\Controllers\VMSessionController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
-use App\Http\Controllers\Admin\VMTemplateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -68,14 +67,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::post('/{node}/vms/{vmid}/reboot', [ProxmoxNodeController::class, 'rebootVM'])->name('admin.nodes.vms.reboot');
         Route::post('/{node}/vms/{vmid}/shutdown', [ProxmoxNodeController::class, 'shutdownVM'])->name('admin.nodes.vms.shutdown');
     });
-    // Templates API & page routes. index() handles both Inertia and JSON.
-    Route::prefix('/templates')->group(function () {
-        Route::get('/', [VMTemplateController::class, 'index'])->name('admin.templates.index');
-        Route::post('/', [VMTemplateController::class, 'store'])->name('admin.templates.store');
-        Route::get('/{template}', [VMTemplateController::class, 'show'])->name('admin.templates.show');
-        Route::patch('/{template}', [VMTemplateController::class, 'update'])->name('admin.templates.update');
-        Route::delete('/{template}', [VMTemplateController::class, 'destroy'])->name('admin.templates.destroy');
-    });
+
     // Proxmox servers - index handles both page and JSON
     Route::prefix('proxmox-servers')->group(function () {
         Route::get('/', [ProxmoxServerController::class, 'index'])->name('admin.proxmox-servers.index');

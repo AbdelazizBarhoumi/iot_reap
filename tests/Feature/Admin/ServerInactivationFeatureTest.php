@@ -5,7 +5,6 @@ namespace Tests\Feature\Admin;
 use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Models\User;
 use App\Enums\UserRole;
 use App\Enums\VMSessionStatus;
@@ -56,18 +55,14 @@ class ServerInactivationFeatureTest extends TestCase
             'max_vms' => 5,
         ]);
 
-        $template = VMTemplate::factory()->create();
-
         // Create 3 active sessions
         for ($i = 0; $i < 3; $i++) {
             VMSession::create([
                 'user_id' => $engineer->id,
-                'template_id' => $template->id,
                 'proxmox_server_id' => $server->id,
                 'node_id' => $node->id,
                 'vm_id' => 100 + $i,
                 'status' => VMSessionStatus::ACTIVE,
-                'session_type' => 'ephemeral',
                 'expires_at' => now()->addHours(2),
             ]);
         }
@@ -122,7 +117,7 @@ class ServerInactivationFeatureTest extends TestCase
         ]);
 
         $response = $this->actingAs($engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk();
         $response->assertJsonPath('data.0.name', 'Active Server');
@@ -166,7 +161,7 @@ class ServerInactivationFeatureTest extends TestCase
 
         $payload = [
             'name' => 'New Cluster',
-            'host' => 'fix',
+            'host' => '192.168.1.200',
             'port' => 8006,
             'realm' => 'pam',
             'token_id' => 'test_token',
@@ -196,7 +191,6 @@ class ServerInactivationFeatureTest extends TestCase
     public function test_inactive_server_excluded_from_user_sessions(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->create();
 
         $activeServer = ProxmoxServer::create([
             'name' => 'Active Server',
@@ -237,30 +231,30 @@ class ServerInactivationFeatureTest extends TestCase
             'max_vms' => 5,
         ]);
 
-        // Create sessions on both servers
+        // Create sessions on both servers using dummy VM IDs
         VMSession::create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'proxmox_server_id' => $activeServer->id,
             'node_id' => $activeNode->id,
+            'vm_id' => 501,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => 'ephemeral',
+            'protocol' => 'rdp',
             'expires_at' => now()->addHours(2),
         ]);
 
         VMSession::create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'proxmox_server_id' => $inactiveServer->id,
             'node_id' => $inactiveNode->id,
+            'vm_id' => 502,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => 'ephemeral',
+            'protocol' => 'rdp',
             'expires_at' => now()->addHours(2),
         ]);
 
         // Get user's sessions (only on active servers)
         $response = $this->actingAs($user)
-            ->getJson('/api/sessions');
+            ->getJson('/sessions');
 
         $response->assertOk();
 

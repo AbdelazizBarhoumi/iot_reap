@@ -57,7 +57,9 @@ class TerminateVMSessionRequest extends FormRequest
      */
     public function shouldStopVm(): bool
     {
-        return $this->validated('stop_vm') ?? true;
+        // by default we leave the VM running; the frontend must explicitly
+        // pass `stop_vm: true` if it wants the guest powered off.
+        return $this->validated('stop_vm') ?? false;
     }
 
     /**

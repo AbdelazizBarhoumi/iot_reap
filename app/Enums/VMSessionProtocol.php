@@ -2,10 +2,11 @@
 
 namespace App\Enums;
 
-enum VMSessionType: string
+enum VMSessionProtocol: string
 {
-    case EPHEMERAL = 'ephemeral';
-    case PERSISTENT = 'persistent';
+    case RDP = 'rdp';
+    case VNC = 'vnc';
+    case SSH = 'ssh';
 
     public static function values(): array
     {

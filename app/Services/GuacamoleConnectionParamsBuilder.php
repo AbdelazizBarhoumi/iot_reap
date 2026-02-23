@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\VMTemplateProtocol;
+use App\Enums\VMSessionProtocol;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Repositories\UserConnectionPreferenceRepository;
@@ -42,17 +42,17 @@ class GuacamoleConnectionParamsBuilder
             );
         }
 
-        // Use session's effective protocol (override or template default)
-        $protocol = $session->getEffectiveProtocol();
+        // Use session's effective protocol (now stored directly on session)
+        $protocol = $session->getProtocol();
 
         // Load user's saved preferences for this protocol (null if none saved)
         $preference    = $this->preferenceRepository->findByUser($user, $protocol->value);
         $userSettings  = $preference?->parameters ?? [];
 
         return match ($protocol) {
-            VMTemplateProtocol::RDP => $this->buildRDPParams($session->ip_address, $session, $userSettings),
-            VMTemplateProtocol::VNC => $this->buildVNCParams($session->ip_address, $session, $userSettings),
-            VMTemplateProtocol::SSH => $this->buildSSHParams($session->ip_address, $session, $userSettings),
+            VMSessionProtocol::RDP => $this->buildRDPParams($session->ip_address, $session, $userSettings),
+            VMSessionProtocol::VNC => $this->buildVNCParams($session->ip_address, $session, $userSettings),
+            VMSessionProtocol::SSH => $this->buildSSHParams($session->ip_address, $session, $userSettings),
             default => throw new RuntimeException("Unsupported protocol: {$protocol->value}"),
         };
     }

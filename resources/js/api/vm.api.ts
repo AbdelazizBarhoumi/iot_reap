@@ -3,11 +3,11 @@
  * Sprint 2 - Phase 2 (Updated: removed /api/ prefix, uses web routes)
  */
 
+import type { AxiosResponse } from 'axios';
 import type {
   ApiResponse,
   ConnectionProfile,
   CreateVMSessionRequest,
-  CreateVMTemplateRequest,
   ExtendSessionRequest,
   GuacamoleTokenResponse,
   ProxmoxNode,
@@ -16,24 +16,33 @@ import type {
   TerminateSessionRequest,
   VMSession,
   VMSnapshot,
-  VMTemplate,
 } from '../types/vm.types';
 import client from './client';
 
 /**
  * VM Session API
  */
+
 export const vmSessionApi = {
   // helper for endpoint responses that sometimes wrap return values in
   // `{ data: ... }` and sometimes return the resource directly.  the
   // backend historically was inconsistent (index wraps, show/create do
   // not), so be forgiving here so the frontend never receives `undefined`.
-  async unwrap<T>(axiosPromise: Promise<any>): Promise<T> {
+  async unwrap<T>(axiosPromise: Promise<AxiosResponse<unknown>>): Promise<T> {
     const res = await axiosPromise;
-    const payload = res.data;
-    if (payload && typeof payload === 'object' && payload.data !== undefined) {
-      return payload.data as T;
+    const payload = res.data as unknown;
+
+    // some endpoints wrap responses in `{ data: ... }` while others
+    // return the resource directly.  guard against both forms without
+    // resorting to `any`.
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'data' in (payload as Record<string, unknown>)
+    ) {
+      return (payload as { data: T }).data;
     }
+
     return payload as T;
   },
 
@@ -134,23 +143,6 @@ export const connectionPreferencesApi = {
 /**
  * VM Template API (public endpoints)
  */
-export const vmTemplateApi = {
-  /**
-   * Get all active templates.
-   */
-  async list(): Promise<VMTemplate[]> {
-    const response = await client.get<ApiResponse<VMTemplate[]>>('/admin/templates');
-    return response.data.data;
-  },
-
-  /**
-   * Get a specific template by ID.
-   */
-  async get(templateId: number): Promise<VMTemplate> {
-    const response = await client.get<ApiResponse<VMTemplate>>(`/admin/templates/${templateId}`);
-    return response.data.data;
-  },
-};
 
 /**
  * Proxmox VM Browser API (available to all authenticated users)
@@ -187,36 +179,6 @@ export const adminApi = {
     return response.data.data;
   },
 
-  /**
-   * Get all templates (admin view).
-   */
-  async getTemplates(): Promise<VMTemplate[]> {
-    const response = await client.get<ApiResponse<VMTemplate[]>>('/admin/templates');
-    return response.data.data;
-  },
-
-  /**
-   * Create a new template.
-   */
-  async createTemplate(data: CreateVMTemplateRequest): Promise<VMTemplate> {
-    const response = await client.post<VMTemplate>('/admin/templates', data);
-    return response.data;
-  },
-
-  /**
-   * Update a template.
-   */
-  async updateTemplate(templateId: number, data: Partial<CreateVMTemplateRequest>): Promise<VMTemplate> {
-    const response = await client.put<VMTemplate>(`/admin/templates/${templateId}`, data);
-    return response.data;
-  },
-
-  /**
-   * Delete a template.
-   */
-  async deleteTemplate(templateId: number): Promise<void> {
-    await client.delete(`/admin/templates/${templateId}`);
-  },
 
   /**
    * Get all VMs on a node (running + stopped).

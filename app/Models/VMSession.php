@@ -3,8 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
-use App\Enums\VMTemplateProtocol;
+use App\Enums\VMSessionProtocol;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,13 +14,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property string $user_id
- * @property int $template_id
  * @property int|null $proxmox_server_id
  * @property int $node_id
  * @property int|null $vm_id
  * @property VMSessionStatus $status
- * @property VMSessionType $session_type
- * @property string|null $protocol_override
+ * @property string|null $protocol
  * @property string|null $ip_address
  * @property int|null $guacamole_connection_id
  * @property \DateTime $expires_at
@@ -34,13 +31,11 @@ class VMSession extends Model
 
     protected $fillable = [
         'user_id',
-        'template_id',
         'proxmox_server_id',
         'node_id',
         'vm_id',
         'status',
-        'session_type',
-        'protocol_override',
+        'protocol',
         'ip_address',
         'credentials',
         'return_snapshot',
@@ -50,37 +45,39 @@ class VMSession extends Model
 
     protected $casts = [
         'status' => VMSessionStatus::class,
-        'session_type' => VMSessionType::class,
-        'expires_at' => 'datetime',
-        'template_id' => 'integer',
+                'expires_at' => 'datetime',
         'proxmox_server_id' => 'integer',
         'node_id' => 'integer',
         'vm_id' => 'integer',
         'guacamole_connection_id' => 'integer',
         'credentials' => 'encrypted:array',
+        'protocol' => VMSessionProtocol::class,
     ];
 
     /**
      * Get the effective protocol for this session.
-     * Uses protocol_override if set, otherwise falls back to template protocol.
+     * After the template table was removed the protocol is stored directly on
+     * the session row.  There is no longer a separate "override"; the column
+     * was renamed from `protocol_override` to plain `protocol` during migration.
+     *
+     * The value is always present when a session is created via the normal
+     * provisioning flow, so this method simply casts it to the enum.  A runtime
+     * exception will be thrown if somehow the column is null (indicates a bug).
      */
-    public function getEffectiveProtocol(): VMTemplateProtocol
+    public function getProtocol(): VMSessionProtocol
     {
-        if ($this->protocol_override) {
-            return VMTemplateProtocol::from($this->protocol_override);
+        if (empty($this->protocol)) {
+            throw new \RuntimeException("VMSession {$this->id} has no protocol set");
         }
 
-        return $this->template->protocol;
+        // The `protocol` attribute is cast to VMSessionProtocol in $casts, so we
+        // can return it directly rather than constructing a new enum instance.
+        return $this->protocol;
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function template(): BelongsTo
-    {
-        return $this->belongsTo(VMTemplate::class);
     }
 
     public function proxmoxServer(): BelongsTo

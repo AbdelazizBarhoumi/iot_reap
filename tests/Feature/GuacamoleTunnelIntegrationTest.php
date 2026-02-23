@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
 use App\Models\User;
-use App\Models\VMTemplate;
 use App\Models\VMSession;
 use Tests\TestCase;
 
@@ -50,13 +49,11 @@ class GuacamoleTunnelIntegrationTest extends TestCase
         $connectionId = env('TEST_GUAC_CONNECTION_ID', 31);
 
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
 
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
                 'guacamole_connection_id' => $connectionId,

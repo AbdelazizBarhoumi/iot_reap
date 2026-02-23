@@ -5,9 +5,10 @@
  * These preferences are applied when building the Guacamole connection to a VM.
  */
 
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Loader2, Monitor, Plus, Save, Star, Terminal, Trash2, Wifi } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import client from '@/api/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,12 +29,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import client from '@/api/client';
 
 interface ConnectionProfile {
   profile_name: string;
   is_default: boolean;
-  parameters: Record<string, any>;
+  parameters: Record<string, string>;
 }
 
 interface ConnectionPreferencesPageProps {
@@ -56,7 +56,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // Helper to convert any null/undefined values to empty strings and ensure all entries are strings.
-function normalizeParams(raw: Record<string, any> | undefined | null): Record<string, string> {
+function normalizeParams(raw: Record<string, unknown> | undefined | null): Record<string, string> {
   if (!raw) return {};
   const result: Record<string, string> = {};
   Object.entries(raw).forEach(([key, value]) => {

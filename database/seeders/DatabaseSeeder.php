@@ -6,7 +6,6 @@ use App\Enums\ProxmoxNodeStatus;
 use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -28,8 +27,7 @@ class DatabaseSeeder extends Seeder
         // Seed 7 Proxmox nodes
         $this->seedProxmoxNodes();
 
-        // Seed 3 VM templates (Windows 11, Ubuntu 22.04, Kali Linux)
-        $this->seedVMTemplates();
+        // VM templates are no longer used; seeding skipped
 
         // Seed 2 demo VM sessions
         $this->seedVMSessions($testUser);
@@ -55,37 +53,27 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    /**
-     * Seed Windows 11, Ubuntu 22.04, and Kali Linux templates.
-     */
-    private function seedVMTemplates(): void
-    {
-        VMTemplate::factory()->windows11()->create();
-        VMTemplate::factory()->ubuntu2204()->create();
-        VMTemplate::factory()->kaliLinux()->create();
-    }
 
     /**
      * Seed demo VM sessions for testing.
      */
     private function seedVMSessions(User $user): void
     {
-        $template = VMTemplate::where('name', 'Windows 11')->first();
         $node = ProxmoxNode::where('status', ProxmoxNodeStatus::ONLINE)->first();
 
-        if ($template && $node) {
-            // Create an active demo session
+        if ($node) {
+            // Create an active demo session (using placeholder vmid)
             VMSession::factory()->active()->create([
                 'user_id' => $user->id,
-                'template_id' => $template->id,
                 'node_id' => $node->id,
+                'vm_id' => 100,
             ]);
 
             // Create a pending demo session
             VMSession::factory()->pending()->create([
                 'user_id' => $user->id,
-                'template_id' => $template->id,
                 'node_id' => $node->id,
+                'vm_id' => 101,
             ]);
         }
     }

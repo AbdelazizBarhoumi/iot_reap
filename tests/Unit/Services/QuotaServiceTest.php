@@ -3,12 +3,10 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Services\QuotaService;
 use Tests\TestCase;
 

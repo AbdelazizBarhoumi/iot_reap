@@ -6,7 +6,6 @@ use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
 use App\Models\VMSession;
 use App\Models\User;
-use App\Models\VMTemplate;
 use App\Enums\VMSessionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,13 +79,11 @@ class ProxmoxServerModelTest extends TestCase
     public function test_proxmox_server_has_vm_sessions_relationship(): void
     {
         $user = User::factory()->create();
-        $template = VMTemplate::factory()->create();
         $node = ProxmoxNode::factory()->create();
         $server = ProxmoxServer::factory()->create();
 
         $session = VMSession::factory()->create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'proxmox_server_id' => $server->id,
         ]);
@@ -131,13 +128,11 @@ class ProxmoxServerModelTest extends TestCase
     public function test_vm_session_belongs_to_server(): void
     {
         $user = User::factory()->create();
-        $template = VMTemplate::factory()->create();
         $node = ProxmoxNode::factory()->create();
         $server = ProxmoxServer::factory()->create();
 
         $session = VMSession::factory()->create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'proxmox_server_id' => $server->id,
         ]);

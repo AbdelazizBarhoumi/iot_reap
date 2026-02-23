@@ -52,7 +52,7 @@ return new class extends Migration
 
             if (!Schema::hasColumn('proxmox_servers', 'memory_overcommit_ratio')) {
                 $table->decimal('memory_overcommit_ratio', 8, 2)
-                      ->default(1.512)
+                      ->default(1.50)
                       ->after('cpu_overcommit_ratio');
             }
         });

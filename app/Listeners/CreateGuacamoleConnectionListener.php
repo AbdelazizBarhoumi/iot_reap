@@ -56,7 +56,8 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
      */
     public function handle(VMSessionActivated $event): void
     {
-        $session = $event->session->fresh(['template', 'user', 'node', 'proxmoxServer']);
+        // session is reloaded to pick up any changes made by previous attempts
+        $session = $event->session->fresh(['user', 'node', 'proxmoxServer']);
 
         // Sanity check — vm_id must be set before this listener is invoked
         if ($session->vm_id === null) {
@@ -142,7 +143,7 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
                 'session_id'    => $session->id,
                 'connection_id' => $connectionId,
                 'ip_address'    => $ipAddress,
-                'protocol'      => $session->template->protocol->value,
+                'protocol'      => $session->getProtocol()->value,
                 'user_id'       => $session->user_id,
             ]);
 

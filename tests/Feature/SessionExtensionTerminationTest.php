@@ -4,14 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\ProxmoxNodeStatus;
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Jobs\CleanupVMJob;
 use App\Jobs\TerminateVMJob;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Queue;
@@ -25,7 +23,7 @@ class SessionExtensionTerminationTest extends TestCase
 {
     private User $user;
     private ProxmoxServer $server;
-    private VMTemplate $template;
+    // template removed; we no longer track it
     private ProxmoxNode $node;
     private VMSession $session;
 
@@ -46,15 +44,11 @@ class SessionExtensionTerminationTest extends TestCase
             'status' => ProxmoxNodeStatus::ONLINE,
         ]);
 
-        $this->template = VMTemplate::factory()->create();
-
-        // Create an active session
+        // Create an active session on existing VM
         $this->session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => VMSessionType::EPHEMERAL,
             'expires_at' => now()->addHours(2),
             'vm_id' => 100,
         ]);
@@ -76,7 +70,6 @@ class SessionExtensionTerminationTest extends TestCase
                  ->assertJsonStructure([
                      'id',
                      'status',
-                     'session_type',
                      'expires_at',
                  ]);
 
@@ -158,9 +151,8 @@ class SessionExtensionTerminationTest extends TestCase
         $response->assertJsonStructure(['message', 'error']);
     }
 
-    public function test_extend_reschedules_cleanup_job_for_ephemeral_sessions(): void
+    public function test_extend_does_not_dispatch_cleanup_job(): void
     {
-        $this->session->update(['session_type' => VMSessionType::EPHEMERAL]);
         Queue::fake();
 
         $response = $this->actingAs($this->user)->postJson(
@@ -168,7 +160,8 @@ class SessionExtensionTerminationTest extends TestCase
             ['minutes' => 30]
         );
 
-        // CleanupVMJob should be dispatched with new expiry
+        // no CleanupVMJob should be dispatched
+        Queue::assertNotPushed(CleanupVMJob::class);
         $response->assertOk();
     }
 
@@ -176,6 +169,26 @@ class SessionExtensionTerminationTest extends TestCase
     {
         $response = $this->postJson("/sessions/{$this->session->id}/extend");
         $response->assertUnauthorized();
+    }
+
+    public function test_expiring_overdue_sessions_does_not_dispatch_cleanup_job(): void
+    {
+        Queue::fake();
+
+        // create a session that has already passed its expiry time
+        $session = VMSession::factory()->create([
+            'user_id' => $this->user->id,
+            'node_id' => $this->node->id,
+            'vm_id' => 500,
+            'status' => VMSessionStatus::ACTIVE,
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $count = app(\App\Repositories\VMSessionRepository::class)
+            ->expireOverdueSessions();
+
+        $this->assertSame(1, $count);
+        Queue::assertNotPushed(CleanupVMJob::class);
     }
 
     public function test_user_cannot_extend_other_users_session(): void
@@ -192,29 +205,33 @@ class SessionExtensionTerminationTest extends TestCase
 
     // ===== TERMINATE SESSION TESTS =====
 
-    public function test_authenticated_user_can_terminate_own_ephemeral_session(): void
+    public function test_authenticated_user_can_terminate_own_session(): void
     {
-        $this->session->update(['session_type' => VMSessionType::EPHEMERAL]);
-
+        // by default the API will leave the VM running (stop_vm flag false)
         $response = $this->actingAs($this->user)->deleteJson(
-            "/sessions/{$this->session->id}",
-            ['stop_vm' => true]
+            "/sessions/{$this->session->id}"
         );
 
         $response->assertStatus(202);
         $response->assertJson(['message' => 'Session termination initiated']);
+
+        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
+            return $job->shouldStopVm() === false;
+        });
     }
 
-    public function test_terminate_with_stop_vm_flag_true_for_ephemeral(): void
+    public function test_terminate_with_stop_vm_flag_true(): void
     {
-        $this->session->update(['session_type' => VMSessionType::EPHEMERAL]);
-
         $response = $this->actingAs($this->user)->deleteJson(
             "/sessions/{$this->session->id}",
             ['stop_vm' => true]
         );
 
         $response->assertStatus(202);
+
+        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
+            return $job->shouldStopVm() === true;
+        });
     }
 
     public function test_terminate_with_stop_vm_flag_false(): void
@@ -225,12 +242,14 @@ class SessionExtensionTerminationTest extends TestCase
         );
 
         $response->assertStatus(202);
+
+        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
+            return $job->shouldStopVm() === false;
+        });
     }
 
     public function test_terminate_accepts_return_snapshot_parameter(): void
     {
-        $this->session->update(['session_type' => VMSessionType::PERSISTENT]);
-
         $snapshotName = 'snap-session-123-1708345200';
 
         $response = $this->actingAs($this->user)->deleteJson(
@@ -239,17 +258,6 @@ class SessionExtensionTerminationTest extends TestCase
                 'stop_vm' => true,
                 'return_snapshot' => $snapshotName,
             ]
-        );
-
-        $response->assertStatus(202);
-    }
-
-    public function test_terminate_defaults_to_stop_vm_true(): void
-    {
-        // No stop_vm parameter provided
-        $response = $this->actingAs($this->user)->deleteJson(
-            "/sessions/{$this->session->id}",
-            []
         );
 
         $response->assertStatus(202);
@@ -280,7 +288,6 @@ class SessionExtensionTerminationTest extends TestCase
         // Create another one to reach the concurrent limit (default 2)
         VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
             'status' => VMSessionStatus::ACTIVE,
             'expires_at' => now()->addHours(1),
@@ -288,9 +295,9 @@ class SessionExtensionTerminationTest extends TestCase
 
         // Create a third session - should fail at concurrent limit
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 200,
+            'node_id' => $this->node->id,
             'duration_minutes' => 60,
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
 
         $response->assertStatus(422);
@@ -307,9 +314,9 @@ class SessionExtensionTerminationTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 201,
+            'node_id' => $this->node->id,
             'duration_minutes' => 60, // Would exceed 240 total
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
 
         $response->assertStatus(422);
@@ -321,8 +328,9 @@ class SessionExtensionTerminationTest extends TestCase
 
         // Create session without duration_minutes
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
-            'session_type' => VMSessionType::EPHEMERAL->value,
+            'vmid' => 202,
+            'node_id' => $this->node->id,
+            'protocol' => 'rdp',
             // duration_minutes intentionally omitted
         ]);
 
@@ -342,7 +350,7 @@ class SessionExtensionTerminationTest extends TestCase
 
     // ===== INTEGRATION TESTS =====
 
-    public function test_full_session_lifecycle_ephemeral(): void
+    public function test_full_session_lifecycle(): void
     {
         Queue::fake();
 
@@ -351,9 +359,10 @@ class SessionExtensionTerminationTest extends TestCase
 
         // 1. Create session
         $createResponse = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 203,
+            'node_id' => $this->node->id,
+            'protocol' => 'rdp',
             'duration_minutes' => 60,
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
 
         $createResponse->assertCreated();
@@ -384,18 +393,19 @@ class SessionExtensionTerminationTest extends TestCase
         $terminateResponse->assertStatus(202);
     }
 
-    public function test_full_session_lifecycle_persistent_with_snapshot(): void
+    public function test_full_session_lifecycle_with_snapshot(): void
     {
         Queue::fake();
 
         // Delete the setUp session to avoid quota conflicts
         $this->session->delete();
 
-        // Create persistent session
+        // Create session to test snapshot revert
         $createResponse = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 204,
+            'node_id' => $this->node->id,
+            'protocol' => 'rdp',
             'duration_minutes' => 120,
-            'session_type' => VMSessionType::PERSISTENT->value,
         ]);
 
         $createResponse->assertCreated();

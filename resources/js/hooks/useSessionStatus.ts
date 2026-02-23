@@ -72,7 +72,6 @@ export function useSessionStatus(
       // VMSessionReady: just became active
       if (data.status === 'active' && prevStatus !== 'active') {
         onReady?.(data);
-      } else if (data.status === 'active' && prevStatus === 'active') {
       }
 
       // VMSessionExpiring: active and ≤ 5 min remaining
@@ -99,7 +98,7 @@ export function useSessionStatus(
       }
 
       prevStatusRef.current = data.status;
-    } catch (e: any) {
+    } catch (err: unknown) {
       if (!mountedRef.current) return;
 
       // When the server returns 404 it means the session record no longer
@@ -107,22 +106,26 @@ export function useSessionStatus(
       // where the user navigates here while the session is being deleted (or
       // if we attempted to poll before the record was committed).  Instead of
       // flooding the console with errors we treat it as a terminal event.
-      if (e?.response?.status === 404) {
+      interface AxiosErr {
+        response?: { status?: number };
+      }
+      const status = (err as AxiosErr).response?.status;
+      if (status === 404) {
         console.warn('[useSessionStatus] session not found (404), treating as ended');
-        onEnded?.(session ?? null as any);
+        if (session) onEnded?.(session);
         setError(null);
         return;
       }
 
-      const message = e instanceof Error ? e.message : 'Failed to fetch session status';
-      console.error('[useSessionStatus] fetch error', message, e);
+      const message = err instanceof Error ? err.message : 'Failed to fetch session status';
+      console.error('[useSessionStatus] fetch error', message, err);
       setError(message);
     } finally {
       if (mountedRef.current) {
         setLoading(false);
       }
     }
-  }, [sessionId, onReady, onExpiring, onEnded]);
+  }, [sessionId, onReady, onExpiring, onEnded, session]);
 
   useEffect(() => {
     if (!sessionId) {

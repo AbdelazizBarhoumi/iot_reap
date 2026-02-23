@@ -3,10 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Models\ProxmoxNode;
 use App\Models\User;
-use App\Models\VMTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,11 +21,10 @@ class VMSessionFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'template_id' => VMTemplate::factory(),
             'node_id' => ProxmoxNode::factory(),
             'vm_id' => null,
             'status' => VMSessionStatus::PENDING->value,
-            'session_type' => VMSessionType::EPHEMERAL->value,
+            'protocol' => \App\Enums\VMSessionProtocol::RDP->value, // default for tests
             'ip_address' => null,
             'guacamole_connection_id' => null,
             'expires_at' => now()->addHours(4),
@@ -38,6 +35,7 @@ class VMSessionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => VMSessionStatus::ACTIVE->value,
+            'protocol' => \App\Enums\VMSessionProtocol::RDP->value,
             'vm_id' => fake()->unique()->numberBetween(200, 999),
             'ip_address' => fake()->ipv4(),
             'guacamole_connection_id' => fake()->numberBetween(1, 1000),
@@ -83,12 +81,5 @@ class VMSessionFactory extends Factory
         ]);
     }
 
-    public function persistent(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'session_type' => VMSessionType::PERSISTENT->value,
-            'expires_at' => now()->addDays(30),
-        ]);
-    }
 }
 

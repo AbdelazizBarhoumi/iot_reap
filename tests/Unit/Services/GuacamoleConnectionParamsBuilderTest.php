@@ -2,11 +2,10 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\VMTemplateProtocol;
+use App\Enums\VMSessionProtocol;
 use App\Models\GuacamoleConnectionPreference;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Models\ProxmoxNode;
 use App\Repositories\UserConnectionPreferenceRepository;
 use App\Services\GuacamoleConnectionParamsBuilder;
@@ -39,7 +38,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_builds_rdp_params_with_sensible_defaults(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::RDP, '10.0.0.50');
+        $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.50');
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -54,9 +53,10 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_rdp_applies_user_saved_settings_over_defaults(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::RDP, '10.0.0.51');
+        $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.51');
 
         // Save user preferences (custom port and display size)
+        // save as the default profile so findByUser() will pick it up
         $this->prefRepo->save($user, 'rdp', [
             'port'             => 13389,
             'width'            => 1920,
@@ -64,7 +64,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
             'username'         => 'john',
             'enable-printing'  => true,
             'disable-wallpaper' => false,
-        ]);
+        ], 'Default', true);
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -80,7 +80,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_rdp_user_cannot_override_hostname(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::RDP, '10.0.0.52');
+        $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.52');
 
         // Attempt to override hostname via user preferences
         $this->prefRepo->save($user, 'rdp', [
@@ -98,7 +98,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_builds_vnc_params_with_sensible_defaults(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::VNC, '10.0.0.60');
+        $session = $this->makeSession($user, VMSessionProtocol::VNC, '10.0.0.60');
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -110,12 +110,12 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_vnc_applies_user_settings(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::VNC, '10.0.0.61');
+        $session = $this->makeSession($user, VMSessionProtocol::VNC, '10.0.0.61');
 
         $this->prefRepo->save($user, 'vnc', [
             'port'     => 5901,
             'password' => 'mypass',
-        ]);
+        ], 'Default', true);
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -129,7 +129,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_builds_ssh_params_with_sensible_defaults(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::SSH, '10.0.0.70');
+        $session = $this->makeSession($user, VMSessionProtocol::SSH, '10.0.0.70');
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -142,12 +142,12 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_ssh_applies_user_settings(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::SSH, '10.0.0.71');
+        $session = $this->makeSession($user, VMSessionProtocol::SSH, '10.0.0.71');
 
         $this->prefRepo->save($user, 'ssh', [
             'port'     => 2222,
             'username' => 'deploy',
-        ]);
+        ], 'Default', true);
 
         $params = $this->builder->buildParams($session, $user);
 
@@ -161,7 +161,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_throws_when_ip_address_is_null(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::RDP, null);
+        $session = $this->makeSession($user, VMSessionProtocol::RDP, null);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/ip_address is null/');
@@ -172,7 +172,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
     public function test_boolean_user_settings_cast_to_guacamole_string_format(): void
     {
         $user    = User::factory()->engineer()->create();
-        $session = $this->makeSession($user, VMTemplateProtocol::RDP, '10.0.0.80');
+        $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.80');
 
         $this->prefRepo->save($user, 'rdp', [
             'enable-audio'   => true,
@@ -187,17 +187,16 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     // ─── Helper ──────────────────────────────────────────────────────────────
 
-    private function makeSession(User $user, VMTemplateProtocol $protocol, ?string $ip): VMSession
+    private function makeSession(User $user, VMSessionProtocol $protocol, ?string $ip): VMSession
     {
-        $template = VMTemplate::factory()->create(['protocol' => $protocol]);
-        $node     = ProxmoxNode::factory()->create();
+        $node = ProxmoxNode::factory()->create();
 
         return VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
-                'node_id'     => $node->id,
-                'ip_address'  => $ip,
+                'node_id'    => $node->id,
+                'ip_address' => $ip,
+                'protocol'   => $protocol->value,
             ]);
     }
 }

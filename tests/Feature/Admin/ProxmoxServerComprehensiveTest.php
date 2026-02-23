@@ -86,7 +86,7 @@ class ProxmoxServerComprehensiveTest extends TestCase
 
         // Step 4: Engineer sees both servers for selection
         $response = $this->actingAs($engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')
@@ -107,7 +107,7 @@ class ProxmoxServerComprehensiveTest extends TestCase
 
         // Step 6: Engineer now sees only one active server
         $response = $this->actingAs($engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -194,7 +194,7 @@ class ProxmoxServerComprehensiveTest extends TestCase
 
         // Engineer sees only active servers
         $response = $this->actingAs($engineer)
-            ->getJson('/api/proxmox-servers/active');
+            ->getJson('/proxmox-servers/active');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');

@@ -6,7 +6,6 @@ use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -18,13 +17,11 @@ class SessionPageTest extends TestCase
     public function test_session_page_renders_inertia_with_session_prop(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->create();
         $node = ProxmoxNode::factory()->create();
 
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
             ]);

@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Models\User;
 use App\Enums\VMSessionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -112,18 +111,15 @@ class ServerInactivationAndResourceControlTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $template = VMTemplate::factory()->create();
 
         // Create 2 active sessions on this node
         for ($i = 0; $i < 2; $i++) {
             VMSession::create([
                 'user_id' => $user->id,
-                'template_id' => $template->id,
                 'proxmox_server_id' => $server->id,
                 'node_id' => $node->id,
                 'vm_id' => 100 + $i,
                 'status' => VMSessionStatus::ACTIVE,
-                'session_type' => 'ephemeral',
                 'expires_at' => now()->addHours(2),
             ]);
         }
@@ -161,18 +157,15 @@ class ServerInactivationAndResourceControlTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $template = VMTemplate::factory()->create();
 
         // Create 2 sessions to hit max_concurrent_sessions limit
         for ($i = 0; $i < 2; $i++) {
             VMSession::create([
                 'user_id' => $user->id,
-                'template_id' => $template->id,
                 'proxmox_server_id' => $server->id,
                 'node_id' => $node->id,
                 'vm_id' => 100 + $i,
                 'status' => VMSessionStatus::ACTIVE,
-                'session_type' => 'ephemeral',
                 'expires_at' => now()->addHours(2),
             ]);
         }
@@ -239,35 +232,30 @@ class ServerInactivationAndResourceControlTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $template = VMTemplate::factory()->create();
 
         // Create active session
         VMSession::create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => 'ephemeral',
             'expires_at' => now()->addHours(2),
         ]);
 
         // Create expired session
         VMSession::create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => 'ephemeral',
+
             'expires_at' => now()->subHours(1),
         ]);
 
         // Create terminated session
         VMSession::create([
             'user_id' => $user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'status' => VMSessionStatus::TERMINATED,
-            'session_type' => 'ephemeral',
+
             'expires_at' => now()->addHours(2),
         ]);
 

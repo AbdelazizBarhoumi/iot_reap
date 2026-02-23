@@ -22,8 +22,6 @@ import {
   Power,
   RefreshCw,
   Server,
-  Skull,
-  Terminal,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { vmSessionApi, connectionPreferencesApi, proxmoxVMApi } from '@/api/vm.api';
@@ -47,23 +45,12 @@ import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import type { ConnectionProfile, ProxmoxVMInfo, VMSessionType, VMSnapshot } from '@/types/vm.types';
+import type { ConnectionProfile, ProxmoxVMInfo, VMSnapshot, CreateVMSessionRequest } from '@/types/vm.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: dashboard().url },
 ];
 
-const OS_ICONS: Record<string, typeof Monitor> = {
-  windows: Monitor,
-  linux: Terminal,
-  kali: Skull,
-};
-
-const OS_COLORS: Record<string, string> = {
-  windows: 'bg-blue-500',
-  linux: 'bg-orange-500',
-  kali: 'bg-purple-500',
-};
 
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   running: 'default',
@@ -101,7 +88,6 @@ export default function Dashboard() {
   const [selectedVM, setSelectedVM] = useState<ProxmoxVMInfo | null>(null);
   const [isLaunchOpen, setIsLaunchOpen] = useState(false);
   const [launchDuration, setLaunchDuration] = useState<number>(60);
-  const [launchType, setLaunchType] = useState<VMSessionType>('ephemeral');
   const [launchLoading, setLaunchLoading] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [useExisting, setUseExisting] = useState(false); // if true, connect to VM instead of cloning
@@ -169,19 +155,19 @@ export default function Dashboard() {
 
 
     try {
-      const payload: any = {
+      // we already checked `selectedVM` above, so all required fields are defined
+      const payload: CreateVMSessionRequest = {
         vmid: selectedVM.vmid,
         node_id: selectedVM.node_id,
         vm_name: selectedVM.name,
         duration_minutes: launchDuration,
-        session_type: launchType,
         username: launchUsername || undefined,
         password: launchPassword || undefined,
         connection_preference_protocol: launchProtocol || undefined,
         return_snapshot: launchReturnSnapshot || undefined,
         use_existing: useExisting || undefined,
       };
-if (!useExisting) {
+      if (!useExisting) {
         payload.connection_preference_protocol = launchProtocol || undefined;
       }
       const session = await vmSessionApi.create(payload);
@@ -198,7 +184,7 @@ if (!useExisting) {
     } finally {
       setLaunchLoading(false);
     }
-  }, [selectedVM, launchDuration, launchType, launchUsername, launchPassword, launchProtocol, launchReturnSnapshot]);
+  }, [selectedVM, launchDuration, launchUsername, launchPassword, launchProtocol, launchReturnSnapshot, useExisting]);
 
   const hasPreferencesForProtocol = useCallback(
     (protocol: string) => {
@@ -239,8 +225,9 @@ if (!useExisting) {
             </p>
             <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activeSessions.map((session) => {
-                const OSIcon = OS_ICONS[session.template.os_type] ?? Monitor;
-                const osColor = OS_COLORS[session.template.os_type] ?? 'bg-gray-500';
+                // templates removed; use generic icon and color
+                const OSIcon = Monitor;
+                const osColor = 'bg-gray-500';
                 const isTerminating = terminatingId === session.id;
                 return (
                   <Card key={session.id} className="flex flex-col">
@@ -251,7 +238,7 @@ if (!useExisting) {
                             <OSIcon className="h-5 w-5" />
                           </div>
                           <div>
-                            <CardTitle className="text-base">{session.template.name}</CardTitle>
+                            <CardTitle className="text-base">VM #{session.vm_id}</CardTitle>
                             <CardDescription className="text-xs">{session.node_name}</CardDescription>
                           </div>
                         </div>
@@ -264,8 +251,7 @@ if (!useExisting) {
                           <Clock className="h-4 w-4" />
                           {formatTimeRemaining(session.time_remaining_seconds)}
                         </span>
-                        <Badge variant="outline" className="capitalize">{session.session_type}</Badge>
-                      </div>
+                                  </div>
                     </CardContent>
                     <div className="border-t p-3 flex gap-2">
                       <Button asChild className="flex-1" size="sm">
@@ -282,8 +268,8 @@ if (!useExisting) {
               })}
 
               {provisioningSessions.map((session) => {
-                const OSIcon = OS_ICONS[session.template.os_type] ?? Monitor;
-                const osColor = OS_COLORS[session.template.os_type] ?? 'bg-gray-500';
+                const OSIcon = Monitor;
+                const osColor = 'bg-gray-500';
                 return (
                   <Card key={session.id} className="flex flex-col opacity-75">
                     <CardHeader className="pb-3">
@@ -292,7 +278,7 @@ if (!useExisting) {
                           <div className={`p-2 rounded-lg ${osColor} text-white`}>
                             <OSIcon className="h-5 w-5" />
                           </div>
-                          <CardTitle className="text-base">{session.template.name}</CardTitle>
+                          <CardTitle className="text-base">VM #{session.vm_id}</CardTitle>
                         </div>
                         <Badge variant="default" className="bg-blue-600 capitalize">{session.status}</Badge>
                       </div>
@@ -447,19 +433,6 @@ if (!useExisting) {
               </Select>
             </div>
 
-            {/* Session Type */}
-            <div className="grid gap-2">
-              <Label htmlFor="launch-type">Session Type</Label>
-              <Select value={launchType} onValueChange={(v) => setLaunchType(v as VMSessionType)} disabled={launchLoading}>
-                <SelectTrigger id="launch-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ephemeral">Ephemeral (auto-delete after expiry)</SelectItem>
-                  <SelectItem value="persistent">Persistent (manual cleanup)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Connection Protocol */}
             <div className="grid gap-2">
@@ -535,42 +508,42 @@ if (!useExisting) {
               </p>
             </div>
 
-            {/* Return to Snapshot (only for clones) */}
-            {!useExisting && (
-              <div className="grid gap-2">
-                <Label htmlFor="launch-snapshot">Return to Snapshot <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Select
-                  value={launchReturnSnapshot}
-                  onValueChange={(v) => {
-                    // translate the sentinel back into an empty string state
-                    if (v === NO_SNAPSHOT_VALUE) {
-                      setLaunchReturnSnapshot('');
-                    } else {
-                      setLaunchReturnSnapshot(v);
-                    }
-                  }}
-                  disabled={launchLoading || snapshotsLoading}
-                >
-                  <SelectTrigger id="launch-snapshot">
-                    <SelectValue placeholder={snapshotsLoading ? 'Loading snapshots...' : 'No snapshot (default)'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NO_SNAPSHOT_VALUE}>No snapshot (default)</SelectItem>
-                    {vmSnapshots
-                      .filter((s) => s.name !== 'current')
-                      .map((snap) => (
-                        <SelectItem key={snap.name} value={snap.name}>
-                          {snap.name}
-                          {snap.description ? ` — ${snap.description}` : ''}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  The VM will be reverted to this snapshot when the session ends.
-                </p>
-              </div>
-            )}
+            {/* Return to Snapshot (optional)
+                shown for all session launches, whether cloning or connecting
+                directly. */}
+            <div className="grid gap-2">
+              <Label htmlFor="launch-snapshot">Return to Snapshot <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Select
+                value={launchReturnSnapshot}
+                onValueChange={(v) => {
+                  // translate the sentinel back into an empty string state
+                  if (v === NO_SNAPSHOT_VALUE) {
+                    setLaunchReturnSnapshot('');
+                  } else {
+                    setLaunchReturnSnapshot(v);
+                  }
+                }}
+                disabled={launchLoading || snapshotsLoading}
+              >
+                <SelectTrigger id="launch-snapshot">
+                  <SelectValue placeholder={snapshotsLoading ? 'Loading snapshots...' : 'No snapshot (default)'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SNAPSHOT_VALUE}>No snapshot (default)</SelectItem>
+                  {vmSnapshots
+                    .filter((s) => s.name !== 'current')
+                    .map((snap) => (
+                      <SelectItem key={snap.name} value={snap.name}>
+                        {snap.name}
+                        {snap.description ? ` — ${snap.description}` : ''}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                The VM will be reverted to this snapshot when the session ends.
+              </p>
+            </div>
 
             {/* Error display */}
             {launchError && (

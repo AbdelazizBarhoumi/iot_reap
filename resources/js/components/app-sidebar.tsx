@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Server, HardDrive, FileBox, Settings2 } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Server, HardDrive, Settings2 } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -39,11 +39,6 @@ const adminNavItems: NavItem[] = [
         title: 'Proxmox Nodes',
         href: '/admin/nodes',
         icon: HardDrive,
-    },
-    {
-        title: 'VM Templates',
-        href: '/admin/templates',
-        icon: FileBox,
     },
 ];
 

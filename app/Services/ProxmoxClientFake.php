@@ -92,9 +92,16 @@ class ProxmoxClientFake extends ProxmoxClient
     public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int
     {
         if ($newVmid === null) {
-            // Use atomic increment for concurrency safety
-            $newVmid = self::$globalNextVmid[$nodeName] ?? 200;
-            self::$globalNextVmid[$nodeName] = $newVmid + 1;
+            // honor any value previously set by tests
+            if (isset($this->nextVmid[$nodeName])) {
+                $newVmid = $this->nextVmid[$nodeName];
+                // once consumed, remove so subsequent clones increment normally
+                unset($this->nextVmid[$nodeName]);
+            } else {
+                // Use atomic increment for concurrency safety
+                $newVmid = self::$globalNextVmid[$nodeName] ?? 200;
+                self::$globalNextVmid[$nodeName] = $newVmid + 1;
+            }
         }
 
         $this->createdVMs[$nodeName][] = [

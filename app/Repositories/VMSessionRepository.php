@@ -37,7 +37,7 @@ class VMSessionRepository
     {
         return VMSession::where('user_id', $user->id)
             ->where('status', VMSessionStatus::ACTIVE)
-            ->with(['template', 'node'])
+            ->with(['node'])
             ->get();
     }
 
@@ -47,7 +47,7 @@ class VMSessionRepository
     public function findByUser(User $user): Collection
     {
         return VMSession::where('user_id', $user->id)
-            ->with(['template', 'node'])
+            ->with(['node'])
             ->orderByDesc('created_at')
             ->get();
     }
@@ -61,7 +61,7 @@ class VMSessionRepository
     {
         return VMSession::where('user_id', $user->id)
             ->whereHas('proxmoxServer', fn($q) => $q->active())
-            ->with(['template', 'node', 'proxmoxServer'])
+            ->with(['node', 'proxmoxServer'])
             ->orderByDesc('created_at')
             ->get();
     }
@@ -75,7 +75,7 @@ class VMSessionRepository
             ->where('status', VMSessionStatus::ACTIVE)
             ->where('expires_at', '>', now())
             ->whereHas('proxmoxServer', fn($q) => $q->active())
-            ->with(['template', 'node', 'proxmoxServer'])
+            ->with(['node', 'proxmoxServer'])
             ->get();
     }
 

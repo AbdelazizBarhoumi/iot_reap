@@ -13,7 +13,6 @@ use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxLoadBalancer;
 use App\Services\ProxmoxServerSelector;
-use App\Services\VMProvisioningService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Router;
@@ -73,14 +72,6 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        // Bind VMProvisioningService with all dependencies
-        $this->app->bind(VMProvisioningService::class, function ($app) {
-            return new VMProvisioningService(
-                $app->make(\App\Repositories\VMSessionRepository::class),
-                $app->make(ProxmoxLoadBalancer::class),
-                $app->make(ProxmoxClientInterface::class)
-            );
-        });
 
         // Bind new multi-server support services
         $this->app->singleton(ProxmoxServerRepository::class);

@@ -3,12 +3,10 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Services\ExtendSessionService;
 use App\Services\QuotaService;
 use Carbon\Carbon;
@@ -38,14 +36,10 @@ class ExtendSessionServiceTest extends TestCase
 
         $server = ProxmoxServer::factory()->create();
         $node = ProxmoxNode::factory()->create();
-        $template = VMTemplate::factory()->create();
-
         $this->session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $template->id,
             'node_id' => $node->id,
             'status' => VMSessionStatus::ACTIVE,
-            'session_type' => VMSessionType::EPHEMERAL,
             'expires_at' => now()->addHours(2),
             'vm_id' => 100,
         ]);

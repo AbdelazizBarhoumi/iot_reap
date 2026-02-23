@@ -72,49 +72,31 @@ class ProvisionVMJob implements ShouldQueue
         try {
             // Refresh the session to ensure we have latest data
             $session = $this->session->fresh();
-            $template = $session->template;
             $node = $session->node;
 
-            // Clone the template VM
-            $vmId = $client->cloneTemplate(
-                templateVmid: $template->template_vmid,
-                nodeName: $node->name,
-            );
+            // We no longer clone templates; assume vm_id already set on session.
+            $vmId = $session->vm_id;
+            if (! $vmId) {
+                Log::error('ProvisionVMJob: vm_id missing, cannot provision', ['session_id' => $session->id]);
+                $sessionRepository->update($session, ['status' => VMSessionStatus::FAILED]);
+                return;
+            }
 
-            Log::info('Successfully cloned template VM', [
-                'session_id' => $session->id,
-                'vm_id' => $vmId,
-                'node' => $node->name,
-            ]);
-
-            // Start the VM
+            // Ensure VM is started just in case
             $client->startVM(nodeName: $node->name, vmid: $vmId);
 
-            Log::info('Successfully started VM', [
+            Log::info('ProvisionVMJob: ensured VM started', [
                 'session_id' => $session->id,
                 'vm_id' => $vmId,
             ]);
 
-            // Update session with vm_id and mark as provisioning (waiting for Guacamole connection setup)
-            // The CreateGuacamoleConnectionListener will then resolve IP and mark as ACTIVE
+            // Update session status to provisioning (Guacamole listener will handle activation)
             $sessionRepository->update($session, [
-                'vm_id' => $vmId,
                 'status' => VMSessionStatus::PROVISIONING,
             ]);
 
-            Log::info('VM provisioning successful', [
-                'session_id' => $session->id,
-                'vm_id' => $vmId,
-                'status' => VMSessionStatus::ACTIVE->value,
-            ]);
-
-            // Refresh session from DB to get updated state
             $freshSession = $session->fresh();
-
-            // Emit VMSessionCreated event for downstream processors (notifications, etc.)
             event(new VMSessionCreated($freshSession));
-
-            // Emit VMSessionActivated event to trigger Guacamole connection creation
             event(new VMSessionActivated($freshSession));
         } catch (ProxmoxApiException $e) {
             Log::warning('Proxmox API error during provisioning', [

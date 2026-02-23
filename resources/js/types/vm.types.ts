@@ -4,8 +4,6 @@
  */
 
 export type VMSessionStatus = 'pending' | 'provisioning' | 'active' | 'expiring' | 'expired' | 'failed' | 'terminated';
-export type VMSessionType = 'ephemeral' | 'persistent';
-export type VMTemplateOSType = 'windows' | 'linux' | 'kali';
 export type VMTemplateProtocol = 'rdp' | 'vnc' | 'ssh';
 
 /**
@@ -26,32 +24,14 @@ export interface ConnectionProfilesResponse {
   ssh: ConnectionProfile[];
 }
 
-export interface VMTemplate {
-  id: number;
-  name: string;
-  os_type: VMTemplateOSType;
-  protocol: VMTemplateProtocol;
-  cpu_cores: number;
-  ram_mb: number;
-  disk_gb: number;
-  tags: string[];
-  is_active: boolean;
-  created_at: string;
-}
+
 
 export interface VMSession {
   id: string;
   status: VMSessionStatus;
-  session_type: VMSessionType;
-  template: {
-    id: number;
-    name: string;
-    os_type: VMTemplateOSType;
-    protocol: VMTemplateProtocol;
-    cpu_cores: number;
-    ram_mb: number;
-    disk_gb: number;
-  };
+  vm_id: number;                    // proxmox VMID
+  // protocol stored directly on session
+  protocol: VMTemplateProtocol;
   node_name: string;
   expires_at: string;
   time_remaining_seconds: number;
@@ -147,35 +127,21 @@ export interface ProxmoxVMInfo {
 }
 
 export interface CreateVMSessionRequest {
-  template_id?: number;
-  vmid?: number;
-  node_id?: number;
+  vmid: number;
+  node_id: number;
+  // optional descriptive name; backend allows it to be null
   vm_name?: string;
   os_type?: string;
   protocol?: string;
   duration_minutes: number;
-  session_type: VMSessionType;
   proxmox_server_id?: number;
   username?: string;
   password?: string;
   connection_preference_protocol?: string;
   return_snapshot?: string;
-  // when true, the session will connect to the supplied VMID directly
-  // instead of cloning it as a new ephemeral VM. only used by dashboard.
   use_existing?: boolean;
 }
 
-export interface CreateVMTemplateRequest {
-  name: string;
-  os_type: VMTemplateOSType;
-  protocol: VMTemplateProtocol;
-  template_vmid: number;
-  cpu_cores: number;
-  ram_mb: number;
-  disk_gb: number;
-  tags?: string[];
-  is_active?: boolean;
-}
 
 export interface ApiResponse<T> {
   data: T;

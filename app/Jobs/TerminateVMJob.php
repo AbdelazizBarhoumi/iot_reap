@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Models\VMSession;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientInterface;
@@ -34,12 +33,35 @@ class TerminateVMJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * By default the underlying VM is left powered on when the session ends.
+     * The optional `$stopVm` flag exists only for legacy workflows or when an
+     * administrator explicitly requests that the guest be powered off or
+     * removed.  Internally we always serialize this value so the property is
+     * initialized after the job is unserialized by the queue worker.
+     *
+     * @param bool $stopVm whether to stop/delete the VM (default: false)
+     * @param string|null $returnSnapshot snapshot name to revert to before
+     *                                        stopping (optional)
      */
+    // default values ensure a job pulled from an older queue payload
+    // remains valid even if the constructor wasn’t executed during
+    // deserialization.  This guards against the typed property exception we
+    // saw in the logs when stopVm was accessed before initialization.
+    private bool $stopVm = false;
+    private ?string $returnSnapshot = null; // not readonly so we can default to null
+
     public function __construct(
         private readonly VMSession $session,
-        private readonly bool $stopVm = true,
-        private readonly ?string $returnSnapshot = null,
-    ) {}
+        bool $stopVm = false,
+        ?string $returnSnapshot = null,
+    ) {
+        // explicitly assign values so that defaults are stored during
+        // serialization and the properties are never left uninitialized after
+        // the job is pulled from the queue.
+        $this->stopVm = $stopVm;
+        $this->returnSnapshot = $returnSnapshot;
+    }
 
     /**
      * Execute the job.
@@ -84,7 +106,7 @@ class TerminateVMJob implements ShouldQueue
 
                 // Step 3: Stop or delete the VM
                 if ($this->stopVm) {
-                    $this->stopOrDeleteVM($session, $proxmoxClient);
+                    $this->stopVM($session, $proxmoxClient);
                 } else {
                     Log::info('Skipping VM stop/delete (stop_vm flag is false)', [
                         'session_id' => $session->id,
@@ -200,72 +222,46 @@ class TerminateVMJob implements ShouldQueue
     }
 
     /**
-     * Stop or delete the VM based on session type.
+     * Stop the VM without deleting it.
      *
-     * - Ephemeral sessions: Always delete the VM
-     * - Persistent sessions: Stop the VM (keep it for next session)
+     * Since all sessions now retain their underlying VM, the job only needs
+     * to issue a stop call and log the action. Any snapshot revert logic has
+     * already been handled separately if requested.
      */
-    private function stopOrDeleteVM(
+    private function stopVM(
         VMSession $session,
         ProxmoxClientInterface $client,
     ): void {
         try {
-            if ($session->session_type === VMSessionType::EPHEMERAL) {
-                // For ephemeral VMs: Stop first, then delete
-                // Proxmox won't delete a running VM
-                Log::info('Stopping VM before deletion', [
-                    'session_id' => $session->id,
-                    'vm_id' => $session->vm_id,
-                ]);
+            $client->stopVM(
+                nodeName: $session->node->name,
+                vmid: $session->vm_id,
+            );
 
-                try {
-                    $client->stopVM(
-                        nodeName: $session->node->name,
-                        vmid: $session->vm_id,
-                    );
-                    // Wait for VM to stop (up to 30 seconds)
-                    $this->waitForVMStopped($client, $session->node->name, $session->vm_id, 30);
-                } catch (Throwable $e) {
-                    // If stop fails (e.g., VM already stopped), try to proceed with delete
-                    Log::warning('VM stop failed, attempting delete anyway', [
-                        'session_id' => $session->id,
-                        'vm_id' => $session->vm_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-
-                // Now delete the stopped VM
-                $client->deleteVM(
-                    nodeName: $session->node->name,
-                    vmid: $session->vm_id,
-                );
-
-                Log::info('Ephemeral VM deleted', [
-                    'session_id' => $session->id,
-                    'vm_id' => $session->vm_id,
-                ]);
-            } else {
-                // Stop persistent VMs (don't delete)
-                $client->stopVM(
-                    nodeName: $session->node->name,
-                    vmid: $session->vm_id,
-                );
-
-                Log::info('Persistent VM stopped', [
-                    'session_id' => $session->id,
-                    'vm_id' => $session->vm_id,
-                ]);
-            }
-        } catch (Throwable $e) {
-            Log::error('Failed to stop/delete VM', [
+            Log::info('VM stopped (no deletion)', [
                 'session_id' => $session->id,
                 'vm_id' => $session->vm_id,
-                'session_type' => $session->session_type->value,
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Failed to stop VM', [
+                'session_id' => $session->id,
+                'vm_id' => $session->vm_id,
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e; // Will trigger retry
+            throw $e;
         }
+    }
+
+    /**
+     * Determine whether the job should stop the VM.
+     *
+     * Exposed primarily for tests so they can assert on the argument passed
+     * to the constructor without poking at private properties.
+     */
+    public function shouldStopVm(): bool
+    {
+        return $this->stopVm;
     }
 
     /**

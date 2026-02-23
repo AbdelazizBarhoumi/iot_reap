@@ -4,12 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\ProxmoxNodeStatus;
 use App\Enums\VMSessionStatus;
-use App\Enums\VMSessionType;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Queue;
@@ -19,7 +17,7 @@ class VMSessionControllerTest extends TestCase
 {
     private User $user;
     private ProxmoxServer $server;
-    private VMTemplate $template;
+    // no template needed
     private ProxmoxNode $node;
 
     protected function setUp(): void
@@ -37,11 +35,12 @@ class VMSessionControllerTest extends TestCase
         $this->user = User::factory()->create();
         $this->server = ProxmoxServer::factory()->create();
 
+        // Associate node with a server so controller logic can retrieve proxmox_server_id
         $this->node = ProxmoxNode::factory()->create([
             'status' => ProxmoxNodeStatus::ONLINE,
+            'proxmox_server_id' => $this->server->id,
         ]);
 
-        $this->template = VMTemplate::factory()->create();
     }
 
     public function test_unauthenticated_user_cannot_access_sessions(): void
@@ -54,8 +53,8 @@ class VMSessionControllerTest extends TestCase
     {
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 500,
         ]);
 
         $response = $this->actingAs($this->user)->getJson('/sessions');
@@ -66,8 +65,7 @@ class VMSessionControllerTest extends TestCase
                          '*' => [
                              'id',
                              'status',
-                             'session_type',
-                             'template',
+                             'protocol',
                              'node_name',
                              'expires_at',
                              'time_remaining_seconds',
@@ -85,8 +83,8 @@ class VMSessionControllerTest extends TestCase
 
         VMSession::factory()->create([
             'user_id' => $otherUser->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 124,
         ]);
 
         $response = $this->actingAs($this->user)->getJson('/sessions');
@@ -94,20 +92,42 @@ class VMSessionControllerTest extends TestCase
         $this->assertEmpty($response->json('data'));
     }
 
+    public function test_redirects_when_accessing_expired_session(): void
+    {
+        $session = VMSession::factory()->create([
+            'user_id' => $this->user->id,
+            'node_id' => $this->node->id,
+            'status' => VMSessionStatus::EXPIRED,
+        ]);
+
+        // browser request should be bounced to dashboard
+        $response = $this->actingAs($this->user)->get('/sessions/' . $session->id);
+        $response->assertRedirect(route('dashboard'));
+
+        // XHR JSON clients should get 404 so they can handle it gracefully
+        $json = $this->actingAs($this->user)->getJson('/sessions/' . $session->id);
+        $json->assertNotFound();
+    }
+
     public function test_authenticated_user_can_create_session(): void
     {
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 200,
+            'node_id' => $this->node->id,
             'duration_minutes' => 60,
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
+
+        if ($response->status() !== 201) {
+            // provide diagnostics in case of validation/exception
+            $this->fail('Create session failed with ' . $response->status()
+                . ' body: ' . json_encode($response->json()));
+        }
 
         $response->assertCreated()
                  ->assertJsonStructure([
                      'id',
                      'status',
-                     'session_type',
-                     'template',
+                     'protocol',
                      'node_name',
                      'expires_at',
                      'time_remaining_seconds',
@@ -115,106 +135,63 @@ class VMSessionControllerTest extends TestCase
 
         $this->assertDatabaseHas('vm_sessions', [
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
+            'vm_id' => 200,
             'status' => VMSessionStatus::PENDING->value,
         ]);
     }
 
-    public function test_create_session_validates_template_id(): void
+    public function test_authenticated_user_can_create_session_with_snapshot(): void
     {
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => 99999,
+            'vmid' => 201,
+            'node_id' => $this->node->id,
+            'duration_minutes' => 45,
+            'return_snapshot' => 'snap-123',
+        ]);
+
+        if ($response->status() !== 201) {
+            $this->fail('Create session with snapshot failed: ' . json_encode($response->json()));
+        }
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('vm_sessions', [
+            'return_snapshot' => 'snap-123',
+        ]);
+    }
+
+    public function test_create_session_requires_vmid_and_node(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            // missing both vmid and node_id
             'duration_minutes' => 60,
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
 
         $response->assertUnprocessable()
-                 ->assertJsonValidationErrors(['template_id']);
+                 ->assertJsonValidationErrors(['vmid', 'node_id']);
     }
 
     public function test_create_session_validates_duration_minutes(): void
     {
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+
         $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
+            'vmid' => 999,
+            'node_id' => $node->id,
             'duration_minutes' => 20, // Below minimum
-            'session_type' => VMSessionType::EPHEMERAL->value,
         ]);
 
         $response->assertUnprocessable()
                  ->assertJsonValidationErrors(['duration_minutes']);
     }
 
-    public function test_create_session_validates_session_type(): void
-    {
-        $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'template_id' => $this->template->id,
-            'duration_minutes' => 60,
-            'session_type' => 'invalid_type',
-        ]);
-
-        $response->assertUnprocessable()
-                 ->assertJsonValidationErrors(['session_type']);
-    }
-
-    public function test_authenticated_user_can_create_direct_session(): void
-    {
-        Queue::fake();
-
-        $vmid = 555;
-        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
-
-        $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'vmid' => $vmid,
-            'node_id' => $node->id,
-            'vm_name' => 'Actual VM',
-            'duration_minutes' => 30,
-            'session_type' => VMSessionType::EPHEMERAL->value,
-            'use_existing' => true,
-        ]);
-
-        $response->assertCreated()
-                 ->assertJsonPath('vm_ip_address', null)
-                 ->assertJsonPath('status', VMSessionStatus::PENDING->value);
-
-        // session record should contain the vm_id we supplied
-        $this->assertDatabaseHas('vm_sessions', [
-            'user_id' => $this->user->id,
-            'vm_id' => $vmid,
-            'node_id' => $node->id,
-        ]);
-
-        // protocol_override must be null for direct connections
-        $this->assertDatabaseHas('vm_sessions', [
-            'id' => $response->json('id'),
-            'protocol_override' => null,
-        ]);
-
-        // provisioning job should NOT have been dispatched
-        Queue::assertNotPushed(\App\Jobs\ProvisionVMJob::class);
-    }
-
-    public function test_create_direct_session_validates_use_existing_boolean(): void
-    {
-        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
-
-        $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'vmid' => 123,
-            'node_id' => $node->id,
-            'duration_minutes' => 30,
-            'session_type' => VMSessionType::EPHEMERAL->value,
-            'use_existing' => 'notabool',
-        ]);
-
-        $response->assertUnprocessable()
-                 ->assertJsonValidationErrors(['use_existing']);
-    }
+    // the `use_existing` parameter has been removed; validation is handled elsewhere
 
     public function test_authenticated_user_can_get_session(): void
     {
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 400,
         ]);
 
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");
@@ -223,8 +200,7 @@ class VMSessionControllerTest extends TestCase
                  ->assertJsonStructure([
                      'id',
                      'status',
-                     'session_type',
-                     'template',
+                     'protocol',
                      'node_name',
                  ]);
     }
@@ -235,8 +211,8 @@ class VMSessionControllerTest extends TestCase
 
         $session = VMSession::factory()->create([
             'user_id' => $otherUser->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 401,
         ]);
 
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");
@@ -250,8 +226,8 @@ class VMSessionControllerTest extends TestCase
 
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 402,
         ]);
 
         $response = $this->actingAs($this->user)->deleteJson("/sessions/{$session->id}");
@@ -259,8 +235,11 @@ class VMSessionControllerTest extends TestCase
         // 202 Accepted - termination is async via job
         $response->assertAccepted();
 
-        // Verify termination job was dispatched
-        Queue::assertPushed(\App\Jobs\TerminateVMJob::class);
+        // Verify termination job was dispatched and default flag value
+        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
+            // default TerminateVMJob should not stop the VM
+            return method_exists($job, 'shouldStopVm') && $job->shouldStopVm() === false;
+        });
     }
 
     public function test_user_cannot_delete_other_users_session(): void
@@ -269,8 +248,8 @@ class VMSessionControllerTest extends TestCase
 
         $session = VMSession::factory()->create([
             'user_id' => $otherUser->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
+            'vm_id' => 403,
         ]);
 
         $response = $this->actingAs($this->user)->deleteJson("/sessions/{$session->id}");
@@ -282,7 +261,6 @@ class VMSessionControllerTest extends TestCase
     {
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
             'status' => VMSessionStatus::PENDING,
         ]);
@@ -296,7 +274,6 @@ class VMSessionControllerTest extends TestCase
     {
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
             'status' => VMSessionStatus::ACTIVE,
         ]);
@@ -310,7 +287,6 @@ class VMSessionControllerTest extends TestCase
     {
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
-            'template_id' => $this->template->id,
             'node_id' => $this->node->id,
             'vm_id' => 12345,
             'ip_address' => '192.168.1.50',

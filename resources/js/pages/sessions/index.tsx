@@ -10,8 +10,6 @@ import {
   Clock,
   Loader2,
   Monitor,
-  Terminal,
-  Skull,
   ArrowRight,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -25,17 +23,6 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { VMSessionStatus } from '@/types/vm.types';
 
-const OS_ICONS = {
-  windows: Monitor,
-  linux: Terminal,
-  kali: Skull,
-};
-
-const OS_COLORS = {
-  windows: 'bg-blue-500',
-  linux: 'bg-orange-500',
-  kali: 'bg-purple-500',
-};
 
 const STATUS_COLORS: Record<VMSessionStatus, 'default' | 'secondary' | 'destructive' | 'outline'> =
   {
@@ -144,8 +131,8 @@ export default function SessionsIndexPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {activeSessions.map((session) => {
-                    const OSIcon = OS_ICONS[session.template.os_type];
-                    const osColor = OS_COLORS[session.template.os_type];
+                    const OSIcon = Monitor;
+                    const osColor = 'bg-gray-500';
 
                     return (
                       <Card key={session.id} className="flex flex-col">
@@ -157,7 +144,7 @@ export default function SessionsIndexPage() {
                               </div>
                               <div>
                                 <CardTitle className="text-base">
-                                  {session.template.name}
+                                  VM #{session.vm_id}
                                 </CardTitle>
                                 <CardDescription className="text-xs">
                                   {session.node_name}
@@ -175,9 +162,6 @@ export default function SessionsIndexPage() {
                               <Clock className="h-4 w-4" />
                               {formatTimeRemaining(session.time_remaining_seconds)}
                             </span>
-                            <Badge variant="outline" className="capitalize">
-                              {session.session_type}
-                            </Badge>
                           </div>
                         </CardContent>
                         <div className="border-t p-3">
@@ -204,8 +188,8 @@ export default function SessionsIndexPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {provisioning.map((session) => {
-                    const OSIcon = OS_ICONS[session.template.os_type];
-                    const osColor = OS_COLORS[session.template.os_type];
+                    const OSIcon = Monitor;
+                    const osColor = 'bg-gray-500';
 
                     return (
                       <Card key={session.id} className="flex flex-col opacity-75">
@@ -217,7 +201,7 @@ export default function SessionsIndexPage() {
                               </div>
                               <div>
                                 <CardTitle className="text-base">
-                                  {session.template.name}
+                                  VM #{session.vm_id}
                                 </CardTitle>
                               </div>
                             </div>
@@ -254,8 +238,8 @@ export default function SessionsIndexPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {inactive.map((session) => {
-                    const OSIcon = OS_ICONS[session.template.os_type];
-                    const osColor = OS_COLORS[session.template.os_type];
+                    const OSIcon = Monitor;
+                    const osColor = 'bg-gray-500';
 
                     return (
                       <Card key={session.id} className="flex flex-col opacity-60">
@@ -267,7 +251,7 @@ export default function SessionsIndexPage() {
                               </div>
                               <div>
                                 <CardTitle className="text-base text-muted-foreground">
-                                  {session.template.name}
+                                  VM #{session.vm_id}
                                 </CardTitle>
                               </div>
                             </div>

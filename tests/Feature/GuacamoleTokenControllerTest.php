@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\VMSessionStatus;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\VMTemplate;
 use App\Models\ProxmoxNode;
 use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
@@ -30,7 +29,6 @@ class GuacamoleTokenControllerTest extends TestCase
         Log::spy();
 
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         
         // Get a real connection ID from the fake client
@@ -40,7 +38,6 @@ class GuacamoleTokenControllerTest extends TestCase
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
                 'guacamole_connection_id' => $connectionId,
@@ -75,13 +72,11 @@ class GuacamoleTokenControllerTest extends TestCase
     {
         $ownerUser = User::factory()->engineer()->create();
         $otherUser = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         
         $session = VMSession::factory()
             ->for($ownerUser)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
                 'guacamole_connection_id' => 'test-connection-123',
@@ -97,13 +92,11 @@ class GuacamoleTokenControllerTest extends TestCase
     public function test_returns_422_for_pending_session(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::PENDING,
             ]);
@@ -118,13 +111,11 @@ class GuacamoleTokenControllerTest extends TestCase
     public function test_returns_422_for_failed_session(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::FAILED,
             ]);
@@ -139,13 +130,11 @@ class GuacamoleTokenControllerTest extends TestCase
     public function test_returns_422_for_expired_session(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
                 'expires_at' => now()->subHours(1),
@@ -162,7 +151,6 @@ class GuacamoleTokenControllerTest extends TestCase
     public function test_rate_limit_10_requests_per_minute(): void
     {
         $user = User::factory()->engineer()->create();
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         $fake = $this->app->make(GuacamoleClientInterface::class);
         
@@ -173,7 +161,6 @@ class GuacamoleTokenControllerTest extends TestCase
             $sessions[] = VMSession::factory()
                 ->for($user)
                 ->create([
-                    'template_id' => $template->id,
                     'node_id' => $node->id,
                     'status' => VMSessionStatus::ACTIVE,
                     'guacamole_connection_id' => $connectionId,
@@ -198,14 +185,12 @@ class GuacamoleTokenControllerTest extends TestCase
 
     public function test_requires_authentication(): void
     {
-        $template = VMTemplate::factory()->windows()->create();
         $node = ProxmoxNode::factory()->create();
         $user = User::factory()->engineer()->create();
         
         $session = VMSession::factory()
             ->for($user)
             ->create([
-                'template_id' => $template->id,
                 'node_id' => $node->id,
                 'status' => VMSessionStatus::ACTIVE,
             ]);

@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Route;
 
 /**
  * API resource for VM session responses.
@@ -19,23 +18,13 @@ class VMSessionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Get the effective protocol (session's override or template default)
-        $effectiveProtocol = $this->resource->getEffectiveProtocol();
+        // Determine effective protocol stored on session
+        $protocol = $this->resource->getProtocol();
 
         return [
             'id'           => $this->id,
             'status'       => $this->status->value,
-            'session_type' => $this->session_type->value,
-            'template'     => [
-                'id'        => $this->template->id,
-                'name'      => $this->template->name,
-                'os_type'   => $this->template->os_type->value,
-                'protocol'  => $effectiveProtocol->value,  // Use effective protocol
-                'cpu_cores' => $this->template->cpu_cores,
-                'ram_mb'    => $this->template->ram_mb,
-                'disk_gb'   => $this->template->disk_gb,
-            ],
-            'protocol_override' => $this->protocol_override,
+            'protocol'     => $protocol->value,
             'node_name'             => $this->node->name,
             'expires_at'            => $this->expires_at->toIso8601String(),
             'time_remaining_seconds' => max(0, now()->diffInSeconds($this->expires_at, false)),

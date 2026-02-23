@@ -2,16 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\VMSessionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
  * Form request for creating a new VM session.
  *
- * Supports two flows:
- * 1. template_id — existing DB template (original flow)
- * 2. vmid + node_id — Proxmox VM reference (auto-registers template)
+ * Creates a session for an existing Proxmox VM identified by vmid and node_id.
  */
 class CreateVMSessionRequest extends FormRequest
 {
@@ -31,23 +28,14 @@ class CreateVMSessionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Flow 1: existing DB template
-            'template_id' => [
-                'required_without:vmid',
-                'nullable',
-                'integer',
-                'exists:vm_templates,id',
-            ],
-            // Flow 2: direct Proxmox VM reference
+            // direct Proxmox VM reference
             'vmid' => [
-                'required_without:template_id',
-                'nullable',
+                'required',
                 'integer',
                 'min:1',
             ],
             'node_id' => [
-                'required_with:vmid',
-                'nullable',
+                'required',
                 'integer',
                 'exists:proxmox_nodes,id',
             ],
@@ -61,10 +49,6 @@ class CreateVMSessionRequest extends FormRequest
                 'integer',
                 'min:' . config('sessions.min_duration_minutes', 30),
                 'max:' . config('sessions.max_duration_minutes', 240),
-            ],
-            'session_type' => [
-                'required',
-                Rule::enum(VMSessionType::class),
             ],
 
             // VM credentials (used when connecting via Guacamole)
@@ -93,14 +77,11 @@ class CreateVMSessionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'template_id.exists' => 'The selected template does not exist.',
-            'vmid.required_without' => 'Either template_id or vmid is required.',
-            'template_id.required_without' => 'Either template_id or vmid is required.',
-            'node_id.required_with' => 'node_id is required when using vmid.',
+            'node_id.required' => 'node_id is required.',
+            'vmid.required' => 'vmid is required.',
             'duration_minutes.min' => 'Session duration must be at least ' . config('sessions.min_duration_minutes', 30) . ' minutes.',
             'duration_minutes.max' => 'Session duration cannot exceed ' . config('sessions.max_duration_minutes', 240) . ' minutes.',
-            'session_type.enum' => 'Session type must be either "ephemeral" or "persistent".',
-            'use_existing.boolean' => 'The use_existing flag must be a boolean value.',
+                        'use_existing.boolean' => 'The use_existing flag must be a boolean value.',
         ];
     }
 

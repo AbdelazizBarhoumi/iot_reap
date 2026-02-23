@@ -40,9 +40,9 @@
         <env name="GUACAMOLE_IDLE_TIMEOUT" value="30"/>
         <env name="GUACAMOLE_TOKEN_EXPIRATION" value="300"/>
         <!-- Enable running the guarded live Guacamole test when true -->
-        <env name="GUACAMOLE_LIVE_TEST" value="true"/>
+        <env name="GUACAMOLE_LIVE_TEST" value="false"/>
 
         <!-- Proxmox live-integration toggle (set to true to allow real Proxmox calls) -->
-        <env name="PROXMOX_LIVE_TEST" value="true"/>
+        <env name="PROXMOX_LIVE_TEST" value="false"/>
     </php>
 </phpunit>

@@ -4,14 +4,13 @@ namespace App\Services;
 
 use App\Enums\VMSessionStatus;
 use App\Exceptions\ProxmoxApiException;
-use App\Jobs\CleanupVMJob;
 use App\Models\VMSession;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Service for extending VM session durations.
- * Handles quota validation and cleanup job rescheduling.
+ * Handles quota validation for session extensions.
  */
 class ExtendSessionService
 {
@@ -65,10 +64,7 @@ class ExtendSessionService
         $session->update(['expires_at' => $newExpiresAt]);
         $session->refresh();
 
-        // For ephemeral sessions, reschedule the cleanup job
-        if ($this->isEphemeral($session)) {
-            $this->rescheduleCleanupJob($session);
-        }
+        // Sessions are retained indefinitely; no cleanup job to reschedule.
 
         Log::info('VM session extended successfully', [
             'session_id' => $session->id,
@@ -78,32 +74,5 @@ class ExtendSessionService
         return $session;
     }
 
-    /**
-     * Reschedule the CleanupVMJob for the updated expiration time.
-     *
-     * Since we can't update a queued job directly, we dispatch a new one
-     * with the new delay. The old job will execute harmlessly if the session
-     * is already marked as expired or failed.
-     */
-    private function rescheduleCleanupJob(VMSession $session): void
-    {
-        Log::info('Rescheduling CleanupVMJob', [
-            'session_id' => $session->id,
-            'new_expiry' => $session->expires_at,
-        ]);
 
-        // Dispatch new cleanup job with updated expiration
-        // Calculate delay as the difference between expires_at and now, ensuring it's always in the future
-        $delayUntil = $session->expires_at->isFuture() ? $session->expires_at : now()->addMinutes(1);
-        CleanupVMJob::dispatch($session)
-            ->delay($delayUntil);
-    }
-
-    /**
-     * Check if the session is ephemeral.
-     */
-    private function isEphemeral(VMSession $session): bool
-    {
-        return $session->session_type->value === 'ephemeral';
-    }
 }
