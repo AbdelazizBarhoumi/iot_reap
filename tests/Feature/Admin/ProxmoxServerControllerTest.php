@@ -476,44 +476,42 @@ class ProxmoxServerControllerTest extends TestCase
     }
 
     /**
-     * Delete prevented if server has associated nodes (422).
+     * Deleting a server also removes any linked nodes from the database.
+     * This mirrors the behaviour of the UI request described by the user:
+     * we simply drop the configuration record, not touching any actual
+     * VMs on the Proxmox cluster.
      */
-    public function test_delete_prevented_if_server_has_nodes(): void
-    {
-        $server = ProxmoxServer::factory()->create();
-        ProxmoxNode::factory(2)->create(['proxmox_server_id' => $server->id]);
-
-        $response = $this->actingAs($this->admin)
-            ->deleteJson("/admin/proxmox-servers/{$server->id}");
-
-        $response->assertStatus(422)
-            ->assertJsonPath('nodes_count', 2)
-            ->assertJsonStructure(['nodes' => ['*' => ['id', 'name', 'hostname']]]);
-
-        $this->assertDatabaseHas('proxmox_servers', ['id' => $server->id]);
-    }
-
-    /**
-     * Delete with force flag orphans nodes.
-     */
-    public function test_delete_with_force_orphans_nodes(): void
+    public function test_deleting_server_cascades_to_nodes_and_sessions(): void
     {
         $server = ProxmoxServer::factory()->create();
         $nodes = ProxmoxNode::factory(2)->create(['proxmox_server_id' => $server->id]);
 
-        $response = $this->actingAs($this->admin)
-            ->deleteJson("/admin/proxmox-servers/{$server->id}?force=true");
+        // create a couple of VM sessions tied to those nodes
+        $session1 = \App\Models\VMSession::factory()->create(['node_id' => $nodes[0]->id]);
+        $session2 = \App\Models\VMSession::factory()->create(['node_id' => $nodes[1]->id]);
 
-        $response->assertOk();
+        $response = $this->actingAs($this->admin)
+            ->deleteJson("/admin/proxmox-servers/{$server->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Proxmox server deleted successfully');
 
         $this->assertDatabaseMissing('proxmox_servers', ['id' => $server->id]);
 
-        // Verify nodes are orphaned (proxmox_server_id set to NULL)
+        // nodes themselves should no longer exist after deletion
         foreach ($nodes as $node) {
-            $node->refresh();
-            $this->assertNull($node->proxmox_server_id);
+            $this->assertDatabaseMissing('proxmox_nodes', ['id' => $node->id]);
         }
+
+        // sessions that referenced those nodes should also have been removed
+        $this->assertDatabaseMissing('vm_sessions', ['id' => $session1->id]);
+        $this->assertDatabaseMissing('vm_sessions', ['id' => $session2->id]);
     }
+
+    // The force-delete behaviour is no longer necessary because nodes are
+    // removed alongside the server. Any lingering references would be a bug,
+    // so we simply rely on the cascade logic above and no longer test for
+    // `?force=true`.
 
     /**
      * Deletion is logged in audit table.
@@ -529,12 +527,20 @@ class ProxmoxServerControllerTest extends TestCase
         $response->assertOk();
 
         // After deletion, proxmox_server_id is set to NULL via onDelete('set null')
-        // but the audit log entry should still exist
+        // but the audit log entry should still exist. we also expect the
+        // details payload to mention nodes_removed (and possibly sessions_removed).
         $this->assertDatabaseHas('node_credentials_log', [
             'proxmox_server_id' => null,
             'action' => 'deleted',
             'changed_by' => $this->admin->id,
         ]);
+
+        $log = \App\Models\NodeCredentialsLog::where('changed_by', $this->admin->id)
+            ->where('action', 'deleted')
+            ->latest()
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertArrayHasKey('nodes_removed', $log->details);
     }
 
     // ===== TEST ENDPOINT =====

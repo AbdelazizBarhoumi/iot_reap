@@ -57,14 +57,17 @@ class ProxmoxNodeController extends Controller
             ]);
         }
 
-        // Normal HTML request — render the Inertia React page which will fetch data client-side
-        return Inertia::render('admin/NodesPage');
+        // Normal HTML request — redirect to unified Infrastructure page
+        return Inertia::render('admin/InfrastructurePage');
     }
 
     /**
-     * Get VMs for a specific node with real-time stats.
+     * Get VMs for a specific node.
+     *
+     * Uses caching (30s TTL). Defaults to enriched data for admin use.
+     * Add ?light=1 query param to skip per-VM CPU/memory stats (faster).
      */
-    public function getVMs(ProxmoxNode $node): JsonResponse
+    public function getVMs(ProxmoxNode $node, Request $request): JsonResponse
     {
         try {
             if (!$node->proxmoxServer) {
@@ -82,8 +85,21 @@ class ProxmoxNodeController extends Controller
                 ], 422);
             }
 
-            $client = $this->clientFactory->make($node->proxmoxServer);
-            $vms = $client->getVMs($node->name);
+            // Admin panel defaults to enriched data for proper stats display
+            $light = $request->boolean('light', false);
+            $cacheKey = "node_vms:{$node->proxmoxServer->id}:{$node->name}:" . ($light ? 'light' : 'full');
+
+            $vms = Cache::remember($cacheKey, 30, function () use ($node, $light) {
+                $client = $this->clientFactory->make($node->proxmoxServer);
+
+                if ($light) {
+                    // Lightweight list - single API call, no per-VM enrichment
+                    return $client->listVMsLight($node->name);
+                }
+
+                // Full per-VM status enrichment (N+1 API calls but shows stats)
+                return $client->getVMs($node->name);
+            });
 
             return response()->json([
                 'data' => $vms,

@@ -153,12 +153,7 @@ export default function ProxmoxServersPage() {
       setDeleteServer(null);
       fetchServers();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { nodes_count?: number } } };
-      if (axiosErr.response?.data?.nodes_count) {
-        setError(`Cannot delete: server has ${axiosErr.response.data.nodes_count} associated nodes`);
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to delete server');
-      }
+      setError(err instanceof Error ? err.message : 'Failed to delete server');
     } finally {
       setDeleteLoading(false);
     }

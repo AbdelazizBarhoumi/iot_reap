@@ -48,13 +48,14 @@ class ProxmoxServerResource extends JsonResource
             'online_nodes_count' => $this->whenLoaded('nodes', function () {
                 return $this->nodes->where('status', 'online')->count();
             }),
-            'active_sessions_count' => $this->whenLoaded('vmSessions', function () {
+            // Use withCount attributes when available, fallback to loaded relationship
+            'active_sessions_count' => $this->active_sessions_count ?? $this->whenLoaded('vmSessions', function () {
                 return $this->vmSessions()
                     ->where('status', 'active')
                     ->where('expires_at', '>', now())
                     ->count();
             }),
-            'total_sessions_count' => $this->whenLoaded('vmSessions', function () {
+            'total_sessions_count' => $this->total_sessions_count ?? $this->whenLoaded('vmSessions', function () {
                 return $this->vmSessions->count();
             }),
             'created_at' => $this->created_at?->toIso8601String(),

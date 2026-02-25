@@ -331,7 +331,7 @@ After=network.target
 [Service]
 Type=forking
 Environment="JAVA_HOME=/usr/lib/jvm/default-java"
-Environment="CATALINA_PID=/var/run/tomcat10.pid"
+Environment="CATALINA_PID=/run/tomcat10/tomcat10.pid"
 Environment="CATALINA_HOME=/opt/tomcat10"
 Environment="CATALINA_BASE=/opt/tomcat10"
 Environment="CATALINA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
@@ -575,6 +575,8 @@ mysql-port: ${mysqlPort}
 mysql-database: ${guacDb}
 mysql-username: ${guacUser}
 mysql-password: ${guacPwd}
+mysql-ssl-mode: disabled
+mysql-properties: useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 EOF
 
 # Add Duo settings if installed

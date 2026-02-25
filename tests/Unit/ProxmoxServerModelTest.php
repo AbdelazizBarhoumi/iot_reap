@@ -8,6 +8,7 @@ use App\Models\VMSession;
 use App\Models\User;
 use App\Enums\VMSessionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ProxmoxServerModelTest extends TestCase
@@ -55,7 +56,7 @@ class ProxmoxServerModelTest extends TestCase
         ]);
 
         // Use raw query to verify data is actually encrypted in database
-        $rawData = \DB::table('proxmox_servers')->first();
+        $rawData = DB::table('proxmox_servers')->first();
 
         // Tokens in database should NOT match the original plaintext values
         $this->assertNotEquals($originalTokenId, $rawData->token_id);

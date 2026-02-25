@@ -110,6 +110,21 @@ class US06MigrationTest extends TestCase
     }
 
     /**
+     * Deleting a Proxmox node should automatically remove its sessions
+     * thanks to the cascade-on-delete constraint added by the latest
+     * migration.
+     */
+    public function test_deleting_node_cascades_to_sessions(): void
+    {
+        $node = ProxmoxNode::factory()->create();
+        $session = VMSession::factory()->create(['node_id' => $node->id]);
+
+        $node->delete();
+
+        $this->assertDatabaseMissing('vm_sessions', ['id' => $session->id]);
+    }
+
+    /**
      * Test enums work correctly.
      */
     public function test_proxmox_node_status_enum(): void

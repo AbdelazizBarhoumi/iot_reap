@@ -20,7 +20,7 @@ class ProxmoxNodePageTest extends TestCase
             ->get('/admin/nodes')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('admin/NodesPage')
+                ->component('admin/InfrastructurePage')
             );
     }
 

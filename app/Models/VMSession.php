@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $node_id
  * @property int|null $vm_id
  * @property VMSessionStatus $status
- * @property string|null $protocol
+ * @property \App\Enums\VMSessionProtocol|null $protocol
  * @property string|null $ip_address
  * @property int|null $guacamole_connection_id
  * @property \DateTime $expires_at

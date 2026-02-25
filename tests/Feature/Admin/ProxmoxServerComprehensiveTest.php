@@ -5,7 +5,9 @@ namespace Tests\Feature\Admin;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Services\ProxmoxConnection;
+use App\Services\ProxmoxNodeSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -24,11 +26,23 @@ class ProxmoxServerComprehensiveTest extends TestCase
         $this->mock(ProxmoxConnection::class, function ($mock) {
             $mock->shouldReceive('testConnection')->andReturn([
                 'success' => true,
+                // return two distinct nodes so we exercise the sync logic
                 'nodes' => [
                     ['node' => 'node1', 'status' => 'online'],
+                    ['node' => 'node2', 'status' => 'online'],
                 ],
             ]);
         });
+
+        // Mock HTTP responses for ProxmoxNodeSyncService
+        Http::fake([
+            '*/api2/json/nodes' => Http::response([
+                'data' => [
+                    ['node' => 'node1', 'status' => 'online', 'hostname' => 'node1.local'],
+                    ['node' => 'node2', 'status' => 'online', 'hostname' => 'node2.local'],
+                ],
+            ], 200),
+        ]);
     }
 
     /**
@@ -56,10 +70,16 @@ class ProxmoxServerComprehensiveTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.name', 'Production Cluster')
-            ->assertJsonPath('message', 'Proxmox server registered successfully');
+            ->assertJsonPath('message', 'Proxmox server registered successfully')
+            // resource should include count of nodes that were synced
+            ->assertJsonPath('data.nodes_count', 2);
 
         $server1Id = $response->json('data.id');
         $this->assertNotNull($server1Id, 'Server ID should not be null after creation');
+
+        // database should contain both nodes
+        $this->assertDatabaseCount('proxmox_nodes', 2);
+
 
         // Step 2: Admin registers second Proxmox server
         $server2Data = [
@@ -127,7 +147,7 @@ class ProxmoxServerComprehensiveTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonCount(1, 'nodes');
+            ->assertJsonCount(2, 'nodes');
 
         // Verify server was NOT saved
         $this->assertDatabaseMissing('proxmox_servers', ['name' => 'Test Server (Not Saved)']);

@@ -19,6 +19,14 @@ class ProxmoxClientFake extends ProxmoxClient
     private array $nodeStatuses = [];
 
     /**
+     * Optional override of the next VMID for a given node.
+     * Tests can set this so cloneTemplate returns a predictable ID.
+     *
+     * @var array<string,int>
+     */
+    private array $nextVmid = [];
+
+    /**
      * Create a new fake ProxmoxClient instance.
      */
     public function __construct(?ProxmoxServer $server = null)

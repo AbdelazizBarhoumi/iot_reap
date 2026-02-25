@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Server, HardDrive, Settings2 } from 'lucide-react';
+import { BookOpen, Folder, History, LayoutGrid, Network, Settings2 } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -23,6 +23,11 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Session History',
+        href: '/sessions',
+        icon: History,
+    },
+    {
         title: 'Connection Preferences',
         href: '/connection-preferences',
         icon: Settings2,
@@ -31,14 +36,9 @@ const mainNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
     {
-        title: 'Proxmox Servers',
-        href: '/admin/proxmox-servers',
-        icon: Server,
-    },
-    {
-        title: 'Proxmox Nodes',
-        href: '/admin/nodes',
-        icon: HardDrive,
+        title: 'Infrastructure',
+        href: '/admin/infrastructure',
+        icon: Network,
     },
 ];
 

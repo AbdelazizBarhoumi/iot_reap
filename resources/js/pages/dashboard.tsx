@@ -22,6 +22,8 @@ import {
   Power,
   RefreshCw,
   Server,
+  Activity,
+  History,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { vmSessionApi, connectionPreferencesApi, proxmoxVMApi } from '@/api/vm.api';
@@ -215,6 +217,54 @@ export default function Dashboard() {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Dashboard" />
       <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+        {/* ─── Stats Overview ─── */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Available VMs</p>
+                  <p className="text-2xl font-bold">{vms.length}</p>
+                </div>
+                <Monitor className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Sessions</p>
+                  <p className="text-2xl font-bold text-green-600">{activeSessions.length}</p>
+                </div>
+                <Activity className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Provisioning</p>
+                  <p className="text-2xl font-bold text-blue-600">{provisioningSessions.length}</p>
+                </div>
+                <Loader2 className={`h-8 w-8 text-blue-500 ${provisioningSessions.length > 0 ? 'animate-spin' : ''}`} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <Link href="/sessions" className="flex items-center justify-between hover:opacity-80 transition-opacity">
+                <div>
+                  <p className="text-sm text-muted-foreground">Session History</p>
+                  <p className="text-sm text-primary">View past sessions →</p>
+                </div>
+                <History className="h-8 w-8 text-muted-foreground" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* ─── Active Sessions ─── */}
         {!sessionsLoading && hasActiveSessions && (

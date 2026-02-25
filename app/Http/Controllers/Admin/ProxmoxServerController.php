@@ -44,8 +44,15 @@ class ProxmoxServerController extends Controller
     {
         // If the client expects JSON (XHR / API), return the resource collection
         if ($request->wantsJson()) {
-            // Fetch all servers (including inactive for admin review)
-            $servers = ProxmoxServer::with(['createdBy', 'nodes', 'vmSessions', 'credentialLogs'])
+            // Fetch all servers with optimized eager loading
+            // Use withCount for aggregate stats instead of loading full relationships
+            $servers = ProxmoxServer::with(['createdBy:id,name,email', 'nodes:id,proxmox_server_id,status'])
+                ->withCount([
+                    'vmSessions as active_sessions_count' => fn($q) => $q
+                        ->where('status', 'active')
+                        ->where('expires_at', '>', now()),
+                    'vmSessions as total_sessions_count',
+                ])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -54,8 +61,8 @@ class ProxmoxServerController extends Controller
             ]);
         }
 
-        // Normal HTML request — render the Inertia React page
-        return Inertia::render('admin/ProxmoxServersPage');
+        // Normal HTML request — redirect to unified Infrastructure page
+        return Inertia::render('admin/InfrastructurePage');
     }
 
     /**
@@ -256,46 +263,44 @@ class ProxmoxServerController extends Controller
     /**
      * Delete a Proxmox server.
      *
-     * If the server has associated nodes:
-     * - Without ?force=true: returns 422 with node list
-     * - With ?force=true: orphans the nodes (sets proxmox_server_id to NULL)
+     * Any local node records that referenced this server are removed as
+     * well.  No attempt is made to contact the Proxmox cluster – the
+     * operation only affects our database configuration.
      *
      * @return JsonResponse
      */
     public function destroy(Request $request, ProxmoxServer $proxmox_server): JsonResponse
     {
         try {
-            $force = $request->query('force') === 'true';
+            // remove any node records tied to this server; we are purging our
+            // local configuration. the remote Proxmox cluster is untouched.
+            $nodeIds = ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)
+                ->pluck('id');
 
-            // Check for associated nodes
-            $nodeCount = ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)->count();
+            $nodeCount = $nodeIds->count();
+            $sessionsRemoved = 0;
 
-            if ($nodeCount > 0 && !$force) {
-                $nodes = ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)
-                    ->select(['id', 'name', 'hostname', 'status'])
-                    ->get();
+            if ($nodeCount > 0) {
+                // drop any VM sessions tied to the nodes before removing them.
+                // this guarantees we won't accidentally leave orphaned rows and
+                // matches the user's requirement to remove both nodes and
+                // associated sessions when the server is deleted.
+                $sessionsRemoved = VMSession::whereIn('node_id', $nodeIds)->count();
+                if ($sessionsRemoved > 0) {
+                    VMSession::whereIn('node_id', $nodeIds)->delete();
+                }
 
-                return response()->json([
-                    'message' => 'Cannot delete server with associated nodes',
-                    'error' => "Server has {$nodeCount} associated node(s)",
-                    'nodes_count' => $nodeCount,
-                    'nodes' => $nodes,
-                ], 422);
-            }
+                ProxmoxNode::whereIn('id', $nodeIds)->delete();
 
-            // If force is true, orphan the nodes
-            if ($force && $nodeCount > 0) {
-                ProxmoxNode::where('proxmox_server_id', $proxmox_server->id)
-                    ->update(['proxmox_server_id' => null]);
-
-                Log::warning('Proxmox server nodes orphaned during deletion', [
+                Log::info('Proxmox server deleted along with its nodes and sessions', [
                     'server_id' => $proxmox_server->id,
-                    'nodes_count' => $nodeCount,
+                    'nodes_removed' => $nodeCount,
+                    'sessions_removed' => $sessionsRemoved,
                     'user_id' => Auth::id(),
                 ]);
             }
 
-            // Log the deletion
+            // Log the deletion for audit; nodes_removed is included for clarity
             NodeCredentialsLog::create([
                 'proxmox_server_id' => $proxmox_server->id,
                 'action' => 'deleted',
@@ -304,8 +309,7 @@ class ProxmoxServerController extends Controller
                 'details' => [
                     'server_name' => $proxmox_server->name,
                     'host' => $proxmox_server->host,
-                    'force_flag' => $force,
-                    'nodes_orphaned' => $force ? $nodeCount : 0,
+                    'nodes_removed' => $nodeCount,
                 ],
             ]);
 
@@ -313,7 +317,6 @@ class ProxmoxServerController extends Controller
 
             Log::info('Proxmox server deleted', [
                 'server_id' => $proxmox_server->id,
-                'force' => $force,
                 'user_id' => Auth::id(),
             ]);
 

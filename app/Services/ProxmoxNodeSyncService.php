@@ -54,23 +54,29 @@ class ProxmoxNodeSyncService
                 // Map Proxmox status to our enum
                 $status = $this->mapStatus($nodeInfo['status'] ?? 'unknown');
 
-                // Find or create node
-                $node = ProxmoxNode::where('name', $nodeName)->first();
+                // prefer a hostname field coming from the API; older cluster
+                // responses may not include one, so fall back to the node name.
+                $hostname = $nodeInfo['hostname'] ?? $nodeName;
+
+                // Look up by server + node name instead of global name only.
+                $node = ProxmoxNode::where('proxmox_server_id', $server->id)
+                    ->where('name', $nodeName)
+                    ->first();
 
                 if ($node) {
-                    // Update existing node
+                    // Update existing node; keep the server association intact.
                     $node->update([
-                        'proxmox_server_id' => $server->id,
                         'status' => $status,
-                        'hostname' => $server->host,
+                        'hostname' => $hostname,
+                        // api_url remains generic at cluster level
                         'api_url' => "https://{$server->host}:{$server->port}/api2/json",
                     ]);
                     $result['updated']++;
                 } else {
-                    // Create new node
+                    // Create new node record scoped to this server.
                     ProxmoxNode::create([
                         'name' => $nodeName,
-                        'hostname' => $server->host,
+                        'hostname' => $hostname,
                         'api_url' => "https://{$server->host}:{$server->port}/api2/json",
                         'status' => $status,
                         'max_vms' => 50,
@@ -131,7 +137,7 @@ class ProxmoxNodeSyncService
      *
      * @return array|null
      */
-    private function fetchNodesFromApi(ProxmoxServer $server): ?array
+    protected function fetchNodesFromApi(ProxmoxServer $server): ?array
     {
         try {
             $url = "https://{$server->host}:{$server->port}/api2/json/nodes";

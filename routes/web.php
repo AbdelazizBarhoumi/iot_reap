@@ -58,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Admin pages (Inertia) and API endpoints
 Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->group(function () {
+    // Infrastructure page (unified servers + nodes view)
+    Route::get('/infrastructure', function () {
+        return Inertia::render('admin/InfrastructurePage');
+    })->name('admin.infrastructure');
+
     // Nodes page (handles both page render and JSON)
     Route::prefix('/nodes')->group(function () {
         Route::get('/', [ProxmoxNodeController::class, 'index'])->name('admin.nodes.index');

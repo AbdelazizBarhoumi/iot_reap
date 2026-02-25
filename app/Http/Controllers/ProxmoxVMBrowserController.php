@@ -7,6 +7,7 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Services\ProxmoxClientFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Log;
  */
 class ProxmoxVMBrowserController extends Controller
 {
+    private const VM_LIST_CACHE_TTL = 60; // seconds
+
     public function __construct(
         private readonly ProxmoxClientFactory $clientFactory,
     ) {}
@@ -23,7 +26,7 @@ class ProxmoxVMBrowserController extends Controller
      * GET /api/proxmox-vms
      *
      * Returns a flat list of VMs from all active servers' online nodes.
-     * Lightweight — no per-VM status enrichment.
+     * Cached for 60 seconds. Lightweight — no per-VM status enrichment.
      */
     public function index(): JsonResponse
     {
@@ -47,41 +50,38 @@ class ProxmoxVMBrowserController extends Controller
                 continue;
             }
 
-            try {
-                $client = $this->clientFactory->make($server);
+            foreach ($nodes as $node) {
+                $cacheKey = "vm_browser:{$server->id}:{$node->name}";
 
-                foreach ($nodes as $node) {
+                $nodeVMs = Cache::remember($cacheKey, self::VM_LIST_CACHE_TTL, function () use ($server, $node) {
                     try {
-                        $nodeVMs = $client->listVMsLight($node->name);
-
-                        foreach ($nodeVMs as $vm) {
-                            $vms[] = [
-                                'vmid'        => $vm['vmid'] ?? 0,
-                                'name'        => $vm['name'] ?? "VM {$vm['vmid']}",
-                                'status'      => $vm['status'] ?? 'unknown',
-                                'maxmem'      => $vm['maxmem'] ?? 0,
-                                'cpus'        => $vm['cpus'] ?? $vm['maxcpu'] ?? 1,
-                                'maxdisk'     => $vm['maxdisk'] ?? 0,
-                                'uptime'      => $vm['uptime'] ?? 0,
-                                'is_template' => !empty($vm['template']),
-                                'node_id'     => $node->id,
-                                'node_name'   => $node->name,
-                                'server_id'   => $server->id,
-                                'server_name' => $server->name,
-                            ];
-                        }
+                        $client = $this->clientFactory->make($server);
+                        return $client->listVMsLight($node->name);
                     } catch (\Throwable $e) {
                         Log::warning('Failed to list VMs for node', [
                             'node'  => $node->name,
                             'error' => $e->getMessage(),
                         ]);
+                        return [];
                     }
+                });
+
+                foreach ($nodeVMs as $vm) {
+                    $vms[] = [
+                        'vmid'        => $vm['vmid'] ?? 0,
+                        'name'        => $vm['name'] ?? "VM {$vm['vmid']}",
+                        'status'      => $vm['status'] ?? 'unknown',
+                        'maxmem'      => $vm['maxmem'] ?? 0,
+                        'cpus'        => $vm['cpus'] ?? $vm['maxcpu'] ?? 1,
+                        'maxdisk'     => $vm['maxdisk'] ?? 0,
+                        'uptime'      => $vm['uptime'] ?? 0,
+                        'is_template' => !empty($vm['template']),
+                        'node_id'     => $node->id,
+                        'node_name'   => $node->name,
+                        'server_id'   => $server->id,
+                        'server_name' => $server->name,
+                    ];
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Failed to create Proxmox client for server', [
-                    'server_id' => $server->id,
-                    'error'     => $e->getMessage(),
-                ]);
             }
         }
 
