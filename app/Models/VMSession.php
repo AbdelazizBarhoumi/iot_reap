@@ -89,4 +89,20 @@ class VMSession extends Model
     {
         return $this->belongsTo(ProxmoxNode::class);
     }
+
+    /**
+     * Get the USB devices currently attached to this session.
+     */
+    public function attachedDevices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UsbDevice::class, 'attached_session_id');
+    }
+
+    /**
+     * Get the queue entries for this session (devices waiting for).
+     */
+    public function deviceQueueEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UsbDeviceQueue::class, 'session_id');
+    }
 }

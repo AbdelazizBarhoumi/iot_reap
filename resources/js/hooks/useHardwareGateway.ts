@@ -1,0 +1,231 @@
+/**
+ * Hook for fetching and managing USB/IP hardware gateway data.
+ * Provides data fetching, polling, and device operations.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { hardwareApi } from '../api/hardware.api';
+import type { AttachDeviceRequest, GatewayNode, UsbDevice } from '../types/hardware.types';
+
+interface UseHardwareGatewayResult {
+  nodes: GatewayNode[];
+  devices: UsbDevice[];
+  loading: boolean;
+  error: string | null;
+  actionLoading: boolean;
+  refetch: () => Promise<void>;
+  refreshAll: () => Promise<boolean>;
+  refreshNode: (nodeId: number) => Promise<boolean>;
+  bindDevice: (deviceId: number) => Promise<boolean>;
+  unbindDevice: (deviceId: number) => Promise<boolean>;
+  attachDevice: (deviceId: number, data: AttachDeviceRequest) => Promise<boolean>;
+  detachDevice: (deviceId: number) => Promise<boolean>;
+  discoverGateways: () => Promise<boolean>;
+  verifyNode: (nodeId: number, verified: boolean) => Promise<boolean>;
+}
+
+const POLL_INTERVAL = 15000; // 15 seconds
+
+export function useHardwareGateway(): UseHardwareGatewayResult {
+  const [nodes, setNodes] = useState<GatewayNode[]>([]);
+  const [devices, setDevices] = useState<UsbDevice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const nodesData = await hardwareApi.getNodes();
+      setNodes(nodesData);
+      
+      // Extract devices from nodes or fetch separately
+      const allDevices = nodesData.flatMap(node => node.devices || []);
+      setDevices(allDevices);
+      
+      setError(null);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load hardware data';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refreshAll = useCallback(async (): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.refreshAll();
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Refresh failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const refreshNode = useCallback(async (nodeId: number): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.refreshNode(nodeId);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Refresh failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const bindDevice = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.bindDevice(deviceId);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Bind failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const unbindDevice = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.unbindDevice(deviceId);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unbind failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const attachDevice = useCallback(async (deviceId: number, data: AttachDeviceRequest): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.attachDevice(deviceId, data);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Attach failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const detachDevice = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.detachDevice(deviceId);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Detach failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const discoverGateways = useCallback(async (): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.discoverGateways();
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Discovery failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const verifyNode = useCallback(async (nodeId: number, verified: boolean): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      const result = await hardwareApi.verifyNode(nodeId, verified);
+      if (result.success) {
+        await fetchData();
+        return true;
+      }
+      setError(result.message);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Verify failed';
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+
+    // Poll every 15 seconds
+    const interval = setInterval(fetchData, POLL_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return {
+    nodes,
+    devices,
+    loading,
+    error,
+    actionLoading,
+    refetch: fetchData,
+    refreshAll,
+    refreshNode,
+    bindDevice,
+    unbindDevice,
+    attachDevice,
+    detachDevice,
+    discoverGateways,
+    verifyNode,
+  };
+}

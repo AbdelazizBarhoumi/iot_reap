@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, History, LayoutGrid, Network, Settings2 } from 'lucide-react';
+import { BookOpen, Folder, History, LayoutGrid, Network, Settings2, Usb } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -26,6 +26,11 @@ const mainNavItems: NavItem[] = [
         title: 'Session History',
         href: '/sessions',
         icon: History,
+    },
+    {
+        title: 'Hardware',
+        href: '/hardware',
+        icon: Usb,
     },
     {
         title: 'Connection Preferences',

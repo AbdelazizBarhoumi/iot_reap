@@ -64,37 +64,10 @@ class GuacamoleClient implements GuacamoleClientInterface
      */
     public function createConnection(array $params): string
     {
+        // wrap in retry helper so that if we hit a 403 (expired/invalid token)
+        // we clear the cached token and try once more before giving up.
         try {
-            $authToken  = $this->getAuthToken();
-            $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
-
-            // Token passed as Guacamole-Token header; body is raw JSON (no authToken in body)
-            $response = Http::timeout(self::TIMEOUT)
-                ->withHeaders(['Guacamole-Token' => $authToken])
-                ->asJson()
-                ->post(config('guacamole.url') . "/api/session/data/{$dataSource}/connections", [
-                    'name'             => $params['name'] ?? 'Unnamed Connection',
-                    'protocol'         => $params['protocol'] ?? 'rdp',
-                    'parentIdentifier' => 'ROOT',
-                    'parameters'       => $params['parameters'] ?? [],
-                    'attributes'       => [
-                        'max-connections'          => '',
-                        'max-connections-per-user' => '2',
-                        'failover-only'            => 'false',
-                        'guacd-encryption'         => 'none',
-                    ],
-                ])
-                ->throw();
-
-            $connectionId = $response->json('identifier');
-
-            Log::info('Guacamole connection created', [
-                'connection_id' => $connectionId,
-                'name' => $params['name'] ?? null,
-                'protocol' => $params['protocol'] ?? null,
-            ]);
-
-            return $connectionId;
+            return $this->withAuthRetry(fn () => $this->doCreateConnection($params));
         } catch (\Throwable $e) {
             Log::error('Failed to create Guacamole connection', [
                 'error' => $e->getMessage(),
@@ -105,6 +78,35 @@ class GuacamoleClient implements GuacamoleClientInterface
     }
 
     /**
+     * Actual implementation of createConnection without retry logic.
+     */
+    private function doCreateConnection(array $params): string
+    {
+        $authToken  = $this->getAuthToken();
+        $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
+
+        // Token passed as Guacamole-Token header; body is raw JSON (no authToken in body)
+        $response = Http::timeout(self::TIMEOUT)
+            ->withHeaders(['Guacamole-Token' => $authToken])
+            ->asJson()
+            ->post(config('guacamole.url') . "/api/session/data/{$dataSource}/connections", [
+                'name'             => $params['name'] ?? 'Unnamed Connection',
+                'protocol'         => $params['protocol'] ?? 'rdp',
+                'parentIdentifier' => 'ROOT',
+                'parameters'       => $params['parameters'] ?? [],
+                'attributes'       => [
+                    'max-connections'          => '',
+                    'max-connections-per-user' => '2',
+                    'failover-only'            => 'false',
+                    'guacd-encryption'         => 'none',
+                ],
+            ])
+            ->throw();
+
+        return $response->json('identifier');
+    }
+
+    /**
      * Delete a Guacamole connection.
      *
      * @throws GuacamoleApiException
@@ -112,14 +114,7 @@ class GuacamoleClient implements GuacamoleClientInterface
     public function deleteConnection(string $connectionId): void
     {
         try {
-            $authToken  = $this->getAuthToken();
-            $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
-
-            Http::timeout(self::TIMEOUT)
-                ->withHeaders(['Guacamole-Token' => $authToken])
-                ->delete(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
-                ->throw();
-
+            $this->withAuthRetry(fn () => $this->doDeleteConnection($connectionId));
             Log::info('Guacamole connection deleted', [
                 'connection_id' => $connectionId,
             ]);
@@ -130,6 +125,17 @@ class GuacamoleClient implements GuacamoleClientInterface
             ]);
             throw new GuacamoleApiException("Failed to delete connection: {$e->getMessage()}", $e);
         }
+    }
+
+    private function doDeleteConnection(string $connectionId): void
+    {
+        $authToken  = $this->getAuthToken();
+        $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
+
+        Http::timeout(self::TIMEOUT)
+            ->withHeaders(['Guacamole-Token' => $authToken])
+            ->delete(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
+            ->throw();
     }
 
     /**
@@ -146,7 +152,9 @@ class GuacamoleClient implements GuacamoleClientInterface
     public function generateAuthToken(string $connectionId, int $expiresInSeconds): string
     {
         try {
-            $token = $this->getAuthToken();
+            // this method is essentially a wrapper around getAuthToken;
+            // a 403 here means the token is invalid and we should retry once.
+            $token = $this->withAuthRetry(fn () => $this->getAuthToken());
 
             Log::info('Guacamole auth token retrieved for viewer', [
                 'connection_id'     => $connectionId,
@@ -173,15 +181,7 @@ class GuacamoleClient implements GuacamoleClientInterface
     public function getConnection(string $connectionId): array
     {
         try {
-            $authToken  = $this->getAuthToken();
-            $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
-
-            $response = Http::timeout(self::TIMEOUT)
-                ->withHeaders(['Guacamole-Token' => $authToken])
-                ->get(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
-                ->throw();
-
-            return $response->json();
+            return $this->withAuthRetry(fn () => $this->doGetConnection($connectionId));
         } catch (\Throwable $e) {
             Log::error('Failed to get Guacamole connection', [
                 'connection_id' => $connectionId,
@@ -189,6 +189,19 @@ class GuacamoleClient implements GuacamoleClientInterface
             ]);
             throw new GuacamoleApiException("Failed to get connection: {$e->getMessage()}", $e);
         }
+    }
+
+    private function doGetConnection(string $connectionId): array
+    {
+        $authToken  = $this->getAuthToken();
+        $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
+
+        $response = Http::timeout(self::TIMEOUT)
+            ->withHeaders(['Guacamole-Token' => $authToken])
+            ->get(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
+            ->throw();
+
+        return $response->json();
     }
 
     /**
@@ -219,5 +232,39 @@ class GuacamoleClient implements GuacamoleClientInterface
     {
         $this->authToken = null;
         $this->resolvedDataSource = null;
+    }
+
+    /**
+     * Helper used by all public methods to catch a 403 from Guacamole and
+     * transparently retry the request once after clearing the cached token.
+     *
+     * @template T
+     * @param  \Closure():T  $callback
+     * @return T
+     * @throws \Throwable
+     */
+    private function withAuthRetry(\Closure $callback)
+    {
+        try {
+            return $callback();
+        } catch (\Throwable $e) {
+            $shouldRetry = false;
+
+            if ($e instanceof \Illuminate\Http\Client\RequestException &&
+                $e->response && $e->response->status() === 403) {
+                $shouldRetry = true;
+            } elseif (str_contains($e->getMessage(), 'status code 403')) {
+                // some helpers like getAuthToken wrap the exception in GuacamoleApiException
+                // but the message still contains the original HTTP status
+                $shouldRetry = true;
+            }
+
+            if ($shouldRetry) {
+                $this->clearAuthToken();
+                return $callback();
+            }
+
+            throw $e;
+        }
     }
 }

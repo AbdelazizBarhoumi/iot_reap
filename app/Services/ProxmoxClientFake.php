@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ProxmoxApiException;
 use App\Models\ProxmoxServer;
 
 /**
@@ -353,6 +354,447 @@ class ProxmoxClientFake extends ProxmoxClient
             'status'     => $status,
             'ip_address' => $ip,
         ];
+
+        return $this;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LXC Container Methods (for gateway discovery)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Fake LXC containers registered for testing.
+     *
+     * @var array<string, array<array{vmid: int, name: string, status: string, ip_address: ?string}>>
+     */
+    private array $containers = [];
+
+    /**
+     * Get all LXC containers on a node.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getContainers(string $nodeName): array
+    {
+        $containers = $this->containers[$nodeName] ?? [];
+
+        return array_map(function ($ct) {
+            return [
+                'vmid'   => $ct['vmid'],
+                'name'   => $ct['name'],
+                'status' => $ct['status'],
+            ];
+        }, $containers);
+    }
+
+    /**
+     * Get the IPv4 address for a running LXC container.
+     */
+    public function getContainerNetworkIP(string $nodeName, int $vmid): ?string
+    {
+        if (isset($this->containers[$nodeName])) {
+            foreach ($this->containers[$nodeName] as $ct) {
+                if ($ct['vmid'] === $vmid && $ct['status'] === 'running') {
+                    return $ct['ip_address'] ?? null;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the configuration of an LXC container.
+     *
+     * @return array<string, mixed>
+     */
+    public function getContainerConfig(string $nodeName, int $vmid): array
+    {
+        if (isset($this->containers[$nodeName])) {
+            foreach ($this->containers[$nodeName] as $ct) {
+                if ($ct['vmid'] === $vmid) {
+                    return [
+                        'hostname' => $ct['name'],
+                        'memory'   => 512,
+                        'cores'    => 1,
+                        'net0'     => 'name=eth0,bridge=vmbr0,ip=dhcp',
+                    ];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Register a fake LXC container for testing.
+     */
+    public function registerContainer(
+        string $nodeName,
+        int $vmid,
+        string $name,
+        string $status = 'running',
+        ?string $ip = null
+    ): self {
+        if (! isset($this->containers[$nodeName])) {
+            $this->containers[$nodeName] = [];
+        }
+
+        // Update existing entry if present
+        foreach ($this->containers[$nodeName] as &$ct) {
+            if ($ct['vmid'] === $vmid) {
+                $ct['name']       = $name;
+                $ct['status']     = $status;
+                $ct['ip_address'] = $ip;
+
+                return $this;
+            }
+        }
+
+        // Add new entry
+        $this->containers[$nodeName][] = [
+            'vmid'       => $vmid,
+            'name'       => $name,
+            'status'     => $status,
+            'ip_address' => $ip,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * Get all registered containers for testing assertions.
+     *
+     * @return array<string, array>
+     */
+    public function getRegisteredContainers(): array
+    {
+        return $this->containers;
+    }
+
+    // ─── Guest Agent Exec Methods (Fake Implementation) ──────────────────────
+
+    /**
+     * Track exec commands for testing assertions.
+     *
+     * @var array<int, array{node: string, vmid: int, command: string, result: array}>
+     */
+    private array $execHistory = [];
+
+    /**
+     * PID counter for fake exec operations.
+     */
+    private int $nextFakePid = 1000;
+
+    /**
+     * Predefined fake results for specific commands (for testing).
+     * Key is a command substring to match, value is the result array.
+     *
+     * @var array<string, array{exitcode: int, out-data: string, err-data: string}>
+     */
+    private array $execResultOverrides = [];
+
+    /**
+     * Commands that should throw ProxmoxApiException (for testing).
+     * Key is a command substring to match, value is the exception message.
+     *
+     * @var array<string, string>
+     */
+    private array $execExceptionOverrides = [];
+
+    /**
+     * Execute a command inside a VM via the QEMU guest agent (fake).
+     *
+     * @return array{pid: int}
+     */
+    public function execInVm(string $nodeName, int $vmid, string $command, int $timeout = 60): array
+    {
+        $pid = $this->nextFakePid++;
+
+        $this->execHistory[$pid] = [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'command' => $command,
+            'timeout' => $timeout,
+            'result' => $this->determineExecResult($command),
+        ];
+
+        return ['pid' => $pid];
+    }
+
+    /**
+     * Get the result of a command executed via guest agent (fake).
+     *
+     * @return array{exited: bool, exitcode?: int, out-data?: string, err-data?: string}
+     */
+    public function getExecStatus(string $nodeName, int $vmid, int $pid): array
+    {
+        if (!isset($this->execHistory[$pid])) {
+            return ['exited' => true, 'exitcode' => 127, 'err-data' => 'Process not found'];
+        }
+
+        $result = $this->execHistory[$pid]['result'];
+
+        return [
+            'exited' => true,
+            'exitcode' => $result['exitcode'],
+            'out-data' => $result['out-data'],
+            'err-data' => $result['err-data'],
+        ];
+    }
+
+    /**
+     * Execute a command inside a VM and wait for completion (fake).
+     *
+     * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
+     */
+    public function execInVmAndWait(string $nodeName, int $vmid, string $command, int $timeoutSeconds = 60): array
+    {
+        // Check if this command should throw an exception
+        foreach ($this->execExceptionOverrides as $pattern => $message) {
+            if (str_contains($command, $pattern)) {
+                throw new ProxmoxApiException($message);
+            }
+        }
+
+        $execResult = $this->execInVm($nodeName, $vmid, $command, $timeoutSeconds);
+        $pid = $execResult['pid'];
+
+        $result = $this->execHistory[$pid]['result'];
+
+        return [
+            'exitcode' => $result['exitcode'],
+            'out-data' => $result['out-data'],
+            'err-data' => $result['err-data'],
+            'success' => $result['exitcode'] === 0,
+        ];
+    }
+
+    /**
+     * Fake implementation: Track file writes for testing.
+     * Stores all writes in sequence to allow asserting on all content written.
+     *
+     * @var array<int, array{key: string, content: string}> Sequential history of file writes
+     */
+    private array $writtenFilesHistory = [];
+
+    /**
+     * Map of file keys to their latest content (for getWrittenFile).
+     *
+     * @var array<string, string> Keyed by "nodeName:vmid:filePath"
+     */
+    private array $writtenFiles = [];
+
+    /**
+     * Write a file inside a VM via the QEMU guest agent (fake implementation).
+     *
+     * Stores the file content in memory for testing verification.
+     *
+     * @param string $nodeName The node name where the VM is running
+     * @param int    $vmid     The VM ID
+     * @param string $filePath The file path inside the VM
+     * @param string $content  The content to write to the file
+     */
+    public function writeFileInVm(string $nodeName, int $vmid, string $filePath, string $content): void
+    {
+        $key = "{$nodeName}:{$vmid}:{$filePath}";
+        $this->writtenFiles[$key] = $content;
+        $this->writtenFilesHistory[] = ['key' => $key, 'content' => $content];
+    }
+
+    /**
+     * Get a file that was written via writeFileInVm (testing helper).
+     *
+     * @return string|null The file content or null if not written
+     */
+    public function getWrittenFile(string $nodeName, int $vmid, string $filePath): ?string
+    {
+        $key = "{$nodeName}:{$vmid}:{$filePath}";
+        return $this->writtenFiles[$key] ?? null;
+    }
+
+    /**
+     * Fake OS type overrides for testing.
+     * Key is "nodeName:vmid", value is 'windows' | 'linux' | 'unknown'
+     *
+     * @var array<string, string>
+     */
+    private array $osTypeOverrides = [];
+
+    /**
+     * Default OS type for VMs that don't have an override.
+     */
+    private string $defaultOsType = 'linux';
+
+    /**
+     * Set the OS type for a specific VM (testing helper).
+     */
+    public function setGuestOsType(string $nodeName, int $vmid, string $osType): self
+    {
+        $this->osTypeOverrides["{$nodeName}:{$vmid}"] = $osType;
+        return $this;
+    }
+
+    /**
+     * Set the default OS type for all VMs (testing helper).
+     */
+    public function setDefaultOsType(string $osType): self
+    {
+        $this->defaultOsType = $osType;
+        return $this;
+    }
+
+    /**
+     * Get the guest OS type from the QEMU guest agent (fake implementation).
+     *
+     * Returns overridden value if set, otherwise returns the default.
+     *
+     * @return string 'windows' | 'linux' | 'unknown'
+     */
+    public function getGuestOsType(string $nodeName, int $vmid): string
+    {
+        $key = "{$nodeName}:{$vmid}";
+        return $this->osTypeOverrides[$key] ?? $this->defaultOsType;
+    }
+
+    /**
+     * Determine the fake result for a command.
+     * Checks for overrides first, then returns success for known commands.
+     *
+     * @return array{exitcode: int, out-data: string, err-data: string}
+     */
+    private function determineExecResult(string $command): array
+    {
+        // Check for explicit overrides
+        foreach ($this->execResultOverrides as $pattern => $result) {
+            if (str_contains($command, $pattern)) {
+                return $result;
+            }
+        }
+
+        // Default: simulate success for usbip commands
+        if (str_contains($command, 'usbip attach')) {
+            return [
+                'exitcode' => 0,
+                'out-data' => '',
+                'err-data' => '',
+            ];
+        }
+
+        if (str_contains($command, 'usbip detach')) {
+            return [
+                'exitcode' => 0,
+                'out-data' => '',
+                'err-data' => '',
+            ];
+        }
+
+        // Windows batch files for usbip commands (written via writeFileInVm)
+        // e.g., C:\usbip-cmd.bat
+        if (str_contains($command, 'usbip-cmd') && str_contains($command, '.bat')) {
+            return [
+                'exitcode' => 0,
+                'out-data' => '',
+                'err-data' => '',
+            ];
+        }
+
+        // Default: command not found
+        return [
+            'exitcode' => 127,
+            'out-data' => '',
+            'err-data' => 'command not found',
+        ];
+    }
+
+    /**
+     * Set a fake result for a specific command pattern (testing helper).
+     *
+     * @param string $commandPattern  Substring to match in the command
+     * @param int    $exitcode        Exit code to return
+     * @param string $stdout          Standard output
+     * @param string $stderr          Standard error
+     */
+    public function setExecResult(string $commandPattern, int $exitcode, string $stdout = '', string $stderr = ''): self
+    {
+        $this->execResultOverrides[$commandPattern] = [
+            'exitcode' => $exitcode,
+            'out-data' => $stdout,
+            'err-data' => $stderr,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * Configure a command pattern to throw ProxmoxApiException (testing helper).
+     *
+     * This simulates what happens in production when the Proxmox API returns
+     * a 500 error (e.g., "No such file or directory" from guest agent).
+     *
+     * @param string $commandPattern  Substring to match in the command
+     * @param string $message         Exception message to throw
+     */
+    public function setExecException(string $commandPattern, string $message): self
+    {
+        $this->execExceptionOverrides[$commandPattern] = $message;
+
+        return $this;
+    }
+
+    /**
+     * Get all executed commands for testing assertions.
+     *
+     * @return array<int, array{node: string, vmid: int, command: string}>
+     */
+    public function getExecHistory(): array
+    {
+        return array_map(function ($entry) {
+            return [
+                'node' => $entry['node'],
+                'vmid' => $entry['vmid'],
+                'command' => $entry['command'],
+            ];
+        }, $this->execHistory);
+    }
+
+    /**
+     * Assert that a command was executed in a VM (testing helper).
+     * Also checks batch file contents for Windows VM commands.
+     */
+    public function assertCommandExecuted(string $expectedCommandSubstring): void
+    {
+        // Check direct command execution
+        foreach ($this->execHistory as $entry) {
+            if (str_contains($entry['command'], $expectedCommandSubstring)) {
+                return;
+            }
+        }
+
+        // Check written batch files content history (for Windows VM commands)
+        foreach ($this->writtenFilesHistory as $entry) {
+            if (str_contains($entry['content'], $expectedCommandSubstring)) {
+                return;
+            }
+        }
+
+        throw new \PHPUnit\Framework\ExpectationFailedException(
+            "Expected command containing '{$expectedCommandSubstring}' was not executed. " .
+            "Executed commands: " . json_encode(array_column($this->execHistory, 'command')) .
+            " Written files: " . json_encode(array_column($this->writtenFilesHistory, 'content'))
+        );
+    }
+
+    /**
+     * Clear the exec history (testing helper).
+     */
+    public function clearExecHistory(): self
+    {
+        $this->execHistory = [];
+        $this->execResultOverrides = [];
+        $this->execExceptionOverrides = [];
+        $this->writtenFiles = [];
+        $this->writtenFilesHistory = [];
 
         return $this;
     }

@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Exceptions\GuacamoleApiException;
 use App\Services\GuacamoleClient;
 use App\Services\GuacamoleClientFake;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class GuacamoleClientTest extends TestCase
@@ -105,5 +106,45 @@ class GuacamoleClientTest extends TestCase
         $client->resetAll();
 
         $this->assertEmpty($client->getAllConnections());
+    }
+
+    public function test_real_client_retries_after_403_token_failure(): void
+    {
+        // simulate first createConnection attempt failing with 403,
+        // then succeeding after a fresh auth token is fetched.
+        Http::fakeSequence()
+            // initial auth request
+            ->push(['authToken' => 'first-token', 'dataSource' => 'mysql'], 200)
+            // connection creation returns 403 permission denied
+            ->push(['message' => 'Permission Denied'], 403)
+            // second auth request after clearing token
+            ->push(['authToken' => 'second-token', 'dataSource' => 'mysql'], 200)
+            // successful connection creation
+            ->push(['identifier' => 'new-id'], 200);
+
+        $client = new GuacamoleClient();
+        $result = $client->createConnection(['name' => 'retry-test', 'protocol' => 'rdp']);
+
+        $this->assertEquals('new-id', $result);
+
+        // confirm that two auth requests were triggered
+        $this->assertCount(2, Http::recorded(function ($request) {
+            return str_contains($request->url(), '/api/tokens');
+        }));
+    }
+
+    public function test_generate_auth_token_retry_on_403(): void
+    {
+        Http::fakeSequence()
+            // initial auth request returns 403 directly when generateAuthToken is called;
+            // since generateAuthToken uses withAuthRetry which calls getAuthToken,
+            // the failing response will trigger a retry.
+            ->push([], 403)
+            ->push(['authToken' => 'renewed', 'dataSource' => 'mysql'], 200);
+
+        $client = new GuacamoleClient();
+        $token = $client->generateAuthToken('whatever', 100);
+
+        $this->assertEquals('renewed', $token);
     }
 }

@@ -30,6 +30,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { SessionCountdown } from '@/components/SessionCountdown';
 import { SessionExtendButton } from '@/components/SessionExtendButton';
+import { SessionHardwarePanel } from '@/components/SessionHardwarePanel';
 import { TerminateSessionButton } from '@/components/TerminateSessionButton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -334,6 +335,9 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
                 </InfoRow>
               </CardContent>
             </Card>
+
+            {/* USB Hardware Panel */}
+            <SessionHardwarePanel sessionId={ds.id} isActive={isAlive} />
 
             {/* Template Specs */}
           </div>

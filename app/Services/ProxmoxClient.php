@@ -288,6 +288,340 @@ class ProxmoxClient implements ProxmoxClientInterface
     }
 
     /**
+     * Get all LXC containers on a node.
+     *
+     * Proxmox endpoint: GET /nodes/{node}/lxc
+     *
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getContainers(string $nodeName): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/lxc");
+
+        return $response['data'] ?? [];
+    }
+
+    /**
+     * Get the IPv4 address of an LXC container.
+     * Uses /nodes/{node}/lxc/{vmid}/interfaces endpoint.
+     *
+     * @return string|null The IP address or null if not available
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getContainerNetworkIP(string $nodeName, int $vmid): ?string
+    {
+        try {
+            $response = $this->request('GET', "/nodes/{$nodeName}/lxc/{$vmid}/interfaces");
+            $interfaces = $response['data'] ?? [];
+
+            foreach ($interfaces as $iface) {
+                // Skip loopback
+                if (($iface['name'] ?? '') === 'lo') {
+                    continue;
+                }
+
+                $ip = $iface['inet'] ?? null;
+                if ($ip) {
+                    // Remove CIDR notation if present (e.g., "192.168.50.6/24" -> "192.168.50.6")
+                    $ip = explode('/', $ip)[0];
+
+                    // Skip link-local and loopback
+                    if (str_starts_with($ip, '169.254.') || str_starts_with($ip, '127.')) {
+                        continue;
+                    }
+
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                        return $ip;
+                    }
+                }
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::warning("Failed to get container network IP", [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Get container configuration.
+     *
+     * Proxmox endpoint: GET /nodes/{node}/lxc/{vmid}/config
+     *
+     * @return array<string, mixed>
+     *
+     * @throws ProxmoxApiException
+     */
+    public function getContainerConfig(string $nodeName, int $vmid): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/lxc/{$vmid}/config");
+
+        return $response['data'] ?? [];
+    }
+
+    /**
+     * Execute a command inside a VM via the QEMU guest agent.
+     *
+     * Proxmox endpoint: POST /nodes/{node}/qemu/{vmid}/agent/exec
+     *
+     * NOTE: The guest agent (qemu-guest-agent) must be installed and running
+     * in the VM for this to work. The command runs asynchronously; use
+     * getExecStatus() to poll for completion.
+     *
+     * @param string $nodeName  The node name where the VM is running
+     * @param int    $vmid      The VM ID
+     * @param string $command   The command to execute (e.g., "usbip attach -r 192.168.1.100 -b 1-1")
+     * @param int    $timeout   Unused (kept for interface compatibility). Polling timeout is handled in execInVmAndWait.
+     *
+     * @return array{pid: int}  Returns the process ID of the executed command
+     *
+     * @throws ProxmoxApiException If guest agent is not responding or the request fails
+     */
+    public function execInVm(string $nodeName, int $vmid, string $command, int $timeout = 60): array
+    {
+        Log::debug('ProxmoxClient execInVm', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'command' => $command,
+        ]);
+
+        try {
+            // Proxmox agent/exec only accepts 'command' and optionally 'input-data'
+            // The command is passed as a single string - Proxmox will parse it
+            $response = $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/agent/exec", [
+                'command' => $command,
+            ]);
+
+            $pid = $response['data']['pid'] ?? null;
+
+            if ($pid === null) {
+                throw new ProxmoxApiException(
+                    "Guest agent did not return PID for command execution"
+                );
+            }
+
+            Log::debug('ProxmoxClient execInVm started', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'pid' => $pid,
+            ]);
+
+            return ['pid' => (int) $pid];
+        } catch (ProxmoxApiException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new ProxmoxApiException(
+                "Failed to execute command in VM via guest agent: {$e->getMessage()}",
+                previous: $e
+            );
+        }
+    }
+
+    /**
+     * Get the result of a command executed via guest agent.
+     *
+     * Proxmox endpoint: GET /nodes/{node}/qemu/{vmid}/agent/exec-status?pid={pid}
+     *
+     * @param string $nodeName  The node name where the VM is running
+     * @param int    $vmid      The VM ID
+     * @param int    $pid       The process ID returned by execInVm()
+     *
+     * @return array{exited: bool, exitcode?: int, out-data?: string, err-data?: string}
+     *
+     * @throws ProxmoxApiException If the request fails
+     */
+    public function getExecStatus(string $nodeName, int $vmid, int $pid): array
+    {
+        $response = $this->request('GET', "/nodes/{$nodeName}/qemu/{$vmid}/agent/exec-status", [
+            'pid' => $pid,
+        ]);
+
+        return $response['data'] ?? [];
+    }
+
+    /**
+     * Execute a command inside a VM and wait for completion.
+     *
+     * This is a convenience method that combines execInVm() and getExecStatus()
+     * with polling until the command finishes.
+     *
+     * @param string $nodeName       The node name where the VM is running
+     * @param int    $vmid           The VM ID
+     * @param string $command        The command to execute
+     * @param int    $timeoutSeconds Maximum time to wait for command completion
+     *
+     * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
+     *
+     * @throws ProxmoxApiException If guest agent is unavailable or command execution fails
+     */
+    public function execInVmAndWait(string $nodeName, int $vmid, string $command, int $timeoutSeconds = 60): array
+    {
+        $execResult = $this->execInVm($nodeName, $vmid, $command, $timeoutSeconds);
+        $pid = $execResult['pid'];
+
+        $endTime = now()->addSeconds($timeoutSeconds);
+        $pollInterval = 2; // seconds
+
+        while (now()->isBefore($endTime)) {
+            $status = $this->getExecStatus($nodeName, $vmid, $pid);
+
+            if (!empty($status['exited'])) {
+                $exitCode = $status['exitcode'] ?? -1;
+
+                Log::debug('ProxmoxClient execInVmAndWait completed', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'pid' => $pid,
+                    'exitcode' => $exitCode,
+                    'out' => $status['out-data'] ?? '',
+                    'err' => $status['err-data'] ?? '',
+                ]);
+
+                return [
+                    'exitcode' => $exitCode,
+                    'out-data' => $status['out-data'] ?? '',
+                    'err-data' => $status['err-data'] ?? '',
+                    'success' => $exitCode === 0,
+                ];
+            }
+
+            sleep($pollInterval);
+        }
+
+        throw new ProxmoxApiException(
+            "Command execution in VM timed out after {$timeoutSeconds} seconds"
+        );
+    }
+
+    /**
+     * Write a file inside a VM via the QEMU guest agent.
+     *
+     * Uses the Proxmox guest agent file-write endpoint to create or overwrite a file.
+     * Useful for creating batch/script files that can then be executed via execInVm().
+     *
+     * Proxmox endpoint: POST /nodes/{node}/qemu/{vmid}/agent/file-write
+     *
+     * @param string $nodeName The node name where the VM is running
+     * @param int    $vmid     The VM ID
+     * @param string $filePath The file path inside the VM
+     * @param string $content  The content to write to the file
+     *
+     * @throws ProxmoxApiException If guest agent is not responding or the request fails
+     */
+    public function writeFileInVm(string $nodeName, int $vmid, string $filePath, string $content): void
+    {
+        Log::debug('ProxmoxClient writeFileInVm', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'file' => $filePath,
+            'content_length' => strlen($content),
+        ]);
+
+        $this->request('POST', "/nodes/{$nodeName}/qemu/{$vmid}/agent/file-write", [
+            'file' => $filePath,
+            'content' => $content,
+        ]);
+
+        Log::debug('ProxmoxClient writeFileInVm completed', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'file' => $filePath,
+        ]);
+    }
+
+    /**
+     * Get the guest OS type from the QEMU guest agent.
+     *
+     * Queries the guest agent's get-osinfo endpoint and returns a simplified type.
+     * Returns 'windows', 'linux', or 'unknown'.
+     *
+     * @param string $nodeName The node name where the VM is running
+     * @param int    $vmid     The VM ID
+     *
+     * @return string 'windows' | 'linux' | 'unknown'
+     *
+     * @throws ProxmoxApiException If the guest agent is not responding
+     */
+    public function getGuestOsType(string $nodeName, int $vmid): string
+    {
+        Log::debug('ProxmoxClient getGuestOsType', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+        ]);
+
+        try {
+            $response = $this->request('GET', "/nodes/{$nodeName}/qemu/{$vmid}/agent/get-osinfo");
+
+            $osInfo = $response['data']['result'] ?? [];
+
+            // The Proxmox API returns various fields, including:
+            // - kernel: e.g. "Windows Server 2019" or "Linux"
+            // - name: e.g. "Microsoft Windows 10 Enterprise" or "Debian GNU/Linux"
+            // - id: e.g. "mswindows" or "debian"
+            // - version-id: e.g. "10" or "11"
+
+            $id = strtolower($osInfo['id'] ?? '');
+            $name = strtolower($osInfo['name'] ?? '');
+            $kernel = strtolower($osInfo['kernel'] ?? '');
+
+            // Check for Windows
+            if (str_contains($id, 'mswindows') ||
+                str_contains($id, 'windows') ||
+                str_contains($name, 'windows') ||
+                str_contains($kernel, 'windows')
+            ) {
+                Log::debug('ProxmoxClient getGuestOsType detected Windows', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'osInfo' => $osInfo,
+                ]);
+                return 'windows';
+            }
+
+            // Check for Linux (most common distributions)
+            if (str_contains($id, 'debian') ||
+                str_contains($id, 'ubuntu') ||
+                str_contains($id, 'centos') ||
+                str_contains($id, 'fedora') ||
+                str_contains($id, 'rhel') ||
+                str_contains($id, 'alpine') ||
+                str_contains($id, 'arch') ||
+                str_contains($name, 'linux') ||
+                str_contains($kernel, 'linux')
+            ) {
+                Log::debug('ProxmoxClient getGuestOsType detected Linux', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'osInfo' => $osInfo,
+                ]);
+                return 'linux';
+            }
+
+            Log::warning('ProxmoxClient getGuestOsType could not determine OS', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'osInfo' => $osInfo,
+            ]);
+            return 'unknown';
+        } catch (ProxmoxApiException $e) {
+            Log::warning('ProxmoxClient getGuestOsType failed', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
+            ]);
+            // Return unknown if guest agent is not available
+            return 'unknown';
+        }
+    }
+
+    /**
      * Execute an HTTP request to the Proxmox API with retry logic.
      *
      * @param array<string, mixed> $data

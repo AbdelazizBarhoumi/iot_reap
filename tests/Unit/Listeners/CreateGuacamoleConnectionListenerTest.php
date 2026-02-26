@@ -10,9 +10,11 @@ use App\Models\VMSession;
 use App\Models\ProxmoxNode;
 use App\Enums\VMSessionProtocol;
 use App\Services\GuacamoleClientFake;
+use App\Services\GuacamoleClient;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
+use Illuminate\Support\Facades\Http;
 use App\Notifications\SessionActivationFailed;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -160,6 +162,41 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
 
         $this->assertNotEmpty(Notification::sentNotifications());
         Notification::assertSentTimes(SessionActivationFailed::class, 1);
+    }
+
+    public function test_listener_retries_on_token_expiry_and_does_not_fail(): void
+    {
+        // replace the fake with the real HTTP-backed client and simulate a
+        // 403 response on the first connection creation attempt
+        Http::fakeSequence()
+            ->push(['authToken' => 'first', 'dataSource' => 'mysql'], 200) // initial auth
+            ->push(['message' => 'Permission Denied'], 403) // initial create fails
+            ->push(['authToken' => 'second', 'dataSource' => 'mysql'], 200) // reauth
+            ->push(['identifier' => 'okay'], 200); // success on retry
+
+        $this->app->singleton(GuacamoleClientInterface::class, fn () => new GuacamoleClient());
+
+        $vmId = 207;
+        $user = User::factory()->engineer()->create();
+        $this->proxmoxClient->registerVM('pve-1', $vmId, 'running', '10.0.0.77');
+
+        $session = VMSession::factory()
+            ->for($user)
+            ->create([
+                'node_id' => $this->node->id,
+                'vm_id' => $vmId,
+                'status' => VMSessionStatus::PENDING,
+                'ip_address' => null,
+                'guacamole_connection_id' => null,
+                'protocol' => VMSessionProtocol::RDP->value,
+            ]);
+
+        $listener = app(CreateGuacamoleConnectionListener::class);
+        $listener->handle(new VMSessionActivated($session));
+
+        $session->refresh();
+        $this->assertEquals(VMSessionStatus::ACTIVE, $session->status);
+        $this->assertNotNull($session->guacamole_connection_id);
     }
 
     public function test_user_saved_preferences_are_applied_during_connection_creation(): void

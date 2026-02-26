@@ -72,6 +72,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check whether the user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(UserRole::ADMIN);
+    }
+
+    /**
      * Check whether the user has any of the supplied roles.
      *
      * @param array<string|UserRole> $roles

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,6 +22,7 @@ class VMSessionFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'proxmox_server_id' => ProxmoxServer::factory(),
             'node_id' => ProxmoxNode::factory(),
             'vm_id' => null,
             'status' => VMSessionStatus::PENDING->value,
