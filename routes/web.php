@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/devices/{device}/unbind', [HardwareController::class, 'unbind'])->name('devices.unbind');
         Route::post('/devices/{device}/attach', [HardwareController::class, 'attach'])->name('devices.attach');
         Route::post('/devices/{device}/detach', [HardwareController::class, 'detach'])->name('devices.detach');
+        Route::post('/devices/{device}/cancel-pending', [HardwareController::class, 'cancelPending'])->name('devices.cancel-pending');
     });
 
     // Session-specific hardware management (attach/detach devices to session)

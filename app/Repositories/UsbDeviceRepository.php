@@ -218,4 +218,65 @@ class UsbDeviceRepository
 
         return $affectedCount;
     }
+
+    /**
+     * Mark device as pending attachment to a VM that is not currently running.
+     * When the VM starts, the device will be automatically attached.
+     */
+    public function markPendingAttach(
+        UsbDevice $device,
+        int $vmid,
+        string $nodeName,
+        int $serverId,
+        ?string $vmIp = null,
+        ?string $vmName = null
+    ): bool {
+        return $device->update([
+            'status' => UsbDeviceStatus::PENDING_ATTACH,
+            'pending_vmid' => $vmid,
+            'pending_node' => $nodeName,
+            'pending_server_id' => $serverId,
+            'pending_vm_ip' => $vmIp,
+            'pending_vm_name' => $vmName,
+            'pending_since' => now(),
+        ]);
+    }
+
+    /**
+     * Clear pending attachment data and restore to bound state.
+     */
+    public function clearPendingAttach(UsbDevice $device): bool
+    {
+        return $device->update([
+            'status' => UsbDeviceStatus::BOUND,
+            'pending_vmid' => null,
+            'pending_node' => null,
+            'pending_server_id' => null,
+            'pending_vm_ip' => null,
+            'pending_vm_name' => null,
+            'pending_since' => null,
+        ]);
+    }
+
+    /**
+     * Get all devices with pending attachments.
+     */
+    public function findPendingAttach(): Collection
+    {
+        return UsbDevice::pendingAttach()
+            ->with(['gatewayNode', 'pendingServer'])
+            ->get();
+    }
+
+    /**
+     * Get devices with pending attachment for a specific VM.
+     */
+    public function findPendingForVm(int $vmid, int $serverId): Collection
+    {
+        return UsbDevice::pendingAttach()
+            ->where('pending_vmid', $vmid)
+            ->where('pending_server_id', $serverId)
+            ->with('gatewayNode')
+            ->get();
+    }
 }

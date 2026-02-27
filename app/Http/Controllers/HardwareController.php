@@ -197,7 +197,7 @@ class HardwareController extends Controller
 
                 $server = ProxmoxServer::findOrFail($serverId);
 
-                $this->gatewayService->attachToVmDirect(
+                $result = $this->gatewayService->attachToVmDirect(
                     device: $device,
                     vmid: $vmid,
                     nodeName: $nodeName,
@@ -205,6 +205,16 @@ class HardwareController extends Controller
                     vmIp: $vmIp,
                     vmName: $vmName
                 );
+
+                // If attachment is pending (VM not running), return appropriate response
+                if ($result['pending']) {
+                    return response()->json([
+                        'success' => true,
+                        'pending' => true,
+                        'message' => $result['message'],
+                        'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+                    ]);
+                }
             }
 
             return response()->json([
@@ -246,6 +256,34 @@ class HardwareController extends Controller
                 'message' => $e->getMessage(),
             ], 502);
         }
+    }
+
+    /**
+     * Cancel a pending USB device attachment.
+     */
+    public function cancelPending(UsbDevice $device): JsonResponse
+    {
+        if (!$device->isPendingAttach()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device does not have a pending attachment',
+            ], 422);
+        }
+
+        $cancelled = $this->gatewayService->cancelPendingAttachment($device);
+
+        if (!$cancelled) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel pending attachment',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pending attachment cancelled',
+            'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+        ]);
     }
 
     // ─── Admin-only endpoints ─────────────────────────────────────────────

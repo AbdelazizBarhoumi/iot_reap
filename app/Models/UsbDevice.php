@@ -22,6 +22,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $attached_session_id
  * @property string|null $attached_vm_ip
  * @property string|null $usbip_port
+ * @property int|null $pending_vmid
+ * @property string|null $pending_node
+ * @property int|null $pending_server_id
+ * @property string|null $pending_vm_ip
+ * @property string|null $pending_vm_name
+ * @property \DateTime|null $pending_since
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  */
@@ -40,11 +46,20 @@ class UsbDevice extends Model
         'attached_session_id',
         'attached_vm_ip',
         'usbip_port',
+        'pending_vmid',
+        'pending_node',
+        'pending_server_id',
+        'pending_vm_ip',
+        'pending_vm_name',
+        'pending_since',
     ];
 
     protected $casts = [
         'gateway_node_id' => 'integer',
         'status' => UsbDeviceStatus::class,
+        'pending_vmid' => 'integer',
+        'pending_server_id' => 'integer',
+        'pending_since' => 'datetime',
     ];
 
     /**
@@ -185,5 +200,54 @@ class UsbDevice extends Model
     public function scopeFromVerifiedGateways($query)
     {
         return $query->whereHas('gatewayNode', fn ($q) => $q->verified());
+    }
+
+    /**
+     * Get the pending Proxmox server relationship.
+     */
+    public function pendingServer(): BelongsTo
+    {
+        return $this->belongsTo(ProxmoxServer::class, 'pending_server_id');
+    }
+
+    /**
+     * Check if device has a pending attachment.
+     */
+    public function hasPendingAttachment(): bool
+    {
+        return $this->status === UsbDeviceStatus::PENDING_ATTACH
+            && $this->pending_vmid !== null
+            && $this->pending_node !== null
+            && $this->pending_server_id !== null;
+    }
+
+    /**
+     * Check if device is pending attach.
+     */
+    public function isPendingAttach(): bool
+    {
+        return $this->status === UsbDeviceStatus::PENDING_ATTACH;
+    }
+
+    /**
+     * Scope: Get pending attachment devices.
+     */
+    public function scopePendingAttach($query)
+    {
+        return $query->where('status', UsbDeviceStatus::PENDING_ATTACH);
+    }
+
+    /**
+     * Clear pending attachment data.
+     */
+    public function clearPendingAttachment(): void
+    {
+        $this->pending_vmid = null;
+        $this->pending_node = null;
+        $this->pending_server_id = null;
+        $this->pending_vm_ip = null;
+        $this->pending_vm_name = null;
+        $this->pending_since = null;
+        $this->save();
     }
 }

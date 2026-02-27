@@ -108,6 +108,14 @@ export const hardwareApi = {
     return response.data;
   },
 
+  /**
+   * Cancel a pending USB device attachment.
+   */
+  async cancelPendingAttachment(deviceId: number): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>(`/hardware/devices/${deviceId}/cancel-pending`);
+    return response.data;
+  },
+
   // Admin endpoints
 
   /**

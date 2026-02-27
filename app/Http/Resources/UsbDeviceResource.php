@@ -32,6 +32,13 @@ class UsbDeviceResource extends JsonResource
             'attached_to' => $this->attached_to,
             'attached_session_id' => $this->attached_session_id,
             'attached_vm_ip' => $this->attached_vm_ip,
+            // Pending attachment fields
+            'pending_vmid' => $this->pending_vmid,
+            'pending_node' => $this->pending_node,
+            'pending_server_id' => $this->pending_server_id,
+            'pending_vm_ip' => $this->pending_vm_ip,
+            'pending_vm_name' => $this->pending_vm_name,
+            'pending_since' => $this->pending_since?->toIso8601String(),
             'queue_count' => $this->whenLoaded('queueEntries', fn() => $this->queueEntries->count()),
             'has_active_reservation' => $this->hasActiveReservation(),
             'created_at' => $this->created_at->toIso8601String(),

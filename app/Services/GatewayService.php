@@ -47,6 +47,36 @@ class GatewayService
     }
 
     /**
+     * Safely extract an error message from a JSON response.
+     * Handles cases where the 'detail' field could be an array or object.
+     */
+    private function extractErrorMessage(\Illuminate\Http\Client\Response $response, string $key = 'detail', string $default = 'Operation failed'): string
+    {
+        $value = $response->json($key, $default);
+        
+        if (is_string($value)) {
+            return $value;
+        }
+        
+        if (is_array($value)) {
+            // Try common error array formats
+            if (isset($value['message'])) {
+                return (string) $value['message'];
+            }
+            if (isset($value['error'])) {
+                return (string) $value['error'];
+            }
+            if (isset($value['msg'])) {
+                return (string) $value['msg'];
+            }
+            // Fallback: JSON encode the error detail
+            return json_encode($value) ?: $default;
+        }
+        
+        return (string) $value;
+    }
+
+    /**
      * Discover all USB devices from all gateway nodes.
      *
      * @return array<string, int> Summary of discovery results
@@ -255,7 +285,7 @@ class GatewayService
                 ->post("{$node->api_url}/bind", ['busid' => $device->busid]);
 
             if (!$response->ok()) {
-                $detail = $response->json('detail', 'Bind failed');
+                $detail = $this->extractErrorMessage($response, 'detail', 'Bind failed');
                 
                 // "already bound" is actually success
                 if (!str_contains(strtolower($detail), 'already bound')) {
@@ -388,7 +418,7 @@ class GatewayService
 
             if (!$response->ok()) {
                 throw new GatewayApiException(
-                    $response->json('detail', 'Bind operation failed'),
+                    $this->extractErrorMessage($response, 'detail', 'Bind operation failed'),
                     gatewayHost: $node->ip,
                     operation: 'bind'
                 );
@@ -437,7 +467,7 @@ class GatewayService
 
             if (!$response->ok()) {
                 throw new GatewayApiException(
-                    $response->json('detail', 'Unbind operation failed'),
+                    $this->extractErrorMessage($response, 'detail', 'Unbind operation failed'),
                     gatewayHost: $node->ip,
                     operation: 'unbind'
                 );
@@ -851,6 +881,9 @@ class GatewayService
      *
      * This is for admin-initiated permanent VM attachments (not session-based).
      * It requires vmid, Proxmox node name, and server_id to execute usbip inside the VM.
+     * 
+     * If the VM is not running, the device will be marked as pending attachment
+     * and auto-attached when the VM starts.
      *
      * @param UsbDevice      $device    The USB device to attach
      * @param int            $vmid      The Proxmox VM ID
@@ -858,8 +891,11 @@ class GatewayService
      * @param ProxmoxServer  $server    The Proxmox server
      * @param string         $vmIp      The VM's IP address
      * @param string         $vmName    Optional display name for the VM
+     * @param bool           $allowPending  If true, save as pending when VM not running (default: true)
      *
      * @throws GatewayApiException If the attach operation fails
+     * 
+     * @return array{pending: bool, message: string}
      */
     public function attachToVmDirect(
         UsbDevice $device,
@@ -867,8 +903,9 @@ class GatewayService
         string $nodeName,
         ProxmoxServer $server,
         string $vmIp,
-        string $vmName = 'direct-attach'
-    ): void {
+        string $vmName = 'direct-attach',
+        bool $allowPending = true
+    ): array {
         $node = $device->gatewayNode;
 
         if (!$node) {
@@ -878,12 +915,60 @@ class GatewayService
             );
         }
 
-        // Ensure device is bound for sharing
-        if (!$device->isBound() && !$device->isAvailable()) {
+        // Ensure device is bound for sharing, or pending attach
+        if (!$device->isBound() && !$device->isAvailable() && !$device->isPendingAttach()) {
             throw new GatewayApiException(
                 'Device must be bound before attaching',
                 operation: 'attach'
             );
+        }
+
+        // Get the Proxmox client for this server
+        $proxmoxClient = $this->proxmoxClientFactory->make($server);
+
+        // Check if VM is running
+        try {
+            $vmStatus = $proxmoxClient->getVMStatus($nodeName, $vmid);
+            $isRunning = ($vmStatus['status'] ?? 'stopped') === 'running';
+        } catch (ProxmoxApiException $e) {
+            Log::warning('Failed to get VM status, assuming stopped', [
+                'vmid' => $vmid,
+                'node' => $nodeName,
+                'error' => $e->getMessage(),
+            ]);
+            $isRunning = false;
+        }
+
+        // If VM is not running, save as pending attachment
+        if (!$isRunning) {
+            if (!$allowPending) {
+                throw new GatewayApiException(
+                    'VM is not running and pending attachment not allowed',
+                    operation: 'attach'
+                );
+            }
+
+            $this->deviceRepository->markPendingAttach(
+                device: $device,
+                vmid: $vmid,
+                nodeName: $nodeName,
+                serverId: $server->id,
+                vmIp: $vmIp,
+                vmName: $vmName,
+            );
+
+            Log::info('USB device marked as pending attachment (VM not running)', [
+                'device_id' => $device->id,
+                'busid' => $device->busid,
+                'vmid' => $vmid,
+                'node' => $nodeName,
+                'vm_name' => $vmName,
+            ]);
+
+            return [
+                'pending' => true,
+                'message' => "VM is not running. Device will be attached automatically when the VM starts.",
+            ];
         }
 
         // Pre-flight check: verify gateway and device state, auto-fix if possible
@@ -907,9 +992,6 @@ class GatewayService
         $busid = $device->busid;
 
         try {
-            // Get the Proxmox client for this server
-            $proxmoxClient = $this->proxmoxClientFactory->make($server);
-
             // Query the guest agent for the actual OS type
             $osType = $proxmoxClient->getGuestOsType($nodeName, $vmid);
             $isWindows = ($osType === 'windows');
@@ -952,13 +1034,18 @@ class GatewayService
                 if ($port !== null) {
                     // Device IS attached - mark success
                     $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                    // Clear any pending attachment data
+                    $device->clearPendingAttachment();
                     Log::info('USB device verified attached after command failure (direct)', [
                         'device_id' => $device->id,
                         'vmid' => $vmid,
                         'port' => $port,
                         'original_error' => $errorMsg,
                     ]);
-                    return;
+                    return [
+                        'pending' => false,
+                        'message' => 'Device attached successfully.',
+                    ];
                 }
 
                 // Device not found in VM - genuine failure
@@ -981,6 +1068,8 @@ class GatewayService
             );
 
             $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+            // Clear any pending attachment data
+            $device->clearPendingAttachment();
 
             Log::info('USB device attached to VM via guest agent (direct)', [
                 'device_id' => $device->id,
@@ -988,6 +1077,11 @@ class GatewayService
                 'vmid' => $vmid,
                 'port' => $port,
             ]);
+
+            return [
+                'pending' => false,
+                'message' => 'Device attached successfully.',
+            ];
         } catch (ProxmoxApiException $e) {
             Log::error('Proxmox guest agent attach failed (direct)', [
                 'device_id' => $device->id,
@@ -1008,13 +1102,18 @@ class GatewayService
 
                     if ($port !== null) {
                         $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                        // Clear any pending attachment data
+                        $device->clearPendingAttachment();
                         Log::info('USB device verified attached after ProxmoxApiException (direct)', [
                             'device_id' => $device->id,
                             'vmid' => $vmid,
                             'port' => $port,
                             'original_error' => $e->getMessage(),
                         ]);
-                        return;
+                        return [
+                            'pending' => false,
+                            'message' => 'Device attached successfully.',
+                        ];
                     }
                 } catch (\Throwable $verifyException) {
                     Log::warning('Failed to verify device attachment state after exception (direct)', [
@@ -1071,7 +1170,7 @@ class GatewayService
 
             if (!$response->ok()) {
                 throw new GatewayApiException(
-                    $response->json('detail', 'Attach operation failed'),
+                    $this->extractErrorMessage($response, 'detail', 'Attach operation failed'),
                     gatewayHost: $node->ip,
                     operation: 'attach'
                 );
@@ -1320,7 +1419,7 @@ class GatewayService
 
             if (!$response->ok()) {
                 throw new GatewayApiException(
-                    $response->json('detail', 'Detach operation failed'),
+                    $this->extractErrorMessage($response, 'detail', 'Detach operation failed'),
                     gatewayHost: $node->ip,
                     operation: 'detach'
                 );
@@ -1375,5 +1474,92 @@ class GatewayService
             'node_id' => $node->id,
             'node_name' => $node->name,
         ]);
+    }
+
+    /**
+     * Process pending USB attachments for a specific VM.
+     *
+     * This should be called when a VM starts to attach any devices
+     * that were waiting for it.
+     *
+     * @param int $vmid The Proxmox VM ID
+     * @param ProxmoxServer $server The Proxmox server
+     * @return array{attached: int, failed: int, errors: array<string>}
+     */
+    public function processPendingAttachmentsForVm(int $vmid, ProxmoxServer $server): array
+    {
+        $pendingDevices = $this->deviceRepository->findPendingForVm($vmid, $server->id);
+        
+        $result = [
+            'attached' => 0,
+            'failed' => 0,
+            'errors' => [],
+        ];
+
+        if ($pendingDevices->isEmpty()) {
+            return $result;
+        }
+
+        Log::info("Processing {$pendingDevices->count()} pending USB attachments for VM", [
+            'vmid' => $vmid,
+            'server_id' => $server->id,
+        ]);
+
+        foreach ($pendingDevices as $device) {
+            try {
+                $attachResult = $this->attachToVmDirect(
+                    device: $device,
+                    vmid: $vmid,
+                    nodeName: $device->pending_node,
+                    server: $server,
+                    vmIp: $device->pending_vm_ip ?? '0.0.0.0',
+                    vmName: $device->pending_vm_name ?? 'pending-attach',
+                    allowPending: false
+                );
+
+                if ($attachResult['pending']) {
+                    $result['failed']++;
+                    $result['errors'][] = "Device {$device->id}: Still pending - {$attachResult['message']}";
+                } else {
+                    $result['attached']++;
+                }
+            } catch (GatewayApiException $e) {
+                $result['failed']++;
+                $result['errors'][] = "Device {$device->id}: {$e->getMessage()}";
+                Log::error('Failed to attach pending device to VM', [
+                    'device_id' => $device->id,
+                    'vmid' => $vmid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        Log::info('Finished processing pending USB attachments for VM', [
+            'vmid' => $vmid,
+            'attached' => $result['attached'],
+            'failed' => $result['failed'],
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Cancel a pending attachment and return device to bound state.
+     */
+    public function cancelPendingAttachment(UsbDevice $device): bool
+    {
+        if (!$device->isPendingAttach()) {
+            return false;
+        }
+
+        $this->deviceRepository->clearPendingAttach($device);
+
+        Log::info('Pending USB attachment cancelled', [
+            'device_id' => $device->id,
+            'busid' => $device->busid,
+            'previous_pending_vmid' => $device->pending_vmid,
+        ]);
+
+        return true;
     }
 }

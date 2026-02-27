@@ -2,7 +2,7 @@
  * USB/IP Hardware Gateway TypeScript interfaces.
  */
 
-export type UsbDeviceStatus = 'available' | 'bound' | 'attached' | 'disconnected';
+export type UsbDeviceStatus = 'available' | 'bound' | 'attached' | 'disconnected' | 'pending_attach';
 export type UsbReservationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
 
 /**
@@ -42,6 +42,13 @@ export interface UsbDevice {
   attached_to: string | null;
   attached_vm_ip: string | null;
   attached_session_id: string | null;
+  // Pending attachment fields (for when VM was not running at attach time)
+  pending_vmid: number | null;
+  pending_node: string | null;
+  pending_server_id: number | null;
+  pending_vm_ip: string | null;
+  pending_vm_name: string | null;
+  pending_since: string | null;
   queue_count: number;
   has_active_reservation: boolean;
   created_at: string;
