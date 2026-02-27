@@ -308,13 +308,25 @@ class UsbDeviceQueueService
 
     /**
      * Get devices available for a session (from online and verified gateways only).
-     * Shows bound and attached devices. Users can attach bound devices directly.
+     * Shows bound and session-attached devices. Users can attach bound devices directly.
+     * 
+     * IMPORTANT: Devices attached from Infrastructure page (no session_id) are NOT shown.
+     * Those are infra-managed and not available for session-based attach/queue.
      */
     public function getAvailableDevicesForSession(VMSession $session): Collection
     {
         return UsbDevice::whereHas('gatewayNode', fn ($q) => $q->active())
             ->with(['gatewayNode', 'queueEntries'])
-            ->whereIn('status', ['bound', 'attached'])
+            ->where(function ($query) {
+                // Include all bound devices (ready for attach)
+                $query->where('status', 'bound')
+                    // Include attached devices ONLY if they have a session_id
+                    // (excludes infra-attached devices which have status=attached but session_id=null)
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'attached')
+                          ->whereNotNull('attached_session_id');
+                    });
+            })
             ->get()
             ->map(function ($device) use ($session) {
                 $canAttach = $this->canUserAttachNow($device, $session->user);

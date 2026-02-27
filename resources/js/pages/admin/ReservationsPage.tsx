@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { adminReservationApi, hardwareApi } from '@/api/hardware.api';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +41,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { adminReservationApi, hardwareApi } from '@/api/hardware.api';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { UsbDevice, UsbDeviceReservation, UsbReservationStatus } from '@/types/hardware.types';
@@ -101,14 +101,14 @@ function ReservationCard({ reservation, onApprove, onReject, actionLoading }: Re
           <div className="flex justify-between">
             <span className="text-muted-foreground">Requested Period:</span>
             <span>
-              {formatDateTime(reservation.requested_start)} — {formatDateTime(reservation.requested_end)}
+              {formatDateTime(reservation.requested_start_at)} — {formatDateTime(reservation.requested_end_at)}
             </span>
           </div>
-          {reservation.approved_start && (
+          {(reservation.approved_start_at || reservation.approved_end_at) && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Approved Period:</span>
               <span>
-                {formatDateTime(reservation.approved_start)} — {formatDateTime(reservation.approved_end)}
+                {formatDateTime(reservation.approved_start_at)} — {formatDateTime(reservation.approved_end_at)}
               </span>
             </div>
           )}
@@ -172,8 +172,10 @@ function ApproveDialog({ reservation, open, onClose, onConfirm, loading }: Appro
   useEffect(() => {
     if (reservation) {
       // Pre-fill with requested times
-      setStart(reservation.requested_start?.slice(0, 16) || '');
-      setEnd(reservation.requested_end?.slice(0, 16) || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStart(reservation.requested_start_at?.slice(0, 16) || '');
+       
+      setEnd(reservation.requested_end_at?.slice(0, 16) || '');
       setNotes('');
     }
   }, [reservation]);
@@ -413,8 +415,8 @@ export default function AdminReservationsPage() {
     setActionLoading(true);
     try {
       await adminReservationApi.approve(selectedReservation.id, {
-        approved_start: new Date(start).toISOString(),
-        approved_end: new Date(end).toISOString(),
+        approved_start_at: new Date(start).toISOString(),
+        approved_end_at: new Date(end).toISOString(),
         admin_notes: notes || undefined,
       });
       await fetchData();
@@ -447,9 +449,9 @@ export default function AdminReservationsPage() {
     try {
       await adminReservationApi.createBlock({
         usb_device_id: deviceId,
-        approved_start: new Date(start).toISOString(),
-        approved_end: new Date(end).toISOString(),
-        admin_notes: notes || undefined,
+        start_at: new Date(start).toISOString(),
+        end_at: new Date(end).toISOString(),
+        notes: notes || undefined,
       });
       await fetchData();
     } catch (e) {

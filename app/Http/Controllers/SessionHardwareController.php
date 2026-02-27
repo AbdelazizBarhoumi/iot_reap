@@ -13,6 +13,7 @@ use App\Services\GatewayService;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Controller for managing USB devices within a session context.
@@ -71,6 +72,9 @@ class SessionHardwareController extends Controller
 
     /**
      * Attach a USB device to the session.
+     * 
+     * Uses database-level locking to prevent race conditions when
+     * multiple users attempt to attach the same device simultaneously.
      */
     public function attach(VMSession $session, UsbDevice $device): JsonResponse
     {
@@ -95,35 +99,50 @@ class SessionHardwareController extends Controller
             ], 422);
         }
 
-        // Validate device is bound
-        if (!$device->isBound()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Device must be bound before attaching',
-            ], 422);
-        }
-
-        // Check if user can attach (reservation check)
-        $canAttach = $this->queueService->canUserAttachNow($device, auth()->user());
-        if (!$canAttach['can_attach']) {
-            return response()->json([
-                'success' => false,
-                'message' => $canAttach['reason'],
-                'reserved_until' => $canAttach['until'] ?? null,
-            ], 422);
-        }
-
         try {
-            $this->gatewayService->attachToSession($device, $session);
+            // Use database transaction with row-level locking to prevent race conditions
+            return DB::transaction(function () use ($session, $device) {
+                // Lock the device row for update to prevent concurrent attach attempts
+                $lockedDevice = UsbDevice::where('id', $device->id)
+                    ->lockForUpdate()
+                    ->first();
 
-            // Remove from queue if they were waiting
-            $this->queueService->leaveQueue($device, $session);
+                if (!$lockedDevice) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Device not found',
+                    ], 404);
+                }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Device attached successfully',
-                'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
-            ]);
+                // Re-validate device is still bound (may have changed while waiting for lock)
+                if (!$lockedDevice->isBound()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Device is no longer available for attachment',
+                    ], 422);
+                }
+
+                // Check if user can attach (reservation check)
+                $canAttach = $this->queueService->canUserAttachNow($lockedDevice, auth()->user());
+                if (!$canAttach['can_attach']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $canAttach['reason'],
+                        'reserved_until' => $canAttach['until'] ?? null,
+                    ], 422);
+                }
+
+                $this->gatewayService->attachToSession($lockedDevice, $session);
+
+                // Remove from queue if they were waiting
+                $this->queueService->leaveQueue($lockedDevice, $session);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Device attached successfully',
+                    'device' => new UsbDeviceResource($lockedDevice->fresh()->load('gatewayNode')),
+                ]);
+            });
         } catch (GatewayApiException $e) {
             return response()->json([
                 'success' => false,

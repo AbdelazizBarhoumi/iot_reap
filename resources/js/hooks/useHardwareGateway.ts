@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { hardwareApi } from '../api/hardware.api';
 import type { AttachDeviceRequest, GatewayNode, UsbDevice } from '../types/hardware.types';
 
@@ -53,16 +54,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const refreshAll = useCallback(async (): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.refreshAll();
       if (result.success) {
+        toast.success('All gateways refreshed');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Refresh failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Refresh failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -72,16 +78,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const refreshNode = useCallback(async (nodeId: number): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.refreshNode(nodeId);
       if (result.success) {
+        toast.success('Gateway refreshed');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Refresh failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Refresh failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -91,16 +102,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const bindDevice = useCallback(async (deviceId: number): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.bindDevice(deviceId);
       if (result.success) {
+        toast.success('Device bound successfully');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Bind failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Bind failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -110,16 +126,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const unbindDevice = useCallback(async (deviceId: number): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.unbindDevice(deviceId);
       if (result.success) {
+        toast.success('Device unbound successfully');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Unbind failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Unbind failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -129,16 +150,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const attachDevice = useCallback(async (deviceId: number, data: AttachDeviceRequest): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.attachDevice(deviceId, data);
       if (result.success) {
+        toast.success('Device attached successfully');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Attach failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Attach failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -148,16 +174,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const detachDevice = useCallback(async (deviceId: number): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.detachDevice(deviceId);
       if (result.success) {
+        toast.success('Device detached successfully');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Detach failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Detach failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -167,16 +198,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const discoverGateways = useCallback(async (): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.discoverGateways();
       if (result.success) {
+        toast.success('Gateway discovery completed');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Discovery failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Discovery failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {
@@ -186,16 +222,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
 
   const verifyNode = useCallback(async (nodeId: number, verified: boolean): Promise<boolean> => {
     setActionLoading(true);
+    setError(null);
     try {
       const result = await hardwareApi.verifyNode(nodeId, verified);
       if (result.success) {
+        toast.success(verified ? 'Gateway verified' : 'Gateway unverified');
         await fetchData();
         return true;
       }
-      setError(result.message);
+      const errorMsg = result.message || 'Verify failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
       return false;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Verify failed';
+      toast.error(message);
       setError(message);
       return false;
     } finally {

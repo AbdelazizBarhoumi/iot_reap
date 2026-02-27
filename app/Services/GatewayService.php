@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\GatewayApiException;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\GatewayNode;
+use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Enums\UsbDeviceStatus;
 use App\Models\VMSession;
@@ -167,6 +168,203 @@ class GatewayService
     }
 
     /**
+     * Check if a device is actually exportable (can be seen by usbip clients).
+     *
+     * A device may be in "bound" state in the database but usbipd may not be
+     * serving it properly (e.g., after container restart, usbipd restart).
+     *
+     * @param UsbDevice $device The device to check
+     * @return bool True if device is visible via /devices/exported endpoint
+     */
+    public function isDeviceExportable(UsbDevice $device): bool
+    {
+        $node = $device->gatewayNode;
+
+        if (!$node) {
+            return false;
+        }
+
+        try {
+            $response = Http::timeout($this->timeout())
+                ->get("{$node->api_url}/devices/exported");
+
+            if (!$response->ok()) {
+                return false;
+            }
+
+            $output = $response->json('output', '');
+            return str_contains($output, $device->busid);
+        } catch (\Exception $e) {
+            Log::warning('Failed to check device exportability', [
+                'device_id' => $device->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Ensure a device is properly exportable by rebinding if necessary.
+     *
+     * This handles the edge case where a device is marked as "bound" in the DB
+     * but usbipd isn't actually serving it (e.g., after daemon restart).
+     *
+     * @param UsbDevice $device The device to ensure is exportable
+     * @return bool True if device is now exportable
+     * @throws GatewayApiException If rebind fails
+     */
+    public function ensureDeviceExportable(UsbDevice $device): bool
+    {
+        // First check if already exportable
+        if ($this->isDeviceExportable($device)) {
+            return true;
+        }
+
+        // Device not exportable - try unbind then rebind
+        $node = $device->gatewayNode;
+        if (!$node) {
+            throw new GatewayApiException(
+                'Device has no associated gateway node',
+                operation: 'ensure-exportable'
+            );
+        }
+
+        Log::info('Device not exportable, attempting rebind', [
+            'device_id' => $device->id,
+            'busid' => $device->busid,
+            'node' => $node->name,
+        ]);
+
+        try {
+            // Try unbind first (ignore errors - device may not be bound)
+            Http::timeout($this->timeout())
+                ->post("{$node->api_url}/unbind", ['busid' => $device->busid]);
+        } catch (\Exception $e) {
+            // Ignore unbind errors
+            Log::debug('Unbind during rebind attempt failed (expected)', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Small delay to let usbipd process the unbind
+        usleep(500000); // 500ms
+
+        // Now bind
+        try {
+            $response = Http::timeout($this->timeout())
+                ->post("{$node->api_url}/bind", ['busid' => $device->busid]);
+
+            if (!$response->ok()) {
+                $detail = $response->json('detail', 'Bind failed');
+                
+                // "already bound" is actually success
+                if (!str_contains(strtolower($detail), 'already bound')) {
+                    throw new GatewayApiException(
+                        "Rebind failed: {$detail}",
+                        gatewayHost: $node->ip,
+                        operation: 'ensure-exportable'
+                    );
+                }
+            }
+        } catch (GatewayApiException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new GatewayApiException(
+                "Failed to rebind device: {$e->getMessage()}",
+                gatewayHost: $node->ip,
+                operation: 'ensure-exportable',
+                previous: $e
+            );
+        }
+
+        // Update DB status
+        $this->deviceRepository->markBound($device);
+
+        // Wait a bit and verify
+        usleep(500000); // 500ms
+
+        if (!$this->isDeviceExportable($device)) {
+            Log::error('Device still not exportable after rebind', [
+                'device_id' => $device->id,
+                'busid' => $device->busid,
+            ]);
+            return false;
+        }
+
+        Log::info('Device successfully rebound and now exportable', [
+            'device_id' => $device->id,
+            'busid' => $device->busid,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Verify gateway and device state before an operation.
+     *
+     * Performs pre-flight checks:
+     * 1. Gateway is online
+     * 2. Device exists on the gateway
+     * 3. Device is properly exportable (for attach operations)
+     *
+     * @param UsbDevice $device The device to verify
+     * @param bool $requireExportable Whether device must be exportable (for attach)
+     * @return array{ok: bool, error?: string, auto_fixed?: bool}
+     */
+    public function verifyDeviceState(UsbDevice $device, bool $requireExportable = false): array
+    {
+        $node = $device->gatewayNode;
+
+        if (!$node) {
+            return ['ok' => false, 'error' => 'Device has no associated gateway node'];
+        }
+
+        // Check gateway health
+        if (!$this->checkHealth($node)) {
+            return ['ok' => false, 'error' => "Gateway {$node->name} is offline"];
+        }
+
+        // Check device exists on gateway
+        try {
+            $response = Http::timeout($this->timeout())
+                ->get("{$node->api_url}/devices");
+
+            if (!$response->ok()) {
+                return ['ok' => false, 'error' => 'Failed to query gateway devices'];
+            }
+
+            $devices = $response->json('devices', []);
+            $found = collect($devices)->firstWhere('busid', $device->busid);
+
+            if (!$found) {
+                // Device not on gateway - mark as disconnected
+                $device->update(['status' => UsbDeviceStatus::DISCONNECTED]);
+                return ['ok' => false, 'error' => "Device {$device->busid} not found on gateway"];
+            }
+        } catch (\Exception $e) {
+            return ['ok' => false, 'error' => "Gateway query failed: {$e->getMessage()}"];
+        }
+
+        // Check exportability if required
+        if ($requireExportable) {
+            if (!$this->isDeviceExportable($device)) {
+                // Try to auto-fix
+                try {
+                    if ($this->ensureDeviceExportable($device)) {
+                        return ['ok' => true, 'auto_fixed' => true];
+                    } else {
+                        return ['ok' => false, 'error' => 'Device is bound but not exportable (rebind failed)'];
+                    }
+                } catch (GatewayApiException $e) {
+                    return ['ok' => false, 'error' => "Auto-rebind failed: {$e->getMessage()}"];
+                }
+            }
+        }
+
+        return ['ok' => true];
+    }
+
+    /**
      * Bind a USB device for sharing via USB/IP.
      *
      * @throws GatewayApiException
@@ -313,6 +511,23 @@ class GatewayService
             );
         }
 
+        // Pre-flight check: verify gateway and device state, auto-fix if possible
+        $verification = $this->verifyDeviceState($device, requireExportable: true);
+        if (!$verification['ok']) {
+            throw new GatewayApiException(
+                $verification['error'] ?? 'Device verification failed',
+                gatewayHost: $node->ip,
+                operation: 'attach'
+            );
+        }
+
+        if (!empty($verification['auto_fixed'])) {
+            Log::info('Device was auto-fixed during attach pre-flight', [
+                'device_id' => $device->id,
+                'busid' => $device->busid,
+            ]);
+        }
+
         // Build the usbip attach command to run inside the VM
         $gatewayIp = $node->ip;
         $busid = $device->busid;
@@ -337,13 +552,16 @@ class GatewayService
             ]);
 
             // Execute the command differently based on OS type
+            // Windows USB/IP attach is slow due to driver loading, needs longer timeout
+            $attachTimeout = $isWindows ? 60 : 30;
+            
             $result = $this->executeUsbipCommand(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $proxmoxNode->name,
                 vmid: $session->vm_id,
                 command: "attach -r {$gatewayIp} -b {$busid}",
                 isWindows: $isWindows,
-                timeoutSeconds: 30
+                timeoutSeconds: $attachTimeout
             );
 
             if (!$result['success']) {
@@ -367,42 +585,41 @@ class GatewayService
                     );
                 }
 
-                // If the attach command timed out, check if device is already attached in VM
-                if (str_contains(strtolower($errorMsg), 'timeout')) {
-                    Log::warning('usbip attach command timed out, checking device state in VM', [
+                // For any other error (timeout, already attached, generic failure, etc.),
+                // verify if the device was actually attached before reporting failure.
+                // This handles cases where the command succeeds but reports wrong exit code,
+                // or when a fallback attempt fails because the device is already attached.
+                Log::warning('usbip attach command reported failure, verifying device state in VM', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                    'error' => $errorMsg,
+                ]);
+
+                $port = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                    busid: $busid,
+                    isWindows: $isWindows
+                );
+
+                if ($port !== null) {
+                    // Device IS actually attached - mark success despite command reporting failure
+                    $vmName = "session-{$session->id}";
+                    $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
+                    Log::info('USB device verified attached after command failure (port found)', [
                         'device_id' => $device->id,
                         'session_id' => $session->id,
-                        'error' => $errorMsg,
+                        'port' => $port,
+                        'original_error' => $errorMsg,
                     ]);
-                    // Try to get the port number; if found, mark as attached
-                    $port = $this->getAttachedPort(
-                        proxmoxClient: $proxmoxClient,
-                        nodeName: $proxmoxNode->name,
-                        vmid: $session->vm_id,
-                        busid: $busid,
-                        isWindows: $isWindows
-                    );
-                    if ($port !== null) {
-                        $vmName = "session-{$session->id}";
-                        $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
-                        Log::info('USB device marked attached after timeout (port found)', [
-                            'device_id' => $device->id,
-                            'session_id' => $session->id,
-                            'port' => $port,
-                        ]);
-                        return;
-                    }
-                    // If not found, mark as available
-                    $device->status = UsbDeviceStatus::AVAILABLE;
-                    $device->attached_session_id = null;
-                    $device->save();
-                    throw new GatewayApiException(
-                        "usbip attach failed: timeout and device not found in VM",
-                        gatewayHost: $gatewayIp,
-                        operation: 'attach'
-                    );
+                    return;
                 }
 
+                // Device not found in VM - genuine failure
+                $device->status = UsbDeviceStatus::BOUND;
+                $device->attached_session_id = null;
+                $device->save();
                 throw new GatewayApiException(
                     "usbip attach failed: {$errorMsg}",
                     gatewayHost: $gatewayIp,
@@ -434,6 +651,38 @@ class GatewayService
                 'session_id' => $session->id,
                 'error' => $e->getMessage(),
             ]);
+
+            // If we have enough context, verify if the device was actually attached
+            // despite the exception (e.g., timeout during response, but command succeeded)
+            if (isset($proxmoxClient, $proxmoxNode, $busid, $isWindows)) {
+                try {
+                    $port = $this->getAttachedPort(
+                        proxmoxClient: $proxmoxClient,
+                        nodeName: $proxmoxNode->name,
+                        vmid: $session->vm_id,
+                        busid: $busid,
+                        isWindows: $isWindows
+                    );
+
+                    if ($port !== null) {
+                        // Device IS attached - mark success despite exception
+                        $vmName = "session-{$session->id}";
+                        $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
+                        Log::info('USB device verified attached after ProxmoxApiException (port found)', [
+                            'device_id' => $device->id,
+                            'session_id' => $session->id,
+                            'port' => $port,
+                            'original_error' => $e->getMessage(),
+                        ]);
+                        return;
+                    }
+                } catch (\Throwable $verifyException) {
+                    Log::warning('Failed to verify device attachment state after exception', [
+                        'device_id' => $device->id,
+                        'verify_error' => $verifyException->getMessage(),
+                    ]);
+                }
+            }
 
             throw new GatewayApiException(
                 "Failed to attach device via guest agent: {$e->getMessage()}",
@@ -594,6 +843,193 @@ class GatewayService
         } catch (\Throwable $e) {
             Log::warning('Failed to get usbip port', ['error' => $e->getMessage()]);
             return null;
+        }
+    }
+
+    /**
+     * Attach a USB device to a VM directly via USB/IP using Proxmox guest agent.
+     *
+     * This is for admin-initiated permanent VM attachments (not session-based).
+     * It requires vmid, Proxmox node name, and server_id to execute usbip inside the VM.
+     *
+     * @param UsbDevice      $device    The USB device to attach
+     * @param int            $vmid      The Proxmox VM ID
+     * @param string         $nodeName  The Proxmox node name
+     * @param ProxmoxServer  $server    The Proxmox server
+     * @param string         $vmIp      The VM's IP address
+     * @param string         $vmName    Optional display name for the VM
+     *
+     * @throws GatewayApiException If the attach operation fails
+     */
+    public function attachToVmDirect(
+        UsbDevice $device,
+        int $vmid,
+        string $nodeName,
+        ProxmoxServer $server,
+        string $vmIp,
+        string $vmName = 'direct-attach'
+    ): void {
+        $node = $device->gatewayNode;
+
+        if (!$node) {
+            throw new GatewayApiException(
+                'Device has no associated gateway node',
+                operation: 'attach'
+            );
+        }
+
+        // Ensure device is bound for sharing
+        if (!$device->isBound() && !$device->isAvailable()) {
+            throw new GatewayApiException(
+                'Device must be bound before attaching',
+                operation: 'attach'
+            );
+        }
+
+        // Pre-flight check: verify gateway and device state, auto-fix if possible
+        $verification = $this->verifyDeviceState($device, requireExportable: true);
+        if (!$verification['ok']) {
+            throw new GatewayApiException(
+                $verification['error'] ?? 'Device verification failed',
+                gatewayHost: $node->ip,
+                operation: 'attach'
+            );
+        }
+
+        if (!empty($verification['auto_fixed'])) {
+            Log::info('Device was auto-fixed during direct attach pre-flight', [
+                'device_id' => $device->id,
+                'busid' => $device->busid,
+            ]);
+        }
+
+        $gatewayIp = $node->ip;
+        $busid = $device->busid;
+
+        try {
+            // Get the Proxmox client for this server
+            $proxmoxClient = $this->proxmoxClientFactory->make($server);
+
+            // Query the guest agent for the actual OS type
+            $osType = $proxmoxClient->getGuestOsType($nodeName, $vmid);
+            $isWindows = ($osType === 'windows');
+
+            // Execute the attach command inside the VM via guest agent
+            Log::info('Executing usbip attach inside VM via guest agent (direct)', [
+                'device_id' => $device->id,
+                'busid' => $busid,
+                'gateway_ip' => $gatewayIp,
+                'vmid' => $vmid,
+                'node' => $nodeName,
+                'server_id' => $server->id,
+                'os_type' => $osType,
+            ]);
+
+            // Windows USB/IP attach is slow due to driver loading, needs longer timeout
+            $attachTimeout = $isWindows ? 60 : 30;
+
+            $result = $this->executeUsbipCommand(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: "attach -r {$gatewayIp} -b {$busid}",
+                isWindows: $isWindows,
+                timeoutSeconds: $attachTimeout
+            );
+
+            if (!$result['success']) {
+                $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
+
+                // Verify if the device was actually attached despite reported failure
+                $port = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                    busid: $busid,
+                    isWindows: $isWindows
+                );
+
+                if ($port !== null) {
+                    // Device IS attached - mark success
+                    $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                    Log::info('USB device verified attached after command failure (direct)', [
+                        'device_id' => $device->id,
+                        'vmid' => $vmid,
+                        'port' => $port,
+                        'original_error' => $errorMsg,
+                    ]);
+                    return;
+                }
+
+                // Device not found in VM - genuine failure
+                $device->status = UsbDeviceStatus::BOUND;
+                $device->save();
+                throw new GatewayApiException(
+                    "usbip attach failed: {$errorMsg}",
+                    gatewayHost: $gatewayIp,
+                    operation: 'attach'
+                );
+            }
+
+            // Get the port number from usbip port command
+            $port = $this->getAttachedPort(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                busid: $busid,
+                isWindows: $isWindows
+            );
+
+            $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+
+            Log::info('USB device attached to VM via guest agent (direct)', [
+                'device_id' => $device->id,
+                'busid' => $busid,
+                'vmid' => $vmid,
+                'port' => $port,
+            ]);
+        } catch (ProxmoxApiException $e) {
+            Log::error('Proxmox guest agent attach failed (direct)', [
+                'device_id' => $device->id,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Verify if device was attached despite exception
+            if (isset($proxmoxClient, $isWindows)) {
+                try {
+                    $port = $this->getAttachedPort(
+                        proxmoxClient: $proxmoxClient,
+                        nodeName: $nodeName,
+                        vmid: $vmid,
+                        busid: $busid,
+                        isWindows: $isWindows
+                    );
+
+                    if ($port !== null) {
+                        $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                        Log::info('USB device verified attached after ProxmoxApiException (direct)', [
+                            'device_id' => $device->id,
+                            'vmid' => $vmid,
+                            'port' => $port,
+                            'original_error' => $e->getMessage(),
+                        ]);
+                        return;
+                    }
+                } catch (\Throwable $verifyException) {
+                    Log::warning('Failed to verify device attachment state after exception (direct)', [
+                        'device_id' => $device->id,
+                        'verify_error' => $verifyException->getMessage(),
+                    ]);
+                }
+            }
+
+            throw new GatewayApiException(
+                "Failed to attach device via guest agent: {$e->getMessage()}",
+                gatewayHost: $gatewayIp,
+                operation: 'attach',
+                previous: $e
+            );
         }
     }
 
@@ -801,6 +1237,34 @@ class GatewayService
                 'session_id' => $session->id,
                 'error' => $e->getMessage(),
             ]);
+
+            // Verify if device was actually detached despite exception
+            // (e.g., timeout during response but command succeeded)
+            try {
+                $verifyPort = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                    busid: $device->busid,
+                    isWindows: $isWindows
+                );
+
+                if ($verifyPort === null) {
+                    // Device IS detached - mark success despite exception
+                    $this->deviceRepository->markDetached($device);
+                    Log::info('USB device verified detached after ProxmoxApiException', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'original_error' => $e->getMessage(),
+                    ]);
+                    return;
+                }
+            } catch (\Throwable $verifyException) {
+                Log::warning('Failed to verify device detachment state after exception', [
+                    'device_id' => $device->id,
+                    'verify_error' => $verifyException->getMessage(),
+                ]);
+            }
 
             throw new GatewayApiException(
                 "Failed to detach device via guest agent: {$e->getMessage()}",

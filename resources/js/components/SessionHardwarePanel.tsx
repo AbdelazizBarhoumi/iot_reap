@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSessionHardware } from '@/hooks/useSessionHardware';
-import type { UsbDevice, AvailableDeviceEntry } from '@/types/hardware.types';
+import type { UsbDevice } from '@/types/hardware.types';
 
 interface SessionHardwarePanelProps {
   sessionId: string;
@@ -117,6 +117,9 @@ function DeviceRow({
         )}
 
         <DeviceStatusBadge status={device.status} />
+        {reason && (
+          <p className="text-xs text-muted-foreground italic">{reason}</p>
+        )}
 
         {isAttached && onDetach && (
           <Button
@@ -262,11 +265,7 @@ export function SessionHardwarePanel({ sessionId, isActive }: SessionHardwarePan
     setLoadingDeviceId(null);
   };
 
-  // Get queue position for a device
-  const getQueuePosition = (deviceId: number): number | undefined => {
-    const entry = queueEntries.find((e) => e.usb_device_id === deviceId);
-    return entry?.position;
-  };
+  // queue position helper was unused; removed to satisfy lint
 
   // Check if user is in queue for a device
   const isInQueueFor = (deviceId: number): boolean => {

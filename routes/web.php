@@ -133,6 +133,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::delete('/nodes/{node}', [HardwareController::class, 'destroyNode'])->name('nodes.destroy');
         Route::post('/discover', [HardwareController::class, 'discoverGateways'])->name('discover');
         Route::post('/status', [HardwareController::class, 'refreshGatewayStatus'])->name('status');
+        Route::get('/running-vms', [HardwareController::class, 'runningVms'])->name('running-vms');
     });
 
     // Admin reservation management

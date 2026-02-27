@@ -2,10 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
+use App\Services\GatewayService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientInterface;
+use App\Services\UsbDeviceQueueService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -69,6 +72,8 @@ class TerminateVMJob implements ShouldQueue
     public function handle(
         GuacamoleClientInterface $guacamoleClient,
         ProxmoxClientInterface $proxmoxClient,
+        GatewayService $gatewayService,
+        UsbDeviceQueueService $queueService,
     ): void {
         Log::info('Starting TerminateVMJob', [
             'session_id' => $this->session->id,
@@ -94,6 +99,9 @@ class TerminateVMJob implements ShouldQueue
 
             // Step 1: Delete Guacamole connection (ALWAYS do this first)
             $this->deleteGuacamoleConnection($session, $guacamoleClient);
+
+            // Step 1.5: Detach and cleanup USB devices
+            $this->cleanupUsbDevices($session, $gatewayService, $queueService);
 
             // Only proceed with VM operations if we have a VM ID
             if ($session->vm_id) {
@@ -181,6 +189,66 @@ class TerminateVMJob implements ShouldQueue
 
             // Rethrow to trigger retry - we MUST delete the Guacamole connection
             throw $e;
+        }
+    }
+
+    /**
+     * Detach and cleanup USB devices attached to this session.
+     *
+     * This ensures devices are properly released when a session ends,
+     * and queued users are notified about device availability.
+     */
+    private function cleanupUsbDevices(
+        VMSession $session,
+        GatewayService $gatewayService,
+        UsbDeviceQueueService $queueService,
+    ): void {
+        $attachedDevices = $session->attachedDevices()->get();
+
+        if ($attachedDevices->isEmpty()) {
+            Log::info('No USB devices to cleanup', [
+                'session_id' => $session->id,
+            ]);
+            return;
+        }
+
+        Log::info('Cleaning up USB devices for terminated session', [
+            'session_id' => $session->id,
+            'device_count' => $attachedDevices->count(),
+        ]);
+
+        foreach ($attachedDevices as $device) {
+            try {
+                // Attempt graceful detach via gateway service
+                $gatewayService->detachFromVm($device);
+                
+                Log::info('USB device detached during session cleanup', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                ]);
+
+                // Process queue - notify next user in line
+                $queueService->processQueueOnDetach($device);
+            } catch (Throwable $e) {
+                // If detach fails (VM already stopped, network issue, etc.),
+                // force-mark device as bound so it's available for others
+                Log::warning('Failed to gracefully detach USB device, forcing bound state', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $device->update([
+                    'status' => UsbDeviceStatus::BOUND,
+                    'attached_session_id' => null,
+                    'attached_to' => null,
+                    'attached_vm_ip' => null,
+                    'usbip_port' => null,
+                ]);
+
+                // Still process the queue even on force-release
+                $queueService->processQueueOnDetach($device);
+            }
         }
     }
 

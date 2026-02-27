@@ -27,10 +27,15 @@ class AttachDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Either session_id OR (vm_ip + vm_name) must be provided
+            // Either session_id OR (vm_ip + vmid + node + server_id) must be provided
             'session_id' => ['nullable', 'string', 'exists:vm_sessions,id'],
+
+            // For direct VM attachment (admin):
             'vm_ip' => ['nullable', 'required_without:session_id', 'ip'],
-            'vm_name' => ['nullable', 'required_with:vm_ip', 'string', 'max:100'],
+            'vm_name' => ['nullable', 'string', 'max:100'],
+            'vmid' => ['nullable', 'required_without:session_id', 'integer', 'min:1'],
+            'node' => ['nullable', 'required_without:session_id', 'string', 'max:50'],
+            'server_id' => ['nullable', 'required_without:session_id', 'integer', 'exists:proxmox_servers,id'],
         ];
     }
 
@@ -43,7 +48,9 @@ class AttachDeviceRequest extends FormRequest
     {
         return [
             'vm_ip.required_without' => 'Either a session ID or VM IP address is required.',
-            'vm_name.required_with' => 'VM name is required when specifying VM IP.',
+            'vmid.required_without' => 'Either a session ID or VM ID is required.',
+            'node.required_without' => 'Either a session ID or Proxmox node name is required.',
+            'server_id.required_without' => 'Either a session ID or server ID is required.',
         ];
     }
 }

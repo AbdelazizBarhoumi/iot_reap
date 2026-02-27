@@ -2,7 +2,7 @@
  * USB/IP Hardware Gateway TypeScript interfaces.
  */
 
-export type UsbDeviceStatus = 'available' | 'bound' | 'attached';
+export type UsbDeviceStatus = 'available' | 'bound' | 'attached' | 'disconnected';
 export type UsbReservationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
 
 /**
@@ -96,6 +96,10 @@ export interface UsbDeviceReservation {
   actual_start_at: string | null;
   actual_end_at: string | null;
   purpose: string | null;
+  // convenience flags returned by API
+  is_admin_block: boolean;
+  // alias for TypeScript consumers that expected a `reason` property
+  reason?: string | null;
   admin_notes: string | null;
   priority: number;
   is_pending: boolean;
@@ -130,11 +134,16 @@ export interface CreateGatewayNodeRequest {
 
 /**
  * Request payload for attaching a device.
+ * For session-based attachment: provide session_id
+ * For direct VM attachment (admin): provide vmid, node, server_id, vm_ip
  */
 export interface AttachDeviceRequest {
   session_id?: string;
   vm_ip?: string;
   vm_name?: string;
+  vmid?: number;
+  node?: string;       // Proxmox node name
+  server_id?: number;  // ProxmoxServer id
 }
 
 /**
@@ -195,4 +204,18 @@ export interface SessionHardwareSummary {
   attached_devices: UsbDevice[];
   queue_entries: UsbDeviceQueueEntry[];
   available_devices: AvailableDeviceEntry[];
+}
+
+/**
+ * Running VM retrieved from Proxmox for device attachment.
+ * Used in the admin hardware page to select a target VM.
+ */
+export interface RunningVm {
+  vmid: number;
+  name: string;
+  ip_address: string | null;
+  node: string;
+  server_id: number;
+  server_name: string;
+  display_name: string;
 }

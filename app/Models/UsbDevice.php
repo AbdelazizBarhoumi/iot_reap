@@ -164,6 +164,22 @@ class UsbDevice extends Model
     }
 
     /**
+     * Scope: Get only disconnected devices.
+     */
+    public function scopeDisconnected($query)
+    {
+        return $query->where('status', UsbDeviceStatus::DISCONNECTED);
+    }
+
+    /**
+     * Check if device is disconnected (physically unplugged while attached).
+     */
+    public function isDisconnected(): bool
+    {
+        return $this->status === UsbDeviceStatus::DISCONNECTED;
+    }
+
+    /**
      * Scope: Get devices from verified gateways only.
      */
     public function scopeFromVerifiedGateways($query)

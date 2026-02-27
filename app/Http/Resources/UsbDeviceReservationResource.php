@@ -42,7 +42,10 @@ class UsbDeviceReservationResource extends JsonResource
             'actual_end_at' => $this->actual_end_at?->toIso8601String(),
             
             // Details
+            // Purpose or user-provided reason. front-end historically used `reason` so we alias it.
             'purpose' => $this->purpose,
+            'reason' => $this->purpose, // synonym for older clients
+            'is_admin_block' => $this->purpose === 'Admin block',
             'admin_notes' => $this->when($request->user()?->isAdmin() ?? false, $this->admin_notes),
             'priority' => $this->priority,
             

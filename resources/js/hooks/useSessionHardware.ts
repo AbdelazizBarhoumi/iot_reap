@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { sessionHardwareApi } from '@/api/hardware.api';
 import type { UsbDevice, UsbDeviceQueueEntry, AvailableDeviceEntry } from '@/types/hardware.types';
 
@@ -81,16 +82,21 @@ export function useSessionHardware(
       if (!sessionId) return false;
 
       setActionLoading(true);
+      setError(null); // Clear previous error
       try {
         const result = await sessionHardwareApi.attachDevice(sessionId, deviceId);
         if (result.success) {
+          toast.success('USB device attached successfully');
           await fetchData();
           return true;
         }
-        setError(result.message);
+        const errorMsg = result.message || 'Attach failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
         return false;
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Attach failed';
+        toast.error(message);
         setError(message);
         return false;
       } finally {
@@ -105,16 +111,21 @@ export function useSessionHardware(
       if (!sessionId) return false;
 
       setActionLoading(true);
+      setError(null); // Clear previous error
       try {
         const result = await sessionHardwareApi.detachDevice(sessionId, deviceId);
         if (result.success) {
+          toast.success('USB device detached successfully');
           await fetchData();
           return true;
         }
-        setError(result.message);
+        const errorMsg = result.message || 'Detach failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
         return false;
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Detach failed';
+        toast.error(message);
         setError(message);
         return false;
       } finally {
@@ -129,16 +140,21 @@ export function useSessionHardware(
       if (!sessionId) return false;
 
       setActionLoading(true);
+      setError(null); // Clear previous error
       try {
         const result = await sessionHardwareApi.joinQueue(sessionId, deviceId);
         if (result.success) {
+          toast.success('Joined device queue');
           await fetchData();
           return true;
         }
-        setError(result.message);
+        const errorMsg = result.message || 'Queue operation failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
         return false;
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Queue operation failed';
+        toast.error(message);
         setError(message);
         return false;
       } finally {
@@ -153,16 +169,21 @@ export function useSessionHardware(
       if (!sessionId) return false;
 
       setActionLoading(true);
+      setError(null); // Clear previous error
       try {
         const result = await sessionHardwareApi.leaveQueue(sessionId, deviceId);
         if (result.success) {
+          toast.success('Left device queue');
           await fetchData();
           return true;
         }
-        setError(result.message);
+        const errorMsg = result.message || 'Leave queue failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
         return false;
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Leave queue failed';
+        toast.error(message);
         setError(message);
         return false;
       } finally {

@@ -11,6 +11,7 @@ enum UsbDeviceStatus: string
     case AVAILABLE = 'available';
     case BOUND = 'bound';
     case ATTACHED = 'attached';
+    case DISCONNECTED = 'disconnected';
 
     /**
      * Get human-readable label.
@@ -21,6 +22,7 @@ enum UsbDeviceStatus: string
             self::AVAILABLE => 'Available',
             self::BOUND => 'Bound',
             self::ATTACHED => 'Attached',
+            self::DISCONNECTED => 'Disconnected',
         };
     }
 
@@ -33,6 +35,7 @@ enum UsbDeviceStatus: string
             self::AVAILABLE => 'green',
             self::BOUND => 'yellow',
             self::ATTACHED => 'blue',
+            self::DISCONNECTED => 'red',
         };
     }
 }

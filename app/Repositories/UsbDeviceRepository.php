@@ -185,13 +185,37 @@ class UsbDeviceRepository
 
     /**
      * Remove devices that are no longer present on a node.
+     * 
+     * If a device is currently attached but physically disconnected,
+     * mark it as DISCONNECTED instead of deleting (for audit trail).
+     * Only deletes devices that are available or bound.
      *
      * @param array<string> $currentBusIds
+     * @return int Number of devices affected (deleted or marked disconnected)
      */
     public function removeStaleDevices(GatewayNode $node, array $currentBusIds): int
     {
-        return UsbDevice::where('gateway_node_id', $node->id)
+        $staleDevices = UsbDevice::where('gateway_node_id', $node->id)
             ->whereNotIn('busid', $currentBusIds)
-            ->delete();
+            ->get();
+
+        $affectedCount = 0;
+
+        foreach ($staleDevices as $device) {
+            if ($device->isAttached()) {
+                // Device was physically unplugged while attached
+                // Mark as disconnected instead of deleting (keeps audit trail)
+                $device->update([
+                    'status' => UsbDeviceStatus::DISCONNECTED,
+                ]);
+                $affectedCount++;
+            } else {
+                // Device is available or bound - safe to delete
+                $device->delete();
+                $affectedCount++;
+            }
+        }
+
+        return $affectedCount;
     }
 }

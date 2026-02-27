@@ -4,8 +4,9 @@
  */
 
 import { Head, usePage } from '@inertiajs/react';
-import { AlertCircle, HardDrive, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle, HardDrive, Loader2, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { hardwareApi } from '@/api/hardware.api';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +20,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHardwareGateway } from '@/hooks/useHardwareGateway';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import type { GatewayNode, UsbDevice } from '@/types/hardware.types';
+import type { GatewayNode, RunningVm, UsbDevice } from '@/types/hardware.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -49,23 +56,53 @@ interface AttachDialogProps {
   device: UsbDevice | null;
   open: boolean;
   onClose: () => void;
-  onAttach: (deviceId: number, vmIp: string, vmName: string) => Promise<void>;
+  onAttach: (deviceId: number, vmIp: string, vmName: string, vmid: number, node: string, serverId: number) => Promise<void>;
   loading: boolean;
 }
 
 function AttachDialog({ device, open, onClose, onAttach, loading }: AttachDialogProps) {
-  const [vmIp, setVmIp] = useState('');
-  const [vmName, setVmName] = useState('');
+  const [selectedVmId, setSelectedVmId] = useState<string>('');
+  const [runningVms, setRunningVms] = useState<RunningVm[]>([]);
+  const [loadingVms, setLoadingVms] = useState(false);
+  const [vmError, setVmError] = useState<string | null>(null);
+
+  // Fetch running VMs when dialog opens
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoadingVms(true);
+      setVmError(null);
+      setSelectedVmId('');
+      
+      hardwareApi.getRunningVms()
+        .then((vms) => {
+          setRunningVms(vms);
+          if (vms.length === 0) {
+            setVmError('No running VMs found. Make sure VMs are powered on and have the guest agent installed.');
+          }
+        })
+        .catch((err) => {
+          setVmError(err.message || 'Failed to load running VMs');
+          setRunningVms([]);
+        })
+        .finally(() => setLoadingVms(false));
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (device && vmIp && vmName) {
-      await onAttach(device.id, vmIp, vmName);
-      setVmIp('');
-      setVmName('');
-      onClose();
+    if (device && selectedVmId) {
+      const selectedVm = runningVms.find(vm => `${vm.vmid}-${vm.server_id}` === selectedVmId);
+      if (selectedVm && selectedVm.ip_address) {
+        await onAttach(device.id, selectedVm.ip_address, selectedVm.name, selectedVm.vmid, selectedVm.node, selectedVm.server_id);
+        setSelectedVmId('');
+        onClose();
+      }
     }
   };
+
+  const selectedVm = runningVms.find(vm => `${vm.vmid}-${vm.server_id}` === selectedVmId);
+  const canSubmit = device && selectedVm && selectedVm.ip_address && !loading;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -79,31 +116,50 @@ function AttachDialog({ device, open, onClose, onAttach, loading }: AttachDialog
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="vm-ip">VM IP Address</Label>
-              <Input
-                id="vm-ip"
-                placeholder="192.168.50.10"
-                value={vmIp}
-                onChange={(e) => setVmIp(e.target.value)}
-                required
-              />
+              <Label htmlFor="vm-select">Select Running VM</Label>
+              {loadingVms ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading running VMs...
+                </div>
+              ) : vmError ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{vmError}</AlertDescription>
+                </Alert>
+              ) : (
+                <Select value={selectedVmId} onValueChange={setSelectedVmId}>
+                  <SelectTrigger id="vm-select">
+                    <SelectValue placeholder="Select a VM..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {runningVms.map((vm) => (
+                      <SelectItem 
+                        key={`${vm.vmid}-${vm.server_id}`} 
+                        value={`${vm.vmid}-${vm.server_id}`}
+                        disabled={!vm.ip_address}
+                      >
+                        {vm.display_name}
+                        {!vm.ip_address && ' (Guest agent not responding)'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="vm-name">VM Name</Label>
-              <Input
-                id="vm-name"
-                placeholder="Windows-VM-1"
-                value={vmName}
-                onChange={(e) => setVmName(e.target.value)}
-                required
-              />
-            </div>
+            {selectedVm && (
+              <div className="text-sm text-muted-foreground space-y-1 p-3 bg-muted rounded-md">
+                <p><strong>VM:</strong> {selectedVm.name}</p>
+                <p><strong>IP:</strong> {selectedVm.ip_address || 'Not available'}</p>
+                <p><strong>Node:</strong> {selectedVm.node} ({selectedVm.server_name})</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !vmIp || !vmName}>
+            <Button type="submit" disabled={!canSubmit}>
               {loading ? 'Attaching...' : 'Attach'}
             </Button>
           </DialogFooter>
@@ -304,7 +360,7 @@ export default function HardwarePage() {
     loading,
     error,
     actionLoading,
-    refetch,
+    // refetch is provided by the hook but unused in this page
     refreshAll,
     refreshNode,
     bindDevice,
@@ -317,8 +373,8 @@ export default function HardwarePage() {
 
   const [attachDialogDevice, setAttachDialogDevice] = useState<UsbDevice | null>(null);
 
-  const handleAttach = async (deviceId: number, vmIp: string, vmName: string) => {
-    await attachDevice(deviceId, { vm_ip: vmIp, vm_name: vmName });
+  const handleAttach = async (deviceId: number, vmIp: string, vmName: string, vmid: number, node: string, serverId: number) => {
+    await attachDevice(deviceId, { vm_ip: vmIp, vm_name: vmName, vmid, node, server_id: serverId });
   };
 
   const onlineCount = nodes.filter((n) => n.online).length;

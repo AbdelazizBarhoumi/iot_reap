@@ -2,7 +2,6 @@
  * USB/IP Hardware Gateway API module.
  */
 
-import client from './client';
 import type {
   AttachDeviceRequest,
   CreateGatewayNodeRequest,
@@ -12,11 +11,13 @@ import type {
   UpdateGatewayNodeRequest,
   DiscoverySummary,
   GatewayNode,
+  RunningVm,
   UsbDevice,
   UsbDeviceQueueEntry,
   UsbDeviceReservation,
   SessionHardwareSummary,
 } from '../types/hardware.types';
+import client from './client';
 
 interface ApiResponse<T> {
   data: T;
@@ -155,6 +156,15 @@ export const hardwareApi = {
   async verifyNode(nodeId: number, verified: boolean): Promise<ActionResponse> {
     const response = await client.post<ActionResponse>(`/admin/hardware/nodes/${nodeId}/verify`, { is_verified: verified });
     return response.data;
+  },
+
+  /**
+   * Get list of running VMs from all Proxmox servers (admin only).
+   * Used for selecting a target VM when attaching devices from the infrastructure page.
+   */
+  async getRunningVms(): Promise<RunningVm[]> {
+    const response = await client.get<ApiResponse<RunningVm[]>>('/admin/hardware/running-vms');
+    return response.data.data;
   },
 };
 

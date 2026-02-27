@@ -2,9 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
+use App\Services\GatewayService;
 use App\Services\ProxmoxClientInterface;
+use App\Services\UsbDeviceQueueService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -33,8 +36,11 @@ class CleanupVMJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(ProxmoxClientInterface $client): void
-    {
+    public function handle(
+        ProxmoxClientInterface $client,
+        GatewayService $gatewayService,
+        UsbDeviceQueueService $queueService,
+    ): void {
         Log::info('Starting CleanupVMJob', [
             'session_id' => $this->session->id,
         ]);
@@ -65,6 +71,9 @@ class CleanupVMJob implements ShouldQueue
 
                 return;
             }
+
+            // Step 0: Cleanup any attached USB devices first
+            $this->cleanupUsbDevices($session, $gatewayService, $queueService);
 
             // Delete the VM
             $client->deleteVM(
@@ -109,5 +118,48 @@ class CleanupVMJob implements ShouldQueue
         $session->update(['status' => VMSessionStatus::EXPIRED]);
 
         // TODO: Alert admin about orphaned VM
+    }
+
+    /**
+     * Detach and cleanup USB devices attached to this session.
+     */
+    private function cleanupUsbDevices(
+        VMSession $session,
+        GatewayService $gatewayService,
+        UsbDeviceQueueService $queueService,
+    ): void {
+        $attachedDevices = $session->attachedDevices()->get();
+
+        if ($attachedDevices->isEmpty()) {
+            return;
+        }
+
+        Log::info('Cleaning up USB devices before VM deletion', [
+            'session_id' => $session->id,
+            'device_count' => $attachedDevices->count(),
+        ]);
+
+        foreach ($attachedDevices as $device) {
+            try {
+                $gatewayService->detachFromVm($device);
+                $queueService->processQueueOnDetach($device);
+            } catch (Throwable $e) {
+                // Force-mark as bound if detach fails
+                Log::warning('Force-releasing USB device during cleanup', [
+                    'device_id' => $device->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $device->update([
+                    'status' => UsbDeviceStatus::BOUND,
+                    'attached_session_id' => null,
+                    'attached_to' => null,
+                    'attached_vm_ip' => null,
+                    'usbip_port' => null,
+                ]);
+
+                $queueService->processQueueOnDetach($device);
+            }
+        }
     }
 }
