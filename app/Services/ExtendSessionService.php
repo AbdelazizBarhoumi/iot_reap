@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Exceptions\ProxmoxApiException;
 use App\Models\VMSession;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -37,10 +35,18 @@ class ExtendSessionService
             'extend_minutes' => $minutes,
         ]);
 
-        // Only allow extending active sessions
+        // Only allow extending active sessions that haven't passed their expiry.
+        // If status is ACTIVE but expires_at has passed, the scheduler hasn't
+        // cleaned it up yet — reject the extension request.
         if ($session->status !== VMSessionStatus::ACTIVE) {
             throw new \Exception(
                 "Cannot extend session with status: {$session->status->value}"
+            );
+        }
+
+        if ($session->expires_at && $session->expires_at->isPast()) {
+            throw new \Exception(
+                "Cannot extend session that has already expired. Please start a new session."
             );
         }
 
@@ -64,7 +70,8 @@ class ExtendSessionService
         $session->update(['expires_at' => $newExpiresAt]);
         $session->refresh();
 
-        // Sessions are retained indefinitely; no cleanup job to reschedule.
+        // No delayed job needed — lazy expiration in the controller and
+        // repository handles auto-expiry when the session is next accessed.
 
         Log::info('VM session extended successfully', [
             'session_id' => $session->id,

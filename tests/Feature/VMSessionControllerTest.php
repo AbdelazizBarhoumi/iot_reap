@@ -8,9 +8,9 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
+use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class VMSessionControllerTest extends TestCase
@@ -19,18 +19,27 @@ class VMSessionControllerTest extends TestCase
     private ProxmoxServer $server;
     // no template needed
     private ProxmoxNode $node;
+    private ProxmoxClientFake $proxmoxFake;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Fake the queue to prevent actual job execution
-        Queue::fake();
+        // Create and bind the fake ProxmoxClient as a singleton so tests
+        // can register VMs before requests.
+        $this->proxmoxFake = new ProxmoxClientFake();
+        $this->app->instance(ProxmoxClientInterface::class, $this->proxmoxFake);
 
-        // Bind the fake ProxmoxClient
-        $this->app->bind(ProxmoxClientInterface::class, function () {
-            return new ProxmoxClientFake();
-        });
+        // Mock GuacamoleClient — the sync listener now calls it during
+        // the HTTP request, so it must not hit the real Guacamole server.
+        $guacMock = \Mockery::mock(GuacamoleClientInterface::class);
+        $guacMock->shouldReceive('createConnection')->andReturn('fake-conn-1');
+        $guacMock->shouldReceive('deleteConnection')->andReturn(null);
+        $guacMock->shouldReceive('generateAuthToken')->andReturn('fake-token');
+        $guacMock->shouldReceive('getConnection')->andReturn([]);
+        $guacMock->shouldReceive('getDataSource')->andReturn('mysql');
+        $guacMock->shouldReceive('clearAuthToken')->andReturn(null);
+        $this->app->instance(GuacamoleClientInterface::class, $guacMock);
 
         $this->user = User::factory()->create();
         $this->server = ProxmoxServer::factory()->create();
@@ -111,6 +120,9 @@ class VMSessionControllerTest extends TestCase
 
     public function test_authenticated_user_can_create_session(): void
     {
+        // Register the VM in the fake so the sync listener can resolve its IP
+        $this->proxmoxFake->registerVM($this->node->name, 200, 'running', '10.0.0.100');
+
         $response = $this->actingAs($this->user)->postJson('/sessions', [
             'vmid' => 200,
             'node_id' => $this->node->id,
@@ -133,15 +145,19 @@ class VMSessionControllerTest extends TestCase
                      'time_remaining_seconds',
                  ]);
 
+        // Session should be ACTIVE after synchronous activation
         $this->assertDatabaseHas('vm_sessions', [
             'user_id' => $this->user->id,
             'vm_id' => 200,
-            'status' => VMSessionStatus::PENDING->value,
+            'status' => VMSessionStatus::ACTIVE->value,
         ]);
     }
 
     public function test_authenticated_user_can_create_session_with_snapshot(): void
     {
+        // Register the VM in the fake so the sync listener can resolve its IP
+        $this->proxmoxFake->registerVM($this->node->name, 201, 'running', '10.0.0.101');
+
         $response = $this->actingAs($this->user)->postJson('/sessions', [
             'vmid' => 201,
             'node_id' => $this->node->id,
@@ -222,24 +238,21 @@ class VMSessionControllerTest extends TestCase
 
     public function test_authenticated_user_can_delete_session(): void
     {
-        Queue::fake();
-
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
             'node_id' => $this->node->id,
             'vm_id' => 402,
+            'status' => VMSessionStatus::ACTIVE,
         ]);
 
         $response = $this->actingAs($this->user)->deleteJson("/sessions/{$session->id}");
 
-        // 202 Accepted - termination is async via job
-        $response->assertAccepted();
+        // Termination is now synchronous — returns 200
+        $response->assertOk();
 
-        // Verify termination job was dispatched and default flag value
-        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
-            // default TerminateVMJob should not stop the VM
-            return method_exists($job, 'shouldStopVm') && $job->shouldStopVm() === false;
-        });
+        // Session should be marked as expired after termination
+        $session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $session->status);
     }
 
     public function test_user_cannot_delete_other_users_session(): void
@@ -295,16 +308,22 @@ class VMSessionControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");
 
-        // Verify internal fields that should NOT be exposed
-        $this->assertArrayNotHasKey('vm_id', $response->json());
-        
-        // Per US-52: vm_ip_address and guacamole_connection_id ARE exposed in the API response
+        // vm_id, vm_ip_address and guacamole_connection_id are intentionally
+        // exposed so the dashboard and session pages can display them.
+        $this->assertArrayHasKey('vm_id', $response->json());
+        $this->assertEquals(12345, $response->json('vm_id'));
+
         $this->assertArrayHasKey('vm_ip_address', $response->json());
         $this->assertArrayHasKey('guacamole_connection_id', $response->json());
         
         // Verify values are correct
         $this->assertEquals('192.168.1.50', $response->json('vm_ip_address'));
         $this->assertEquals(99999, $response->json('guacamole_connection_id'));
+
+        // Sensitive internal fields that should NOT be exposed
+        $this->assertArrayNotHasKey('credentials', $response->json());
+        $this->assertArrayNotHasKey('user_id', $response->json());
+        $this->assertArrayNotHasKey('proxmox_server_id', $response->json());
     }
 }
 

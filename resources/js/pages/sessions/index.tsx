@@ -5,14 +5,17 @@
  */
 
 import { Head, Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
   Calendar,
+  CheckCircle2,
   Clock,
   History,
   Loader2,
   Monitor,
+  XCircle,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,24 +29,14 @@ import type { BreadcrumbItem } from '@/types';
 import type { VMSessionStatus } from '@/types/vm.types';
 
 
-const STATUS_COLORS: Record<VMSessionStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  pending: 'default',
-  provisioning: 'default',
-  active: 'default',
-  expiring: 'destructive',
-  expired: 'secondary',
-  failed: 'destructive',
-  terminated: 'outline',
-};
-
-const STATUS_LABELS: Record<VMSessionStatus, string> = {
-  pending: 'Pending',
-  provisioning: 'Provisioning',
-  active: 'Active',
-  expiring: 'Expiring',
-  expired: 'Expired',
-  failed: 'Failed',
-  terminated: 'Terminated',
+const STATUS_CONFIG: Record<VMSessionStatus, { label: string; className: string }> = {
+  pending: { label: 'Pending', className: 'bg-warning/10 text-warning border-warning/30' },
+  provisioning: { label: 'Provisioning', className: 'bg-warning/10 text-warning border-warning/30' },
+  active: { label: 'Active', className: 'bg-success/10 text-success border-success/30' },
+  expiring: { label: 'Expiring', className: 'bg-destructive/10 text-destructive border-destructive/30' },
+  expired: { label: 'Expired', className: 'bg-muted text-muted-foreground' },
+  failed: { label: 'Failed', className: 'bg-destructive/10 text-destructive border-destructive/30' },
+  terminated: { label: 'Terminated', className: 'bg-muted text-muted-foreground' },
 };
 
 function formatDate(dateStr: string): string {
@@ -81,9 +74,13 @@ export default function SessionHistoryPage() {
     (s) => s.status === 'expired' || s.status === 'failed' || s.status === 'terminated'
   );
 
-  // Also track active sessions for a notice
+  // Also track active sessions for a notice — exclude sessions whose
+  // time has actually run out (backend lazy expiration may not have
+  // processed them yet when the fetch happened).
   const activeSessions = sessions.filter(
-    (s) => s.status === 'active' || s.status === 'provisioning' || s.status === 'pending' || s.status === 'expiring'
+    (s) =>
+      (s.status === 'active' || s.status === 'provisioning' || s.status === 'pending' || s.status === 'expiring') &&
+      s.time_remaining_seconds > 0
   );
 
   // Group history by date
@@ -115,11 +112,13 @@ export default function SessionHistoryPage() {
     return (
       <AppLayout breadcrumbs={breadcrumbs}>
         <Head title="Session History" />
-        <div className="flex flex-1 flex-col gap-6 p-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+        <div className="min-h-screen bg-background">
+          <div className="container py-8">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
         </div>
       </AppLayout>
     );
@@ -128,25 +127,30 @@ export default function SessionHistoryPage() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Session History" />
-      <div className="flex flex-1 flex-col gap-6 p-6">
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-              <History className="h-8 w-8" />
-              Session History
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              View your past VM sessions. For active sessions, go to the Dashboard.
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <History className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="font-heading text-3xl font-bold text-foreground">Session History</h1>
+              <p className="text-muted-foreground">View your past VM sessions</p>
+            </div>
           </div>
-          <Button asChild>
+          <Button className="bg-info text-info-foreground hover:bg-info/90" asChild>
             <Link href={dashboard().url}>
               Go to Dashboard
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>
-        </div>
+        </motion.div>
 
         {/* Active sessions notice */}
         {activeSessions.length > 0 && (
@@ -163,97 +167,123 @@ export default function SessionHistoryPage() {
         )}
 
         {/* History stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold">{historySessions.length}</p>
-                <p className="text-sm text-muted-foreground">Total Past Sessions</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold">
-                  {historySessions.filter((s) => s.status === 'terminated' || s.status === 'expired').length}
-                </p>
-                <p className="text-sm text-muted-foreground">Completed</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-destructive">
-                  {historySessions.filter((s) => s.status === 'failed').length}
-                </p>
-                <p className="text-sm text-muted-foreground">Failed</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="shadow-card">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <History className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Past Sessions</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">{historySessions.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="shadow-card">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-success/10 text-success">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">
+                    {historySessions.filter((s) => s.status === 'terminated' || s.status === 'expired').length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="shadow-card">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                  <XCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Failed</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">
+                    {historySessions.filter((s) => s.status === 'failed').length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Session history list */}
         {historySessions.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">No session history yet</p>
-              <Button asChild>
-                <Link href={dashboard().url}>Launch Your First VM</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="shadow-card">
+              <CardContent className="py-12 text-center">
+                <CheckCircle2 className="h-12 w-12 mx-auto text-success/40 mb-3" />
+                <p className="text-muted-foreground mb-4">No session history yet</p>
+                <Button className="bg-info text-info-foreground hover:bg-info/90" asChild>
+                  <Link href={dashboard().url}>Launch Your First VM</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
           <div className="space-y-6">
-            {sessionsByDate.map(([dateKey, dateSessions]) => (
-              <div key={dateKey}>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            {sessionsByDate.map(([dateKey, dateSessions], groupIndex) => (
+              <motion.div
+                key={dateKey}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + groupIndex * 0.1 }}
+              >
+                <h3 className="font-heading text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   {dateKey}
                 </h3>
                 <div className="space-y-2">
-                  {dateSessions.map((session) => (
-                    <Card key={session.id} className="hover:bg-muted/50 transition-colors">
-                      <CardContent className="py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                              <Monitor className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <p className="font-medium">VM #{session.vm_id}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {session.node_name} • {session.protocol?.toUpperCase()}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-right text-sm">
-                              <p className="flex items-center gap-1 text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                {formatDate(session.created_at)}
-                              </p>
-                              {session.expires_at && (
-                                <p className="text-xs text-muted-foreground">
-                                  Duration: {formatDuration(session.created_at, session.expires_at)}
+                  {dateSessions.map((session) => {
+                    const status = STATUS_CONFIG[session.status];
+                    return (
+                      <Card key={session.id} className="shadow-card hover:shadow-card-hover transition-all">
+                        <CardContent className="py-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                                <Monitor className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="font-heading font-medium">VM #{session.vm_id}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {session.node_name} • {session.protocol?.toUpperCase()}
                                 </p>
-                              )}
+                              </div>
                             </div>
-                            <Badge variant={STATUS_COLORS[session.status]} className="capitalize">
-                              {STATUS_LABELS[session.status]}
-                            </Badge>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right text-sm">
+                                <p className="flex items-center gap-1 text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  {formatDate(session.created_at)}
+                                </p>
+                                {session.expires_at && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Duration: {formatDuration(session.created_at, session.expires_at)}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge variant="outline" className={`text-xs ${status.className}`}>
+                                {status.label}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
+        </div>
       </div>
     </AppLayout>
   );

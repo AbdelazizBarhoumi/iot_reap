@@ -7,6 +7,7 @@
  */
 
 import { Head } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
   Activity,
   Check,
@@ -21,11 +22,12 @@ import {
   Server,
   Trash2,
   X,
+  Shield,
+  Monitor,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import client from '@/api/client';
 import { adminApi } from '@/api/vm.api';
-import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -140,7 +142,7 @@ function NodeCard({ node, onSelectNode, selectedNodeId }: NodeCardProps) {
 
   return (
     <div
-      className={`border rounded-lg p-4 cursor-pointer transition-all hover:border-primary/50 ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+      className={`border rounded-lg p-4 cursor-pointer transition-all hover:border-secondary/50 ${isSelected ? 'ring-2 ring-secondary border-secondary' : ''}`}
       onClick={() => onSelectNode(node.id)}
     >
       <div className="flex items-center justify-between mb-3">
@@ -267,7 +269,7 @@ function VMsPanel({ nodeId, nodeName, onClose }: VMsPanelProps) {
             {vms.map((vm) => (
               <div key={vm.vmid} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="primary" className="font-mono text-xs">
                     {vm.vmid}
                   </Badge>
                   <span className="font-medium">{vm.name || `VM ${vm.vmid}`}</span>
@@ -355,7 +357,7 @@ function ServerCard({
   const selectedNode = serverNodes.find((n) => n.id === selectedNodeId);
 
   return (
-    <Card className={!server.is_active ? 'opacity-60' : ''}>
+    <Card className={`shadow-card hover:shadow-card-hover transition-all ${!server.is_active ? 'opacity-60' : ''}`}>
       <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
@@ -366,16 +368,18 @@ function ServerCard({
                 ) : (
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 )}
-                <Server className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                  <Server className="h-5 w-5" />
+                </div>
                 <div>
-                  <CardTitle className="text-lg">{server.name}</CardTitle>
+                  <CardTitle className="font-heading text-lg">{server.name}</CardTitle>
                   <CardDescription>{server.description || server.host}</CardDescription>
                 </div>
               </div>
             </CollapsibleTrigger>
 
             <div className="flex items-center gap-2">
-              <Badge variant={server.is_active ? 'default' : 'secondary'}>{server.is_active ? 'Active' : 'Inactive'}</Badge>
+              <Badge variant="outline" className={server.is_active ? 'bg-success/10 text-success border-success/30' : 'bg-muted text-muted-foreground'}>{server.is_active ? 'Active' : 'Inactive'}</Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -618,127 +622,155 @@ export default function InfrastructurePage() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Infrastructure" />
-      <div className="flex h-full flex-1 flex-col gap-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Heading title="Infrastructure" description="Manage Proxmox servers, nodes, and virtual machines" />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading || nodesLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading || nodesLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditingServer(null);
-                setFormData(initialFormData);
-                setIsDialogOpen(true);
-              }}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Server
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Servers</p>
-                  <p className="text-2xl font-bold">
-                    {activeServers}/{servers.length}
-                  </p>
-                </div>
-                <Server className="h-8 w-8 text-muted-foreground" />
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                <Shield className="h-5 w-5" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nodes Online</p>
-                  <p className="text-2xl font-bold">
-                    {onlineNodes}/{nodes.length}
-                  </p>
-                </div>
-                <Activity className="h-8 w-8 text-green-500" />
+              <div>
+                <h1 className="font-heading text-3xl font-bold text-foreground">Infrastructure</h1>
+                <p className="text-muted-foreground">Manage Proxmox servers, nodes, and virtual machines</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total VMs</p>
-                  <p className="text-2xl font-bold">{totalVMs}</p>
-                </div>
-                <Power className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Servers List */}
-        {loading && servers.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : servers.length === 0 ? (
-          <div className="text-center py-12">
-            <Server className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No Proxmox servers configured</h3>
-            <p className="text-muted-foreground mb-4">Add your first Proxmox VE cluster to get started.</p>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Server
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {servers.map((server) => (
-              <ServerCard
-                key={server.id}
-                server={server}
-                nodes={nodes}
-                nodesLoading={nodesLoading}
-                isExpanded={expandedServers.has(server.id)}
-                onToggleExpand={() => handleToggleExpand(server.id)}
-                onEdit={() => {
-                  setEditingServer(server);
-                  setFormData({
-                    name: server.name ?? '',
-                    description: server.description ?? '',
-                    host: server.host ?? '',
-                    port: server.port ?? 8006,
-                    realm: server.realm ?? 'pam',
-                    token_id: '',
-                    token_secret: '',
-                    verify_ssl: server.verify_ssl ?? true,
-                  });
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading || nodesLoading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading || nodesLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                size="sm"
+                className="bg-info text-info-foreground hover:bg-info/90"
+                onClick={() => {
+                  setEditingServer(null);
+                  setFormData(initialFormData);
                   setIsDialogOpen(true);
                 }}
-                onToggleActive={() => handleToggleActive(server)}
-                onDelete={() => setDeleteServer(server)}
-                onSyncNodes={() => handleSyncNodes(server.id)}
-              />
-            ))}
-          </div>
-        )}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Server
+              </Button>
+            </div>
+          </motion.div>
 
-        <p className="text-xs text-muted-foreground text-center">Node stats auto-refresh every 30 seconds</p>
+          {/* Stats Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+                <CardContent className="flex items-center gap-4 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-info/10 text-info">
+                    <Server className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Servers</p>
+                    <p className="font-heading text-2xl font-bold text-foreground">
+                      {activeServers}/{servers.length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+                <CardContent className="flex items-center gap-4 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-success/10 text-success">
+                    <Activity className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nodes Online</p>
+                    <p className="font-heading text-2xl font-bold text-foreground">
+                      {onlineNodes}/{nodes.length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+                <CardContent className="flex items-center gap-4 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                    <Monitor className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total VMs</p>
+                    <p className="font-heading text-2xl font-bold text-foreground">{totalVMs}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Servers List */}
+          {loading && servers.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : servers.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-center py-12"
+            >
+              <Server className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
+              <h3 className="font-heading text-lg font-medium">No Proxmox servers configured</h3>
+              <p className="text-muted-foreground mb-4">Add your first Proxmox VE cluster to get started.</p>
+              <Button className="bg-info text-info-foreground hover:bg-info/90" onClick={() => setIsDialogOpen(true)}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Server
+              </Button>
+            </motion.div>
+          ) : (
+            <div className="space-y-4">
+              {servers.map((server, i) => (
+                <motion.div
+                  key={server.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + i * 0.1 }}
+                >
+                  <ServerCard
+                    server={server}
+                    nodes={nodes}
+                    nodesLoading={nodesLoading}
+                    isExpanded={expandedServers.has(server.id)}
+                    onToggleExpand={() => handleToggleExpand(server.id)}
+                    onEdit={() => {
+                      setEditingServer(server);
+                      setFormData({
+                        name: server.name ?? '',
+                        description: server.description ?? '',
+                        host: server.host ?? '',
+                        port: server.port ?? 8006,
+                        realm: server.realm ?? 'pam',
+                        token_id: '',
+                        token_secret: '',
+                        verify_ssl: server.verify_ssl ?? true,
+                      });
+                      setIsDialogOpen(true);
+                    }}
+                    onToggleActive={() => handleToggleActive(server)}
+                    onDelete={() => setDeleteServer(server)}
+                    onSyncNodes={() => handleSyncNodes(server.id)}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add/Edit Server Dialog */}

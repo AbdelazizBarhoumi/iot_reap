@@ -3,6 +3,17 @@
 @import '@fontsource/instrument-sans/500.css';
 @import '@fontsource/instrument-sans/600.css';
 
+/* Fonts used by learning pages - Space Grotesk for headings, DM Sans for body */
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -17,6 +28,10 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    /* Learning font families */
+    --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -64,28 +79,42 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Learning semantic colors */
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+
+    /* Shadow utilities for learning cards */
+    --shadow-card: 0 1px 3px hsl(220 70% 15% / 0.06);
+    --shadow-card-hover: 0 4px 12px hsl(220 70% 15% / 0.08);
+    --shadow-glow: 0 0 30px hsl(175 60% 42% / 0.15);
 }
 
 :root {
-    --background: oklch(1 0 0);
+    --background: hsl(40, 30%, 97%);    
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
+    /* default primary/secondary now match learning theme */
+    --primary:  oklch(63.861% 0.11491 179.792);               /* dark‑blue hero */
+    --primary-foreground: oklch(0.97 0 0);
+    --secondary:  oklch(18.345% 0.09471 280.992);
+    --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --accent: oklch(0.56 0.11 180);
+    --accent-foreground: oklch(1 0 0);
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --ring: oklch(0.56 0.11 180);              /* ring follows accent */
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -96,10 +125,18 @@
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent: oklch(72.232% 0.12828 179.836 / 0.308);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+
+    /* Learning semantic colors - light mode */
+    --success: oklch(0.62 0.18 145);
+    --success-foreground: oklch(1 0 0);
+    --warning: oklch(0.75 0.18 60);
+    --warning-foreground: oklch(1 0 0);
+    --info: oklch(0.65 0.18 250);
+    --info-foreground: oklch(1 0 0);
 }
 
 .dark {
@@ -109,19 +146,19 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.145 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.60 0.12 180);           /* dark‑mode hero/secondary */
+    --primary-foreground: oklch(0.15 0.05 260);
+    --secondary: oklch(18.345% 0.09471 280.992);         /* teal accent even in dark */
+    --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.269 0 0);
     --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --accent: oklch(0.56 0.11 180);
+    --accent-foreground: oklch(1 0 0);
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
+    --ring: oklch(0.56 0.11 180);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -131,10 +168,18 @@
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.985 0 0);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent: oklch(0.56 0.11 180);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+
+    /* Learning semantic colors - dark mode */
+    --success: oklch(42.141% 0.18639 300.067);
+    --success-foreground: oklch(1 0 0);
+    --warning: oklch(0.75 0.18 60);
+    --warning-foreground: oklch(1 0 0);
+    --info: oklch(0.65 0.18 250);
+    --info-foreground: oklch(1 0 0);
 }
 
 @layer base {
@@ -144,5 +189,121 @@
 
     body {
         @apply bg-background text-foreground;
+        /* default body font from learning */
+        font-family: var(--font-body);
     }
+
+    /* Container utility - matches learning styling exactly */
+    .container {
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+
+    /* Mobile-first responsive container */
+    @media (min-width: 640px) {
+        .container {
+            max-width: 640px;
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .container {
+            max-width: 768px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .container {
+            max-width: 1024px;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .container {
+            max-width: 1280px;
+        }
+    }
+
+    @media (min-width: 1536px) {
+        .container {
+            max-width: 1400px;
+        }
+    }
+
+        --primary: oklch(0.60 0.12 180);
+        --primary-foreground: oklch(0.15 0.05 260);
+    }
+
+
+/* ================================================
+   Learning Studio Styles
+   ================================================ */
+
+/* Font families */
+.font-heading {
+    font-family: var(--font-heading);
 }
+
+/* Apply heading font to all heading elements */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+}
+a, button {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+.font-body {
+    font-family: var(--font-body);
+}
+
+/* Shadow utilities */
+.shadow-card {
+    box-shadow: var(--shadow-card);
+}
+
+.shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+}
+
+.shadow-glow {
+    box-shadow: var(--shadow-glow);
+}
+
+/* Hero gradient background */
+.bg-hero-gradient {
+    /* dark blue to secondary colour (formerly teal) */
+    background: linear-gradient(135deg, hsl(220 70% 15%) 0%, hsl(220 60% 25%) 50%, var(--primary) 100%);
+}
+
+/* Terminal styling for VM labs */
+.terminal-bg {
+    background-color: #0f172a;
+    color: #4ade80;
+    font-family: 'Monaco', 'Cascadia Code', 'Consolas', monospace;
+}
+
+
+/* Legacy accent utilities using secondary color variable */
+.text-secondary-accent {
+    color: var(--secondary);
+}
+
+.bg-secondary-accent {
+    background-color: var(--secondary);
+}
+
+.border-secondary-accent {
+    border-color: var(--secondary);
+}
+
+.ring-secondary-accent {
+    --tw-ring-color: var(--secondary);
+}
+
+/* Hover ring effect for learning cards */
+

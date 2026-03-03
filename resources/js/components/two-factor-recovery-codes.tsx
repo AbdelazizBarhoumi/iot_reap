@@ -87,7 +87,7 @@ export default function TwoFactorRecoveryCodes({
                         >
                             {({ processing }) => (
                                 <Button
-                                    variant="secondary"
+                                    variant="default"
                                     type="submit"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"

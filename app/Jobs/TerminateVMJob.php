@@ -53,17 +53,20 @@ class TerminateVMJob implements ShouldQueue
     // saw in the logs when stopVm was accessed before initialization.
     private bool $stopVm = false;
     private ?string $returnSnapshot = null; // not readonly so we can default to null
+    private ?string $scheduledForExpiry = null; // for auto-expire jobs
 
     public function __construct(
         private readonly VMSession $session,
         bool $stopVm = false,
         ?string $returnSnapshot = null,
+        ?string $scheduledForExpiry = null,
     ) {
         // explicitly assign values so that defaults are stored during
         // serialization and the properties are never left uninitialized after
         // the job is pulled from the queue.
         $this->stopVm = $stopVm;
         $this->returnSnapshot = $returnSnapshot;
+        $this->scheduledForExpiry = $scheduledForExpiry;
     }
 
     /**
@@ -87,6 +90,7 @@ class TerminateVMJob implements ShouldQueue
             // Skip if already terminated
             if (in_array($session->status, [
                 VMSessionStatus::EXPIRED,
+                VMSessionStatus::TERMINATED,
                 VMSessionStatus::FAILED,
             ])) {
                 Log::info('Session already expired/failed, skipping termination', [
@@ -95,6 +99,22 @@ class TerminateVMJob implements ShouldQueue
                 ]);
 
                 return;
+            }
+
+            // If this is an auto-expire job (has scheduledForExpiry), check if
+            // the session was extended. If expires_at changed, skip — a new
+            // auto-expire job will handle it.
+            if ($this->scheduledForExpiry !== null) {
+                $scheduledTime = \Carbon\Carbon::parse($this->scheduledForExpiry);
+                if ($session->expires_at->greaterThan($scheduledTime)) {
+                    Log::info('Session was extended, skipping auto-expire job', [
+                        'session_id' => $session->id,
+                        'scheduled_for' => $this->scheduledForExpiry,
+                        'current_expires_at' => $session->expires_at->toIso8601String(),
+                    ]);
+
+                    return;
+                }
             }
 
             // Step 1: Delete Guacamole connection (ALWAYS do this first)
@@ -330,6 +350,17 @@ class TerminateVMJob implements ShouldQueue
     public function shouldStopVm(): bool
     {
         return $this->stopVm;
+    }
+
+    /**
+     * Get the session being terminated.
+     *
+     * Exposed primarily for tests so they can assert on the session passed
+     * to the constructor.
+     */
+    public function getSession(): VMSession
+    {
+        return $this->session;
     }
 
     /**

@@ -25,9 +25,17 @@ class QuotaService
         $maxConcurrent = config('sessions.max_concurrent_sessions');
         $maxMinutes = config('sessions.max_concurrent_minutes');
 
-        // Count active sessions
+        // Count sessions that are occupying a slot: ACTIVE, PENDING, and
+        // PROVISIONING all count toward the concurrent limit.  Sessions may
+        // have status=ACTIVE but be past expires_at if the lazy expiration
+        // hasn't run yet — don't count those as blocking quota.
         $activeCount = VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE)
+            ->whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->where('expires_at', '>', now())
             ->count();
 
         if ($activeCount >= $maxConcurrent) {

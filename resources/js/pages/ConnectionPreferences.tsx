@@ -6,7 +6,8 @@
  */
 
 import { Head } from '@inertiajs/react';
-import { Loader2, Monitor, Plus, Save, Star, Terminal, Trash2, Wifi } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Loader2, Monitor, Plus, Save, Settings2, Star, Terminal, Trash2, Wifi } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import client from '@/api/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -171,7 +172,7 @@ function ProfileManager({ protocol, profiles, selectedProfile, onSelectProfile, 
               key={profile.profile_name}
               className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
                 selectedProfile?.profile_name === profile.profile_name
-                  ? 'border-primary bg-primary/5'
+                  ? 'border-secondary bg-secondary/5'
                   : 'hover:bg-muted/50'
               }`}
               onClick={() => onSelectProfile(profile)}
@@ -303,12 +304,22 @@ export default function ConnectionPreferencesPage({ profiles, preferences }: Con
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Connection Preferences" />
       <div className="flex h-full flex-1 flex-col gap-6 p-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Connection Preferences</h2>
-          <p className="text-muted-foreground mt-1">
-            Configure default Guacamole connection settings per protocol. These are applied when launching sessions.
-          </p>
-        </div>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+            <Settings2 className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-foreground">Connection Preferences</h1>
+            <p className="text-muted-foreground">
+              Configure default Guacamole connection settings per protocol. These are applied when launching sessions.
+            </p>
+          </div>
+        </motion.div>
 
         <Tabs defaultValue="rdp" className="w-full">
           <TabsList className="grid w-full grid-cols-3">

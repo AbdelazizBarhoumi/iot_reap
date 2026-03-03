@@ -31,9 +31,8 @@ class SessionPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('sessions/show')
-                // the JsonResource is wrapped with `data` when serialized,
-                // so the actual prop is session.data.id
-                ->where('session.data.id', $session->id)
+                // Inertia resolves JsonResource without the 'data' wrapper
+                ->where('session.id', $session->id)
             );
     }
 }

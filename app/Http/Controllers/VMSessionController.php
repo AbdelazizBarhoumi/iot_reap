@@ -13,6 +13,7 @@ use App\Jobs\TerminateVMJob;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
 use App\Services\ExtendSessionService;
+use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
 use App\Services\QuotaService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -43,6 +44,10 @@ class VMSessionController extends Controller
      */
     public function index(Request $request): JsonResponse|InertiaResponse
     {
+        // Lazy expiration: mark overdue sessions before listing so the
+        // frontend always sees correct statuses without queue:work.
+        $this->sessionRepository->expireOverdueSessions();
+
         $sessions = $this->sessionRepository->findByUser($request->user());
 
         if ($request->wantsJson()) {
@@ -101,8 +106,20 @@ class VMSessionController extends Controller
 
         $session = $this->sessionRepository->create($sessionData);
 
+        Log::info('Session record created, activating synchronously', [
+            'session_id' => $session->id,
+            'expires_at' => $session->expires_at->toIso8601String(),
+        ]);
+
         event(new VMSessionCreated($session));
+
+        // VMSessionActivated listener runs synchronously — starts VM, resolves
+        // IP, creates Guacamole connection, and marks session ACTIVE.  If it
+        // fails, the session is marked FAILED and an exception propagates here.
         event(new VMSessionActivated($session));
+
+        // Reload to pick up changes made by the listener
+        $session->refresh();
 
         return response()->json(new VMSessionResource($session), 201);
         } catch (\Exception $e) {
@@ -172,14 +189,41 @@ class VMSessionController extends Controller
             Gate::authorize('admin-only');
         }
 
-        // once the session has ended we no longer allow the browser page to
-        // render. users should be sent back to the dashboard (or API clients
-        // should receive a 404 so they can handle it however they like).
-        if (in_array($session->status, [
+        // Lazy expiration: if session is past its expiry but still marked
+        // active/pending/provisioning, expire it now so the user sees the
+        // correct state without needing a queue worker.
+        $isTimeExpired = $session->expires_at && $session->expires_at->isPast();
+        if ($isTimeExpired && in_array($session->status, [
+            VMSessionStatus::ACTIVE,
+            VMSessionStatus::PENDING,
+            VMSessionStatus::PROVISIONING,
+        ], true)) {
+            // Best-effort Guacamole cleanup on lazy expiration
+            if ($session->guacamole_connection_id) {
+                try {
+                    app(GuacamoleClientInterface::class)
+                        ->deleteConnection((string) $session->guacamole_connection_id);
+                } catch (\Throwable $e) {
+                    Log::warning('Lazy expiration: failed to delete Guacamole connection', [
+                        'session_id' => $session->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            $session->update([
+                'status' => VMSessionStatus::EXPIRED,
+                'guacamole_connection_id' => null,
+            ]);
+            $session->refresh();
+        }
+
+        $isEnded = in_array($session->status, [
             VMSessionStatus::EXPIRED,
             VMSessionStatus::TERMINATED,
             VMSessionStatus::FAILED,
-        ], true)) {
+        ], true);
+
+        if ($isEnded) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Session is no longer available',
@@ -222,6 +266,15 @@ class VMSessionController extends Controller
             Gate::authorize('admin-only');
         }
 
+        // If already ended, return success immediately
+        if (in_array($session->status, [
+            VMSessionStatus::EXPIRED,
+            VMSessionStatus::TERMINATED,
+            VMSessionStatus::FAILED,
+        ], true)) {
+            return response()->json(['message' => 'Session already ended'], 200);
+        }
+
         Log::info('Terminating VM session', [
             'session_id' => $session->id,
             'user_id' => $request->user()->id,
@@ -229,17 +282,36 @@ class VMSessionController extends Controller
             'return_snapshot' => $request->getReturnSnapshot(),
         ]);
 
-        // Dispatch the termination job
-        TerminateVMJob::dispatch(
-            session: $session,
-            stopVm: $request->shouldStopVm(),
-            returnSnapshot: $request->getReturnSnapshot(),
-        );
+        // Run termination synchronously — no queue dependency.
+        try {
+            TerminateVMJob::dispatchSync(
+                session: $session,
+                stopVm: $request->shouldStopVm(),
+                returnSnapshot: $request->getReturnSnapshot(),
+            );
 
-        return response()->json(
-            ['message' => 'Session termination initiated'],
-            202
-        );
+            return response()->json(['message' => 'Session terminated'], 200);
+        } catch (\Exception $e) {
+            Log::error('Session termination error', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Force-expire even if cleanup had errors
+            $session->refresh();
+            if (!in_array($session->status, [
+                VMSessionStatus::EXPIRED,
+                VMSessionStatus::TERMINATED,
+                VMSessionStatus::FAILED,
+            ], true)) {
+                $session->update(['status' => VMSessionStatus::EXPIRED]);
+            }
+
+            return response()->json(
+                ['message' => 'Session terminated (with cleanup warnings)'],
+                200,
+            );
+        }
     }
 
     /**

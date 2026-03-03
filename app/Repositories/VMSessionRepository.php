@@ -32,11 +32,16 @@ class VMSessionRepository
 
     /**
      * Find all active sessions for a user.
+     *
+     * Filters by both status=ACTIVE and expires_at > now() to exclude
+     * sessions that are technically still marked active but have passed
+     * their expiration time (scheduler may not have run yet).
      */
     public function findActiveByUser(User $user): Collection
     {
         return VMSession::where('user_id', $user->id)
             ->where('status', VMSessionStatus::ACTIVE)
+            ->where('expires_at', '>', now())
             ->with(['node'])
             ->get();
     }
@@ -94,11 +99,47 @@ class VMSessionRepository
     /**
      * Expire sessions that have passed their expiration time.
      *
+     * Includes PENDING and PROVISIONING sessions that timed out
+     * before they could activate (e.g. Proxmox was slow, listener failed).
+     *
+     * Also performs best-effort Guacamole connection cleanup for any
+     * expired sessions that still have a connection ID — this prevents
+     * orphaned connections in Guacamole.
+     *
      * @return int Number of sessions expired
      */
     public function expireOverdueSessions(): int
     {
-        return VMSession::where('status', VMSessionStatus::ACTIVE)
+        // First, clean up Guacamole connections for sessions that are about to expire
+        $overdueWithGuac = VMSession::whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->where('expires_at', '<=', now())
+            ->whereNotNull('guacamole_connection_id')
+            ->get();
+
+        foreach ($overdueWithGuac as $session) {
+            try {
+                app(\App\Services\GuacamoleClientInterface::class)
+                    ->deleteConnection((string) $session->guacamole_connection_id);
+                $session->update(['guacamole_connection_id' => null]);
+            } catch (\Throwable $e) {
+                // Log but don't block — connection may already be gone
+                \Illuminate\Support\Facades\Log::warning('Lazy expiration: Guacamole cleanup failed', [
+                    'session_id' => $session->id,
+                    'connection_id' => $session->guacamole_connection_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return VMSession::whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
             ->where('expires_at', '<=', now())
             ->update(['status' => VMSessionStatus::EXPIRED]);
     }
@@ -113,11 +154,14 @@ class VMSessionRepository
 
     /**
      * Count active sessions for a user.
+     *
+     * Only counts sessions that are both status=ACTIVE and not past expires_at.
      */
     public function countActiveByUser(User $user): int
     {
         return VMSession::where('user_id', $user->id)
             ->where('status', VMSessionStatus::ACTIVE)
+            ->where('expires_at', '>', now())
             ->count();
     }
 

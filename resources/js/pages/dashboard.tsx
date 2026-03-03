@@ -7,6 +7,7 @@
  */
 
 import { Head, Link, router } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
@@ -24,6 +25,7 @@ import {
   Server,
   Activity,
   History,
+  Terminal,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { vmSessionApi, connectionPreferencesApi, proxmoxVMApi } from '@/api/vm.api';
@@ -54,11 +56,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  running: 'default',
-  stopped: 'secondary',
-  paused: 'outline',
-};
 
 const DURATION_OPTIONS = [
   { value: 30, label: '30 minutes' },
@@ -115,9 +112,11 @@ export default function Dashboard() {
     ssh: [],
   });
 
-  const activeSessions = sessions.filter((s) => s?.status === 'active');
+  const activeSessions = sessions.filter(
+    (s) => s?.status === 'active' && s.time_remaining_seconds > 0
+  );
   const provisioningSessions = sessions.filter(
-    (s) => s?.status === 'provisioning' || s?.status === 'pending'
+    (s) => (s?.status === 'provisioning' || s?.status === 'pending') && s.time_remaining_seconds > 0
   );
   const hasActiveSessions = activeSessions.length > 0 || provisioningSessions.length > 0;
 
@@ -216,135 +215,173 @@ export default function Dashboard() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Dashboard" />
-      <div className="flex h-full flex-1 flex-col gap-6 p-6">
+      <div className="container py-8">
+
+        {/* ─── Page Header ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-foreground">VM Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Manage your virtual machines and sessions</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={vmsLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${vmsLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </motion.div>
 
         {/* ─── Stats Overview ─── */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-info/10 text-info">
+                  <Monitor className="h-6 w-6" />
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Available VMs</p>
-                  <p className="text-2xl font-bold">{vms.length}</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">{vms.length}</p>
                 </div>
-                <Monitor className="h-8 w-8 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-success/10 text-success">
+                  <Activity className="h-6 w-6" />
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Sessions</p>
-                  <p className="text-2xl font-bold text-green-600">{activeSessions.length}</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">{activeSessions.length}</p>
                 </div>
-                <Activity className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-warning/10 text-warning ${provisioningSessions.length > 0 ? '' : ''}`}>
+                  <Loader2 className={`h-6 w-6 ${provisioningSessions.length > 0 ? 'animate-spin' : ''}`} />
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Provisioning</p>
-                  <p className="text-2xl font-bold text-blue-600">{provisioningSessions.length}</p>
+                  <p className="font-heading text-2xl font-bold text-foreground">{provisioningSessions.length}</p>
                 </div>
-                <Loader2 className={`h-8 w-8 text-blue-500 ${provisioningSessions.length > 0 ? 'animate-spin' : ''}`} />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <Link href="/sessions" className="flex items-center justify-between hover:opacity-80 transition-opacity">
-                <div>
-                  <p className="text-sm text-muted-foreground">Session History</p>
-                  <p className="text-sm text-primary">View past sessions →</p>
-                </div>
-                <History className="h-8 w-8 text-muted-foreground" />
-              </Link>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+              <CardContent className="p-5">
+                <Link href="/sessions" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <History className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Session History</p>
+                    <p className="text-sm font-medium text-info">View past sessions →</p>
+                  </div>
+                </Link>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* ─── Active Sessions ─── */}
         {!sessionsLoading && hasActiveSessions && (
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Your Sessions</h2>
-            <p className="text-muted-foreground mt-1">
-              Active sessions — connect or terminate
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {activeSessions.map((session) => {
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="font-heading text-xl font-semibold text-foreground">Your Sessions</h2>
+              <Badge className="bg-success/10 text-success border-success/30">{activeSessions.length + provisioningSessions.length} active</Badge>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {activeSessions.map((session, i) => {
                 // templates removed; use generic icon and color
                 const OSIcon = Monitor;
-                const osColor = 'bg-gray-500';
                 const isTerminating = terminatingId === session.id;
                 return (
-                  <Card key={session.id} className="flex flex-col">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${osColor} text-white`}>
-                            <OSIcon className="h-5 w-5" />
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Card className="flex flex-col shadow-card hover:shadow-card-hover transition-all">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10 text-success">
+                              <OSIcon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <CardTitle className="font-heading text-base">VM #{session.vm_id}</CardTitle>
+                              <CardDescription className="text-xs">{session.node_name}</CardDescription>
+                            </div>
                           </div>
-                          <div>
-                            <CardTitle className="text-base">VM #{session.vm_id}</CardTitle>
-                            <CardDescription className="text-xs">{session.node_name}</CardDescription>
-                          </div>
+                          <Badge className="bg-success/10 text-success border-success/30 text-xs">Active</Badge>
                         </div>
-                        <Badge variant="default" className="bg-green-600">Active</Badge>
+                      </CardHeader>
+                      <CardContent className="flex-1 pb-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            {formatTimeRemaining(session.time_remaining_seconds)}
+                          </span>
+                        </div>
+                      </CardContent>
+                      <div className="border-t p-3 flex gap-2">
+                        <Button asChild className="flex-1 bg-info text-info-foreground hover:bg-info/90" size="sm">
+                          <Link href={`/sessions/${session.id}`}>
+                            Connect <ArrowRight className="h-3 w-3 ml-2" />
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => handleTerminate(session.id)} disabled={isTerminating}>
+                          {isTerminating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Power className="h-3 w-3" />}
+                        </Button>
                       </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 pb-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {formatTimeRemaining(session.time_remaining_seconds)}
-                        </span>
-                                  </div>
-                    </CardContent>
-                    <div className="border-t p-3 flex gap-2">
-                      <Button asChild className="flex-1" size="sm">
-                        <Link href={`/sessions/${session.id}`}>
-                          Connect <ArrowRight className="h-3 w-3 ml-2" />
-                        </Link>
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleTerminate(session.id)} disabled={isTerminating}>
-                        {isTerminating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Power className="h-3 w-3" />}
-                      </Button>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
                 );
               })}
 
-              {provisioningSessions.map((session) => {
+              {provisioningSessions.map((session, i) => {
                 const OSIcon = Monitor;
-                const osColor = 'bg-gray-500';
                 return (
-                  <Card key={session.id} className="flex flex-col opacity-75">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${osColor} text-white`}>
-                            <OSIcon className="h-5 w-5" />
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (activeSessions.length + i) * 0.1 }}
+                  >
+                    <Card className="flex flex-col shadow-card opacity-75">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                              <OSIcon className="h-5 w-5" />
+                            </div>
+                            <CardTitle className="font-heading text-base">VM #{session.vm_id}</CardTitle>
                           </div>
-                          <CardTitle className="text-base">VM #{session.vm_id}</CardTitle>
+                          <Badge className="bg-warning/10 text-warning border-warning/30 text-xs capitalize">{session.status}</Badge>
                         </div>
-                        <Badge variant="default" className="bg-blue-600 capitalize">{session.status}</Badge>
+                      </CardHeader>
+                      <CardContent className="flex-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Provisioning — this may take a few minutes...</span>
+                        </div>
+                      </CardContent>
+                      <div className="border-t p-3">
+                        <Button asChild className="w-full" size="sm" variant="outline">
+                          <Link href={`/sessions/${session.id}`}>View Details</Link>
+                        </Button>
                       </div>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Provisioning — this may take a few minutes...</span>
-                      </div>
-                    </CardContent>
-                    <div className="border-t p-3">
-                      <Button asChild className="w-full" size="sm" variant="outline">
-                        <Link href={`/sessions/${session.id}`}>View Details</Link>
-                      </Button>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
@@ -352,18 +389,15 @@ export default function Dashboard() {
         )}
 
         {/* ─── Available VMs ─── */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Available VMs</h2>
-            <p className="text-muted-foreground mt-1">
-              VMs from your Proxmox servers — select one to start a session
-            </p>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-foreground">Available VMs</h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                VMs from your Proxmox servers — select one to start a session
+              </p>
+            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={vmsLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${vmsLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
 
         {vmsError && (
           <Alert variant="destructive">
@@ -387,56 +421,84 @@ export default function Dashboard() {
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {vms.map((vm) => (
-              <Card key={`${vm.server_id}-${vm.node_id}-${vm.vmid}`} className="flex flex-col">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{vm.name}</CardTitle>
-                    <Badge variant={STATUS_VARIANTS[vm.status] ?? 'outline'} className="capitalize">
-                      {vm.status}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-1 text-xs">
-                    <Server className="h-3 w-3" />
-                    {vm.server_name} / {vm.node_name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1"><HardDrive className="h-3.5 w-3.5" /> VMID</span>
-                      <span className="font-mono font-medium text-foreground">{vm.vmid}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1"><Cpu className="h-3.5 w-3.5" /> CPU</span>
-                      <span className="font-medium text-foreground">{vm.cpus} cores</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1"><MemoryStick className="h-3.5 w-3.5" /> RAM</span>
-                      <span className="font-medium text-foreground">{formatBytes(vm.maxmem)}</span>
-                    </div>
-                    {vm.maxdisk > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1"><HardDrive className="h-3.5 w-3.5" /> Disk</span>
-                        <span className="font-medium text-foreground">{formatBytes(vm.maxdisk)}</span>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {vms.map((vm, i) => (
+              <motion.div
+                key={`${vm.server_id}-${vm.node_id}-${vm.vmid}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Card className="flex flex-col shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${vm.is_template ? 'bg-info/10 text-info' : 'bg-muted text-muted-foreground'}`}>
+                          {vm.is_template ? <Terminal className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+                        </div>
+                        <div>
+                          <CardTitle className="font-heading text-lg">{vm.name}</CardTitle>
+                          <CardDescription className="flex items-center gap-1 text-xs">
+                            <Server className="h-3 w-3" />
+                            {vm.server_name} / {vm.node_name}
+                          </CardDescription>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  {vm.is_template && (
-                    <Badge variant="outline" className="mt-3 text-xs">Template</Badge>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => handleOpenLaunch(vm)}>
-                    <Play className="h-4 w-4 mr-2" />
-                    {vm.is_template ? 'Launch Session' : 'Connect'}
-                  </Button>
-                </CardFooter>
-              </Card>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Badge
+                        variant="outline"
+                        className={
+                          vm.status === 'running'
+                            ? 'bg-success/10 text-success border-success/30'
+                            : vm.status === 'stopped'
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-warning/10 text-warning border-warning/30'
+                        }
+                      >
+                        {vm.status}
+                      </Badge>
+                      {vm.is_template && (
+                        <Badge variant="outline" className="bg-info/10 text-info border-info/30 text-xs">
+                          Template
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> VMID</span>
+                        <span className="font-mono font-medium text-foreground">{vm.vmid}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5"><Cpu className="h-3.5 w-3.5" /> CPU</span>
+                        <span className="font-medium text-foreground">{vm.cpus} cores</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5"><MemoryStick className="h-3.5 w-3.5" /> RAM</span>
+                        <span className="font-medium text-foreground">{formatBytes(vm.maxmem)}</span>
+                      </div>
+                      {vm.maxdisk > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> Disk</span>
+                          <span className="font-medium text-foreground">{formatBytes(vm.maxdisk)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full bg-info text-info-foreground hover:bg-info/90" onClick={() => handleOpenLaunch(vm)}>
+                      <Play className="h-4 w-4 mr-2" />
+                      {vm.is_template ? 'Launch Session' : 'Connect'}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* ─── Launch Session Dialog ─── */}
@@ -600,6 +662,16 @@ export default function Dashboard() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{launchError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Progress indicator during activation */}
+            {launchLoading && (
+              <Alert>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <AlertDescription>
+                  Starting VM and preparing remote desktop connection. This may take up to a minute...
+                </AlertDescription>
               </Alert>
             )}
           </div>

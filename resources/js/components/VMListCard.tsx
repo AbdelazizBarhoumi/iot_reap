@@ -125,7 +125,7 @@ export function VMListCard({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{vm.name || `VM ${vm.vmid}`}</span>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="primary" className="text-xs">
                   ID: {vm.vmid}
                 </Badge>
                 <Badge

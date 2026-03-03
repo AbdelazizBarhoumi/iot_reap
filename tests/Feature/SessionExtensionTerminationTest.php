@@ -10,6 +10,7 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
+use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Queue;
@@ -26,22 +27,32 @@ class SessionExtensionTerminationTest extends TestCase
     // template removed; we no longer track it
     private ProxmoxNode $node;
     private VMSession $session;
+    private ProxmoxClientFake $proxmoxFake;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Queue::fake();
+        // Bind ProxmoxClientFake as singleton so tests can register VMs.
+        $this->proxmoxFake = new ProxmoxClientFake();
+        $this->app->instance(ProxmoxClientInterface::class, $this->proxmoxFake);
 
-        $this->app->bind(ProxmoxClientInterface::class, function () {
-            return new ProxmoxClientFake();
-        });
+        // Mock GuacamoleClient — the sync listener and TerminateVMJob call it.
+        $guacMock = \Mockery::mock(GuacamoleClientInterface::class);
+        $guacMock->shouldReceive('createConnection')->andReturn('fake-conn-1');
+        $guacMock->shouldReceive('deleteConnection')->andReturn(null);
+        $guacMock->shouldReceive('generateAuthToken')->andReturn('fake-token');
+        $guacMock->shouldReceive('getConnection')->andReturn([]);
+        $guacMock->shouldReceive('getDataSource')->andReturn('mysql');
+        $guacMock->shouldReceive('clearAuthToken')->andReturn(null);
+        $this->app->instance(GuacamoleClientInterface::class, $guacMock);
 
         $this->user = User::factory()->create();
         $this->server = ProxmoxServer::factory()->create();
 
         $this->node = ProxmoxNode::factory()->create([
             'status' => ProxmoxNodeStatus::ONLINE,
+            'proxmox_server_id' => $this->server->id,
         ]);
 
         // Create an active session on existing VM
@@ -212,26 +223,27 @@ class SessionExtensionTerminationTest extends TestCase
             "/sessions/{$this->session->id}"
         );
 
-        $response->assertStatus(202);
-        $response->assertJson(['message' => 'Session termination initiated']);
+        // Termination is now synchronous — returns 200
+        $response->assertOk();
 
-        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
-            return $job->shouldStopVm() === false;
-        });
+        // Session should be marked expired after sync termination
+        $this->session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $this->session->status);
     }
 
     public function test_terminate_with_stop_vm_flag_true(): void
     {
+        // Register the VM so ProxmoxClientFake can handle stopVM
+        $this->proxmoxFake->registerVM($this->node->name, 100, 'running', '10.0.0.1');
+
         $response = $this->actingAs($this->user)->deleteJson(
             "/sessions/{$this->session->id}",
             ['stop_vm' => true]
         );
 
-        $response->assertStatus(202);
-
-        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
-            return $job->shouldStopVm() === true;
-        });
+        $response->assertOk();
+        $this->session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $this->session->status);
     }
 
     public function test_terminate_with_stop_vm_flag_false(): void
@@ -241,15 +253,16 @@ class SessionExtensionTerminationTest extends TestCase
             ['stop_vm' => false]
         );
 
-        $response->assertStatus(202);
-
-        Queue::assertPushed(\App\Jobs\TerminateVMJob::class, function ($job) {
-            return $job->shouldStopVm() === false;
-        });
+        $response->assertOk();
+        $this->session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $this->session->status);
     }
 
     public function test_terminate_accepts_return_snapshot_parameter(): void
     {
+        // Register the VM so ProxmoxClientFake can handle snapshot revert + stop
+        $this->proxmoxFake->registerVM($this->node->name, 100, 'running', '10.0.0.1');
+
         $snapshotName = 'snap-session-123-1708345200';
 
         $response = $this->actingAs($this->user)->deleteJson(
@@ -260,7 +273,9 @@ class SessionExtensionTerminationTest extends TestCase
             ]
         );
 
-        $response->assertStatus(202);
+        $response->assertOk();
+        $this->session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $this->session->status);
     }
 
     public function test_unauthenticated_user_cannot_terminate_session(): void
@@ -324,7 +339,8 @@ class SessionExtensionTerminationTest extends TestCase
 
     public function test_default_duration_used_when_not_provided(): void
     {
-        Queue::fake();
+        // Register the VM so the sync activation listener can resolve its IP
+        $this->proxmoxFake->registerVM($this->node->name, 202, 'running', '10.0.0.202');
 
         // Create session without duration_minutes
         $response = $this->actingAs($this->user)->postJson('/sessions', [
@@ -352,12 +368,13 @@ class SessionExtensionTerminationTest extends TestCase
 
     public function test_full_session_lifecycle(): void
     {
-        Queue::fake();
-
         // Delete the setUp session to avoid quota conflicts
         $this->session->delete();
 
-        // 1. Create session
+        // Register the VM for sync activation
+        $this->proxmoxFake->registerVM($this->node->name, 203, 'running', '10.0.0.203');
+
+        // 1. Create session (sync activation → ACTIVE immediately)
         $createResponse = $this->actingAs($this->user)->postJson('/sessions', [
             'vmid' => 203,
             'node_id' => $this->node->id,
@@ -368,10 +385,9 @@ class SessionExtensionTerminationTest extends TestCase
         $createResponse->assertCreated();
         $sessionId = $createResponse->json('id');
 
-        // Refresh to get updated info
         $session = VMSession::find($sessionId);
-        // Mark as ACTIVE so we can extend (normally done by ProvisionVMJob)
-        $session->update(['status' => VMSessionStatus::ACTIVE]);
+        // Session is already ACTIVE after sync activation
+        $this->assertEquals(VMSessionStatus::ACTIVE, $session->status);
         $originalExpiry = $session->expires_at;
 
         // 2. Extend session
@@ -384,23 +400,26 @@ class SessionExtensionTerminationTest extends TestCase
         $session->refresh();
         $this->assertTrue($session->expires_at->greaterThan($originalExpiry));
 
-        // 3. Terminate session
+        // 3. Terminate session (sync termination → EXPIRED immediately)
         $terminateResponse = $this->actingAs($this->user)->deleteJson(
             "/sessions/{$sessionId}",
             ['stop_vm' => true]
         );
 
-        $terminateResponse->assertStatus(202);
+        $terminateResponse->assertOk();
+        $session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $session->status);
     }
 
     public function test_full_session_lifecycle_with_snapshot(): void
     {
-        Queue::fake();
-
         // Delete the setUp session to avoid quota conflicts
         $this->session->delete();
 
-        // Create session to test snapshot revert
+        // Register the VM for sync activation and termination
+        $this->proxmoxFake->registerVM($this->node->name, 204, 'running', '10.0.0.204');
+
+        // 1. Create session (sync activation → ACTIVE immediately)
         $createResponse = $this->actingAs($this->user)->postJson('/sessions', [
             'vmid' => 204,
             'node_id' => $this->node->id,
@@ -411,11 +430,10 @@ class SessionExtensionTerminationTest extends TestCase
         $createResponse->assertCreated();
         $sessionId = $createResponse->json('id');
 
-        // Mark as ACTIVE so we can extend (normally done by ProvisionVMJob)
         $session = VMSession::find($sessionId);
-        $session->update(['status' => VMSessionStatus::ACTIVE]);
+        $this->assertEquals(VMSessionStatus::ACTIVE, $session->status);
 
-        // Extend the session
+        // 2. Extend the session
         $extendResponse = $this->actingAs($this->user)->postJson(
             "/sessions/{$sessionId}/extend",
             ['minutes' => 60]
@@ -423,7 +441,7 @@ class SessionExtensionTerminationTest extends TestCase
 
         $extendResponse->assertOk();
 
-        // Terminate with snapshot revert
+        // 3. Terminate with snapshot revert
         $terminateResponse = $this->actingAs($this->user)->deleteJson(
             "/sessions/{$sessionId}",
             [
@@ -432,6 +450,8 @@ class SessionExtensionTerminationTest extends TestCase
             ]
         );
 
-        $terminateResponse->assertStatus(202);
+        $terminateResponse->assertOk();
+        $session->refresh();
+        $this->assertEquals(VMSessionStatus::EXPIRED, $session->status);
     }
 }

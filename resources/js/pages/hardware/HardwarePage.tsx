@@ -4,10 +4,10 @@
  */
 
 import { Head, usePage } from '@inertiajs/react';
-import { AlertCircle, HardDrive, Loader2, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { AlertCircle, HardDrive, Loader2, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb, Cpu } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { hardwareApi } from '@/api/hardware.api';
-import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,16 +39,16 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Hardware', href: '/hardware' },
 ];
 
-function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+function getStatusBadgeClass(status: string): string {
   switch (status) {
     case 'available':
-      return 'default';
+      return 'bg-success/10 text-success border-success/30';
     case 'bound':
-      return 'secondary';
+      return 'bg-warning/10 text-warning border-warning/30';
     case 'attached':
-      return 'destructive';
+      return 'bg-info/10 text-info border-info/30';
     default:
-      return 'outline';
+      return 'bg-muted text-muted-foreground';
   }
 }
 
@@ -194,7 +194,7 @@ function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, loading }: De
         <code className="text-xs bg-muted px-1 py-0.5 rounded">{device.busid}</code>
       </td>
       <td className="py-3 px-4">
-        <Badge variant={getStatusBadgeVariant(device.status)}>
+        <Badge variant="outline" className={getStatusBadgeClass(device.status)}>
           {device.status_label}
         </Badge>
       </td>
@@ -261,31 +261,31 @@ function GatewayNodeCard({
   isAdmin,
 }: GatewayNodeCardProps) {
   return (
-    <Card>
+    <Card className="shadow-card hover:shadow-card-hover transition-all">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${node.online ? 'bg-green-100' : 'bg-red-100'}`}>
-              <Server className={`h-5 w-5 ${node.online ? 'text-green-600' : 'text-red-600'}`} />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${node.online ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+              <Server className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-lg">{node.name}</CardTitle>
+              <CardTitle className="font-heading text-lg">{node.name}</CardTitle>
               <CardDescription>
                 {node.ip}:{node.port}
               </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={node.online ? 'default' : 'destructive'}>
+            <Badge variant="outline" className={node.online ? 'bg-success/10 text-success border-success/30' : 'bg-destructive/10 text-destructive border-destructive/30'}>
               {node.online ? 'Online' : 'Offline'}
             </Badge>
             {node.is_verified ? (
-              <Badge variant="outline" className="text-green-600 border-green-400">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                 <ShieldCheck className="h-3 w-3 mr-1" />
                 Verified
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-amber-600 border-amber-400">
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
                 <ShieldAlert className="h-3 w-3 mr-1" />
                 Unverified
               </Badge>
@@ -309,14 +309,14 @@ function GatewayNodeCard({
       <CardContent>
         {!node.is_verified ? (
           <div className="text-center py-8 text-muted-foreground">
-            <ShieldAlert className="h-8 w-8 mx-auto mb-2 text-amber-500" />
-            <p>Container not verified</p>
+            <ShieldAlert className="h-8 w-8 mx-auto mb-2 text-warning" />
+            <p className="font-heading font-medium">Container not verified</p>
             <p className="text-sm mt-1">Verify this container to view and manage USB devices</p>
           </div>
         ) : !node.devices || node.devices.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <HardDrive className="h-8 w-8 mx-auto mb-2" />
-            <p>No USB devices detected</p>
+            <p className="font-heading font-medium">No USB devices detected</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -389,23 +389,34 @@ export default function HardwarePage() {
       <Head title="Hardware Gateway" />
       <div className="flex h-full flex-1 flex-col gap-6 p-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Heading
-              title="USB/IP Hardware Gateway"
-              description="Manage USB devices across gateway nodes"
-            />
-            {!loading && (
-              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                <span>{onlineCount} of {nodes.length} gateways online</span>
-                <span>{totalDevices} devices detected</span>
-                <span>{attachedDevices} devices attached</span>
-              </div>
-            )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+              <Cpu className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="font-heading text-3xl font-bold text-foreground">USB/IP Hardware Gateway</h1>
+              <p className="text-muted-foreground">Manage USB devices across gateway nodes</p>
+              {!loading && (
+                <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${onlineCount > 0 ? 'bg-success' : 'bg-muted'}`} />
+                    {onlineCount}/{nodes.length} gateways online
+                  </span>
+                  <span>{totalDevices} devices</span>
+                  <span>{attachedDevices} attached</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             {isAdmin && (
               <Button
+                className="bg-info text-info-foreground hover:bg-info/90"
                 onClick={() => discoverGateways()}
                 disabled={loading || actionLoading}
               >
@@ -422,7 +433,7 @@ export default function HardwarePage() {
               Refresh All
             </Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Error Alert */}
         {error && (
@@ -441,32 +452,43 @@ export default function HardwarePage() {
             ))}
           </div>
         ) : nodes.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <Server className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Gateway Nodes</h3>
-                <p className="text-muted-foreground mb-4">
-                  No USB/IP gateway nodes have been configured yet.
-                </p>
-                {isAdmin ? (
-                  <Button onClick={() => discoverGateways()} disabled={actionLoading}>
-                    <Search className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-pulse' : ''}`} />
-                    Discover Gateways from Proxmox
-                  </Button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Contact an administrator to add gateway nodes.
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="shadow-card">
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <Server className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
+                  <h3 className="font-heading text-lg font-medium mb-2">No Gateway Nodes</h3>
+                  <p className="text-muted-foreground mb-4">
+                    No USB/IP gateway nodes have been configured yet.
                   </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  {isAdmin ? (
+                    <Button className="bg-info text-info-foreground hover:bg-info/90" onClick={() => discoverGateways()} disabled={actionLoading}>
+                      <Search className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-pulse' : ''}`} />
+                      Discover Gateways from Proxmox
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Contact an administrator to add gateway nodes.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {nodes.map((node) => (
-              <GatewayNodeCard
+            {nodes.map((node, i) => (
+              <motion.div
                 key={node.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.1 }}
+              >
+                <GatewayNodeCard
                 node={node}
                 onRefresh={() => refreshNode(node.id)}
                 onBindDevice={bindDevice}
@@ -477,6 +499,7 @@ export default function HardwarePage() {
                 loading={actionLoading}
                 isAdmin={isAdmin}
               />
+              </motion.div>
             ))}
           </div>
         )}

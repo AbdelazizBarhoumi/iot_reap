@@ -154,14 +154,21 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
             ]);
 
         $listener = app(CreateGuacamoleConnectionListener::class);
-        $listener->handle(new VMSessionActivated($session));
 
-        $session->refresh();
-        $this->assertEquals(VMSessionStatus::FAILED, $session->status);
-        $this->assertNull($session->guacamole_connection_id);
+        // The listener now propagates exceptions after marking the session FAILED.
+        $this->expectException(\App\Exceptions\GuacamoleApiException::class);
 
-        $this->assertNotEmpty(Notification::sentNotifications());
-        Notification::assertSentTimes(SessionActivationFailed::class, 1);
+        try {
+            $listener->handle(new VMSessionActivated($session));
+        } finally {
+            // Session should still be marked FAILED even though exception is thrown
+            $session->refresh();
+            $this->assertEquals(VMSessionStatus::FAILED, $session->status);
+            $this->assertNull($session->guacamole_connection_id);
+
+            $this->assertNotEmpty(Notification::sentNotifications());
+            Notification::assertSentTimes(SessionActivationFailed::class, 1);
+        }
     }
 
     public function test_listener_retries_on_token_expiry_and_does_not_fail(): void

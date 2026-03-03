@@ -23,19 +23,6 @@ interface SessionHardwarePanelProps {
   isActive: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  available: 'bg-green-500',
-  bound: 'bg-blue-500',
-  attached: 'bg-orange-500',
-};
-
-function DeviceStatusBadge({ status }: { status: string }) {
-  return (
-    <Badge className={`${STATUS_COLORS[status] || 'bg-gray-500'} text-white text-xs`}>
-      {status}
-    </Badge>
-  );
-}
 
 interface DeviceRowProps {
   device: UsbDevice;
@@ -116,7 +103,6 @@ function DeviceRow({
           </TooltipProvider>
         )}
 
-        <DeviceStatusBadge status={device.status} />
         {reason && (
           <p className="text-xs text-muted-foreground italic">{reason}</p>
         )}
@@ -165,7 +151,7 @@ function DeviceRow({
               <TooltipTrigger asChild>
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="default"
                   onClick={onJoinQueue}
                   disabled={actionLoading}
                   className="h-7 px-2"

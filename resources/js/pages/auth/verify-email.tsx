@@ -16,7 +16,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Email verification" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-success">
                     A new verification link has been sent to the email address
                     you provided during registration.
                 </div>
@@ -25,7 +25,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Form {...send.form()} className="space-y-6 text-center">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
+                        <Button disabled={processing} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
                             {processing && <Spinner />}
                             Resend verification email
                         </Button>

@@ -4,9 +4,9 @@
  */
 
 import { Head } from '@inertiajs/react';
-import { ArrowLeft, RefreshCw, Server } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Network, RefreshCw, Server } from 'lucide-react';
 import { useState } from 'react';
-import Heading from '@/components/heading';
 import { NodeHealthCard } from '@/components/NodeHealthCard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -45,25 +45,43 @@ export default function NodesPage() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Proxmox Nodes" />
-      <div className="flex h-full flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+        >
+          <div className="flex items-center gap-3">
             {selectedNodeId ? (
-              <div className="flex items-center gap-2">
+              <>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedNodeId(null)}>
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Back
                 </Button>
-                <Heading title={`VMs on ${selectedNode?.name || 'Node'}`} description="Manage virtual machines" />
-              </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                  <Server className="h-5 w-5" />
+                </div>
+                <div>
+                  <h1 className="font-heading text-3xl font-bold text-foreground">VMs on {selectedNode?.name || 'Node'}</h1>
+                  <p className="text-muted-foreground">Manage virtual machines</p>
+                </div>
+              </>
             ) : (
               <>
-                <Heading title="Proxmox Nodes" description="Monitor node health and resource usage" />
-                {!loading && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {onlineCount} of {totalCount} nodes online
-                  </p>
-                )}
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                  <Network className="h-5 w-5" />
+                </div>
+                <div>
+                  <h1 className="font-heading text-3xl font-bold text-foreground">Proxmox Nodes</h1>
+                  <p className="text-muted-foreground">Monitor node health and resource usage</p>
+                  {!loading && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {onlineCount} of {totalCount} nodes online
+                    </p>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -71,7 +89,7 @@ export default function NodesPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${(loading || vmsLoading) ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-        </div>
+        </motion.div>
 
         {error && (
           <Alert variant="destructive">
@@ -105,7 +123,7 @@ export default function NodesPage() {
           // Show node grid
           <>
             {loading && nodes.length === 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {[...Array(7)].map((_, i) => (
                   <Skeleton key={i} className="h-[200px]" />
                 ))}
@@ -119,7 +137,7 @@ export default function NodesPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {nodes.map((node) => (
                   <NodeHealthCard
                     key={node.id}
@@ -136,6 +154,7 @@ export default function NodesPage() {
         <p className="text-xs text-muted-foreground text-center">
           Stats auto-refresh every {selectedNodeId ? '15' : '30'} seconds
         </p>
+        </div>
       </div>
     </AppLayout>
   );

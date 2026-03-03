@@ -15,6 +15,7 @@ use App\Services\ProxmoxLoadBalancer;
 use App\Services\ProxmoxServerSelector;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -107,6 +108,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Disable resource wrapping for Inertia
+        JsonResource::withoutWrapping();
+        
         //model strict
         Model::shouldBeStrict();
         $this->configureDefaults();

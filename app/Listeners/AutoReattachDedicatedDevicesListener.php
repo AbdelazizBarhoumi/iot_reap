@@ -6,8 +6,6 @@ use App\Enums\UsbReservationStatus;
 use App\Events\VMSessionActivated;
 use App\Models\UsbDeviceReservation;
 use App\Services\GatewayService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -20,24 +18,12 @@ use Throwable;
  * 2. Template-based devices: (Future) If the VM template has dedicated devices
  *    configured, auto-attach them.
  *
- * Runs asynchronously after the VMSessionActivated event to avoid blocking session startup.
+ * Runs synchronously so USB attachment happens during session creation
+ * without depending on a queue worker.  Failures are logged but do not
+ * block session activation.
  */
-class AutoReattachDedicatedDevicesListener implements ShouldQueue
+class AutoReattachDedicatedDevicesListener
 {
-    use InteractsWithQueue;
-
-    /**
-     * Number of times the job may be attempted.
-     */
-    public int $tries = 2;
-
-    /**
-     * Seconds to wait before retrying.
-     *
-     * @var array<int>
-     */
-    public array $backoff = [10, 30];
-
     public function __construct(
         private readonly GatewayService $gatewayService,
     ) {}

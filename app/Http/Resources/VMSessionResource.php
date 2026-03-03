@@ -18,16 +18,20 @@ class VMSessionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Determine effective protocol stored on session
-        $protocol = $this->resource->getProtocol();
+        // Gracefully handle sessions that may not have a protocol set yet
+        // (e.g. still PENDING before the listener ran).
+        $protocolValue = $this->resource->protocol?->value ?? 'rdp';
 
         return [
             'id'           => $this->id,
             'status'       => $this->status->value,
-            'protocol'     => $protocol->value,
-            'node_name'             => $this->node->name,
-            'expires_at'            => $this->expires_at->toIso8601String(),
-            'time_remaining_seconds' => max(0, now()->diffInSeconds($this->expires_at, false)),
+            'protocol'     => $protocolValue,
+            'vm_id'        => $this->vm_id,
+            'node_name'             => $this->node?->name ?? 'unknown',
+            'expires_at'            => $this->expires_at?->toIso8601String(),
+            'time_remaining_seconds' => $this->expires_at
+                ? max(0, now()->diffInSeconds($this->expires_at, false))
+                : 0,
             // The VM's dynamically resolved DHCP IP address (null until ProxmoxIPResolver completes)
             'vm_ip_address'         => $this->ip_address,
             // Cached Guacamole connection ID — reused for the entire session.

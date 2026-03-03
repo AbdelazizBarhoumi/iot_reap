@@ -31,6 +31,9 @@ class DatabaseSeeder extends Seeder
 
         // Seed 2 demo VM sessions
         $this->seedVMSessions($testUser);
+
+        // Seed courses with modules and lessons
+        $this->call(\Database\Seeders\CourseSeeder::class);
     }
 
     /**

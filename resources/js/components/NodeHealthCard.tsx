@@ -105,7 +105,7 @@ export function NodeHealthCard({ node, onViewVMs, isSelected }: NodeHealthCardPr
   }, [node.id, node.server_active]);
 
   return (
-    <Card className={isSelected ? 'ring-2 ring-primary' : ''}>
+    <Card className={isSelected ? 'ring-2 ring-secondary' : ''}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

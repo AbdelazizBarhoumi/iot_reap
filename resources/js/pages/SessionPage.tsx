@@ -19,12 +19,16 @@
  */
 
 import { Head, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowLeft,
   Copy,
   Loader2,
   Monitor,
+  Clock,
+  Terminal,
+  Server,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
@@ -44,14 +48,14 @@ import type { VMSessionStatus, VMSession } from '@/types/vm.types';
 // ---------- Constants ----------
 
 
-const STATUS_COLORS: Record<VMSessionStatus, string> = {
-  pending: 'bg-yellow-500',
-  provisioning: 'bg-blue-500',
-  active: 'bg-green-500',
-  expiring: 'bg-orange-500',
-  expired: 'bg-red-500',
-  failed: 'bg-red-600',
-  terminated: 'bg-gray-500',
+const STATUS_CONFIG: Record<VMSessionStatus, { bg: string; text: string; label: string }> = {
+  pending: { bg: 'bg-warning/10', text: 'text-warning border-warning/30', label: 'Pending' },
+  provisioning: { bg: 'bg-info/10', text: 'text-info border-info/30', label: 'Provisioning' },
+  active: { bg: 'bg-success/10', text: 'text-success border-success/30', label: 'Active' },
+  expiring: { bg: 'bg-warning/10', text: 'text-warning border-warning/30', label: 'Expiring' },
+  expired: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Expired' },
+  failed: { bg: 'bg-destructive/10', text: 'text-destructive border-destructive/30', label: 'Failed' },
+  terminated: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Terminated' },
 };
 
 // ---------- Component ----------
@@ -184,15 +188,17 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
     return (
       <AppLayout breadcrumbs={breadcrumbs}>
         <Head title="Error" />
-        <div className="flex flex-1 flex-col gap-6 p-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button variant="outline" size="sm" onClick={() => router.visit('/sessions')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Sessions
-          </Button>
+        <div className="min-h-screen bg-background">
+          <div className="container py-8">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button variant="outline" size="sm" onClick={() => router.visit('/sessions')} className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Sessions
+            </Button>
+          </div>
         </div>
       </AppLayout>
     );
@@ -207,8 +213,7 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
 
 
   const OSIcon = Monitor;
-  const osColor = 'bg-gray-500';
-  const statusColor = STATUS_COLORS[ds.status as VMSessionStatus];
+  const statusConfig = STATUS_CONFIG[ds.status as VMSessionStatus];
   const isActive = ds.status === 'active';
   const isAlive = isActive || ds.status === 'expiring';
   const isPending = ds.status === 'pending' || ds.status === 'provisioning';
@@ -218,7 +223,8 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`Session ${ds.id.substring(0, 8)}…`} />
 
-      <div className="flex flex-1 flex-col gap-6 p-6">
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
         {/* ---- Expiring alert ---- */}
         {expiringAlert && isAlive && (
           <Alert variant="destructive">
@@ -230,28 +236,32 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
         )}
 
         {/* ---- Header ---- */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-6"
+        >
           <div className="flex items-center gap-4">
-            <div className={`rounded-lg p-3 text-white ${osColor}`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${statusConfig.bg} ${statusConfig.text.split(' ')[0]}`}>
               <OSIcon className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Session {ds.id.substring(0,8)}</h1>
+              <h1 className="font-heading text-3xl font-bold text-foreground">Session {ds.id.substring(0,8)}</h1>
               <div className="mt-2 flex items-center gap-2">
                 <code className="rounded bg-muted px-2 py-1 text-sm text-muted-foreground">
                   {ds.id}
                 </code>
-                <Button variant="ghost" size="sm" onClick={handleCopyId} className="h-auto p-1">
+                <Button variant="ghost" size="sm" onClick={handleCopyId} className="h-auto p-1 hover:bg-muted">
                   <Copy className="h-4 w-4" />
                 </Button>
-                {copied && <span className="text-xs text-green-600">Copied!</span>}
+                {copied && <span className="text-xs text-success">Copied!</span>}
               </div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <Badge className={`${statusColor} capitalize text-white`}>{ds.status}</Badge>
+            <Badge variant="outline" className={`${statusConfig.text} capitalize`}>{statusConfig.label}</Badge>
 
             {isAlive && effectiveExpiresAt && (
               <SessionCountdown expiresAt={effectiveExpiresAt} />
@@ -271,7 +281,7 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
               />
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* ---- Status alerts for non-active sessions ---- */}
         {!isAlive && !isPending && (
@@ -299,70 +309,102 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
         )}
 
         {/* ---- Main grid ---- */}
-        <div className="grid gap-6 lg:grid-cols-4">
+        <div className="grid gap-6 lg:grid-cols-4 mt-6">
           {/* Sidebar — session info */}
           <div className="space-y-6 lg:col-span-1">
             {/* Session Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Details</CardTitle>
-                <CardDescription>Configuration and timing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="shadow-card">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Server className="h-4 w-4 text-info" />
+                    <CardTitle className="font-heading">Session Details</CardTitle>
+                  </div>
+                  <CardDescription>Configuration and timing</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
 
-                <InfoRow label="Node">{ds.node_name}</InfoRow>
+                  <InfoRow label="Node">{ds.node_name}</InfoRow>
 
-                <InfoRow label="Protocol">
-                  <Badge variant="outline" className="uppercase">
-                    {ds.protocol}
-                  </Badge>
-                </InfoRow>
-
-                {ds.vm_ip_address && (
-                  <InfoRow label="VM IP Address">
-                    <code className="text-sm">{ds.vm_ip_address}</code>
+                  <InfoRow label="Protocol">
+                    <Badge variant="outline" className="bg-info/10 text-info border-info/30 uppercase">
+                      {ds.protocol}
+                    </Badge>
                   </InfoRow>
-                )}
 
-                <InfoRow label="Created">
-                  {new Date(ds.created_at).toLocaleString()}
-                </InfoRow>
+                  {ds.vm_ip_address && (
+                    <InfoRow label="VM IP Address">
+                      <code className="text-sm font-mono">{ds.vm_ip_address}</code>
+                    </InfoRow>
+                  )}
 
-                <InfoRow label="Expires">
-                  {effectiveExpiresAt
-                    ? new Date(effectiveExpiresAt).toLocaleString()
-                    : '—'}
-                </InfoRow>
-              </CardContent>
-            </Card>
+                  <InfoRow label="Created">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      {new Date(ds.created_at).toLocaleString()}
+                    </span>
+                  </InfoRow>
+
+                  <InfoRow label="Expires">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      {effectiveExpiresAt
+                        ? new Date(effectiveExpiresAt).toLocaleString()
+                        : '—'}
+                    </span>
+                  </InfoRow>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* USB Hardware Panel */}
-            <SessionHardwarePanel sessionId={ds.id} isActive={isAlive} />
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <SessionHardwarePanel sessionId={ds.id} isActive={isAlive} />
+            </motion.div>
 
             {/* Template Specs */}
           </div>
 
           {/* Main — Guacamole viewer */}
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Remote Desktop</CardTitle>
-              <CardDescription>
-                {isAlive
-                  ? 'Connected to your virtual machine'
-                  : isPending
-                    ? 'Waiting for VM to become ready…'
-                    : 'Session is no longer active'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <GuacamoleViewer
-                sessionId={ds.id}
-                isActive={isAlive}
-                protocol={ds.protocol}
-                vmIpAddress={ds.vm_ip_address}
-              />
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="lg:col-span-3"
+          >
+            <Card className="shadow-card h-full">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4 text-info" />
+                  <CardTitle className="font-heading">Remote Desktop</CardTitle>
+                </div>
+                <CardDescription>
+                  {isAlive
+                    ? 'Connected to your virtual machine'
+                    : isPending
+                      ? 'Waiting for VM to become ready…'
+                      : 'Session is no longer active'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GuacamoleViewer
+                  sessionId={ds.id}
+                  isActive={isAlive}
+                  protocol={ds.protocol}
+                  vmIpAddress={ds.vm_ip_address}
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
         </div>
       </div>
     </AppLayout>

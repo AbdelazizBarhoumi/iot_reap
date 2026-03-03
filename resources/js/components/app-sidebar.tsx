@@ -1,6 +1,13 @@
-import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, History, LayoutGrid, Network, Settings2, Usb } from 'lucide-react';
-import { NavFooter } from '@/components/nav-footer';
+import { Link } from '@inertiajs/react';
+import {
+    CalendarCheck,
+    CheckCircle,
+    Cpu,
+    LayoutGrid,
+    Network,
+    Server,
+    Usb,
+} from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -16,30 +23,17 @@ import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+/**
+ * Admin-only sidebar navigation.
+ * Only rendered for the admin role — other roles use the header layout.
+ */
+
+const overviewNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
     },
-    {
-        title: 'Session History',
-        href: '/sessions',
-        icon: History,
-    },
-    {
-        title: 'Hardware',
-        href: '/hardware',
-        icon: Usb,
-    },
-    {
-        title: 'Connection Preferences',
-        href: '/connection-preferences',
-        icon: Settings2,
-    },
-];
-
-const adminNavItems: NavItem[] = [
     {
         title: 'Infrastructure',
         href: '/admin/infrastructure',
@@ -47,23 +41,38 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
+const managementNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Proxmox Servers',
+        href: '/admin/proxmox-servers',
+        icon: Server,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Nodes & VMs',
+        href: '/admin/nodes',
+        icon: Cpu,
+    },
+    {
+        title: 'Hardware Gateways',
+        href: '/hardware',
+        icon: Usb,
+    },
+];
+
+const contentNavItems: NavItem[] = [
+    {
+        title: 'Course Approvals',
+        href: '/admin/courses',
+        icon: CheckCircle,
+    },
+    {
+        title: 'Reservations',
+        href: '/admin/reservations-page',
+        icon: CalendarCheck,
     },
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
-    const isAdmin = auth.user?.role === 'admin';
-
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -79,12 +88,12 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
-                {isAdmin && <NavMain items={adminNavItems} label="Admin" />}
+                <NavMain items={overviewNavItems} label="Overview" />
+                <NavMain items={managementNavItems} label="Management" />
+                <NavMain items={contentNavItems} label="Content & Scheduling" />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

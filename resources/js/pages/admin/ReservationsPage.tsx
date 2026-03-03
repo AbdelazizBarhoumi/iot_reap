@@ -4,6 +4,7 @@
  */
 
 import { Head } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   Calendar,
@@ -17,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { adminReservationApi, hardwareApi } from '@/api/hardware.api';
-import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -479,23 +479,34 @@ export default function AdminReservationsPage() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Device Reservations" />
-      <div className="flex h-full flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
-          <Heading
-            title="Device Reservations"
-            description="Manage USB device reservation requests and blocking"
-          />
+      <div className="min-h-screen bg-background">
+        <div className="container py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+              <Usb className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="font-heading text-3xl font-bold text-foreground">Device Reservations</h1>
+              <p className="text-muted-foreground">Manage USB device reservation requests and blocking</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button size="sm" onClick={() => setBlockDialogOpen(true)}>
+            <Button className="bg-info text-info-foreground hover:bg-info/90" size="sm" onClick={() => setBlockDialogOpen(true)}>
               <Lock className="h-4 w-4 mr-2" />
               Block Device
             </Button>
           </div>
-        </div>
+        </motion.div>
 
         {error && (
           <Alert variant="destructive">
@@ -511,7 +522,7 @@ export default function AdminReservationsPage() {
               <Clock className="h-4 w-4" />
               Pending
               {pendingCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="primary" className="ml-1">
                   {pendingCount}
                 </Badge>
               )}
@@ -520,7 +531,7 @@ export default function AdminReservationsPage() {
               <Check className="h-4 w-4" />
               Approved
               {approvedCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="primary" className="ml-1">
                   {approvedCount}
                 </Badge>
               )}
@@ -529,7 +540,7 @@ export default function AdminReservationsPage() {
               <Lock className="h-4 w-4" />
               Blocks
               {blocksCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="primary" className="ml-1">
                   {blocksCount}
                 </Badge>
               )}
@@ -545,7 +556,7 @@ export default function AdminReservationsPage() {
               <LoadingSkeleton />
             ) : filteredReservations.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center">
+                <CardContent className="p-12 text-center">
                   <p className="text-muted-foreground">
                     {activeTab === 'pending' && 'No pending reservations'}
                     {activeTab === 'approved' && 'No approved reservations'}
@@ -555,7 +566,7 @@ export default function AdminReservationsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {filteredReservations.map((reservation) => (
                   <ReservationCard
                     key={reservation.id}
@@ -569,6 +580,7 @@ export default function AdminReservationsPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </div>
 
       <ApproveDialog

@@ -10,8 +10,6 @@ use App\Services\GuacamoleClientInterface;
 use App\Services\GuacamoleConnectionParamsBuilder;
 use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxIPResolver;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -26,24 +24,11 @@ use Illuminate\Support\Facades\Log;
  *  6. Create connection in Guacamole, store connection_id in vm_sessions.
  *  7. Mark session status as 'active'.
  *
- * Implements ShouldQueue — runs asynchronously so provisioning does not block the HTTP request.
+ * Runs synchronously within the HTTP request so sessions activate
+ * immediately without depending on a queue worker.
  */
-class CreateGuacamoleConnectionListener implements ShouldQueue
+class CreateGuacamoleConnectionListener
 {
-    use InteractsWithQueue;
-
-    /**
-     * Number of times the job may be attempted.
-     */
-    public int $tries = 3;
-
-    /**
-     * Seconds to wait before retrying.
-     *
-     * @var array<int>
-     */
-    public array $backoff = [30, 60, 120];
-
     public function __construct(
         private readonly GuacamoleClientInterface $guacamoleClient,
         private readonly ProxmoxClientInterface $proxmoxClient,
@@ -114,7 +99,7 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
                 server:         $session->proxmoxServer,
                 nodeId:         $nodeName,
                 vmId:           $vmId,
-                maxWaitSeconds: 300,
+                maxWaitSeconds: 90,
             );
 
             // ── Step 4: persist resolved IP ────────────────────────────────────
@@ -191,6 +176,8 @@ class CreateGuacamoleConnectionListener implements ShouldQueue
             ]);
         }
 
-        $this->fail($e);
+        // Propagate exception so controller can return an error response.
+        // The session is already marked FAILED above.
+        throw $e;
     }
 }

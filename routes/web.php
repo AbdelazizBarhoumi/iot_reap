@@ -15,9 +15,13 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', function () {
+Route::get('/', function (\App\Services\CourseService $courseService) {
+    // grab a small selection of approved courses for the landing page
+    $featured = $courseService->getApprovedCourses()->take(3);
+
     return Inertia::render('welcome', [
         'canRegister' => Features::enabled(Features::registration()),
+        'featuredCourses' => \App\Http\Resources\CourseResource::collection($featured),
     ]);
 })->name('home');
 
@@ -99,6 +103,13 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         return Inertia::render('admin/InfrastructurePage');
     })->name('admin.infrastructure');
 
+    // Course Approvals page and API
+    Route::prefix('courses')->name('admin.courses.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminCourseController::class, 'index'])->name('index');
+        Route::post('/{course}/approve', [\App\Http\Controllers\Admin\AdminCourseController::class, 'approve'])->name('approve');
+        Route::post('/{course}/reject', [\App\Http\Controllers\Admin\AdminCourseController::class, 'reject'])->name('reject');
+    });
+
     // Reservations page (Inertia render)
     Route::get('/reservations-page', function () {
         return Inertia::render('admin/ReservationsPage');
@@ -146,6 +157,50 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::post('/{reservation}/reject', [AdminReservationController::class, 'reject'])->name('reject');
         Route::post('/block', [AdminReservationController::class, 'createBlock'])->name('block');
     });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Course & Learning Routes (Unified)
+// ─────────────────────────────────────────────────────────────────────────────
+// Public course browsing (guest access)
+Route::get('/courses', [\App\Http\Controllers\CourseController::class, 'index'])->name('courses.index');
+Route::get('/courses/{id}', [\App\Http\Controllers\CourseController::class, 'show'])->name('courses.show');
+
+// Authenticated course routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/my-courses', [\App\Http\Controllers\CourseController::class, 'myCourses'])->name('courses.my');
+    Route::get('/courses/{courseId}/lesson/{lessonId}', [\App\Http\Controllers\CourseController::class, 'lesson'])->name('courses.lesson');
+    
+    // Course enrollment
+    Route::post('/courses/{id}/enroll', [\App\Http\Controllers\CourseController::class, 'enroll'])->name('courses.enroll');
+    Route::delete('/courses/{id}/enroll', [\App\Http\Controllers\CourseController::class, 'unenroll'])->name('courses.unenroll');
+    
+    // Lesson progress
+    Route::post('/courses/{courseId}/lessons/{lessonId}/complete', [\App\Http\Controllers\CourseController::class, 'markLessonComplete'])->name('courses.lessons.complete');
+    Route::delete('/courses/{courseId}/lessons/{lessonId}/complete', [\App\Http\Controllers\CourseController::class, 'markLessonIncomplete'])->name('courses.lessons.incomplete');
+});
+
+// Teaching Routes (Teachers & Admins)
+Route::middleware(['auth', 'verified'])->prefix('teaching')->name('teaching.')->group(function () {
+    // Dashboard and course management
+    Route::get('/', [\App\Http\Controllers\TeachingController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\TeachingController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\TeachingController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [\App\Http\Controllers\TeachingController::class, 'edit'])->name('edit');
+    Route::patch('/{course}', [\App\Http\Controllers\TeachingController::class, 'update'])->name('update');
+    Route::delete('/{course}', [\App\Http\Controllers\TeachingController::class, 'destroy'])->name('destroy');
+    Route::post('/{course}/submit', [\App\Http\Controllers\TeachingController::class, 'submitForReview'])->name('submit');
+    
+    // Module management
+    Route::post('/{course}/modules', [\App\Http\Controllers\TeachingController::class, 'storeModule'])->name('modules.store');
+    Route::patch('/{course}/modules/{module}', [\App\Http\Controllers\TeachingController::class, 'updateModule'])->name('modules.update');
+    Route::delete('/{course}/modules/{module}', [\App\Http\Controllers\TeachingController::class, 'destroyModule'])->name('modules.destroy');
+    
+    // Lesson management
+    Route::get('/{courseId}/module/{moduleId}/lesson/{lessonId}', [\App\Http\Controllers\TeachingController::class, 'editLesson'])->name('lesson.edit');
+    Route::post('/{course}/modules/{module}/lessons', [\App\Http\Controllers\TeachingController::class, 'storeLesson'])->name('lessons.store');
+    Route::patch('/{course}/modules/{module}/lessons/{lesson}', [\App\Http\Controllers\TeachingController::class, 'updateLesson'])->name('lessons.update');
+    Route::delete('/{course}/modules/{module}/lessons/{lesson}', [\App\Http\Controllers\TeachingController::class, 'destroyLesson'])->name('lessons.destroy');
 });
 
 require __DIR__ . '/settings.php';
