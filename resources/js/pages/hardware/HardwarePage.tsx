@@ -5,8 +5,16 @@
 
 import { Head, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { AlertCircle, HardDrive, Loader2, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb, Cpu } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertCircle, Camera, Check, Clock, HardDrive, Loader2, Plug, PlugZap, RefreshCw, Search, Server, ShieldCheck, ShieldAlert, Unplug, Usb, Cpu, Video, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { adminCameraApi } from '@/api/camera.api';
+
+// minimal error shape we care about from axios responses
+interface ApiError {
+  response?: { data?: { message?: string } };
+  message?: string;
+}
 import { hardwareApi } from '@/api/hardware.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +40,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useHardwareGateway } from '@/hooks/useHardwareGateway';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import type { Camera as CameraType, CameraReservation } from '@/types/camera.types';
 import type { GatewayNode, RunningVm, UsbDevice } from '@/types/hardware.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -351,6 +360,339 @@ function GatewayNodeCard({
   );
 }
 
+// ─── Camera Attach Dialog ───
+
+interface CameraAttachDialogProps {
+  camera: CameraType | null;
+  open: boolean;
+  onClose: () => void;
+  onAttach: (cameraId: number, vmId: number, vmName: string) => Promise<void>;
+  loading: boolean;
+}
+
+function CameraAttachDialog({ camera, open, onClose, onAttach, loading }: CameraAttachDialogProps) {
+  const [selectedVmId, setSelectedVmId] = useState<string>('');
+  const [runningVms, setRunningVms] = useState<RunningVm[]>([]);
+  const [loadingVms, setLoadingVms] = useState(false);
+  const [vmError, setVmError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoadingVms(true);
+      setVmError(null);
+      setSelectedVmId('');
+
+      hardwareApi.getRunningVms()
+        .then((vms) => {
+          setRunningVms(vms);
+          if (vms.length === 0) {
+            setVmError('No running VMs found. Make sure VMs are powered on.');
+          }
+        })
+        .catch((err) => {
+          setVmError(err.message || 'Failed to load running VMs');
+          setRunningVms([]);
+        })
+        .finally(() => setLoadingVms(false));
+    }
+  }, [open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (camera && selectedVmId) {
+      const selectedVm = runningVms.find(vm => `${vm.vmid}-${vm.server_id}` === selectedVmId);
+      if (selectedVm) {
+        await onAttach(camera.id, selectedVm.vmid, selectedVm.name);
+        setSelectedVmId('');
+        onClose();
+      }
+    }
+  };
+
+  const selectedVm = runningVms.find(vm => `${vm.vmid}-${vm.server_id}` === selectedVmId);
+  const canSubmit = camera && selectedVm && !loading;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Attach Camera to VM</DialogTitle>
+          <DialogDescription>
+            Reserve <strong>{camera?.name}</strong> for exclusive use by a virtual machine.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="cam-vm-select">Select Running VM</Label>
+              {loadingVms ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading running VMs...
+                </div>
+              ) : vmError ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{vmError}</AlertDescription>
+                </Alert>
+              ) : (
+                <Select value={selectedVmId} onValueChange={setSelectedVmId}>
+                  <SelectTrigger id="cam-vm-select">
+                    <SelectValue placeholder="Select a VM..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {runningVms.map((vm) => (
+                      <SelectItem
+                        key={`${vm.vmid}-${vm.server_id}`}
+                        value={`${vm.vmid}-${vm.server_id}`}
+                      >
+                        {vm.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            {selectedVm && (
+              <div className="text-sm text-muted-foreground space-y-1 p-3 bg-muted rounded-md">
+                <p><strong>VM:</strong> {selectedVm.name}</p>
+                <p><strong>IP:</strong> {selectedVm.ip_address || 'Not available'}</p>
+                <p><strong>Node:</strong> {selectedVm.node} ({selectedVm.server_name})</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {loading ? 'Attaching...' : 'Attach Camera'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Camera Row ───
+
+function getCameraStatusClass(status: string): string {
+  switch (status) {
+    case 'active':
+      return 'bg-success/10 text-success border-success/30';
+    case 'inactive':
+      return 'bg-muted text-muted-foreground';
+    case 'error':
+      return 'bg-destructive/10 text-destructive border-destructive/30';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+}
+
+interface CameraRowProps {
+  camera: CameraType;
+  onAttach: () => void;
+  onDetach: () => void;
+  loading: boolean;
+  isAdmin: boolean;
+}
+
+function CameraRow({ camera, onAttach, onDetach, loading, isAdmin }: CameraRowProps) {
+
+  const hasReservation = camera.is_controlled || camera.has_active_reservation;
+
+  return (
+    <tr className="border-b">
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-2">
+          <Camera className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{camera.name}</span>
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          {camera.type_label} {camera.ptz_capable ? '• PTZ' : ''}
+        </div>
+      </td>
+      <td className="py-3 px-4">
+        <code className="text-xs bg-muted px-1 py-0.5 rounded">{camera.stream_key}</code>
+      </td>
+      <td className="py-3 px-4">
+        <Badge variant="outline" className={getCameraStatusClass(camera.status)}>
+          {camera.status_label}
+        </Badge>
+      </td>
+      <td className="py-3 px-4">
+        <span className="text-sm">{camera.robot_name}</span>
+      </td>
+      <td className="py-3 px-4">
+        {hasReservation && camera.control ? (
+          <span className="text-sm text-amber-600">Session #{camera.control.session_id.slice(0, 8)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </td>
+      <td className="py-3 px-4">
+        <div className="flex gap-2 items-center">
+          {isAdmin && !hasReservation && camera.status === 'active' && (
+            <Button size="sm" onClick={onAttach} disabled={loading}>
+              <PlugZap className="h-3 w-3 mr-1" />
+              Attach
+            </Button>
+          )}
+          {isAdmin && hasReservation && (
+            <Button size="sm" variant="destructive" onClick={onDetach} disabled={loading}>
+              <Unplug className="h-3 w-3 mr-1" />
+              Detach
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Camera Card ───
+
+interface CameraCardProps {
+  cameras: CameraType[];
+  pendingReservations: CameraReservation[];
+  loading: boolean;
+  onRefresh: () => void;
+  onAttachCamera: (camera: CameraType) => void;
+  onDetachCamera: (cameraId: number) => void;
+  onApproveReservation: (reservationId: number) => void;
+  onRejectReservation: (reservationId: number) => void;
+  isAdmin: boolean;
+}
+
+function CameraCard({
+  cameras,
+  pendingReservations,
+  loading,
+  onRefresh,
+  onAttachCamera,
+  onDetachCamera,
+  onApproveReservation,
+  onRejectReservation,
+  isAdmin,
+}: CameraCardProps) {
+  const activeCameras = cameras.filter(c => c.status === 'active').length;
+  const attachedCameras = cameras.filter(c => c.is_controlled).length;
+
+  return (
+    <Card className="shadow-card hover:shadow-card-hover transition-all">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
+              <Video className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="font-heading text-lg">Cameras</CardTitle>
+              <CardDescription>
+                {activeCameras}/{cameras.length} active &middot; {attachedCameras} attached
+              </CardDescription>
+            </div>
+          </div>
+          <Button size="sm" variant="ghost" onClick={onRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Pending reservations (admin only) */}
+        {isAdmin && pendingReservations.length > 0 && (
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-2 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pending Reservations ({pendingReservations.length})
+            </h4>
+            <div className="space-y-2">
+              {pendingReservations.map((res) => (
+                <div key={res.id} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50/50 dark:bg-yellow-950/10 border-yellow-200 dark:border-yellow-900/30">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                      Pending
+                    </Badge>
+                    <div>
+                      <p className="font-medium text-sm">
+                        {res.camera?.name ?? `Camera #${res.camera_id}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {res.user?.name} &middot;{' '}
+                        {new Date(res.requested_start_at).toLocaleDateString()} &ndash;{' '}
+                        {new Date(res.requested_end_at).toLocaleDateString()}
+                        {res.purpose && ` \u00b7 ${res.purpose}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-green-600 hover:bg-green-50"
+                      onClick={() => onApproveReservation(res.id)}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:bg-red-50"
+                      onClick={() => onRejectReservation(res.id)}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Camera table */}
+        {cameras.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Camera className="h-8 w-8 mx-auto mb-2" />
+            <p className="font-heading font-medium">No cameras configured</p>
+            <p className="text-sm mt-1">Run the camera seeder or register cameras via API</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b text-left text-sm text-muted-foreground">
+                  <th className="py-2 px-4">Camera</th>
+                  <th className="py-2 px-4">Stream Key</th>
+                  <th className="py-2 px-4">Status</th>
+                  <th className="py-2 px-4">Robot</th>
+                  <th className="py-2 px-4">Attached To</th>
+                  <th className="py-2 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cameras.map((cam) => (
+                  <CameraRow
+                    key={cam.id}
+                    camera={cam}
+                    onAttach={() => onAttachCamera(cam)}
+                    onDetach={() => onDetachCamera(cam.id)}
+                    loading={loading}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function HardwarePage() {
   const { auth } = usePage().props;
   const isAdmin = auth.user?.role === 'admin';
@@ -360,7 +702,6 @@ export default function HardwarePage() {
     loading,
     error,
     actionLoading,
-    // refetch is provided by the hook but unused in this page
     refreshAll,
     refreshNode,
     bindDevice,
@@ -373,8 +714,113 @@ export default function HardwarePage() {
 
   const [attachDialogDevice, setAttachDialogDevice] = useState<UsbDevice | null>(null);
 
+  // Camera state
+  const [cameras, setCameras] = useState<CameraType[]>([]);
+  const [pendingCameraReservations, setPendingCameraReservations] = useState<CameraReservation[]>([]);
+  const [camerasLoading, setCamerasLoading] = useState(false);
+  const [cameraAttachTarget, setCameraAttachTarget] = useState<CameraType | null>(null);
+  const [cameraActionLoading, setCameraActionLoading] = useState(false);
+
+  const fetchCameras = useCallback(async () => {
+    setCamerasLoading(true);
+    try {
+      const [cams, pending] = await Promise.all([
+        adminCameraApi.getCameras(),
+        adminCameraApi.getPending(),
+      ]);
+      setCameras(cams);
+      setPendingCameraReservations(pending);
+    } catch (err) {
+      console.error('Failed to fetch cameras:', err);
+    } finally {
+      setCamerasLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCameras();
+  }, [fetchCameras]);
+
   const handleAttach = async (deviceId: number, vmIp: string, vmName: string, vmid: number, node: string, serverId: number) => {
     await attachDevice(deviceId, { vm_ip: vmIp, vm_name: vmName, vmid, node, server_id: serverId });
+  };
+
+  // Camera attach — creates an immediate admin block reservation
+  const handleCameraAttach = async (cameraId: number, _vmId: number, vmName: string) => {
+    setCameraActionLoading(true);
+    try {
+      const now = new Date();
+      const end = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year block
+      await adminCameraApi.createBlock({
+        camera_id: cameraId,
+        start_at: now.toISOString(),
+        end_at: end.toISOString(),
+        notes: `Permanently attached to VM: ${vmName}`,
+      });
+      await fetchCameras();
+    } catch (err: unknown) {
+      // show a user-friendly toast message
+      console.error('Failed to attach camera:', err);
+      let message = 'Failed to attach camera';
+      if ((err as ApiError)?.response?.data?.message) {
+        message = (err as ApiError).response.data.message;
+      } else if ((err as ApiError)?.message) {
+        message = (err as ApiError).message;
+      }
+      toast.error(message);
+    } finally {
+      setCameraActionLoading(false);
+    }
+  };
+
+  // Camera detach — would cancel the active reservation/block
+  const handleCameraDetach = async (cameraId: number) => {
+    setCameraActionLoading(true);
+    try {
+      const cam = cameras.find((c) => c.id === cameraId);
+      if (!cam || !cam.active_reservation_id) {
+        throw new Error('No active reservation found for camera');
+      }
+
+      // call cancel endpoint (admin wrapper or generic)
+      await adminCameraApi.cancelReservation(cam.active_reservation_id);
+      await fetchCameras();
+      toast.success('Camera detached successfully');
+    } catch (err: unknown) {
+      console.error('Failed to detach camera:', err);
+      let message = 'Failed to detach camera';
+      if ((err as ApiError)?.response?.data?.message) {
+        message = (err as ApiError).response.data.message;
+      } else if ((err as ApiError)?.message) {
+        message = (err as ApiError).message;
+      }
+      toast.error(message);
+    } finally {
+      setCameraActionLoading(false);
+    }
+  };
+
+  const handleApproveCameraReservation = async (reservationId: number) => {
+    try {
+      await adminCameraApi.approve(reservationId, {});
+      await fetchCameras();
+    } catch (err) {
+      console.error('Failed to approve camera reservation:', err);
+    }
+  };
+
+  const handleRejectCameraReservation = async (reservationId: number) => {
+    try {
+      await adminCameraApi.reject(reservationId);
+      await fetchCameras();
+    } catch (err) {
+      console.error('Failed to reject camera reservation:', err);
+    }
+  };
+
+  const handleRefreshAll = () => {
+    refreshAll();
+    fetchCameras();
   };
 
   const onlineCount = nodes.filter((n) => n.online).length;
@@ -383,6 +829,8 @@ export default function HardwarePage() {
     (sum, n) => sum + (n.devices?.filter((d) => d.status === 'attached').length || 0),
     0
   );
+  const activeCameras = cameras.filter((c) => c.status === 'active').length;
+  const attachedCameras = cameras.filter((c) => c.is_controlled).length;
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -400,15 +848,17 @@ export default function HardwarePage() {
             </div>
             <div>
               <h1 className="font-heading text-3xl font-bold text-foreground">USB/IP Hardware Gateway</h1>
-              <p className="text-muted-foreground">Manage USB devices across gateway nodes</p>
+              <p className="text-muted-foreground">Manage USB devices and cameras across gateway nodes</p>
               {!loading && (
-                <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-4 mt-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${onlineCount > 0 ? 'bg-success' : 'bg-muted'}`} />
                     {onlineCount}/{nodes.length} gateways online
                   </span>
-                  <span>{totalDevices} devices</span>
+                  <span>{totalDevices} USB devices</span>
                   <span>{attachedDevices} attached</span>
+                  <span className="border-l pl-4">{activeCameras}/{cameras.length} cameras active</span>
+                  <span>{attachedCameras} reserved</span>
                 </div>
               )}
             </div>
@@ -426,7 +876,7 @@ export default function HardwarePage() {
             )}
             <Button
               variant="outline"
-              onClick={() => refreshAll()}
+              onClick={() => handleRefreshAll()}
               disabled={loading || actionLoading}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-spin' : ''}`} />
@@ -504,19 +954,47 @@ export default function HardwarePage() {
           </div>
         )}
 
+        {/* Camera Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <CameraCard
+            cameras={cameras}
+            pendingReservations={pendingCameraReservations}
+            loading={camerasLoading || cameraActionLoading}
+            onRefresh={fetchCameras}
+            onAttachCamera={setCameraAttachTarget}
+            onDetachCamera={handleCameraDetach}
+            onApproveReservation={handleApproveCameraReservation}
+            onRejectReservation={handleRejectCameraReservation}
+            isAdmin={isAdmin}
+          />
+        </motion.div>
+
         {/* Footer */}
         <p className="text-xs text-muted-foreground text-center">
           Device list auto-refreshes every 15 seconds
         </p>
       </div>
 
-      {/* Attach Dialog */}
+      {/* USB Attach Dialog */}
       <AttachDialog
         device={attachDialogDevice}
         open={!!attachDialogDevice}
         onClose={() => setAttachDialogDevice(null)}
         onAttach={handleAttach}
         loading={actionLoading}
+      />
+
+      {/* Camera Attach Dialog */}
+      <CameraAttachDialog
+        camera={cameraAttachTarget}
+        open={!!cameraAttachTarget}
+        onClose={() => setCameraAttachTarget(null)}
+        onAttach={handleCameraAttach}
+        loading={cameraActionLoading}
       />
     </AppLayout>
   );

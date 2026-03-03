@@ -5,10 +5,12 @@ use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HardwareController;
 use App\Http\Controllers\ProxmoxVMBrowserController;
+use App\Http\Controllers\CameraReservationController;
 use App\Http\Controllers\SessionCameraController;
 use App\Http\Controllers\SessionHardwareController;
 use App\Http\Controllers\UsbDeviceReservationController;
 use App\Http\Controllers\VMSessionController;
+use App\Http\Controllers\Admin\AdminCameraController;
 use App\Http\Controllers\Admin\AdminReservationController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
@@ -104,6 +106,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{reservation}/cancel', [UsbDeviceReservationController::class, 'cancel'])->name('cancel');
         Route::get('/devices/{device}/calendar', [UsbDeviceReservationController::class, 'deviceReservations'])->name('device.calendar');
     });
+
+    // Camera reservations (user-facing)
+    Route::prefix('camera-reservations')->name('camera-reservations.')->group(function () {
+        Route::get('/', [CameraReservationController::class, 'index'])->name('index');
+        Route::post('/', [CameraReservationController::class, 'store'])->name('store');
+        Route::get('/{reservation}', [CameraReservationController::class, 'show'])->name('show');
+        Route::post('/{reservation}/cancel', [CameraReservationController::class, 'cancel'])->name('cancel');
+        Route::get('/cameras/{camera}/calendar', [CameraReservationController::class, 'cameraReservations'])->name('camera.calendar');
+    });
 });
 
 // Admin pages (Inertia) and API endpoints
@@ -166,6 +177,17 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::post('/{reservation}/approve', [AdminReservationController::class, 'approve'])->name('approve');
         Route::post('/{reservation}/reject', [AdminReservationController::class, 'reject'])->name('reject');
         Route::post('/block', [AdminReservationController::class, 'createBlock'])->name('block');
+    });
+
+    // Admin camera management + camera reservations
+    Route::prefix('cameras')->name('admin.cameras.')->group(function () {
+        Route::get('/', [AdminCameraController::class, 'cameras'])->name('index');
+        Route::get('/reservations', [AdminCameraController::class, 'index'])->name('reservations.index');
+        Route::get('/reservations/pending', [AdminCameraController::class, 'pending'])->name('reservations.pending');
+        Route::get('/reservations/upcoming', [AdminCameraController::class, 'upcoming'])->name('reservations.upcoming');
+        Route::post('/reservations/{reservation}/approve', [AdminCameraController::class, 'approve'])->name('reservations.approve');
+        Route::post('/reservations/{reservation}/reject', [AdminCameraController::class, 'reject'])->name('reservations.reject');
+        Route::post('/reservations/block', [AdminCameraController::class, 'createBlock'])->name('reservations.block');
     });
 });
 

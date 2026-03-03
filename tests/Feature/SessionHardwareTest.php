@@ -123,6 +123,18 @@ class SessionHardwareTest extends TestCase
             ->bound()
             ->create(['busid' => '1-1']);
 
+        // stub gateway endpoints so attach verification passes
+        Http::fake([
+            "http://{$this->gateway->ip}:8000/health" => Http::response([], 200),
+            "http://{$this->gateway->ip}:8000/devices" => Http::response([
+                'devices' => [['busid' => '1-1']],
+            ], 200),
+            "http://{$this->gateway->ip}:8000/devices/exported" => Http::response([
+                'devices' => [['busid' => '1-1']],
+            ], 200),
+            "http://{$this->gateway->ip}:8000/*" => Http::response([], 200),
+        ]);
+
         // The fake ProxmoxClient will return success for usbip attach by default
         $this->fakeProxmoxClient->clearExecHistory();
 

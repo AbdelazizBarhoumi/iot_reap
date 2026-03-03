@@ -116,6 +116,25 @@ class HardwareGatewayTest extends TestCase
         ]);
     }
 
+    public function test_refresh_node_failure_marks_offline(): void
+    {
+        $node = GatewayNode::factory()->online()->create(['ip' => '192.168.50.6']);
+
+        // simulate gateway not responding (timeout / 500)
+        Http::fake([
+            'http://192.168.50.6:8000/devices' => Http::response('', 500),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/hardware/nodes/{$node->id}/refresh");
+
+        $response->assertStatus(502);
+        $response->assertJson(['success' => false]);
+
+        $node->refresh();
+        $this->assertFalse($node->online);
+    }
+
     // ─── POST /hardware/devices/{device}/bind ─────────────────────────────────
 
     public function test_user_can_bind_available_device(): void
@@ -182,6 +201,25 @@ class HardwareGatewayTest extends TestCase
         $response->assertJsonPath('message', 'Cannot unbind attached device. Detach it first.');
     }
 
+    /**
+     * When the discovery service itself throws an exception the controller
+     * should catch it, log it, and return a 500 JSON response so the
+     * frontend can display an error rather than bubbling an uncaught error.
+     */
+    public function test_discover_gateways_handles_service_exception(): void
+    {
+        $this->actingAs($this->admin);
+
+        $mock = Mockery::mock(\App\Services\GatewayDiscoveryService::class);
+        $mock->shouldReceive('discoverAll')->once()->andThrow(new \Exception('boom'));
+        $this->app->instance(\App\Services\GatewayDiscoveryService::class, $mock);
+
+        $response = $this->postJson('/admin/hardware/discover');
+        $response->assertStatus(500);
+        $response->assertJson(['success' => false]);
+        $response->assertJsonPath('message', 'Failed to discover gateways: boom');
+    }
+
     // ─── POST /hardware/devices/{device}/attach ───────────────────────────────
 
     public function test_user_can_attach_bound_device_to_vm(): void
@@ -191,12 +229,46 @@ class HardwareGatewayTest extends TestCase
 
         Http::fake([
             'http://192.168.50.6:8000/attach' => Http::response(['success' => true, 'port' => '00'], 200),
+            'http://192.168.50.6:8000/health' => Http::response([], 200),
+            // return the bound device so verifyDeviceState passes
+            'http://192.168.50.6:8000/devices' => Http::response([
+                'devices' => [
+                    ['busid' => '1-1', 'vendor_id' => '1234', 'product_id' => '5678', 'name' => 'Test'],
+                ],
+            ], 200),
+            // exported list should contain the busid so isDeviceExportable returns true
+            'http://192.168.50.6:8000/devices/exported' => Http::response(['output' => "1-1"], 200),
         ]);
+
+        // include vmid/node/server_id because validation requires them when no session_id is present
+        $server = \App\Models\ProxmoxServer::factory()->create();
+
+        // mock ProxmoxClientFactory so that the VM is considered running and guest-agent commands succeed
+        $proxmoxClientMock = Mockery::mock(\App\Services\ProxmoxClientInterface::class)
+            ->shouldIgnoreMissing();
+        $proxmoxClientMock->shouldReceive('getVMStatus')->andReturn(['status' => 'running']);
+        $proxmoxClientMock->shouldReceive('getGuestOsType')->andReturn('linux');
+        // execInVmAndWait is used by executeUsbipCommand
+        $proxmoxClientMock->shouldReceive('execInVmAndWait')->andReturn([
+            'exitcode' => 0,
+            'success' => true,
+            'out-data' => '',
+            'err-data' => '',
+        ]);
+        // not strictly necessary but we can keep for completeness
+        $proxmoxClientMock->shouldReceive('getAttachedPort')->andReturn('001');
+
+        $factoryMock = Mockery::mock(\App\Services\ProxmoxClientFactory::class);
+        $factoryMock->shouldReceive('make')->andReturn($proxmoxClientMock);
+        $this->app->instance(\App\Services\ProxmoxClientFactory::class, $factoryMock);
 
         $response = $this->actingAs($this->user)
             ->postJson("/hardware/devices/{$device->id}/attach", [
                 'vm_ip' => '192.168.50.100',
                 'vm_name' => 'Windows-VM-1',
+                'vmid' => 42,
+                'node' => 'pve1',
+                'server_id' => $server->id,
             ]);
 
         $response->assertOk();
@@ -213,10 +285,14 @@ class HardwareGatewayTest extends TestCase
         $node = GatewayNode::factory()->create();
         $device = UsbDevice::factory()->for($node)->available()->create();
 
+        $server = \App\Models\ProxmoxServer::factory()->create();
         $response = $this->actingAs($this->user)
             ->postJson("/hardware/devices/{$device->id}/attach", [
                 'vm_ip' => '192.168.50.100',
                 'vm_name' => 'Test-VM',
+                'vmid' => 7,
+                'node' => 'pve1',
+                'server_id' => $server->id,
             ]);
 
         $response->assertUnprocessable();

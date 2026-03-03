@@ -446,6 +446,11 @@ class HardwareController extends Controller
                 'gateways' => GatewayNodeResource::collection($discovered->load('usbDevices')),
             ]);
         } catch (\Exception $e) {
+            // log the exception for diagnostics, including stacktrace in case unexpected
+            Log::error('Error during gateway discovery', [
+                'exception' => $e,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to discover gateways: ' . $e->getMessage(),

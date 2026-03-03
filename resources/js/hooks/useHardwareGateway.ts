@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 import { hardwareApi } from '../api/hardware.api';
 import type { AttachDeviceRequest, GatewayNode, UsbDevice } from '../types/hardware.types';
 
+// Axios error responses don't have a stable interface; define what we care about
+interface ApiError {
+  response?: { data?: { message?: string } };
+  message?: string;
+}
+
 interface UseHardwareGatewayResult {
   nodes: GatewayNode[];
   devices: UsbDevice[];
@@ -59,17 +65,23 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       const result = await hardwareApi.refreshAll();
       if (result.success) {
         toast.success('All gateways refreshed');
-        await fetchData();
-        return true;
+      } else {
+        const errorMsg = result.message || 'Refresh failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
       }
-      const errorMsg = result.message || 'Refresh failed';
-      toast.error(errorMsg);
-      setError(errorMsg);
-      return false;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Refresh failed';
+      // always reload nodes so UI stays in sync (offline marking may have occurred)
+      await fetchData();
+      return result.success;
+    } catch (e: unknown) {
+      // try to surface server-provided message if available
+      let message = e instanceof Error ? e.message : 'Refresh failed';
+      if ((e as ApiError)?.response?.data?.message) {
+        message = (e as ApiError).response.data.message;
+      }
       toast.error(message);
       setError(message);
+      await fetchData();
       return false;
     } finally {
       setActionLoading(false);
@@ -83,17 +95,22 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       const result = await hardwareApi.refreshNode(nodeId);
       if (result.success) {
         toast.success('Gateway refreshed');
-        await fetchData();
-        return true;
+      } else {
+        const errorMsg = result.message || 'Refresh failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
       }
-      const errorMsg = result.message || 'Refresh failed';
-      toast.error(errorMsg);
-      setError(errorMsg);
-      return false;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Refresh failed';
+      // even on failure we may have marked the node offline, so re-fetch
+      await fetchData();
+      return result.success;
+    } catch (e: unknown) {
+      let message = e instanceof Error ? e.message : 'Refresh failed';
+      if ((e as ApiError)?.response?.data?.message) {
+        message = (e as ApiError).response.data.message;
+      }
       toast.error(message);
       setError(message);
+      await fetchData();
       return false;
     } finally {
       setActionLoading(false);
@@ -203,17 +220,21 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       const result = await hardwareApi.discoverGateways();
       if (result.success) {
         toast.success('Gateway discovery completed');
-        await fetchData();
-        return true;
+      } else {
+        const errorMsg = result.message || 'Discovery failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
       }
-      const errorMsg = result.message || 'Discovery failed';
-      toast.error(errorMsg);
-      setError(errorMsg);
-      return false;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Discovery failed';
+      await fetchData();
+      return result.success;
+    } catch (e: unknown) {
+      let message = e instanceof Error ? e.message : 'Discovery failed';
+      if ((e as ApiError)?.response?.data?.message) {
+        message = (e as ApiError).response.data.message;
+      }
       toast.error(message);
       setError(message);
+      await fetchData();
       return false;
     } finally {
       setActionLoading(false);

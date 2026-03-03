@@ -23,15 +23,9 @@ export function CameraViewer({ camera }: CameraViewerProps) {
   const hlsUrl = camera.stream_urls.hls;
 
   useEffect(() => {
-    setStreamError(false);
-    setIsLoading(true);
-
     const video = videoRef.current;
     if (!video) return;
 
-    // Try to load the HLS stream natively (Safari supports HLS natively,
-    // Chrome/Firefox need hls.js — for now we use the native fallback
-    // and show a placeholder when the stream isn't available).
     video.src = hlsUrl;
     video.load();
 
@@ -48,12 +42,10 @@ export function CameraViewer({ camera }: CameraViewerProps) {
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('error', handleError);
 
-    // Give it 5 seconds then show placeholder if still loading
+    // After 5 seconds we assume stream failed and show placeholder.
     const timeout = setTimeout(() => {
-      if (isLoading) {
-        setIsLoading(false);
-        setStreamError(true);
-      }
+      setIsLoading(false);
+      setStreamError(true);
     }, 5000);
 
     return () => {

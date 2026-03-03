@@ -2,10 +2,8 @@ import { Link } from '@inertiajs/react';
 import {
     CalendarCheck,
     CheckCircle,
-    Cpu,
     LayoutGrid,
     Network,
-    Server,
     Usb,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
@@ -42,16 +40,6 @@ const overviewNavItems: NavItem[] = [
 ];
 
 const managementNavItems: NavItem[] = [
-    {
-        title: 'Proxmox Servers',
-        href: '/admin/proxmox-servers',
-        icon: Server,
-    },
-    {
-        title: 'Nodes & VMs',
-        href: '/admin/nodes',
-        icon: Cpu,
-    },
     {
         title: 'Hardware Gateways',
         href: '/hardware',

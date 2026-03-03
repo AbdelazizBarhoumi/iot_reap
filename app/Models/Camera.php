@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CameraReservationStatus;
 use App\Enums\CameraStatus;
 use App\Enums\CameraType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -90,5 +91,48 @@ class Camera extends Model
             ->where('session_id', $sessionId)
             ->whereNull('released_at')
             ->exists();
+    }
+
+    /**
+     * Get all reservations for this camera.
+     */
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(CameraReservation::class);
+    }
+
+    /**
+     * Check if this camera has any active or approved reservation right now.
+     */
+    public function hasActiveReservation(): bool
+    {
+        $now = now();
+
+        return $this->reservations()
+            ->whereIn('status', [
+                CameraReservationStatus::APPROVED->value,
+                CameraReservationStatus::ACTIVE->value,
+            ])
+            ->whereNotNull('approved_start_at')
+            ->where('approved_start_at', '<=', $now)
+            ->where('approved_end_at', '>=', $now)
+            ->exists();
+    }
+
+    /**
+     * Get the currently active reservation (if any).
+     */
+    public function activeReservation(): HasOne
+    {
+        $now = now();
+
+        return $this->hasOne(CameraReservation::class)
+            ->whereIn('status', [
+                CameraReservationStatus::APPROVED->value,
+                CameraReservationStatus::ACTIVE->value,
+            ])
+            ->whereNotNull('approved_start_at')
+            ->where('approved_start_at', '<=', $now)
+            ->where('approved_end_at', '>=', $now);
     }
 }

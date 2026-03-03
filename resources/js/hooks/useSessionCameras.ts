@@ -54,11 +54,11 @@ export function useSessionCameras(sessionId: string | undefined): UseSessionCame
     } finally {
       setLoading(false);
     }
-  }, [sessionId, selectedCamera?.id]);
+  }, [sessionId, selectedCamera]);
 
   useEffect(() => {
     fetchCameras();
-  }, [sessionId]);
+  }, [sessionId, fetchCameras]);
 
   // The camera THIS session currently controls
   const controlledCamera = cameras.find(c =>

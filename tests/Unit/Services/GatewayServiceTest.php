@@ -211,6 +211,23 @@ class GatewayServiceTest extends TestCase
             ->bound()
             ->create(['busid' => '1-1']);
 
+        // stub gateway HTTP endpoints so verifyDeviceState passes
+        Http::fake(function ($request) use ($gateway) {
+            $url = $request->url();
+            $base = "http://{$gateway->ip}:8000";
+            if (str_starts_with($url, "$base/health")) {
+                return Http::response([], 200);
+            }
+            if (str_ends_with($url, '/devices/exported')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            if (str_ends_with($url, '/devices')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            // default for any other endpoint (bind/unbind etc.)
+            return Http::response([], 200);
+        });
+
         // Clear any previous exec history
         $this->fakeProxmoxClient->clearExecHistory();
 
@@ -253,6 +270,22 @@ class GatewayServiceTest extends TestCase
             ->bound()
             ->create(['busid' => '1-1']);
 
+        // stub gateway state so attach verification succeeds
+        Http::fake(function ($request) use ($gateway) {
+            $url = $request->url();
+            $base = "http://{$gateway->ip}:8000";
+            if (str_starts_with($url, "$base/health")) {
+                return Http::response([], 200);
+            }
+            if (str_ends_with($url, '/devices/exported')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            if (str_ends_with($url, '/devices')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            return Http::response([], 200);
+        });
+
         $this->fakeProxmoxClient->clearExecHistory();
         // Set this VM as Windows so the batch fallback will be attempted
         $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'windows');
@@ -290,6 +323,22 @@ class GatewayServiceTest extends TestCase
             ->for($gateway)
             ->bound()
             ->create(['busid' => '1-1']);
+
+        // stub gateway state so attach verification succeeds
+        Http::fake(function ($request) use ($gateway) {
+            $url = $request->url();
+            $base = "http://{$gateway->ip}:8000";
+            if (str_starts_with($url, "$base/health")) {
+                return Http::response([], 200);
+            }
+            if (str_ends_with($url, '/devices/exported')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            if (str_ends_with($url, '/devices')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            return Http::response([], 200);
+        });
 
         $this->fakeProxmoxClient->clearExecHistory();
         // Set this VM as Windows so the batch fallback will be attempted
@@ -572,6 +621,15 @@ class GatewayServiceTest extends TestCase
             ->bound()
             ->create(['busid' => '1-1']);
 
+        // stub gateway state so initial verification passes
+        Http::fake([
+            "http://{$gateway->ip}:8000/health" => Http::response([], 200),
+            "http://{$gateway->ip}:8000/devices" => Http::response([
+                'devices' => [['busid' => '1-1']],
+            ], 200),
+            "http://{$gateway->ip}:8000/*" => Http::response([], 200),
+        ]);
+
         // Simulate error message from guest agent indicating device gone
         // both direct and batch attempts should fail with the same message
         $this->fakeProxmoxClient->setExecResult('usbip attach', 1, '', 'No such device');
@@ -610,6 +668,15 @@ class GatewayServiceTest extends TestCase
             ->for($gateway)
             ->bound()
             ->create(['busid' => '1-1']);
+
+        // stub gateway state so initial verification passes
+        Http::fake([
+            "http://{$gateway->ip}:8000/health" => Http::response([], 200),
+            "http://{$gateway->ip}:8000/devices" => Http::response([
+                'devices' => [['busid' => '1-1']],
+            ], 200),
+            "http://{$gateway->ip}:8000/*" => Http::response([], 200),
+        ]);
 
         // Configure fake to fail both direct and batch attempts
         $this->fakeProxmoxClient->setExecResult('usbip attach', 1, '', 'connection refused');

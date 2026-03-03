@@ -1,6 +1,6 @@
 /**
  * Camera API module.
- * Sprint 4 — Camera streaming & PTZ control
+ * Sprint 4 — Camera streaming & PTZ control + Reservations
  */
 
 import type {
@@ -8,8 +8,23 @@ import type {
   CameraActionResponse,
   CameraListResponse,
   CameraPTZDirection,
+  CameraReservation,
+  CreateCameraReservationRequest,
+  ApproveCameraReservationRequest,
+  CreateAdminCameraBlockRequest,
 } from '../types/camera.types';
 import client from './client';
+
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+interface ActionResponse {
+  success: boolean;
+  message: string;
+  data?: CameraReservation;
+}
 
 /**
  * Session Camera API — all camera operations scoped to a VM session.
@@ -62,5 +77,129 @@ export const cameraApi = {
     await client.post(`/sessions/${sessionId}/cameras/${cameraId}/move`, {
       direction,
     });
+  },
+};
+
+// ─── Camera Reservation API (User-facing) ───
+
+export const cameraReservationApi = {
+  /**
+   * List current user's camera reservations.
+   */
+  async getMyReservations(): Promise<CameraReservation[]> {
+    const response = await client.get<ApiResponse<CameraReservation[]>>('/camera-reservations');
+    return response.data.data;
+  },
+
+  /**
+   * Create a new camera reservation request.
+   */
+  async create(data: CreateCameraReservationRequest): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>('/camera-reservations', data);
+    return response.data;
+  },
+
+  /**
+   * Cancel a camera reservation.
+   */
+  async cancel(reservationId: number): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>(`/camera-reservations/${reservationId}/cancel`);
+    return response.data;
+  },
+
+  /**
+   * Get reservations for a specific camera (calendar view).
+   */
+  async getCameraCalendar(cameraId: number, start?: string, end?: string): Promise<CameraReservation[]> {
+    const params: Record<string, string> = {};
+    if (start) params.start = start;
+    if (end) params.end = end;
+    const response = await client.get<ApiResponse<CameraReservation[]>>(
+      `/camera-reservations/cameras/${cameraId}/calendar`,
+      { params },
+    );
+    return response.data.data;
+  },
+};
+
+// ─── Admin Camera API ───
+
+export const adminCameraApi = {
+  /**
+   * List all cameras with reservation info (admin).
+   */
+  async getCameras(): Promise<Camera[]> {
+    const response = await client.get<ApiResponse<Camera[]>>('/admin/cameras');
+    return response.data.data;
+  },
+
+  /**
+   * Get all camera reservations with optional status filter.
+   */
+  async getReservations(status?: string): Promise<CameraReservation[]> {
+    const params = status ? { status } : {};
+    const response = await client.get<ApiResponse<CameraReservation[]>>(
+      '/admin/cameras/reservations',
+      { params },
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Get pending camera reservations.
+   */
+  async getPending(): Promise<CameraReservation[]> {
+    const response = await client.get<ApiResponse<CameraReservation[]>>('/admin/cameras/reservations/pending');
+    return response.data.data;
+  },
+
+  /**
+   * Get upcoming camera reservations.
+   */
+  async getUpcoming(): Promise<{ active: CameraReservation[]; upcoming: CameraReservation[] }> {
+    const response = await client.get<{ active: CameraReservation[]; upcoming: CameraReservation[] }>(
+      '/admin/cameras/reservations/upcoming',
+    );
+    return response.data;
+  },
+
+  /**
+   * Approve a camera reservation.
+   */
+  async approve(reservationId: number, data: ApproveCameraReservationRequest): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>(
+      `/admin/cameras/reservations/${reservationId}/approve`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Reject a camera reservation.
+   */
+  async reject(reservationId: number, adminNotes?: string): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>(
+      `/admin/cameras/reservations/${reservationId}/reject`,
+      { admin_notes: adminNotes },
+    );
+    return response.data;
+  },
+
+  /**
+   * Create an admin block for a camera.
+   */
+  async createBlock(data: CreateAdminCameraBlockRequest): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>('/admin/cameras/reservations/block', data);
+    return response.data;
+  },
+
+  /**
+   * Cancel a reservation. Admin convenience wrapper around the user-facing endpoint.
+   */
+  async cancelReservation(reservationId: number): Promise<ActionResponse> {
+    const response = await client.post<ActionResponse>(
+      `/camera-reservations/${reservationId}/cancel`
+    );
+    return response.data;
   },
 };

@@ -1,11 +1,12 @@
 /**
  * Camera TypeScript interfaces.
- * Sprint 4 — Camera streaming & PTZ control
+ * Sprint 4 — Camera streaming & PTZ control + Reservations
  */
 
 export type CameraType = 'usb' | 'ip' | 'esp32_cam';
 export type CameraStatus = 'active' | 'inactive' | 'error';
 export type CameraPTZDirection = 'up' | 'down' | 'left' | 'right';
+export type CameraReservationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
 
 /**
  * Stream URLs generated from the camera's stream_key.
@@ -40,6 +41,9 @@ export interface Camera {
   stream_urls: CameraStreamUrls;
   control?: CameraControlInfo;
   is_controlled: boolean;
+  has_active_reservation: boolean;
+  /** reservation id overlapping now, present when `has_active_reservation` is true */
+  active_reservation_id?: number;
   created_at: string;
 }
 
@@ -63,4 +67,78 @@ export interface CameraActionResponse {
  */
 export interface CameraMoveRequest {
   direction: CameraPTZDirection;
+}
+
+// ─── Camera Reservation Types ───
+
+/**
+ * Camera reservation as returned by the API.
+ */
+export interface CameraReservation {
+  id: number;
+  camera_id: number;
+  user_id: string;
+  approved_by: string | null;
+  status: CameraReservationStatus;
+  status_label: string;
+  status_color: string;
+  requested_start_at: string;
+  requested_end_at: string;
+  approved_start_at: string | null;
+  approved_end_at: string | null;
+  effective_start_at: string | null;
+  effective_end_at: string | null;
+  duration_minutes: number;
+  actual_start_at: string | null;
+  actual_end_at: string | null;
+  purpose: string | null;
+  reason: string | null;
+  is_admin_block: boolean;
+  admin_notes?: string;
+  priority: number;
+  is_pending: boolean;
+  is_approved: boolean;
+  is_active: boolean;
+  can_modify: boolean;
+  camera?: Camera;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  approver?: {
+    id: string;
+    name: string;
+  } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Request payload for creating a camera reservation.
+ */
+export interface CreateCameraReservationRequest {
+  camera_id: number;
+  start_at: string;
+  end_at: string;
+  purpose?: string;
+}
+
+/**
+ * Request payload for admin approving a camera reservation.
+ */
+export interface ApproveCameraReservationRequest {
+  approved_start_at?: string;
+  approved_end_at?: string;
+  admin_notes?: string;
+}
+
+/**
+ * Request payload for admin creating a camera block.
+ */
+export interface CreateAdminCameraBlockRequest {
+  camera_id: number;
+  start_at: string;
+  end_at: string;
+  notes?: string;
 }

@@ -52,7 +52,7 @@ export function SessionCameraPanel({ sessionId, isActive }: SessionCameraPanelPr
     acquireControl,
     releaseControl,
     move,
-    refetch,
+    refetch: _refetch,
   } = useSessionCameras(sessionId);
 
   if (loading) {

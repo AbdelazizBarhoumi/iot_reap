@@ -24,8 +24,13 @@ import {
   X,
   Shield,
   Monitor,
+  Camera,
+  Video,
+  Clock,
+  Eye,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { adminCameraApi } from '@/api/camera.api';
 import client from '@/api/client';
 import { adminApi } from '@/api/vm.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -57,6 +62,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import type { Camera as CameraType, CameraReservation } from '@/types/camera.types';
 import type { ProxmoxNode, ProxmoxServerAdmin, ProxmoxVM } from '@/types/vm.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -490,6 +496,12 @@ export default function InfrastructurePage() {
   const [deleteServer, setDeleteServer] = useState<ProxmoxServerAdmin | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Camera state
+  const [cameras, setCameras] = useState<CameraType[]>([]);
+  const [cameraReservations, setCameraReservations] = useState<CameraReservation[]>([]);
+  const [camerasLoading, setCamerasLoading] = useState(false);
+  const [showCameraSection, setShowCameraSection] = useState(true);
+
   // Fetch servers and nodes
   const fetchServers = useCallback(async () => {
     setLoading(true);
@@ -516,10 +528,27 @@ export default function InfrastructurePage() {
     }
   }, []);
 
+  const fetchCameras = useCallback(async () => {
+    setCamerasLoading(true);
+    try {
+      const [cams, pending] = await Promise.all([
+        adminCameraApi.getCameras(),
+        adminCameraApi.getPending(),
+      ]);
+      setCameras(cams);
+      setCameraReservations(pending);
+    } catch (err) {
+      console.error('Failed to fetch cameras:', err);
+    } finally {
+      setCamerasLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchServers();
     fetchNodes();
-  }, [fetchServers, fetchNodes]);
+    fetchCameras();
+  }, [fetchServers, fetchNodes, fetchCameras]);
 
   // Auto-refresh nodes every 30s
   useEffect(() => {
@@ -612,12 +641,33 @@ export default function InfrastructurePage() {
   const handleRefresh = () => {
     fetchServers();
     fetchNodes();
+    fetchCameras();
   };
 
   // Stats
   const activeServers = servers.filter((s) => s.is_active).length;
   const onlineNodes = nodes.filter((n) => n.status === 'online').length;
   const totalVMs = nodes.reduce((sum, n) => sum + (n.active_vm_count ?? 0), 0);
+  const activeCameras = cameras.filter((c) => c.status === 'active').length;
+  const pendingCameraReservations = cameraReservations.length;
+
+  const handleApproveCameraReservation = async (reservationId: number) => {
+    try {
+      await adminCameraApi.approve(reservationId, {});
+      fetchCameras();
+    } catch (err) {
+      console.error('Failed to approve camera reservation:', err);
+    }
+  };
+
+  const handleRejectCameraReservation = async (reservationId: number) => {
+    try {
+      await adminCameraApi.reject(reservationId);
+      fetchCameras();
+    } catch (err) {
+      console.error('Failed to reject camera reservation:', err);
+    }
+  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -636,7 +686,7 @@ export default function InfrastructurePage() {
               </div>
               <div>
                 <h1 className="font-heading text-3xl font-bold text-foreground">Infrastructure</h1>
-                <p className="text-muted-foreground">Manage Proxmox servers, nodes, and virtual machines</p>
+                <p className="text-muted-foreground">Manage Proxmox servers, nodes, VMs, and cameras</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -660,7 +710,7 @@ export default function InfrastructurePage() {
           </motion.div>
 
           {/* Stats Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card className="shadow-card hover:shadow-card-hover transition-shadow">
                 <CardContent className="flex items-center gap-4 p-5">
@@ -700,6 +750,21 @@ export default function InfrastructurePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Total VMs</p>
                     <p className="font-heading text-2xl font-bold text-foreground">{totalVMs}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="shadow-card hover:shadow-card-hover transition-shadow">
+                <CardContent className="flex items-center gap-4 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
+                    <Camera className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cameras Active</p>
+                    <p className="font-heading text-2xl font-bold text-foreground">
+                      {activeCameras}/{cameras.length}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -771,6 +836,148 @@ export default function InfrastructurePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Camera Management Section */}
+      <div className="container pb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <Collapsible open={showCameraSection} onOpenChange={setShowCameraSection}>
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center gap-3 cursor-pointer hover:opacity-80">
+                      {showCameraSection ? (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
+                        <Video className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="font-heading text-lg">Camera Management</CardTitle>
+                        <CardDescription>
+                          {cameras.length} cameras &middot; {pendingCameraReservations} pending reservations
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <Button variant="ghost" size="sm" onClick={fetchCameras} disabled={camerasLoading}>
+                    <RefreshCw className={`h-4 w-4 ${camerasLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CollapsibleContent>
+                <CardContent className="pt-0 space-y-6">
+                  {/* Pending Reservations */}
+                  {cameraReservations.length > 0 && (
+                    <div>
+                      <h3 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Pending Reservations ({cameraReservations.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {cameraReservations.map((res) => (
+                          <div key={res.id} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50/50 dark:bg-yellow-950/10 border-yellow-200 dark:border-yellow-900/30">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                                Pending
+                              </Badge>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  {res.camera?.name ?? `Camera #${res.camera_id}`}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {res.user?.name} &middot;{' '}
+                                  {new Date(res.requested_start_at).toLocaleDateString()} &ndash;{' '}
+                                  {new Date(res.requested_end_at).toLocaleDateString()}
+                                  {res.purpose && ` &middot; ${res.purpose}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 hover:bg-green-50"
+                                onClick={() => handleApproveCameraReservation(res.id)}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:bg-red-50"
+                                onClick={() => handleRejectCameraReservation(res.id)}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Camera Grid */}
+                  {camerasLoading && cameras.length === 0 ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : cameras.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No cameras configured. Run the camera seeder to add cameras.
+                    </p>
+                  ) : (
+                    <div>
+                      <h3 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        All Cameras ({cameras.length})
+                      </h3>
+                      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {cameras.map((cam) => {
+                          const statusColor =
+                            cam.status === 'active' ? 'bg-green-500' :
+                            cam.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500';
+                          const textColor =
+                            cam.status === 'active' ? 'text-green-600' :
+                            cam.status === 'inactive' ? 'text-gray-500' : 'text-red-600';
+
+                          return (
+                            <div key={cam.id} className="border rounded-lg p-4 hover:border-secondary/50 transition-all">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Camera className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-sm">{cam.name}</span>
+                                </div>
+                                <Badge variant="outline" className={`${textColor} border-current capitalize text-xs`}>
+                                  <span className={`w-2 h-2 rounded-full mr-1.5 ${statusColor}`} />
+                                  {cam.status}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-1">
+                                <p>Robot: {cam.robot_name}</p>
+                                <p>Type: {cam.type_label} {cam.ptz_capable ? '(PTZ)' : ''}</p>
+                                <p>Stream: {cam.stream_key}</p>
+                                {cam.is_controlled && cam.control && (
+                                  <p className="text-amber-600">Controlled by session</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        </motion.div>
       </div>
 
       {/* Add/Edit Server Dialog */}

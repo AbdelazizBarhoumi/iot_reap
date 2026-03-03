@@ -18,7 +18,7 @@ class CameraResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $baseHost = config('gateway.mediamtx_url', '192.168.50.3');
+        $baseHost = config('gateway.mediamtx_url', '192.168.50.6');
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
 
@@ -44,6 +44,19 @@ class CameraResource extends JsonResource
                 'acquired_at' => $activeControl->acquired_at?->toIso8601String(),
             ]),
             'is_controlled' => $activeControl !== null && $activeControl instanceof \App\Models\CameraSessionControl,
+            'has_active_reservation' => $this->hasActiveReservation(),
+            // if there is an approved/active reservation overlapping now, include its id
+            'active_reservation_id' => $this->hasActiveReservation()
+                ? $this->reservations()
+                    ->whereIn('status', [
+                        \App\Enums\CameraReservationStatus::APPROVED->value,
+                        \App\Enums\CameraReservationStatus::ACTIVE->value,
+                    ])
+                    ->whereNotNull('approved_start_at')
+                    ->where('approved_start_at', '<=', now())
+                    ->where('approved_end_at', '>=', now())
+                    ->value('id')
+                : null,
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

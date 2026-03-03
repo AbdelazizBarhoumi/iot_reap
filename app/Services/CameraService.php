@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Enums\CameraPTZDirection;
+use App\Enums\CameraReservationStatus;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
+use App\Models\CameraReservation;
 use App\Models\CameraSessionControl;
+use App\Models\User;
 use App\Repositories\CameraRepository;
+use App\Repositories\CameraReservationRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +26,7 @@ class CameraService
 {
     public function __construct(
         private readonly CameraRepository $cameraRepository,
+        private readonly CameraReservationRepository $reservationRepository,
     ) {}
 
     /**
@@ -45,7 +50,7 @@ class CameraService
      */
     public function getStreamUrls(Camera $camera): array
     {
-        $baseHost = config('gateway.mediamtx_url', '192.168.50.3');
+        $baseHost = config('gateway.mediamtx_url', '192.168.50.6');
         $rtspPort = config('gateway.mediamtx_rtsp_port', 8554);
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
@@ -170,5 +175,203 @@ class CameraService
             'direction' => $direction->value,
             'camera_name' => $camera->name,
         ]);
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Reservation Management
+    // ────────────────────────────────────────────────────────────────────
+
+    /**
+     * Request a reservation for a camera.
+     */
+    public function requestReservation(
+        Camera $camera,
+        User $user,
+        \DateTimeInterface $startAt,
+        \DateTimeInterface $endAt,
+        ?string $purpose = null
+    ): CameraReservation {
+        // Check for conflicts
+        if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
+            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+        }
+
+        $reservation = $this->reservationRepository->create([
+            'camera_id' => $camera->id,
+            'user_id' => $user->id,
+            'status' => CameraReservationStatus::PENDING->value,
+            'requested_start_at' => $startAt,
+            'requested_end_at' => $endAt,
+            'purpose' => $purpose,
+        ]);
+
+        Log::info('Camera reservation requested', [
+            'reservation_id' => $reservation->id,
+            'camera_id' => $camera->id,
+            'user_id' => $user->id,
+            'requested_start' => $startAt->format('Y-m-d H:i:s'),
+            'requested_end' => $endAt->format('Y-m-d H:i:s'),
+        ]);
+
+        return $reservation;
+    }
+
+    /**
+     * Approve a camera reservation (admin action).
+     */
+    public function approveReservation(
+        CameraReservation $reservation,
+        User $approver,
+        ?\DateTimeInterface $modifiedStartAt = null,
+        ?\DateTimeInterface $modifiedEndAt = null,
+        ?string $adminNotes = null
+    ): CameraReservation {
+        $startAt = $modifiedStartAt ?? $reservation->requested_start_at;
+        $endAt = $modifiedEndAt ?? $reservation->requested_end_at;
+
+        // Check for conflicts (excluding this reservation)
+        if ($this->reservationRepository->hasConflict($reservation->camera, $startAt, $endAt, $reservation->id)) {
+            throw new \InvalidArgumentException('Modified time slot conflicts with existing reservation');
+        }
+
+        $this->reservationRepository->update($reservation, [
+            'status' => CameraReservationStatus::APPROVED->value,
+            'approved_by' => $approver->id,
+            'approved_start_at' => $startAt,
+            'approved_end_at' => $endAt,
+            'admin_notes' => $adminNotes,
+        ]);
+
+        Log::info('Camera reservation approved', [
+            'reservation_id' => $reservation->id,
+            'approved_by' => $approver->id,
+            'approved_start' => $startAt->format('Y-m-d H:i:s'),
+            'approved_end' => $endAt->format('Y-m-d H:i:s'),
+        ]);
+
+        return $reservation->fresh();
+    }
+
+    /**
+     * Reject a camera reservation (admin action).
+     */
+    public function rejectReservation(
+        CameraReservation $reservation,
+        User $approver,
+        ?string $adminNotes = null
+    ): CameraReservation {
+        $this->reservationRepository->update($reservation, [
+            'status' => CameraReservationStatus::REJECTED->value,
+            'approved_by' => $approver->id,
+            'admin_notes' => $adminNotes,
+        ]);
+
+        Log::info('Camera reservation rejected', [
+            'reservation_id' => $reservation->id,
+            'rejected_by' => $approver->id,
+        ]);
+
+        return $reservation->fresh();
+    }
+
+    /**
+     * Cancel a camera reservation (user or admin).
+     */
+    public function cancelReservation(CameraReservation $reservation): CameraReservation
+    {
+        if (!$reservation->canModify()) {
+            throw new \InvalidArgumentException('Reservation cannot be cancelled in current state');
+        }
+
+        $this->reservationRepository->update($reservation, [
+            'status' => CameraReservationStatus::CANCELLED->value,
+        ]);
+
+        Log::info('Camera reservation cancelled', [
+            'reservation_id' => $reservation->id,
+        ]);
+
+        return $reservation->fresh();
+    }
+
+    /**
+     * Create an admin block reservation (prevents others from using camera).
+     */
+    public function createAdminBlock(
+        Camera $camera,
+        User $admin,
+        \DateTimeInterface $startAt,
+        \DateTimeInterface $endAt,
+        ?string $notes = null
+    ): CameraReservation {
+        // Check for conflicts
+        if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
+            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+        }
+
+        $reservation = $this->reservationRepository->create([
+            'camera_id' => $camera->id,
+            'user_id' => $admin->id,
+            'approved_by' => $admin->id,
+            'status' => CameraReservationStatus::APPROVED->value,
+            'requested_start_at' => $startAt,
+            'requested_end_at' => $endAt,
+            'approved_start_at' => $startAt,
+            'approved_end_at' => $endAt,
+            'purpose' => 'Admin block',
+            'admin_notes' => $notes,
+            'priority' => 100,
+        ]);
+
+        Log::info('Camera admin block created', [
+            'reservation_id' => $reservation->id,
+            'camera_id' => $camera->id,
+            'admin_id' => $admin->id,
+        ]);
+
+        return $reservation;
+    }
+
+    /**
+     * Check if a user can use a camera now (considering reservations).
+     */
+    public function canUserUseNow(Camera $camera, User $user): array
+    {
+        $now = now();
+
+        $activeReservation = CameraReservation::where('camera_id', $camera->id)
+            ->whereIn('status', [CameraReservationStatus::APPROVED->value, CameraReservationStatus::ACTIVE->value])
+            ->whereNotNull('approved_start_at')
+            ->where('approved_start_at', '<=', $now)
+            ->where('approved_end_at', '>=', $now)
+            ->first();
+
+        if ($activeReservation) {
+            if ($activeReservation->user_id === $user->id) {
+                return ['can_use' => true, 'reason' => 'User has active reservation'];
+            }
+            return [
+                'can_use' => false,
+                'reason' => 'Camera is reserved by another user',
+                'reserved_by' => $activeReservation->user->name,
+                'until' => $activeReservation->approved_end_at->toDateTimeString(),
+            ];
+        }
+
+        return ['can_use' => true, 'reason' => 'No blocking reservation'];
+    }
+
+    /**
+     * Get all cameras with their reservation status for admin view.
+     */
+    public function getAllCamerasWithReservations(): Collection
+    {
+        return Camera::with(['robot', 'activeControl', 'reservations' => function ($q) {
+            $q->whereIn('status', [
+                CameraReservationStatus::PENDING->value,
+                CameraReservationStatus::APPROVED->value,
+                CameraReservationStatus::ACTIVE->value,
+            ])->orderBy('requested_start_at');
+        }])->get();
     }
 }

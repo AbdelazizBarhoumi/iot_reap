@@ -102,14 +102,14 @@ class CameraSeeder extends Seeder
             'identifier' => 'robot-gamma',
             'description' => 'Fixed monitoring station at entrance — camera only (no actuators)',
             'status' => 'online',
-            'ip_address' => '192.168.50.30',
+            'ip_address' => '192.168.50.60',
         ]);
 
         Camera::create([
             'robot_id' => $robotGamma->id,
             'name' => 'Entrance IP Camera',
             'stream_key' => 'gamma-entrance',
-            'source_url' => 'rtsp://192.168.50.30:554/stream1',
+            'source_url' => 'rtsp://192.168.50.60:554/stream1',
             'type' => CameraType::IP,
             'status' => CameraStatus::ACTIVE,
             'ptz_capable' => true,
@@ -121,7 +121,7 @@ class CameraSeeder extends Seeder
             'robot_id' => $robotGamma->id,
             'name' => 'Gamma Side Cam',
             'stream_key' => 'gamma-side',
-            'source_url' => 'rtsp://192.168.50.31:554/stream',
+            'source_url' => 'rtsp://192.168.50.61:554/stream',
             'type' => CameraType::ESP32_CAM,
             'status' => CameraStatus::INACTIVE,
             'ptz_capable' => false,

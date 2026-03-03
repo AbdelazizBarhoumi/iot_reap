@@ -57,6 +57,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Infrastructure Container IP
+    |--------------------------------------------------------------------------
+    |
+    | Static IP of the LXC container (CT 200) that hosts all infrastructure
+    | services: MediaMTX, Frigate, CUPS, ser2net, avahi-daemon, Docker.
+    |
+    */
+    'infrastructure_ip' => env('GATEWAY_INFRASTRUCTURE_IP', '192.168.50.6'),
+
+    /*
+    |--------------------------------------------------------------------------
     | MediaMTX Streaming Server
     |--------------------------------------------------------------------------
     |
@@ -64,9 +75,54 @@ return [
     | running on the gateway. Cameras proxy their streams through MediaMTX.
     |
     */
-    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.3'),
+    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.6'),
     'mediamtx_rtsp_port' => (int) env('MEDIAMTX_RTSP_PORT', 8554),
     'mediamtx_hls_port' => (int) env('MEDIAMTX_HLS_PORT', 8888),
     'mediamtx_webrtc_port' => (int) env('MEDIAMTX_WEBRTC_PORT', 8889),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Frigate NVR
+    |--------------------------------------------------------------------------
+    |
+    | Frigate is the network video recorder providing AI-powered object
+    | detection on camera feeds. Runs as a Docker container on the gateway.
+    |
+    */
+    'frigate_url' => env('FRIGATE_URL', 'http://192.168.50.6'),
+    'frigate_port' => (int) env('FRIGATE_PORT', 5000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CUPS Print Server
+    |--------------------------------------------------------------------------
+    |
+    | Common UNIX Printing System for shared printer access from VMs.
+    |
+    */
+    'cups_url' => env('CUPS_URL', 'https://192.168.50.6'),
+    'cups_port' => (int) env('CUPS_PORT', 631),
+
+    /*
+    |--------------------------------------------------------------------------
+    | ser2net — Serial Port to Network Proxy
+    |--------------------------------------------------------------------------
+    |
+    | Exposes physical serial ports (RS-232/485) over TCP so VMs and
+    | remote sessions can interact with serial devices transparently.
+    |
+    */
+    'ser2net_port' => (int) env('SER2NET_PORT', 2001),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Avahi / mDNS
+    |--------------------------------------------------------------------------
+    |
+    | Whether the avahi-daemon is enabled on the gateway for zero-conf
+    | service discovery on the local network.
+    |
+    */
+    'avahi_enabled' => (bool) env('GATEWAY_AVAHI_ENABLED', true),
 
 ];
