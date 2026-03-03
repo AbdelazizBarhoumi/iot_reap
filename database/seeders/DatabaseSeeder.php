@@ -34,6 +34,9 @@ class DatabaseSeeder extends Seeder
 
         // Seed courses with modules and lessons
         $this->call(\Database\Seeders\CourseSeeder::class);
+
+        // Seed robots and cameras (mock data for camera streaming feature)
+        $this->call(\Database\Seeders\CameraSeeder::class);
     }
 
     /**

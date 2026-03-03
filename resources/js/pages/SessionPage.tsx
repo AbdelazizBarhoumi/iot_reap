@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
+import { SessionCameraPanel } from '@/components/SessionCameraPanel';
 import { SessionCountdown } from '@/components/SessionCountdown';
 import { SessionExtendButton } from '@/components/SessionExtendButton';
 import { SessionHardwarePanel } from '@/components/SessionHardwarePanel';
@@ -405,6 +406,16 @@ export default function SessionPage({ session: initialSession }: SessionPageProp
             </Card>
           </motion.div>
         </div>
+
+        {/* ---- Camera Panel (below main grid) ---- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-6"
+        >
+          <SessionCameraPanel sessionId={ds.id} isActive={isAlive} />
+        </motion.div>
         </div>
       </div>
     </AppLayout>

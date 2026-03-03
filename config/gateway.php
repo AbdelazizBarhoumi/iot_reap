@@ -55,4 +55,18 @@ return [
     */
     'poll_interval' => (int) env('GATEWAY_POLL_INTERVAL', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | MediaMTX Streaming Server
+    |--------------------------------------------------------------------------
+    |
+    | Connection details for the MediaMTX RTSP/HLS/WebRTC streaming server
+    | running on the gateway. Cameras proxy their streams through MediaMTX.
+    |
+    */
+    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.3'),
+    'mediamtx_rtsp_port' => (int) env('MEDIAMTX_RTSP_PORT', 8554),
+    'mediamtx_hls_port' => (int) env('MEDIAMTX_HLS_PORT', 8888),
+    'mediamtx_webrtc_port' => (int) env('MEDIAMTX_WEBRTC_PORT', 8889),
+
 ];

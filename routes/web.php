@@ -5,6 +5,7 @@ use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HardwareController;
 use App\Http\Controllers\ProxmoxVMBrowserController;
+use App\Http\Controllers\SessionCameraController;
 use App\Http\Controllers\SessionHardwareController;
 use App\Http\Controllers\UsbDeviceReservationController;
 use App\Http\Controllers\VMSessionController;
@@ -75,6 +76,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/devices/{device}/attach', [HardwareController::class, 'attach'])->name('devices.attach');
         Route::post('/devices/{device}/detach', [HardwareController::class, 'detach'])->name('devices.detach');
         Route::post('/devices/{device}/cancel-pending', [HardwareController::class, 'cancelPending'])->name('devices.cancel-pending');
+    });
+
+    // Session-specific camera management (view streams, PTZ control)
+    Route::prefix('sessions/{session}/cameras')->name('sessions.cameras.')->group(function () {
+        Route::get('/', [SessionCameraController::class, 'index'])->name('index');
+        Route::get('/{camera}', [SessionCameraController::class, 'show'])->name('show');
+        Route::post('/{camera}/control', [SessionCameraController::class, 'acquireControl'])->name('control.acquire');
+        Route::delete('/{camera}/control', [SessionCameraController::class, 'releaseControl'])->name('control.release');
+        Route::post('/{camera}/move', [SessionCameraController::class, 'move'])->name('move');
     });
 
     // Session-specific hardware management (attach/detach devices to session)
