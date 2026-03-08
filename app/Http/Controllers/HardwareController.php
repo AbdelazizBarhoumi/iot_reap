@@ -286,6 +286,220 @@ class HardwareController extends Controller
         ]);
     }
 
+    /**
+     * Convert a USB device to a Camera entity.
+     * This marks the device as a camera and creates a Camera record
+     * that integrates with the streaming system.
+     */
+    public function convertToCamera(Request $request, UsbDevice $device): JsonResponse
+    {
+        // Check if device already has a camera
+        if ($device->hasCamera()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This device is already registered as a camera',
+                'camera' => new \App\Http\Resources\CameraResource($device->camera->load(['gatewayNode', 'usbDevice'])),
+            ], 422);
+        }
+
+        // Validate optional stream settings
+        $validated = $request->validate([
+            'width' => 'nullable|integer|in:320,640,800,1280,1920',
+            'height' => 'nullable|integer|in:240,480,600,720,1080',
+            'framerate' => 'nullable|integer|min:5|max:30',
+        ]);
+
+        // Default stream settings (balanced for USB/IP bandwidth)
+        $width = $validated['width'] ?? 640;
+        $height = $validated['height'] ?? 480;
+        $framerate = $validated['framerate'] ?? 15;
+
+        // Generate a unique stream key
+        $streamKey = 'usb-' . $device->gatewayNode->name . '-' . str_replace(['.', '-'], '', $device->busid);
+
+        // Determine video device path - count existing cameras on this gateway
+        $existingCameras = \App\Models\Camera::where('gateway_node_id', $device->gateway_node_id)->count();
+        $videoDeviceIndex = $existingCameras * 2; // Each camera takes 2 /dev/video entries (video + metadata)
+        $devicePath = "/dev/video{$videoDeviceIndex}";
+
+        // Create the camera record
+        $camera = \App\Models\Camera::create([
+            'gateway_node_id' => $device->gateway_node_id,
+            'usb_device_id' => $device->id,
+            'name' => $device->name,
+            'stream_key' => $streamKey,
+            'source_url' => $devicePath,
+            'stream_width' => $width,
+            'stream_height' => $height,
+            'stream_framerate' => $framerate,
+            'stream_input_format' => 'mjpeg',
+            'type' => \App\Enums\CameraType::USB,
+            'status' => \App\Enums\CameraStatus::INACTIVE,
+            'ptz_capable' => false,
+        ]);
+
+        // Mark the USB device as a camera
+        $device->update(['is_camera' => true]);
+
+        // Try to start the camera stream via gateway agent
+        $streamResult = $this->gatewayService->startCameraStream(
+            $device->gatewayNode,
+            $streamKey,
+            $devicePath,
+            [
+                'width' => $width,
+                'height' => $height,
+                'framerate' => $framerate,
+                'input_format' => 'mjpeg',
+            ]
+        );
+
+        if ($streamResult['success']) {
+            $camera->update(['status' => \App\Enums\CameraStatus::ACTIVE]);
+        }
+
+        Log::info('USB device converted to camera', [
+            'device_id' => $device->id,
+            'camera_id' => $camera->id,
+            'stream_key' => $streamKey,
+            'device_path' => $devicePath,
+            'resolution' => "{$width}x{$height}@{$framerate}fps",
+            'stream_started' => $streamResult['success'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device registered as camera successfully',
+            'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+            'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+            'stream_started' => $streamResult['success'],
+            'stream_error' => $streamResult['error'] ?? null,
+            'available_resolutions' => \App\Models\Camera::getAvailableResolutions(),
+        ], 201);
+    }
+
+    /**
+     * Remove camera registration from a USB device.
+     * Deletes the Camera record and unmarks the device.
+     */
+    public function removeCamera(UsbDevice $device): JsonResponse
+    {
+        if (!$device->hasCamera()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This device is not registered as a camera',
+            ], 422);
+        }
+
+        $camera = $device->camera;
+
+        // Check if camera has active controls or reservations
+        if ($camera->isControlled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot remove camera while it is being used by a session',
+            ], 422);
+        }
+
+        // Stop the camera stream if running
+        if ($camera->gatewayNode) {
+            $this->gatewayService->stopCameraStream(
+                $camera->gatewayNode,
+                $camera->stream_key
+            );
+        }
+
+        // Delete the camera record
+        $camera->delete();
+
+        // Unmark the device
+        $device->update(['is_camera' => false]);
+
+        Log::info('Camera registration removed from USB device', [
+            'device_id' => $device->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Camera registration removed',
+            'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+        ]);
+    }
+
+    /**
+     * Update camera stream settings (resolution, framerate).
+     * Restarts the stream with new settings if camera is active.
+     */
+    public function updateCameraSettings(Request $request, UsbDevice $device): JsonResponse
+    {
+        if (!$device->hasCamera()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This device is not registered as a camera',
+            ], 422);
+        }
+
+        $camera = $device->camera;
+
+        // Validate stream settings
+        $validated = $request->validate([
+            'width' => 'required|integer|in:320,640,800,1280,1920',
+            'height' => 'required|integer|in:240,480,600,720,1080',
+            'framerate' => 'required|integer|min:5|max:30',
+        ]);
+
+        // Stop existing stream
+        if ($camera->status === \App\Enums\CameraStatus::ACTIVE && $camera->gatewayNode) {
+            $this->gatewayService->stopCameraStream(
+                $camera->gatewayNode,
+                $camera->stream_key
+            );
+        }
+
+        // Update camera settings
+        $camera->update([
+            'stream_width' => $validated['width'],
+            'stream_height' => $validated['height'],
+            'stream_framerate' => $validated['framerate'],
+        ]);
+
+        // Restart stream with new settings
+        $streamResult = ['success' => false, 'error' => null];
+        if ($camera->gatewayNode) {
+            $streamResult = $this->gatewayService->startCameraStream(
+                $camera->gatewayNode,
+                $camera->stream_key,
+                $camera->source_url,
+                [
+                    'width' => $validated['width'],
+                    'height' => $validated['height'],
+                    'framerate' => $validated['framerate'],
+                    'input_format' => $camera->stream_input_format ?? 'mjpeg',
+                ]
+            );
+
+            $camera->update([
+                'status' => $streamResult['success']
+                    ? \App\Enums\CameraStatus::ACTIVE
+                    : \App\Enums\CameraStatus::INACTIVE,
+            ]);
+        }
+
+        Log::info('Camera stream settings updated', [
+            'camera_id' => $camera->id,
+            'new_resolution' => "{$validated['width']}x{$validated['height']}@{$validated['framerate']}fps",
+            'stream_restarted' => $streamResult['success'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Camera settings updated' . ($streamResult['success'] ? ' and stream restarted' : ''),
+            'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+            'stream_restarted' => $streamResult['success'],
+            'stream_error' => $streamResult['error'] ?? null,
+        ]);
+    }
+
     // ─── Admin-only endpoints ─────────────────────────────────────────────
 
     /**
@@ -333,6 +547,7 @@ class HardwareController extends Controller
             'ip' => ['sometimes', 'ip'],
             'port' => ['sometimes', 'integer', 'min:1', 'max:65535'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'proxmox_camera_api_url' => ['nullable', 'url', 'max:255'],
         ]);
 
         $this->nodeRepository->update($node, $validated);

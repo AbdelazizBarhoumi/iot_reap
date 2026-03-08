@@ -38,13 +38,15 @@ type Props = {
 
 /**
  * Build nav items based on user role.
- * Engineers & security officers see: Dashboard, Sessions, Hardware, Courses
- * Teachers also see: Teaching
+ * Engineers see: Dashboard, Sessions, Hardware, Courses
+ * Teachers see: Dashboard, Courses, Teaching
+ * Security Officers see: Dashboard, Courses
  */
 function useNavItems(): NavItem[] {
     const { auth } = usePage().props;
     const role = auth.user?.role;
     const isTeacher = role === 'teacher';
+    const isEngineer = role === 'engineer';
 
     const items: NavItem[] = [
         {
@@ -52,24 +54,38 @@ function useNavItems(): NavItem[] {
             href: dashboard(),
             icon: LayoutGrid,
         },
-        {
-            title: 'Sessions',
-            href: '/sessions',
-            icon: History,
-        },
-        {
-            title: 'Hardware',
-            href: '/hardware',
-            icon: Usb,
-        },
-        {
-            title: 'Courses',
-            href: '/courses',
-            icon: GraduationCap,
-        },
     ];
 
-    if (isTeacher) {
+    // Engineers & admins see VM sessions and hardware
+    if (isEngineer || role === 'admin') {
+        items.push(
+            {
+                title: 'Sessions',
+                href: '/sessions',
+                icon: History,
+            },
+            {
+                title: 'Hardware',
+                href: '/hardware',
+                icon: Usb,
+            },
+            {
+                title: 'My Courses',
+                href: '/my-courses',
+                icon: GraduationCap,
+            },
+        );
+    }
+
+    // Everyone can browse courses
+    items.push({
+        title: 'Courses',
+        href: '/courses',
+        icon: GraduationCap,
+    });
+
+    // Teachers & admins see Teaching management
+    if (isTeacher || role === 'admin') {
         items.push({
             title: 'Teaching',
             href: '/teaching',
@@ -94,7 +110,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     return (
         <>
             <header className="sticky top-0 z-50 border-b border-border bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
-                <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
+                <div className="mx-auto flex h-16 items-center px-4 md:">
                     {/* Mobile Menu Toggle */}
                     <button
                         className="mr-3 text-foreground lg:hidden"
@@ -186,7 +202,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                 {/* Mobile Navigation Dropdown */}
                 {mobileOpen && (
                     <div className="border-t border-border bg-background lg:hidden">
-                        <div className="mx-auto flex flex-col gap-1 px-4 py-3 md:max-w-7xl">
+                        <div className="mx-auto flex flex-col gap-1 px-4 py-3 md:">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.title}
@@ -218,7 +234,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
             {breadcrumbs.length > 1 && (
                 <div className="flex w-full border-b border-border bg-background/50">
-                    <div className="mx-auto flex h-10 w-full items-center justify-start px-4 text-muted-foreground md:max-w-7xl">
+                    <div className="mx-auto flex h-10 w-full items-center justify-start px-4 text-muted-foreground md:">
                         <Breadcrumbs breadcrumbs={breadcrumbs} />
                     </div>
                 </div>

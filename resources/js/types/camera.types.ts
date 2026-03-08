@@ -17,6 +17,27 @@ export interface CameraStreamUrls {
 }
 
 /**
+ * Stream quality settings for the camera.
+ */
+export interface CameraStreamSettings {
+  width: number;
+  height: number;
+  framerate: number;
+  input_format: string;
+  resolution_label: string;
+}
+
+/**
+ * Available resolution preset.
+ */
+export interface CameraResolutionPreset {
+  width: number;
+  height: number;
+  label: string;
+  recommended_framerate: number;
+}
+
+/**
  * Active control info — who currently controls this camera.
  */
 export interface CameraControlInfo {
@@ -29,8 +50,13 @@ export interface CameraControlInfo {
  */
 export interface Camera {
   id: number;
-  robot_id: number;
-  robot_name: string;
+  robot_id: number | null;
+  robot_name?: string;
+  gateway_node_id: number | null;
+  gateway_name?: string;
+  usb_device_id: number | null;
+  is_usb_camera: boolean;
+  source_name: string; // Robot name or Gateway name
   name: string;
   stream_key: string;
   type: CameraType;
@@ -38,6 +64,7 @@ export interface Camera {
   status: CameraStatus;
   status_label: string;
   ptz_capable: boolean;
+  stream_settings: CameraStreamSettings;
   stream_urls: CameraStreamUrls;
   control?: CameraControlInfo;
   is_controlled: boolean;

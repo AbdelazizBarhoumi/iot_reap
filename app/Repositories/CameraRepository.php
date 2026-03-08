@@ -44,7 +44,7 @@ class CameraRepository
      */
     public function findAll(): Collection
     {
-        return Camera::with(['robot', 'activeControl.session'])->get();
+        return Camera::with(['robot', 'gatewayNode', 'activeControl.session'])->get();
     }
 
     /**
@@ -52,7 +52,7 @@ class CameraRepository
      */
     public function findWithControl(int $id): Camera
     {
-        return Camera::with(['robot', 'activeControl.session'])
+        return Camera::with(['robot', 'gatewayNode', 'activeControl.session'])
             ->findOrFail($id);
     }
 

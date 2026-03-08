@@ -6,12 +6,13 @@
  *  - cameras list with control state
  *  - acquire/release control
  *  - PTZ move commands
+ *  - resolution management (manual + auto)
  *  - auto-refresh on control changes
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { cameraApi } from '@/api/camera.api';
-import type { Camera, CameraPTZDirection } from '@/types/camera.types';
+import type { Camera, CameraPTZDirection, CameraResolutionPreset } from '@/types/camera.types';
 
 interface UseSessionCamerasReturn {
   cameras: Camera[];
@@ -26,6 +27,12 @@ interface UseSessionCamerasReturn {
   releaseControl: (cameraId: number) => Promise<void>;
   move: (cameraId: number, direction: CameraPTZDirection) => Promise<void>;
   refetch: () => void;
+  /** Available resolution presets. */
+  resolutions: CameraResolutionPreset[];
+  /** Change camera resolution — pass 'auto' or a specific preset. */
+  changeResolution: (cameraId: number, preset: CameraResolutionPreset | 'auto') => Promise<void>;
+  /** Whether a resolution change is in progress. */
+  changingResolution: boolean;
 }
 
 export function useSessionCameras(sessionId: string | undefined): UseSessionCamerasReturn {
@@ -33,6 +40,8 @@ export function useSessionCameras(sessionId: string | undefined): UseSessionCame
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
+  const [resolutions, setResolutions] = useState<CameraResolutionPreset[]>([]);
+  const [changingResolution, setChangingResolution] = useState(false);
 
   const fetchCameras = useCallback(async () => {
     if (!sessionId) return;
@@ -56,9 +65,21 @@ export function useSessionCameras(sessionId: string | undefined): UseSessionCame
     }
   }, [sessionId, selectedCamera]);
 
+  // Fetch resolution presets once
+  const fetchResolutions = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      const data = await cameraApi.getResolutions(sessionId);
+      setResolutions(data);
+    } catch {
+      // Non-critical — resolutions just won't show
+    }
+  }, [sessionId]);
+
   useEffect(() => {
     fetchCameras();
-  }, [sessionId, fetchCameras]);
+    fetchResolutions();
+  }, [sessionId, fetchCameras, fetchResolutions]);
 
   // The camera THIS session currently controls
   const controlledCamera = cameras.find(c =>
@@ -100,6 +121,21 @@ export function useSessionCameras(sessionId: string | undefined): UseSessionCame
     }
   }, [sessionId]);
 
+  const changeResolution = useCallback(async (cameraId: number, preset: CameraResolutionPreset | 'auto') => {
+    if (!sessionId) return;
+    setChangingResolution(true);
+    try {
+      await cameraApi.changeResolution(sessionId, cameraId, preset);
+      await fetchCameras();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to change resolution';
+      setError(msg);
+      throw e;
+    } finally {
+      setChangingResolution(false);
+    }
+  }, [sessionId, fetchCameras]);
+
   const selectCamera = useCallback((camera: Camera | null) => {
     setSelectedCamera(camera);
   }, []);
@@ -115,5 +151,8 @@ export function useSessionCameras(sessionId: string | undefined): UseSessionCame
     releaseControl,
     move,
     refetch: fetchCameras,
+    resolutions,
+    changeResolution,
+    changingResolution,
   };
 }

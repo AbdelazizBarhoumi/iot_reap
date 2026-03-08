@@ -20,15 +20,21 @@ class AuthService
      */
     public function register(array $data): User
     {
-        // ensure role defaults to engineer if not supplied
-        $data['role'] = $data['role'] ?? UserRole::ENGINEER->value;
+        // Only allow self-registration as engineer or teacher (admin/security_officer must be assigned)
+        $allowedSelfRegister = [UserRole::ENGINEER->value, UserRole::TEACHER->value];
+        $role = $data['role'] ?? UserRole::ENGINEER->value;
+
+        if (!in_array($role, $allowedSelfRegister, true)) {
+            $role = UserRole::ENGINEER->value;
+        }
+
+        $data['role'] = $role;
 
         // creation relies on User model for password hashing
         $user = $this->users->create($data);
 
         // Log the newly created user into the session
         Auth::login($user);
-    
 
         return $user;
     }

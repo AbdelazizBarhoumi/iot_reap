@@ -17,6 +17,7 @@ export interface GatewayNode {
   is_verified: boolean;
   proxmox_vmid: number | null;
   proxmox_node: string | null;
+  proxmox_camera_api_url: string | null;
   description: string | null;
   last_seen_at: string | null;
   devices_count: number;
@@ -37,6 +38,9 @@ export interface UsbDevice {
   vendor_id: string;
   product_id: string;
   name: string;
+  is_camera: boolean;
+  has_camera_registration: boolean;
+  camera_id: number | null;
   status: UsbDeviceStatus;
   status_label: string;
   attached_to: string | null;

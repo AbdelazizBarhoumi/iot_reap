@@ -50,7 +50,9 @@ class CameraService
      */
     public function getStreamUrls(Camera $camera): array
     {
-        $baseHost = config('gateway.mediamtx_url', '192.168.50.6');
+        // Use the camera's gateway node IP — each camera streams from its own gateway
+        $camera->loadMissing('gatewayNode');
+        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.7');
         $rtspPort = config('gateway.mediamtx_rtsp_port', 8554);
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
@@ -366,12 +368,41 @@ class CameraService
      */
     public function getAllCamerasWithReservations(): Collection
     {
-        return Camera::with(['robot', 'activeControl', 'reservations' => function ($q) {
+        return Camera::with(['robot', 'gatewayNode', 'usbDevice', 'activeControl', 'reservations' => function ($q) {
             $q->whereIn('status', [
                 CameraReservationStatus::PENDING->value,
                 CameraReservationStatus::APPROVED->value,
                 CameraReservationStatus::ACTIVE->value,
             ])->orderBy('requested_start_at');
         }])->get();
+    }
+
+    /**
+     * Determine ideal auto-resolution for a camera.
+     *
+     * USB cameras over USB/IP have bandwidth constraints.
+     * ESP32-CAM has hardware limits. IP cameras can do higher res.
+     *
+     * @return array{width: int, height: int, framerate: int}
+     */
+    public function getAutoResolution(Camera $camera): array
+    {
+        return match ($camera->type) {
+            \App\Enums\CameraType::USB => [
+                'width' => 640,
+                'height' => 480,
+                'framerate' => 15,
+            ],
+            \App\Enums\CameraType::ESP32_CAM => [
+                'width' => 640,
+                'height' => 480,
+                'framerate' => 10,
+            ],
+            \App\Enums\CameraType::IP => [
+                'width' => 1280,
+                'height' => 720,
+                'framerate' => 25,
+            ],
+        };
     }
 }

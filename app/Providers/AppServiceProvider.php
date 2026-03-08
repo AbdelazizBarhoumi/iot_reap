@@ -130,6 +130,12 @@ class AppServiceProvider extends ServiceProvider
             UserRole::ADMIN->value,
         ]));
 
+        // Teaching gate — only teachers and admins can manage courses
+        Gate::define('teach', fn(User $user) => $user->hasAnyRole([
+            UserRole::TEACHER->value,
+            UserRole::ADMIN->value,
+        ]));
+
         // generic role gate for programmatic checks: Gate::allows('role', 'admin')
         Gate::define('role', fn(User $user, string $role) => $user->hasRole($role));
     }

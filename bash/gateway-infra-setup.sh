@@ -124,10 +124,14 @@ rtspAddress: :8554
 
 hls: yes
 hlsAddress: :8888
+hlsAlwaysRemux: yes
 
 webrtc: yes
 webrtcAddress: :8889
 webrtcICEServers2: []
+# Allow CORS from any origin so browsers can use WHEP directly if needed.
+# The primary flow uses a Laravel WHEP proxy, but this allows direct access too.
+webrtcAllowOrigin: "*"
 
 paths:
   all_others:

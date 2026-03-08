@@ -184,16 +184,30 @@ interface DeviceRowProps {
   onUnbind: () => void;
   onAttach: () => void;
   onDetach: () => void;
+  onMarkAsCamera: () => void;
+  onRemoveCamera: () => void;
   loading: boolean;
 }
 
-function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, loading }: DeviceRowProps) {
+function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, onMarkAsCamera, onRemoveCamera, loading }: DeviceRowProps) {
+  const isCamera = device.is_camera;
+  const hasRegistration = device.has_camera_registration;
+
   return (
     <tr className="border-b">
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
-          <Usb className="h-4 w-4 text-muted-foreground" />
+          {isCamera ? (
+            <Camera className="h-4 w-4 text-purple-500" />
+          ) : (
+            <Usb className="h-4 w-4 text-muted-foreground" />
+          )}
           <span className="font-medium">{device.name}</span>
+          {hasRegistration && (
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-300 text-xs">
+              Camera
+            </Badge>
+          )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">
           {device.vendor_id}:{device.product_id}
@@ -203,44 +217,64 @@ function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, loading }: De
         <code className="text-xs bg-muted px-1 py-0.5 rounded">{device.busid}</code>
       </td>
       <td className="py-3 px-4">
-        <Badge variant="outline" className={getStatusBadgeClass(device.status)}>
-          {device.status_label}
-        </Badge>
+        {hasRegistration ? (
+          <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-300">
+            Streaming Device
+          </Badge>
+        ) : (
+          <Badge variant="outline" className={getStatusBadgeClass(device.status)}>
+            {device.status_label}
+          </Badge>
+        )}
       </td>
       <td className="py-3 px-4">
-        {device.attached_to ? (
+        {hasRegistration ? (
+          <span className="text-sm text-purple-600">See Cameras section</span>
+        ) : device.attached_to ? (
           <span className="text-sm">{device.attached_to}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </td>
       <td className="py-3 px-4">
-        <div className="flex gap-2">
-          {device.status === 'available' && (
-            <Button size="sm" variant="outline" onClick={onBind} disabled={loading}>
-              <Plug className="h-3 w-3 mr-1" />
-              Bind
+        {hasRegistration ? (
+          <Button size="sm" variant="outline" onClick={onRemoveCamera} disabled={loading} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+            <Camera className="h-3 w-3 mr-1" />
+            Remove Camera
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            {/* Mark as Camera button - always available */}
+            <Button size="sm" variant="outline" onClick={onMarkAsCamera} disabled={loading} className="text-purple-600 border-purple-300 hover:bg-purple-50">
+              <Camera className="h-3 w-3 mr-1" />
+              Mark as Camera
             </Button>
-          )}
-          {device.status === 'bound' && (
-            <>
-              <Button size="sm" onClick={onAttach} disabled={loading}>
-                <PlugZap className="h-3 w-3 mr-1" />
-                Attach
+            {device.status === 'available' && (
+              <Button size="sm" variant="outline" onClick={onBind} disabled={loading}>
+                <Plug className="h-3 w-3 mr-1" />
+                Bind
               </Button>
-              <Button size="sm" variant="outline" onClick={onUnbind} disabled={loading}>
+            )}
+            {device.status === 'bound' && (
+              <>
+                <Button size="sm" onClick={onAttach} disabled={loading}>
+                  <PlugZap className="h-3 w-3 mr-1" />
+                  Attach
+                </Button>
+                <Button size="sm" variant="outline" onClick={onUnbind} disabled={loading}>
+                  <Unplug className="h-3 w-3 mr-1" />
+                  Unbind
+                </Button>
+              </>
+            )}
+            {device.status === 'attached' && (
+              <Button size="sm" variant="destructive" onClick={onDetach} disabled={loading}>
                 <Unplug className="h-3 w-3 mr-1" />
-                Unbind
+                Detach
               </Button>
-            </>
-          )}
-          {device.status === 'attached' && (
-            <Button size="sm" variant="destructive" onClick={onDetach} disabled={loading}>
-              <Unplug className="h-3 w-3 mr-1" />
-              Detach
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -253,6 +287,8 @@ interface GatewayNodeCardProps {
   onUnbindDevice: (deviceId: number) => void;
   onAttachDevice: (device: UsbDevice) => void;
   onDetachDevice: (deviceId: number) => void;
+  onMarkAsCamera: (deviceId: number) => void;
+  onRemoveCamera: (deviceId: number) => void;
   onVerify?: (verified: boolean) => void;
   loading: boolean;
   isAdmin: boolean;
@@ -265,6 +301,8 @@ function GatewayNodeCard({
   onUnbindDevice,
   onAttachDevice,
   onDetachDevice,
+  onMarkAsCamera,
+  onRemoveCamera,
   onVerify,
   loading,
   isAdmin,
@@ -348,6 +386,8 @@ function GatewayNodeCard({
                     onUnbind={() => onUnbindDevice(device.id)}
                     onAttach={() => onAttachDevice(device)}
                     onDetach={() => onDetachDevice(device.id)}
+                    onMarkAsCamera={() => onMarkAsCamera(device.id)}
+                    onRemoveCamera={() => onRemoveCamera(device.id)}
                     loading={loading}
                   />
                 ))}
@@ -507,8 +547,13 @@ function CameraRow({ camera, onAttach, onDetach, loading, isAdmin }: CameraRowPr
     <tr className="border-b">
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
-          <Camera className="h-4 w-4 text-muted-foreground" />
+          <Camera className={`h-4 w-4 ${camera.is_usb_camera ? 'text-purple-500' : 'text-muted-foreground'}`} />
           <span className="font-medium">{camera.name}</span>
+          {camera.is_usb_camera && (
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-300 text-xs">
+              USB
+            </Badge>
+          )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">
           {camera.type_label} {camera.ptz_capable ? '• PTZ' : ''}
@@ -523,7 +568,7 @@ function CameraRow({ camera, onAttach, onDetach, loading, isAdmin }: CameraRowPr
         </Badge>
       </td>
       <td className="py-3 px-4">
-        <span className="text-sm">{camera.robot_name}</span>
+        <span className="text-sm">{camera.source_name}</span>
       </td>
       <td className="py-3 px-4">
         {hasReservation && camera.control ? (
@@ -668,7 +713,7 @@ function CameraCard({
                   <th className="py-2 px-4">Camera</th>
                   <th className="py-2 px-4">Stream Key</th>
                   <th className="py-2 px-4">Status</th>
-                  <th className="py-2 px-4">Robot</th>
+                  <th className="py-2 px-4">Source</th>
                   <th className="py-2 px-4">Attached To</th>
                   <th className="py-2 px-4">Actions</th>
                 </tr>
@@ -708,6 +753,8 @@ export default function HardwarePage() {
     unbindDevice,
     attachDevice,
     detachDevice,
+    markAsCamera,
+    removeCamera,
     discoverGateways,
     verifyNode,
   } = useHardwareGateway();
@@ -741,6 +788,24 @@ export default function HardwarePage() {
     fetchCameras();
   }, [fetchCameras]);
 
+  // Wrapper for markAsCamera that also refreshes cameras list
+  const handleMarkAsCamera = async (deviceId: number) => {
+    const success = await markAsCamera(deviceId);
+    if (success) {
+      // Refresh cameras list to show the newly created camera
+      await fetchCameras();
+    }
+  };
+
+  // Wrapper for removeCamera that also refreshes cameras list
+  const handleRemoveCamera = async (deviceId: number) => {
+    const success = await removeCamera(deviceId);
+    if (success) {
+      // Refresh cameras list to remove the deleted camera
+      await fetchCameras();
+    }
+  };
+
   const handleAttach = async (deviceId: number, vmIp: string, vmName: string, vmid: number, node: string, serverId: number) => {
     await attachDevice(deviceId, { vm_ip: vmIp, vm_name: vmName, vmid, node, server_id: serverId });
   };
@@ -761,11 +826,12 @@ export default function HardwarePage() {
     } catch (err: unknown) {
       // show a user-friendly toast message
       console.error('Failed to attach camera:', err);
-      let message = 'Failed to attach camera';
-      if ((err as ApiError)?.response?.data?.message) {
-        message = (err as ApiError).response.data.message;
+      let message: string = 'Failed to attach camera';
+      const serverMsg = (err as ApiError)?.response?.data?.message;
+      if (serverMsg) {
+        message = serverMsg;
       } else if ((err as ApiError)?.message) {
-        message = (err as ApiError).message;
+        message = (err as ApiError).message!;
       }
       toast.error(message);
     } finally {
@@ -788,11 +854,12 @@ export default function HardwarePage() {
       toast.success('Camera detached successfully');
     } catch (err: unknown) {
       console.error('Failed to detach camera:', err);
-      let message = 'Failed to detach camera';
-      if ((err as ApiError)?.response?.data?.message) {
-        message = (err as ApiError).response.data.message;
+      let message: string = 'Failed to detach camera';
+      const serverMsg = (err as ApiError)?.response?.data?.message;
+      if (serverMsg) {
+        message = serverMsg;
       } else if ((err as ApiError)?.message) {
-        message = (err as ApiError).message;
+        message = (err as ApiError).message!;
       }
       toast.error(message);
     } finally {
@@ -945,6 +1012,8 @@ export default function HardwarePage() {
                 onUnbindDevice={unbindDevice}
                 onAttachDevice={setAttachDialogDevice}
                 onDetachDevice={detachDevice}
+                onMarkAsCamera={handleMarkAsCamera}
+                onRemoveCamera={handleRemoveCamera}
                 onVerify={(verified) => verifyNode(node.id, verified)}
                 loading={actionLoading}
                 isAdmin={isAdmin}

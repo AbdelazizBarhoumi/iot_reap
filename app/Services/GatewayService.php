@@ -35,6 +35,13 @@ class GatewayService
      */
     private const WINDOWS_USBIP_PATH = 'C:\PROGRA~1\USBIP-~1\usbip.exe';
 
+    /**
+     * Separate batch file paths for attach vs query commands to avoid race conditions.
+     * The attach command may still be running when we need to poll port status.
+     */
+    private const WINDOWS_BATCH_ATTACH = 'C:\usbip-attach.bat';
+    private const WINDOWS_BATCH_QUERY = 'C:\usbip-query.bat';
+
     public function __construct(
         private readonly GatewayNodeRepository $nodeRepository,
         private readonly UsbDeviceRepository $deviceRepository,
@@ -134,6 +141,12 @@ class GatewayService
             foreach ($devices as $device) {
                 $currentBusIds[] = $device['busid'];
 
+                // Check if device is a camera based on VID:PID
+                $isCamera = UsbDevice::isKnownCamera(
+                    $device['vendor_id'],
+                    $device['product_id']
+                );
+
                 $this->deviceRepository->updateOrCreate(
                     [
                         'gateway_node_id' => $node->id,
@@ -143,6 +156,7 @@ class GatewayService
                         'vendor_id' => $device['vendor_id'],
                         'product_id' => $device['product_id'],
                         'name' => $device['name'],
+                        'is_camera' => $isCamera,
                     ]
                 );
             }
@@ -404,10 +418,21 @@ class GatewayService
     /**
      * Bind a USB device for sharing via USB/IP.
      *
+     * This operation is idempotent - if the device is already bound on the gateway,
+     * the database state is synced and the operation succeeds.
+     *
      * @throws GatewayApiException
      */
     public function bindDevice(UsbDevice $device): void
     {
+        // Camera devices cannot be bound to VMs
+        if ($device->is_camera) {
+            throw new GatewayApiException(
+                'Camera devices cannot be bound to VMs. Cameras are managed separately via the camera streaming system.',
+                operation: 'bind'
+            );
+        }
+
         $node = $device->gatewayNode;
 
         if (!$node) {
@@ -424,8 +449,24 @@ class GatewayService
                 ]);
 
             if (!$response->ok()) {
+                $errorMessage = $this->extractErrorMessage($response, 'detail', 'Bind operation failed');
+
+                // Handle idempotent case: device is already bound on the gateway
+                // This can happen when gateway state and database state are out of sync
+                if (str_contains($errorMessage, 'already bound to usbip-host')) {
+                    Log::warning('USB device already bound on gateway, syncing database state', [
+                        'device_id' => $device->id,
+                        'busid' => $device->busid,
+                        'node' => $node->name,
+                    ]);
+
+                    $this->deviceRepository->markBound($device);
+
+                    return;
+                }
+
                 throw new GatewayApiException(
-                    $this->extractErrorMessage($response, 'detail', 'Bind operation failed'),
+                    $errorMessage,
                     gatewayHost: $node->ip,
                     operation: 'bind'
                 );
@@ -453,6 +494,9 @@ class GatewayService
     /**
      * Unbind a USB device from USB/IP sharing.
      *
+     * This operation is idempotent - if the device is already unbound on the gateway,
+     * the database state is synced and the operation succeeds.
+     *
      * @throws GatewayApiException
      */
     public function unbindDevice(UsbDevice $device): void
@@ -473,8 +517,24 @@ class GatewayService
                 ]);
 
             if (!$response->ok()) {
+                $errorMessage = $this->extractErrorMessage($response, 'detail', 'Unbind operation failed');
+
+                // Handle idempotent case: device is already unbound on the gateway
+                // This can happen when gateway state and database state are out of sync
+                if (str_contains($errorMessage, 'not bound to usbip-host')) {
+                    Log::warning('USB device already unbound on gateway, syncing database state', [
+                        'device_id' => $device->id,
+                        'busid' => $device->busid,
+                        'node' => $node->name,
+                    ]);
+
+                    $this->deviceRepository->markAvailable($device);
+
+                    return;
+                }
+
                 throw new GatewayApiException(
-                    $this->extractErrorMessage($response, 'detail', 'Unbind operation failed'),
+                    $errorMessage,
                     gatewayHost: $node->ip,
                     operation: 'unbind'
                 );
@@ -512,6 +572,14 @@ class GatewayService
      */
     public function attachToSession(UsbDevice $device, VMSession $session): void
     {
+        // Camera devices cannot be attached to VMs
+        if ($device->is_camera) {
+            throw new GatewayApiException(
+                'Camera devices cannot be attached to VMs. Cameras are managed separately via the camera streaming system.',
+                operation: 'attach'
+            );
+        }
+
         $node = $device->gatewayNode;
 
         if (!$node) {
@@ -590,7 +658,8 @@ class GatewayService
 
             // Execute the command differently based on OS type
             // Windows USB/IP attach is slow due to driver loading, needs longer timeout
-            $attachTimeout = $isWindows ? 60 : 30;
+            // User feedback: driver loading takes ~91 seconds. Use 120s to be safe.
+            $attachTimeout = $isWindows ? 120 : 30;
             
             $result = $this->executeUsbipCommand(
                 proxmoxClient: $proxmoxClient,
@@ -632,12 +701,14 @@ class GatewayService
                     'error' => $errorMsg,
                 ]);
 
+                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $port = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $proxmoxNode->name,
                     vmid: $session->vm_id,
                     busid: $busid,
-                    isWindows: $isWindows
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
                 );
 
                 if ($port !== null) {
@@ -665,12 +736,14 @@ class GatewayService
             }
 
             // Get the port number from usbip port command
+            $vidPid = "{$device->vendor_id}:{$device->product_id}";
             $port = $this->getAttachedPort(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $proxmoxNode->name,
                 vmid: $session->vm_id,
                 busid: $busid,
-                isWindows: $isWindows
+                isWindows: $isWindows,
+                vidPid: $vidPid
             );
 
             $vmName = "session-{$session->id}";
@@ -693,12 +766,14 @@ class GatewayService
             // despite the exception (e.g., timeout during response, but command succeeded)
             if (isset($proxmoxClient, $proxmoxNode, $busid, $isWindows)) {
                 try {
+                    $vidPid = "{$device->vendor_id}:{$device->product_id}";
                     $port = $this->getAttachedPort(
                         proxmoxClient: $proxmoxClient,
                         nodeName: $proxmoxNode->name,
                         vmid: $session->vm_id,
                         busid: $busid,
-                        isWindows: $isWindows
+                        isWindows: $isWindows,
+                        vidPid: $vidPid
                     );
 
                     if ($port !== null) {
@@ -737,6 +812,11 @@ class GatewayService
      * - Linux: Direct command execution works fine
      * - Windows: Uses a batch file because Proxmox guest agent struggles with command arguments
      *
+     * For Windows `attach` commands specifically, uses fire-and-forget execution
+     * followed by polling `usbip port` to verify success. This is necessary because
+     * `usbip.exe attach` on Windows blocks indefinitely after a successful attach
+     * (it never exits), which would cause PHP max_execution_time to be exceeded.
+     *
      * @param ProxmoxClientInterface $proxmoxClient The Proxmox client
      * @param string $nodeName       The Proxmox node name
      * @param int    $vmid           The VM ID
@@ -754,22 +834,37 @@ class GatewayService
         bool $isWindows,
         int $timeoutSeconds = 30
     ): array {
-        // Always attempt the direct invocation first. On Linux this will be the only
-        // path taken; on Windows we may need to fallback if the guest agent can't
-        // handle the path with spaces or arguments correctly.
-        //
-        // We wrap in try-catch because ProxmoxClient may throw ProxmoxApiException
-        // if the guest agent returns 500 (e.g., "No such file or directory" when
-        // the command isn't in PATH). For Windows, we want to catch that and try
-        // the batch file fallback.
+        // For Windows "attach" commands, use fire-and-forget + port verification.
+        // usbip-win's attach command blocks indefinitely after a successful attach,
+        // so we cannot wait for it to exit. Instead we start the command and poll
+        // `usbip port` until the device shows up.
+        $isAttachCommand = str_starts_with(trim($command), 'attach ');
+
+        if ($isWindows && $isAttachCommand) {
+            return $this->executeWindowsUsbipAttach(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $command,
+                timeoutSeconds: $timeoutSeconds
+            );
+        }
+
+        // For non-attach commands (port, detach, list) and Linux, use the standard
+        // approach: try direct invocation first, then batch file fallback on Windows.
         $direct = null;
         $directException = null;
+        
+        // Use full path for Windows wrapped in cmd.exe, just "usbip" for Linux
+        $cmd = $isWindows 
+            ? 'cmd.exe /c "' . self::WINDOWS_USBIP_PATH . ' ' . $command . '"'
+            : "usbip {$command}";
 
         try {
             $direct = $proxmoxClient->execInVmAndWait(
                 nodeName: $nodeName,
                 vmid: $vmid,
-                command: "usbip {$command}",
+                command: $cmd,
                 timeoutSeconds: $timeoutSeconds
             );
 
@@ -799,8 +894,153 @@ class GatewayService
             'direct_exception' => $directException?->getMessage(),
         ]);
 
-        // Windows: Write a batch file first, then execute it
-        $batchPath = 'C:\usbip-cmd.bat';
+        return $this->writeAndExecWindowsBatch(
+            proxmoxClient: $proxmoxClient,
+            nodeName: $nodeName,
+            vmid: $vmid,
+            command: $command,
+            timeoutSeconds: $timeoutSeconds,
+            wait: true
+        );
+    }
+
+    /**
+     * Execute a Windows USB/IP attach command using fire-and-forget + port polling.
+     *
+     * usbip-win's `attach` command blocks indefinitely after a successful attach,
+     * so we cannot use execInVmAndWait. Instead we:
+     * 1. Try direct `usbip attach` via execInVm (fire-and-forget)
+     * 2. If that fails (command not found), fall back to batch file
+     * 3. Poll `usbip port` to verify the device actually appeared
+     *
+     * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
+     */
+    private function executeWindowsUsbipAttach(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $command,
+        int $timeoutSeconds = 30
+    ): array {
+        // Extract the busid from the command for port verification later.
+        // Command format: "attach -r <ip> -b <busid>"
+        $busid = null;
+        if (preg_match('/-b\s+(\S+)/', $command, $matches)) {
+            $busid = $matches[1];
+        }
+
+        // Snapshot the ports BEFORE attach so we can detect new ones
+        $portsBefore = $this->getUsbipPortList($proxmoxClient, $nodeName, $vmid, isWindows: true);
+
+        // Step 1: Try direct invocation with full path via cmd.exe (fire-and-forget)
+        // Using cmd.exe /c is more reliable for QEMU guest agent on Windows
+        $started = false;
+        $fullCommand = 'cmd.exe /c "' . self::WINDOWS_USBIP_PATH . ' ' . $command . '"';
+        try {
+            $proxmoxClient->execInVm(
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $fullCommand
+            );
+            $started = true;
+        } catch (ProxmoxApiException $e) {
+            Log::debug('Windows usbip direct invocation via cmd.exe failed, trying batch file', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'command' => $fullCommand,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Step 2: If direct failed, use batch file (also fire-and-forget)
+        if (!$started) {
+            $this->writeAndExecWindowsBatch(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $command,
+                timeoutSeconds: $timeoutSeconds,
+                wait: false,
+                isAttach: true // Use attach-specific batch file path
+            );
+        }
+
+        // Step 3: Poll `usbip port` until the device appears or timeout
+        $pollInterval = 3; // seconds
+        $endTime = now()->addSeconds($timeoutSeconds);
+
+        Log::info('Windows usbip attach started (fire-and-forget), polling for device', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'command' => $command,
+            'busid' => $busid,
+            'timeout' => $timeoutSeconds,
+        ]);
+
+        // Give the driver a moment to start loading
+        sleep(2);
+
+        while (now()->isBefore($endTime)) {
+            $portsNow = $this->getUsbipPortList($proxmoxClient, $nodeName, $vmid, isWindows: true);
+
+            // Check if a new port appeared with our device
+            $newPort = $this->deviceAppearedInPortList($portsNow, $busid, $portsBefore);
+            
+            if ($newPort !== null) {
+                Log::info('Windows usbip attach verified via port polling', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'busid' => $busid,
+                    'detected_port' => $newPort,
+                ]);
+
+                return [
+                    'exitcode' => 0,
+                    'out-data' => $portsNow,
+                    'err-data' => '',
+                    'success' => true,
+                    'detected_port' => $newPort, // Include the detected port in response
+                ];
+            }
+
+            sleep($pollInterval);
+        }
+
+        Log::warning('Windows usbip attach timed out during port polling', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'busid' => $busid,
+            'timeout' => $timeoutSeconds,
+            'last_ports' => $portsNow ?? '',
+        ]);
+
+        return [
+            'exitcode' => -1,
+            'out-data' => $portsNow ?? '',
+            'err-data' => 'Timeout waiting for device to appear in usbip port list',
+            'success' => false,
+        ];
+    }
+
+    /**
+     * Write a batch file and optionally execute it inside a Windows VM.
+     *
+     * @param bool $wait If true, use execInVmAndWait; if false, use execInVm (fire-and-forget)
+     * @param bool $isAttach If true, use attach batch path; if false, use query batch path
+     *
+     * @return array For wait=true: {exitcode, out-data, err-data, success}. For wait=false: {pid}
+     */
+    private function writeAndExecWindowsBatch(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $command,
+        int $timeoutSeconds = 30,
+        bool $wait = true,
+        bool $isAttach = false
+    ): array {
+        // Use separate batch files to avoid race conditions
+        $batchPath = $isAttach ? self::WINDOWS_BATCH_ATTACH : self::WINDOWS_BATCH_QUERY;
         $batchContent = self::WINDOWS_USBIP_PATH . ' ' . $command;
 
         Log::debug('Writing Windows usbip batch file', [
@@ -816,25 +1056,119 @@ class GatewayService
             content: $batchContent
         );
 
-        return $proxmoxClient->execInVmAndWait(
+        if ($wait) {
+            return $proxmoxClient->execInVmAndWait(
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $batchPath,
+                timeoutSeconds: $timeoutSeconds
+            );
+        }
+
+        return $proxmoxClient->execInVm(
             nodeName: $nodeName,
             vmid: $vmid,
-            command: $batchPath,
-            timeoutSeconds: $timeoutSeconds
+            command: $batchPath
         );
+    }
+
+    /**
+     * Get raw `usbip port` output from inside a VM.
+     */
+    private function getUsbipPortList(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        bool $isWindows = false
+    ): string {
+        try {
+            // Use the standard executeUsbipCommand for non-attach commands
+            // (this won't recurse because 'port' is not an attach command)
+            $result = $this->executeUsbipCommand(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: 'port',
+                isWindows: $isWindows,
+                timeoutSeconds: 10
+            );
+
+            return $result['out-data'] ?? '';
+        } catch (\Throwable $e) {
+            Log::debug('Failed to get usbip port list for polling', [
+                'error' => $e->getMessage(),
+            ]);
+            return '';
+        }
+    }
+
+    /**
+     * Check if a device appeared in the usbip port list compared to a previous snapshot.
+     *
+     * usbip-win port output format:
+     *   Port 00: <Device in Use> at High Speed(480Mbps)
+     *          SanDisk Corp. : Cruzer Blade (0781:5567)
+     *          ...
+     *
+     * Returns the new port number if found, null otherwise.
+     */
+    private function deviceAppearedInPortList(string $portsNow, string $busid, string $portsBefore): ?string
+    {
+        // Parse port numbers from each snapshot
+        preg_match_all('/Port\s+(\d+):/', $portsNow, $nowMatches);
+        preg_match_all('/Port\s+(\d+):/', $portsBefore, $beforeMatches);
+
+        $nowPorts = $nowMatches[1] ?? [];
+        $beforePorts = $beforeMatches[1] ?? [];
+
+        // Find ports that are new (in now but not in before)
+        $newPorts = array_diff($nowPorts, $beforePorts);
+
+        if (count($newPorts) > 0) {
+            // Return the first new port number
+            return (string) reset($newPorts);
+        }
+
+        // Also check if total count increased (device might have taken same port number)
+        if (count($nowPorts) > count($beforePorts)) {
+            // Return the highest port number (most likely the new one)
+            return (string) max($nowPorts);
+        }
+
+        // Check if content changed for any existing port (device replaced another)
+        // This handles edge cases where device count is same but devices are different
+        $nowLines = array_filter(explode("\n", trim($portsNow)));
+        $beforeLines = array_filter(explode("\n", trim($portsBefore)));
+
+        // If the output is substantially different in content (not just whitespace)
+        $nowHash = md5(preg_replace('/\s+/', '', $portsNow));
+        $beforeHash = md5(preg_replace('/\s+/', '', $portsBefore));
+
+        if ($nowHash !== $beforeHash && count($nowPorts) > 0) {
+            // Content changed, assume a device was added/replaced
+            // Return the last port in the list
+            return (string) end($nowPorts);
+        }
+
+        return null; // No new device detected
     }
 
     /**
      * Get the USB/IP port number for a recently attached device.
      *
      * Runs `usbip port` inside the VM and parses the output to find the port.
+     * On Windows, usbip-win doesn't show busid in port output, so we check for
+     * VID:PID or device name patterns instead.
+     *
+     * @param string|null $vidPid Optional VID:PID pattern like "0c45:6536" to match
      */
     private function getAttachedPort(
         ProxmoxClientInterface $proxmoxClient,
         string $nodeName,
         int $vmid,
         string $busid,
-        bool $isWindows = false
+        bool $isWindows = false,
+        ?string $vidPid = null
     ): ?string {
         try {
             $result = $this->executeUsbipCommand(
@@ -854,29 +1188,63 @@ class GatewayService
                 return null;
             }
 
+            // If the attach result already contains detected port, use it
+            if (isset($result['detected_port'])) {
+                return $result['detected_port'];
+            }
+
             // Parse the output to find the port number
-            // Example output:
-            // Port 00:  <device>
-            //     busid: 1-1.2
-            //     ...
+            // Linux example output:
+            //   Port 00:  <device>
+            //       busid: 1-1.2
+            //       ...
+            //
+            // Windows example output:
+            //   Port 00: <Device in Use> at High Speed(480Mbps)
+            //          Microdia : USB 2.0 Camera (0c45:6536)
+            //          ...
             $output = $result['out-data'] ?? '';
             $lines = explode("\n", $output);
             $currentPort = null;
+            $matchedPort = null;
 
             foreach ($lines as $line) {
                 // Match "Port 00:" pattern
                 if (preg_match('/Port\s+(\d+):/', $line, $matches)) {
                     $currentPort = $matches[1];
                 }
-                // Match busid line
-                if ($currentPort !== null && str_contains($line, $busid)) {
+
+                // On Linux, match busid line
+                if (!$isWindows && $currentPort !== null && str_contains($line, $busid)) {
                     return $currentPort;
+                }
+
+                // On Windows, match VID:PID if provided
+                if ($isWindows && $currentPort !== null && $vidPid !== null) {
+                    if (str_contains($line, $vidPid)) {
+                        return $currentPort;
+                    }
+                }
+
+                // Track the latest port we've seen
+                if ($currentPort !== null) {
+                    $matchedPort = $currentPort;
                 }
             }
 
-            // If we couldn't find the exact busid, return the latest port
-            // (the most recently attached device)
-            return $currentPort;
+            // On Windows without VID:PID, don't fall back to last port - it's unreliable
+            // Return null so the caller knows we couldn't determine the port
+            if ($isWindows && $vidPid === null) {
+                Log::debug('Cannot determine Windows usbip port without VID:PID', [
+                    'vmid' => $vmid,
+                    'busid' => $busid,
+                    'output' => $output,
+                ]);
+                return null;
+            }
+
+            // On Linux, return the last port as fallback
+            return $matchedPort;
         } catch (\Throwable $e) {
             Log::warning('Failed to get usbip port', ['error' => $e->getMessage()]);
             return null;
@@ -913,6 +1281,14 @@ class GatewayService
         string $vmName = 'direct-attach',
         bool $allowPending = true
     ): array {
+        // Camera devices cannot be attached to VMs
+        if ($device->is_camera) {
+            throw new GatewayApiException(
+                'Camera devices cannot be attached to VMs. Cameras are managed separately via the camera streaming system.',
+                operation: 'attach'
+            );
+        }
+
         $node = $device->gatewayNode;
 
         if (!$node) {
@@ -1015,7 +1391,8 @@ class GatewayService
             ]);
 
             // Windows USB/IP attach is slow due to driver loading, needs longer timeout
-            $attachTimeout = $isWindows ? 60 : 30;
+            // User feedback: driver loading takes ~91 seconds. Use 120s to be safe.
+            $attachTimeout = $isWindows ? 120 : 30;
 
             $result = $this->executeUsbipCommand(
                 proxmoxClient: $proxmoxClient,
@@ -1030,12 +1407,14 @@ class GatewayService
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
                 // Verify if the device was actually attached despite reported failure
+                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $port = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $nodeName,
                     vmid: $vmid,
                     busid: $busid,
-                    isWindows: $isWindows
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
                 );
 
                 if ($port !== null) {
@@ -1066,12 +1445,14 @@ class GatewayService
             }
 
             // Get the port number from usbip port command
+            $vidPid = "{$device->vendor_id}:{$device->product_id}";
             $port = $this->getAttachedPort(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $nodeName,
                 vmid: $vmid,
                 busid: $busid,
-                isWindows: $isWindows
+                isWindows: $isWindows,
+                vidPid: $vidPid
             );
 
             $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
@@ -1099,12 +1480,14 @@ class GatewayService
             // Verify if device was attached despite exception
             if (isset($proxmoxClient, $isWindows)) {
                 try {
+                    $vidPid = "{$device->vendor_id}:{$device->product_id}";
                     $port = $this->getAttachedPort(
                         proxmoxClient: $proxmoxClient,
                         nodeName: $nodeName,
                         vmid: $vmid,
                         busid: $busid,
-                        isWindows: $isWindows
+                        isWindows: $isWindows,
+                        vidPid: $vidPid
                     );
 
                     if ($port !== null) {
@@ -1148,6 +1531,14 @@ class GatewayService
      */
     public function attachToVm(UsbDevice $device, string $vmIp, string $vmName, ?string $sessionId = null): void
     {
+        // Camera devices cannot be attached to VMs
+        if ($device->is_camera) {
+            throw new GatewayApiException(
+                'Camera devices cannot be attached to VMs. Cameras are managed separately via the camera streaming system.',
+                operation: 'attach'
+            );
+        }
+
         $node = $device->gatewayNode;
 
         if (!$node) {
@@ -1260,12 +1651,14 @@ class GatewayService
             ]);
 
             try {
+                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $port = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $proxmoxNode->name,
                     vmid: $session->vm_id,
                     busid: $device->busid,
-                    isWindows: $isWindows
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
                 );
             } catch (\Throwable $e) {
                 Log::warning('Could not auto-detect port', ['error' => $e->getMessage()]);
@@ -1347,12 +1740,14 @@ class GatewayService
             // Verify if device was actually detached despite exception
             // (e.g., timeout during response but command succeeded)
             try {
+                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $verifyPort = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $proxmoxNode->name,
                     vmid: $session->vm_id,
                     busid: $device->busid,
-                    isWindows: $isWindows
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
                 );
 
                 if ($verifyPort === null) {
@@ -1568,5 +1963,171 @@ class GatewayService
         ]);
 
         return true;
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Camera Streaming Methods
+    // ────────────────────────────────────────────────────────────────
+
+    /**
+     * Start streaming a USB camera to MediaMTX.
+     *
+     * @param GatewayNode $node The gateway node where the camera is connected
+     * @param string $streamKey Unique stream key (used as MediaMTX path)
+     * @param string $devicePath Device path (default: /dev/video0)
+     * @param array $options Optional: width, height, framerate, input_format
+     * @return array{success: bool, pid?: int, rtsp_url?: string, hls_url?: string, error?: string}
+     */
+    public function startCameraStream(
+        GatewayNode $node,
+        string $streamKey,
+        string $devicePath = '/dev/video0',
+        array $options = []
+    ): array {
+        $payload = [
+            'stream_key' => $streamKey,
+            'device_path' => $devicePath,
+            'width' => $options['width'] ?? 640,
+            'height' => $options['height'] ?? 480,
+            'framerate' => $options['framerate'] ?? 15,
+            'input_format' => $options['input_format'] ?? 'mjpeg',
+        ];
+
+        // Use Proxmox camera API if configured (cameras are on Proxmox node, not gateway)
+        // Otherwise fall back to gateway agent for backwards compatibility
+        $apiUrl = $node->proxmox_camera_api_url ?? "{$node->api_url}/camera";
+        $startEndpoint = $node->proxmox_camera_api_url
+            ? "{$node->proxmox_camera_api_url}/streams/start"
+            : "{$node->api_url}/camera/start";
+
+        try {
+            $response = Http::timeout($this->timeout() * 2)
+                ->post($startEndpoint, $payload);
+
+            if (!$response->ok()) {
+                $error = $this->extractErrorMessage($response);
+                Log::warning('Failed to start camera stream', [
+                    'node_id' => $node->id,
+                    'stream_key' => $streamKey,
+                    'api_url' => $startEndpoint,
+                    'error' => $error,
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => $error,
+                ];
+            }
+
+            $data = $response->json();
+
+            Log::info('Camera stream started', [
+                'node_id' => $node->id,
+                'stream_key' => $streamKey,
+                'api_url' => $startEndpoint,
+                'pid' => $data['pid'] ?? null,
+            ]);
+
+            return [
+                'success' => true,
+                'pid' => $data['pid'] ?? null,
+                'rtsp_url' => $data['rtsp_url'] ?? null,
+                'hls_url' => $data['hls_url'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Camera stream start failed', [
+                'node_id' => $node->id,
+                'stream_key' => $streamKey,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Stop a camera stream on a gateway node.
+     *
+     * @param GatewayNode $node The gateway node
+     * @param string $streamKey The stream key to stop
+     * @return array{success: bool, error?: string}
+     */
+    public function stopCameraStream(GatewayNode $node, string $streamKey): array
+    {
+        // Use Proxmox camera API if configured
+        $stopEndpoint = $node->proxmox_camera_api_url
+            ? "{$node->proxmox_camera_api_url}/streams/stop"
+            : "{$node->api_url}/camera/stop";
+
+        try {
+            $response = Http::timeout($this->timeout())
+                ->post($stopEndpoint, [
+                    'stream_key' => $streamKey,
+                ]);
+
+            if (!$response->ok()) {
+                $error = $this->extractErrorMessage($response);
+                return [
+                    'success' => false,
+                    'error' => $error,
+                ];
+            }
+
+            Log::info('Camera stream stopped', [
+                'node_id' => $node->id,
+                'stream_key' => $streamKey,
+                'api_url' => $stopEndpoint,
+            ]);
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            Log::error('Camera stream stop failed', [
+                'node_id' => $node->id,
+                'stream_key' => $streamKey,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get status of a camera stream on a gateway node.
+     *
+     * @param GatewayNode $node The gateway node
+     * @param string $streamKey The stream key to check
+     * @return array{running: bool, pid?: int, rtsp_url?: string}
+     */
+    public function getCameraStreamStatus(GatewayNode $node, string $streamKey): array
+    {
+        // Use Proxmox camera API if configured
+        $statusEndpoint = $node->proxmox_camera_api_url
+            ? "{$node->proxmox_camera_api_url}/streams/status/{$streamKey}"
+            : "{$node->api_url}/camera/status/{$streamKey}";
+
+        try {
+            $response = Http::timeout($this->timeout())
+                ->get($statusEndpoint);
+
+            if (!$response->ok()) {
+                return ['running' => false];
+            }
+
+            $data = $response->json();
+
+            return [
+                'running' => $data['running'] ?? false,
+                'pid' => $data['pid'] ?? null,
+                'rtsp_url' => $data['rtsp_url'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            return ['running' => false];
+        }
     }
 }

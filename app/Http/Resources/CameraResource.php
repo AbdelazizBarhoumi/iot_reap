@@ -18,7 +18,12 @@ class CameraResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $baseHost = config('gateway.mediamtx_url', '192.168.50.6');
+        // Use the camera's gateway node IP, fallback to config if no gateway assigned
+        // Use relationLoaded to avoid lazy loading violation in tests
+        $gatewayIp = $this->relationLoaded('gatewayNode') && $this->gatewayNode
+            ? $this->gatewayNode->ip
+            : config('gateway.mediamtx_url', '192.168.50.7');
+        $baseHost = $gatewayIp;
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
 
@@ -28,6 +33,11 @@ class CameraResource extends JsonResource
             'id' => $this->id,
             'robot_id' => $this->robot_id,
             'robot_name' => $this->whenLoaded('robot', fn() => $this->robot->name),
+            'gateway_node_id' => $this->gateway_node_id,
+            'gateway_name' => $this->whenLoaded('gatewayNode', fn() => $this->gatewayNode->name),
+            'usb_device_id' => $this->usb_device_id,
+            'is_usb_camera' => $this->gateway_node_id !== null,
+            'source_name' => $this->source_name, // Robot name or Gateway name
             'name' => $this->name,
             'stream_key' => $this->stream_key,
             'type' => $this->type->value,
@@ -35,6 +45,13 @@ class CameraResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'ptz_capable' => $this->ptz_capable,
+            'stream_settings' => [
+                'width' => $this->stream_width ?? 640,
+                'height' => $this->stream_height ?? 480,
+                'framerate' => $this->stream_framerate ?? 15,
+                'input_format' => $this->stream_input_format ?? 'mjpeg',
+                'resolution_label' => $this->getResolutionLabel(),
+            ],
             'stream_urls' => [
                 'hls'    => "http://{$baseHost}:{$hlsPort}/{$this->stream_key}/index.m3u8",
                 'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$this->stream_key}",

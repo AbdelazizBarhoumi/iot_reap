@@ -10,12 +10,17 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Administrator',
-            'email' => env('DEFAULT_ADMIN_EMAIL', 'admin@example.com'),
-            'password' => env('DEFAULT_ADMIN_PASSWORD', 'password'),
-            'role' => UserRole::ADMIN->value,
-            'email_verified_at' => now(),
-        ]);
+        // create one user per role using a consistent password
+        $defaultPassword = env('DEFAULT_ADMIN_PASSWORD', 'password');
+
+        foreach (UserRole::cases() as $role) {
+            User::factory()->create([
+                'name' => ucfirst(str_replace('_', ' ', $role->value)),
+                'email' => $role->value . '@example.com',
+                'password' => $defaultPassword,
+                'role' => $role->value,
+                'email_verified_at' => now(),
+            ]);
+        }
     }
 }

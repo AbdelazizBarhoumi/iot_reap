@@ -27,6 +27,8 @@ interface UseHardwareGatewayResult {
   unbindDevice: (deviceId: number) => Promise<boolean>;
   attachDevice: (deviceId: number, data: AttachDeviceRequest) => Promise<boolean>;
   detachDevice: (deviceId: number) => Promise<boolean>;
+  markAsCamera: (deviceId: number) => Promise<boolean>;
+  removeCamera: (deviceId: number) => Promise<boolean>;
   discoverGateways: () => Promise<boolean>;
   verifyNode: (nodeId: number, verified: boolean) => Promise<boolean>;
 }
@@ -75,9 +77,10 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       return result.success;
     } catch (e: unknown) {
       // try to surface server-provided message if available
-      let message = e instanceof Error ? e.message : 'Refresh failed';
-      if ((e as ApiError)?.response?.data?.message) {
-        message = (e as ApiError).response.data.message;
+      let message: string = e instanceof Error ? e.message : 'Refresh failed';
+      const serverMsg = (e as ApiError)?.response?.data?.message;
+      if (serverMsg) {
+        message = serverMsg;
       }
       toast.error(message);
       setError(message);
@@ -104,9 +107,10 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       await fetchData();
       return result.success;
     } catch (e: unknown) {
-      let message = e instanceof Error ? e.message : 'Refresh failed';
-      if ((e as ApiError)?.response?.data?.message) {
-        message = (e as ApiError).response.data.message;
+      let message: string = e instanceof Error ? e.message : 'Refresh failed';
+      const serverMsg = (e as ApiError)?.response?.data?.message;
+      if (serverMsg) {
+        message = serverMsg;
       }
       toast.error(message);
       setError(message);
@@ -228,9 +232,10 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
       await fetchData();
       return result.success;
     } catch (e: unknown) {
-      let message = e instanceof Error ? e.message : 'Discovery failed';
-      if ((e as ApiError)?.response?.data?.message) {
-        message = (e as ApiError).response.data.message;
+      let message: string = e instanceof Error ? e.message : 'Discovery failed';
+      const serverMsg = (e as ApiError)?.response?.data?.message;
+      if (serverMsg) {
+        message = serverMsg;
       }
       toast.error(message);
       setError(message);
@@ -265,6 +270,54 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
     }
   }, [fetchData]);
 
+  const markAsCamera = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const result = await hardwareApi.convertToCamera(deviceId);
+      if (result.success) {
+        toast.success('Device registered as camera');
+        await fetchData();
+        return true;
+      }
+      const errorMsg = result.message || 'Failed to register camera';
+      toast.error(errorMsg);
+      setError(errorMsg);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to register camera';
+      toast.error(message);
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
+  const removeCamera = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const result = await hardwareApi.removeCamera(deviceId);
+      if (result.success) {
+        toast.success('Camera registration removed');
+        await fetchData();
+        return true;
+      }
+      const errorMsg = result.message || 'Failed to remove camera';
+      toast.error(errorMsg);
+      setError(errorMsg);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to remove camera';
+      toast.error(message);
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
   useEffect(() => {
     fetchData();
 
@@ -287,6 +340,8 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
     unbindDevice,
     attachDevice,
     detachDevice,
+    markAsCamera,
+    removeCamera,
     discoverGateways,
     verifyNode,
   };

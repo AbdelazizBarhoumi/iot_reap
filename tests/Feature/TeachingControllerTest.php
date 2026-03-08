@@ -14,9 +14,9 @@ class TeachingControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authenticated_user_can_view_teaching_dashboard(): void
+    public function test_teacher_can_view_teaching_dashboard(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         Course::factory()->count(2)->create(['instructor_id' => $user->id]);
 
         $response = $this->actingAs($user)->get('/teaching');
@@ -38,7 +38,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_create_course(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
 
         $courseData = [
             'title' => 'New Course',
@@ -61,7 +61,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_update_own_course(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create([
             'instructor_id' => $user->id,
             'title' => 'Original Title',
@@ -81,8 +81,8 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_cannot_update_other_instructor_course(): void
     {
-        $instructor1 = User::factory()->create();
-        $instructor2 = User::factory()->create();
+        $instructor1 = User::factory()->teacher()->create();
+        $instructor2 = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $instructor1->id]);
 
         $response = $this->actingAs($instructor2)->patch("/teaching/{$course->id}", [
@@ -98,7 +98,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_delete_own_course(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $courseId = $course->id;
 
@@ -110,8 +110,8 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_cannot_delete_other_instructor_course(): void
     {
-        $instructor1 = User::factory()->create();
-        $instructor2 = User::factory()->create();
+        $instructor1 = User::factory()->teacher()->create();
+        $instructor2 = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $instructor1->id]);
 
         $response = $this->actingAs($instructor2)->delete("/teaching/{$course->id}");
@@ -122,7 +122,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_submit_course_for_review(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create([
             'instructor_id' => $user->id,
             'status' => CourseStatus::DRAFT,
@@ -139,7 +139,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_add_module_to_course(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
 
         $response = $this->actingAs($user)->post("/teaching/{$course->id}/modules", [
@@ -155,7 +155,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_update_module(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
 
@@ -172,7 +172,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_delete_module(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         $moduleId = $module->id;
@@ -185,7 +185,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_add_lesson_to_module(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
 
@@ -207,7 +207,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_update_lesson(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
@@ -226,7 +226,7 @@ class TeachingControllerTest extends TestCase
 
     public function test_instructor_can_delete_lesson(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         $course = Course::factory()->create(['instructor_id' => $user->id]);
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
@@ -236,5 +236,14 @@ class TeachingControllerTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseMissing('lessons', ['id' => $lessonId]);
+    }
+
+    public function test_engineer_cannot_access_teaching_dashboard(): void
+    {
+        $user = User::factory()->engineer()->create();
+
+        $response = $this->actingAs($user)->get('/teaching');
+
+        $response->assertForbidden();
     }
 }

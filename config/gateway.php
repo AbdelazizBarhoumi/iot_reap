@@ -64,7 +64,7 @@ return [
     | services: MediaMTX, Frigate, CUPS, ser2net, avahi-daemon, Docker.
     |
     */
-    'infrastructure_ip' => env('GATEWAY_INFRASTRUCTURE_IP', '192.168.50.6'),
+    'infrastructure_ip' => env('GATEWAY_INFRASTRUCTURE_IP', '192.168.50.7'),
 
     /*
     |--------------------------------------------------------------------------
@@ -75,7 +75,7 @@ return [
     | running on the gateway. Cameras proxy their streams through MediaMTX.
     |
     */
-    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.6'),
+    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.7'),
     'mediamtx_rtsp_port' => (int) env('MEDIAMTX_RTSP_PORT', 8554),
     'mediamtx_hls_port' => (int) env('MEDIAMTX_HLS_PORT', 8888),
     'mediamtx_webrtc_port' => (int) env('MEDIAMTX_WEBRTC_PORT', 8889),
@@ -89,7 +89,7 @@ return [
     | detection on camera feeds. Runs as a Docker container on the gateway.
     |
     */
-    'frigate_url' => env('FRIGATE_URL', 'http://192.168.50.6'),
+    'frigate_url' => env('FRIGATE_URL', 'http://192.168.50.7'),
     'frigate_port' => (int) env('FRIGATE_PORT', 5000),
 
     /*
@@ -100,7 +100,7 @@ return [
     | Common UNIX Printing System for shared printer access from VMs.
     |
     */
-    'cups_url' => env('CUPS_URL', 'https://192.168.50.6'),
+    'cups_url' => env('CUPS_URL', 'https://192.168.50.7'),
     'cups_port' => (int) env('CUPS_PORT', 631),
 
     /*
@@ -124,5 +124,49 @@ return [
     |
     */
     'avahi_enabled' => (bool) env('GATEWAY_AVAHI_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | USB Camera Detection
+    |--------------------------------------------------------------------------
+    |
+    | Known USB camera VID:PID patterns. These devices are classified as
+    | cameras and handled separately - they cannot be bound/attached to VMs.
+    | Patterns support wildcards: * matches any value.
+    |
+    | Format: 'vendor_id:product_id' or 'vendor_id:*' for all products
+    |
+    */
+    'camera_vid_pids' => [
+        // Microdia PC Camera / JIELI (common webcam chips)
+        '0c45:6536',    // Microdia USB 2.0 Camera (the Microdia device)
+        '0c45:*',       // All Microdia devices (commonly webcams)
+
+        // Logitech webcams
+        '046d:082c',    // Logitech HD Webcam C615
+        '046d:0825',    // Logitech Webcam C270
+        '046d:082d',    // Logitech HD Pro Webcam C920
+        '046d:0843',    // Logitech Webcam C930e
+
+        // Microsoft webcams
+        '045e:0810',    // Microsoft LifeCam HD-3000
+        '045e:0779',    // Microsoft LifeCam HD-5000
+
+        // Generic UVC cameras (USB Video Class)
+        // These often have class code 0e (video)
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Camera USB Class Codes
+    |--------------------------------------------------------------------------
+    |
+    | USB device class codes that indicate a camera/video device.
+    | Class 0e = Video, Subclass 01 = Video Control
+    |
+    */
+    'camera_usb_classes' => [
+        '0e',           // USB Video Class (UVC)
+    ],
 
 ];

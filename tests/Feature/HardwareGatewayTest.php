@@ -202,6 +202,58 @@ class HardwareGatewayTest extends TestCase
     }
 
     /**
+     * Unbind should be idempotent: if gateway reports device is already unbound,
+     * sync the database state and return success.
+     */
+    public function test_unbind_is_idempotent_when_device_already_unbound_on_gateway(): void
+    {
+        $node = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()->for($node)->bound()->create(['busid' => '1-1']);
+
+        // Gateway returns 400 because device is not actually bound
+        Http::fake([
+            'http://192.168.50.6:8000/unbind' => Http::response([
+                'detail' => 'usbip: error: device is not bound to usbip-host driver',
+            ], 400),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/hardware/devices/{$device->id}/unbind");
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::AVAILABLE, $device->status);
+    }
+
+    /**
+     * Bind should be idempotent: if gateway reports device is already bound,
+     * sync the database state and return success.
+     */
+    public function test_bind_is_idempotent_when_device_already_bound_on_gateway(): void
+    {
+        $node = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()->for($node)->available()->create(['busid' => '1-1']);
+
+        // Gateway returns 400 because device is already bound
+        Http::fake([
+            'http://192.168.50.6:8000/bind' => Http::response([
+                'detail' => 'usbip: error: device on busid 1-1 is already bound to usbip-host',
+            ], 400),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/hardware/devices/{$device->id}/bind");
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
+    }
+
+    /**
      * When the discovery service itself throws an exception the controller
      * should catch it, log it, and return a 500 JSON response so the
      * frontend can display an error rather than bubbling an uncaught error.

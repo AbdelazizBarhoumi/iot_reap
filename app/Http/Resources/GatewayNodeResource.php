@@ -26,6 +26,7 @@ class GatewayNodeResource extends JsonResource
             'is_verified' => $this->is_verified,
             'proxmox_vmid' => $this->proxmox_vmid,
             'proxmox_node' => $this->proxmox_node,
+            'proxmox_camera_api_url' => $this->proxmox_camera_api_url,
             'description' => $this->description,
             'last_seen_at' => $this->last_seen_at?->toIso8601String(),
             'devices_count' => $this->whenLoaded('usbDevices', fn() => $this->usbDevices->count(), 0),

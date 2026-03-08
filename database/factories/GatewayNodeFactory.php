@@ -83,4 +83,14 @@ class GatewayNodeFactory extends Factory
             'is_verified' => false,
         ]);
     }
+
+    /**
+     * Configure with Proxmox camera API URL.
+     */
+    public function withCameraApi(string $url): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'proxmox_camera_api_url' => $url,
+        ]);
+    }
 }

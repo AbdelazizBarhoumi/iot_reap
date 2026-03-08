@@ -81,6 +81,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Set the user role to teacher.
+     */
+    public function teacher(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::TEACHER->value,
+        ]);
+    }
+
+    /**
      * Set the user role to security officer.
      */
     public function securityOfficer(): static

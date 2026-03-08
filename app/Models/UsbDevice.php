@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * USB device model for USB/IP devices on gateway nodes.
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $vendor_id
  * @property string $product_id
  * @property string $name
+ * @property bool $is_camera
  * @property UsbDeviceStatus $status
  * @property string|null $attached_to
  * @property string|null $attached_session_id
@@ -41,6 +43,7 @@ class UsbDevice extends Model
         'vendor_id',
         'product_id',
         'name',
+        'is_camera',
         'status',
         'attached_to',
         'attached_session_id',
@@ -56,6 +59,7 @@ class UsbDevice extends Model
 
     protected $casts = [
         'gateway_node_id' => 'integer',
+        'is_camera' => 'boolean',
         'status' => UsbDeviceStatus::class,
         'pending_vmid' => 'integer',
         'pending_server_id' => 'integer',
@@ -92,6 +96,22 @@ class UsbDevice extends Model
     public function reservations(): HasMany
     {
         return $this->hasMany(UsbDeviceReservation::class);
+    }
+
+    /**
+     * Get the camera entity created from this USB device (if any).
+     */
+    public function camera(): HasOne
+    {
+        return $this->hasOne(Camera::class);
+    }
+
+    /**
+     * Check if this USB device has been converted to a Camera entity.
+     */
+    public function hasCamera(): bool
+    {
+        return $this->camera()->exists();
     }
 
     /**
@@ -187,6 +207,22 @@ class UsbDevice extends Model
     }
 
     /**
+     * Scope: Get only camera devices.
+     */
+    public function scopeCameras($query)
+    {
+        return $query->where('is_camera', true);
+    }
+
+    /**
+     * Scope: Get only non-camera devices (regular USB devices).
+     */
+    public function scopeNonCameras($query)
+    {
+        return $query->where('is_camera', false);
+    }
+
+    /**
      * Check if device is disconnected (physically unplugged while attached).
      */
     public function isDisconnected(): bool
@@ -249,5 +285,51 @@ class UsbDevice extends Model
         $this->pending_vm_name = null;
         $this->pending_since = null;
         $this->save();
+    }
+
+    /**
+     * Check if a VID:PID combination indicates a camera device.
+     *
+     * Compares against known camera patterns in config/gateway.php.
+     * Supports exact matches and wildcard patterns (e.g., '0c45:*').
+     */
+    public static function isKnownCamera(string $vendorId, string $productId): bool
+    {
+        $patterns = config('gateway.camera_vid_pids', []);
+        $vidPid = strtolower("{$vendorId}:{$productId}");
+        $vendorOnly = strtolower("{$vendorId}:*");
+
+        foreach ($patterns as $pattern) {
+            $pattern = strtolower($pattern);
+
+            // Exact match
+            if ($pattern === $vidPid) {
+                return true;
+            }
+
+            // Vendor wildcard match (e.g., '0c45:*')
+            if ($pattern === $vendorOnly) {
+                return true;
+            }
+
+            // Wildcard pattern check
+            if (str_contains($pattern, '*')) {
+                $regex = '/^' . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/';
+                if (preg_match($regex, $vidPid)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this device can be bound/attached to VMs.
+     * Camera devices cannot be bound to VMs.
+     */
+    public function canBeAttachedToVm(): bool
+    {
+        return !$this->is_camera;
     }
 }

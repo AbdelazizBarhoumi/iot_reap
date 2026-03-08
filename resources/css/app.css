@@ -234,9 +234,6 @@
             max-width: 1400px;
         }
     }
-
-        --primary: oklch(0.60 0.12 180);
-        --primary-foreground: oklch(0.15 0.05 260);
     }
 
 

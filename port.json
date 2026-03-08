@@ -1,1 +1,0 @@
-{"data":{"exitcode":0,"exited":1,"out-data":"\r\nC:\\Windows\\system32>C:\\PROGRA~1\\USBIP-~1\\usbip.exe port \r\nImported USB devices\r\n====================\r\nPort 00: <Device in Use> at High Speed(480Mbps)\r\n       SanDisk Corp. : Cruzer Blade (0781:5567)\r\n       ?-? -> unknown host, remote port and remote busid\r\n           -> remote bus/dev ???/???\r\n"}}

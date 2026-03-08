@@ -29,14 +29,22 @@ Route::get('/', function (\App\Services\CourseService $courseService) {
 })->name('home');
 
 Route::get('dashboard', function () {
+    $user = auth()->user();
+
+    // Teachers go to their teaching dashboard
+    if ($user->hasRole(\App\Enums\UserRole::TEACHER)) {
+        return redirect()->route('teaching.index');
+    }
+
+    // Engineers & admins see the VM browser dashboard
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::post('/browser-log', [BrowserLogController::class, 'store']);
 
 
-// VM session pages and API (unified routing)
-Route::middleware(['auth', 'verified'])->group(function () {
+// VM session pages and API (engineers & admins only)
+Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
     // Sessions - controller handles both JSON and Inertia responses
     Route::get('/sessions', [VMSessionController::class, 'index'])->name('sessions.index');
     Route::post('/sessions', [VMSessionController::class, 'store'])->name('sessions.store');
@@ -78,15 +86,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/devices/{device}/attach', [HardwareController::class, 'attach'])->name('devices.attach');
         Route::post('/devices/{device}/detach', [HardwareController::class, 'detach'])->name('devices.detach');
         Route::post('/devices/{device}/cancel-pending', [HardwareController::class, 'cancelPending'])->name('devices.cancel-pending');
+        Route::post('/devices/{device}/convert-to-camera', [HardwareController::class, 'convertToCamera'])->name('devices.convert-to-camera');
+        Route::put('/devices/{device}/camera-settings', [HardwareController::class, 'updateCameraSettings'])->name('devices.update-camera-settings');
+        Route::delete('/devices/{device}/camera', [HardwareController::class, 'removeCamera'])->name('devices.remove-camera');
     });
 
     // Session-specific camera management (view streams, PTZ control)
     Route::prefix('sessions/{session}/cameras')->name('sessions.cameras.')->group(function () {
         Route::get('/', [SessionCameraController::class, 'index'])->name('index');
+        Route::get('/resolutions', [SessionCameraController::class, 'resolutions'])->name('resolutions');
         Route::get('/{camera}', [SessionCameraController::class, 'show'])->name('show');
         Route::post('/{camera}/control', [SessionCameraController::class, 'acquireControl'])->name('control.acquire');
         Route::delete('/{camera}/control', [SessionCameraController::class, 'releaseControl'])->name('control.release');
         Route::post('/{camera}/move', [SessionCameraController::class, 'move'])->name('move');
+        Route::put('/{camera}/resolution', [SessionCameraController::class, 'changeResolution'])->name('resolution');
+        Route::post('/{camera}/whep', [SessionCameraController::class, 'whepProxy'])->name('whep');
+        Route::get('/{camera}/hls/{path?}', [SessionCameraController::class, 'hlsProxy'])->where('path', '.*')->name('hls');
     });
 
     // Session-specific hardware management (attach/detach devices to session)
@@ -213,7 +228,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Teaching Routes (Teachers & Admins)
-Route::middleware(['auth', 'verified'])->prefix('teaching')->name('teaching.')->group(function () {
+Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('teaching.')->group(function () {
     // Dashboard and course management
     Route::get('/', [\App\Http\Controllers\TeachingController::class, 'index'])->name('index');
     Route::get('/create', [\App\Http\Controllers\TeachingController::class, 'create'])->name('create');

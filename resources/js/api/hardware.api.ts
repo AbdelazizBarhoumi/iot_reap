@@ -2,6 +2,7 @@
  * USB/IP Hardware Gateway API module.
  */
 
+import type { Camera } from '../types/camera.types';
 import type {
   AttachDeviceRequest,
   CreateGatewayNodeRequest,
@@ -113,6 +114,26 @@ export const hardwareApi = {
    */
   async cancelPendingAttachment(deviceId: number): Promise<ActionResponse> {
     const response = await client.post<ActionResponse>(`/hardware/devices/${deviceId}/cancel-pending`);
+    return response.data;
+  },
+
+  /**
+   * Convert a USB device to a Camera entity.
+   * Creates a Camera record linked to the USB device for streaming.
+   */
+  async convertToCamera(deviceId: number): Promise<ActionResponse & { camera?: Camera }> {
+    const response = await client.post<ActionResponse & { camera?: Camera }>(
+      `/hardware/devices/${deviceId}/convert-to-camera`
+    );
+    return response.data;
+  },
+
+  /**
+   * Remove camera registration from a USB device.
+   * Deletes the Camera record and unmarks the device.
+   */
+  async removeCamera(deviceId: number): Promise<ActionResponse> {
+    const response = await client.delete<ActionResponse>(`/hardware/devices/${deviceId}/camera`);
     return response.data;
   },
 

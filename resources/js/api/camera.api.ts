@@ -9,6 +9,7 @@ import type {
   CameraListResponse,
   CameraPTZDirection,
   CameraReservation,
+  CameraResolutionPreset,
   CreateCameraReservationRequest,
   ApproveCameraReservationRequest,
   CreateAdminCameraBlockRequest,
@@ -77,6 +78,40 @@ export const cameraApi = {
     await client.post(`/sessions/${sessionId}/cameras/${cameraId}/move`, {
       direction,
     });
+  },
+
+  /**
+   * Get available resolution presets for cameras.
+   */
+  async getResolutions(sessionId: string): Promise<CameraResolutionPreset[]> {
+    const response = await client.get<ApiResponse<CameraResolutionPreset[]>>(
+      `/sessions/${sessionId}/cameras/resolutions`,
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Change camera resolution. Pass 'auto' or a specific preset.
+   * Restarts the stream with new settings.
+   */
+  async changeResolution(
+    sessionId: string,
+    cameraId: number,
+    preset: CameraResolutionPreset | 'auto',
+  ): Promise<Camera> {
+    const body = preset === 'auto'
+      ? { mode: 'auto' }
+      : {
+          mode: 'manual',
+          width: preset.width,
+          height: preset.height,
+          framerate: preset.recommended_framerate,
+        };
+    const response = await client.put<CameraActionResponse>(
+      `/sessions/${sessionId}/cameras/${cameraId}/resolution`,
+      body,
+    );
+    return response.data.data;
   },
 };
 

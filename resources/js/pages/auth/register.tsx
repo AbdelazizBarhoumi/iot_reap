@@ -89,10 +89,25 @@ export default function Register() {
                                 />
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="role">I am a</Label>
+                                <select
+                                    id="role"
+                                    name="role"
+                                    tabIndex={5}
+                                    defaultValue="engineer"
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    <option value="engineer">Engineer</option>
+                                    <option value="teacher">Teacher</option>
+                                </select>
+                                <InputError message={errors.role} />
+                            </div>
+
                             <Button
                                 type="submit"
                                 className="mt-2 w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                                tabIndex={5}
+                                tabIndex={6}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}

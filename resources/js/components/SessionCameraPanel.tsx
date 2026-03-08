@@ -34,7 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSessionCameras } from '@/hooks/useSessionCameras';
-import type { Camera, CameraPTZDirection } from '@/types/camera.types';
+import type { Camera, CameraPTZDirection, CameraResolutionPreset } from '@/types/camera.types';
 
 interface SessionCameraPanelProps {
   sessionId: string;
@@ -53,6 +53,9 @@ export function SessionCameraPanel({ sessionId, isActive }: SessionCameraPanelPr
     releaseControl,
     move,
     refetch: _refetch,
+    resolutions,
+    changeResolution,
+    changingResolution,
   } = useSessionCameras(sessionId);
 
   if (loading) {
@@ -137,6 +140,15 @@ export function SessionCameraPanel({ sessionId, isActive }: SessionCameraPanelPr
     }
   };
 
+  const handleResolutionChange = async (preset: CameraResolutionPreset | 'auto') => {
+    if (!selectedCamera) return;
+    try {
+      await changeResolution(selectedCamera.id, preset);
+    } catch {
+      // Error is set in the hook
+    }
+  };
+
   const isControlledByMe = (camera: Camera) =>
     camera.control?.session_id === sessionId;
 
@@ -208,7 +220,13 @@ export function SessionCameraPanel({ sessionId, isActive }: SessionCameraPanelPr
             {/* Video + PTZ side by side */}
             <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
               {/* Stream viewer */}
-              <CameraViewer camera={selectedCamera} />
+              <CameraViewer
+                camera={selectedCamera}
+                sessionId={sessionId}
+                resolutions={resolutions}
+                onResolutionChange={handleResolutionChange}
+                changingResolution={changingResolution}
+              />
 
               {/* PTZ Controls — only shown if user controls this camera */}
               {isControlledByMe(selectedCamera) && selectedCamera.ptz_capable && (
