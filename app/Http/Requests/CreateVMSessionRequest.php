@@ -47,8 +47,8 @@ class CreateVMSessionRequest extends FormRequest
             'duration_minutes' => [
                 'nullable',
                 'integer',
-                'min:' . config('sessions.min_duration_minutes', 30),
-                'max:' . config('sessions.max_duration_minutes', 240),
+                'min:'.config('sessions.min_duration_minutes', 30),
+                'max:'.config('sessions.max_duration_minutes', 240),
             ],
 
             // VM credentials (used when connecting via Guacamole)
@@ -79,9 +79,9 @@ class CreateVMSessionRequest extends FormRequest
         return [
             'node_id.required' => 'node_id is required.',
             'vmid.required' => 'vmid is required.',
-            'duration_minutes.min' => 'Session duration must be at least ' . config('sessions.min_duration_minutes', 30) . ' minutes.',
-            'duration_minutes.max' => 'Session duration cannot exceed ' . config('sessions.max_duration_minutes', 240) . ' minutes.',
-                        'use_existing.boolean' => 'The use_existing flag must be a boolean value.',
+            'duration_minutes.min' => 'Session duration must be at least '.config('sessions.min_duration_minutes', 30).' minutes.',
+            'duration_minutes.max' => 'Session duration cannot exceed '.config('sessions.max_duration_minutes', 240).' minutes.',
+            'use_existing.boolean' => 'The use_existing flag must be a boolean value.',
         ];
     }
 

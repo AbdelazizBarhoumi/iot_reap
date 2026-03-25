@@ -6,8 +6,8 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\ProxmoxServerRepository;
 use App\Services\GuacamoleClient;
-use App\Services\GuacamoleClientInterface;
 use App\Services\GuacamoleClientFake;
+use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientInterface;
@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
 
             // If no credentials anywhere, use the fake client (tests / local dev)
             if (! $tokenId || ! $tokenSecret) {
-                return new \App\Services\ProxmoxClientFake();
+                return new \App\Services\ProxmoxClientFake;
             }
 
             // Build an in-memory server model from config
@@ -64,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // For backward compatibility, bind concrete ProxmoxClient to the interface
-        $this->app->singleton(ProxmoxClient::class, fn($app) => $app->make(ProxmoxClientInterface::class));
+        $this->app->singleton(ProxmoxClient::class, fn ($app) => $app->make(ProxmoxClientInterface::class));
 
         // Bind ProxmoxLoadBalancer with ProxmoxClientInterface dependency
         $this->app->bind(ProxmoxLoadBalancer::class, function ($app) {
@@ -72,7 +72,6 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(ProxmoxClientInterface::class)
             );
         });
-
 
         // Bind new multi-server support services
         $this->app->singleton(ProxmoxServerRepository::class);
@@ -92,15 +91,15 @@ class AppServiceProvider extends ServiceProvider
             $password = config('guacamole.password');
 
             // If no credentials configured, use the fake client (tests / local dev)
-            if (!$username || !$password) {
-                return new GuacamoleClientFake();
+            if (! $username || ! $password) {
+                return new GuacamoleClientFake;
             }
 
-            return new GuacamoleClient();
+            return new GuacamoleClient;
         });
 
         // For backward compatibility, bind concrete GuacamoleClient to the interface
-        $this->app->singleton(GuacamoleClient::class, fn($app) => $app->make(GuacamoleClientInterface::class));
+        $this->app->singleton(GuacamoleClient::class, fn ($app) => $app->make(GuacamoleClientInterface::class));
     }
 
     /**
@@ -110,8 +109,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Disable resource wrapping for Inertia
         JsonResource::withoutWrapping();
-        
-        //model strict
+
+        // model strict
         Model::shouldBeStrict();
         $this->configureDefaults();
 
@@ -119,25 +118,25 @@ class AppServiceProvider extends ServiceProvider
         $this->app->make(Router::class)->aliasMiddleware('role', \App\Http\Middleware\EnsureRole::class);
 
         // gates based on UserRole enum (names per phase-1 spec)
-        Gate::define('admin-only', fn(User $user) => $user->hasRole(UserRole::ADMIN));
-        Gate::define('security-officer-only', fn(User $user) => $user->hasRole(UserRole::SECURITY_OFFICER));
-        Gate::define('provision-vm', fn(User $user) => $user->hasAnyRole([
+        Gate::define('admin-only', fn (User $user) => $user->hasRole(UserRole::ADMIN));
+        Gate::define('security-officer-only', fn (User $user) => $user->hasRole(UserRole::SECURITY_OFFICER));
+        Gate::define('provision-vm', fn (User $user) => $user->hasAnyRole([
             UserRole::ENGINEER->value,
             UserRole::ADMIN->value,
         ]));
-        Gate::define('create-vm-session', fn(User $user) => $user->hasAnyRole([
+        Gate::define('create-vm-session', fn (User $user) => $user->hasAnyRole([
             UserRole::ENGINEER->value,
             UserRole::ADMIN->value,
         ]));
 
         // Teaching gate — only teachers and admins can manage courses
-        Gate::define('teach', fn(User $user) => $user->hasAnyRole([
+        Gate::define('teach', fn (User $user) => $user->hasAnyRole([
             UserRole::TEACHER->value,
             UserRole::ADMIN->value,
         ]));
 
         // generic role gate for programmatic checks: Gate::allows('role', 'admin')
-        Gate::define('role', fn(User $user, string $role) => $user->hasRole($role));
+        Gate::define('role', fn (User $user, string $role) => $user->hasRole($role));
     }
 
     /**

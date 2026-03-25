@@ -84,7 +84,7 @@ class CourseControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $course = Course::factory()->approved()->create();
-        
+
         CourseEnrollment::factory()->create([
             'user_id' => $user->id,
             'course_id' => $course->id,
@@ -102,7 +102,7 @@ class CourseControllerTest extends TestCase
         $course = Course::factory()->approved()->create();
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
-        
+
         CourseEnrollment::factory()->create([
             'user_id' => $user->id,
             'course_id' => $course->id,
@@ -137,7 +137,7 @@ class CourseControllerTest extends TestCase
         $course = Course::factory()->approved()->create();
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
-        
+
         CourseEnrollment::factory()->create([
             'user_id' => $user->id,
             'course_id' => $course->id,

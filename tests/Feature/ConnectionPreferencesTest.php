@@ -50,18 +50,18 @@ class ConnectionPreferencesTest extends TestCase
     public function test_user_gets_all_saved_profiles(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Work',
-            'is_default'      => true,
-            'parameters'      => ['port' => 3389, 'width' => 1920],
+            'profile_name' => 'Work',
+            'is_default' => true,
+            'parameters' => ['port' => 3389, 'width' => 1920],
         ]);
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Home',
-            'is_default'      => false,
-            'parameters'      => ['port' => 3390],
+            'profile_name' => 'Home',
+            'is_default' => false,
+            'parameters' => ['port' => 3390],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -84,11 +84,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_user_gets_profiles_for_protocol(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
-            'is_default'      => true,
-            'parameters'      => ['port' => 3389],
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => ['port' => 3389],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -115,11 +115,11 @@ class ConnectionPreferencesTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/connection-preferences/rdp', [
                 'profile_name' => 'Work RDP',
-                'is_default'   => true,
-                'parameters'   => [
-                    'port'             => 3389,
-                    'width'            => 1920,
-                    'height'           => 1080,
+                'is_default' => true,
+                'parameters' => [
+                    'port' => 3389,
+                    'width' => 1920,
+                    'height' => 1080,
                     'disable-wallpaper' => true,
                 ],
             ]);
@@ -131,26 +131,26 @@ class ConnectionPreferencesTest extends TestCase
         $response->assertJsonPath('data.parameters.port', 3389);
 
         $this->assertDatabaseHas('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Work RDP',
+            'profile_name' => 'Work RDP',
         ]);
     }
 
     public function test_cannot_create_duplicate_profile_name(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Work',
-            'is_default'      => true,
-            'parameters'      => [],
+            'profile_name' => 'Work',
+            'is_default' => true,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
             ->postJson('/connection-preferences/rdp', [
                 'profile_name' => 'Work',
-                'parameters'   => ['port' => 3389],
+                'parameters' => ['port' => 3389],
             ]);
 
         $response->assertUnprocessable();
@@ -161,11 +161,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_user_can_update_profile(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
-            'is_default'      => true,
-            'parameters'      => ['port' => 3389],
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => ['port' => 3389],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -191,11 +191,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_update_validates_port_range(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
-            'is_default'      => true,
-            'parameters'      => [],
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -210,11 +210,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_update_validates_display_dimensions(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
-            'is_default'      => true,
-            'parameters'      => [],
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -228,11 +228,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_update_rejects_invalid_security_mode(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
-            'is_default'      => true,
-            'parameters'      => [],
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -249,11 +249,11 @@ class ConnectionPreferencesTest extends TestCase
     public function test_user_can_delete_profile(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'ToDelete',
-            'is_default'      => false,
-            'parameters'      => [],
+            'profile_name' => 'ToDelete',
+            'is_default' => false,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -261,9 +261,9 @@ class ConnectionPreferencesTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseMissing('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'ToDelete',
+            'profile_name' => 'ToDelete',
         ]);
     }
 
@@ -280,18 +280,18 @@ class ConnectionPreferencesTest extends TestCase
     public function test_user_can_set_profile_as_default(): void
     {
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Work',
-            'is_default'      => true,
-            'parameters'      => [],
+            'profile_name' => 'Work',
+            'is_default' => true,
+            'parameters' => [],
         ]);
         GuacamoleConnectionPreference::create([
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Home',
-            'is_default'      => false,
-            'parameters'      => [],
+            'profile_name' => 'Home',
+            'is_default' => false,
+            'parameters' => [],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -301,14 +301,14 @@ class ConnectionPreferencesTest extends TestCase
 
         // Home should now be default, Work should not
         $this->assertDatabaseHas('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
-            'profile_name'    => 'Home',
-            'is_default'      => true,
+            'user_id' => $this->user->id,
+            'profile_name' => 'Home',
+            'is_default' => true,
         ]);
         $this->assertDatabaseHas('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
-            'profile_name'    => 'Work',
-            'is_default'      => false,
+            'user_id' => $this->user->id,
+            'profile_name' => 'Work',
+            'is_default' => false,
         ]);
     }
 
@@ -320,8 +320,8 @@ class ConnectionPreferencesTest extends TestCase
         $this->actingAs($this->user)
             ->postJson('/connection-preferences/rdp', [
                 'profile_name' => 'Default',
-                'is_default'   => true,
-                'parameters'   => ['port' => 3389],
+                'is_default' => true,
+                'parameters' => ['port' => 3389],
             ])
             ->assertCreated();
 
@@ -329,22 +329,22 @@ class ConnectionPreferencesTest extends TestCase
         $this->actingAs($this->user)
             ->postJson('/connection-preferences/vnc', [
                 'profile_name' => 'Default',
-                'is_default'   => true,
-                'parameters'   => ['port' => 5901],
+                'is_default' => true,
+                'parameters' => ['port' => 5901],
             ])
             ->assertCreated();
 
         // RDP and VNC profiles are stored separately
         $this->assertDatabaseCount('guacamole_connection_preferences', 2);
         $this->assertDatabaseHas('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'rdp',
-            'profile_name'    => 'Default',
+            'profile_name' => 'Default',
         ]);
         $this->assertDatabaseHas('guacamole_connection_preferences', [
-            'user_id'         => $this->user->id,
+            'user_id' => $this->user->id,
             'vm_session_type' => 'vnc',
-            'profile_name'    => 'Default',
+            'profile_name' => 'Default',
         ]);
     }
 }

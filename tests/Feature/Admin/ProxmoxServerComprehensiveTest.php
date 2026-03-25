@@ -80,7 +80,6 @@ class ProxmoxServerComprehensiveTest extends TestCase
         // database should contain both nodes
         $this->assertDatabaseCount('proxmox_nodes', 2);
 
-
         // Step 2: Admin registers second Proxmox server
         $server2Data = [
             'name' => 'DR Cluster',

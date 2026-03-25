@@ -26,7 +26,7 @@ class ProxmoxLiveDiagnosticTest extends TestCase
             $this->markTestSkipped('PROXMOX_LIVE_TEST not enabled');
         }
 
-        if (!file_exists(base_path('docs/prox.md'))) {
+        if (! file_exists(base_path('docs/prox.md'))) {
             $this->markTestSkipped('docs/prox.md not found — cannot read Proxmox credentials');
         }
     }
@@ -43,7 +43,7 @@ class ProxmoxLiveDiagnosticTest extends TestCase
                 'host' => $node['ip'],
                 'port' => (int) ($node['port'] ?? 8006),
                 'realm' => explode('@', $node['user'])[1] ?? 'pam',
-                'token_id' => $node['user'] . '!' . $node['token_name'],
+                'token_id' => $node['user'].'!'.$node['token_name'],
                 'token_secret' => $node['token'],
                 'verify_ssl' => false,
                 'is_active' => true,
@@ -56,7 +56,7 @@ class ProxmoxLiveDiagnosticTest extends TestCase
             $this->assertIsArray($clusterNodes, 'getNodes did not return an array');
 
             // Print a short summary to test output for user visibility
-            fwrite(STDOUT, "\nProxmox server '{$server->name}' ({$server->host}:{$server->port}) returned " . count($clusterNodes) . " nodes.\n");
+            fwrite(STDOUT, "\nProxmox server '{$server->name}' ({$server->host}:{$server->port}) returned ".count($clusterNodes)." nodes.\n");
 
             // For each node returned by the cluster, list top 3 VMs (non-destructive)
             foreach (array_slice($clusterNodes, 0, 3) as $clusterNode) {
@@ -68,11 +68,11 @@ class ProxmoxLiveDiagnosticTest extends TestCase
                 $vms = $client->getVMs($nodeName);
                 $this->assertIsArray($vms);
 
-                fwrite(STDOUT, "  Node: {$nodeName} — VMs: " . count($vms) . "\n");
+                fwrite(STDOUT, "  Node: {$nodeName} — VMs: ".count($vms)."\n");
                 // show first VM id/name if available
                 if (! empty($vms)) {
                     $first = $vms[0];
-                    fwrite(STDOUT, "    - VMID: {$first['vmid']} name: " . ($first['name'] ?? '(no name)') . " status: " . ($first['status'] ?? 'unknown') . "\n");
+                    fwrite(STDOUT, "    - VMID: {$first['vmid']} name: ".($first['name'] ?? '(no name)').' status: '.($first['status'] ?? 'unknown')."\n");
                 }
             }
 
@@ -121,7 +121,7 @@ class ProxmoxLiveDiagnosticTest extends TestCase
 
     private function extractValue(string $block, string $label): ?string
     {
-        if (preg_match('/' . preg_quote($label, '/') . '\s*:\s*(.+)/i', $block, $m)) {
+        if (preg_match('/'.preg_quote($label, '/').'\s*:\s*(.+)/i', $block, $m)) {
             return trim($m[1]);
         }
 

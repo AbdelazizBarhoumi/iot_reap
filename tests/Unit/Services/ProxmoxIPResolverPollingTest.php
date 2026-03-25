@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 /**
  * Comprehensive polling tests for ProxmoxIPResolver.
- * 
+ *
  * These tests specifically exercise the polling loop and edge cases:
  *  - Multi-attempt polling before IP is available
  *  - VM status transitions during polling
@@ -20,16 +20,18 @@ use Tests\TestCase;
 class ProxmoxIPResolverPollingTest extends TestCase
 {
     private ProxmoxClientFake $proxmoxFake;
+
     private ProxmoxIPResolver $resolver;
+
     private ProxmoxServer $server;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->proxmoxFake = new ProxmoxClientFake();
-        $this->resolver    = new ProxmoxIPResolver($this->proxmoxFake);
-        $this->server      = ProxmoxServer::factory()->make();
+        $this->proxmoxFake = new ProxmoxClientFake;
+        $this->resolver = new ProxmoxIPResolver($this->proxmoxFake);
+        $this->server = ProxmoxServer::factory()->make();
     }
 
     /**
@@ -45,9 +47,9 @@ class ProxmoxIPResolverPollingTest extends TestCase
         $this->proxmoxFake->registerVM('pve-1', $vmId, 'running');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -61,7 +63,7 @@ class ProxmoxIPResolverPollingTest extends TestCase
     /**
      * VM transitions from 'stopped' → 'provisioning' → 'running'.
      * Resolver should poll through all states and eventually get IP.
-     * 
+     *
      * Note: This test actually invokes sleep() once because VM starts as stopped.
      */
     public function test_vm_state_transition_stopped_to_running(): void
@@ -72,15 +74,15 @@ class ProxmoxIPResolverPollingTest extends TestCase
         // Simulate async VM boot: move to running after being queried once
         // We'll call startVM manually to simulate the listener's call
         $this->proxmoxClient = $this->proxmoxFake;
-        
+
         $this->proxmoxFake->startVM('pve-1', $vmId);
         // Now VM is running and should have a fallback IP assigned by the fake
         $this->proxmoxFake->setVMIPAddress('pve-1', $vmId, '192.168.100.50');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 30,
         );
 
@@ -101,9 +103,9 @@ class ProxmoxIPResolverPollingTest extends TestCase
         $this->expectExceptionMessageMatches('/did not obtain an IP address within 1 seconds/');
 
         $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 1,
         );
     }
@@ -120,21 +122,21 @@ class ProxmoxIPResolverPollingTest extends TestCase
         $startTime = microtime(true);
 
         $this->expectException(ProxmoxApiException::class);
-        
+
         try {
             $this->resolver->resolveVMIP(
-                server:         $this->server,
-                nodeId:         'pve-1',
-                vmId:           $vmId,
+                server: $this->server,
+                nodeId: 'pve-1',
+                vmId: $vmId,
                 maxWaitSeconds: 2,
             );
         } catch (ProxmoxApiException $e) {
             $elapsedSeconds = microtime(true) - $startTime;
-            
+
             // Should have taken at least 2 seconds (due to 2-second poll intervals)
             // allowing some tolerance for overhead
             $this->assertGreaterThanOrEqual(1.0, $elapsedSeconds);
-            
+
             throw $e; // Re-throw for @expectException to catch
         }
     }
@@ -146,21 +148,21 @@ class ProxmoxIPResolverPollingTest extends TestCase
     {
         $vm1 = 310;
         $vm2 = 311;
-        
+
         $this->proxmoxFake->registerVM('pve-1', $vm1, 'running', '192.168.1.10');
         $this->proxmoxFake->registerVM('pve-1', $vm2, 'running', '192.168.1.11');
 
         $ip1 = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vm1,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vm1,
             maxWaitSeconds: 10,
         );
 
         $ip2 = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vm2,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vm2,
             maxWaitSeconds: 10,
         );
 
@@ -174,21 +176,21 @@ class ProxmoxIPResolverPollingTest extends TestCase
     public function test_resolves_same_vmid_on_different_nodes(): void
     {
         $vmId = 320;
-        
+
         $this->proxmoxFake->registerVM('pve-1', $vmId, 'running', '10.0.0.1');
         $this->proxmoxFake->registerVM('pve-2', $vmId, 'running', '10.0.0.2');
 
         $ip1 = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
         $ip2 = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-2',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-2',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -203,18 +205,18 @@ class ProxmoxIPResolverPollingTest extends TestCase
     public function test_vm_with_delayed_dhcp_assignment(): void
     {
         $vmId = 330;
-        
+
         // Register as running but the fake will return null initially (guest agent slow)
         // We'll manually set the IP after a moment to simulate DHCP assigning it
         $this->proxmoxFake->registerVM('pve-1', $vmId, 'running');
-        
+
         // Immediately assign IP so we don't actually sleep
         $this->proxmoxFake->setVMIPAddress('pve-1', $vmId, '172.16.0.100');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -228,16 +230,16 @@ class ProxmoxIPResolverPollingTest extends TestCase
     public function test_vm_on_unregistered_node_times_out(): void
     {
         $vmId = 340;
-        
+
         // Don't register anything on 'pve-unknown-node'
-        
+
         $this->expectException(ProxmoxApiException::class);
         $this->expectExceptionMessageMatches('/did not obtain an IP address/');
 
         $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-unknown-node',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-unknown-node',
+            vmId: $vmId,
             maxWaitSeconds: 1,
         );
     }
@@ -253,9 +255,9 @@ class ProxmoxIPResolverPollingTest extends TestCase
 
         // Capture logs by checking that the resolver logs info/debug
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -276,9 +278,9 @@ class ProxmoxIPResolverPollingTest extends TestCase
         $startTime = microtime(true);
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 300, // Long timeout but IP is ready
         );
 
@@ -298,9 +300,9 @@ class ProxmoxIPResolverPollingTest extends TestCase
         $this->proxmoxFake->registerVM('pve-1', $vmId, 'running', '192.168.200.5');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 

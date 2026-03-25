@@ -21,7 +21,7 @@ return new class extends Migration
             $table->json('resources')->nullable(); // Array of resource links
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
-            
+
             $table->index(['module_id', 'sort_order']);
         });
     }

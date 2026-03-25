@@ -27,6 +27,7 @@ interface UseHardwareGatewayResult {
   unbindDevice: (deviceId: number) => Promise<boolean>;
   attachDevice: (deviceId: number, data: AttachDeviceRequest) => Promise<boolean>;
   detachDevice: (deviceId: number) => Promise<boolean>;
+  cancelPendingAttachment: (deviceId: number) => Promise<boolean>;
   markAsCamera: (deviceId: number) => Promise<boolean>;
   removeCamera: (deviceId: number) => Promise<boolean>;
   discoverGateways: () => Promise<boolean>;
@@ -217,6 +218,30 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
     }
   }, [fetchData]);
 
+  const cancelPendingAttachment = useCallback(async (deviceId: number): Promise<boolean> => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const result = await hardwareApi.cancelPendingAttachment(deviceId);
+      if (result.success) {
+        toast.success('Pending attachment cancelled');
+        await fetchData();
+        return true;
+      }
+      const errorMsg = result.message || 'Cancel failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
+      return false;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Cancel failed';
+      toast.error(message);
+      setError(message);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchData]);
+
   const discoverGateways = useCallback(async (): Promise<boolean> => {
     setActionLoading(true);
     setError(null);
@@ -340,6 +365,7 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
     unbindDevice,
     attachDevice,
     detachDevice,
+    cancelPendingAttachment,
     markAsCamera,
     removeCamera,
     discoverGateways,

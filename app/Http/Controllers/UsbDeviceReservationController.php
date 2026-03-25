@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 /**
  * Controller for USB device reservations.
- * 
+ *
  * Users can request reservations, view their own reservations, and cancel them.
  */
 class UsbDeviceReservationController extends Controller
@@ -43,7 +43,7 @@ class UsbDeviceReservationController extends Controller
         $device = UsbDevice::with('gatewayNode')->findOrFail($request->validated('usb_device_id'));
 
         // Verify device is from a verified gateway
-        if (!$device->gatewayNode?->is_verified) {
+        if (! $device->gatewayNode?->is_verified) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device gateway is not verified',
@@ -81,7 +81,7 @@ class UsbDeviceReservationController extends Controller
     public function show(UsbDeviceReservation $reservation): JsonResponse
     {
         // Users can only view their own reservations
-        if ($reservation->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
         }
 
@@ -98,7 +98,7 @@ class UsbDeviceReservationController extends Controller
     public function cancel(UsbDeviceReservation $reservation): JsonResponse
     {
         // Users can only cancel their own reservations
-        if ($reservation->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
         }
 
@@ -130,7 +130,7 @@ class UsbDeviceReservationController extends Controller
             ->whereIn('status', ['pending', 'approved', 'active'])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('requested_start_at', [$startDate, $endDate])
-                  ->orWhereBetween('approved_start_at', [$startDate, $endDate]);
+                    ->orWhereBetween('approved_start_at', [$startDate, $endDate]);
             })
             ->with(['user'])
             ->orderBy('requested_start_at')

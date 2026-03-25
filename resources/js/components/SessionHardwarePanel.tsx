@@ -6,9 +6,11 @@
  * - List available devices with attach button
  * - Show queue status when device is in use
  * - Queue/dequeue functionality
+ * - Show blocking reasons with reservation request link
  */
 
-import { Usb, Plug, Unplug, Clock, Loader2, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Usb, Plug, Unplug, Clock, Loader2, AlertCircle, RefreshCw, ShieldAlert, CalendarClock, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,7 @@ interface DeviceRowProps {
   canAttach?: boolean;
   gatewayVerified?: boolean;
   reason?: string | null;
+  reservedUntil?: string | null;
 }
 
 function DeviceRow({
@@ -52,7 +55,11 @@ function DeviceRow({
   canAttach = false,
   gatewayVerified = true,
   reason,
+  reservedUntil,
 }: DeviceRowProps) {
+  // Check if device is blocked due to reservation
+  const isReserved = reason?.toLowerCase().includes('reserved');
+
   return (
     <div className="flex items-center justify-between py-2 border-b last:border-0">
       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -103,8 +110,36 @@ function DeviceRow({
           </TooltipProvider>
         )}
 
-        {reason && (
-          <p className="text-xs text-muted-foreground italic">{reason}</p>
+        {/* Show reservation block with helpful info */}
+        {isReserved && !isAttached && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="text-xs text-orange-600 border-orange-400">
+                    <CalendarClock className="h-3 w-3 mr-1" />
+                    Reserved
+                  </Badge>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{reason}</p>
+                {reservedUntil && (
+                  <p className="text-xs mt-1">
+                    Until: {new Date(reservedUntil).toLocaleString()}
+                  </p>
+                )}
+                <p className="text-xs mt-1 text-muted-foreground">
+                  Request a reservation to use this device
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* Show non-reservation reason */}
+        {reason && !isReserved && !isAttached && (
+          <p className="text-xs text-muted-foreground italic max-w-[120px] truncate">{reason}</p>
         )}
 
         {isAttached && onDetach && (
@@ -145,7 +180,31 @@ function DeviceRow({
           </Button>
         )}
 
-        {!isAttached && !isInQueue && !canAttach && device.status === 'attached' && onJoinQueue && (
+        {/* For reserved devices, show request reservation button instead of queue */}
+        {!isAttached && !isInQueue && !canAttach && isReserved && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  asChild
+                  className="h-7 px-2"
+                >
+                  <Link href="/my-reservations">
+                    <CalendarClock className="h-3 w-3 mr-1" />
+                    Reserve
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Request a reservation for this device</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {!isAttached && !isInQueue && !canAttach && device.status === 'attached' && !isReserved && onJoinQueue && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

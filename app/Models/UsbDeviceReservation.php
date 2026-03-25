@@ -138,8 +138,8 @@ class UsbDeviceReservation extends Model
     {
         $start = $this->effective_start;
         $end = $this->effective_end;
-        
-        if (!$start || !$end) {
+
+        if (! $start || ! $end) {
             return 0;
         }
 
@@ -154,7 +154,7 @@ class UsbDeviceReservation extends Model
         $effectiveStart = $this->effective_start;
         $effectiveEnd = $this->effective_end;
 
-        if (!$effectiveStart || !$effectiveEnd) {
+        if (! $effectiveStart || ! $effectiveEnd) {
             return false;
         }
 

@@ -61,11 +61,10 @@ class CameraReservationResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ]),
-            'approver' => $this->whenLoaded('approver', fn () =>
-                $this->approver ? [
-                    'id' => $this->approver->id,
-                    'name' => $this->approver->name,
-                ] : null
+            'approver' => $this->whenLoaded('approver', fn () => $this->approver ? [
+                'id' => $this->approver->id,
+                'name' => $this->approver->name,
+            ] : null
             ),
 
             'created_at' => $this->created_at->toIso8601String(),

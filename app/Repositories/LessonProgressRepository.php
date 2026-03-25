@@ -14,7 +14,7 @@ class LessonProgressRepository
     /**
      * Create or update progress for a lesson.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function upsert(string $userId, int $lessonId, array $data): LessonProgress
     {

@@ -6,7 +6,6 @@ use App\Exceptions\NoAvailableNodeException;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Repositories\ProxmoxServerRepository;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class ProxmoxServerSelector
 {
     private const CACHE_TTL = 30; // seconds
+
     private const OVERLOAD_THRESHOLD = 85; // percent
 
     /**
@@ -101,10 +101,10 @@ class ProxmoxServerSelector
         }
 
         // Sort by score descending (more nodes = faster)
-        usort($serverScores, fn($a, $b) => $b['score'] <=> $a['score']);
+        usort($serverScores, fn ($a, $b) => $b['score'] <=> $a['score']);
 
         Log::debug('Server scores calculated', [
-            'scores' => array_map(fn($s) => [
+            'scores' => array_map(fn ($s) => [
                 'server' => $s['server']->name,
                 'online_nodes' => $s['online_nodes'],
             ], $serverScores),
@@ -141,7 +141,7 @@ class ProxmoxServerSelector
         ]);
 
         throw new NoAvailableNodeException(
-            'All Proxmox servers are overloaded. No capacity available across ' . $servers->count() . ' clusters.'
+            'All Proxmox servers are overloaded. No capacity available across '.$servers->count().' clusters.'
         );
     }
 

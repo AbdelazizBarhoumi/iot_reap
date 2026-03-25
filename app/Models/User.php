@@ -3,12 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use App\Enums\UserRole;
 
 /**
  * App user model.
@@ -82,7 +82,7 @@ class User extends Authenticatable
     /**
      * Check whether the user has any of the supplied roles.
      *
-     * @param array<string|UserRole> $roles
+     * @param  array<string|UserRole>  $roles
      */
     public function hasAnyRole(array $roles): bool
     {

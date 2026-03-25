@@ -227,7 +227,7 @@ class SessionCameraController extends Controller
             $streamResult['skipped'] = false;
 
             // Only mark inactive if restart was attempted and failed
-            if (!$streamResult['success']) {
+            if (! $streamResult['success']) {
                 $camera->update(['status' => \App\Enums\CameraStatus::INACTIVE]);
             }
         }
@@ -279,7 +279,7 @@ class SessionCameraController extends Controller
         try {
             $response = Http::timeout(10)->get($upstreamUrl);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return response($response->body(), $response->status())
                     ->header('Content-Type', 'text/plain');
             }
@@ -297,32 +297,32 @@ class SessionCameraController extends Controller
             if (str_ends_with($streamPath, '.m3u8')) {
                 // Rewrite relative URLs in playlist to use our proxy
                 $proxyBase = "/sessions/{$sessionId}/cameras/{$cameraId}/hls/";
-                
+
                 // Rewrite segment URLs (lines that don't start with # and aren't already absolute)
                 $body = preg_replace(
                     '/^(?!\/)([^#\n][^\n]*\.(?:m3u8|ts|mp4|m4s))$/m',
-                    $proxyBase . '$1',
+                    $proxyBase.'$1',
                     $body
                 );
-                
+
                 // Rewrite EXT-X-MAP URI (init segment) - only if not already absolute
                 $body = preg_replace(
                     '/(#EXT-X-MAP:URI=")(?!\/)([^"]+)(")/m',
-                    '${1}' . $proxyBase . '$2$3',
+                    '${1}'.$proxyBase.'$2$3',
                     $body
                 );
-                
+
                 // Rewrite EXT-X-PART URI - only if not already absolute (.*? to match across commas)
                 $body = preg_replace(
                     '/(#EXT-X-PART:.*?URI=")(?!\/)([^"]+\.mp4)(")/m',
-                    '${1}' . $proxyBase . '$2$3',
+                    '${1}'.$proxyBase.'$2$3',
                     $body
                 );
-                
+
                 // Rewrite EXT-X-PRELOAD-HINT URI - only if not already absolute (.*? to match across commas)
                 $body = preg_replace(
                     '/(#EXT-X-PRELOAD-HINT:.*?URI=")(?!\/)([^"]+)(")/m',
-                    '${1}' . $proxyBase . '$2$3',
+                    '${1}'.$proxyBase.'$2$3',
                     $body
                 );
             }
@@ -339,7 +339,7 @@ class SessionCameraController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response('HLS proxy error: ' . $e->getMessage(), 502)
+            return response('HLS proxy error: '.$e->getMessage(), 502)
                 ->header('Content-Type', 'text/plain');
         }
     }
@@ -371,7 +371,7 @@ class SessionCameraController extends Controller
                 ->timeout(10)
                 ->post($whepUrl);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return response($response->body(), $response->status())
                     ->header('Content-Type', 'text/plain');
             }
@@ -399,7 +399,7 @@ class SessionCameraController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response('WHEP proxy error: ' . $e->getMessage(), 502)
+            return response('WHEP proxy error: '.$e->getMessage(), 502)
                 ->header('Content-Type', 'text/plain');
         }
     }

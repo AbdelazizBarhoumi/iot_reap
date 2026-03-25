@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 class TestProxmoxConnection extends Command
 {
     protected $signature = 'test:proxmox';
+
     protected $description = 'Test Proxmox connections';
 
     public function handle()

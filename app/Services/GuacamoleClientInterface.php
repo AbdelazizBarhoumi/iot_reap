@@ -14,7 +14,7 @@ interface GuacamoleClientInterface
      * Create a new Guacamole connection.
      *
      * @param  array<string, mixed>  $params  Connection parameters (protocol, hostname, port, etc.)
-     * @return string  Connection identifier
+     * @return string Connection identifier
      *
      * @throws GuacamoleApiException
      */
@@ -32,7 +32,7 @@ interface GuacamoleClientInterface
      * Token is valid for the specified duration only.
      *
      * @param  int  $expiresInSeconds  Token validity duration in seconds
-     * @return string  JWT token usable in Guacamole viewer URL
+     * @return string JWT token usable in Guacamole viewer URL
      *
      * @throws GuacamoleApiException
      */
@@ -41,7 +41,7 @@ interface GuacamoleClientInterface
     /**
      * Get connection details by ID.
      *
-     * @return array<string, mixed>  Connection details
+     * @return array<string, mixed> Connection details
      *
      * @throws GuacamoleApiException
      */

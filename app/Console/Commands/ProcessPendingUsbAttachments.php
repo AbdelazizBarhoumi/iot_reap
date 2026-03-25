@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Exceptions\GatewayApiException;
-use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayService;
@@ -61,11 +60,12 @@ class ProcessPendingUsbAttachments extends Command
 
         if ($pendingDevices->isEmpty()) {
             $this->info('No pending USB attachments found.');
+
             return self::SUCCESS;
         }
 
         $this->info("Found {$pendingDevices->count()} pending USB attachment(s).");
-        
+
         if ($dryRun) {
             $this->warn('DRY RUN - no changes will be made.');
         }
@@ -113,12 +113,13 @@ class ProcessPendingUsbAttachments extends Command
         $vmName = $device->pending_vm_name ?? 'pending-attach';
         $vmIp = $device->pending_vm_ip;
 
-        if (!$server) {
+        if (! $server) {
             $this->error("  Device {$device->id} ({$device->busid}): Missing server reference, clearing pending state.");
-            if (!$dryRun) {
+            if (! $dryRun) {
                 $this->deviceRepository->clearPendingAttach($device);
             }
             $failed++;
+
             return;
         }
 
@@ -132,12 +133,14 @@ class ProcessPendingUsbAttachments extends Command
         } catch (\Exception $e) {
             $this->warn("    Could not check VM status: {$e->getMessage()}");
             $stillPending++;
+
             return;
         }
 
-        if (!$isRunning) {
+        if (! $isRunning) {
             $this->comment("    VM {$vmid} is still not running. Keeping pending.");
             $stillPending++;
+
             return;
         }
 
@@ -145,17 +148,18 @@ class ProcessPendingUsbAttachments extends Command
         if ($dryRun) {
             $this->info("    [DRY RUN] Would attach device to VM {$vmid}");
             $attached++;
+
             return;
         }
 
         try {
             // Get VM IP if not stored (it may have changed)
-            if (!$vmIp) {
+            if (! $vmIp) {
                 try {
                     $interfaces = $proxmoxClient->getVMNetworkInterfaces($node, $vmid);
                     foreach ($interfaces as $iface) {
                         foreach ($iface['ip-addresses'] ?? [] as $addr) {
-                            if ($addr['ip-address-type'] === 'ipv4' && !str_starts_with($addr['ip-address'], '127.')) {
+                            if ($addr['ip-address-type'] === 'ipv4' && ! str_starts_with($addr['ip-address'], '127.')) {
                                 $vmIp = $addr['ip-address'];
                                 break 2;
                             }

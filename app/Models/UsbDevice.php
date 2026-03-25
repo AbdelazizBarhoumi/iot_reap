@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $pending_vm_ip
  * @property string|null $pending_vm_name
  * @property \DateTime|null $pending_since
+ * @property int|null $dedicated_vmid       Permanent VM assignment (survives reboots)
+ * @property string|null $dedicated_node    Node name for dedicated VM
+ * @property int|null $dedicated_server_id  Server ID for dedicated VM
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  */
@@ -55,6 +58,9 @@ class UsbDevice extends Model
         'pending_vm_ip',
         'pending_vm_name',
         'pending_since',
+        'dedicated_vmid',
+        'dedicated_node',
+        'dedicated_server_id',
     ];
 
     protected $casts = [
@@ -64,6 +70,8 @@ class UsbDevice extends Model
         'pending_vmid' => 'integer',
         'pending_server_id' => 'integer',
         'pending_since' => 'datetime',
+        'dedicated_vmid' => 'integer',
+        'dedicated_server_id' => 'integer',
     ];
 
     /**
@@ -285,6 +293,73 @@ class UsbDevice extends Model
         $this->pending_vm_name = null;
         $this->pending_since = null;
         $this->save();
+    }
+
+    /**
+     * Get the dedicated Proxmox server relationship.
+     */
+    public function dedicatedServer(): BelongsTo
+    {
+        return $this->belongsTo(ProxmoxServer::class, 'dedicated_server_id');
+    }
+
+    /**
+     * Check if device is dedicated to a specific VM (permanent assignment).
+     */
+    public function isDedicated(): bool
+    {
+        return $this->dedicated_vmid !== null
+            && $this->dedicated_node !== null
+            && $this->dedicated_server_id !== null;
+    }
+
+    /**
+     * Check if device is dedicated to a specific VM ID.
+     */
+    public function isDedicatedTo(int $vmid, int $serverId): bool
+    {
+        return $this->dedicated_vmid === $vmid
+            && $this->dedicated_server_id === $serverId;
+    }
+
+    /**
+     * Set dedicated VM assignment (device will auto-attach when VM starts).
+     */
+    public function setDedicatedVm(int $vmid, string $nodeName, int $serverId): void
+    {
+        $this->dedicated_vmid = $vmid;
+        $this->dedicated_node = $nodeName;
+        $this->dedicated_server_id = $serverId;
+        $this->save();
+    }
+
+    /**
+     * Clear dedicated VM assignment.
+     */
+    public function clearDedicatedVm(): void
+    {
+        $this->dedicated_vmid = null;
+        $this->dedicated_node = null;
+        $this->dedicated_server_id = null;
+        $this->save();
+    }
+
+    /**
+     * Scope: Get devices dedicated to a specific VM.
+     */
+    public function scopeDedicatedTo($query, int $vmid, int $serverId)
+    {
+        return $query->where('dedicated_vmid', $vmid)
+            ->where('dedicated_server_id', $serverId);
+    }
+
+    /**
+     * Get unique VID:PID identifier (used for reliable device matching).
+     * This is more reliable than busid which can change with port.
+     */
+    public function getVidPidAttribute(): string
+    {
+        return strtolower("{$this->vendor_id}:{$this->product_id}");
     }
 
     /**

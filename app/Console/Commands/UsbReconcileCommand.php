@@ -59,7 +59,7 @@ class UsbReconcileCommand extends Command
         $verifyVms = $this->option('verify-vms');
         $verifyExports = $this->option('verify-exports');
 
-        $this->info('Starting USB device reconciliation' . ($dryRun ? ' (dry run)' : ''));
+        $this->info('Starting USB device reconciliation'.($dryRun ? ' (dry run)' : ''));
 
         $stats = [
             'exports_fixed' => 0,
@@ -126,6 +126,7 @@ class UsbReconcileCommand extends Command
             if ($verbose) {
                 $this->line('  No bound devices to verify');
             }
+
             return 0;
         }
 
@@ -134,19 +135,19 @@ class UsbReconcileCommand extends Command
 
         /** @var UsbDevice $device */
         foreach ($boundDevices as $device) {
-            if (!$device->gatewayNode) {
+            if (! $device->gatewayNode) {
                 continue;
             }
 
             try {
                 $isExportable = $this->gatewayService->isDeviceExportable($device);
 
-                if (!$isExportable) {
+                if (! $isExportable) {
                     if ($verbose) {
                         $this->warn("  Device {$device->id} ({$device->busid}) is BOUND but NOT EXPORTABLE");
                     }
 
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         Log::warning('Bound device not exportable, attempting rebind', [
                             'device_id' => $device->id,
                             'busid' => $device->busid,
@@ -177,7 +178,7 @@ class UsbReconcileCommand extends Command
         }
 
         if ($count > 0) {
-            $this->info("Found {$count} non-exportable device(s)" . ($dryRun ? ' (would fix)' : ''));
+            $this->info("Found {$count} non-exportable device(s)".($dryRun ? ' (would fix)' : ''));
         }
 
         return $count;
@@ -201,6 +202,7 @@ class UsbReconcileCommand extends Command
             if ($verbose) {
                 $this->line('  No attached devices with active sessions to verify');
             }
+
             return 0;
         }
 
@@ -210,7 +212,7 @@ class UsbReconcileCommand extends Command
         /** @var UsbDevice $device */
         foreach ($attachedDevices as $device) {
             $session = $device->attachedSession;
-            if (!$session || !$session->vm_id || !$session->node || !$session->proxmoxServer) {
+            if (! $session || ! $session->vm_id || ! $session->node || ! $session->proxmoxServer) {
                 continue;
             }
 
@@ -225,12 +227,12 @@ class UsbReconcileCommand extends Command
                 // Parse port output to see if our device's busid is present
                 $devicePresent = $this->isDeviceInPortOutput($portOutput, $device->busid);
 
-                if (!$devicePresent) {
+                if (! $devicePresent) {
                     if ($verbose) {
                         $this->warn("  Device {$device->id} ({$device->busid}) NOT found in VM {$session->vm_id}");
                     }
 
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         Log::warning('USB device not found in VM during reconciliation', [
                             'device_id' => $device->id,
                             'busid' => $device->busid,
@@ -264,7 +266,7 @@ class UsbReconcileCommand extends Command
         }
 
         if ($count > 0) {
-            $this->info("Found {$count} device(s) missing from VMs" . ($dryRun ? ' (would fix)' : ' - fixed'));
+            $this->info("Found {$count} device(s) missing from VMs".($dryRun ? ' (would fix)' : ' - fixed'));
         }
 
         return $count;
@@ -279,7 +281,7 @@ class UsbReconcileCommand extends Command
             // Windows: Use batch file approach
             $batchPath = 'C:\usbip-cmd.bat';
             $batchContent = 'C:\PROGRA~1\USBIP-~1\usbip.exe port';
-            
+
             $client->writeFileInVm($session->node->name, $session->vm_id, $batchPath, $batchContent);
             $result = $client->execInVmAndWait($session->node->name, $session->vm_id, $batchPath, 15);
         } else {
@@ -302,11 +304,11 @@ class UsbReconcileCommand extends Command
         //
         // For Windows the busid may show as "?-?" but we can still check
         // if there are any ports listed at all, and match by device name if needed
-        
+
         // Simple check: if output contains "Port" followed by content, device is present
         // More robust: We stored the port number, could verify that specific port
-        return str_contains($output, 'Port ') && 
-               !str_contains(trim($output), "====================\n\n") &&
+        return str_contains($output, 'Port ') &&
+               ! str_contains(trim($output), "====================\n\n") &&
                strlen(trim(explode('====================', $output)[1] ?? '')) > 10;
     }
 
@@ -329,7 +331,7 @@ class UsbReconcileCommand extends Command
                 $this->line("  Releasing orphaned device: {$device->name} (ID: {$device->id})");
             }
 
-            if (!$dryRun) {
+            if (! $dryRun) {
                 $device->update([
                     'status' => UsbDeviceStatus::BOUND,
                     'attached_session_id' => null,
@@ -346,7 +348,7 @@ class UsbReconcileCommand extends Command
         }
 
         if ($count > 0) {
-            $this->info("Found {$count} orphaned device(s)" . ($dryRun ? ' (would release)' : ' - released'));
+            $this->info("Found {$count} orphaned device(s)".($dryRun ? ' (would release)' : ' - released'));
         }
 
         return $count;
@@ -369,7 +371,7 @@ class UsbReconcileCommand extends Command
                 $this->line("  Handling long-disconnected device: {$device->name} (ID: {$device->id})");
             }
 
-            if (!$dryRun) {
+            if (! $dryRun) {
                 // Clear attachment info and keep as disconnected
                 // The device will be rediscovered when plugged back in
                 $device->update([
@@ -384,7 +386,7 @@ class UsbReconcileCommand extends Command
         }
 
         if ($count > 0) {
-            $this->info("Found {$count} disconnected device(s) older than 1 hour" . ($dryRun ? ' (would clean)' : ' - cleaned'));
+            $this->info("Found {$count} disconnected device(s) older than 1 hour".($dryRun ? ' (would clean)' : ' - cleaned'));
         }
 
         return $count;
@@ -407,7 +409,7 @@ class UsbReconcileCommand extends Command
         /** @var UsbDevice $device */
         foreach ($boundDevicesWithQueues as $device) {
             $nextEntry = $device->queueEntries->first();
-            if (!$nextEntry) {
+            if (! $nextEntry) {
                 continue;
             }
 
@@ -415,7 +417,7 @@ class UsbReconcileCommand extends Command
                 $this->line("  Processing stuck queue for device: {$device->name} (ID: {$device->id})");
             }
 
-            if (!$dryRun) {
+            if (! $dryRun) {
                 $this->queueService->processQueueOnDetach($device);
             }
 
@@ -423,7 +425,7 @@ class UsbReconcileCommand extends Command
         }
 
         if ($count > 0) {
-            $this->info("Found {$count} stuck queue(s)" . ($dryRun ? ' (would process)' : ' - processed'));
+            $this->info("Found {$count} stuck queue(s)".($dryRun ? ' (would process)' : ' - processed'));
         }
 
         return $count;

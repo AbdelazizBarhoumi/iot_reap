@@ -81,9 +81,9 @@ class UserConnectionPreferenceRepository
 
         return GuacamoleConnectionPreference::updateOrCreate(
             [
-                'user_id'         => $user->id,
+                'user_id' => $user->id,
                 'vm_session_type' => $sessionType,
-                'profile_name'    => $profileName,
+                'profile_name' => $profileName,
             ],
             [
                 'parameters' => $params,

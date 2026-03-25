@@ -23,24 +23,24 @@ class UsbDeviceReservationResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'status_color' => $this->status->badgeColor(),
-            
+
             // Requested schedule
             'requested_start_at' => $this->requested_start_at?->toIso8601String(),
             'requested_end_at' => $this->requested_end_at?->toIso8601String(),
-            
+
             // Approved schedule
             'approved_start_at' => $this->approved_start_at?->toIso8601String(),
             'approved_end_at' => $this->approved_end_at?->toIso8601String(),
-            
+
             // Effective schedule (approved or requested)
             'effective_start_at' => $this->effective_start?->toIso8601String(),
             'effective_end_at' => $this->effective_end?->toIso8601String(),
             'duration_minutes' => $this->duration_minutes,
-            
+
             // Actual usage
             'actual_start_at' => $this->actual_start_at?->toIso8601String(),
             'actual_end_at' => $this->actual_end_at?->toIso8601String(),
-            
+
             // Details
             // Purpose or user-provided reason. front-end historically used `reason` so we alias it.
             'purpose' => $this->purpose,
@@ -48,13 +48,13 @@ class UsbDeviceReservationResource extends JsonResource
             'is_admin_block' => $this->purpose === 'Admin block',
             'admin_notes' => $this->when($request->user()?->isAdmin() ?? false, $this->admin_notes),
             'priority' => $this->priority,
-            
+
             // State checks
             'is_pending' => $this->isPending(),
             'is_approved' => $this->isApproved(),
             'is_active' => $this->isActive(),
             'can_modify' => $this->canModify(),
-            
+
             // Relations
             'device' => new UsbDeviceResource($this->whenLoaded('device')),
             'user' => $this->whenLoaded('user', fn () => [
@@ -62,13 +62,12 @@ class UsbDeviceReservationResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ]),
-            'approver' => $this->whenLoaded('approver', fn () => 
-                $this->approver ? [
-                    'id' => $this->approver->id,
-                    'name' => $this->approver->name,
-                ] : null
+            'approver' => $this->whenLoaded('approver', fn () => $this->approver ? [
+                'id' => $this->approver->id,
+                'name' => $this->approver->name,
+            ] : null
             ),
-            
+
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

@@ -21,10 +21,12 @@ import {
     Menu,
     Play,
     Terminal,
+    Clock,
+    Users,
 } from 'lucide-react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { courseApi } from '@/api/course.api';
-import { vmSessionApi, proxmoxVMApi } from '@/api/vm.api';
+import { vmSessionApi } from '@/api/vm.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -32,10 +34,45 @@ import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
+import { courseToasts } from '@/lib/toast-utils';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import type { Course, Lesson, LessonType } from '@/types/course.types';
-import type { ProxmoxVMInfo } from '@/types/vm.types';
+
+/**
+ * VM template info from approved lesson assignment.
+ */
+interface VMTemplateInfo {
+    id: number;
+    vmid: number;
+    name: string;
+    description: string | null;
+    os_type: string | null;
+    protocol: string | null;
+    is_available: boolean;
+    node?: { id: number; name: string } | null;
+    proxmox_server?: { id: number; name: string } | null;
+}
+
+/**
+ * Queue status for a VM template.
+ */
+interface QueueStatus {
+    in_use: boolean;
+    current_user: string | null;
+    queue_count: number;
+    estimated_wait_minutes: number | null;
+}
+
+/**
+ * VM info passed from backend for the lesson.
+ */
+interface LessonVMInfo {
+    template: VMTemplateInfo;
+    queue_status: QueueStatus;
+    can_start: boolean;
+    my_position: number | null;
+}
 
 // Lesson type icons mapping
 const lessonIcons: Record<LessonType, React.ElementType> = {
@@ -215,46 +252,40 @@ function LessonSidebar({
 }
 
 interface VMLabPanelProps {
-    lessonTitle: string;
+    vmInfo: LessonVMInfo | null;
 }
 
-function VMLabPanel({ lessonTitle: _lessonTitle }: VMLabPanelProps) {
+function VMLabPanel({ vmInfo }: VMLabPanelProps) {
     const { sessions, loading: sessionsLoading } = useVMSessions();
-    const [vms, setVms] = useState<ProxmoxVMInfo[]>([]);
-    const [loadingVMs, setLoadingVMs] = useState(true);
-    const [launchingVmId, setLaunchingVmId] = useState<number | null>(null);
+    const [launching, setLaunching] = useState(false);
 
     const activeSessions = sessions.filter((s) => s?.status === 'active');
     const hasActiveSession = activeSessions.length > 0;
 
-    useEffect(() => {
-        proxmoxVMApi.list()
-            .then(setVms)
-            .catch(() => setVms([]))
-            .finally(() => setLoadingVMs(false));
-    }, []);
-
-    const handleLaunchVM = useCallback(async (vm: ProxmoxVMInfo) => {
-        setLaunchingVmId(vm.vmid);
+    const handleLaunchVM = useCallback(async () => {
+        if (!vmInfo) return;
+        
+        setLaunching(true);
         try {
             const session = await vmSessionApi.create({
-                vmid: vm.vmid,
-                node_id: vm.node_id,
-                vm_name: vm.name,
+                vmid: vmInfo.template.vmid,
+                node_id: vmInfo.template.node?.id ?? 0,
+                vm_name: vmInfo.template.name,
                 duration_minutes: 60,
-                use_existing: !vm.is_template,
+                use_existing: false, // Always clone from template
             });
             if (session?.id) {
                 router.visit(`/sessions/${session.id}`);
             }
         } catch (e) {
             console.error('Failed to launch VM:', e);
+            courseToasts.error('Failed to start VM session');
         } finally {
-            setLaunchingVmId(null);
+            setLaunching(false);
         }
-    }, []);
+    }, [vmInfo]);
 
-    if (sessionsLoading || loadingVMs) {
+    if (sessionsLoading) {
         return (
             <Card>
                 <CardContent className="py-8 flex items-center justify-center gap-2">
@@ -265,6 +296,7 @@ function VMLabPanel({ lessonTitle: _lessonTitle }: VMLabPanelProps) {
         );
     }
 
+    // User has an active session - show link to it
     if (hasActiveSession) {
         const session = activeSessions[0];
         return (
@@ -293,52 +325,110 @@ function VMLabPanel({ lessonTitle: _lessonTitle }: VMLabPanelProps) {
         );
     }
 
-    const labVMs = vms.slice(0, 3);
+    // No approved VM template for this lesson
+    if (!vmInfo) {
+        return (
+            <Card>
+                <CardContent className="py-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Terminal className="h-5 w-5 text-muted-foreground" />
+                        <h4 className="font-medium text-foreground">Virtual Machine</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        No VM has been assigned to this lesson yet. The instructor will assign a VM template that an administrator must approve.
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    const { template, queue_status, can_start, my_position } = vmInfo;
+
+    // Template is in maintenance or unavailable
+    if (!template.is_available) {
+        return (
+            <Card>
+                <CardContent className="py-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Terminal className="h-5 w-5 text-amber-500" />
+                        <h4 className="font-medium text-foreground">{template.name}</h4>
+                    </div>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                        This VM is currently in maintenance. Please try again later.
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card>
             <CardContent className="py-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Terminal className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium text-foreground">Launch a Virtual Machine</h4>
+                    <h4 className="font-medium text-foreground">{template.name}</h4>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                    Start a VM session to practice the concepts from this lesson.
-                </p>
-                {labVMs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        No VMs available. Contact your administrator.
-                    </p>
-                ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {labVMs.map((vm) => (
-                            <Button
-                                key={vm.vmid}
-                                variant="outline"
-                                className="justify-start h-auto py-3"
-                                onClick={() => handleLaunchVM(vm)}
-                                disabled={launchingVmId !== null}
-                            >
-                                {launchingVmId === vm.vmid ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Play className="mr-2 h-4 w-4" />
-                                )}
-                                <div className="text-left">
-                                    <p className="font-medium">{vm.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {vm.cpus} CPU · {Math.round(vm.maxmem / 1024 / 1024 / 1024)}GB RAM
-                                    </p>
-                                </div>
-                            </Button>
-                        ))}
+                
+                {template.description && (
+                    <p className="text-sm text-muted-foreground mb-4">{template.description}</p>
+                )}
+
+                {/* Queue status */}
+                {queue_status.in_use && (
+                    <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                                Currently in use by {queue_status.current_user}
+                            </span>
+                        </div>
+                        {queue_status.queue_count > 0 && (
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">
+                                    {queue_status.queue_count} in queue
+                                    {queue_status.estimated_wait_minutes && (
+                                        <> · ~{queue_status.estimated_wait_minutes} min wait</>
+                                    )}
+                                </span>
+                            </div>
+                        )}
+                        {my_position !== null && my_position > 0 && (
+                            <p className="text-sm text-primary mt-2">
+                                You are #{my_position} in the queue
+                            </p>
+                        )}
                     </div>
                 )}
-                <Button variant="ghost" className="w-full mt-3 text-primary" asChild>
-                    <Link href="/dashboard">
-                        View all VMs <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
+
+                <Button
+                    onClick={handleLaunchVM}
+                    disabled={launching || !can_start}
+                    className="w-full"
+                >
+                    {launching ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Starting...
+                        </>
+                    ) : can_start ? (
+                        <>
+                            <Play className="mr-2 h-4 w-4" />
+                            Start VM Session
+                        </>
+                    ) : (
+                        <>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Join Queue
+                        </>
+                    )}
                 </Button>
+
+                {template.os_type && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                        {template.os_type} · {template.protocol?.toUpperCase() || 'RDP'}
+                    </p>
+                )}
             </CardContent>
         </Card>
     );
@@ -348,11 +438,12 @@ interface PageProps {
     course: Course;
     lesson: Lesson;
     completedLessonIds: (string | number)[];
+    vmInfo: LessonVMInfo | null;
 }
 
 export default function LessonPage() {
     const pageProps = usePage<{ props: PageProps }>().props as unknown as PageProps;
-    const { course, lesson, completedLessonIds: initialCompleted } = pageProps;
+    const { course, lesson, completedLessonIds: initialCompleted, vmInfo } = pageProps;
     
     const [completedLessonIds, setCompletedLessonIds] = useState<(string | number)[]>(initialCompleted || []);
     const [markingComplete, setMarkingComplete] = useState(false);
@@ -390,13 +481,21 @@ export default function LessonPage() {
             // Update local state
             if (!isCurrentLessonCompleted) {
                 setCompletedLessonIds(prev => [...prev, lesson.id]);
+                courseToasts.lessonCompleted(lesson.title);
+                
+                // Check if course is now completed
+                const newCompletedCount = completedCount + 1;
+                if (newCompletedCount === totalLessons) {
+                    courseToasts.courseCompleted(course.title);
+                }
             }
         } catch (e) {
             console.error('Failed to mark lesson complete:', e);
+            courseToasts.error('Failed to mark lesson as complete');
         } finally {
             setMarkingComplete(false);
         }
-    }, [course?.id, lesson?.id, isCurrentLessonCompleted]);
+    }, [course?.id, course?.title, lesson?.id, lesson?.title, isCurrentLessonCompleted, completedCount, totalLessons]);
 
     const handleMarkIncomplete = useCallback(async () => {
         if (!course?.id || !lesson?.id) return;
@@ -434,8 +533,8 @@ export default function LessonPage() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${lesson.title} - ${course.title}`} />
             <div className="flex h-full flex-1">
-                {/* Desktop Sidebar */}
-                <div className="hidden lg:block w-80 shrink-0">
+                {/* Desktop Sidebar - Sticky */}
+                <div className="hidden lg:block w-80 shrink-0 sticky top-0 h-screen overflow-y-auto">
                     <LessonSidebar
                         modules={course.modules}
                         currentLessonId={lesson.id}
@@ -447,9 +546,9 @@ export default function LessonPage() {
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 min-w-0 overflow-y-auto">
-                    {/* Top bar with progress and mobile menu */}
-                    <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur-lg px-6 py-3">
+                <div className="flex-1 min-w-0 overflow-y-auto flex flex-col">
+                    {/* Top bar with progress and mobile menu - Sticky */}
+                    <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/95 backdrop-blur-lg px-6 py-3 shrink-0">
                         <div className="flex items-center gap-3">
                             <Sheet>
                                 <SheetTrigger asChild>
@@ -490,12 +589,13 @@ export default function LessonPage() {
                         </div>
                     </div>
 
-                    <div className="max-w-4xl mx-auto px-6 py-8">
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            key={lesson.id}
-                        >
+                    <div className="flex-1 min-w-0 overflow-y-auto">
+                        <div className="max-w-4xl mx-auto px-6 py-8">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                key={lesson.id}
+                            >
                             {/* Lesson Header */}
                             <div className="flex items-start justify-between gap-4 mb-6">
                                 <div className="flex items-center gap-3">
@@ -611,7 +711,7 @@ export default function LessonPage() {
                                         <Terminal className="h-5 w-5 text-primary" />
                                         Virtual Machine Lab
                                     </h3>
-                                    <VMLabPanel lessonTitle={lesson.title} />
+                                    <VMLabPanel vmInfo={vmInfo ?? null} />
                                 </div>
                             )}
 
@@ -648,6 +748,7 @@ export default function LessonPage() {
                                 )}
                             </div>
                         </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

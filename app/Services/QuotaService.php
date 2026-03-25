@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\VMSessionStatus;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Enums\VMSessionStatus;
 
 /**
  * Service for checking and enforcing user session quotas.
@@ -40,8 +40,8 @@ class QuotaService
 
         if ($activeCount >= $maxConcurrent) {
             throw new \Exception(
-                "Maximum concurrent sessions ({$maxConcurrent}) reached. " .
-                "Please terminate an existing session before creating a new one."
+                "Maximum concurrent sessions ({$maxConcurrent}) reached. ".
+                'Please terminate an existing session before creating a new one.'
             );
         }
 
@@ -50,7 +50,7 @@ class QuotaService
 
         if ($totalMinutes + $durationMinutes > $maxMinutes) {
             throw new \Exception(
-                "Requesting {$durationMinutes} minutes would exceed quota. " .
+                "Requesting {$durationMinutes} minutes would exceed quota. ".
                 "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m"
             );
         }
@@ -68,9 +68,9 @@ class QuotaService
 
         if ($totalMinutes + $additionalMinutes > $maxMinutes) {
             throw new \Exception(
-                "Cannot extend by {$additionalMinutes} minutes. " .
-                "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m, " .
-                "(requested total: " . ($totalMinutes + $additionalMinutes) . "m)"
+                "Cannot extend by {$additionalMinutes} minutes. ".
+                "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m, ".
+                '(requested total: '.($totalMinutes + $additionalMinutes).'m)'
             );
         }
     }

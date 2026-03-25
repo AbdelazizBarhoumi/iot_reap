@@ -97,8 +97,8 @@ class GuacamoleTokenController extends Controller
             // Use the data source name as Guacamole resolved it (may be 'mysql' lowercase,
             // not the 'MySQL' value from config) to avoid viewer 404 errors.
             $dataSource = $this->guacamoleClient->getDataSource();
-            $clientId   = base64_encode((string) $session->guacamole_connection_id . "\0c\0" . $dataSource);
-            $viewerUrl  = config('guacamole.url') . '/#/client/' . $clientId . '?token=' . $token;
+            $clientId = base64_encode((string) $session->guacamole_connection_id."\0c\0".$dataSource);
+            $viewerUrl = config('guacamole.url').'/#/client/'.$clientId.'?token='.$token;
 
             Log::info('Guacamole token generated', [
                 'session_id' => $session->id,

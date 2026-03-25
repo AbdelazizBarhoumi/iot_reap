@@ -21,9 +21,10 @@ use Throwable;
  */
 class CleanupVMJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, InteractsWithQueue;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
+
     public $backoff = [10, 30, 60]; // seconds
 
     /**
@@ -62,7 +63,7 @@ class CleanupVMJob implements ShouldQueue
             }
 
             // Only cleanup if we have a VM ID
-            if (!$session->vm_id) {
+            if (! $session->vm_id) {
                 Log::warning('No VM ID for session, cannot cleanup', [
                     'session_id' => $session->id,
                 ]);

@@ -42,7 +42,7 @@ return [
     'connection' => [
         // Timeout in minutes after which idle connections are suspended
         'idle_timeout' => env('GUACAMOLE_IDLE_TIMEOUT', 30),
-        
+
         // Token expiration time in seconds (5 minutes)
         'token_expiration_seconds' => env('GUACAMOLE_TOKEN_EXPIRATION', 300),
     ],
@@ -55,11 +55,11 @@ return [
     */
     'protocols' => [
         'rdp' => [
-            'port'          => 3389,
+            'port' => 3389,
             // 'any' allows NLA, TLS, and classic RDP — works with any Windows/Debian VM
             // without requiring specific NLA configuration on the guest.
-            'security'      => 'any',
-            'ignore_cert'   => true,
+            'security' => 'any',
+            'ignore_cert' => true,
             'resize_method' => 'display-update',
         ],
         'vnc' => [

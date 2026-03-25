@@ -46,7 +46,7 @@ class ExtendSessionService
 
         if ($session->expires_at && $session->expires_at->isPast()) {
             throw new \Exception(
-                "Cannot extend session that has already expired. Please start a new session."
+                'Cannot extend session that has already expired. Please start a new session.'
             );
         }
 
@@ -80,6 +80,4 @@ class ExtendSessionService
 
         return $session;
     }
-
-
 }

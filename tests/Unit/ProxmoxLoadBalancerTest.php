@@ -14,7 +14,9 @@ use Tests\TestCase;
 class ProxmoxLoadBalancerTest extends TestCase
 {
     private ProxmoxServer $server;
+
     private ProxmoxClientFake $client;
+
     private ProxmoxLoadBalancer $balancer;
 
     protected function setUp(): void

@@ -33,10 +33,10 @@ class ProxmoxIPResolver
      *
      * @param  ProxmoxServer|null  $server  The server the VM belongs to (used for logging; may be null in tests)
      * @param  string  $nodeId  The Proxmox node name (e.g. "pve-1")
-     * @param  int     $vmId    The VMID of the running VM
-     * @param  int     $maxWaitSeconds  Maximum seconds to wait before giving up (default 300)
+     * @param  int  $vmId  The VMID of the running VM
+     * @param  int  $maxWaitSeconds  Maximum seconds to wait before giving up (default 300)
      *
-     * @throws ProxmoxApiException  When the VM does not obtain an IP within the allotted time
+     * @throws ProxmoxApiException When the VM does not obtain an IP within the allotted time
      */
     public function resolveVMIP(
         ?ProxmoxServer $server,
@@ -48,7 +48,7 @@ class ProxmoxIPResolver
 
         Log::info('ProxmoxIPResolver: starting IP resolution', [
             'node_id' => $nodeId,
-            'vm_id'   => $vmId,
+            'vm_id' => $vmId,
             'timeout' => $maxWaitSeconds,
         ]);
 
@@ -61,9 +61,10 @@ class ProxmoxIPResolver
                 if ($currentStatus !== 'running') {
                     Log::debug('ProxmoxIPResolver: VM not yet running, waiting', [
                         'status' => $currentStatus,
-                        'vm_id'  => $vmId,
+                        'vm_id' => $vmId,
                     ]);
                     sleep(self::POLL_INTERVAL_SECONDS);
+
                     continue;
                 }
 
@@ -73,8 +74,8 @@ class ProxmoxIPResolver
                 if ($ip !== null) {
                     Log::info('ProxmoxIPResolver: IP resolved', [
                         'node_id' => $nodeId,
-                        'vm_id'   => $vmId,
-                        'ip'      => $ip,
+                        'vm_id' => $vmId,
+                        'ip' => $ip,
                     ]);
 
                     return $ip;

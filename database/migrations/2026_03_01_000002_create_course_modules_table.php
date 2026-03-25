@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('title');
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
-            
+
             $table->index(['course_id', 'sort_order']);
         });
     }

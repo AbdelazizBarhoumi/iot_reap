@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\UsbDeviceStatus;
 use App\Exceptions\GatewayApiException;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\GatewayNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
-use App\Enums\UsbDeviceStatus;
 use App\Models\VMSession;
 use App\Repositories\GatewayNodeRepository;
 use App\Repositories\UsbDeviceRepository;
@@ -40,6 +40,7 @@ class GatewayService
      * The attach command may still be running when we need to poll port status.
      */
     private const WINDOWS_BATCH_ATTACH = 'C:\usbip-attach.bat';
+
     private const WINDOWS_BATCH_QUERY = 'C:\usbip-query.bat';
 
     public function __construct(
@@ -60,11 +61,11 @@ class GatewayService
     private function extractErrorMessage(\Illuminate\Http\Client\Response $response, string $key = 'detail', string $default = 'Operation failed'): string
     {
         $value = $response->json($key, $default);
-        
+
         if (is_string($value)) {
             return $value;
         }
-        
+
         if (is_array($value)) {
             // Try common error array formats
             if (isset($value['message'])) {
@@ -76,10 +77,11 @@ class GatewayService
             if (isset($value['msg'])) {
                 return (string) $value['msg'];
             }
+
             // Fallback: JSON encode the error detail
             return json_encode($value) ?: $default;
         }
-        
+
         return (string) $value;
     }
 
@@ -123,8 +125,9 @@ class GatewayService
             $response = Http::timeout($this->timeout())
                 ->get("{$node->api_url}/devices");
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $this->nodeRepository->markOffline($node);
+
                 return [
                     'success' => false,
                     'devices_count' => 0,
@@ -147,18 +150,47 @@ class GatewayService
                     $device['product_id']
                 );
 
-                $this->deviceRepository->updateOrCreate(
-                    [
-                        'gateway_node_id' => $node->id,
+                // Check if this device already exists at a different port (port change)
+                // This handles cases where a device is unplugged and plugged into a different port.
+                // Important for dedicated devices that must persist their assignment.
+                $existingDevice = UsbDevice::where('gateway_node_id', $node->id)
+                    ->where('vendor_id', strtolower($device['vendor_id']))
+                    ->where('product_id', strtolower($device['product_id']))
+                    ->where('busid', '!=', $device['busid'])
+                    ->first();
+
+                if ($existingDevice && $existingDevice->isDedicated()) {
+                    // Device moved to a new port - update busid instead of creating duplicate
+                    Log::info('Dedicated USB device changed port, updating busid', [
+                        'device_id' => $existingDevice->id,
+                        'old_busid' => $existingDevice->busid,
+                        'new_busid' => $device['busid'],
+                        'vid_pid' => "{$device['vendor_id']}:{$device['product_id']}",
+                        'dedicated_vmid' => $existingDevice->dedicated_vmid,
+                    ]);
+                    $existingDevice->update([
                         'busid' => $device['busid'],
-                    ],
-                    [
-                        'vendor_id' => $device['vendor_id'],
-                        'product_id' => $device['product_id'],
                         'name' => $device['name'],
-                        'is_camera' => $isCamera,
-                    ]
-                );
+                        // If it was disconnected, mark it available again
+                        'status' => $existingDevice->status === UsbDeviceStatus::DISCONNECTED
+                            ? UsbDeviceStatus::AVAILABLE
+                            : $existingDevice->status,
+                    ]);
+                } else {
+                    // Normal case: update or create by gateway_node_id + busid
+                    $this->deviceRepository->updateOrCreate(
+                        [
+                            'gateway_node_id' => $node->id,
+                            'busid' => $device['busid'],
+                        ],
+                        [
+                            'vendor_id' => $device['vendor_id'],
+                            'product_id' => $device['product_id'],
+                            'name' => $device['name'],
+                            'is_camera' => $isCamera,
+                        ]
+                    );
+                }
             }
 
             // Remove devices that are no longer present
@@ -207,6 +239,7 @@ class GatewayService
             return $online;
         } catch (\Exception $e) {
             $this->nodeRepository->markOffline($node);
+
             return false;
         }
     }
@@ -217,14 +250,14 @@ class GatewayService
      * A device may be in "bound" state in the database but usbipd may not be
      * serving it properly (e.g., after container restart, usbipd restart).
      *
-     * @param UsbDevice $device The device to check
+     * @param  UsbDevice  $device  The device to check
      * @return bool True if device is visible via /devices/exported endpoint
      */
     public function isDeviceExportable(UsbDevice $device): bool
     {
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             return false;
         }
 
@@ -232,17 +265,19 @@ class GatewayService
             $response = Http::timeout($this->timeout())
                 ->get("{$node->api_url}/devices/exported");
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return false;
             }
 
             $output = $response->json('output', '');
+
             return str_contains($output, $device->busid);
         } catch (\Exception $e) {
             Log::warning('Failed to check device exportability', [
                 'device_id' => $device->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -253,8 +288,9 @@ class GatewayService
      * This handles the edge case where a device is marked as "bound" in the DB
      * but usbipd isn't actually serving it (e.g., after daemon restart).
      *
-     * @param UsbDevice $device The device to ensure is exportable
+     * @param  UsbDevice  $device  The device to ensure is exportable
      * @return bool True if device is now exportable
+     *
      * @throws GatewayApiException If rebind fails
      */
     public function ensureDeviceExportable(UsbDevice $device): bool
@@ -266,7 +302,7 @@ class GatewayService
 
         // Device not exportable - try unbind then rebind
         $node = $device->gatewayNode;
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'ensure-exportable'
@@ -298,11 +334,11 @@ class GatewayService
             $response = Http::timeout($this->timeout())
                 ->post("{$node->api_url}/bind", ['busid' => $device->busid]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $detail = $this->extractErrorMessage($response, 'detail', 'Bind failed');
-                
+
                 // "already bound" is actually success
-                if (!str_contains(strtolower($detail), 'already bound')) {
+                if (! str_contains(strtolower($detail), 'already bound')) {
                     throw new GatewayApiException(
                         "Rebind failed: {$detail}",
                         gatewayHost: $node->ip,
@@ -327,11 +363,12 @@ class GatewayService
         // Wait a bit and verify
         usleep(500000); // 500ms
 
-        if (!$this->isDeviceExportable($device)) {
+        if (! $this->isDeviceExportable($device)) {
             Log::error('Device still not exportable after rebind', [
                 'device_id' => $device->id,
                 'busid' => $device->busid,
             ]);
+
             return false;
         }
 
@@ -351,20 +388,20 @@ class GatewayService
      * 2. Device exists on the gateway
      * 3. Device is properly exportable (for attach operations)
      *
-     * @param UsbDevice $device The device to verify
-     * @param bool $requireExportable Whether device must be exportable (for attach)
+     * @param  UsbDevice  $device  The device to verify
+     * @param  bool  $requireExportable  Whether device must be exportable (for attach)
      * @return array{ok: bool, error?: string, auto_fixed?: bool}
      */
     public function verifyDeviceState(UsbDevice $device, bool $requireExportable = false): array
     {
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             return ['ok' => false, 'error' => 'Device has no associated gateway node'];
         }
 
         // Check gateway health
-        if (!$this->checkHealth($node)) {
+        if (! $this->checkHealth($node)) {
             return ['ok' => false, 'error' => "Gateway {$node->name} is offline"];
         }
 
@@ -373,16 +410,17 @@ class GatewayService
             $response = Http::timeout($this->timeout())
                 ->get("{$node->api_url}/devices");
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return ['ok' => false, 'error' => 'Failed to query gateway devices'];
             }
 
             $devices = $response->json('devices', []);
             $found = collect($devices)->firstWhere('busid', $device->busid);
 
-            if (!$found) {
+            if (! $found) {
                 // Device not on gateway - mark as disconnected
                 $device->update(['status' => UsbDeviceStatus::DISCONNECTED]);
+
                 return ['ok' => false, 'error' => "Device {$device->busid} not found on gateway"];
             }
         } catch (\Exception $e) {
@@ -398,7 +436,7 @@ class GatewayService
                 return ['ok' => true];
             }
 
-            if (!$this->isDeviceExportable($device)) {
+            if (! $this->isDeviceExportable($device)) {
                 // Try to auto-fix
                 try {
                     if ($this->ensureDeviceExportable($device)) {
@@ -435,7 +473,7 @@ class GatewayService
 
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'bind'
@@ -448,7 +486,7 @@ class GatewayService
                     'busid' => $device->busid,
                 ]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $errorMessage = $this->extractErrorMessage($response, 'detail', 'Bind operation failed');
 
                 // Handle idempotent case: device is already bound on the gateway
@@ -503,7 +541,7 @@ class GatewayService
     {
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'unbind'
@@ -516,7 +554,7 @@ class GatewayService
                     'busid' => $device->busid,
                 ]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $errorMessage = $this->extractErrorMessage($response, 'detail', 'Unbind operation failed');
 
                 // Handle idempotent case: device is already unbound on the gateway
@@ -565,8 +603,8 @@ class GatewayService
      * This method executes `usbip attach` inside the VM via the QEMU guest agent,
      * ensuring the device is properly attached from the VM's perspective.
      *
-     * @param UsbDevice $device   The USB device to attach
-     * @param VMSession $session  The VM session to attach the device to
+     * @param  UsbDevice  $device  The USB device to attach
+     * @param  VMSession  $session  The VM session to attach the device to
      *
      * @throws GatewayApiException If the attach operation fails
      */
@@ -582,7 +620,7 @@ class GatewayService
 
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'attach'
@@ -590,7 +628,7 @@ class GatewayService
         }
 
         // Ensure device is bound for sharing
-        if (!$device->isBound() && !$device->isAvailable()) {
+        if (! $device->isBound() && ! $device->isAvailable()) {
             throw new GatewayApiException(
                 'Device must be bound before attaching',
                 operation: 'attach'
@@ -598,7 +636,7 @@ class GatewayService
         }
 
         // Ensure session has required data
-        if (!$session->vm_id || !$session->node_id) {
+        if (! $session->vm_id || ! $session->node_id) {
             throw new GatewayApiException(
                 'Session missing VM ID or node information',
                 operation: 'attach'
@@ -609,7 +647,7 @@ class GatewayService
         $session->loadMissing(['node', 'proxmoxServer']);
         $proxmoxNode = $session->node;
 
-        if (!$proxmoxNode) {
+        if (! $proxmoxNode) {
             throw new GatewayApiException(
                 'Session has no associated Proxmox node',
                 operation: 'attach'
@@ -618,7 +656,7 @@ class GatewayService
 
         // Pre-flight check: verify gateway and device state, auto-fix if possible
         $verification = $this->verifyDeviceState($device, requireExportable: true);
-        if (!$verification['ok']) {
+        if (! $verification['ok']) {
             throw new GatewayApiException(
                 $verification['error'] ?? 'Device verification failed',
                 gatewayHost: $node->ip,
@@ -626,7 +664,7 @@ class GatewayService
             );
         }
 
-        if (!empty($verification['auto_fixed'])) {
+        if (! empty($verification['auto_fixed'])) {
             Log::info('Device was auto-fixed during attach pre-flight', [
                 'device_id' => $device->id,
                 'busid' => $device->busid,
@@ -660,7 +698,7 @@ class GatewayService
             // Windows USB/IP attach is slow due to driver loading, needs longer timeout
             // User feedback: driver loading takes ~91 seconds. Use 120s to be safe.
             $attachTimeout = $isWindows ? 120 : 30;
-            
+
             $result = $this->executeUsbipCommand(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $proxmoxNode->name,
@@ -670,7 +708,7 @@ class GatewayService
                 timeoutSeconds: $attachTimeout
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
                 // If the device is no longer bound on the gateway, mark it available
@@ -721,6 +759,7 @@ class GatewayService
                         'port' => $port,
                         'original_error' => $errorMsg,
                     ]);
+
                     return;
                 }
 
@@ -786,6 +825,7 @@ class GatewayService
                             'port' => $port,
                             'original_error' => $e->getMessage(),
                         ]);
+
                         return;
                     }
                 } catch (\Throwable $verifyException) {
@@ -817,13 +857,12 @@ class GatewayService
      * `usbip.exe attach` on Windows blocks indefinitely after a successful attach
      * (it never exits), which would cause PHP max_execution_time to be exceeded.
      *
-     * @param ProxmoxClientInterface $proxmoxClient The Proxmox client
-     * @param string $nodeName       The Proxmox node name
-     * @param int    $vmid           The VM ID
-     * @param string $command        The usbip subcommand and arguments (e.g., "attach -r 192.168.1.1 -b 1-2")
-     * @param bool   $isWindows      Whether this is a Windows VM
-     * @param int    $timeoutSeconds Command timeout
-     *
+     * @param  ProxmoxClientInterface  $proxmoxClient  The Proxmox client
+     * @param  string  $nodeName  The Proxmox node name
+     * @param  int  $vmid  The VM ID
+     * @param  string  $command  The usbip subcommand and arguments (e.g., "attach -r 192.168.1.1 -b 1-2")
+     * @param  bool  $isWindows  Whether this is a Windows VM
+     * @param  int  $timeoutSeconds  Command timeout
      * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
      */
     private function executeUsbipCommand(
@@ -854,10 +893,10 @@ class GatewayService
         // approach: try direct invocation first, then batch file fallback on Windows.
         $direct = null;
         $directException = null;
-        
+
         // Use full path for Windows wrapped in cmd.exe, just "usbip" for Linux
-        $cmd = $isWindows 
-            ? 'cmd.exe /c "' . self::WINDOWS_USBIP_PATH . ' ' . $command . '"'
+        $cmd = $isWindows
+            ? 'cmd.exe /c "'.self::WINDOWS_USBIP_PATH.' '.$command.'"'
             : "usbip {$command}";
 
         try {
@@ -879,10 +918,11 @@ class GatewayService
         // If the direct execution failed and we know the VM is Windows, try the
         // batch file approach as a last resort. For Linux we'll just return the
         // failing result (or rethrow the exception) so the caller can handle the error.
-        if (!$isWindows) {
+        if (! $isWindows) {
             if ($directException) {
                 throw $directException;
             }
+
             return $direct;
         }
 
@@ -935,7 +975,7 @@ class GatewayService
         // Step 1: Try direct invocation with full path via cmd.exe (fire-and-forget)
         // Using cmd.exe /c is more reliable for QEMU guest agent on Windows
         $started = false;
-        $fullCommand = 'cmd.exe /c "' . self::WINDOWS_USBIP_PATH . ' ' . $command . '"';
+        $fullCommand = 'cmd.exe /c "'.self::WINDOWS_USBIP_PATH.' '.$command.'"';
         try {
             $proxmoxClient->execInVm(
                 nodeName: $nodeName,
@@ -953,7 +993,7 @@ class GatewayService
         }
 
         // Step 2: If direct failed, use batch file (also fire-and-forget)
-        if (!$started) {
+        if (! $started) {
             $this->writeAndExecWindowsBatch(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $nodeName,
@@ -985,7 +1025,7 @@ class GatewayService
 
             // Check if a new port appeared with our device
             $newPort = $this->deviceAppearedInPortList($portsNow, $busid, $portsBefore);
-            
+
             if ($newPort !== null) {
                 Log::info('Windows usbip attach verified via port polling', [
                     'node' => $nodeName,
@@ -1025,9 +1065,8 @@ class GatewayService
     /**
      * Write a batch file and optionally execute it inside a Windows VM.
      *
-     * @param bool $wait If true, use execInVmAndWait; if false, use execInVm (fire-and-forget)
-     * @param bool $isAttach If true, use attach batch path; if false, use query batch path
-     *
+     * @param  bool  $wait  If true, use execInVmAndWait; if false, use execInVm (fire-and-forget)
+     * @param  bool  $isAttach  If true, use attach batch path; if false, use query batch path
      * @return array For wait=true: {exitcode, out-data, err-data, success}. For wait=false: {pid}
      */
     private function writeAndExecWindowsBatch(
@@ -1041,7 +1080,7 @@ class GatewayService
     ): array {
         // Use separate batch files to avoid race conditions
         $batchPath = $isAttach ? self::WINDOWS_BATCH_ATTACH : self::WINDOWS_BATCH_QUERY;
-        $batchContent = self::WINDOWS_USBIP_PATH . ' ' . $command;
+        $batchContent = self::WINDOWS_USBIP_PATH.' '.$command;
 
         Log::debug('Writing Windows usbip batch file', [
             'node' => $nodeName,
@@ -1098,6 +1137,7 @@ class GatewayService
             Log::debug('Failed to get usbip port list for polling', [
                 'error' => $e->getMessage(),
             ]);
+
             return '';
         }
     }
@@ -1160,7 +1200,7 @@ class GatewayService
      * On Windows, usbip-win doesn't show busid in port output, so we check for
      * VID:PID or device name patterns instead.
      *
-     * @param string|null $vidPid Optional VID:PID pattern like "0c45:6536" to match
+     * @param  string|null  $vidPid  Optional VID:PID pattern like "0c45:6536" to match
      */
     private function getAttachedPort(
         ProxmoxClientInterface $proxmoxClient,
@@ -1180,11 +1220,12 @@ class GatewayService
                 timeoutSeconds: 10
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 Log::warning('Could not get usbip port list', [
                     'vmid' => $vmid,
                     'error' => $result['err-data'] ?? 'Unknown',
                 ]);
+
                 return null;
             }
 
@@ -1215,7 +1256,7 @@ class GatewayService
                 }
 
                 // On Linux, match busid line
-                if (!$isWindows && $currentPort !== null && str_contains($line, $busid)) {
+                if (! $isWindows && $currentPort !== null && str_contains($line, $busid)) {
                     return $currentPort;
                 }
 
@@ -1240,6 +1281,7 @@ class GatewayService
                     'busid' => $busid,
                     'output' => $output,
                 ]);
+
                 return null;
             }
 
@@ -1247,6 +1289,7 @@ class GatewayService
             return $matchedPort;
         } catch (\Throwable $e) {
             Log::warning('Failed to get usbip port', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -1256,21 +1299,20 @@ class GatewayService
      *
      * This is for admin-initiated permanent VM attachments (not session-based).
      * It requires vmid, Proxmox node name, and server_id to execute usbip inside the VM.
-     * 
+     *
      * If the VM is not running, the device will be marked as pending attachment
      * and auto-attached when the VM starts.
      *
-     * @param UsbDevice      $device    The USB device to attach
-     * @param int            $vmid      The Proxmox VM ID
-     * @param string         $nodeName  The Proxmox node name
-     * @param ProxmoxServer  $server    The Proxmox server
-     * @param string         $vmIp      The VM's IP address
-     * @param string         $vmName    Optional display name for the VM
-     * @param bool           $allowPending  If true, save as pending when VM not running (default: true)
+     * @param  UsbDevice  $device  The USB device to attach
+     * @param  int  $vmid  The Proxmox VM ID
+     * @param  string  $nodeName  The Proxmox node name
+     * @param  ProxmoxServer  $server  The Proxmox server
+     * @param  string  $vmIp  The VM's IP address
+     * @param  string  $vmName  Optional display name for the VM
+     * @param  bool  $allowPending  If true, save as pending when VM not running (default: true)
+     * @return array{pending: bool, message: string}
      *
      * @throws GatewayApiException If the attach operation fails
-     * 
-     * @return array{pending: bool, message: string}
      */
     public function attachToVmDirect(
         UsbDevice $device,
@@ -1291,7 +1333,7 @@ class GatewayService
 
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'attach'
@@ -1299,7 +1341,7 @@ class GatewayService
         }
 
         // Ensure device is bound for sharing, or pending attach
-        if (!$device->isBound() && !$device->isAvailable() && !$device->isPendingAttach()) {
+        if (! $device->isBound() && ! $device->isAvailable() && ! $device->isPendingAttach()) {
             throw new GatewayApiException(
                 'Device must be bound before attaching',
                 operation: 'attach'
@@ -1323,8 +1365,8 @@ class GatewayService
         }
 
         // If VM is not running, save as pending attachment
-        if (!$isRunning) {
-            if (!$allowPending) {
+        if (! $isRunning) {
+            if (! $allowPending) {
                 throw new GatewayApiException(
                     'VM is not running and pending attachment not allowed',
                     operation: 'attach'
@@ -1350,13 +1392,13 @@ class GatewayService
 
             return [
                 'pending' => true,
-                'message' => "VM is not running. Device will be attached automatically when the VM starts.",
+                'message' => 'VM is not running. Device will be attached automatically when the VM starts.',
             ];
         }
 
         // Pre-flight check: verify gateway and device state, auto-fix if possible
         $verification = $this->verifyDeviceState($device, requireExportable: true);
-        if (!$verification['ok']) {
+        if (! $verification['ok']) {
             throw new GatewayApiException(
                 $verification['error'] ?? 'Device verification failed',
                 gatewayHost: $node->ip,
@@ -1364,7 +1406,7 @@ class GatewayService
             );
         }
 
-        if (!empty($verification['auto_fixed'])) {
+        if (! empty($verification['auto_fixed'])) {
             Log::info('Device was auto-fixed during direct attach pre-flight', [
                 'device_id' => $device->id,
                 'busid' => $device->busid,
@@ -1403,7 +1445,7 @@ class GatewayService
                 timeoutSeconds: $attachTimeout
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
                 // Verify if the device was actually attached despite reported failure
@@ -1428,6 +1470,7 @@ class GatewayService
                         'port' => $port,
                         'original_error' => $errorMsg,
                     ]);
+
                     return [
                         'pending' => false,
                         'message' => 'Device attached successfully.',
@@ -1500,6 +1543,7 @@ class GatewayService
                             'port' => $port,
                             'original_error' => $e->getMessage(),
                         ]);
+
                         return [
                             'pending' => false,
                             'message' => 'Device attached successfully.',
@@ -1541,7 +1585,7 @@ class GatewayService
 
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'attach'
@@ -1553,6 +1597,7 @@ class GatewayService
             $session = VMSession::find($sessionId);
             if ($session && $session->vm_id && $session->node_id) {
                 $this->attachToSession($device, $session);
+
                 return;
             }
         }
@@ -1566,7 +1611,7 @@ class GatewayService
                     'target_ip' => $vmIp,
                 ]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 throw new GatewayApiException(
                     $this->extractErrorMessage($response, 'detail', 'Attach operation failed'),
                     gatewayHost: $node->ip,
@@ -1601,8 +1646,8 @@ class GatewayService
      *
      * This method executes `usbip detach` inside the VM via the QEMU guest agent.
      *
-     * @param UsbDevice $device   The USB device to detach
-     * @param VMSession $session  The VM session to detach the device from
+     * @param  UsbDevice  $device  The USB device to detach
+     * @param  VMSession  $session  The VM session to detach the device from
      *
      * @throws GatewayApiException If the detach operation fails
      */
@@ -1610,7 +1655,7 @@ class GatewayService
     {
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'detach'
@@ -1618,7 +1663,7 @@ class GatewayService
         }
 
         // Ensure session has required data
-        if (!$session->vm_id || !$session->node_id) {
+        if (! $session->vm_id || ! $session->node_id) {
             throw new GatewayApiException(
                 'Session missing VM ID or node information',
                 operation: 'detach'
@@ -1629,7 +1674,7 @@ class GatewayService
         $session->loadMissing(['node', 'proxmoxServer']);
         $proxmoxNode = $session->node;
 
-        if (!$proxmoxNode) {
+        if (! $proxmoxNode) {
             throw new GatewayApiException(
                 'Session has no associated Proxmox node',
                 operation: 'detach'
@@ -1643,7 +1688,7 @@ class GatewayService
 
         $port = $device->usbip_port;
 
-        if (!$port) {
+        if (! $port) {
             // Try to find the port by running usbip port and matching busid
             Log::warning('No port recorded, attempting to find port for device', [
                 'device_id' => $device->id,
@@ -1665,7 +1710,7 @@ class GatewayService
             }
         }
 
-        if (!$port) {
+        if (! $port) {
             // Device may already have been removed inside the guest or the
             // usbip binding cleared manually. Treat this as a successful detach
             // to avoid leaving the record in an attached state.
@@ -1677,6 +1722,7 @@ class GatewayService
             $device->attached_session_id = null;
             $device->usbip_port = null;
             $device->save();
+
             return;
         }
 
@@ -1699,7 +1745,7 @@ class GatewayService
                 timeoutSeconds: 15
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
                 // If the error indicates the device or port is gone, just log and
@@ -1758,6 +1804,7 @@ class GatewayService
                         'session_id' => $session->id,
                         'original_error' => $e->getMessage(),
                     ]);
+
                     return;
                 }
             } catch (\Throwable $verifyException) {
@@ -1788,7 +1835,7 @@ class GatewayService
     {
         $node = $device->gatewayNode;
 
-        if (!$node) {
+        if (! $node) {
             throw new GatewayApiException(
                 'Device has no associated gateway node',
                 operation: 'detach'
@@ -1800,12 +1847,13 @@ class GatewayService
             $session = $device->attachedSession;
             if ($session && $session->vm_id && $session->node_id) {
                 $this->detachFromSession($device, $session);
+
                 return;
             }
         }
 
         // Fallback to legacy gateway API call
-        if (!$device->usbip_port) {
+        if (! $device->usbip_port) {
             Log::warning('Detaching device without port reference (legacy)', [
                 'device_id' => $device->id,
                 'busid' => $device->busid,
@@ -1819,7 +1867,7 @@ class GatewayService
                     'port' => $device->usbip_port,
                 ]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 throw new GatewayApiException(
                     $this->extractErrorMessage($response, 'detail', 'Detach operation failed'),
                     gatewayHost: $node->ip,
@@ -1884,14 +1932,14 @@ class GatewayService
      * This should be called when a VM starts to attach any devices
      * that were waiting for it.
      *
-     * @param int $vmid The Proxmox VM ID
-     * @param ProxmoxServer $server The Proxmox server
+     * @param  int  $vmid  The Proxmox VM ID
+     * @param  ProxmoxServer  $server  The Proxmox server
      * @return array{attached: int, failed: int, errors: array<string>}
      */
     public function processPendingAttachmentsForVm(int $vmid, ProxmoxServer $server): array
     {
         $pendingDevices = $this->deviceRepository->findPendingForVm($vmid, $server->id);
-        
+
         $result = [
             'attached' => 0,
             'failed' => 0,
@@ -1950,7 +1998,7 @@ class GatewayService
      */
     public function cancelPendingAttachment(UsbDevice $device): bool
     {
-        if (!$device->isPendingAttach()) {
+        if (! $device->isPendingAttach()) {
             return false;
         }
 
@@ -1965,6 +2013,179 @@ class GatewayService
         return true;
     }
 
+    /**
+     * Process dedicated USB devices for a VM on start.
+     *
+     * This attaches all devices that are permanently assigned to this VM
+     * using the dedicated_vmid field. Unlike pending attachment, dedicated
+     * assignment persists and will re-attach on every VM start.
+     *
+     * @param  int  $vmid  The Proxmox VM ID
+     * @param  ProxmoxServer  $server  The Proxmox server
+     * @return array{attached: int, failed: int, errors: array<string>}
+     */
+    public function processDedicatedDevicesForVm(int $vmid, ProxmoxServer $server): array
+    {
+        $dedicatedDevices = $this->deviceRepository->findDedicatedForVm($vmid, $server->id);
+
+        $result = [
+            'attached' => 0,
+            'failed' => 0,
+            'errors' => [],
+        ];
+
+        if ($dedicatedDevices->isEmpty()) {
+            return $result;
+        }
+
+        Log::info("Processing {$dedicatedDevices->count()} dedicated USB devices for VM", [
+            'vmid' => $vmid,
+            'server_id' => $server->id,
+        ]);
+
+        foreach ($dedicatedDevices as $device) {
+            // Skip if device is already attached
+            if ($device->isAttached()) {
+                Log::debug('Dedicated device already attached, skipping', [
+                    'device_id' => $device->id,
+                    'attached_to' => $device->attached_to,
+                ]);
+
+                continue;
+            }
+
+            // Skip if device is not in attachable state
+            if (! $device->isBound() && ! $device->isAvailable()) {
+                Log::warning('Dedicated device not in attachable state', [
+                    'device_id' => $device->id,
+                    'status' => $device->status->value,
+                ]);
+                $result['failed']++;
+                $result['errors'][] = "Device {$device->id}: Not in attachable state ({$device->status->value})";
+
+                continue;
+            }
+
+            // Ensure device is bound first
+            if ($device->isAvailable()) {
+                try {
+                    $this->bindDevice($device);
+                } catch (GatewayApiException $e) {
+                    $result['failed']++;
+                    $result['errors'][] = "Device {$device->id}: Failed to bind - {$e->getMessage()}";
+
+                    continue;
+                }
+            }
+
+            try {
+                $attachResult = $this->attachToVmDirect(
+                    device: $device,
+                    vmid: $vmid,
+                    nodeName: $device->dedicated_node,
+                    server: $server,
+                    vmIp: '0.0.0.0',
+                    vmName: "dedicated-vm-{$vmid}",
+                    allowPending: false  // Don't mark as pending - this is a dedicated device
+                );
+
+                if ($attachResult['pending']) {
+                    // VM might have stopped again - this is not a failure
+                    Log::info('Dedicated device still pending (VM may have stopped)', [
+                        'device_id' => $device->id,
+                        'message' => $attachResult['message'],
+                    ]);
+                } else {
+                    $result['attached']++;
+                    Log::info('Dedicated device attached to VM', [
+                        'device_id' => $device->id,
+                        'vmid' => $vmid,
+                    ]);
+                }
+            } catch (GatewayApiException $e) {
+                $result['failed']++;
+                $result['errors'][] = "Device {$device->id}: {$e->getMessage()}";
+                Log::error('Failed to attach dedicated device to VM', [
+                    'device_id' => $device->id,
+                    'vmid' => $vmid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        Log::info('Finished processing dedicated USB devices for VM', [
+            'vmid' => $vmid,
+            'attached' => $result['attached'],
+            'failed' => $result['failed'],
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Set a device as dedicated to a specific VM.
+     *
+     * The device will automatically attach whenever the VM starts
+     * and detach when the VM stops. Uses VID:PID for identification
+     * which is more reliable than bus ID (which changes with port).
+     *
+     * @throws GatewayApiException If device cannot be dedicated
+     */
+    public function dedicateDeviceToVm(
+        UsbDevice $device,
+        int $vmid,
+        string $nodeName,
+        ProxmoxServer $server
+    ): void {
+        // Camera devices cannot be dedicated to VMs
+        if ($device->is_camera) {
+            throw new GatewayApiException(
+                'Camera devices cannot be dedicated to VMs',
+                operation: 'dedicate'
+            );
+        }
+
+        // Clear any existing dedication
+        if ($device->isDedicated()) {
+            Log::info('Clearing previous dedication before setting new one', [
+                'device_id' => $device->id,
+                'previous_vmid' => $device->dedicated_vmid,
+                'new_vmid' => $vmid,
+            ]);
+        }
+
+        $this->deviceRepository->setDedicatedVm($device, $vmid, $nodeName, $server->id);
+
+        Log::info('USB device dedicated to VM', [
+            'device_id' => $device->id,
+            'vid_pid' => $device->vid_pid,
+            'vmid' => $vmid,
+            'node' => $nodeName,
+            'server_id' => $server->id,
+        ]);
+    }
+
+    /**
+     * Remove dedicated VM assignment from a device.
+     */
+    public function removeDedication(UsbDevice $device): bool
+    {
+        if (! $device->isDedicated()) {
+            return false;
+        }
+
+        $previousVmid = $device->dedicated_vmid;
+        $this->deviceRepository->clearDedicatedVm($device);
+
+        Log::info('USB device dedication removed', [
+            'device_id' => $device->id,
+            'vid_pid' => $device->vid_pid,
+            'previous_vmid' => $previousVmid,
+        ]);
+
+        return true;
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Camera Streaming Methods
     // ────────────────────────────────────────────────────────────────
@@ -1972,10 +2193,10 @@ class GatewayService
     /**
      * Start streaming a USB camera to MediaMTX.
      *
-     * @param GatewayNode $node The gateway node where the camera is connected
-     * @param string $streamKey Unique stream key (used as MediaMTX path)
-     * @param string $devicePath Device path (default: /dev/video0)
-     * @param array $options Optional: width, height, framerate, input_format
+     * @param  GatewayNode  $node  The gateway node where the camera is connected
+     * @param  string  $streamKey  Unique stream key (used as MediaMTX path)
+     * @param  string  $devicePath  Device path (default: /dev/video0)
+     * @param  array  $options  Optional: width, height, framerate, input_format
      * @return array{success: bool, pid?: int, rtsp_url?: string, hls_url?: string, error?: string}
      */
     public function startCameraStream(
@@ -2004,7 +2225,7 @@ class GatewayService
             $response = Http::timeout($this->timeout() * 2)
                 ->post($startEndpoint, $payload);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $error = $this->extractErrorMessage($response);
                 Log::warning('Failed to start camera stream', [
                     'node_id' => $node->id,
@@ -2051,8 +2272,8 @@ class GatewayService
     /**
      * Stop a camera stream on a gateway node.
      *
-     * @param GatewayNode $node The gateway node
-     * @param string $streamKey The stream key to stop
+     * @param  GatewayNode  $node  The gateway node
+     * @param  string  $streamKey  The stream key to stop
      * @return array{success: bool, error?: string}
      */
     public function stopCameraStream(GatewayNode $node, string $streamKey): array
@@ -2068,8 +2289,9 @@ class GatewayService
                     'stream_key' => $streamKey,
                 ]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $error = $this->extractErrorMessage($response);
+
                 return [
                     'success' => false,
                     'error' => $error,
@@ -2100,8 +2322,8 @@ class GatewayService
     /**
      * Get status of a camera stream on a gateway node.
      *
-     * @param GatewayNode $node The gateway node
-     * @param string $streamKey The stream key to check
+     * @param  GatewayNode  $node  The gateway node
+     * @param  string  $streamKey  The stream key to check
      * @return array{running: bool, pid?: int, rtsp_url?: string}
      */
     public function getCameraStreamStatus(GatewayNode $node, string $streamKey): array
@@ -2115,7 +2337,7 @@ class GatewayService
             $response = Http::timeout($this->timeout())
                 ->get($statusEndpoint);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return ['running' => false];
             }
 

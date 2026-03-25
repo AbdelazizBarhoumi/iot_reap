@@ -2,20 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UsbDeviceStatus;
-use App\Enums\UsbReservationStatus;
-use App\Enums\VMSessionStatus;
 use App\Models\GatewayNode;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
-use App\Models\UsbDeviceReservation;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Services\GatewayService;
-use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientFactory;
+use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Http;
 use Mockery;
@@ -34,11 +29,17 @@ use Tests\TestCase;
 class SessionHardwareTest extends TestCase
 {
     private User $user;
+
     private User $otherUser;
+
     private VMSession $session;
+
     private GatewayNode $gateway;
+
     private ProxmoxServer $proxmoxServer;
+
     private ProxmoxNode $proxmoxNode;
+
     private ProxmoxClientFake $fakeProxmoxClient;
 
     protected function setUp(): void
@@ -46,13 +47,13 @@ class SessionHardwareTest extends TestCase
         parent::setUp();
         $this->user = User::factory()->engineer()->create();
         $this->otherUser = User::factory()->engineer()->create();
-        
+
         $this->gateway = GatewayNode::factory()->online()->verified()->create();
-        
+
         // Create Proxmox server and node for guest agent operations
         $this->proxmoxServer = ProxmoxServer::factory()->create();
         $this->proxmoxNode = ProxmoxNode::factory()->create(['name' => 'pve-test']);
-        
+
         $this->session = VMSession::factory()
             ->for($this->user)
             ->active()
@@ -63,10 +64,10 @@ class SessionHardwareTest extends TestCase
             ]);
 
         // Set up the fake ProxmoxClient
-        $this->fakeProxmoxClient = new ProxmoxClientFake();
-        
-        $this->app->bind(ProxmoxClientInterface::class, fn() => $this->fakeProxmoxClient);
-        
+        $this->fakeProxmoxClient = new ProxmoxClientFake;
+
+        $this->app->bind(ProxmoxClientInterface::class, fn () => $this->fakeProxmoxClient);
+
         $mockFactory = Mockery::mock(ProxmoxClientFactory::class);
         $mockFactory->shouldReceive('make')
             ->andReturn($this->fakeProxmoxClient);
@@ -74,7 +75,7 @@ class SessionHardwareTest extends TestCase
             ->andReturn($this->fakeProxmoxClient);
         $mockFactory->shouldReceive('makeForServerId')
             ->andReturn($this->fakeProxmoxClient);
-        
+
         $this->app->instance(ProxmoxClientFactory::class, $mockFactory);
     }
 
@@ -146,7 +147,7 @@ class SessionHardwareTest extends TestCase
 
         $device->refresh();
         $this->assertEquals($this->session->id, $device->attached_session_id);
-        
+
         // Verify the command was executed via guest agent
         $this->fakeProxmoxClient->assertCommandExecuted('usbip attach');
     }
@@ -197,7 +198,7 @@ class SessionHardwareTest extends TestCase
 
         $device->refresh();
         $this->assertNull($device->attached_session_id);
-        
+
         // Verify the command was executed via guest agent
         $this->fakeProxmoxClient->assertCommandExecuted('usbip detach');
     }

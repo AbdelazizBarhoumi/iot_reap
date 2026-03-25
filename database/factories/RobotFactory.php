@@ -14,11 +14,11 @@ class RobotFactory extends Factory
 
     public function definition(): array
     {
-        $name = $this->faker->unique()->word() . '-bot';
+        $name = $this->faker->unique()->word().'-bot';
 
         return [
             'name' => ucfirst($name),
-            'identifier' => 'robot-' . $this->faker->unique()->slug(2),
+            'identifier' => 'robot-'.$this->faker->unique()->slug(2),
             'description' => $this->faker->sentence(),
             'status' => 'online',
             'ip_address' => $this->faker->localIpv4(),
@@ -30,7 +30,7 @@ class RobotFactory extends Factory
      */
     public function online(): static
     {
-        return $this->state(fn() => ['status' => 'online']);
+        return $this->state(fn () => ['status' => 'online']);
     }
 
     /**
@@ -38,6 +38,6 @@ class RobotFactory extends Factory
      */
     public function offline(): static
     {
-        return $this->state(fn() => ['status' => 'offline']);
+        return $this->state(fn () => ['status' => 'offline']);
     }
 }

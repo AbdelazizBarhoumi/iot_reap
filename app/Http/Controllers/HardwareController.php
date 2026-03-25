@@ -89,7 +89,7 @@ class HardwareController extends Controller
     {
         $result = $this->gatewayService->discoverDevicesFromNode($node);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'] ?? 'Failed to contact gateway node',
@@ -109,7 +109,7 @@ class HardwareController extends Controller
      */
     public function bind(UsbDevice $device): JsonResponse
     {
-        if (!$device->isAvailable()) {
+        if (! $device->isAvailable()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device is not in available state',
@@ -144,7 +144,7 @@ class HardwareController extends Controller
             ], 422);
         }
 
-        if (!$device->isBound()) {
+        if (! $device->isBound()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device is not in bound state',
@@ -172,7 +172,7 @@ class HardwareController extends Controller
      */
     public function attach(UsbDevice $device, AttachDeviceRequest $request): JsonResponse
     {
-        if (!$device->isBound()) {
+        if (! $device->isBound()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device must be bound before attaching',
@@ -235,7 +235,7 @@ class HardwareController extends Controller
      */
     public function detach(UsbDevice $device): JsonResponse
     {
-        if (!$device->isAttached()) {
+        if (! $device->isAttached()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device is not attached to any VM',
@@ -263,7 +263,7 @@ class HardwareController extends Controller
      */
     public function cancelPending(UsbDevice $device): JsonResponse
     {
-        if (!$device->isPendingAttach()) {
+        if (! $device->isPendingAttach()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Device does not have a pending attachment',
@@ -272,7 +272,7 @@ class HardwareController extends Controller
 
         $cancelled = $this->gatewayService->cancelPendingAttachment($device);
 
-        if (!$cancelled) {
+        if (! $cancelled) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to cancel pending attachment',
@@ -315,7 +315,7 @@ class HardwareController extends Controller
         $framerate = $validated['framerate'] ?? 15;
 
         // Generate a unique stream key
-        $streamKey = 'usb-' . $device->gatewayNode->name . '-' . str_replace(['.', '-'], '', $device->busid);
+        $streamKey = 'usb-'.$device->gatewayNode->name.'-'.str_replace(['.', '-'], '', $device->busid);
 
         // Determine video device path - count existing cameras on this gateway
         $existingCameras = \App\Models\Camera::where('gateway_node_id', $device->gateway_node_id)->count();
@@ -384,7 +384,7 @@ class HardwareController extends Controller
      */
     public function removeCamera(UsbDevice $device): JsonResponse
     {
-        if (!$device->hasCamera()) {
+        if (! $device->hasCamera()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This device is not registered as a camera',
@@ -432,7 +432,7 @@ class HardwareController extends Controller
      */
     public function updateCameraSettings(Request $request, UsbDevice $device): JsonResponse
     {
-        if (!$device->hasCamera()) {
+        if (! $device->hasCamera()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This device is not registered as a camera',
@@ -493,7 +493,7 @@ class HardwareController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Camera settings updated' . ($streamResult['success'] ? ' and stream restarted' : ''),
+            'message' => 'Camera settings updated'.($streamResult['success'] ? ' and stream restarted' : ''),
             'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
             'stream_restarted' => $streamResult['success'],
             'stream_error' => $streamResult['error'] ?? null,
@@ -571,7 +571,7 @@ class HardwareController extends Controller
         $verified = $request->boolean('verified', true);
 
         // When unverifying, unbind all devices on this gateway
-        if (!$verified) {
+        if (! $verified) {
             $boundDevices = $node->usbDevices()
                 ->whereIn('status', [UsbDeviceStatus::BOUND, UsbDeviceStatus::ATTACHED])
                 ->get();
@@ -586,6 +586,7 @@ class HardwareController extends Controller
                             'busid' => $device->busid,
                             'attached_to' => $device->attached_to,
                         ]);
+
                         continue;
                     }
 
@@ -605,7 +606,7 @@ class HardwareController extends Controller
                 }
             }
 
-            if (!empty($unbindErrors)) {
+            if (! empty($unbindErrors)) {
                 Log::warning('Some devices failed to unbind during gateway unverify', [
                     'gateway_id' => $node->id,
                     'failed_busids' => $unbindErrors,
@@ -668,7 +669,7 @@ class HardwareController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to discover gateways: ' . $e->getMessage(),
+                'message' => 'Failed to discover gateways: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -692,7 +693,7 @@ class HardwareController extends Controller
 
     /**
      * Get list of running VMs from all Proxmox servers (admin only).
-     * 
+     *
      * Returns a list of VMs that can be used as targets for USB device attachment.
      * Includes VM ID, name, IP address (if available via guest agent), and node.
      */
@@ -739,7 +740,7 @@ class HardwareController extends Controller
                             'node' => $nodeName,
                             'server_id' => $server->id,
                             'server_name' => $server->name,
-                            'display_name' => $ipAddress 
+                            'display_name' => $ipAddress
                                 ? "{$vmName} ({$ipAddress})"
                                 : "{$vmName} (No IP)",
                         ];
@@ -757,6 +758,93 @@ class HardwareController extends Controller
         return response()->json([
             'success' => true,
             'data' => $runningVms,
+        ]);
+    }
+
+    /**
+     * Dedicate a USB device to a VM (admin only).
+     *
+     * When a device is dedicated to a VM, it will automatically attach
+     * whenever the VM starts. This uses VID:PID for identification which
+     * is more reliable than bus ID (which changes with USB port).
+     */
+    public function dedicateDevice(Request $request, UsbDevice $device): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $validated = $request->validate([
+            'vmid' => ['required', 'integer', 'min:100'],
+            'node' => ['required', 'string', 'max:255'],
+            'server_id' => ['required', 'integer', 'exists:proxmox_servers,id'],
+        ]);
+
+        // Camera devices cannot be dedicated
+        if ($device->is_camera) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Camera devices cannot be dedicated to VMs',
+            ], 422);
+        }
+
+        $server = ProxmoxServer::findOrFail($validated['server_id']);
+
+        try {
+            $this->gatewayService->dedicateDeviceToVm(
+                device: $device,
+                vmid: $validated['vmid'],
+                nodeName: $validated['node'],
+                server: $server
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Device dedicated to VM {$validated['vmid']}. It will auto-attach on VM start.",
+                'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+            ]);
+        } catch (GatewayApiException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Remove dedication from a USB device (admin only).
+     */
+    public function removeDedication(UsbDevice $device): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        if (! $device->isDedicated()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device is not dedicated to any VM',
+            ], 422);
+        }
+
+        $previousVmid = $device->dedicated_vmid;
+        $this->gatewayService->removeDedication($device);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Dedication to VM {$previousVmid} removed",
+            'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
+        ]);
+    }
+
+    /**
+     * Get all dedicated device assignments (admin only).
+     */
+    public function dedicatedDevices(): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $devices = $this->deviceRepository->findAllDedicated();
+
+        return response()->json([
+            'success' => true,
+            'data' => UsbDeviceResource::collection($devices),
         ]);
     }
 }

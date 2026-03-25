@@ -16,9 +16,12 @@ use Tests\TestCase;
 class VMSessionControllerTest extends TestCase
 {
     private User $user;
+
     private ProxmoxServer $server;
+
     // no template needed
     private ProxmoxNode $node;
+
     private ProxmoxClientFake $proxmoxFake;
 
     protected function setUp(): void
@@ -27,7 +30,7 @@ class VMSessionControllerTest extends TestCase
 
         // Create and bind the fake ProxmoxClient as a singleton so tests
         // can register VMs before requests.
-        $this->proxmoxFake = new ProxmoxClientFake();
+        $this->proxmoxFake = new ProxmoxClientFake;
         $this->app->instance(ProxmoxClientInterface::class, $this->proxmoxFake);
 
         // Mock GuacamoleClient — the sync listener now calls it during
@@ -69,19 +72,19 @@ class VMSessionControllerTest extends TestCase
         $response = $this->actingAs($this->user)->getJson('/sessions');
 
         $response->assertOk()
-                 ->assertJsonStructure([
-                     'data' => [
-                         '*' => [
-                             'id',
-                             'status',
-                             'protocol',
-                             'node_name',
-                             'expires_at',
-                             'time_remaining_seconds',
-                             'guacamole_url',
-                         ],
-                     ],
-                 ]);
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => [
+                        'id',
+                        'status',
+                        'protocol',
+                        'node_name',
+                        'expires_at',
+                        'time_remaining_seconds',
+                        'guacamole_url',
+                    ],
+                ],
+            ]);
 
         $this->assertCount(1, $response->json('data'));
     }
@@ -110,11 +113,11 @@ class VMSessionControllerTest extends TestCase
         ]);
 
         // browser request should be bounced to dashboard
-        $response = $this->actingAs($this->user)->get('/sessions/' . $session->id);
+        $response = $this->actingAs($this->user)->get('/sessions/'.$session->id);
         $response->assertRedirect(route('dashboard'));
 
         // XHR JSON clients should get 404 so they can handle it gracefully
-        $json = $this->actingAs($this->user)->getJson('/sessions/' . $session->id);
+        $json = $this->actingAs($this->user)->getJson('/sessions/'.$session->id);
         $json->assertNotFound();
     }
 
@@ -131,19 +134,19 @@ class VMSessionControllerTest extends TestCase
 
         if ($response->status() !== 201) {
             // provide diagnostics in case of validation/exception
-            $this->fail('Create session failed with ' . $response->status()
-                . ' body: ' . json_encode($response->json()));
+            $this->fail('Create session failed with '.$response->status()
+                .' body: '.json_encode($response->json()));
         }
 
         $response->assertCreated()
-                 ->assertJsonStructure([
-                     'id',
-                     'status',
-                     'protocol',
-                     'node_name',
-                     'expires_at',
-                     'time_remaining_seconds',
-                 ]);
+            ->assertJsonStructure([
+                'id',
+                'status',
+                'protocol',
+                'node_name',
+                'expires_at',
+                'time_remaining_seconds',
+            ]);
 
         // Session should be ACTIVE after synchronous activation
         $this->assertDatabaseHas('vm_sessions', [
@@ -166,7 +169,7 @@ class VMSessionControllerTest extends TestCase
         ]);
 
         if ($response->status() !== 201) {
-            $this->fail('Create session with snapshot failed: ' . json_encode($response->json()));
+            $this->fail('Create session with snapshot failed: '.json_encode($response->json()));
         }
 
         $response->assertCreated();
@@ -183,7 +186,7 @@ class VMSessionControllerTest extends TestCase
         ]);
 
         $response->assertUnprocessable()
-                 ->assertJsonValidationErrors(['vmid', 'node_id']);
+            ->assertJsonValidationErrors(['vmid', 'node_id']);
     }
 
     public function test_create_session_validates_duration_minutes(): void
@@ -197,7 +200,7 @@ class VMSessionControllerTest extends TestCase
         ]);
 
         $response->assertUnprocessable()
-                 ->assertJsonValidationErrors(['duration_minutes']);
+            ->assertJsonValidationErrors(['duration_minutes']);
     }
 
     // the `use_existing` parameter has been removed; validation is handled elsewhere
@@ -213,12 +216,12 @@ class VMSessionControllerTest extends TestCase
         $response = $this->actingAs($this->user)->getJson("/sessions/{$session->id}");
 
         $response->assertOk()
-                 ->assertJsonStructure([
-                     'id',
-                     'status',
-                     'protocol',
-                     'node_name',
-                 ]);
+            ->assertJsonStructure([
+                'id',
+                'status',
+                'protocol',
+                'node_name',
+            ]);
     }
 
     public function test_user_cannot_get_other_users_session(): void
@@ -315,7 +318,7 @@ class VMSessionControllerTest extends TestCase
 
         $this->assertArrayHasKey('vm_ip_address', $response->json());
         $this->assertArrayHasKey('guacamole_connection_id', $response->json());
-        
+
         // Verify values are correct
         $this->assertEquals('192.168.1.50', $response->json('vm_ip_address'));
         $this->assertEquals(99999, $response->json('guacamole_connection_id'));
@@ -326,4 +329,3 @@ class VMSessionControllerTest extends TestCase
         $this->assertArrayNotHasKey('proxmox_server_id', $response->json());
     }
 }
-

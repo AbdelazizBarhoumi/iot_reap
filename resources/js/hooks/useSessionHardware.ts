@@ -86,6 +86,19 @@ export function useSessionHardware(
       try {
         const result = await sessionHardwareApi.attachDevice(sessionId, deviceId);
         if (result.success) {
+          // Check if this was an async operation
+          if ('async' in result && result.async) {
+            // Async mode: device attachment is in progress
+            // Frontend should listen for WebSocket events for progress
+            toast.info('USB device attachment started...', {
+              description: 'This may take up to 2 minutes for Windows VMs. Progress updates will appear automatically.',
+              duration: 8000,
+            });
+            // Don't wait - the polling will pick up state changes
+            await fetchData();
+            return true;
+          }
+          // Sync mode: immediate success
           toast.success('USB device attached successfully');
           await fetchData();
           return true;

@@ -29,9 +29,10 @@ use Throwable;
  */
 class TerminateVMJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, InteractsWithQueue;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
+
     public $backoff = [10, 30, 60]; // seconds
 
     /**
@@ -43,16 +44,18 @@ class TerminateVMJob implements ShouldQueue
      * removed.  Internally we always serialize this value so the property is
      * initialized after the job is unserialized by the queue worker.
      *
-     * @param bool $stopVm whether to stop/delete the VM (default: false)
-     * @param string|null $returnSnapshot snapshot name to revert to before
-     *                                        stopping (optional)
+     * @param  bool  $stopVm  whether to stop/delete the VM (default: false)
+     * @param  string|null  $returnSnapshot  snapshot name to revert to before
+     *                                       stopping (optional)
      */
     // default values ensure a job pulled from an older queue payload
     // remains valid even if the constructor wasn’t executed during
     // deserialization.  This guards against the typed property exception we
     // saw in the logs when stopVm was accessed before initialization.
     private bool $stopVm = false;
+
     private ?string $returnSnapshot = null; // not readonly so we can default to null
+
     private ?string $scheduledForExpiry = null; // for auto-expire jobs
 
     public function __construct(
@@ -171,7 +174,7 @@ class TerminateVMJob implements ShouldQueue
         VMSession $session,
         GuacamoleClientInterface $client,
     ): void {
-        if (!$session->guacamole_connection_id) {
+        if (! $session->guacamole_connection_id) {
             Log::info('No Guacamole connection to delete', [
                 'session_id' => $session->id,
             ]);
@@ -180,7 +183,7 @@ class TerminateVMJob implements ShouldQueue
         }
 
         try {
-            $client->deleteConnection((string)$session->guacamole_connection_id);
+            $client->deleteConnection((string) $session->guacamole_connection_id);
 
             Log::info('Guacamole connection deleted', [
                 'session_id' => $session->id,
@@ -198,6 +201,7 @@ class TerminateVMJob implements ShouldQueue
                 ]);
                 // Clear the connection ID since it no longer exists
                 $session->update(['guacamole_connection_id' => null]);
+
                 return; // Continue with VM cleanup
             }
 
@@ -229,6 +233,7 @@ class TerminateVMJob implements ShouldQueue
             Log::info('No USB devices to cleanup', [
                 'session_id' => $session->id,
             ]);
+
             return;
         }
 
@@ -241,7 +246,7 @@ class TerminateVMJob implements ShouldQueue
             try {
                 // Attempt graceful detach via gateway service
                 $gatewayService->detachFromVm($device);
-                
+
                 Log::info('USB device detached during session cleanup', [
                     'device_id' => $device->id,
                     'session_id' => $session->id,
@@ -385,6 +390,7 @@ class TerminateVMJob implements ShouldQueue
                         'vmid' => $vmid,
                         'elapsed_seconds' => time() - $startTime,
                     ]);
+
                     return;
                 }
             } catch (Throwable $e) {

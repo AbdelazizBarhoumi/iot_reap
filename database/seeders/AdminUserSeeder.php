@@ -16,7 +16,7 @@ class AdminUserSeeder extends Seeder
         foreach (UserRole::cases() as $role) {
             User::factory()->create([
                 'name' => ucfirst(str_replace('_', ' ', $role->value)),
-                'email' => $role->value . '@example.com',
+                'email' => $role->value.'@example.com',
                 'password' => $defaultPassword,
                 'role' => $role->value,
                 'email_verified_at' => now(),

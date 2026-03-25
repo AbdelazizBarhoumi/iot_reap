@@ -13,7 +13,7 @@ class CourseModuleRepository
     /**
      * Create a new module.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): CourseModule
     {
@@ -50,7 +50,7 @@ class CourseModuleRepository
     /**
      * Update a module.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(CourseModule $module, array $data): CourseModule
     {
@@ -70,7 +70,7 @@ class CourseModuleRepository
     /**
      * Reorder modules for a course.
      *
-     * @param array<int, int> $order Map of module_id => sort_order
+     * @param  array<int, int>  $order  Map of module_id => sort_order
      */
     public function reorder(int $courseId, array $order): void
     {

@@ -25,7 +25,7 @@ class GatewayNodeFactory extends Factory
 
         return [
             'name' => "gateway-{$nodeNumber}",
-            'ip' => "192.168.50." . (5 + $nodeNumber),
+            'ip' => '192.168.50.'.(5 + $nodeNumber),
             'port' => 8000,
             'online' => true,
             'last_seen_at' => now(),

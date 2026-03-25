@@ -19,14 +19,15 @@ use Illuminate\Support\Facades\Log;
  * Camera service — all camera business logic.
  *
  * Handles camera viewing, PTZ control acquisition/release,
- * and movement commands. In production, movement commands
- * will be sent via MQTT to the ESP32; for now they are logged.
+ * and movement commands. Movement commands are sent via MQTT
+ * to the ESP32 controller.
  */
 class CameraService
 {
     public function __construct(
         private readonly CameraRepository $cameraRepository,
         private readonly CameraReservationRepository $reservationRepository,
+        private readonly MqttService $mqttService,
     ) {}
 
     /**
@@ -163,19 +164,29 @@ class CameraService
             );
         }
 
-        // TODO: In production, publish MQTT command:
-        // $this->mqtt->publish("robot/{$camera->robot_id}/camera/command", [
-        //     'action' => "ptz_{$direction->value}",
-        //     'params' => ['step' => 10],
-        //     'timestamp' => now()->toISOString(),
-        //     'session_id' => $sessionId,
-        // ]);
+        // Send PTZ command via MQTT to ESP32
+        if ($camera->robot_id) {
+            $published = $this->mqttService->publishPtzCommand(
+                robotId: $camera->robot_id,
+                direction: $direction->value,
+                sessionId: $sessionId
+            );
+
+            if (!$published) {
+                Log::warning('Failed to publish PTZ command via MQTT', [
+                    'camera_id' => $cameraId,
+                    'session_id' => $sessionId,
+                    'direction' => $direction->value,
+                ]);
+            }
+        }
 
         Log::info('Camera PTZ move command', [
             'camera_id' => $cameraId,
             'session_id' => $sessionId,
             'direction' => $direction->value,
             'camera_name' => $camera->name,
+            'robot_id' => $camera->robot_id,
         ]);
     }
 

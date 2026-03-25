@@ -87,18 +87,6 @@ export default function Welcome({
                             >
                                 Browse Courses
                             </Link>
-                            <Link
-                                href="/teaching"
-                                className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground"
-                            >
-                                Teach
-                            </Link>
-                            <Link
-                                href="/admin"
-                                className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground"
-                            >
-                                Admin
-                            </Link>
                             {auth.user && (
                                 <Button asChild>
                                     <Link href={dashboard()}>
@@ -157,20 +145,6 @@ export default function Welcome({
                                         onClick={() => setMobileOpen(false)}
                                     >
                                         Browse Courses
-                                    </Link>
-                                    <Link
-                                        href="/teaching"
-                                        className="text-sm font-medium text-muted-foreground hover:text-primary"
-                                        onClick={() => setMobileOpen(false)}
-                                    >
-                                        Teach
-                                    </Link>
-                                    <Link
-                                        href="/admin"
-                                        className="text-sm font-medium text-muted-foreground hover:text-primary"
-                                        onClick={() => setMobileOpen(false)}
-                                    >
-                                        Admin
                                     </Link>
                                     {auth.user && (
                                         <Link

@@ -38,7 +38,7 @@ class ProxmoxClientFactory
     {
         $server = $this->repository->findDefault();
 
-        if (!$server) {
+        if (! $server) {
             throw new \RuntimeException(
                 'No active Proxmox server configured. Register a server via admin API or set PROXMOX_DEFAULT_SERVER_ID.'
             );

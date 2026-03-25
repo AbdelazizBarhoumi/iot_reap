@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Models\ProxmoxServer;
-use App\Models\ProxmoxNode;
-use App\Models\VMSession;
-use App\Models\User;
 use App\Enums\VMSessionStatus;
+use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
+use App\Models\User;
+use App\Models\VMSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -43,7 +43,7 @@ class ServerInactivationAndResourceControlTest extends TestCase
 
         // The database value should NOT be plain text
         $this->assertNotEquals($host, $databaseRecord->host);
-        $this->assertNotEquals((string)$port, $databaseRecord->port);
+        $this->assertNotEquals((string) $port, $databaseRecord->port);
 
         // But the model should decrypt transparently
         $server = ProxmoxServer::find($server->id);

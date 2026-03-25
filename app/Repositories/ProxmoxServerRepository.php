@@ -84,7 +84,7 @@ class ProxmoxServerRepository
     {
         return ProxmoxServer::active()
             ->with([
-                'nodes' => fn($query) => $query->where('status', 'online'),
+                'nodes' => fn ($query) => $query->where('status', 'online'),
             ])
             ->get()
             ->map(function ($server) {
@@ -110,8 +110,8 @@ class ProxmoxServerRepository
     {
         return ProxmoxServer::active()
             ->with([
-                'nodes' => fn($query) => $query->where('status', 'online'),
-                'vmSessions' => fn($query) => $query
+                'nodes' => fn ($query) => $query->where('status', 'online'),
+                'vmSessions' => fn ($query) => $query
                     ->where('status', 'active')
                     ->where('expires_at', '>', now()),
             ])

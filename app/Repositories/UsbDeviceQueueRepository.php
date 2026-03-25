@@ -4,8 +4,8 @@ namespace App\Repositories;
 
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
-use App\Models\VMSession;
 use App\Models\User;
+use App\Models\VMSession;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -69,7 +69,7 @@ class UsbDeviceQueueRepository
     {
         $device = $entry->device;
         $position = $entry->position;
-        
+
         $deleted = $entry->delete();
 
         // Reorder remaining entries
@@ -85,7 +85,7 @@ class UsbDeviceQueueRepository
     /**
      * Remove all queue entries for a session.
      */
-    public function removeBySession(UsbDevice|null $device = null, VMSession|null $session = null): int|bool
+    public function removeBySession(?UsbDevice $device = null, ?VMSession $session = null): int|bool
     {
         // When both device and session are given, remove the specific entry
         if ($device && $session) {

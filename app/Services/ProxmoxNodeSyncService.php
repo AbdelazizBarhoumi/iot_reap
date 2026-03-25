@@ -37,6 +37,7 @@ class ProxmoxNodeSyncService
 
             if ($nodesData === null) {
                 $result['errors'][] = 'Failed to fetch nodes from Proxmox API';
+
                 return $result;
             }
 
@@ -45,7 +46,7 @@ class ProxmoxNodeSyncService
 
             foreach ($nodesData as $nodeInfo) {
                 $nodeName = $nodeInfo['node'] ?? null;
-                if (!$nodeName) {
+                if (! $nodeName) {
                     continue;
                 }
 
@@ -134,8 +135,6 @@ class ProxmoxNodeSyncService
 
     /**
      * Fetch nodes from Proxmox API.
-     *
-     * @return array|null
      */
     protected function fetchNodesFromApi(ProxmoxServer $server): ?array
     {
@@ -147,17 +146,18 @@ class ProxmoxNodeSyncService
                 'Authorization' => "PVEAPIToken={$tokenAuth}",
             ])->timeout(self::TIMEOUT);
 
-            if (!$server->verify_ssl) {
+            if (! $server->verify_ssl) {
                 $httpClient = $httpClient->withoutVerifying();
             }
 
             $response = $httpClient->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('ProxmoxNodeSyncService: API request failed', [
                     'server_id' => $server->id,
                     'status' => $response->status(),
                 ]);
+
                 return null;
             }
 
@@ -168,6 +168,7 @@ class ProxmoxNodeSyncService
                 'server_id' => $server->id,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

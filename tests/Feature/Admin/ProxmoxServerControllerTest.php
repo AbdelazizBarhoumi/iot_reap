@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\NodeCredentialsLog;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Services\ProxmoxConnection;
-use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,6 +18,7 @@ class ProxmoxServerControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $engineer;
 
     protected function setUp(): void
@@ -53,7 +52,6 @@ class ProxmoxServerControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)
             ->getJson('/admin/proxmox-servers');
-
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -455,7 +453,6 @@ class ProxmoxServerControllerTest extends TestCase
         $this->assertEquals('Original Name', $server->name);
         $this->assertEquals('Updated description', $server->description);
     }
-
 
     // ===== DELETE ENDPOINT (DESTROY) =====
 

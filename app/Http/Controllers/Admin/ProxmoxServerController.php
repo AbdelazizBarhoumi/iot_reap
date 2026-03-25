@@ -37,8 +37,6 @@ class ProxmoxServerController extends Controller
      * List all Proxmox servers.
      * Returns JSON for API/XHR requests, Inertia page for browser visits.
      * Never exposes decrypted host/port in JSON.
-     *
-     * @return JsonResponse|InertiaResponse
      */
     public function index(Request $request): JsonResponse|InertiaResponse
     {
@@ -48,7 +46,7 @@ class ProxmoxServerController extends Controller
             // Use withCount for aggregate stats instead of loading full relationships
             $servers = ProxmoxServer::with(['createdBy:id,name,email', 'nodes:id,proxmox_server_id,status'])
                 ->withCount([
-                    'vmSessions as active_sessions_count' => fn($q) => $q
+                    'vmSessions as active_sessions_count' => fn ($q) => $q
                         ->where('status', 'active')
                         ->where('expires_at', '>', now()),
                     'vmSessions as total_sessions_count',
@@ -67,8 +65,6 @@ class ProxmoxServerController extends Controller
 
     /**
      * Get a single Proxmox server.
-     *
-     * @return JsonResponse
      */
     public function show(ProxmoxServer $proxmox_server): JsonResponse
     {
@@ -82,8 +78,6 @@ class ProxmoxServerController extends Controller
     /**
      * Register a new Proxmox server.
      * Validates credentials before saving (calls test endpoint).
-     *
-     * @return JsonResponse
      */
     public function store(RegisterProxmoxServerRequest $request): JsonResponse
     {
@@ -101,7 +95,7 @@ class ProxmoxServerController extends Controller
                 verifySsl: $validated['verify_ssl'] ?? true,
             );
 
-            if (!$testResult['success']) {
+            if (! $testResult['success']) {
                 return response()->json([
                     'message' => 'Connection test failed',
                     'error' => $testResult['error'] ?? 'Unknown error',
@@ -169,8 +163,6 @@ class ProxmoxServerController extends Controller
     /**
      * Update a Proxmox server's configuration.
      * Re-encrypts tokens if provided.
-     *
-     * @return JsonResponse
      */
     public function update(UpdateProxmoxServerRequest $request, ProxmoxServer $proxmox_server): JsonResponse
     {
@@ -179,7 +171,7 @@ class ProxmoxServerController extends Controller
 
             // Only test connection when credentials changed or host/port actually differ
             // from stored values — avoids 422 when editing non-connection fields
-            $hasNewCredentials = !empty($validated['token_id']) || !empty($validated['token_secret']);
+            $hasNewCredentials = ! empty($validated['token_id']) || ! empty($validated['token_secret']);
             $hasHostChange = isset($validated['host']) && $validated['host'] !== $proxmox_server->host;
             $hasPortChange = isset($validated['port']) && (int) $validated['port'] !== (int) $proxmox_server->port;
             $hasConnectionFields = $hasNewCredentials || $hasHostChange || $hasPortChange;
@@ -194,7 +186,7 @@ class ProxmoxServerController extends Controller
                     verifySsl: $validated['verify_ssl'] ?? $proxmox_server->verify_ssl,
                 );
 
-                if (!$testResult['success']) {
+                if (! $testResult['success']) {
                     return response()->json([
                         'message' => 'Connection test failed',
                         'error' => $testResult['error'] ?? 'Unknown error',
@@ -266,8 +258,6 @@ class ProxmoxServerController extends Controller
      * Any local node records that referenced this server are removed as
      * well.  No attempt is made to contact the Proxmox cluster – the
      * operation only affects our database configuration.
-     *
-     * @return JsonResponse
      */
     public function destroy(Request $request, ProxmoxServer $proxmox_server): JsonResponse
     {
@@ -340,8 +330,6 @@ class ProxmoxServerController extends Controller
     /**
      * Test a connection with provided credentials.
      * Does NOT save to database; useful for validation before save.
-     *
-     * @return JsonResponse
      */
     public function test(RegisterProxmoxServerRequest $request): JsonResponse
     {
@@ -388,8 +376,6 @@ class ProxmoxServerController extends Controller
      * Get all active Proxmox servers for engineer UI dropdown.
      * Public endpoint (auth required, no admin role required).
      * Returns minimal info: id, name only (no credentials or host/port).
-     *
-     * @return JsonResponse
      */
     public function listActive(): JsonResponse
     {
@@ -412,15 +398,13 @@ class ProxmoxServerController extends Controller
     /**
      * Sync nodes from a Proxmox server.
      * Fetches nodes from Proxmox API and creates/updates database records.
-     *
-     * @return JsonResponse
      */
     public function syncNodes(ProxmoxServer $proxmox_server): JsonResponse
     {
         try {
             $result = $this->nodeSyncService->syncNodes($proxmox_server);
 
-            if (!empty($result['errors'])) {
+            if (! empty($result['errors'])) {
                 return response()->json([
                     'message' => 'Node sync completed with errors',
                     'data' => $result,
@@ -452,8 +436,6 @@ class ProxmoxServerController extends Controller
     /**
      * Inactivate a Proxmox server and close all active sessions.
      * This is a soft delete — records remain in database but marked inactive.
-     *
-     * @return JsonResponse
      */
     public function inactivate(ProxmoxServer $proxmox_server): JsonResponse
     {

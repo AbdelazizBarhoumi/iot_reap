@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Course;
 
 use App\Enums\CourseLevel;
-use App\Enums\CourseStatus;
 use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,7 +17,7 @@ class UpdateCourseRequest extends FormRequest
         /** @var Course|null $course */
         $course = $this->route('course');
 
-        if (!$course) {
+        if (! $course) {
             return false;
         }
 

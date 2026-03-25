@@ -13,7 +13,7 @@ class LessonRepository
     /**
      * Create a new lesson.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Lesson
     {
@@ -49,7 +49,7 @@ class LessonRepository
     /**
      * Update a lesson.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(Lesson $lesson, array $data): Lesson
     {
@@ -69,7 +69,7 @@ class LessonRepository
     /**
      * Reorder lessons within a module.
      *
-     * @param array<int, int> $order Map of lesson_id => sort_order
+     * @param  array<int, int>  $order  Map of lesson_id => sort_order
      */
     public function reorder(int $moduleId, array $order): void
     {

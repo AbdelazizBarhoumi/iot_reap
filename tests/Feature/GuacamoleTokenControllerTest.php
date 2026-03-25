@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\VMSessionStatus;
+use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\ProxmoxNode;
 use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +20,7 @@ class GuacamoleTokenControllerTest extends TestCase
 
         // Use fake Guacamole client for all tests
         $this->app->singleton(GuacamoleClientInterface::class, function () {
-            return new GuacamoleClientFake();
+            return new GuacamoleClientFake;
         });
     }
 
@@ -30,11 +30,11 @@ class GuacamoleTokenControllerTest extends TestCase
 
         $user = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
-        
+
         // Get a real connection ID from the fake client
         $connectionId = $this->app->make(GuacamoleClientInterface::class)
             ->createConnection(['name' => 'test-session', 'protocol' => 'rdp']);
-        
+
         $session = VMSession::factory()
             ->for($user)
             ->create([
@@ -59,9 +59,8 @@ class GuacamoleTokenControllerTest extends TestCase
 
         // ensure our trace/debug log was written
         Log::shouldHaveReceived('debug')
-            ->with('Guacamole token details', 
-                Mockery::on(fn($arr) =>
-                    isset($arr['session_id']) && $arr['session_id'] === $session->id &&
+            ->with('Guacamole token details',
+                Mockery::on(fn ($arr) => isset($arr['session_id']) && $arr['session_id'] === $session->id &&
                     isset($arr['viewer_url']) && str_contains($arr['viewer_url'], 'token=') &&
                     isset($arr['tunnel_url']) && str_starts_with($arr['tunnel_url'], 'ws://')
                 )
@@ -73,7 +72,7 @@ class GuacamoleTokenControllerTest extends TestCase
         $ownerUser = User::factory()->engineer()->create();
         $otherUser = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
-        
+
         $session = VMSession::factory()
             ->for($ownerUser)
             ->create([
@@ -93,7 +92,7 @@ class GuacamoleTokenControllerTest extends TestCase
     {
         $user = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
-        
+
         $session = VMSession::factory()
             ->for($user)
             ->create([
@@ -112,7 +111,7 @@ class GuacamoleTokenControllerTest extends TestCase
     {
         $user = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
-        
+
         $session = VMSession::factory()
             ->for($user)
             ->create([
@@ -131,7 +130,7 @@ class GuacamoleTokenControllerTest extends TestCase
     {
         $user = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
-        
+
         $session = VMSession::factory()
             ->for($user)
             ->create([
@@ -153,7 +152,7 @@ class GuacamoleTokenControllerTest extends TestCase
         $user = User::factory()->engineer()->create();
         $node = ProxmoxNode::factory()->create();
         $fake = $this->app->make(GuacamoleClientInterface::class);
-        
+
         // Create 11 sessions with pre-created connection IDs
         $sessions = [];
         for ($i = 1; $i <= 11; $i++) {
@@ -187,7 +186,7 @@ class GuacamoleTokenControllerTest extends TestCase
     {
         $node = ProxmoxNode::factory()->create();
         $user = User::factory()->engineer()->create();
-        
+
         $session = VMSession::factory()
             ->for($user)
             ->create([

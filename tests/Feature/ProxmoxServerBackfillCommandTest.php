@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

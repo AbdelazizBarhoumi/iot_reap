@@ -2,20 +2,20 @@
 
 namespace Tests\Unit\Listeners;
 
+use App\Enums\VMSessionProtocol;
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionActivated;
 use App\Listeners\CreateGuacamoleConnectionListener;
+use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\ProxmoxNode;
-use App\Enums\VMSessionProtocol;
-use App\Services\GuacamoleClientFake;
+use App\Notifications\SessionActivationFailed;
 use App\Services\GuacamoleClient;
+use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Http;
-use App\Notifications\SessionActivationFailed;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -25,7 +25,9 @@ use Tests\TestCase;
 class CreateGuacamoleConnectionListenerTest extends TestCase
 {
     protected GuacamoleClientFake $guacamoleClient;
+
     protected ProxmoxClientFake $proxmoxClient;
+
     /** @var ProxmoxNode node with name matching what the fake expects */
     protected ProxmoxNode $node;
 
@@ -33,10 +35,10 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
     {
         parent::setUp();
 
-        $this->proxmoxClient = new ProxmoxClientFake();
+        $this->proxmoxClient = new ProxmoxClientFake;
         $this->app->singleton(ProxmoxClientInterface::class, fn () => $this->proxmoxClient);
 
-        $this->guacamoleClient = new GuacamoleClientFake();
+        $this->guacamoleClient = new GuacamoleClientFake;
         $this->app->singleton(GuacamoleClientInterface::class, fn () => $this->guacamoleClient);
 
         $this->node = ProxmoxNode::factory()->create(['name' => 'pve-1']);
@@ -181,7 +183,7 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
             ->push(['authToken' => 'second', 'dataSource' => 'mysql'], 200) // reauth
             ->push(['identifier' => 'okay'], 200); // success on retry
 
-        $this->app->singleton(GuacamoleClientInterface::class, fn () => new GuacamoleClient());
+        $this->app->singleton(GuacamoleClientInterface::class, fn () => new GuacamoleClient);
 
         $vmId = 207;
         $user = User::factory()->engineer()->create();

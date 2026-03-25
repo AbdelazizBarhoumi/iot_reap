@@ -70,7 +70,7 @@ class ProxmoxNodeController extends Controller
     public function getVMs(ProxmoxNode $node, Request $request): JsonResponse
     {
         try {
-            if (!$node->proxmoxServer) {
+            if (! $node->proxmoxServer) {
                 return response()->json([
                     'data' => [],
                     'error' => 'Node has no associated Proxmox server',
@@ -87,7 +87,7 @@ class ProxmoxNodeController extends Controller
 
             // Admin panel defaults to enriched data for proper stats display
             $light = $request->boolean('light', false);
-            $cacheKey = "node_vms:{$node->proxmoxServer->id}:{$node->name}:" . ($light ? 'light' : 'full');
+            $cacheKey = "node_vms:{$node->proxmoxServer->id}:{$node->name}:".($light ? 'light' : 'full');
 
             $vms = Cache::remember($cacheKey, 30, function () use ($node, $light) {
                 $client = $this->clientFactory->make($node->proxmoxServer);
@@ -123,7 +123,7 @@ class ProxmoxNodeController extends Controller
     public function startVM(ProxmoxNode $node, int $vmid): JsonResponse
     {
         try {
-            if (!$node->proxmoxServer) {
+            if (! $node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
@@ -157,7 +157,7 @@ class ProxmoxNodeController extends Controller
     public function stopVM(ProxmoxNode $node, int $vmid): JsonResponse
     {
         try {
-            if (!$node->proxmoxServer) {
+            if (! $node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
@@ -190,7 +190,7 @@ class ProxmoxNodeController extends Controller
     public function rebootVM(ProxmoxNode $node, int $vmid): JsonResponse
     {
         try {
-            if (!$node->proxmoxServer) {
+            if (! $node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
@@ -223,7 +223,7 @@ class ProxmoxNodeController extends Controller
     public function shutdownVM(ProxmoxNode $node, int $vmid): JsonResponse
     {
         try {
-            if (!$node->proxmoxServer) {
+            if (! $node->proxmoxServer) {
                 return response()->json(['error' => 'Node has no associated Proxmox server'], 422);
             }
 
@@ -265,7 +265,7 @@ class ProxmoxNodeController extends Controller
                 $status = $client->getNodeStatus($nodeName);
 
                 $cpuPercent = isset($status['cpu']) ? round($status['cpu'] * 100, 2) : 0;
-                
+
                 // Handle both old-style (mem/maxmem) and new-style (memory array) responses
                 if (isset($status['memory']) && is_array($status['memory'])) {
                     $ramUsedMb = round(($status['memory']['used'] ?? 0) / 1024 / 1024);
@@ -274,7 +274,7 @@ class ProxmoxNodeController extends Controller
                     $ramUsedMb = isset($status['mem']) ? round($status['mem'] / 1024 / 1024) : 0;
                     $ramTotalMb = isset($status['maxmem']) ? round($status['maxmem'] / 1024 / 1024) : 0;
                 }
-                
+
                 $uptime = $status['uptime'] ?? 0;
 
                 return [

@@ -36,7 +36,7 @@ class UsbDeviceAvailableNotification extends Notification implements ShouldQueue
     {
         $sessionUrl = url("/sessions/{$this->queueEntry->session_id}");
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('USB Device Available - IoT-REAP')
             ->greeting("Hello {$notifiable->name},")
             ->line("The USB device \"{$this->device->name}\" you were waiting for is now available.")

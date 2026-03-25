@@ -19,9 +19,9 @@ class CameraFactory extends Factory
     {
         return [
             'robot_id' => Robot::factory(),
-            'name' => $this->faker->unique()->word() . ' Camera',
+            'name' => $this->faker->unique()->word().' Camera',
             'stream_key' => $this->faker->unique()->slug(2),
-            'source_url' => 'rtsp://' . $this->faker->localIpv4() . ':554/stream',
+            'source_url' => 'rtsp://'.$this->faker->localIpv4().':554/stream',
             'type' => CameraType::ESP32_CAM,
             'status' => CameraStatus::ACTIVE,
             'ptz_capable' => false,
@@ -35,7 +35,7 @@ class CameraFactory extends Factory
      */
     public function ptzCapable(): static
     {
-        return $this->state(fn() => ['ptz_capable' => true]);
+        return $this->state(fn () => ['ptz_capable' => true]);
     }
 
     /**
@@ -43,7 +43,7 @@ class CameraFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn() => ['status' => CameraStatus::ACTIVE]);
+        return $this->state(fn () => ['status' => CameraStatus::ACTIVE]);
     }
 
     /**
@@ -51,7 +51,7 @@ class CameraFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn() => ['status' => CameraStatus::INACTIVE]);
+        return $this->state(fn () => ['status' => CameraStatus::INACTIVE]);
     }
 
     /**
@@ -59,7 +59,7 @@ class CameraFactory extends Factory
      */
     public function usb(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'type' => CameraType::USB,
             'source_url' => '/dev/video0',
         ]);
@@ -70,9 +70,9 @@ class CameraFactory extends Factory
      */
     public function ipCamera(): static
     {
-        return $this->state(fn(array $attrs) => [
+        return $this->state(fn (array $attrs) => [
             'type' => CameraType::IP,
-            'source_url' => 'rtsp://' . $this->faker->localIpv4() . ':554/stream1',
+            'source_url' => 'rtsp://'.$this->faker->localIpv4().':554/stream1',
         ]);
     }
 
@@ -81,9 +81,9 @@ class CameraFactory extends Factory
      */
     public function esp32Cam(): static
     {
-        return $this->state(fn(array $attrs) => [
+        return $this->state(fn (array $attrs) => [
             'type' => CameraType::ESP32_CAM,
-            'source_url' => 'rtsp://' . $this->faker->localIpv4() . ':554/stream',
+            'source_url' => 'rtsp://'.$this->faker->localIpv4().':554/stream',
         ]);
     }
 }

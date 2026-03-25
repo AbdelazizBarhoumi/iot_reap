@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
-use App\Events\VMSessionActivated;
 use App\Enums\VMSessionStatus;
+use App\Events\VMSessionActivated;
 use App\Exceptions\GuacamoleApiException;
 use App\Exceptions\ProxmoxApiException;
 use App\Services\GuacamoleClientInterface;
@@ -57,7 +57,7 @@ class CreateGuacamoleConnectionListener
         // If another attempt already created a connection, do not create a duplicate
         if ($session->guacamole_connection_id !== null) {
             Log::info('CreateGuacamoleConnectionListener: connection already exists, skipping', [
-                'session_id'    => $session->id,
+                'session_id' => $session->id,
                 'connection_id' => $session->guacamole_connection_id,
             ]);
 
@@ -65,40 +65,40 @@ class CreateGuacamoleConnectionListener
         }
 
         $nodeName = $session->node->name;
-        $vmId     = $session->vm_id;
+        $vmId = $session->vm_id;
 
         try {
             // ── Step 1: check current VM status ────────────────────────────────
-            $vmStatus      = $this->proxmoxClient->getVMStatus($nodeName, $vmId);
+            $vmStatus = $this->proxmoxClient->getVMStatus($nodeName, $vmId);
             $currentStatus = $vmStatus['status'] ?? 'stopped';
 
             Log::info('CreateGuacamoleConnectionListener: VM status check', [
                 'session_id' => $session->id,
-                'vm_id'      => $vmId,
-                'status'     => $currentStatus,
+                'vm_id' => $vmId,
+                'status' => $currentStatus,
             ]);
 
             // ── Step 2: start VM if still stopped ──────────────────────────────
             if ($currentStatus !== 'running') {
                 Log::info('CreateGuacamoleConnectionListener: starting stopped VM', [
                     'session_id' => $session->id,
-                    'vm_id'      => $vmId,
-                    'node'       => $nodeName,
+                    'vm_id' => $vmId,
+                    'node' => $nodeName,
                 ]);
 
                 $this->proxmoxClient->startVM($nodeName, $vmId);
             } else {
                 Log::info('CreateGuacamoleConnectionListener: VM already running, skipping startVM()', [
                     'session_id' => $session->id,
-                    'vm_id'      => $vmId,
+                    'vm_id' => $vmId,
                 ]);
             }
 
             // ── Step 3: resolve DHCP-assigned IP (polls until available) ───────
             $ipAddress = $this->ipResolver->resolveVMIP(
-                server:         $session->proxmoxServer,
-                nodeId:         $nodeName,
-                vmId:           $vmId,
+                server: $session->proxmoxServer,
+                nodeId: $nodeName,
+                vmId: $vmId,
                 maxWaitSeconds: 90,
             );
 
@@ -108,7 +108,7 @@ class CreateGuacamoleConnectionListener
 
             Log::info('CreateGuacamoleConnectionListener: VM IP resolved and stored', [
                 'session_id' => $session->id,
-                'vm_id'      => $vmId,
+                'vm_id' => $vmId,
                 'ip_address' => $ipAddress,
             ]);
 
@@ -121,15 +121,15 @@ class CreateGuacamoleConnectionListener
             // ── Step 7: persist connection ID and mark session active ──────────
             $session->update([
                 'guacamole_connection_id' => $connectionId,
-                'status'                  => VMSessionStatus::ACTIVE,
+                'status' => VMSessionStatus::ACTIVE,
             ]);
 
             Log::info('CreateGuacamoleConnectionListener: session active with Guacamole connection', [
-                'session_id'    => $session->id,
+                'session_id' => $session->id,
                 'connection_id' => $connectionId,
-                'ip_address'    => $ipAddress,
-                'protocol'      => $session->getProtocol()->value,
-                'user_id'       => $session->user_id,
+                'ip_address' => $ipAddress,
+                'protocol' => $session->getProtocol()->value,
+                'user_id' => $session->user_id,
             ]);
 
             // TODO: Broadcast VMSessionReady via Laravel Echo with vm_ip_address
@@ -154,9 +154,9 @@ class CreateGuacamoleConnectionListener
 
         Log::error("CreateGuacamoleConnectionListener: {$context}", [
             'session_id' => $session->id,
-            'user_id'    => $session->user_id,
-            'vm_id'      => $session->vm_id,
-            'error'      => $e->getMessage(),
+            'user_id' => $session->user_id,
+            'vm_id' => $session->vm_id,
+            'error' => $e->getMessage(),
         ]);
 
         // Notify admins so ops can investigate (non-blocking)

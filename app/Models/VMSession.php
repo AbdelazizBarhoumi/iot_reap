@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\VMSessionStatus;
 use App\Enums\VMSessionProtocol;
+use App\Enums\VMSessionStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,7 +45,7 @@ class VMSession extends Model
 
     protected $casts = [
         'status' => VMSessionStatus::class,
-                'expires_at' => 'datetime',
+        'expires_at' => 'datetime',
         'proxmox_server_id' => 'integer',
         'node_id' => 'integer',
         'vm_id' => 'integer',

@@ -13,7 +13,6 @@ import {
     Clock,
     FileText,
     GraduationCap,
-    Loader2,
     Lock,
     Play,
     Star,
@@ -26,8 +25,10 @@ import React from 'react';
 import { courseApi } from '@/api/course.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
+import { courseToasts } from '@/lib/toast-utils';
 import type { BreadcrumbItem } from '@/types';
 import type { Course, CourseProgress } from '@/types/course.types';
 
@@ -55,6 +56,7 @@ export default function CourseDetailPage() {
     const [completedLessonIds, setCompletedLessonIds] = useState<(string | number)[]>(initialCompleted || []);
     const [enrolling, setEnrolling] = useState(false);
     const [enrollError, setEnrollError] = useState<string | null>(null);
+    const [showEnrollDialog, setShowEnrollDialog] = useState(false);
 
     // Sync state with server data when props change (e.g., page revisit)
     useEffect(() => {
@@ -80,14 +82,18 @@ export default function CourseDetailPage() {
             await courseApi.enroll(course.id);
             setIsEnrolled(true);
             setProgress({ completed: 0, total: course.modules?.reduce((a, m) => a + m.lessons.length, 0) ?? 0, percentage: 0 });
+            courseToasts.enrolled(course.title);
+            setShowEnrollDialog(false);
             // Refresh the page to get updated data
             router.reload({ only: ['isEnrolled', 'progress', 'completedLessonIds'] });
         } catch (e) {
-            setEnrollError(e instanceof Error ? e.message : 'Failed to enroll');
+            const errorMsg = e instanceof Error ? e.message : 'Failed to enroll';
+            setEnrollError(errorMsg);
+            courseToasts.error(errorMsg);
         } finally {
             setEnrolling(false);
         }
-    }, [course?.id, course?.modules]);
+    }, [course?.id, course?.title, course?.modules]);
 
     if (!course) {
         return (
@@ -120,9 +126,26 @@ export default function CourseDetailPage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={course.title} />
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background flex flex-col">
+                {/* Sticky Progress Bar - Only for enrolled users with progress */}
+                {isEnrolled && progressPercentage > 0 && (
+                    <div className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md px-4 py-3 shrink-0">
+                        <div className="container">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                                        <span className="font-medium">{completedLessonsCount}/{totalLessons} lessons completed</span>
+                                        <span className="font-semibold">{Math.round(progressPercentage)}%</span>
+                                    </div>
+                                    <Progress value={progressPercentage} className="h-1.5" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Course Header - Hero Section */}
-                <div className="bg-hero-gradient">
+                <div className="bg-hero-gradient flex-1">
                     <div className="container py-12">
                         <Link
                             href="/courses"
@@ -189,20 +212,11 @@ export default function CourseDetailPage() {
                                     <Button
                                         size="lg"
                                         className="bg-primary text-primary-foreground hover:bg-primary/90"
-                                        onClick={handleEnroll}
+                                        onClick={() => setShowEnrollDialog(true)}
                                         disabled={enrolling}
                                     >
-                                        {enrolling ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Enrolling...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <UserPlus className="mr-2 h-4 w-4" />
-                                                Enroll Now - Free
-                                            </>
-                                        )}
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        Enroll Now - Free
                                     </Button>
                                 ) : (
                                     // Enrolled - show continue/start button
@@ -230,19 +244,6 @@ export default function CourseDetailPage() {
                             {/* Error message */}
                             {enrollError && (
                                 <p className="mt-3 text-sm text-destructive">{enrollError}</p>
-                            )}
-
-                            {/* Progress bar for enrolled users */}
-                            {isEnrolled && progressPercentage > 0 && (
-                                <div className="mt-6 max-w-sm">
-                                    <div className="flex justify-between text-xs text-secondary-foreground/50 mb-1">
-                                        <span>
-                                            {completedLessonsCount}/{totalLessons} lessons completed
-                                        </span>
-                                        <span>{Math.round(progressPercentage)}%</span>
-                                    </div>
-                                    <Progress value={progressPercentage} className="h-2 bg-secondary-foreground/10" />
-                                </div>
                             )}
                         </motion.div>
                     </div>
@@ -354,6 +355,19 @@ export default function CourseDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Enrollment Confirmation Dialog */}
+            <ConfirmDialog
+                open={showEnrollDialog}
+                onOpenChange={setShowEnrollDialog}
+                onConfirm={handleEnroll}
+                title="Enroll in Course"
+                description={`Are you ready to start "${course?.title}"? This course is free and you can learn at your own pace.`}
+                confirmText={enrolling ? 'Enrolling...' : 'Enroll Now'}
+                cancelText="Not Yet"
+                variant="default"
+                loading={enrolling}
+            />
         </AppLayout>
     );
 }

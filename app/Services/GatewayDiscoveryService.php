@@ -126,6 +126,7 @@ class GatewayDiscoveryService
                     'vmid' => $container['vmid'],
                     'name' => $container['name'],
                 ]);
+
                 continue;
             }
 
@@ -156,7 +157,7 @@ class GatewayDiscoveryService
     /**
      * Check if a container is a gateway container based on its name.
      *
-     * @param array<string, mixed> $container
+     * @param  array<string, mixed>  $container
      */
     private function isGatewayContainer(array $container): bool
     {

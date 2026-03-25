@@ -60,6 +60,7 @@ class ExpireSessions extends Command
 
         if ($overdueSessions->isEmpty()) {
             $this->info('No overdue sessions to expire.');
+
             return self::SUCCESS;
         }
 
@@ -76,6 +77,7 @@ class ExpireSessions extends Command
                     now()->diffInMinutes($s->expires_at),
                 ])
             );
+
             return self::SUCCESS;
         }
 

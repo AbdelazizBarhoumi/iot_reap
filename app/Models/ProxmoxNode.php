@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Enums\ProxmoxNodeStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * App Proxmox node model.
@@ -56,7 +56,7 @@ class ProxmoxNode extends Model
     public function scopeActiveVMs($query)
     {
         return $query->withCount([
-            'vmSessions as active_vms_count' => fn($q) => $q
+            'vmSessions as active_vms_count' => fn ($q) => $q
                 ->where('status', 'active')
                 ->where('expires_at', '>', now()),
         ]);
@@ -85,6 +85,7 @@ class ProxmoxNode extends Model
         // Available = (max_vms - active_vms) * 2 CPUs * overcommit ratio
         $cpuPerVm = 2;
         $availableSlots = $this->max_vms - $this->countActiveVMs();
+
         return intval($availableSlots * $cpuPerVm * $overcommitRatio);
     }
 
@@ -100,6 +101,7 @@ class ProxmoxNode extends Model
         // Available = (max_vms - active_vms) * 2048 MB * overcommit ratio
         $memoryPerVm = 2048;
         $availableSlots = $this->max_vms - $this->countActiveVMs();
+
         return intval($availableSlots * $memoryPerVm * $overcommitRatio);
     }
 }

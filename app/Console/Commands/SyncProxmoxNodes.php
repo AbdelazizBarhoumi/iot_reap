@@ -33,8 +33,9 @@ class SyncProxmoxNodes extends Command
             // Sync specific server
             $server = \App\Models\ProxmoxServer::find($serverId);
 
-            if (!$server) {
+            if (! $server) {
                 $this->error("Server with ID {$serverId} not found.");
+
                 return Command::FAILURE;
             }
 
@@ -54,6 +55,7 @@ class SyncProxmoxNodes extends Command
 
         if (empty($results)) {
             $this->warn('No active Proxmox servers found. Register a server first.');
+
             return Command::SUCCESS;
         }
 
@@ -68,7 +70,7 @@ class SyncProxmoxNodes extends Command
             $totalCreated += $data['result']['created'];
             $totalUpdated += $data['result']['updated'];
 
-            if (!empty($data['result']['errors'])) {
+            if (! empty($data['result']['errors'])) {
                 $hasErrors = true;
             }
         }
@@ -89,7 +91,7 @@ class SyncProxmoxNodes extends Command
         $this->line("  Created: {$result['created']}");
         $this->line("  Updated: {$result['updated']}");
 
-        if (!empty($result['errors'])) {
+        if (! empty($result['errors'])) {
             foreach ($result['errors'] as $error) {
                 $this->error("  Error: {$error}");
             }

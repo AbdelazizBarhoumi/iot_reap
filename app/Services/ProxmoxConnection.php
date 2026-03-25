@@ -17,13 +17,12 @@ class ProxmoxConnection
      * Test a connection to a Proxmox server.
      * Does NOT require a ProxmoxServer model; works with raw credentials.
      *
-     * @param  string  $host         The Proxmox server hostname or IP
-     * @param  int     $port         The Proxmox API port (typically 8006)
+     * @param  string  $host  The Proxmox server hostname or IP
+     * @param  int  $port  The Proxmox API port (typically 8006)
      * @param  string|null  $realmPassword  Optional realm password (not API token)
-     * @param  string  $tokenId      API token ID (format: user@realm!api-token-name)
+     * @param  string  $tokenId  API token ID (format: user@realm!api-token-name)
      * @param  string  $tokenSecret  API token secret
-     * @param  bool    $verifySsl    Whether to verify SSL certificate
-     *
+     * @param  bool  $verifySsl  Whether to verify SSL certificate
      * @return array<string, mixed> {success: bool, error?: string, nodes?: array}
      */
     public function testConnection(
@@ -48,20 +47,20 @@ class ProxmoxConnection
             $httpClient = Http::withHeaders([
                 'Authorization' => "PVEAPIToken={$tokenAuth}",
             ])->timeout(self::TIMEOUT);
-            
+
             // Handle SSL verification based on flag
-            if (!$verifySsl) {
+            if (! $verifySsl) {
                 $httpClient = $httpClient->withoutVerifying();
             }
-            
+
             $response = $httpClient->get($url);
 
             // Check if successful
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $errorBody = $response->body();
                 $errorMsg = "HTTP {$response->status()}";
 
-                if (!empty($errorBody)) {
+                if (! empty($errorBody)) {
                     // Try to extract error message from JSON
                     $json = @json_decode($errorBody, true);
                     if (is_array($json) && isset($json['error'])) {

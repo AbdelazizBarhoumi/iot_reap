@@ -28,8 +28,11 @@ use Tests\TestCase;
 class UsbDeviceReservationTest extends TestCase
 {
     private User $user;
+
     private User $admin;
+
     private GatewayNode $gateway;
+
     private UsbDevice $device;
 
     protected function setUp(): void
@@ -37,7 +40,7 @@ class UsbDeviceReservationTest extends TestCase
         parent::setUp();
         $this->user = User::factory()->engineer()->create();
         $this->admin = User::factory()->admin()->create();
-        
+
         $this->gateway = GatewayNode::factory()->online()->verified()->create();
         $this->device = UsbDevice::factory()
             ->for($this->gateway)

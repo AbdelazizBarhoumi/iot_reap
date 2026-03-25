@@ -29,15 +29,17 @@ class GuacamoleClientFake implements GuacamoleClientInterface
      * Track whether to simulate failures.
      */
     private bool $shouldFailCreateConnection = false;
+
     private bool $shouldFailDeleteConnection = false;
+
     private bool $shouldFailGenerateToken = false;
+
     private bool $shouldFailGetConnection = false;
 
     /**
      * Create a new Guacamole connection.
      *
      * @param  array<string, mixed>  $params
-     * @return string
      *
      * @throws GuacamoleApiException
      */
@@ -72,7 +74,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
             throw new GuacamoleApiException('Simulated connection deletion failure');
         }
 
-        if (!isset($this->connections[$connectionId])) {
+        if (! isset($this->connections[$connectionId])) {
             throw new GuacamoleApiException("Connection '{$connectionId}' not found");
         }
 
@@ -82,7 +84,6 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     /**
      * Generate a one-time authentication token.
      *
-     * @return string
      *
      * @throws GuacamoleApiException
      */
@@ -92,11 +93,11 @@ class GuacamoleClientFake implements GuacamoleClientInterface
             throw new GuacamoleApiException('Simulated token generation failure');
         }
 
-        if (!isset($this->connections[$connectionId])) {
+        if (! isset($this->connections[$connectionId])) {
             throw new GuacamoleApiException("Connection '{$connectionId}' not found");
         }
 
-        $token = 'fake_token_' . Str::random(32);
+        $token = 'fake_token_'.Str::random(32);
         $this->tokens[$token] = $connectionId;
 
         return $token;
@@ -115,7 +116,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
             throw new GuacamoleApiException('Simulated get connection failure');
         }
 
-        if (!isset($this->connections[$connectionId])) {
+        if (! isset($this->connections[$connectionId])) {
             throw new GuacamoleApiException("Connection '{$connectionId}' not found");
         }
 
@@ -148,6 +149,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     public function setFailCreateConnection(bool $fail): self
     {
         $this->shouldFailCreateConnection = $fail;
+
         return $this;
     }
 
@@ -157,6 +159,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     public function setFailDeleteConnection(bool $fail): self
     {
         $this->shouldFailDeleteConnection = $fail;
+
         return $this;
     }
 
@@ -166,6 +169,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     public function setFailGenerateToken(bool $fail): self
     {
         $this->shouldFailGenerateToken = $fail;
+
         return $this;
     }
 
@@ -175,6 +179,7 @@ class GuacamoleClientFake implements GuacamoleClientInterface
     public function setFailGetConnection(bool $fail): self
     {
         $this->shouldFailGetConnection = $fail;
+
         return $this;
     }
 

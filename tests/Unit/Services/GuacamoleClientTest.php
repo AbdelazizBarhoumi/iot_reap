@@ -12,7 +12,7 @@ class GuacamoleClientTest extends TestCase
 {
     public function test_fake_creates_connection(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $connectionId = $client->createConnection([
             'name' => 'test-connection',
@@ -25,7 +25,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_generates_auth_token(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $connectionId = $client->createConnection([
             'name' => 'test-connection',
@@ -40,7 +40,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_deletes_connection(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $connectionId = $client->createConnection([
             'name' => 'test-connection',
@@ -56,7 +56,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_throws_when_deleting_nonexistent_connection(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $this->expectException(GuacamoleApiException::class);
         $client->deleteConnection('nonexistent-id');
@@ -64,7 +64,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_throws_when_generating_token_for_nonexistent_connection(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $this->expectException(GuacamoleApiException::class);
         $client->generateAuthToken('nonexistent-id', 300);
@@ -72,7 +72,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_gets_connection_details(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $connectionId = $client->createConnection([
             'name' => 'test-connection',
@@ -89,7 +89,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_can_simulate_failures(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
         $client->setFailCreateConnection(true);
 
         $this->expectException(GuacamoleApiException::class);
@@ -98,7 +98,7 @@ class GuacamoleClientTest extends TestCase
 
     public function test_fake_can_be_reset(): void
     {
-        $client = new GuacamoleClientFake();
+        $client = new GuacamoleClientFake;
 
         $connectionId = $client->createConnection(['name' => 'test']);
         $this->assertNotEmpty($client->getAllConnections());
@@ -122,7 +122,7 @@ class GuacamoleClientTest extends TestCase
             // successful connection creation
             ->push(['identifier' => 'new-id'], 200);
 
-        $client = new GuacamoleClient();
+        $client = new GuacamoleClient;
         $result = $client->createConnection(['name' => 'retry-test', 'protocol' => 'rdp']);
 
         $this->assertEquals('new-id', $result);
@@ -142,7 +142,7 @@ class GuacamoleClientTest extends TestCase
             ->push([], 403)
             ->push(['authToken' => 'renewed', 'dataSource' => 'mysql'], 200);
 
-        $client = new GuacamoleClient();
+        $client = new GuacamoleClient;
         $token = $client->generateAuthToken('whatever', 100);
 
         $this->assertEquals('renewed', $token);

@@ -30,11 +30,11 @@ class EnrollmentService
     {
         $course = $this->courseRepository->findById($courseId);
 
-        if (!$course) {
+        if (! $course) {
             throw new \InvalidArgumentException('Course not found');
         }
 
-        if (!$course->isPublished()) {
+        if (! $course->isPublished()) {
             throw new \InvalidArgumentException('Cannot enroll in unpublished course');
         }
 

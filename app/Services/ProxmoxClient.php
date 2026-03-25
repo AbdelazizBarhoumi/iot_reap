@@ -15,7 +15,9 @@ use Throwable;
 class ProxmoxClient implements ProxmoxClientInterface
 {
     private const MAX_RETRIES = 3;
+
     private const RETRY_DELAYS = [2, 5, 10]; // seconds — total worst-case ~45 s, under PHP's 60 s max_execution_time
+
     private const TIMEOUT = 10;
 
     /**
@@ -341,11 +343,12 @@ class ProxmoxClient implements ProxmoxClientInterface
 
             return null;
         } catch (\Throwable $e) {
-            Log::warning("Failed to get container network IP", [
+            Log::warning('Failed to get container network IP', [
                 'node' => $nodeName,
                 'vmid' => $vmid,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -375,12 +378,11 @@ class ProxmoxClient implements ProxmoxClientInterface
      * in the VM for this to work. The command runs asynchronously; use
      * getExecStatus() to poll for completion.
      *
-     * @param string $nodeName  The node name where the VM is running
-     * @param int    $vmid      The VM ID
-     * @param string $command   The command to execute (e.g., "usbip attach -r 192.168.1.100 -b 1-1")
-     * @param int    $timeout   Unused (kept for interface compatibility). Polling timeout is handled in execInVmAndWait.
-     *
-     * @return array{pid: int}  Returns the process ID of the executed command
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $command  The command to execute (e.g., "usbip attach -r 192.168.1.100 -b 1-1")
+     * @param  int  $timeout  Unused (kept for interface compatibility). Polling timeout is handled in execInVmAndWait.
+     * @return array{pid: int} Returns the process ID of the executed command
      *
      * @throws ProxmoxApiException If guest agent is not responding or the request fails
      */
@@ -403,7 +405,7 @@ class ProxmoxClient implements ProxmoxClientInterface
 
             if ($pid === null) {
                 throw new ProxmoxApiException(
-                    "Guest agent did not return PID for command execution"
+                    'Guest agent did not return PID for command execution'
                 );
             }
 
@@ -429,10 +431,9 @@ class ProxmoxClient implements ProxmoxClientInterface
      *
      * Proxmox endpoint: GET /nodes/{node}/qemu/{vmid}/agent/exec-status?pid={pid}
      *
-     * @param string $nodeName  The node name where the VM is running
-     * @param int    $vmid      The VM ID
-     * @param int    $pid       The process ID returned by execInVm()
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  int  $pid  The process ID returned by execInVm()
      * @return array{exited: bool, exitcode?: int, out-data?: string, err-data?: string}
      *
      * @throws ProxmoxApiException If the request fails
@@ -452,11 +453,10 @@ class ProxmoxClient implements ProxmoxClientInterface
      * This is a convenience method that combines execInVm() and getExecStatus()
      * with polling until the command finishes.
      *
-     * @param string $nodeName       The node name where the VM is running
-     * @param int    $vmid           The VM ID
-     * @param string $command        The command to execute
-     * @param int    $timeoutSeconds Maximum time to wait for command completion
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $command  The command to execute
+     * @param  int  $timeoutSeconds  Maximum time to wait for command completion
      * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
      *
      * @throws ProxmoxApiException If guest agent is unavailable or command execution fails
@@ -472,7 +472,7 @@ class ProxmoxClient implements ProxmoxClientInterface
         while (now()->isBefore($endTime)) {
             $status = $this->getExecStatus($nodeName, $vmid, $pid);
 
-            if (!empty($status['exited'])) {
+            if (! empty($status['exited'])) {
                 $exitCode = $status['exitcode'] ?? -1;
 
                 Log::debug('ProxmoxClient execInVmAndWait completed', [
@@ -508,10 +508,10 @@ class ProxmoxClient implements ProxmoxClientInterface
      *
      * Proxmox endpoint: POST /nodes/{node}/qemu/{vmid}/agent/file-write
      *
-     * @param string $nodeName The node name where the VM is running
-     * @param int    $vmid     The VM ID
-     * @param string $filePath The file path inside the VM
-     * @param string $content  The content to write to the file
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $filePath  The file path inside the VM
+     * @param  string  $content  The content to write to the file
      *
      * @throws ProxmoxApiException If guest agent is not responding or the request fails
      */
@@ -542,9 +542,8 @@ class ProxmoxClient implements ProxmoxClientInterface
      * Queries the guest agent's get-osinfo endpoint and returns a simplified type.
      * Returns 'windows', 'linux', or 'unknown'.
      *
-     * @param string $nodeName The node name where the VM is running
-     * @param int    $vmid     The VM ID
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
      * @return string 'windows' | 'linux' | 'unknown'
      *
      * @throws ProxmoxApiException If the guest agent is not responding
@@ -582,6 +581,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                     'vmid' => $vmid,
                     'osInfo' => $osInfo,
                 ]);
+
                 return 'windows';
             }
 
@@ -601,6 +601,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                     'vmid' => $vmid,
                     'osInfo' => $osInfo,
                 ]);
+
                 return 'linux';
             }
 
@@ -609,6 +610,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 'vmid' => $vmid,
                 'osInfo' => $osInfo,
             ]);
+
             return 'unknown';
         } catch (ProxmoxApiException $e) {
             Log::warning('ProxmoxClient getGuestOsType failed', [
@@ -616,6 +618,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 'vmid' => $vmid,
                 'error' => $e->getMessage(),
             ]);
+
             // Return unknown if guest agent is not available
             return 'unknown';
         }
@@ -624,18 +627,17 @@ class ProxmoxClient implements ProxmoxClientInterface
     /**
      * Execute an HTTP request to the Proxmox API with retry logic.
      *
-     * @param array<string, mixed> $data
-     *
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
      */
     private function request(string $method, string $endpoint, array $data = []): array
     {
-        $url = $this->server->getApiUrl() . $endpoint;
+        $url = $this->server->getApiUrl().$endpoint;
         $tokenAuth = "{$this->server->token_id}={$this->server->token_secret}";
 
-        Log::debug("ProxmoxClient request", [
+        Log::debug('ProxmoxClient request', [
             'method' => $method,
             'endpoint' => $endpoint,
             'server' => $this->server->name,
@@ -663,7 +665,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                     default => throw new ProxmoxApiException("Unsupported HTTP method: {$method}"),
                 };
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     throw new ProxmoxApiException(
                         "Proxmox API error: {$response->status()} - {$response->body()}"
                     );
@@ -673,7 +675,7 @@ class ProxmoxClient implements ProxmoxClientInterface
             } catch (Throwable $e) {
                 $isTransient = $this->isTransientError($e);
 
-                Log::debug("ProxmoxClient attempt failed", [
+                Log::debug('ProxmoxClient attempt failed', [
                     'attempt' => $attempt + 1,
                     'max_retries' => self::MAX_RETRIES,
                     'error' => $e->getMessage(),
@@ -681,7 +683,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 ]);
 
                 // If not transient or this is the last attempt, throw immediately
-                if (!$isTransient || $attempt === self::MAX_RETRIES - 1) {
+                if (! $isTransient || $attempt === self::MAX_RETRIES - 1) {
                     throw new ProxmoxApiException(
                         "Failed to call Proxmox API at {$endpoint}: {$e->getMessage()}",
                         previous: $e
@@ -690,12 +692,12 @@ class ProxmoxClient implements ProxmoxClientInterface
 
                 // Wait before retrying
                 $delay = self::RETRY_DELAYS[$attempt];
-                Log::debug("ProxmoxClient retrying", ['delay_seconds' => $delay]);
+                Log::debug('ProxmoxClient retrying', ['delay_seconds' => $delay]);
                 sleep($delay);
             }
         }
 
-        throw new ProxmoxApiException("Proxmox API request failed after " . self::MAX_RETRIES . " attempts");
+        throw new ProxmoxApiException('Proxmox API request failed after '.self::MAX_RETRIES.' attempts');
     }
 
     /**
@@ -748,12 +750,12 @@ class ProxmoxClient implements ProxmoxClientInterface
                 $data = $status['data'] ?? [];
 
                 if (($data['exitstatus'] ?? null) === 'OK') {
-                    Log::debug("ProxmoxClient task completed", ['task_id' => $taskId]);
+                    Log::debug('ProxmoxClient task completed', ['task_id' => $taskId]);
 
                     return;
                 }
 
-                if (!empty($data['exitstatus']) && $data['exitstatus'] !== 'OK') {
+                if (! empty($data['exitstatus']) && $data['exitstatus'] !== 'OK') {
                     throw new ProxmoxApiException(
                         "Proxmox task {$taskId} failed: {$data['exitstatus']}"
                     );
@@ -764,7 +766,7 @@ class ProxmoxClient implements ProxmoxClientInterface
             } catch (ProxmoxApiException $e) {
                 throw $e;
             } catch (Throwable $e) {
-                Log::warning("Error polling task status", ['error' => $e->getMessage()]);
+                Log::warning('Error polling task status', ['error' => $e->getMessage()]);
                 sleep(5);
             }
         }
@@ -787,7 +789,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 $currentStatus = $status['status'] ?? null;
 
                 if ($currentStatus === $desiredStatus) {
-                    Log::debug("ProxmoxClient VM reached desired status", [
+                    Log::debug('ProxmoxClient VM reached desired status', [
                         'vmid' => $vmid,
                         'status' => $desiredStatus,
                     ]);
@@ -798,7 +800,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 // Still transitioning, wait and retry
                 sleep(5);
             } catch (Throwable $e) {
-                Log::warning("Error polling VM status", ['error' => $e->getMessage()]);
+                Log::warning('Error polling VM status', ['error' => $e->getMessage()]);
                 sleep(5);
             }
         }
@@ -815,7 +817,7 @@ class ProxmoxClient implements ProxmoxClientInterface
     {
         try {
             $vms = $this->request('GET', "/nodes/{$nodeName}/qemu");
-            $vmids = array_map(fn($vm) => $vm['vmid'] ?? 0, $vms['data'] ?? []);
+            $vmids = array_map(fn ($vm) => $vm['vmid'] ?? 0, $vms['data'] ?? []);
 
             // Start searching from 200 (user VMs), avoid templates (100-199)
             $nextId = 200;
@@ -823,11 +825,11 @@ class ProxmoxClient implements ProxmoxClientInterface
                 $nextId++;
             }
 
-            Log::debug("Found next available VMID", ['node' => $nodeName, 'vmid' => $nextId]);
+            Log::debug('Found next available VMID', ['node' => $nodeName, 'vmid' => $nextId]);
 
             return $nextId;
         } catch (Throwable $e) {
-            Log::error("Failed to find next available VMID", ['error' => $e->getMessage()]);
+            Log::error('Failed to find next available VMID', ['error' => $e->getMessage()]);
 
             throw new ProxmoxApiException("Cannot determine available VMID: {$e->getMessage()}");
         }

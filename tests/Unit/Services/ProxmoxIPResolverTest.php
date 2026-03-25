@@ -17,16 +17,18 @@ use Tests\TestCase;
 class ProxmoxIPResolverTest extends TestCase
 {
     private ProxmoxClientFake $proxmoxFake;
+
     private ProxmoxIPResolver $resolver;
+
     private ProxmoxServer $server;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->proxmoxFake = new ProxmoxClientFake();
-        $this->resolver    = new ProxmoxIPResolver($this->proxmoxFake);
-        $this->server      = ProxmoxServer::factory()->make();
+        $this->proxmoxFake = new ProxmoxClientFake;
+        $this->resolver = new ProxmoxIPResolver($this->proxmoxFake);
+        $this->server = ProxmoxServer::factory()->make();
     }
 
     /**
@@ -38,9 +40,9 @@ class ProxmoxIPResolverTest extends TestCase
         $this->proxmoxFake->registerVM('pve-1', $vmId, 'running', '192.168.1.45');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -63,9 +65,9 @@ class ProxmoxIPResolverTest extends TestCase
         $this->proxmoxFake->setVMIPAddress('pve-1', $vmId, '10.0.0.202');
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -86,9 +88,9 @@ class ProxmoxIPResolverTest extends TestCase
         $this->expectExceptionMessageMatches('/did not obtain an IP address/');
 
         $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 1, // Very short timeout — one sleep(2) will exceed it
         );
     }
@@ -107,9 +109,9 @@ class ProxmoxIPResolverTest extends TestCase
         // For vmid=204: '192.168.1.204' (204 % 254 = 204)
 
         $ip = $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-1',
-            vmId:           $vmId,
+            server: $this->server,
+            nodeId: 'pve-1',
+            vmId: $vmId,
             maxWaitSeconds: 10,
         );
 
@@ -126,9 +128,9 @@ class ProxmoxIPResolverTest extends TestCase
         $this->expectException(ProxmoxApiException::class);
 
         $this->resolver->resolveVMIP(
-            server:         $this->server,
-            nodeId:         'pve-unknown',
-            vmId:           999,
+            server: $this->server,
+            nodeId: 'pve-unknown',
+            vmId: 999,
             maxWaitSeconds: 1,
         );
     }

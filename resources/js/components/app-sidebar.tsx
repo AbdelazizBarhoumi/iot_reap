@@ -1,9 +1,12 @@
 import { Link } from '@inertiajs/react';
 import {
+    BookOpen,
     CalendarCheck,
     CheckCircle,
+    GraduationCap,
     LayoutGrid,
     Network,
+    PenTool,
     Usb,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
@@ -24,6 +27,7 @@ import AppLogo from './app-logo';
 /**
  * Admin-only sidebar navigation.
  * Only rendered for the admin role — other roles use the header layout.
+ * Admin has full access: VM dashboard, teaching, learning, and admin functions.
  */
 
 const overviewNavItems: NavItem[] = [
@@ -60,6 +64,24 @@ const contentNavItems: NavItem[] = [
     },
 ];
 
+const learningNavItems: NavItem[] = [
+    {
+        title: 'Browse Courses',
+        href: '/courses',
+        icon: GraduationCap,
+    },
+    {
+        title: 'My Learning',
+        href: '/my-courses',
+        icon: BookOpen,
+    },
+    {
+        title: 'Teaching',
+        href: '/teaching',
+        icon: PenTool,
+    },
+];
+
 export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -79,6 +101,7 @@ export function AppSidebar() {
                 <NavMain items={overviewNavItems} label="Overview" />
                 <NavMain items={managementNavItems} label="Management" />
                 <NavMain items={contentNavItems} label="Content & Scheduling" />
+                <NavMain items={learningNavItems} label="Learning" />
             </SidebarContent>
 
             <SidebarFooter>

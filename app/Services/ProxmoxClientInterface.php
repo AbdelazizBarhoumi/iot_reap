@@ -128,12 +128,11 @@ interface ProxmoxClientInterface
      * The guest agent (qemu-guest-agent) must be installed and running in the VM.
      * Returns the PID of the executed command; use getExecStatus() to poll for results.
      *
-     * @param string $nodeName  The node name where the VM is running
-     * @param int    $vmid      The VM ID
-     * @param string $command   The command to execute
-     * @param int    $timeout   Optional timeout for the command in seconds
-     *
-     * @return array{pid: int}  Returns the process ID of the executed command
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $command  The command to execute
+     * @param  int  $timeout  Optional timeout for the command in seconds
+     * @return array{pid: int} Returns the process ID of the executed command
      *
      * @throws ProxmoxApiException
      */
@@ -142,10 +141,9 @@ interface ProxmoxClientInterface
     /**
      * Get the result of a command executed via guest agent.
      *
-     * @param string $nodeName  The node name where the VM is running
-     * @param int    $vmid      The VM ID
-     * @param int    $pid       The process ID returned by execInVm()
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  int  $pid  The process ID returned by execInVm()
      * @return array{exited: bool, exitcode?: int, out-data?: string, err-data?: string}
      *
      * @throws ProxmoxApiException
@@ -157,11 +155,10 @@ interface ProxmoxClientInterface
      *
      * Combines execInVm() and getExecStatus() with polling.
      *
-     * @param string $nodeName       The node name where the VM is running
-     * @param int    $vmid           The VM ID
-     * @param string $command        The command to execute
-     * @param int    $timeoutSeconds Maximum time to wait for command completion
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $command  The command to execute
+     * @param  int  $timeoutSeconds  Maximum time to wait for command completion
      * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
      *
      * @throws ProxmoxApiException
@@ -174,10 +171,10 @@ interface ProxmoxClientInterface
      * Creates or overwrites a file with the specified content. Useful for creating
      * batch/script files that can then be executed via execInVm().
      *
-     * @param string $nodeName The node name where the VM is running
-     * @param int    $vmid     The VM ID
-     * @param string $filePath The file path inside the VM
-     * @param string $content  The content to write to the file
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $filePath  The file path inside the VM
+     * @param  string  $content  The content to write to the file
      *
      * @throws ProxmoxApiException
      */
@@ -189,9 +186,8 @@ interface ProxmoxClientInterface
      * Queries the guest agent for OS information and returns a simplified type.
      * Returns 'windows', 'linux', or 'unknown'.
      *
-     * @param string $nodeName The node name where the VM is running
-     * @param int    $vmid     The VM ID
-     *
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
      * @return string 'windows' | 'linux' | 'unknown'
      *
      * @throws ProxmoxApiException

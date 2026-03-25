@@ -73,7 +73,7 @@ class CameraReservationController extends Controller
     public function show(CameraReservation $reservation): JsonResponse
     {
         // Users can only view their own reservations
-        if ($reservation->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
         }
 
@@ -90,7 +90,7 @@ class CameraReservationController extends Controller
     public function cancel(CameraReservation $reservation): JsonResponse
     {
         // Users can only cancel their own reservations
-        if ($reservation->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
         }
 
@@ -122,7 +122,7 @@ class CameraReservationController extends Controller
             ->whereIn('status', ['pending', 'approved', 'active'])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('requested_start_at', [$startDate, $endDate])
-                  ->orWhereBetween('approved_start_at', [$startDate, $endDate]);
+                    ->orWhereBetween('approved_start_at', [$startDate, $endDate]);
             })
             ->with(['user'])
             ->orderBy('requested_start_at')

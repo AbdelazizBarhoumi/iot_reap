@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use App\Exceptions\NoAvailableNodeException;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
-use App\Models\VMSession;
 use App\Services\ProxmoxServerSelector;
 use Tests\TestCase;
 

@@ -205,6 +205,7 @@ export interface AvailableDeviceEntry {
   queue_position: number | null;
   queue_length: number;
   reason: string | null;
+  reserved_until?: string | null;
   gateway_verified?: boolean;
 }
 

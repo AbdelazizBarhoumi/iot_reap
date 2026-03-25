@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('camera_session_controls', function (Blueprint $table) {
             $table->id();
             $table->foreignId('camera_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
             $table->foreignUlid('session_id')
-                  ->constrained('vm_sessions')
-                  ->cascadeOnDelete();
+                ->constrained('vm_sessions')
+                ->cascadeOnDelete();
             $table->timestamp('acquired_at');
             $table->timestamp('released_at')->nullable();
             $table->timestamps();

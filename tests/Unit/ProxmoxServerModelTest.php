@@ -2,11 +2,10 @@
 
 namespace Tests\Unit;
 
-use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
-use App\Models\VMSession;
+use App\Models\ProxmoxServer;
 use App\Models\User;
-use App\Enums\VMSessionStatus;
+use App\Models\VMSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

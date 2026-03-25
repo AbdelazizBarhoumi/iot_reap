@@ -19,7 +19,9 @@ class CameraReservationTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $admin;
+
     private Camera $camera;
 
     protected function setUp(): void

@@ -43,6 +43,8 @@ class LessonResource extends JsonResource
             'content' => $this->content,
             'objectives' => $this->objectives,
             'vmEnabled' => $this->vm_enabled,
+            'hasApprovedVM' => $this->when($this->vm_enabled, fn () => $this->resource->hasApprovedVM()),
+            'hasPendingVMAssignment' => $this->when($this->vm_enabled, fn () => $this->resource->hasPendingVMAssignment()),
             'videoUrl' => $this->video_url,
             'resources' => $this->resources,
             'sort_order' => $this->sort_order,

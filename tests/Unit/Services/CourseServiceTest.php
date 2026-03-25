@@ -5,8 +5,8 @@ namespace Tests\Unit\Services;
 use App\Enums\CourseStatus;
 use App\Models\Course;
 use App\Models\User;
-use App\Repositories\CourseRepository;
 use App\Repositories\CourseModuleRepository;
+use App\Repositories\CourseRepository;
 use App\Repositories\LessonRepository;
 use App\Services\CourseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +17,7 @@ class CourseServiceTest extends TestCase
     use RefreshDatabase;
 
     private CourseService $courseService;
+
     private CourseRepository $courseRepository;
 
     protected function setUp(): void
@@ -35,7 +36,7 @@ class CourseServiceTest extends TestCase
     public function test_create_course(): void
     {
         $instructor = User::factory()->create();
-        
+
         $data = [
             'title' => 'Test Course',
             'description' => 'Test Description',
@@ -60,7 +61,7 @@ class CourseServiceTest extends TestCase
     public function test_update_course(): void
     {
         $course = Course::factory()->create(['title' => 'Original Title']);
-        
+
         $updated = $this->courseService->updateCourse($course, [
             'title' => 'Updated Title',
             'description' => 'Updated Description',

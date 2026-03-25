@@ -16,7 +16,7 @@ class EnsureRoleMiddlewareTest extends TestCase
     {
         parent::setUp();
 
-        Route::middleware('role:' . UserRole::ADMIN->value . ',' . UserRole::SECURITY_OFFICER->value)
+        Route::middleware('role:'.UserRole::ADMIN->value.','.UserRole::SECURITY_OFFICER->value)
             ->get('/test-admin-route', fn () => response()->json(['message' => 'ok']));
     }
 

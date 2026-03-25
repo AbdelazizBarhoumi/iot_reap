@@ -23,23 +23,23 @@ class VMSessionResource extends JsonResource
         $protocolValue = $this->resource->protocol?->value ?? 'rdp';
 
         return [
-            'id'           => $this->id,
-            'status'       => $this->status->value,
-            'protocol'     => $protocolValue,
-            'vm_id'        => $this->vm_id,
-            'node_name'             => $this->node?->name ?? 'unknown',
-            'expires_at'            => $this->expires_at?->toIso8601String(),
+            'id' => $this->id,
+            'status' => $this->status->value,
+            'protocol' => $protocolValue,
+            'vm_id' => $this->vm_id,
+            'node_name' => $this->node?->name ?? 'unknown',
+            'expires_at' => $this->expires_at?->toIso8601String(),
             'time_remaining_seconds' => $this->expires_at
                 ? max(0, now()->diffInSeconds($this->expires_at, false))
                 : 0,
             // The VM's dynamically resolved DHCP IP address (null until ProxmoxIPResolver completes)
-            'vm_ip_address'         => $this->ip_address,
+            'vm_ip_address' => $this->ip_address,
             // Cached Guacamole connection ID — reused for the entire session.
             // Frontend must call the guacamole-token endpoint using this value; a new token
             // is generated per viewer session but the connection itself is never duplicated.
             'guacamole_connection_id' => $this->guacamole_connection_id,
-            'guacamole_url'         => $this->getGuacamoleUrl(),
-            'created_at'            => $this->created_at->toIso8601String(),
+            'guacamole_url' => $this->getGuacamoleUrl(),
+            'created_at' => $this->created_at->toIso8601String(),
         ];
     }
 

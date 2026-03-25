@@ -42,6 +42,10 @@ class Camera extends Model
         'gateway_node_id',
         'usb_device_id',
         'name',
+        'admin_description',
+        'maintenance_mode',
+        'maintenance_notes',
+        'maintenance_until',
         'stream_key',
         'source_url',
         'stream_width',
@@ -58,6 +62,8 @@ class Camera extends Model
     protected $casts = [
         'type' => CameraType::class,
         'status' => CameraStatus::class,
+        'maintenance_mode' => 'boolean',
+        'maintenance_until' => 'datetime',
         'stream_width' => 'integer',
         'stream_height' => 'integer',
         'stream_framerate' => 'integer',
@@ -117,6 +123,7 @@ class Camera extends Model
         if ($this->gateway_node_id) {
             return $this->gatewayNode?->name ?? 'Unknown Gateway';
         }
+
         return 'Unknown';
     }
 
@@ -127,7 +134,7 @@ class Camera extends Model
     {
         $width = $this->stream_width ?? 640;
         $height = $this->stream_height ?? 480;
-        
+
         $labels = [
             '320x240' => '240p (Low)',
             '640x480' => '480p (SD)',
@@ -135,7 +142,7 @@ class Camera extends Model
             '1280x720' => '720p (HD)',
             '1920x1080' => '1080p (Full HD)',
         ];
-        
+
         return $labels["{$width}x{$height}"] ?? "{$width}x{$height}";
     }
 
@@ -230,5 +237,70 @@ class Camera extends Model
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
             ->where('approved_end_at', '>=', $now);
+    }
+
+    /**
+     * Check if camera is currently in maintenance.
+     */
+    public function isInMaintenance(): bool
+    {
+        if (! $this->maintenance_mode) {
+            return false;
+        }
+
+        if ($this->maintenance_until === null) {
+            return true;
+        }
+
+        return $this->maintenance_until->isFuture();
+    }
+
+    /**
+     * Set maintenance mode.
+     */
+    public function setMaintenance(string $notes, ?\DateTime $until = null): void
+    {
+        $this->maintenance_mode = true;
+        $this->maintenance_notes = $notes;
+        $this->maintenance_until = $until;
+        $this->save();
+    }
+
+    /**
+     * Clear maintenance mode.
+     */
+    public function clearMaintenance(): void
+    {
+        $this->maintenance_mode = false;
+        $this->maintenance_notes = null;
+        $this->maintenance_until = null;
+        $this->save();
+    }
+
+    /**
+     * Scope: Get cameras in maintenance.
+     */
+    public function scopeInMaintenance($query)
+    {
+        return $query->where('maintenance_mode', true)
+            ->where(function ($q) {
+                $q->whereNull('maintenance_until')
+                    ->orWhere('maintenance_until', '>', now());
+            });
+    }
+
+    /**
+     * Scope: Get cameras not in maintenance.
+     */
+    public function scopeNotInMaintenance($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('maintenance_mode', false)
+                ->orWhere(function ($q2) {
+                    $q2->where('maintenance_mode', true)
+                        ->whereNotNull('maintenance_until')
+                        ->where('maintenance_until', '<', now());
+                });
+        });
     }
 }

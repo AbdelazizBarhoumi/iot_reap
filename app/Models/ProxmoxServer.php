@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Proxmox server/cluster model.
@@ -194,6 +194,7 @@ class ProxmoxServer extends Model
     public function getApiUrl(): string
     {
         $protocol = 'https';
+
         return "{$protocol}://{$this->host}:{$this->port}/api2/json";
     }
 }

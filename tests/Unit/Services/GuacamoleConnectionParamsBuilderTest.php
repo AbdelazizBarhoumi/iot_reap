@@ -3,10 +3,9 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\VMSessionProtocol;
-use App\Models\GuacamoleConnectionPreference;
+use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Models\ProxmoxNode;
 use App\Repositories\UserConnectionPreferenceRepository;
 use App\Services\GuacamoleConnectionParamsBuilder;
 use RuntimeException;
@@ -23,21 +22,22 @@ use Tests\TestCase;
 class GuacamoleConnectionParamsBuilderTest extends TestCase
 {
     private GuacamoleConnectionParamsBuilder $builder;
+
     private UserConnectionPreferenceRepository $prefRepo;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->prefRepo = new UserConnectionPreferenceRepository();
-        $this->builder  = new GuacamoleConnectionParamsBuilder($this->prefRepo);
+        $this->prefRepo = new UserConnectionPreferenceRepository;
+        $this->builder = new GuacamoleConnectionParamsBuilder($this->prefRepo);
     }
 
     // ─── RDP ─────────────────────────────────────────────────────────────────
 
     public function test_builds_rdp_params_with_sensible_defaults(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.50');
 
         $params = $this->builder->buildParams($session, $user);
@@ -52,17 +52,17 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_rdp_applies_user_saved_settings_over_defaults(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.51');
 
         // Save user preferences (custom port and display size)
         // save as the default profile so findByUser() will pick it up
         $this->prefRepo->save($user, 'rdp', [
-            'port'             => 13389,
-            'width'            => 1920,
-            'height'           => 1080,
-            'username'         => 'john',
-            'enable-printing'  => true,
+            'port' => 13389,
+            'width' => 1920,
+            'height' => 1080,
+            'username' => 'john',
+            'enable-printing' => true,
             'disable-wallpaper' => false,
         ], 'Default', true);
 
@@ -79,7 +79,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_rdp_user_cannot_override_hostname(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.52');
 
         // Attempt to override hostname via user preferences
@@ -97,7 +97,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_builds_vnc_params_with_sensible_defaults(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::VNC, '10.0.0.60');
 
         $params = $this->builder->buildParams($session, $user);
@@ -109,11 +109,11 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_vnc_applies_user_settings(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::VNC, '10.0.0.61');
 
         $this->prefRepo->save($user, 'vnc', [
-            'port'     => 5901,
+            'port' => 5901,
             'password' => 'mypass',
         ], 'Default', true);
 
@@ -128,7 +128,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_builds_ssh_params_with_sensible_defaults(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::SSH, '10.0.0.70');
 
         $params = $this->builder->buildParams($session, $user);
@@ -141,11 +141,11 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_ssh_applies_user_settings(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::SSH, '10.0.0.71');
 
         $this->prefRepo->save($user, 'ssh', [
-            'port'     => 2222,
+            'port' => 2222,
             'username' => 'deploy',
         ], 'Default', true);
 
@@ -160,7 +160,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_throws_when_ip_address_is_null(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::RDP, null);
 
         $this->expectException(RuntimeException::class);
@@ -171,11 +171,11 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
 
     public function test_boolean_user_settings_cast_to_guacamole_string_format(): void
     {
-        $user    = User::factory()->engineer()->create();
+        $user = User::factory()->engineer()->create();
         $session = $this->makeSession($user, VMSessionProtocol::RDP, '10.0.0.80');
 
         $this->prefRepo->save($user, 'rdp', [
-            'enable-audio'   => true,
+            'enable-audio' => true,
             'enable-printing' => false,
         ]);
 
@@ -194,9 +194,9 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
         return VMSession::factory()
             ->for($user)
             ->create([
-                'node_id'    => $node->id,
+                'node_id' => $node->id,
                 'ip_address' => $ip,
-                'protocol'   => $protocol->value,
+                'protocol' => $protocol->value,
             ]);
     }
 }

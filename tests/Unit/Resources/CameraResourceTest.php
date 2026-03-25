@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Resources;
 
+use App\Enums\CameraReservationStatus;
+use App\Http\Resources\CameraResource;
 use App\Models\Camera;
 use App\Models\CameraReservation;
 use App\Models\Robot;
 use App\Models\User;
-use App\Enums\CameraReservationStatus;
-use App\Http\Resources\CameraResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

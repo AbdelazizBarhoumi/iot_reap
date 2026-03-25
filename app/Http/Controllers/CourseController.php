@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CourseResource;
 use App\Http\Resources\LessonResource;
+use App\Http\Resources\VMTemplateResource;
 use App\Models\Course;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
+use App\Services\LessonVMAssignmentService;
+use App\Services\VMSessionQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,6 +23,8 @@ class CourseController extends Controller
     public function __construct(
         private readonly CourseService $courseService,
         private readonly EnrollmentService $enrollmentService,
+        private readonly LessonVMAssignmentService $vmAssignmentService,
+        private readonly VMSessionQueueService $queueService,
     ) {}
 
     /**
@@ -53,7 +58,7 @@ class CourseController extends Controller
     {
         $course = $this->courseService->getCourseWithContent($id);
 
-        if (!$course || !$course->isPublished()) {
+        if (! $course || ! $course->isPublished()) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Course not found'], 404);
             }
@@ -90,7 +95,7 @@ class CourseController extends Controller
     {
         $course = $this->courseService->getCourseWithContent($courseId);
 
-        if (!$course || !$course->isPublished()) {
+        if (! $course || ! $course->isPublished()) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Course not found'], 404);
             }
@@ -99,7 +104,7 @@ class CourseController extends Controller
 
         $lesson = $course->lessons()->where('lessons.id', $lessonId)->first();
 
-        if (!$lesson) {
+        if (! $lesson) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Lesson not found'], 404);
             }
@@ -107,9 +112,9 @@ class CourseController extends Controller
         }
 
         $user = $request->user();
-        
+
         // Check if user is enrolled (required for lesson access)
-        if (!$user || !$this->enrollmentService->isEnrolled($user, $courseId)) {
+        if (! $user || ! $this->enrollmentService->isEnrolled($user, $courseId)) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'You must be enrolled to access this lesson'], 403);
             }
@@ -118,11 +123,30 @@ class CourseController extends Controller
 
         $completedLessonIds = $this->enrollmentService->getCompletedLessonIds($user, $courseId);
 
+        // Get VM template assignment and queue status for engineers
+        $vmInfo = null;
+        if ($lesson->vm_enabled) {
+            $assignment = $this->vmAssignmentService->getApprovedAssignment($lessonId);
+            if ($assignment && $assignment->vmTemplate) {
+                $template = $assignment->vmTemplate;
+                $queueStatus = $this->queueService->getQueueStatus($template);
+                $canStart = $this->queueService->canUserStartSession($template, $user);
+
+                $vmInfo = [
+                    'template' => new VMTemplateResource($template->load(['proxmoxServer', 'node'])),
+                    'queue_status' => $queueStatus,
+                    'can_start' => $canStart,
+                    'my_position' => $this->queueService->getQueuePosition($template->id, $user->id),
+                ];
+            }
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
                 'course' => new CourseResource($course),
                 'lesson' => new LessonResource($lesson),
                 'completed_lesson_ids' => $completedLessonIds,
+                'vm_info' => $vmInfo,
             ]);
         }
 
@@ -132,6 +156,7 @@ class CourseController extends Controller
             'course' => new CourseResource($course),
             'lesson' => new LessonResource($lesson),
             'completedLessonIds' => $completedLessonIds,
+            'vmInfo' => $vmInfo,
         ]);
     }
 

@@ -1,0 +1,11 @@
+{
+    frankenphp
+    # auto_https off   # ← Uncomment this line only if testing locally (no domain/HTTPS)
+}
+
+:80 {
+    root * /app/public      # Change to /app if your index.php is directly in /app (no public/ folder)
+    encode zstd gzip
+    php_server
+    file_server
+}

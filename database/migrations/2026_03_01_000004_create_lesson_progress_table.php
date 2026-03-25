@@ -15,7 +15,7 @@ return new class extends Migration
             $table->boolean('completed')->default(false);
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'lesson_id']);
             $table->index(['user_id', 'completed']);
         });

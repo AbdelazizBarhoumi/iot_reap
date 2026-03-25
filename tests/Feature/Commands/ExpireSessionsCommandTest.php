@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Commands;
 
-use App\Console\Commands\ExpireSessions;
 use App\Enums\VMSessionStatus;
 use App\Jobs\TerminateVMJob;
 use App\Models\ProxmoxNode;
@@ -18,7 +17,9 @@ class ExpireSessionsCommandTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProxmoxServer $server;
+
     private ProxmoxNode $node;
 
     protected function setUp(): void

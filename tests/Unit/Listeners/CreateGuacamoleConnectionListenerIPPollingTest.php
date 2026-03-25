@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Listeners;
 
+use App\Enums\VMSessionProtocol;
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionActivated;
 use App\Listeners\CreateGuacamoleConnectionListener;
+use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Enums\VMSessionProtocol;
-use App\Models\ProxmoxNode;
 use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
@@ -21,17 +21,19 @@ use Tests\TestCase;
 class CreateGuacamoleConnectionListenerIPPollingTest extends TestCase
 {
     protected GuacamoleClientFake $guacamoleClient;
+
     protected ProxmoxClientFake $proxmoxClient;
+
     protected ProxmoxNode $node;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->proxmoxClient = new ProxmoxClientFake();
+        $this->proxmoxClient = new ProxmoxClientFake;
         $this->app->singleton(ProxmoxClientInterface::class, fn () => $this->proxmoxClient);
 
-        $this->guacamoleClient = new GuacamoleClientFake();
+        $this->guacamoleClient = new GuacamoleClientFake;
         $this->app->singleton(GuacamoleClientInterface::class, fn () => $this->guacamoleClient);
 
         $this->node = ProxmoxNode::factory()->create(['name' => 'pve-1']);

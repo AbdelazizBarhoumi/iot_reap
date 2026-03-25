@@ -55,7 +55,7 @@ class GatewayNodeRepository
     /**
      * Create a new gateway node.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): GatewayNode
     {
@@ -65,7 +65,7 @@ class GatewayNodeRepository
     /**
      * Update a gateway node.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(GatewayNode $node, array $data): bool
     {
@@ -102,8 +102,8 @@ class GatewayNodeRepository
     /**
      * Find or create a gateway node by IP and port.
      *
-     * @param array<string, mixed> $attributes
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
      */
     public function firstOrCreate(array $attributes, array $values = []): GatewayNode
     {

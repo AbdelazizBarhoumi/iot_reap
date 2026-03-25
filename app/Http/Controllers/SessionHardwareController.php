@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\GatewayApiException;
 use App\Http\Resources\UsbDeviceQueueResource;
 use App\Http\Resources\UsbDeviceResource;
+use App\Jobs\AttachUsbDeviceJob;
 use App\Models\UsbDevice;
 use App\Models\VMSession;
 use App\Repositories\UsbDeviceQueueRepository;
@@ -73,10 +74,15 @@ class SessionHardwareController extends Controller
     /**
      * Attach a USB device to the session.
      * 
+     * Supports two modes:
+     * - Synchronous (default): Blocks until attachment completes (may take 90+ seconds on Windows)
+     * - Async (?async=true): Returns immediately and dispatches a background job.
+     *   Progress updates are broadcasted via WebSocket on channel "session.{id}".
+     *
      * Uses database-level locking to prevent race conditions when
      * multiple users attempt to attach the same device simultaneously.
      */
-    public function attach(VMSession $session, UsbDevice $device): JsonResponse
+    public function attach(Request $request, VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
         if ($session->user_id !== auth()->id()) {
@@ -99,9 +105,11 @@ class SessionHardwareController extends Controller
             ], 422);
         }
 
+        $async = $request->boolean('async', false);
+
         try {
             // Use database transaction with row-level locking to prevent race conditions
-            return DB::transaction(function () use ($session, $device) {
+            return DB::transaction(function () use ($session, $device, $async) {
                 // Lock the device row for update to prevent concurrent attach attempts
                 $lockedDevice = UsbDevice::where('id', $device->id)
                     ->lockForUpdate()
@@ -115,7 +123,7 @@ class SessionHardwareController extends Controller
                 }
 
                 // Re-validate device is still bound (may have changed while waiting for lock)
-                if (!$lockedDevice->isBound()) {
+                if (!$lockedDevice->isBound() && !$lockedDevice->isAvailable()) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Device is no longer available for attachment',
@@ -132,6 +140,21 @@ class SessionHardwareController extends Controller
                     ], 422);
                 }
 
+                // Async mode: dispatch job and return immediately
+                if ($async) {
+                    AttachUsbDeviceJob::dispatch($lockedDevice, $session);
+
+                    return response()->json([
+                        'success' => true,
+                        'async' => true,
+                        'message' => 'Attachment started. Listen to WebSocket channel for progress.',
+                        'channel' => "session.{$session->id}",
+                        'event' => 'usb.attachment.progress',
+                        'device' => new UsbDeviceResource($lockedDevice->load('gatewayNode')),
+                    ], 202);
+                }
+
+                // Sync mode: attach immediately (may take up to 120 seconds)
                 $this->gatewayService->attachToSession($lockedDevice, $session);
 
                 // Remove from queue if they were waiting
@@ -139,6 +162,7 @@ class SessionHardwareController extends Controller
 
                 return response()->json([
                     'success' => true,
+                    'async' => false,
                     'message' => 'Device attached successfully',
                     'device' => new UsbDeviceResource($lockedDevice->fresh()->load('gatewayNode')),
                 ]);

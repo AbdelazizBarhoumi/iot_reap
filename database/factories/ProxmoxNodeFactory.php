@@ -24,7 +24,7 @@ class ProxmoxNodeFactory extends Factory
         return [
             'name' => "pve-node-{$nodeNumber}",
             'hostname' => "pve-node-{$nodeNumber}.lab.local",
-            'api_url' => "https://192.168.1." . (100 + $nodeNumber) . ":8006",
+            'api_url' => 'https://192.168.1.'.(100 + $nodeNumber).':8006',
             'status' => ProxmoxNodeStatus::ONLINE->value,
             'max_vms' => 50,
         ];
@@ -51,4 +51,3 @@ class ProxmoxNodeFactory extends Factory
         ]);
     }
 }
-

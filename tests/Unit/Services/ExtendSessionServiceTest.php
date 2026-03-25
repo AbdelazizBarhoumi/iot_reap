@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\VMSession;
 use App\Services\ExtendSessionService;
 use App\Services\QuotaService;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -19,8 +18,11 @@ use Tests\TestCase;
 class ExtendSessionServiceTest extends TestCase
 {
     private ExtendSessionService $service;
+
     private QuotaService $quotaService;
+
     private User $user;
+
     private VMSession $session;
 
     protected function setUp(): void
@@ -29,7 +31,7 @@ class ExtendSessionServiceTest extends TestCase
 
         Queue::fake();
 
-        $this->quotaService = new QuotaService();
+        $this->quotaService = new QuotaService;
         $this->service = new ExtendSessionService($this->quotaService);
 
         $this->user = User::factory()->create();

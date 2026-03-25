@@ -23,10 +23,14 @@ use Tests\TestCase;
 class SessionExtensionTerminationTest extends TestCase
 {
     private User $user;
+
     private ProxmoxServer $server;
+
     // template removed; we no longer track it
     private ProxmoxNode $node;
+
     private VMSession $session;
+
     private ProxmoxClientFake $proxmoxFake;
 
     protected function setUp(): void
@@ -34,7 +38,7 @@ class SessionExtensionTerminationTest extends TestCase
         parent::setUp();
 
         // Bind ProxmoxClientFake as singleton so tests can register VMs.
-        $this->proxmoxFake = new ProxmoxClientFake();
+        $this->proxmoxFake = new ProxmoxClientFake;
         $this->app->instance(ProxmoxClientInterface::class, $this->proxmoxFake);
 
         // Mock GuacamoleClient — the sync listener and TerminateVMJob call it.
@@ -78,11 +82,11 @@ class SessionExtensionTerminationTest extends TestCase
         );
 
         $response->assertOk()
-                 ->assertJsonStructure([
-                     'id',
-                     'status',
-                     'expires_at',
-                 ]);
+            ->assertJsonStructure([
+                'id',
+                'status',
+                'expires_at',
+            ]);
 
         // Verify expiry was extended
         $this->session->refresh();

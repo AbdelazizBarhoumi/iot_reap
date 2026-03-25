@@ -21,6 +21,7 @@ class TerminateVMJobTest extends TestCase
     {
         $mock = Mockery::mock(GatewayService::class);
         $mock->shouldReceive('detachFromVm')->andReturnNull();
+
         return $mock;
     }
 
@@ -28,6 +29,7 @@ class TerminateVMJobTest extends TestCase
     {
         $mock = Mockery::mock(UsbDeviceQueueService::class);
         $mock->shouldReceive('processQueueOnDetach')->andReturnNull();
+
         return $mock;
     }
 
@@ -49,7 +51,7 @@ class TerminateVMJobTest extends TestCase
 
         $job = new TerminateVMJob($session); // default should be false
 
-        $serialized   = serialize($job);
+        $serialized = serialize($job);
         $unserialized = unserialize($serialized);
 
         $this->assertInstanceOf(TerminateVMJob::class, $unserialized);
@@ -58,7 +60,7 @@ class TerminateVMJobTest extends TestCase
         $jobWithTrue = new TerminateVMJob($session, true);
         $this->assertTrue($jobWithTrue->shouldStopVm(), 'constructor parameter respected');
 
-        $serializedTrue   = serialize($jobWithTrue);
+        $serializedTrue = serialize($jobWithTrue);
         $unserializedTrue = unserialize($serializedTrue);
         $this->assertTrue($unserializedTrue->shouldStopVm(), 'flag remains true after unserialize');
     }
@@ -70,13 +72,13 @@ class TerminateVMJobTest extends TestCase
     {
         // prepare fake Proxmox environment
         $server = ProxmoxServer::factory()->create();
-        $node   = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
 
         $session = VMSession::factory()->create([
             'user_id' => User::factory()->create()->id,
             'node_id' => $node->id,
-            'status'  => VMSessionStatus::ACTIVE,
-            'vm_id'   => 123,
+            'status' => VMSessionStatus::ACTIVE,
+            'vm_id' => 123,
             'guacamole_connection_id' => null,
         ]);
 
@@ -104,13 +106,13 @@ class TerminateVMJobTest extends TestCase
     public function test_handle_stops_vm_when_flag_true(): void
     {
         $server = ProxmoxServer::factory()->create();
-        $node   = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
 
         $session = VMSession::factory()->create([
             'user_id' => User::factory()->create()->id,
             'node_id' => $node->id,
-            'status'  => VMSessionStatus::ACTIVE,
-            'vm_id'   => 456,
+            'status' => VMSessionStatus::ACTIVE,
+            'vm_id' => 456,
             'guacamole_connection_id' => null,
         ]);
 

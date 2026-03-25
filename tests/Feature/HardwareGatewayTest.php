@@ -6,7 +6,6 @@ use App\Enums\UsbDeviceStatus;
 use App\Models\GatewayNode;
 use App\Models\UsbDevice;
 use App\Models\User;
-use App\Services\GatewayService;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use Tests\TestCase;
@@ -29,6 +28,7 @@ use Tests\TestCase;
 class HardwareGatewayTest extends TestCase
 {
     private User $user;
+
     private User $admin;
 
     protected function setUp(): void
@@ -289,7 +289,7 @@ class HardwareGatewayTest extends TestCase
                 ],
             ], 200),
             // exported list should contain the busid so isDeviceExportable returns true
-            'http://192.168.50.6:8000/devices/exported' => Http::response(['output' => "1-1"], 200),
+            'http://192.168.50.6:8000/devices/exported' => Http::response(['output' => '1-1'], 200),
         ]);
 
         // include vmid/node/server_id because validation requires them when no session_id is present

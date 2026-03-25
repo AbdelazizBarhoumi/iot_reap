@@ -25,7 +25,7 @@ class ProxmoxListRunningVMsTest extends TestCase
             $this->markTestSkipped('PROXMOX_LIVE_TEST not enabled');
         }
 
-        if (!file_exists(base_path('docs/prox.md'))) {
+        if (! file_exists(base_path('docs/prox.md'))) {
             $this->markTestSkipped('docs/prox.md not found — cannot read Proxmox credentials');
         }
     }
@@ -43,7 +43,7 @@ class ProxmoxListRunningVMsTest extends TestCase
                 'host' => $node['ip'],
                 'port' => (int) ($node['port'] ?? 8006),
                 'realm' => explode('@', $node['user'])[1] ?? 'pam',
-                'token_id' => $node['user'] . '!' . $node['token_name'],
+                'token_id' => $node['user'].'!'.$node['token_name'],
                 'token_secret' => $node['token'],
                 'verify_ssl' => false,
                 'is_active' => true,
@@ -147,7 +147,7 @@ class ProxmoxListRunningVMsTest extends TestCase
 
     private function extractValue(string $block, string $label): ?string
     {
-        if (preg_match('/' . preg_quote($label, '/') . '\s*:\s*(.+)/i', $block, $m)) {
+        if (preg_match('/'.preg_quote($label, '/').'\s*:\s*(.+)/i', $block, $m)) {
             return trim($m[1]);
         }
 

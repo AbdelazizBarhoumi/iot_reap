@@ -10,6 +10,7 @@ use Tests\TestCase;
  * expose raw status, headers and body for debugging authentication errors.
  *
  * Guarded by GUACAMOLE_LIVE_TEST and existing Guacamole credentials.
+ *
  * @group integration
  */
 class GuacamoleTokenRawDiagnosticTest extends TestCase
@@ -22,14 +23,14 @@ class GuacamoleTokenRawDiagnosticTest extends TestCase
             $this->markTestSkipped('GUACAMOLE_LIVE_TEST not enabled');
         }
 
-        if (!config('guacamole.username') || !config('guacamole.password')) {
+        if (! config('guacamole.username') || ! config('guacamole.password')) {
             $this->markTestSkipped('Guacamole credentials are not configured');
         }
     }
 
     public function test_post_tokens_shows_raw_response(): void
     {
-        $url = rtrim(config('guacamole.url'), '/') . '/api/tokens';
+        $url = rtrim(config('guacamole.url'), '/').'/api/tokens';
         $username = config('guacamole.username');
         $password = config('guacamole.password');
 
@@ -43,7 +44,7 @@ class GuacamoleTokenRawDiagnosticTest extends TestCase
         $body = $response->body();
         $headers = $response->headers();
 
-        $diagnostic = "POST {$url} returned status {$status}\n\nHeaders:\n" . var_export($headers, true) . "\n\nBody:\n" . $body;
+        $diagnostic = "POST {$url} returned status {$status}\n\nHeaders:\n".var_export($headers, true)."\n\nBody:\n".$body;
 
         // If not 200, fail and show raw response for debugging
         $this->assertSame(200, $status, $diagnostic);

@@ -36,7 +36,7 @@ class UsbDeviceFactory extends Factory
                 'Canon Printer',
                 'Logitech USB Mouse',
                 'Generic USB Hub',
-            ]) . " #{$deviceNumber}",
+            ])." #{$deviceNumber}",
             'status' => UsbDeviceStatus::AVAILABLE,
             'attached_to' => null,
             'attached_vm_ip' => null,

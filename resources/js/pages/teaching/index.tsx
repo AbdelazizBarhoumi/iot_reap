@@ -9,7 +9,6 @@ import { motion } from 'framer-motion';
 import {
     BarChart3,
     BookOpen,
-    DollarSign,
     Edit,
     Plus,
     Star,
@@ -37,7 +36,6 @@ const statusConfig: Record<CourseStatus, { label: string; className: string }> =
 interface TeacherStats {
     totalCourses: number;
     totalStudents: number;
-    totalRevenue: string;
     avgRating: number;
 }
 
@@ -52,7 +50,6 @@ export default function TeachingPage() {
     const statCards = [
         { icon: BookOpen, label: 'Total Courses', value: stats.totalCourses, bg: 'bg-primary/10', color: 'text-primary' },
         { icon: Users, label: 'Total Students', value: stats.totalStudents.toLocaleString(), bg: 'bg-info/10', color: 'text-info' },
-        { icon: DollarSign, label: 'Revenue', value: stats.totalRevenue, bg: 'bg-success/10', color: 'text-success' },
         { icon: Star, label: 'Avg Rating', value: stats.avgRating, bg: 'bg-warning/10', color: 'text-warning' },
     ];
 
@@ -75,7 +72,7 @@ export default function TeachingPage() {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
                         {statCards.map((stat, i) => (
                             <motion.div
                                 key={stat.label}

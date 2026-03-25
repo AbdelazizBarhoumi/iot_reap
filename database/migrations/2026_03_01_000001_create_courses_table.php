@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('status', ['draft', 'pending_review', 'approved', 'rejected'])->default('draft');
             $table->text('admin_feedback')->nullable();
             $table->timestamps();
-            
+
             $table->index(['status', 'created_at']);
             $table->index('instructor_id');
             $table->index('category');

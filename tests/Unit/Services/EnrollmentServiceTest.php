@@ -78,7 +78,7 @@ class EnrollmentServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        
+
         $course1 = Course::factory()->approved()->create();
         $course2 = Course::factory()->approved()->create();
         $course3 = Course::factory()->approved()->create();
@@ -130,7 +130,7 @@ class EnrollmentServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $course = Course::factory()->approved()->create();
-        
+
         // Create 3 modules with 2 lessons each = 6 total lessons
         $modules = CourseModule::factory()->count(3)->create(['course_id' => $course->id]);
         $allLessons = [];
@@ -156,7 +156,7 @@ class EnrollmentServiceTest extends TestCase
         $user = User::factory()->create();
         $course = Course::factory()->approved()->create();
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        
+
         $lesson1 = Lesson::factory()->create(['module_id' => $module->id]);
         $lesson2 = Lesson::factory()->create(['module_id' => $module->id]);
         $lesson3 = Lesson::factory()->create(['module_id' => $module->id]);

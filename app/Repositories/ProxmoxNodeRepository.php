@@ -47,9 +47,9 @@ class ProxmoxNodeRepository
     public function listWithResourceStats(): Collection
     {
         return ProxmoxNode::where('status', 'online')
-            ->with(['proxmoxServer', 'vmSessions' => fn($q) => $q
+            ->with(['proxmoxServer', 'vmSessions' => fn ($q) => $q
                 ->where('status', 'active')
-                ->where('expires_at', '>', now())
+                ->where('expires_at', '>', now()),
             ])
             ->get()
             ->map(function (ProxmoxNode $node) {
@@ -60,6 +60,7 @@ class ProxmoxNodeRepository
                     $node->setAttribute('available_cpu', $node->getAvailableCPU($server->cpu_overcommit_ratio));
                     $node->setAttribute('available_memory', $node->getAvailableMemory($server->memory_overcommit_ratio));
                 }
+
                 return $node;
             });
     }
@@ -77,7 +78,7 @@ class ProxmoxNodeRepository
             ->where('status', 'online')
             ->with('vmSessions')
             ->get()
-            ->filter(fn(ProxmoxNode $node) => $server->canProvisionsMore($node, $requiredCpu, $requiredMemory));
+            ->filter(fn (ProxmoxNode $node) => $server->canProvisionsMore($node, $requiredCpu, $requiredMemory));
     }
 
     /**

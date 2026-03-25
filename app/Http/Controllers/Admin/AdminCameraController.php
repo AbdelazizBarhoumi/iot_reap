@@ -85,14 +85,14 @@ class AdminCameraController extends Controller
         if ($from = $request->query('from')) {
             $query->where(function ($q) use ($from) {
                 $q->where('requested_start_at', '>=', $from)
-                  ->orWhere('approved_start_at', '>=', $from);
+                    ->orWhere('approved_start_at', '>=', $from);
             });
         }
 
         if ($to = $request->query('to')) {
             $query->where(function ($q) use ($to) {
                 $q->where('requested_end_at', '<=', $to)
-                  ->orWhere('approved_end_at', '<=', $to);
+                    ->orWhere('approved_end_at', '<=', $to);
             });
         }
 
@@ -116,7 +116,7 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        if (!$reservation->isPending()) {
+        if (! $reservation->isPending()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only pending reservations can be approved',
@@ -159,7 +159,7 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        if (!$reservation->isPending()) {
+        if (! $reservation->isPending()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only pending reservations can be rejected',

@@ -21,7 +21,7 @@ class ProxmoxNodeResource extends JsonResource
     /**
      * Set additional stats for this resource.
      *
-     * @param array<string, mixed> $stats
+     * @param  array<string, mixed>  $stats
      */
     public function setStats(array $stats): self
     {

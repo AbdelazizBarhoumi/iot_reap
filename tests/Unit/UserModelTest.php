@@ -13,7 +13,7 @@ class UserModelTest extends TestCase
 
     public function test_user_primary_key_is_id(): void
     {
-        $this->assertEquals('id', (new User())->getKeyName());
+        $this->assertEquals('id', (new User)->getKeyName());
     }
 
     public function test_role_is_cast_to_enum(): void

@@ -672,7 +672,7 @@ export default function InfrastructurePage() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Infrastructure" />
-      <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <div className="container py-8">
           {/* Header */}
           <motion.div

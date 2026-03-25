@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\CameraStatus;
-use App\Enums\CameraType;
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\ProxmoxNode;
@@ -27,9 +26,13 @@ class SessionCameraTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private VMSession $session;
+
     private Robot $robot;
+
     private Camera $ptzCamera;
+
     private Camera $viewOnlyCamera;
 
     protected function setUp(): void
@@ -312,8 +315,8 @@ class SessionCameraTest extends TestCase
                     'name' => 'PTZ Camera',
                     'ptz_capable' => true,
                     'stream_urls' => [
-                        'hls' => "http://192.168.50.7:8888/test-ptz-cam/index.m3u8",
-                        'webrtc' => "http://192.168.50.7:8889/test-ptz-cam",
+                        'hls' => 'http://192.168.50.7:8888/test-ptz-cam/index.m3u8',
+                        'webrtc' => 'http://192.168.50.7:8889/test-ptz-cam',
                     ],
                 ],
             ]);

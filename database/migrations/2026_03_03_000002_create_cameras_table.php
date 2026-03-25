@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('cameras', function (Blueprint $table) {
             $table->id();
             $table->foreignId('robot_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
             $table->string('name');
             $table->string('stream_key')->unique();          // used in MediaMTX path
             $table->string('source_url');                     // rtsp://... or /dev/video0

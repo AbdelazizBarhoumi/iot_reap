@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * USB Device Queue:
      * When a device is attached to another session, users can join a queue.
      * When the device is released, the next user in queue can attach it.

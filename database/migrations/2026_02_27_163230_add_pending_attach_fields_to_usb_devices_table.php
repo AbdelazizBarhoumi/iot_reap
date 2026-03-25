@@ -33,7 +33,7 @@ return new class extends Migration
             $table->dropForeign(['pending_server_id']);
             $table->dropColumn([
                 'pending_vmid',
-                'pending_node', 
+                'pending_node',
                 'pending_server_id',
                 'pending_vm_ip',
                 'pending_vm_name',

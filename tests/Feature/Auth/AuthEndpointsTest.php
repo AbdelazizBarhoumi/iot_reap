@@ -88,7 +88,7 @@ class AuthEndpointsTest extends TestCase
     public function test_me_endpoint_returns_authenticated_user(): void
     {
         $user = User::factory()->create();
-        
+
         $response = $this->actingAs($user)->getJson('/auth/me');
 
         $response->assertOk()
@@ -100,7 +100,7 @@ class AuthEndpointsTest extends TestCase
     public function test_me_endpoint_requires_auth(): void
     {
         $response = $this->getJson('/auth/me');
-        
+
         $response->assertStatus(401);
     }
 

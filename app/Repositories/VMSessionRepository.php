@@ -15,7 +15,7 @@ class VMSessionRepository
     /**
      * Create a new VM session record.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): VMSession
     {
@@ -65,7 +65,7 @@ class VMSessionRepository
     public function allUserSessions(User $user): Collection
     {
         return VMSession::where('user_id', $user->id)
-            ->whereHas('proxmoxServer', fn($q) => $q->active())
+            ->whereHas('proxmoxServer', fn ($q) => $q->active())
             ->with(['node', 'proxmoxServer'])
             ->orderByDesc('created_at')
             ->get();
@@ -79,7 +79,7 @@ class VMSessionRepository
         return VMSession::where('user_id', $user->id)
             ->where('status', VMSessionStatus::ACTIVE)
             ->where('expires_at', '>', now())
-            ->whereHas('proxmoxServer', fn($q) => $q->active())
+            ->whereHas('proxmoxServer', fn ($q) => $q->active())
             ->with(['node', 'proxmoxServer'])
             ->get();
     }
@@ -87,7 +87,7 @@ class VMSessionRepository
     /**
      * Update a session's status and other fields.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(VMSession $session, array $data): VMSession
     {
@@ -112,10 +112,10 @@ class VMSessionRepository
     {
         // First, clean up Guacamole connections for sessions that are about to expire
         $overdueWithGuac = VMSession::whereIn('status', [
-                VMSessionStatus::ACTIVE,
-                VMSessionStatus::PENDING,
-                VMSessionStatus::PROVISIONING,
-            ])
+            VMSessionStatus::ACTIVE,
+            VMSessionStatus::PENDING,
+            VMSessionStatus::PROVISIONING,
+        ])
             ->where('expires_at', '<=', now())
             ->whereNotNull('guacamole_connection_id')
             ->get();
@@ -136,10 +136,10 @@ class VMSessionRepository
         }
 
         return VMSession::whereIn('status', [
-                VMSessionStatus::ACTIVE,
-                VMSessionStatus::PENDING,
-                VMSessionStatus::PROVISIONING,
-            ])
+            VMSessionStatus::ACTIVE,
+            VMSessionStatus::PENDING,
+            VMSessionStatus::PROVISIONING,
+        ])
             ->where('expires_at', '<=', now())
             ->update(['status' => VMSessionStatus::EXPIRED]);
     }

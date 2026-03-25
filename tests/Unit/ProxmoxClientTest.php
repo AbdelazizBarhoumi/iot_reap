@@ -2,15 +2,14 @@
 
 namespace Tests\Unit;
 
-use App\Exceptions\ProxmoxApiException;
 use App\Models\ProxmoxServer;
-use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFake;
 use Tests\TestCase;
 
 class ProxmoxClientTest extends TestCase
 {
     private ProxmoxServer $server;
+
     private ProxmoxClientFake $client;
 
     protected function setUp(): void

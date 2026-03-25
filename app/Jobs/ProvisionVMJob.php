@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\VMSessionStatus;
-use App\Events\VMSessionCreated;
 use App\Events\VMSessionActivated;
+use App\Events\VMSessionCreated;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
@@ -24,7 +24,7 @@ use Throwable;
  */
 class ProvisionVMJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, InteractsWithQueue;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     /**
      * The number of times the job may be attempted.
@@ -79,6 +79,7 @@ class ProvisionVMJob implements ShouldQueue
             if (! $vmId) {
                 Log::error('ProvisionVMJob: vm_id missing, cannot provision', ['session_id' => $session->id]);
                 $sessionRepository->update($session, ['status' => VMSessionStatus::FAILED]);
+
                 return;
             }
 

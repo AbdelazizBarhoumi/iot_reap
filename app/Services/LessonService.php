@@ -21,7 +21,7 @@ class LessonService
     /**
      * Add a module to a course.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function addModule(int $courseId, array $data): CourseModule
     {
@@ -45,7 +45,7 @@ class LessonService
     /**
      * Update a module.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateModule(CourseModule $module, array $data): CourseModule
     {
@@ -65,7 +65,7 @@ class LessonService
     /**
      * Add a lesson to a module.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function addLesson(int $moduleId, array $data): Lesson
     {
@@ -101,7 +101,7 @@ class LessonService
     /**
      * Update a lesson.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateLesson(Lesson $lesson, array $data): Lesson
     {
@@ -140,7 +140,7 @@ class LessonService
     /**
      * Reorder modules within a course.
      *
-     * @param array<int, int> $order
+     * @param  array<int, int>  $order
      */
     public function reorderModules(int $courseId, array $order): void
     {
@@ -150,7 +150,7 @@ class LessonService
     /**
      * Reorder lessons within a module.
      *
-     * @param array<int, int> $order
+     * @param  array<int, int>  $order
      */
     public function reorderLessons(int $moduleId, array $order): void
     {

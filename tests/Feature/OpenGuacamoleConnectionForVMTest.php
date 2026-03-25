@@ -9,11 +9,12 @@ use Tests\TestCase;
 /**
  * Create a temporary Guacamole connection to a real VM and return a viewer URL.
  * Guarded by GUACAMOLE_LIVE_TEST; non-destructive (creates a connection but does not delete it).
+ *
  * @group integration
  */
 class OpenGuacamoleConnectionForVMTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,7 +22,7 @@ class OpenGuacamoleConnectionForVMTest extends TestCase
             $this->markTestSkipped('GUACAMOLE_LIVE_TEST not enabled');
         }
 
-        if (!config('guacamole.username') || !config('guacamole.password')) {
+        if (! config('guacamole.username') || ! config('guacamole.password')) {
             $this->markTestSkipped('Guacamole admin credentials are not configured');
         }
     }
@@ -34,7 +35,7 @@ class OpenGuacamoleConnectionForVMTest extends TestCase
 
         $ip = '192.168.100.166';
         $protocol = 'rdp';
-        $name = 'ad-hoc-session-' . now()->format('YmdHis');
+        $name = 'ad-hoc-session-'.now()->format('YmdHis');
 
         // Credentials provided by user during the session
         $username = 'abdulazeezbrhomi';
@@ -59,8 +60,8 @@ class OpenGuacamoleConnectionForVMTest extends TestCase
         $this->assertNotEmpty($token);
 
         $dataSource = $client->getDataSource();
-        $clientId = base64_encode($connectionId . "\0c\0" . $dataSource);
-        $viewerUrl = config('guacamole.url') . '/#/client/' . $clientId . '?token=' . $token;
+        $clientId = base64_encode($connectionId."\0c\0".$dataSource);
+        $viewerUrl = config('guacamole.url').'/#/client/'.$clientId.'?token='.$token;
 
         // Print URL for user
         fwrite(STDOUT, "\nGuacamole viewer URL:\n{$viewerUrl}\n");
@@ -77,7 +78,7 @@ class OpenGuacamoleConnectionForVMTest extends TestCase
 
         $ip = '192.168.100.166';
         $protocol = 'rdp';
-        $name = 'ad-hoc-rdp-encrypted-' . now()->format('YmdHis');
+        $name = 'ad-hoc-rdp-encrypted-'.now()->format('YmdHis');
 
         // Use same ad-hoc credentials supplied earlier
         $username = 'abdelazeezbrhomi';
@@ -104,8 +105,8 @@ class OpenGuacamoleConnectionForVMTest extends TestCase
         $this->assertNotEmpty($token);
 
         $dataSource = $client->getDataSource();
-        $clientId = base64_encode($connectionId . "\0c\0" . $dataSource);
-        $viewerUrl = config('guacamole.url') . '/#/client/' . $clientId . '?token=' . $token;
+        $clientId = base64_encode($connectionId."\0c\0".$dataSource);
+        $viewerUrl = config('guacamole.url').'/#/client/'.$clientId.'?token='.$token;
 
         fwrite(STDOUT, "\nGuacamole viewer URL (RDP encryption mode):\n{$viewerUrl}\n");
 

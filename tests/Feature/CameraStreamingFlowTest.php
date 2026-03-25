@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Enums\CameraStatus;
 use App\Enums\CameraType;
 use App\Models\Camera;
 use App\Models\GatewayNode;
 use App\Models\Robot;
-use App\Models\UsbDevice;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Services\GatewayService;
@@ -24,7 +22,9 @@ use Tests\TestCase;
 class CameraStreamingFlowTest extends TestCase
 {
     private User $user;
+
     private VMSession $session;
+
     private Camera $camera;
 
     protected function setUp(): void

@@ -10,11 +10,9 @@ use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Repositories\GatewayNodeRepository;
-use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayService;
-use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientFactory;
+use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,18 +27,19 @@ use Tests\TestCase;
 class GatewayServiceTest extends TestCase
 {
     private GatewayService $service;
+
     private ProxmoxClientFake $fakeProxmoxClient;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create a fake ProxmoxClient that we can control in tests
-        $this->fakeProxmoxClient = new ProxmoxClientFake();
-        
+        $this->fakeProxmoxClient = new ProxmoxClientFake;
+
         // Bind the fake to the container for ProxmoxClientInterface
-        $this->app->bind(ProxmoxClientInterface::class, fn() => $this->fakeProxmoxClient);
-        
+        $this->app->bind(ProxmoxClientInterface::class, fn () => $this->fakeProxmoxClient);
+
         // Mock the factory to return our fake client
         $mockFactory = \Mockery::mock(ProxmoxClientFactory::class);
         $mockFactory->shouldReceive('make')
@@ -49,9 +48,9 @@ class GatewayServiceTest extends TestCase
             ->andReturn($this->fakeProxmoxClient);
         $mockFactory->shouldReceive('makeForServerId')
             ->andReturn($this->fakeProxmoxClient);
-        
+
         $this->app->instance(ProxmoxClientFactory::class, $mockFactory);
-        
+
         $this->service = app(GatewayService::class);
     }
 
@@ -224,6 +223,7 @@ class GatewayServiceTest extends TestCase
             if (str_ends_with($url, '/devices')) {
                 return Http::response(['devices' => [['busid' => '1-1']]], 200);
             }
+
             // default for any other endpoint (bind/unbind etc.)
             return Http::response([], 200);
         });
@@ -283,6 +283,7 @@ class GatewayServiceTest extends TestCase
             if (str_ends_with($url, '/devices')) {
                 return Http::response(['devices' => [['busid' => '1-1']]], 200);
             }
+
             return Http::response([], 200);
         });
 
@@ -337,6 +338,7 @@ class GatewayServiceTest extends TestCase
             if (str_ends_with($url, '/devices')) {
                 return Http::response(['devices' => [['busid' => '1-1']]], 200);
             }
+
             return Http::response([], 200);
         });
 
@@ -359,7 +361,6 @@ class GatewayServiceTest extends TestCase
         $device->refresh();
         $this->assertEquals(UsbDeviceStatus::ATTACHED, $device->status);
     }
-
 
     #[Test]
     public function it_throws_exception_when_session_missing_vm_id(): void

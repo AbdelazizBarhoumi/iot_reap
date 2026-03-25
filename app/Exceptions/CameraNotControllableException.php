@@ -7,6 +7,4 @@ use RuntimeException;
 /**
  * Thrown when a camera does not support PTZ control.
  */
-class CameraNotControllableException extends RuntimeException
-{
-}
+class CameraNotControllableException extends RuntimeException {}

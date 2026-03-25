@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+import { CourseStatusBanner } from '@/components/courses/CourseStatusBanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,12 +105,11 @@ function EditCourseContent({ id }: EditCourseContentProps) {
                     </div>
                 </motion.div>
 
-                {course.adminFeedback && (
-                    <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-4 max-w-4xl">
-                        <p className="text-sm font-medium text-destructive mb-1">Admin Feedback:</p>
-                        <p className="text-sm text-muted-foreground">{course.adminFeedback}</p>
-                    </div>
-                )}
+                {/* Status Banner */}
+                <CourseStatusBanner 
+                    status={course.status}
+                    adminFeedback={course.adminFeedback}
+                />
 
                 <div className="max-w-4xl space-y-6">
                     {/* Course Details */}

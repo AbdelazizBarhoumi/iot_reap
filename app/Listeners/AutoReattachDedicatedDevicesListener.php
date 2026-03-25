@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Enums\UsbReservationStatus;
 use App\Events\VMSessionActivated;
+use App\Models\UsbDevice;
 use App\Models\UsbDeviceReservation;
 use App\Services\GatewayService;
 use Illuminate\Support\Facades\Log;
@@ -12,15 +13,16 @@ use Throwable;
 /**
  * Automatically attaches reserved/dedicated USB devices when a session is activated.
  *
- * This listener handles two scenarios:
+ * This listener handles three scenarios:
  * 1. Approved reservations: If the user has an approved reservation for a device
  *    during the current time window, auto-attach it to their session.
- * 2. Template-based devices: (Future) If the VM template has dedicated devices
- *    configured, auto-attach them.
+ * 2. Dedicated devices: If a USB device is dedicated to this VM (by vmid),
+ *    auto-attach it regardless of user.
+ * 3. Pending attachments: If a device was waiting for this VM to start,
+ *    attach it now.
  *
  * Runs synchronously so USB attachment happens during session creation
- * without depending on a queue worker.  Failures are logged but do not
- * block session activation.
+ * without depending on a queue worker or cron jobs.
  */
 class AutoReattachDedicatedDevicesListener
 {
@@ -33,29 +35,63 @@ class AutoReattachDedicatedDevicesListener
      */
     public function handle(VMSessionActivated $event): void
     {
-        $session = $event->session->fresh(['user', 'node']);
+        $session = $event->session->fresh(['user', 'node', 'proxmoxServer']);
 
-        if (!$session || !$session->user) {
-            Log::warning('AutoReattachDedicatedDevicesListener: Invalid session or user', [
-                'session_id' => $session?->id,
+        if (! $session) {
+            Log::warning('AutoReattachDedicatedDevicesListener: Invalid session', [
+                'session_id' => $event->session->id ?? null,
             ]);
+
             return;
         }
 
         // Only auto-attach for active sessions
-        if (!in_array($session->status->value, ['active', 'pending_connection'])) {
+        if (! in_array($session->status->value, ['active', 'pending_connection'])) {
             Log::info('AutoReattachDedicatedDevicesListener: Session not in attachable state', [
                 'session_id' => $session->id,
                 'status' => $session->status->value,
             ]);
+
             return;
         }
 
-        $userId = $session->user_id;
-        $now = now();
+        $stats = [
+            'reservations_attached' => 0,
+            'dedicated_attached' => 0,
+            'pending_attached' => 0,
+            'skipped' => 0,
+            'failed' => 0,
+        ];
 
-        // Find approved/active reservations for this user within the current time window
-        $activeReservations = UsbDeviceReservation::where('user_id', $userId)
+        // 1. Handle user reservations
+        if ($session->user_id) {
+            $this->attachReservedDevices($session, $stats);
+        }
+
+        // 2. Handle dedicated devices (by VM ID)
+        if ($session->vm_id && $session->proxmoxServer) {
+            $this->attachDedicatedDevices($session, $stats);
+        }
+
+        // 3. Handle pending attachments (devices waiting for this VM)
+        if ($session->vm_id && $session->proxmoxServer) {
+            $this->attachPendingDevices($session, $stats);
+        }
+
+        Log::info('AutoReattachDedicatedDevicesListener: Completed', [
+            'session_id' => $session->id,
+            'vm_id' => $session->vm_id,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Attach devices the user has active reservations for.
+     */
+    private function attachReservedDevices($session, array &$stats): void
+    {
+        $now = now();
+        $activeReservations = UsbDeviceReservation::where('user_id', $session->user_id)
             ->whereIn('status', [
                 UsbReservationStatus::APPROVED->value,
                 UsbReservationStatus::ACTIVE->value,
@@ -66,82 +102,143 @@ class AutoReattachDedicatedDevicesListener
             ->with(['device', 'device.gatewayNode'])
             ->get();
 
-        if ($activeReservations->isEmpty()) {
-            Log::debug('AutoReattachDedicatedDevicesListener: No active reservations for user', [
-                'session_id' => $session->id,
-                'user_id' => $userId,
-            ]);
-            return;
-        }
-
-        Log::info('AutoReattachDedicatedDevicesListener: Found active reservations', [
-            'session_id' => $session->id,
-            'user_id' => $userId,
-            'reservation_count' => $activeReservations->count(),
-        ]);
-
-        $attached = 0;
-        $skipped = 0;
-        $failed = 0;
-
         foreach ($activeReservations as $reservation) {
             $device = $reservation->device;
 
-            // Skip if device doesn't exist or gateway is not verified
-            if (!$device || !$device->gatewayNode?->is_verified) {
-                Log::warning('AutoReattachDedicatedDevicesListener: Device or gateway invalid', [
-                    'reservation_id' => $reservation->id,
-                    'device_id' => $device?->id,
-                ]);
-                $skipped++;
+            if (! $device || ! $device->gatewayNode?->is_verified) {
+                $stats['skipped']++;
+
                 continue;
             }
 
-            // Only attach if device is bound (ready for attachment)
-            if (!$device->isBound()) {
-                Log::info('AutoReattachDedicatedDevicesListener: Device not bound, skipping', [
-                    'device_id' => $device->id,
-                    'status' => $device->status->value,
-                    'reservation_id' => $reservation->id,
+            if (! $device->isBound() && ! $device->isAvailable()) {
+                $stats['skipped']++;
+
+                continue;
+            }
+
+            try {
+                // Bind if needed
+                if ($device->isAvailable()) {
+                    $this->gatewayService->bindDevice($device);
+                    $device->refresh();
+                }
+
+                $this->gatewayService->attachToSession($device, $session);
+
+                $reservation->update([
+                    'status' => UsbReservationStatus::ACTIVE,
+                    'actual_start_at' => $now,
                 ]);
-                $skipped++;
+
+                Log::info('Auto-attached reserved device', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                ]);
+
+                $stats['reservations_attached']++;
+            } catch (Throwable $e) {
+                Log::warning('Failed to auto-attach reserved device', [
+                    'device_id' => $device->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $stats['failed']++;
+            }
+        }
+    }
+
+    /**
+     * Attach devices dedicated to this VM (permanent assignment).
+     */
+    private function attachDedicatedDevices($session, array &$stats): void
+    {
+        $dedicatedDevices = UsbDevice::dedicatedTo($session->vm_id, $session->proxmoxServer->id)
+            ->with('gatewayNode')
+            ->get();
+
+        foreach ($dedicatedDevices as $device) {
+            // Skip if already attached
+            if ($device->isAttached()) {
+                continue;
+            }
+
+            if (! $device->gatewayNode?->is_verified) {
+                $stats['skipped']++;
+
+                continue;
+            }
+
+            if (! $device->isBound() && ! $device->isAvailable()) {
+                $stats['skipped']++;
+
+                continue;
+            }
+
+            try {
+                // Bind if needed
+                if ($device->isAvailable()) {
+                    $this->gatewayService->bindDevice($device);
+                    $device->refresh();
+                }
+
+                $this->gatewayService->attachToSession($device, $session);
+
+                Log::info('Auto-attached dedicated device', [
+                    'device_id' => $device->id,
+                    'vid_pid' => $device->vid_pid,
+                    'session_id' => $session->id,
+                    'vm_id' => $session->vm_id,
+                ]);
+
+                $stats['dedicated_attached']++;
+            } catch (Throwable $e) {
+                Log::warning('Failed to auto-attach dedicated device', [
+                    'device_id' => $device->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $stats['failed']++;
+            }
+        }
+    }
+
+    /**
+     * Attach devices that were pending attachment to this VM.
+     */
+    private function attachPendingDevices($session, array &$stats): void
+    {
+        $pendingDevices = UsbDevice::pendingAttach()
+            ->where('pending_vmid', $session->vm_id)
+            ->where('pending_server_id', $session->proxmoxServer->id)
+            ->with('gatewayNode')
+            ->get();
+
+        foreach ($pendingDevices as $device) {
+            if (! $device->gatewayNode?->is_verified) {
+                $stats['skipped']++;
+
                 continue;
             }
 
             try {
                 $this->gatewayService->attachToSession($device, $session);
 
-                // Mark reservation as active
-                $reservation->update([
-                    'status' => UsbReservationStatus::ACTIVE,
-                    'actual_start_at' => $now,
-                ]);
+                // Clear pending state (device is now attached)
+                $device->clearPendingAttachment();
 
-                Log::info('AutoReattachDedicatedDevicesListener: Auto-attached reserved device', [
+                Log::info('Auto-attached pending device', [
                     'device_id' => $device->id,
-                    'device_name' => $device->name,
                     'session_id' => $session->id,
-                    'reservation_id' => $reservation->id,
                 ]);
 
-                $attached++;
+                $stats['pending_attached']++;
             } catch (Throwable $e) {
-                Log::warning('AutoReattachDedicatedDevicesListener: Failed to auto-attach device', [
+                Log::warning('Failed to auto-attach pending device', [
                     'device_id' => $device->id,
-                    'session_id' => $session->id,
-                    'reservation_id' => $reservation->id,
                     'error' => $e->getMessage(),
                 ]);
-                $failed++;
+                $stats['failed']++;
             }
         }
-
-        Log::info('AutoReattachDedicatedDevicesListener: Completed', [
-            'session_id' => $session->id,
-            'attached' => $attached,
-            'skipped' => $skipped,
-            'failed' => $failed,
-        ]);
     }
 
     /**

@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Log;
 class GuacamoleClient implements GuacamoleClientInterface
 {
     private const TIMEOUT = 30;
+
     private ?string $authToken = null;
+
     /** Actual data source returned by Guacamole during authentication (may differ from config case). */
     private ?string $resolvedDataSource = null;
 
@@ -32,7 +34,7 @@ class GuacamoleClient implements GuacamoleClientInterface
             // Guacamole /api/tokens expects application/x-www-form-urlencoded, NOT JSON
             $response = Http::timeout(self::TIMEOUT)
                 ->asForm()
-                ->post(config('guacamole.url') . '/api/tokens', [
+                ->post(config('guacamole.url').'/api/tokens', [
                     'username' => config('guacamole.username'),
                     'password' => config('guacamole.password'),
                 ])
@@ -58,7 +60,7 @@ class GuacamoleClient implements GuacamoleClientInterface
      * Create a new Guacamole connection.
      *
      * @param  array<string, mixed>  $params  Connection parameters
-     * @return string  Connection identifier
+     * @return string Connection identifier
      *
      * @throws GuacamoleApiException
      */
@@ -82,23 +84,23 @@ class GuacamoleClient implements GuacamoleClientInterface
      */
     private function doCreateConnection(array $params): string
     {
-        $authToken  = $this->getAuthToken();
+        $authToken = $this->getAuthToken();
         $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
 
         // Token passed as Guacamole-Token header; body is raw JSON (no authToken in body)
         $response = Http::timeout(self::TIMEOUT)
             ->withHeaders(['Guacamole-Token' => $authToken])
             ->asJson()
-            ->post(config('guacamole.url') . "/api/session/data/{$dataSource}/connections", [
-                'name'             => $params['name'] ?? 'Unnamed Connection',
-                'protocol'         => $params['protocol'] ?? 'rdp',
+            ->post(config('guacamole.url')."/api/session/data/{$dataSource}/connections", [
+                'name' => $params['name'] ?? 'Unnamed Connection',
+                'protocol' => $params['protocol'] ?? 'rdp',
                 'parentIdentifier' => 'ROOT',
-                'parameters'       => $params['parameters'] ?? [],
-                'attributes'       => [
-                    'max-connections'          => '',
+                'parameters' => $params['parameters'] ?? [],
+                'attributes' => [
+                    'max-connections' => '',
                     'max-connections-per-user' => '2',
-                    'failover-only'            => 'false',
-                    'guacd-encryption'         => 'none',
+                    'failover-only' => 'false',
+                    'guacd-encryption' => 'none',
                 ],
             ])
             ->throw();
@@ -129,12 +131,12 @@ class GuacamoleClient implements GuacamoleClientInterface
 
     private function doDeleteConnection(string $connectionId): void
     {
-        $authToken  = $this->getAuthToken();
+        $authToken = $this->getAuthToken();
         $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
 
         Http::timeout(self::TIMEOUT)
             ->withHeaders(['Guacamole-Token' => $authToken])
-            ->delete(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
+            ->delete(config('guacamole.url')."/api/session/data/{$dataSource}/connections/{$connectionId}")
             ->throw();
     }
 
@@ -157,7 +159,7 @@ class GuacamoleClient implements GuacamoleClientInterface
             $token = $this->withAuthRetry(fn () => $this->getAuthToken());
 
             Log::info('Guacamole auth token retrieved for viewer', [
-                'connection_id'     => $connectionId,
+                'connection_id' => $connectionId,
                 'expires_in_seconds' => $expiresInSeconds,
             ]);
 
@@ -193,12 +195,12 @@ class GuacamoleClient implements GuacamoleClientInterface
 
     private function doGetConnection(string $connectionId): array
     {
-        $authToken  = $this->getAuthToken();
+        $authToken = $this->getAuthToken();
         $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
 
         $response = Http::timeout(self::TIMEOUT)
             ->withHeaders(['Guacamole-Token' => $authToken])
-            ->get(config('guacamole.url') . "/api/session/data/{$dataSource}/connections/{$connectionId}")
+            ->get(config('guacamole.url')."/api/session/data/{$dataSource}/connections/{$connectionId}")
             ->throw();
 
         return $response->json();
@@ -239,8 +241,10 @@ class GuacamoleClient implements GuacamoleClientInterface
      * transparently retry the request once after clearing the cached token.
      *
      * @template T
+     *
      * @param  \Closure():T  $callback
      * @return T
+     *
      * @throws \Throwable
      */
     private function withAuthRetry(\Closure $callback)
@@ -261,6 +265,7 @@ class GuacamoleClient implements GuacamoleClientInterface
 
             if ($shouldRetry) {
                 $this->clearAuthToken();
+
                 return $callback();
             }
 

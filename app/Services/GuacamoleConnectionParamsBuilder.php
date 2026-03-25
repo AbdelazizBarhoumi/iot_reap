@@ -31,14 +31,14 @@ class GuacamoleConnectionParamsBuilder
      *
      * @return array<string, mixed>
      *
-     * @throws RuntimeException  When ip_address is null or the protocol is unsupported.
+     * @throws RuntimeException When ip_address is null or the protocol is unsupported.
      */
     public function buildParams(VMSession $session, User $user): array
     {
         if (empty($session->ip_address)) {
             throw new RuntimeException(
                 "Cannot build connection params: vm_sessions.ip_address is null for session {$session->id}. "
-                . 'ProxmoxIPResolver must resolve the VM IP before calling buildParams().'
+                .'ProxmoxIPResolver must resolve the VM IP before calling buildParams().'
             );
         }
 
@@ -46,8 +46,8 @@ class GuacamoleConnectionParamsBuilder
         $protocol = $session->getProtocol();
 
         // Load user's saved preferences for this protocol (null if none saved)
-        $preference    = $this->preferenceRepository->findByUser($user, $protocol->value);
-        $userSettings  = $preference?->parameters ?? [];
+        $preference = $this->preferenceRepository->findByUser($user, $protocol->value);
+        $userSettings = $preference?->parameters ?? [];
 
         return match ($protocol) {
             VMSessionProtocol::RDP => $this->buildRDPParams($session->ip_address, $session, $userSettings),
@@ -78,51 +78,51 @@ class GuacamoleConnectionParamsBuilder
         $rdpConfig = config('guacamole.protocols.rdp', []);
 
         $defaults = [
-            'hostname'                   => $hostname,
-            'port'                       => (string) ($rdpConfig['port'] ?? 3389),
-            'username'                   => '',
-            'password'                   => '',
-            'domain'                     => '',
-            'security'                   => $rdpConfig['security'] ?? 'nla',
-            'ignore-cert'                => filter_var($rdpConfig['ignore_cert'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
-            'resize-method'              => $rdpConfig['resize_method'] ?? 'display-update',
+            'hostname' => $hostname,
+            'port' => (string) ($rdpConfig['port'] ?? 3389),
+            'username' => '',
+            'password' => '',
+            'domain' => '',
+            'security' => $rdpConfig['security'] ?? 'nla',
+            'ignore-cert' => filter_var($rdpConfig['ignore_cert'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
+            'resize-method' => $rdpConfig['resize_method'] ?? 'display-update',
             // Display
-            'width'                      => '1280',
-            'height'                     => '720',
-            'dpi'                        => '96',
-            'color-depth'                => '32',
+            'width' => '1280',
+            'height' => '720',
+            'dpi' => '96',
+            'color-depth' => '32',
             // Performance — disable heavy visuals for better remote performance
-            'disable-wallpaper'          => 'true',
-            'disable-theming'            => 'false',
-            'enable-font-smoothing'      => 'false',
-            'enable-full-window-drag'    => 'false',
+            'disable-wallpaper' => 'true',
+            'disable-theming' => 'false',
+            'enable-font-smoothing' => 'false',
+            'enable-full-window-drag' => 'false',
             'enable-desktop-composition' => 'false',
-            'enable-menu-animations'     => 'false',
+            'enable-menu-animations' => 'false',
             // Device redirection
-            'enable-audio'               => 'true',
-            'enable-printing'            => 'false',
-            'enable-drive'               => 'false',
-            'drive-path'                 => '/tmp/guacamole',
-            'enable-microphone'          => 'false',
+            'enable-audio' => 'true',
+            'enable-printing' => 'false',
+            'enable-drive' => 'false',
+            'drive-path' => '/tmp/guacamole',
+            'enable-microphone' => 'false',
             // Network
-            'connection-timeout'         => '10',
+            'connection-timeout' => '10',
         ];
 
-        $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
+        $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname; // Always the VM's dynamic IP — never overridable by user
 
         // Override with session-level credentials if provided
         $creds = $this->getSessionCredentials($session);
-        if (!empty($creds['username'])) {
+        if (! empty($creds['username'])) {
             $merged['username'] = $creds['username'];
         }
-        if (!empty($creds['password'])) {
+        if (! empty($creds['password'])) {
             $merged['password'] = $creds['password'];
         }
 
         return [
-            'name'       => "session-{$session->id}",
-            'protocol'   => 'rdp',
+            'name' => "session-{$session->id}",
+            'protocol' => 'rdp',
             'parameters' => $merged,
         ];
     }
@@ -138,30 +138,30 @@ class GuacamoleConnectionParamsBuilder
         $vncConfig = config('guacamole.protocols.vnc', []);
 
         $defaults = [
-            'hostname'           => $hostname,
-            'port'               => (string) ($vncConfig['port'] ?? 5900),
-            'password'           => '',
-            'read-only'          => 'false',
-            'width'              => '1280',
-            'height'             => '720',
-            'dpi'                => '96',
-            'color-depth'        => '32',
-            'enable-audio'       => 'false',
+            'hostname' => $hostname,
+            'port' => (string) ($vncConfig['port'] ?? 5900),
+            'password' => '',
+            'read-only' => 'false',
+            'width' => '1280',
+            'height' => '720',
+            'dpi' => '96',
+            'color-depth' => '32',
+            'enable-audio' => 'false',
             'connection-timeout' => '10',
         ];
 
-        $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
+        $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname;
 
         // Override with session-level credentials if provided (VNC uses password only)
         $creds = $this->getSessionCredentials($session);
-        if (!empty($creds['password'])) {
+        if (! empty($creds['password'])) {
             $merged['password'] = $creds['password'];
         }
 
         return [
-            'name'       => "session-{$session->id}",
-            'protocol'   => 'vnc',
+            'name' => "session-{$session->id}",
+            'protocol' => 'vnc',
             'parameters' => $merged,
         ];
     }
@@ -177,34 +177,34 @@ class GuacamoleConnectionParamsBuilder
         $sshConfig = config('guacamole.protocols.ssh', []);
 
         $defaults = [
-            'hostname'            => $hostname,
-            'port'                => (string) ($sshConfig['port'] ?? 22),
-            'username'            => '',
-            'password'            => '',
-            'private-key'         => '',
-            'passphrase'          => '',
-            'font-size'           => '12',
-            'color-scheme'        => 'gray-black',
-            'enable-sftp'         => 'true',
+            'hostname' => $hostname,
+            'port' => (string) ($sshConfig['port'] ?? 22),
+            'username' => '',
+            'password' => '',
+            'private-key' => '',
+            'passphrase' => '',
+            'font-size' => '12',
+            'color-scheme' => 'gray-black',
+            'enable-sftp' => 'true',
             'sftp-root-directory' => '/home',
-            'connection-timeout'  => '10',
+            'connection-timeout' => '10',
         ];
 
-        $merged             = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
+        $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
         $merged['hostname'] = $hostname;
 
         // Override with session-level credentials if provided
         $creds = $this->getSessionCredentials($session);
-        if (!empty($creds['username'])) {
+        if (! empty($creds['username'])) {
             $merged['username'] = $creds['username'];
         }
-        if (!empty($creds['password'])) {
+        if (! empty($creds['password'])) {
             $merged['password'] = $creds['password'];
         }
 
         return [
-            'name'       => "session-{$session->id}",
-            'protocol'   => 'ssh',
+            'name' => "session-{$session->id}",
+            'protocol' => 'ssh',
             'parameters' => $merged,
         ];
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Hardware;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 
 /**
  * Form request for attaching a USB device to a VM.

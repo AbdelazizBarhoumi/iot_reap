@@ -20,12 +20,12 @@ class LessonFactory extends Factory
     public function definition(): array
     {
         $type = $this->faker->randomElement(LessonType::cases());
-        
+
         return [
             'module_id' => CourseModule::factory(),
             'title' => $this->faker->sentence(4),
             'type' => $type,
-            'duration' => $this->faker->numberBetween(10, 60) . ' min',
+            'duration' => $this->faker->numberBetween(10, 60).' min',
             'content' => $this->faker->paragraphs(3, true),
             'objectives' => $this->faker->sentences(3),
             'vm_enabled' => $type === LessonType::VM_LAB,

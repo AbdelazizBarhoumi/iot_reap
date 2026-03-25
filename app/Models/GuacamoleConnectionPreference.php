@@ -13,10 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $id
  * @property string $user_id
- * @property string $vm_session_type  Protocol key: 'rdp', 'vnc', or 'ssh'
- * @property string $profile_name  User-defined profile name
- * @property bool $is_default  Whether this is the default profile for the protocol
- * @property array<string, mixed> $parameters  JSON-encoded connection settings
+ * @property string $vm_session_type Protocol key: 'rdp', 'vnc', or 'ssh'
+ * @property string $profile_name User-defined profile name
+ * @property bool $is_default Whether this is the default profile for the protocol
+ * @property array<string, mixed> $parameters JSON-encoded connection settings
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  */

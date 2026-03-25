@@ -14,9 +14,11 @@ class ProxmoxClientFake extends ProxmoxClient
     // Use a global static counter to track VMIDs across all instances
     // This ensures uniqueness even in concurrent scenarios
     private static array $globalNextVmid = [];
+
     private static object $lock;
-    
+
     private array $createdVMs = [];
+
     private array $nodeStatuses = [];
 
     /**
@@ -68,7 +70,7 @@ class ProxmoxClientFake extends ProxmoxClient
 
         // Initialize global counter for each node (only once)
         foreach ($this->nodeStatuses as $nodeName => $status) {
-            if (!isset(self::$globalNextVmid[$nodeName])) {
+            if (! isset(self::$globalNextVmid[$nodeName])) {
                 self::$globalNextVmid[$nodeName] = 200;
             }
         }
@@ -166,7 +168,7 @@ class ProxmoxClientFake extends ProxmoxClient
         if (isset($this->createdVMs[$nodeName])) {
             $this->createdVMs[$nodeName] = array_filter(
                 $this->createdVMs[$nodeName],
-                fn($vm) => $vm['vmid'] !== $vmid
+                fn ($vm) => $vm['vmid'] !== $vmid
             );
 
             return true;
@@ -260,7 +262,7 @@ class ProxmoxClientFake extends ProxmoxClient
             foreach ($this->createdVMs[$nodeName] as $vm) {
                 if ($vm['vmid'] === $vmid && $vm['status'] === 'running') {
                     // Return a deterministic fake IP based on VMID for testability
-                    return $vm['ip_address'] ?? '192.168.1.' . ($vmid % 254 ?: 10);
+                    return $vm['ip_address'] ?? '192.168.1.'.($vmid % 254 ?: 10);
                 }
             }
         }
@@ -350,8 +352,8 @@ class ProxmoxClientFake extends ProxmoxClient
 
         // Add new entry
         $this->createdVMs[$nodeName][] = [
-            'vmid'       => $vmid,
-            'status'     => $status,
+            'vmid' => $vmid,
+            'status' => $status,
             'ip_address' => $ip,
         ];
 
@@ -380,8 +382,8 @@ class ProxmoxClientFake extends ProxmoxClient
 
         return array_map(function ($ct) {
             return [
-                'vmid'   => $ct['vmid'],
-                'name'   => $ct['name'],
+                'vmid' => $ct['vmid'],
+                'name' => $ct['name'],
                 'status' => $ct['status'],
             ];
         }, $containers);
@@ -415,9 +417,9 @@ class ProxmoxClientFake extends ProxmoxClient
                 if ($ct['vmid'] === $vmid) {
                     return [
                         'hostname' => $ct['name'],
-                        'memory'   => 512,
-                        'cores'    => 1,
-                        'net0'     => 'name=eth0,bridge=vmbr0,ip=dhcp',
+                        'memory' => 512,
+                        'cores' => 1,
+                        'net0' => 'name=eth0,bridge=vmbr0,ip=dhcp',
                     ];
                 }
             }
@@ -443,8 +445,8 @@ class ProxmoxClientFake extends ProxmoxClient
         // Update existing entry if present
         foreach ($this->containers[$nodeName] as &$ct) {
             if ($ct['vmid'] === $vmid) {
-                $ct['name']       = $name;
-                $ct['status']     = $status;
+                $ct['name'] = $name;
+                $ct['status'] = $status;
                 $ct['ip_address'] = $ip;
 
                 return $this;
@@ -453,9 +455,9 @@ class ProxmoxClientFake extends ProxmoxClient
 
         // Add new entry
         $this->containers[$nodeName][] = [
-            'vmid'       => $vmid,
-            'name'       => $name,
-            'status'     => $status,
+            'vmid' => $vmid,
+            'name' => $name,
+            'status' => $status,
             'ip_address' => $ip,
         ];
 
@@ -529,7 +531,7 @@ class ProxmoxClientFake extends ProxmoxClient
      */
     public function getExecStatus(string $nodeName, int $vmid, int $pid): array
     {
-        if (!isset($this->execHistory[$pid])) {
+        if (! isset($this->execHistory[$pid])) {
             return ['exited' => true, 'exitcode' => 127, 'err-data' => 'Process not found'];
         }
 
@@ -590,10 +592,10 @@ class ProxmoxClientFake extends ProxmoxClient
      *
      * Stores the file content in memory for testing verification.
      *
-     * @param string $nodeName The node name where the VM is running
-     * @param int    $vmid     The VM ID
-     * @param string $filePath The file path inside the VM
-     * @param string $content  The content to write to the file
+     * @param  string  $nodeName  The node name where the VM is running
+     * @param  int  $vmid  The VM ID
+     * @param  string  $filePath  The file path inside the VM
+     * @param  string  $content  The content to write to the file
      */
     public function writeFileInVm(string $nodeName, int $vmid, string $filePath, string $content): void
     {
@@ -610,6 +612,7 @@ class ProxmoxClientFake extends ProxmoxClient
     public function getWrittenFile(string $nodeName, int $vmid, string $filePath): ?string
     {
         $key = "{$nodeName}:{$vmid}:{$filePath}";
+
         return $this->writtenFiles[$key] ?? null;
     }
 
@@ -632,6 +635,7 @@ class ProxmoxClientFake extends ProxmoxClient
     public function setGuestOsType(string $nodeName, int $vmid, string $osType): self
     {
         $this->osTypeOverrides["{$nodeName}:{$vmid}"] = $osType;
+
         return $this;
     }
 
@@ -641,6 +645,7 @@ class ProxmoxClientFake extends ProxmoxClient
     public function setDefaultOsType(string $osType): self
     {
         $this->defaultOsType = $osType;
+
         return $this;
     }
 
@@ -654,6 +659,7 @@ class ProxmoxClientFake extends ProxmoxClient
     public function getGuestOsType(string $nodeName, int $vmid): string
     {
         $key = "{$nodeName}:{$vmid}";
+
         return $this->osTypeOverrides[$key] ?? $this->defaultOsType;
     }
 
@@ -710,10 +716,10 @@ class ProxmoxClientFake extends ProxmoxClient
     /**
      * Set a fake result for a specific command pattern (testing helper).
      *
-     * @param string $commandPattern  Substring to match in the command
-     * @param int    $exitcode        Exit code to return
-     * @param string $stdout          Standard output
-     * @param string $stderr          Standard error
+     * @param  string  $commandPattern  Substring to match in the command
+     * @param  int  $exitcode  Exit code to return
+     * @param  string  $stdout  Standard output
+     * @param  string  $stderr  Standard error
      */
     public function setExecResult(string $commandPattern, int $exitcode, string $stdout = '', string $stderr = ''): self
     {
@@ -732,8 +738,8 @@ class ProxmoxClientFake extends ProxmoxClient
      * This simulates what happens in production when the Proxmox API returns
      * a 500 error (e.g., "No such file or directory" from guest agent).
      *
-     * @param string $commandPattern  Substring to match in the command
-     * @param string $message         Exception message to throw
+     * @param  string  $commandPattern  Substring to match in the command
+     * @param  string  $message  Exception message to throw
      */
     public function setExecException(string $commandPattern, string $message): self
     {
@@ -779,9 +785,9 @@ class ProxmoxClientFake extends ProxmoxClient
         }
 
         throw new \PHPUnit\Framework\ExpectationFailedException(
-            "Expected command containing '{$expectedCommandSubstring}' was not executed. " .
-            "Executed commands: " . json_encode(array_column($this->execHistory, 'command')) .
-            " Written files: " . json_encode(array_column($this->writtenFilesHistory, 'content'))
+            "Expected command containing '{$expectedCommandSubstring}' was not executed. ".
+            'Executed commands: '.json_encode(array_column($this->execHistory, 'command')).
+            ' Written files: '.json_encode(array_column($this->writtenFilesHistory, 'content'))
         );
     }
 

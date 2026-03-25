@@ -89,7 +89,7 @@ class UsbDeviceRepository
     /**
      * Create a new USB device.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): UsbDevice
     {
@@ -99,8 +99,8 @@ class UsbDeviceRepository
     /**
      * Update or create a USB device (for discovery).
      *
-     * @param array<string, mixed> $attributes
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
      */
     public function updateOrCreate(array $attributes, array $values): UsbDevice
     {
@@ -110,7 +110,7 @@ class UsbDeviceRepository
     /**
      * Update a USB device.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(UsbDevice $device, array $data): bool
     {
@@ -185,12 +185,14 @@ class UsbDeviceRepository
 
     /**
      * Remove devices that are no longer present on a node.
-     * 
+     *
      * If a device is currently attached but physically disconnected,
      * mark it as DISCONNECTED instead of deleting (for audit trail).
-     * Only deletes devices that are available or bound.
+     * Dedicated devices are never deleted - they are marked DISCONNECTED
+     * so they can be reattached when they reappear.
+     * Only deletes devices that are available or bound and not dedicated.
      *
-     * @param array<string> $currentBusIds
+     * @param  array<string>  $currentBusIds
      * @return int Number of devices affected (deleted or marked disconnected)
      */
     public function removeStaleDevices(GatewayNode $node, array $currentBusIds): int
@@ -202,15 +204,15 @@ class UsbDeviceRepository
         $affectedCount = 0;
 
         foreach ($staleDevices as $device) {
-            if ($device->isAttached()) {
-                // Device was physically unplugged while attached
-                // Mark as disconnected instead of deleting (keeps audit trail)
+            if ($device->isAttached() || $device->isDedicated()) {
+                // Device was physically unplugged while attached or has dedicated assignment
+                // Mark as disconnected instead of deleting (keeps audit trail and dedicated config)
                 $device->update([
                     'status' => UsbDeviceStatus::DISCONNECTED,
                 ]);
                 $affectedCount++;
             } else {
-                // Device is available or bound - safe to delete
+                // Device is available or bound with no special config - safe to delete
                 $device->delete();
                 $affectedCount++;
             }
@@ -278,5 +280,72 @@ class UsbDeviceRepository
             ->where('pending_server_id', $serverId)
             ->with('gatewayNode')
             ->get();
+    }
+
+    /**
+     * Set dedicated VM assignment for a device.
+     *
+     * When the VM starts, this device will be automatically attached.
+     * Unlike pending attachment, dedicated assignment persists permanently
+     * and survives reboots.
+     */
+    public function setDedicatedVm(
+        UsbDevice $device,
+        int $vmid,
+        string $nodeName,
+        int $serverId
+    ): bool {
+        return $device->update([
+            'dedicated_vmid' => $vmid,
+            'dedicated_node' => $nodeName,
+            'dedicated_server_id' => $serverId,
+        ]);
+    }
+
+    /**
+     * Clear dedicated VM assignment.
+     */
+    public function clearDedicatedVm(UsbDevice $device): bool
+    {
+        return $device->update([
+            'dedicated_vmid' => null,
+            'dedicated_node' => null,
+            'dedicated_server_id' => null,
+        ]);
+    }
+
+    /**
+     * Get all devices dedicated to a specific VM.
+     */
+    public function findDedicatedForVm(int $vmid, int $serverId): Collection
+    {
+        return UsbDevice::dedicatedTo($vmid, $serverId)
+            ->with('gatewayNode')
+            ->get();
+    }
+
+    /**
+     * Get all dedicated devices (for admin dashboard).
+     */
+    public function findAllDedicated(): Collection
+    {
+        return UsbDevice::whereNotNull('dedicated_vmid')
+            ->with(['gatewayNode', 'dedicatedServer'])
+            ->get();
+    }
+
+    /**
+     * Find device by VID:PID (more reliable than busid which changes with port).
+     */
+    public function findByVidPid(string $vendorId, string $productId, ?int $gatewayNodeId = null): ?UsbDevice
+    {
+        $query = UsbDevice::where('vendor_id', strtolower($vendorId))
+            ->where('product_id', strtolower($productId));
+
+        if ($gatewayNodeId !== null) {
+            $query->where('gateway_node_id', $gatewayNodeId);
+        }
+
+        return $query->first();
     }
 }

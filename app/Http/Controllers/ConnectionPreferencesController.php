@@ -46,8 +46,8 @@ class ConnectionPreferencesController extends Controller
         foreach ($allProfiles as $profile) {
             $profiles[$profile->vm_session_type][] = [
                 'profile_name' => $profile->profile_name,
-                'is_default'   => (bool) $profile->is_default,
-                'parameters'   => $profile->parameters ?? (object) [],
+                'is_default' => (bool) $profile->is_default,
+                'parameters' => $profile->parameters ?? (object) [],
             ];
         }
 
@@ -77,8 +77,8 @@ class ConnectionPreferencesController extends Controller
                 'protocol' => $protocol,
                 'profiles' => $profiles->map(fn ($p) => [
                     'profile_name' => $p->profile_name,
-                    'is_default'   => (bool) $p->is_default,
-                    'parameters'   => $p->parameters ?? (object) [],
+                    'is_default' => (bool) $p->is_default,
+                    'parameters' => $p->parameters ?? (object) [],
                 ])->values(),
             ],
         ]);
@@ -95,7 +95,7 @@ class ConnectionPreferencesController extends Controller
         $this->validateProtocol($protocol);
 
         $profileName = $request->validated('profile_name');
-        $isDefault   = $request->validated('is_default', false);
+        $isDefault = $request->validated('is_default', false);
 
         // Check if profile name already exists
         $existing = $this->preferenceRepository->findByProfile($request->user(), $protocol, $profileName);
@@ -104,19 +104,19 @@ class ConnectionPreferencesController extends Controller
         }
 
         $profile = $this->preferenceRepository->save(
-            user:        $request->user(),
+            user: $request->user(),
             sessionType: $protocol,
-            params:      $request->validated('parameters', []),
+            params: $request->validated('parameters', []),
             profileName: $profileName,
-            isDefault:   $isDefault,
+            isDefault: $isDefault,
         );
 
         return response()->json([
             'data' => [
-                'protocol'     => $protocol,
+                'protocol' => $protocol,
                 'profile_name' => $profile->profile_name,
-                'is_default'   => (bool) $profile->is_default,
-                'parameters'   => $profile->parameters,
+                'is_default' => (bool) $profile->is_default,
+                'parameters' => $profile->parameters,
             ],
         ], 201);
     }
@@ -132,7 +132,7 @@ class ConnectionPreferencesController extends Controller
         $this->validateProtocol($protocol);
 
         $existing = $this->preferenceRepository->findByProfile($request->user(), $protocol, $profile);
-        if (!$existing) {
+        if (! $existing) {
             abort(404, "Profile '{$profile}' not found for {$protocol}.");
         }
 
@@ -141,19 +141,19 @@ class ConnectionPreferencesController extends Controller
             : $existing->is_default;
 
         $preference = $this->preferenceRepository->save(
-            user:        $request->user(),
+            user: $request->user(),
             sessionType: $protocol,
-            params:      $request->validated('parameters'),
+            params: $request->validated('parameters'),
             profileName: $profile,
-            isDefault:   $isDefault,
+            isDefault: $isDefault,
         );
 
         return response()->json([
             'data' => [
-                'protocol'     => $protocol,
+                'protocol' => $protocol,
                 'profile_name' => $preference->profile_name,
-                'is_default'   => (bool) $preference->is_default,
-                'parameters'   => $preference->parameters,
+                'is_default' => (bool) $preference->is_default,
+                'parameters' => $preference->parameters,
             ],
         ]);
     }
@@ -170,7 +170,7 @@ class ConnectionPreferencesController extends Controller
 
         $deleted = $this->preferenceRepository->delete($request->user(), $protocol, $profile);
 
-        if (!$deleted) {
+        if (! $deleted) {
             abort(404, "Profile '{$profile}' not found for {$protocol}.");
         }
 
@@ -189,7 +189,7 @@ class ConnectionPreferencesController extends Controller
 
         $updated = $this->preferenceRepository->setDefault($request->user(), $protocol, $profile);
 
-        if (!$updated) {
+        if (! $updated) {
             abort(404, "Profile '{$profile}' not found for {$protocol}.");
         }
 
@@ -201,7 +201,7 @@ class ConnectionPreferencesController extends Controller
      */
     private function validateProtocol(string $protocol): void
     {
-        if (!in_array($protocol, self::VALID_PROTOCOLS)) {
+        if (! in_array($protocol, self::VALID_PROTOCOLS)) {
             abort(422, 'Invalid protocol. Must be rdp, vnc, or ssh.');
         }
     }

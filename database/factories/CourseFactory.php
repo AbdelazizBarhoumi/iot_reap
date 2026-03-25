@@ -29,7 +29,7 @@ class CourseFactory extends Factory
             'thumbnail' => null,
             'category' => $this->faker->randomElement($categories),
             'level' => $this->faker->randomElement(CourseLevel::cases()),
-            'duration' => $this->faker->numberBetween(10, 60) . ' hours',
+            'duration' => $this->faker->numberBetween(10, 60).' hours',
             'rating' => $this->faker->randomFloat(1, 3.5, 5.0),
             'has_virtual_machine' => $this->faker->boolean(30),
             'status' => CourseStatus::DRAFT,

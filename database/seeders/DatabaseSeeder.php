@@ -59,7 +59,6 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-
     /**
      * Seed demo VM sessions for testing.
      */

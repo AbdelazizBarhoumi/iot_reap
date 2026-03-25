@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\UsbReservationStatus;
-use App\Exceptions\GatewayApiException;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
 use App\Models\UsbDeviceReservation;
@@ -11,8 +10,8 @@ use App\Models\User;
 use App\Models\VMSession;
 use App\Notifications\UsbDeviceAvailableNotification;
 use App\Repositories\UsbDeviceQueueRepository;
-use App\Repositories\UsbDeviceReservationRepository;
 use App\Repositories\UsbDeviceRepository;
+use App\Repositories\UsbDeviceReservationRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -58,7 +57,7 @@ class UsbDeviceQueueService
      */
     public function leaveQueue(UsbDevice $device, VMSession $session): bool
     {
-        if (!$this->queueRepository->isInQueue($device, $session)) {
+        if (! $this->queueRepository->isInQueue($device, $session)) {
             return false;
         }
 
@@ -81,7 +80,7 @@ class UsbDeviceQueueService
     {
         $nextEntry = $this->queueRepository->getNext($device);
 
-        if (!$nextEntry) {
+        if (! $nextEntry) {
             return null;
         }
 
@@ -223,7 +222,7 @@ class UsbDeviceQueueService
      */
     public function cancelReservation(UsbDeviceReservation $reservation): UsbDeviceReservation
     {
-        if (!$reservation->canModify()) {
+        if (! $reservation->canModify()) {
             throw new \InvalidArgumentException('Reservation cannot be cancelled in current state');
         }
 
@@ -295,6 +294,7 @@ class UsbDeviceQueueService
             if ($activeReservation->user_id === $user->id) {
                 return ['can_attach' => true, 'reason' => 'User has active reservation'];
             }
+
             return [
                 'can_attach' => false,
                 'reason' => 'Device is reserved by another user',
@@ -309,7 +309,7 @@ class UsbDeviceQueueService
     /**
      * Get devices available for a session (from online and verified gateways only).
      * Shows bound and session-attached devices. Users can attach bound devices directly.
-     * 
+     *
      * IMPORTANT: Devices attached from Infrastructure page (no session_id) are NOT shown.
      * Those are infra-managed and not available for session-based attach/queue.
      */
@@ -324,14 +324,14 @@ class UsbDeviceQueueService
                     // (excludes infra-attached devices which have status=attached but session_id=null)
                     ->orWhere(function ($q) {
                         $q->where('status', 'attached')
-                          ->whereNotNull('attached_session_id');
+                            ->whereNotNull('attached_session_id');
                     });
             })
             ->get()
             ->map(function ($device) use ($session) {
                 $canAttach = $this->canUserAttachNow($device, $session->user);
                 $queuePosition = $this->getQueuePosition($device, $session);
-                
+
                 return [
                     'device' => $device,
                     'can_attach' => $device->isBound() && $canAttach['can_attach'],
@@ -339,6 +339,7 @@ class UsbDeviceQueueService
                     'queue_position' => $queuePosition,
                     'queue_length' => $device->queueEntries->count(),
                     'attachment_reason' => $canAttach['reason'] ?? null,
+                    'reserved_until' => $canAttach['until'] ?? null,
                     'gateway_verified' => true, // Always true since we filter by verified
                 ];
             });

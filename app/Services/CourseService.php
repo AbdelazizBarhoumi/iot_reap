@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Enums\CourseStatus;
 use App\Models\Course;
 use App\Models\User;
-use App\Repositories\CourseRepository;
 use App\Repositories\CourseModuleRepository;
+use App\Repositories\CourseRepository;
 use App\Repositories\LessonRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -68,8 +68,8 @@ class CourseService
     /**
      * Create a new course with modules and lessons.
      *
-     * @param array<string, mixed> $data Course data
-     * @param array<array<string, mixed>> $modules Module data with lessons
+     * @param  array<string, mixed>  $data  Course data
+     * @param  array<array<string, mixed>>  $modules  Module data with lessons
      */
     public function createCourse(User $instructor, array $data, array $modules = []): Course
     {
@@ -134,7 +134,7 @@ class CourseService
     /**
      * Update a course.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateCourse(Course $course, array $data): Course
     {

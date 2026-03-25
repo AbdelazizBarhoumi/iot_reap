@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Course\CreateCourseRequest;
-use App\Http\Requests\Course\UpdateCourseRequest;
 use App\Http\Requests\Course\StoreLessonRequest;
 use App\Http\Requests\Course\StoreModuleRequest;
-use App\Http\Resources\CourseResource;
+use App\Http\Requests\Course\UpdateCourseRequest;
 use App\Http\Resources\CourseModuleResource;
+use App\Http\Resources\CourseResource;
 use App\Http\Resources\LessonResource;
+use App\Http\Resources\LessonVMAssignmentResource;
+use App\Http\Resources\VMTemplateResource;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Repositories\CourseRepository;
 use App\Services\CourseService;
 use App\Services\LessonService;
+use App\Services\LessonVMAssignmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,6 +32,7 @@ class TeachingController extends Controller
         private readonly CourseService $courseService,
         private readonly LessonService $lessonService,
         private readonly CourseRepository $courseRepository,
+        private readonly LessonVMAssignmentService $vmAssignmentService,
     ) {}
 
     /**
@@ -43,7 +47,6 @@ class TeachingController extends Controller
             'totalCourses' => $courses->count(),
             'totalStudents' => $courses->sum('student_count'),
             'avgRating' => $courses->avg('rating') ? round($courses->avg('rating'), 1) : 0,
-            'totalRevenue' => '$0', // Placeholder - implement when payment system is added
         ];
 
         if ($request->wantsJson()) {
@@ -91,12 +94,12 @@ class TeachingController extends Controller
     {
         $course = $this->courseService->getCourseWithContent($id);
 
-        if (!$course) {
+        if (! $course) {
             abort(404);
         }
 
         // Only owner or admin can edit
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -129,7 +132,7 @@ class TeachingController extends Controller
     public function destroy(Request $request, Course $course): JsonResponse
     {
         // Only owner or admin can delete
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -144,7 +147,7 @@ class TeachingController extends Controller
     public function submitForReview(Request $request, Course $course): JsonResponse
     {
         // Only owner can submit
-        if (!$course->isOwnedBy($request->user())) {
+        if (! $course->isOwnedBy($request->user())) {
             abort(403);
         }
 
@@ -166,7 +169,7 @@ class TeachingController extends Controller
     public function storeModule(StoreModuleRequest $request, Course $course): JsonResponse
     {
         // Only owner can modify
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -183,7 +186,7 @@ class TeachingController extends Controller
      */
     public function updateModule(StoreModuleRequest $request, Course $course, CourseModule $module): JsonResponse
     {
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -200,7 +203,7 @@ class TeachingController extends Controller
      */
     public function destroyModule(Request $request, Course $course, CourseModule $module): JsonResponse
     {
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -220,20 +223,27 @@ class TeachingController extends Controller
     {
         $lesson = $this->lessonService->getLessonWithContext($lessonId);
 
-        if (!$lesson || $lesson->module->course_id !== $courseId) {
+        if (! $lesson || $lesson->module->course_id !== $courseId) {
             abort(404);
         }
 
         $course = $lesson->module->course;
 
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
+
+        // Get VM assignment info for this lesson
+        $vmAssignment = $this->vmAssignmentService->getApprovedAssignment($lessonId)
+            ?? $lesson->pendingVMAssignment;
+        $availableTemplates = $this->vmAssignmentService->getAvailableTemplates();
 
         if ($request->wantsJson()) {
             return response()->json([
                 'lesson' => new LessonResource($lesson),
                 'course' => new CourseResource($course->load('modules.lessons')),
+                'vm_assignment' => $vmAssignment ? new LessonVMAssignmentResource($vmAssignment->load(['vmTemplate', 'assignedByUser', 'approvedByUser'])) : null,
+                'available_templates' => VMTemplateResource::collection($availableTemplates),
             ]);
         }
 
@@ -243,6 +253,8 @@ class TeachingController extends Controller
             'lessonId' => (string) $lessonId,
             'lesson' => new LessonResource($lesson),
             'course' => new CourseResource($course->load('modules.lessons')),
+            'vmAssignment' => $vmAssignment ? new LessonVMAssignmentResource($vmAssignment->load(['vmTemplate', 'assignedByUser', 'approvedByUser'])) : null,
+            'availableTemplates' => VMTemplateResource::collection($availableTemplates),
         ]);
     }
 
@@ -251,7 +263,7 @@ class TeachingController extends Controller
      */
     public function storeLesson(StoreLessonRequest $request, Course $course, CourseModule $module): JsonResponse
     {
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -268,7 +280,7 @@ class TeachingController extends Controller
      */
     public function updateLesson(StoreLessonRequest $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
     {
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
@@ -285,7 +297,7 @@ class TeachingController extends Controller
      */
     public function destroyLesson(Request $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
     {
-        if (!$course->isOwnedBy($request->user()) && !$request->user()->isAdmin()) {
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 

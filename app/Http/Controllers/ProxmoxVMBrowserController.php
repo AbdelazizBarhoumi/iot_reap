@@ -56,29 +56,31 @@ class ProxmoxVMBrowserController extends Controller
                 $nodeVMs = Cache::remember($cacheKey, self::VM_LIST_CACHE_TTL, function () use ($server, $node) {
                     try {
                         $client = $this->clientFactory->make($server);
+
                         return $client->listVMsLight($node->name);
                     } catch (\Throwable $e) {
                         Log::warning('Failed to list VMs for node', [
-                            'node'  => $node->name,
+                            'node' => $node->name,
                             'error' => $e->getMessage(),
                         ]);
+
                         return [];
                     }
                 });
 
                 foreach ($nodeVMs as $vm) {
                     $vms[] = [
-                        'vmid'        => $vm['vmid'] ?? 0,
-                        'name'        => $vm['name'] ?? "VM {$vm['vmid']}",
-                        'status'      => $vm['status'] ?? 'unknown',
-                        'maxmem'      => $vm['maxmem'] ?? 0,
-                        'cpus'        => $vm['cpus'] ?? $vm['maxcpu'] ?? 1,
-                        'maxdisk'     => $vm['maxdisk'] ?? 0,
-                        'uptime'      => $vm['uptime'] ?? 0,
-                        'is_template' => !empty($vm['template']),
-                        'node_id'     => $node->id,
-                        'node_name'   => $node->name,
-                        'server_id'   => $server->id,
+                        'vmid' => $vm['vmid'] ?? 0,
+                        'name' => $vm['name'] ?? "VM {$vm['vmid']}",
+                        'status' => $vm['status'] ?? 'unknown',
+                        'maxmem' => $vm['maxmem'] ?? 0,
+                        'cpus' => $vm['cpus'] ?? $vm['maxcpu'] ?? 1,
+                        'maxdisk' => $vm['maxdisk'] ?? 0,
+                        'uptime' => $vm['uptime'] ?? 0,
+                        'is_template' => ! empty($vm['template']),
+                        'node_id' => $node->id,
+                        'node_name' => $node->name,
+                        'server_id' => $server->id,
                         'server_name' => $server->name,
                     ];
                 }
@@ -109,9 +111,9 @@ class ProxmoxVMBrowserController extends Controller
         } catch (\Throwable $e) {
             Log::warning('Failed to list VM snapshots', [
                 'server_id' => $serverId,
-                'node'      => $node->name,
-                'vmid'      => $vmid,
-                'error'     => $e->getMessage(),
+                'node' => $node->name,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json(['data' => [], 'message' => 'Could not retrieve snapshots'], 200);

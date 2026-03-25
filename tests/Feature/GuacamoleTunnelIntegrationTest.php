@@ -64,12 +64,14 @@ class GuacamoleTunnelIntegrationTest extends TestCase
             $response = $this->actingAs($user)
                 ->getJson("/sessions/{$session->id}/guacamole-token");
         } catch (\Exception $e) {
-            $this->markTestSkipped('Unable to contact Guacamole API: ' . $e->getMessage());
+            $this->markTestSkipped('Unable to contact Guacamole API: '.$e->getMessage());
+
             return;
         }
 
         if ($response->status() !== 200) {
             $this->markTestSkipped('Guacamole token endpoint returned '.$response->status());
+
             return;
         }
 
@@ -87,23 +89,23 @@ class GuacamoleTunnelIntegrationTest extends TestCase
             'GUAC_HEIGHT' => 600,
             'GUAC_DPI' => 96,
         ]);
-        $fullUrl = $tunnel . '?' . $params;
+        $fullUrl = $tunnel.'?'.$params;
 
         $parts = parse_url($fullUrl);
         $scheme = $parts['scheme'] ?? 'ws';
         $host = $parts['host'] ?? 'localhost';
         $port = $parts['port'] ?? ($scheme === 'wss' ? 443 : 80);
-        $path = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+        $path = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
 
         $transport = $scheme === 'wss' ? 'ssl://' : '';
-        $socket = @fsockopen($transport . $host, $port, $errno, $errstr, 5);
+        $socket = @fsockopen($transport.$host, $port, $errno, $errstr, 5);
         if (! $socket) {
             // skip if unreachable
             $this->markTestSkipped("Cannot reach Guacamole host {$host}: {$errstr} ({$errno})");
         }
 
         $key = base64_encode(random_bytes(16));
-        $req  = "GET {$path} HTTP/1.1\r\n";
+        $req = "GET {$path} HTTP/1.1\r\n";
         $req .= "Host: {$host}:{$port}\r\n";
         $req .= "Upgrade: websocket\r\n";
         $req .= "Connection: Upgrade\r\n";
@@ -151,22 +153,22 @@ class GuacamoleTunnelIntegrationTest extends TestCase
             'GUAC_HEIGHT' => 600,
             'GUAC_DPI' => 96,
         ]);
-        $fullUrl = $tunnel . '?' . $params;
+        $fullUrl = $tunnel.'?'.$params;
 
         $parts = parse_url($fullUrl);
         $scheme = $parts['scheme'] ?? 'ws';
         $host = $parts['host'] ?? 'localhost';
         $port = $parts['port'] ?? ($scheme === 'wss' ? 443 : 80);
-        $path = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+        $path = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
 
         $transport = $scheme === 'wss' ? 'ssl://' : '';
-        $socket = @fsockopen($transport . $host, $port, $errno, $errstr, 5);
+        $socket = @fsockopen($transport.$host, $port, $errno, $errstr, 5);
         if (! $socket) {
             $this->markTestSkipped("Could not open socket to {$host}: {$errstr} ({$errno})");
         }
 
         $key = base64_encode(random_bytes(16));
-        $req  = "GET {$path} HTTP/1.1\r\n";
+        $req = "GET {$path} HTTP/1.1\r\n";
         $req .= "Host: {$host}:{$port}\r\n";
         $req .= "Upgrade: websocket\r\n";
         $req .= "Connection: Upgrade\r\n";

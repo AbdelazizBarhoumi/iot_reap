@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\ProxmoxServer;
-use App\Models\ProxmoxNode;
-use App\Models\VMSession;
-use App\Models\User;
-use App\Enums\UserRole;
 use App\Enums\VMSessionStatus;
+use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
+use App\Models\User;
+use App\Models\VMSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -73,7 +72,7 @@ class ServerInactivationFeatureTest extends TestCase
 
         // DEBUG: show response when failing
         if ($response->status() !== 200) {
-            fwrite(STDERR, "INACTIVATE RESPONSE: " . $response->getContent() . PHP_EOL);
+            fwrite(STDERR, 'INACTIVATE RESPONSE: '.$response->getContent().PHP_EOL);
         }
 
         $response->assertOk();

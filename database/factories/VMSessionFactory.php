@@ -82,6 +82,4 @@ class VMSessionFactory extends Factory
             'expires_at' => now()->subHours(2),
         ]);
     }
-
 }
-

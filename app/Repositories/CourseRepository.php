@@ -6,7 +6,6 @@ use App\Enums\CourseStatus;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Repository for course database access.
@@ -16,7 +15,7 @@ class CourseRepository
     /**
      * Create a new course.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Course
     {
@@ -106,7 +105,7 @@ class CourseRepository
     /**
      * Update a course.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(Course $course, array $data): Course
     {

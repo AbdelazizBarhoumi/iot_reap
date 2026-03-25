@@ -29,6 +29,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
+import { login } from '@/routes';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -38,9 +39,10 @@ type Props = {
 
 /**
  * Build nav items based on user role.
- * Engineers see: Dashboard, Sessions, Hardware, Courses
- * Teachers see: Dashboard, Courses, Teaching
+ * Engineers see: Dashboard, Sessions, Hardware, My Learning, Courses
+ * Teachers see: Dashboard, My Courses (teaching), Courses (browse)
  * Security Officers see: Dashboard, Courses
+ * Admin uses sidebar layout (not this header)
  */
 function useNavItems(): NavItem[] {
     const { auth } = usePage().props;
@@ -56,8 +58,8 @@ function useNavItems(): NavItem[] {
         },
     ];
 
-    // Engineers & admins see VM sessions and hardware
-    if (isEngineer || role === 'admin') {
+    // Engineers see VM sessions, hardware, and their enrolled courses
+    if (isEngineer) {
         items.push(
             {
                 title: 'Sessions',
@@ -70,28 +72,28 @@ function useNavItems(): NavItem[] {
                 icon: Usb,
             },
             {
-                title: 'My Courses',
+                title: 'My Learning',
                 href: '/my-courses',
                 icon: GraduationCap,
             },
         );
     }
 
-    // Everyone can browse courses
-    items.push({
-        title: 'Courses',
-        href: '/courses',
-        icon: GraduationCap,
-    });
-
-    // Teachers & admins see Teaching management
-    if (isTeacher || role === 'admin') {
+    // Teachers see Teaching (their courses) prominently
+    if (isTeacher) {
         items.push({
-            title: 'Teaching',
+            title: 'My Courses',
             href: '/teaching',
             icon: PenTool,
         });
     }
+
+    // Everyone can browse courses
+    items.push({
+        title: 'Browse Courses',
+        href: '/courses',
+        icon: GraduationCap,
+    });
 
     return items;
 }
@@ -102,10 +104,14 @@ const activeItemStyles =
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props;
+    const user = auth.user;
     const getInitials = useInitials();
     const { isCurrentUrl } = useCurrentUrl();
     const navItems = useNavItems();
     const [mobileOpen, setMobileOpen] = useState(false);
+    
+    // Only engineers/admins use VM sessions, so only they need connection preferences
+    const showConnectionPrefs = user?.role === 'engineer' || user?.role === 'admin';
 
     return (
         <>
@@ -168,34 +174,45 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
                     {/* Right side: quick actions + user menu */}
                     <div className="ml-auto flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild className="hidden sm:flex text-muted-foreground hover:text-foreground gap-1.5">
-                            <Link href="/connection-preferences">
-                                <Settings2 className="h-4 w-4" />
-                                <span className="hidden md:inline">Preferences</span>
-                            </Link>
-                        </Button>
+                        {showConnectionPrefs && (
+                            <Button variant="ghost" size="sm" asChild className="hidden sm:flex text-muted-foreground hover:text-foreground gap-1.5">
+                                <Link href="/connection-preferences">
+                                    <Settings2 className="h-4 w-4" />
+                                    <span className="hidden md:inline">Preferences</span>
+                                </Link>
+                            </Button>
+                        )}
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="size-10 rounded-full p-1"
-                                >
-                                    <Avatar className="size-8 overflow-hidden rounded-full">
-                                        <AvatarImage
-                                            src={auth.user.avatar}
-                                            alt={auth.user.name}
-                                        />
-                                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary dark:bg-primary/90 dark:text-primary/70">
-                                            {getInitials(auth.user.name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                <UserMenuContent user={auth.user} />
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        className="size-10 rounded-full p-1"
+                                    >
+                                        <Avatar className="size-8 overflow-hidden rounded-full">
+                                            <AvatarImage
+                                                src={user.avatar || undefined}
+                                                alt={user.name || 'User'}
+                                            />
+                                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary dark:bg-primary/90 dark:text-primary/70">
+                                                {getInitials(user.name || 'User')}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end">
+                                    <UserMenuContent user={user} />
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Link
+                                href={login()}
+                                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:border-foreground hover:text-foreground"
+                            >
+                                Sign in
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -219,14 +236,16 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     {item.title}
                                 </Link>
                             ))}
-                            <Link
-                                href="/connection-preferences"
-                                onClick={() => setMobileOpen(false)}
-                                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors sm:hidden"
-                            >
-                                <Settings2 className="h-4 w-4" />
-                                Preferences
-                            </Link>
+                            {showConnectionPrefs && (
+                                <Link
+                                    href="/connection-preferences"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors sm:hidden"
+                                >
+                                    <Settings2 className="h-4 w-4" />
+                                    Preferences
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}

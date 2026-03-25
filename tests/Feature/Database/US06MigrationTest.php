@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Database;
 
-use App\Models\ProxmoxNode;
-use App\Models\VMSession;
 use App\Enums\ProxmoxNodeStatus;
 use App\Enums\VMSessionStatus;
+use App\Models\ProxmoxNode;
+use App\Models\VMSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,18 +47,17 @@ class US06MigrationTest extends TestCase
     {
         $this->assertTrue(
             \Illuminate\Support\Facades\Schema::hasColumns('proxmox_nodes', [
-                'id', 'name', 'hostname', 'api_url', 'status', 'max_vms', 'created_at', 'updated_at'
+                'id', 'name', 'hostname', 'api_url', 'status', 'max_vms', 'created_at', 'updated_at',
             ]),
             'proxmox_nodes table missing required columns'
         );
     }
 
-
     public function test_vm_sessions_has_required_columns(): void
     {
         $this->assertTrue(
             \Illuminate\Support\Facades\Schema::hasColumns('vm_sessions', [
-                'id', 'user_id', 'node_id', 'vm_id', 'status', 'protocol', 'ip_address', 'expires_at', 'guacamole_connection_id', 'created_at', 'updated_at'
+                'id', 'user_id', 'node_id', 'vm_id', 'status', 'protocol', 'ip_address', 'expires_at', 'guacamole_connection_id', 'created_at', 'updated_at',
             ]),
             'vm_sessions table missing required columns'
         );
@@ -77,7 +76,6 @@ class US06MigrationTest extends TestCase
             'hostname' => $node->hostname,
         ]);
     }
-
 
     public function test_vm_session_factory_creates_model(): void
     {
@@ -99,7 +97,6 @@ class US06MigrationTest extends TestCase
         $this->assertNotNull($session->user);
         $this->assertInstanceOf(\App\Models\User::class, $session->user);
     }
-
 
     public function test_vm_session_belongs_to_node(): void
     {
@@ -135,8 +132,6 @@ class US06MigrationTest extends TestCase
         $this->assertEquals('online', $node->status->value);
     }
 
-
-
     public function test_vm_session_status_enum(): void
     {
         $session = VMSession::factory()->active()->create();
@@ -144,7 +139,6 @@ class US06MigrationTest extends TestCase
         $this->assertEquals(VMSessionStatus::ACTIVE, $session->status);
         $this->assertEquals('active', $session->status->value);
     }
-
 
     /**
      * Test seeded data exists.

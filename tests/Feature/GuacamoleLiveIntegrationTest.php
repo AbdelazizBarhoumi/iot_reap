@@ -27,7 +27,7 @@ class GuacamoleLiveIntegrationTest extends TestCase
             $this->markTestSkipped('GUACAMOLE_LIVE_TEST not enabled');
         }
 
-        if (!config('guacamole.username') || !config('guacamole.password')) {
+        if (! config('guacamole.username') || ! config('guacamole.password')) {
             $this->markTestSkipped('Guacamole credentials are not configured for tests');
         }
 
@@ -53,7 +53,7 @@ class GuacamoleLiveIntegrationTest extends TestCase
     {
         $this->runConnectionLifecycle('rdp', [
             'hostname' => '127.0.0.1',
-            'port'     => '3389',
+            'port' => '3389',
             'security' => 'any',
             'ignore-cert' => 'true',
         ]);
@@ -62,10 +62,10 @@ class GuacamoleLiveIntegrationTest extends TestCase
     public function test_vnc_connection_lifecycle_create_get_token_delete(): void
     {
         $this->runConnectionLifecycle('vnc', [
-            'hostname'    => '127.0.0.1',
-            'port'        => '5900',
+            'hostname' => '127.0.0.1',
+            'port' => '5900',
             'color-depth' => '24',
-            'read-only'   => 'false',
+            'read-only' => 'false',
         ]);
     }
 
@@ -73,28 +73,28 @@ class GuacamoleLiveIntegrationTest extends TestCase
     {
         $this->runConnectionLifecycle('ssh', [
             'hostname' => '127.0.0.1',
-            'port'     => '22',
+            'port' => '22',
         ]);
     }
 
     public function test_viewer_url_client_id_is_correctly_formed(): void
     {
-        $name         = 'live-viewer-url-test-' . bin2hex(random_bytes(4));
+        $name = 'live-viewer-url-test-'.bin2hex(random_bytes(4));
         $connectionId = null;
 
         try {
             $connectionId = $this->client->createConnection([
-                'name'       => $name,
-                'protocol'   => 'rdp',
+                'name' => $name,
+                'protocol' => 'rdp',
                 'parameters' => ['hostname' => '127.0.0.1', 'port' => '3389'],
             ]);
 
-            $token      = $this->client->generateAuthToken($connectionId, 300);
+            $token = $this->client->generateAuthToken($connectionId, 300);
             $dataSource = $this->client->getDataSource();
 
             // Verify the base64 client ID format: base64(connectionId\0c\0dataSource)
-            $expectedClientId = base64_encode($connectionId . "\0c\0" . $dataSource);
-            $viewerUrl        = config('guacamole.url') . '/#/client/' . $expectedClientId . '?token=' . $token;
+            $expectedClientId = base64_encode($connectionId."\0c\0".$dataSource);
+            $viewerUrl = config('guacamole.url').'/#/client/'.$expectedClientId.'?token='.$token;
 
             // Decode and verify roundtrip
             $decoded = base64_decode($expectedClientId);
@@ -106,7 +106,10 @@ class GuacamoleLiveIntegrationTest extends TestCase
             $this->assertStringContainsString('?token=', $viewerUrl);
         } finally {
             if ($connectionId !== null) {
-                try { $this->client->deleteConnection($connectionId); } catch (GuacamoleApiException) {}
+                try {
+                    $this->client->deleteConnection($connectionId);
+                } catch (GuacamoleApiException) {
+                }
             }
         }
     }
@@ -121,14 +124,14 @@ class GuacamoleLiveIntegrationTest extends TestCase
 
     private function runConnectionLifecycle(string $protocol, array $parameters): void
     {
-        $name         = "live-test-{$protocol}-" . now()->format('YmdHis') . '-' . bin2hex(random_bytes(4));
+        $name = "live-test-{$protocol}-".now()->format('YmdHis').'-'.bin2hex(random_bytes(4));
         $connectionId = null;
 
         try {
             // Create
             $connectionId = $this->client->createConnection([
-                'name'       => $name,
-                'protocol'   => $protocol,
+                'name' => $name,
+                'protocol' => $protocol,
                 'parameters' => $parameters,
             ]);
             $this->assertNotEmpty($connectionId, "createConnection({$protocol}) returned empty identifier");
@@ -150,7 +153,7 @@ class GuacamoleLiveIntegrationTest extends TestCase
                 try {
                     $this->client->deleteConnection($connectionId);
                 } catch (GuacamoleApiException $e) {
-                    $this->fail("Cleanup failed for {$protocol} connection: " . $e->getMessage());
+                    $this->fail("Cleanup failed for {$protocol} connection: ".$e->getMessage());
                 }
             }
         }

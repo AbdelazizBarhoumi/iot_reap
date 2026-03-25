@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
-    public function __construct(private readonly UserRepository $users)
-    {
-    }
+    public function __construct(private readonly UserRepository $users) {}
 
     /**
      * Register a new user (returns the created User) and signs them in.
@@ -24,7 +22,7 @@ class AuthService
         $allowedSelfRegister = [UserRole::ENGINEER->value, UserRole::TEACHER->value];
         $role = $data['role'] ?? UserRole::ENGINEER->value;
 
-        if (!in_array($role, $allowedSelfRegister, true)) {
+        if (! in_array($role, $allowedSelfRegister, true)) {
             $role = UserRole::ENGINEER->value;
         }
 

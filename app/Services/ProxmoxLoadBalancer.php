@@ -16,8 +16,11 @@ use Throwable;
 class ProxmoxLoadBalancer
 {
     private const CACHE_TTL = 30; // seconds
+
     private const OVERLOAD_THRESHOLD = 85; // percent
+
     private const CPU_WEIGHT = 0.3;
+
     private const MEMORY_WEIGHT = 0.7;
 
     /**
@@ -38,7 +41,7 @@ class ProxmoxLoadBalancer
 
         $online_nodes = ProxmoxNode::where('status', 'online')
             ->get()
-            ->map(fn($node) => $node->name)
+            ->map(fn ($node) => $node->name)
             ->toArray();
 
         if (empty($online_nodes)) {
@@ -47,7 +50,7 @@ class ProxmoxLoadBalancer
             ]);
 
             throw new NoAvailableNodeException(
-                "No online Proxmox nodes available on server '" . ($server?->name ?? 'unknown') . "'"
+                "No online Proxmox nodes available on server '".($server?->name ?? 'unknown')."'"
             );
         }
 
@@ -70,7 +73,7 @@ class ProxmoxLoadBalancer
             ]);
 
             throw new NoAvailableNodeException(
-                "All Proxmox nodes on server '" . ($server?->name ?? 'unknown') . "' are overloaded (>" . self::OVERLOAD_THRESHOLD . "%)"
+                "All Proxmox nodes on server '".($server?->name ?? 'unknown')."' are overloaded (>".self::OVERLOAD_THRESHOLD.'%)'
             );
         }
 

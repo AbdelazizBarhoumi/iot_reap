@@ -56,6 +56,10 @@ function getStatusBadgeClass(status: string): string {
       return 'bg-warning/10 text-warning border-warning/30';
     case 'attached':
       return 'bg-info/10 text-info border-info/30';
+    case 'pending_attach':
+      return 'bg-amber-500/10 text-amber-600 border-amber-400/30';
+    case 'disconnected':
+      return 'bg-destructive/10 text-destructive border-destructive/30';
     default:
       return 'bg-muted text-muted-foreground';
   }
@@ -184,12 +188,13 @@ interface DeviceRowProps {
   onUnbind: () => void;
   onAttach: () => void;
   onDetach: () => void;
+  onCancelPending: () => void;
   onMarkAsCamera: () => void;
   onRemoveCamera: () => void;
   loading: boolean;
 }
 
-function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, onMarkAsCamera, onRemoveCamera, loading }: DeviceRowProps) {
+function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, onCancelPending, onMarkAsCamera, onRemoveCamera, loading }: DeviceRowProps) {
   const isCamera = device.is_camera;
   const hasRegistration = device.has_camera_registration;
 
@@ -223,13 +228,25 @@ function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, onMarkAsCamer
           </Badge>
         ) : (
           <Badge variant="outline" className={getStatusBadgeClass(device.status)}>
-            {device.status_label}
+            {device.status === 'pending_attach' ? (
+              <span className="flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {device.status_label}
+              </span>
+            ) : (
+              device.status_label
+            )}
           </Badge>
         )}
       </td>
       <td className="py-3 px-4">
         {hasRegistration ? (
           <span className="text-sm text-purple-600">See Cameras section</span>
+        ) : device.status === 'pending_attach' && device.pending_vmid ? (
+          <span className="text-sm text-amber-600">
+            Waiting for VM #{device.pending_vmid}
+            {device.pending_vm_name && ` (${device.pending_vm_name})`}
+          </span>
         ) : device.attached_to ? (
           <span className="text-sm">{device.attached_to}</span>
         ) : (
@@ -273,6 +290,12 @@ function DeviceRow({ device, onBind, onUnbind, onAttach, onDetach, onMarkAsCamer
                 Detach
               </Button>
             )}
+            {device.status === 'pending_attach' && (
+              <Button size="sm" variant="outline" onClick={onCancelPending} disabled={loading} className="text-amber-600 border-amber-300 hover:bg-amber-50">
+                <X className="h-3 w-3 mr-1" />
+                Cancel Pending
+              </Button>
+            )}
           </div>
         )}
       </td>
@@ -287,6 +310,7 @@ interface GatewayNodeCardProps {
   onUnbindDevice: (deviceId: number) => void;
   onAttachDevice: (device: UsbDevice) => void;
   onDetachDevice: (deviceId: number) => void;
+  onCancelPending: (deviceId: number) => void;
   onMarkAsCamera: (deviceId: number) => void;
   onRemoveCamera: (deviceId: number) => void;
   onVerify?: (verified: boolean) => void;
@@ -301,6 +325,7 @@ function GatewayNodeCard({
   onUnbindDevice,
   onAttachDevice,
   onDetachDevice,
+  onCancelPending,
   onMarkAsCamera,
   onRemoveCamera,
   onVerify,
@@ -386,6 +411,7 @@ function GatewayNodeCard({
                     onUnbind={() => onUnbindDevice(device.id)}
                     onAttach={() => onAttachDevice(device)}
                     onDetach={() => onDetachDevice(device.id)}
+                    onCancelPending={() => onCancelPending(device.id)}
                     onMarkAsCamera={() => onMarkAsCamera(device.id)}
                     onRemoveCamera={() => onRemoveCamera(device.id)}
                     loading={loading}
@@ -622,8 +648,10 @@ function CameraCard({
   onRejectReservation,
   isAdmin,
 }: CameraCardProps) {
-  const activeCameras = cameras.filter(c => c.status === 'active').length;
-  const attachedCameras = cameras.filter(c => c.is_controlled).length;
+  // Handle loading state - show skeleton instead of stale data
+  const activeCameras = loading ? 0 : cameras.filter(c => c.status === 'active').length;
+  const attachedCameras = loading ? 0 : cameras.filter(c => c.is_controlled).length;
+  const cameraCount = loading ? '...' : cameras.length.toString();
 
   return (
     <Card className="shadow-card hover:shadow-card-hover transition-all">
@@ -636,7 +664,11 @@ function CameraCard({
             <div>
               <CardTitle className="font-heading text-lg">Cameras</CardTitle>
               <CardDescription>
-                {activeCameras}/{cameras.length} active &middot; {attachedCameras} attached
+                {loading ? (
+                  <span className="text-muted-foreground">Loading cameras...</span>
+                ) : (
+                  <>{activeCameras}/{cameraCount} active &middot; {attachedCameras} attached</>
+                )}
               </CardDescription>
             </div>
           </div>
@@ -753,6 +785,7 @@ export default function HardwarePage() {
     unbindDevice,
     attachDevice,
     detachDevice,
+    cancelPendingAttachment,
     markAsCamera,
     removeCamera,
     discoverGateways,
@@ -761,10 +794,10 @@ export default function HardwarePage() {
 
   const [attachDialogDevice, setAttachDialogDevice] = useState<UsbDevice | null>(null);
 
-  // Camera state
+  // Camera state - start with loading=true since we fetch immediately
   const [cameras, setCameras] = useState<CameraType[]>([]);
   const [pendingCameraReservations, setPendingCameraReservations] = useState<CameraReservation[]>([]);
-  const [camerasLoading, setCamerasLoading] = useState(false);
+  const [camerasLoading, setCamerasLoading] = useState(true);
   const [cameraAttachTarget, setCameraAttachTarget] = useState<CameraType | null>(null);
   const [cameraActionLoading, setCameraActionLoading] = useState(false);
 
@@ -896,8 +929,10 @@ export default function HardwarePage() {
     (sum, n) => sum + (n.devices?.filter((d) => d.status === 'attached').length || 0),
     0
   );
-  const activeCameras = cameras.filter((c) => c.status === 'active').length;
-  const attachedCameras = cameras.filter((c) => c.is_controlled).length;
+  // Use camerasLoading to avoid showing stale counts while loading
+  const activeCameras = camerasLoading ? 0 : cameras.filter((c) => c.status === 'active').length;
+  const attachedCameras = camerasLoading ? 0 : cameras.filter((c) => c.is_controlled).length;
+  const cameraCountDisplay = camerasLoading ? '...' : cameras.length.toString();
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -924,7 +959,13 @@ export default function HardwarePage() {
                   </span>
                   <span>{totalDevices} USB devices</span>
                   <span>{attachedDevices} attached</span>
-                  <span className="border-l pl-4">{activeCameras}/{cameras.length} cameras active</span>
+                  <span className="border-l pl-4">
+                    {camerasLoading ? (
+                      <span className="text-muted-foreground/50">Loading cameras...</span>
+                    ) : (
+                      <>{activeCameras}/{cameraCountDisplay} cameras active</>
+                    )}
+                  </span>
                   <span>{attachedCameras} reserved</span>
                 </div>
               )}
@@ -1012,6 +1053,7 @@ export default function HardwarePage() {
                 onUnbindDevice={unbindDevice}
                 onAttachDevice={setAttachDialogDevice}
                 onDetachDevice={detachDevice}
+                onCancelPending={cancelPendingAttachment}
                 onMarkAsCamera={handleMarkAsCamera}
                 onRemoveCamera={handleRemoveCamera}
                 onVerify={(verified) => verifyNode(node.id, verified)}

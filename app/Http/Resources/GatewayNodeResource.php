@@ -29,7 +29,7 @@ class GatewayNodeResource extends JsonResource
             'proxmox_camera_api_url' => $this->proxmox_camera_api_url,
             'description' => $this->description,
             'last_seen_at' => $this->last_seen_at?->toIso8601String(),
-            'devices_count' => $this->whenLoaded('usbDevices', fn() => $this->usbDevices->count(), 0),
+            'devices_count' => $this->whenLoaded('usbDevices', fn () => $this->usbDevices->count(), 0),
             'devices' => UsbDeviceResource::collection($this->whenLoaded('usbDevices')),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

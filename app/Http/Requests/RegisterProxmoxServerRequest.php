@@ -107,7 +107,7 @@ class RegisterProxmoxServerRequest extends FormRequest
         }
 
         // Default realm to 'pam' if not provided
-        if (!$this->has('realm') || empty($this->input('realm'))) {
+        if (! $this->has('realm') || empty($this->input('realm'))) {
             $this->merge([
                 'realm' => 'pam',
             ]);

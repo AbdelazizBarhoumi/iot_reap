@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\VMSessionStatus;
+use App\Events\VMSessionActivated;
+use App\Events\VMSessionCreated;
 use App\Http\Requests\CreateVMSessionRequest;
 use App\Http\Requests\ExtendVMSessionRequest;
 use App\Http\Requests\TerminateVMSessionRequest;
 use App\Http\Resources\VMSessionResource;
-use App\Events\VMSessionActivated;
-use App\Events\VMSessionCreated;
 use App\Jobs\TerminateVMJob;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
@@ -19,8 +19,8 @@ use App\Services\QuotaService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -70,58 +70,58 @@ class VMSessionController extends Controller
         $durationMinutes = $request->getDurationMinutes();
 
         try {
-// always create a session for the supplied existing VM
-        $node = \App\Models\ProxmoxNode::findOrFail($request->validated('node_id'));
-        $serverId = $node->proxmox_server_id;
+            // always create a session for the supplied existing VM
+            $node = \App\Models\ProxmoxNode::findOrFail($request->validated('node_id'));
+            $serverId = $node->proxmox_server_id;
 
-        Log::info('Creating session for existing VM', [
-            'user_id' => $request->user()->id,
-            'vmid' => $request->validated('vmid'),
-            'node_id' => $node->id,
-            'duration_minutes' => $durationMinutes,
-        ]);
+            Log::info('Creating session for existing VM', [
+                'user_id' => $request->user()->id,
+                'vmid' => $request->validated('vmid'),
+                'node_id' => $node->id,
+                'duration_minutes' => $durationMinutes,
+            ]);
 
-        $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
+            $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
 
-        // Determine protocol order: explicit param, connection preference override,
-        // or fallback default (rdp) to avoid null values that would break the resource.
-        $protocol = $request->validated('protocol')
-            ?? $request->validated('connection_preference_protocol')
-            ?? 'rdp';
+            // Determine protocol order: explicit param, connection preference override,
+            // or fallback default (rdp) to avoid null values that would break the resource.
+            $protocol = $request->validated('protocol')
+                ?? $request->validated('connection_preference_protocol')
+                ?? 'rdp';
 
-        $sessionData = [
-            'user_id' => $request->user()->id,
-            'proxmox_server_id' => $serverId,
-            'node_id' => $node->id,
-            'vm_id' => $request->validated('vmid'),
-            'status' => VMSessionStatus::PENDING,
-            'protocol' => $protocol,
-            'expires_at' => now()->addMinutes($durationMinutes),
-            'credentials' => array_filter([
-                'username' => $request->validated('username'),
-                'password' => $request->validated('password'),
-            ]),
-            'return_snapshot' => $request->validated('return_snapshot'),
-        ];
+            $sessionData = [
+                'user_id' => $request->user()->id,
+                'proxmox_server_id' => $serverId,
+                'node_id' => $node->id,
+                'vm_id' => $request->validated('vmid'),
+                'status' => VMSessionStatus::PENDING,
+                'protocol' => $protocol,
+                'expires_at' => now()->addMinutes($durationMinutes),
+                'credentials' => array_filter([
+                    'username' => $request->validated('username'),
+                    'password' => $request->validated('password'),
+                ]),
+                'return_snapshot' => $request->validated('return_snapshot'),
+            ];
 
-        $session = $this->sessionRepository->create($sessionData);
+            $session = $this->sessionRepository->create($sessionData);
 
-        Log::info('Session record created, activating synchronously', [
-            'session_id' => $session->id,
-            'expires_at' => $session->expires_at->toIso8601String(),
-        ]);
+            Log::info('Session record created, activating synchronously', [
+                'session_id' => $session->id,
+                'expires_at' => $session->expires_at->toIso8601String(),
+            ]);
 
-        event(new VMSessionCreated($session));
+            event(new VMSessionCreated($session));
 
-        // VMSessionActivated listener runs synchronously — starts VM, resolves
-        // IP, creates Guacamole connection, and marks session ACTIVE.  If it
-        // fails, the session is marked FAILED and an exception propagates here.
-        event(new VMSessionActivated($session));
+            // VMSessionActivated listener runs synchronously — starts VM, resolves
+            // IP, creates Guacamole connection, and marks session ACTIVE.  If it
+            // fails, the session is marked FAILED and an exception propagates here.
+            event(new VMSessionActivated($session));
 
-        // Reload to pick up changes made by the listener
-        $session->refresh();
+            // Reload to pick up changes made by the listener
+            $session->refresh();
 
-        return response()->json(new VMSessionResource($session), 201);
+            return response()->json(new VMSessionResource($session), 201);
         } catch (\Exception $e) {
             Log::warning('Failed to create VM session', [
                 'user_id' => $request->user()->id,
@@ -138,7 +138,6 @@ class VMSessionController extends Controller
         }
     }
 
-
     /**
      * List available snapshots for a session's VM.
      *
@@ -154,7 +153,7 @@ class VMSessionController extends Controller
         }
 
         // Cannot list snapshots without a provisioned VM
-        if (!$session->vm_id || !$session->proxmoxServer || !$session->node) {
+        if (! $session->vm_id || ! $session->proxmoxServer || ! $session->node) {
             return response()->json(['data' => []], 200);
         }
 
@@ -180,7 +179,7 @@ class VMSessionController extends Controller
      * @throws AuthorizationException
      */
     public function show(Request $request, string $sessionId): JsonResponse|InertiaResponse|
-        \Illuminate\Http\RedirectResponse
+    \Illuminate\Http\RedirectResponse
     {
         $session = VMSession::findOrFail($sessionId);
 
@@ -299,7 +298,7 @@ class VMSessionController extends Controller
 
             // Force-expire even if cleanup had errors
             $session->refresh();
-            if (!in_array($session->status, [
+            if (! in_array($session->status, [
                 VMSessionStatus::EXPIRED,
                 VMSessionStatus::TERMINATED,
                 VMSessionStatus::FAILED,
@@ -363,4 +362,5 @@ class VMSessionController extends Controller
                 422
             );
         }
-    }}
+    }
+}

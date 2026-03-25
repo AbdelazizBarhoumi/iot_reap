@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ProxmoxServer;
 use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
 use Illuminate\Console\Command;
 
 class BackfillDefaultServer extends Command
@@ -32,6 +32,7 @@ class BackfillDefaultServer extends Command
         if (! config('proxmox.token_id') || ! config('proxmox.token_secret')) {
             $this->warn('⚠️  PROXMOX_TOKEN_ID or PROXMOX_TOKEN_SECRET is not configured in .env');
             $this->info('Please configure these credentials before running this command.');
+
             return self::FAILURE;
         }
 
@@ -69,6 +70,7 @@ class BackfillDefaultServer extends Command
 
         if (! $this->option('force') && ! $this->confirm('Create server with these settings?')) {
             $this->info('Cancelled.');
+
             return self::SUCCESS;
         }
 

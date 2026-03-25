@@ -6,7 +6,6 @@ use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
 use App\Enums\LessonType;
 use App\Models\Course;
-use App\Models\CourseEnrollment;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\User;
@@ -22,7 +21,7 @@ class CourseSeeder extends Seeder
     {
         // Get or create an instructor
         $instructor = User::where('email', 'instructor@example.com')->first();
-        if (!$instructor) {
+        if (! $instructor) {
             $instructor = User::factory()->create([
                 'name' => 'Dr. Sarah Chen',
                 'email' => 'instructor@example.com',
@@ -30,7 +29,7 @@ class CourseSeeder extends Seeder
         }
 
         $secondInstructor = User::where('email', 'instructor2@example.com')->first();
-        if (!$secondInstructor) {
+        if (! $secondInstructor) {
             $secondInstructor = User::factory()->create([
                 'name' => 'James Rodriguez',
                 'email' => 'instructor2@example.com',

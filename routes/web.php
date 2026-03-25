@@ -36,6 +36,11 @@ Route::get('dashboard', function () {
         return redirect()->route('teaching.index');
     }
 
+    // Security officers go to courses (they review/monitor, not operate VMs)
+    if ($user->hasRole(\App\Enums\UserRole::SECURITY_OFFICER)) {
+        return redirect()->route('courses.index');
+    }
+
     // Engineers & admins see the VM browser dashboard
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -182,6 +187,10 @@ Route::middleware(['auth', 'verified', 'can:admin-only'])->prefix('admin')->grou
         Route::post('/discover', [HardwareController::class, 'discoverGateways'])->name('discover');
         Route::post('/status', [HardwareController::class, 'refreshGatewayStatus'])->name('status');
         Route::get('/running-vms', [HardwareController::class, 'runningVms'])->name('running-vms');
+        // Device dedication endpoints
+        Route::get('/dedicated-devices', [HardwareController::class, 'dedicatedDevices'])->name('dedicated-devices');
+        Route::post('/devices/{device}/dedicate', [HardwareController::class, 'dedicateDevice'])->name('devices.dedicate');
+        Route::delete('/devices/{device}/dedicate', [HardwareController::class, 'removeDedication'])->name('devices.remove-dedication');
     });
 
     // Admin reservation management

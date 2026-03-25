@@ -3,8 +3,6 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Models\ProxmoxNode;
-use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Services\QuotaService;
@@ -17,13 +15,14 @@ use Tests\TestCase;
 class QuotaServiceTest extends TestCase
 {
     private QuotaService $service;
+
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->service = new QuotaService();
+        $this->service = new QuotaService;
         $this->user = User::factory()->create();
     }
 

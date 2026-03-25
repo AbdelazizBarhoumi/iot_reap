@@ -32,9 +32,9 @@ class CameraResource extends JsonResource
         return [
             'id' => $this->id,
             'robot_id' => $this->robot_id,
-            'robot_name' => $this->whenLoaded('robot', fn() => $this->robot->name),
+            'robot_name' => $this->whenLoaded('robot', fn () => $this->robot->name),
             'gateway_node_id' => $this->gateway_node_id,
-            'gateway_name' => $this->whenLoaded('gatewayNode', fn() => $this->gatewayNode->name),
+            'gateway_name' => $this->whenLoaded('gatewayNode', fn () => $this->gatewayNode->name),
             'usb_device_id' => $this->usb_device_id,
             'is_usb_camera' => $this->gateway_node_id !== null,
             'source_name' => $this->source_name, // Robot name or Gateway name
@@ -53,10 +53,10 @@ class CameraResource extends JsonResource
                 'resolution_label' => $this->getResolutionLabel(),
             ],
             'stream_urls' => [
-                'hls'    => "http://{$baseHost}:{$hlsPort}/{$this->stream_key}/index.m3u8",
+                'hls' => "http://{$baseHost}:{$hlsPort}/{$this->stream_key}/index.m3u8",
                 'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$this->stream_key}",
             ],
-            'control' => $this->when($activeControl !== null && $activeControl instanceof \App\Models\CameraSessionControl, fn() => [
+            'control' => $this->when($activeControl !== null && $activeControl instanceof \App\Models\CameraSessionControl, fn () => [
                 'session_id' => $activeControl->session_id,
                 'acquired_at' => $activeControl->acquired_at?->toIso8601String(),
             ]),
