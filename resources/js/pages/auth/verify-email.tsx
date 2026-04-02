@@ -6,7 +6,6 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
-
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <AuthLayout
@@ -14,22 +13,22 @@ export default function VerifyEmail({ status }: { status?: string }) {
             description="Please verify your email address by clicking on the link we just emailed to you."
         >
             <Head title="Email verification" />
-
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-success">
                     A new verification link has been sent to the email address
                     you provided during registration.
                 </div>
             )}
-
             <Form {...send.form()} className="space-y-6 text-center">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                        <Button
+                            disabled={processing}
+                            className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                        >
                             {processing && <Spinner />}
                             Resend verification email
                         </Button>
-
                         <TextLink
                             href={logout()}
                             className="mx-auto block text-sm"
@@ -42,3 +41,4 @@ export default function VerifyEmail({ status }: { status?: string }) {
         </AuthLayout>
     );
 }
+

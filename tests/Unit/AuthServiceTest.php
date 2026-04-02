@@ -56,14 +56,14 @@ class AuthServiceTest extends TestCase
         $service = new AuthService($repo);
 
         $user = $service->register([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'name' => 'Teacher User',
+            'email' => 'teacher@example.com',
             'password' => 'super-secret',
-            'role' => \App\Enums\UserRole::ADMIN->value,
+            'role' => \App\Enums\UserRole::TEACHER->value,
         ]);
 
-        $this->assertEquals(\App\Enums\UserRole::ADMIN, $user->role);
+        $this->assertEquals(\App\Enums\UserRole::TEACHER, $user->role);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('super-secret', $user->password));
-        $this->assertDatabaseHas('users', ['email' => 'admin@example.com']);
+        $this->assertDatabaseHas('users', ['email' => 'teacher@example.com']);
     }
 }

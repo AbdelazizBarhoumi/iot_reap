@@ -2,14 +2,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useInitials } from '@/hooks/use-initials';
 import type { User } from '@/types';
-
 const roleLabels: Record<string, { label: string; className: string }> = {
-    admin: { label: 'Admin', className: 'bg-destructive/10 text-destructive border-destructive/30' },
-    engineer: { label: 'Engineer', className: 'bg-primary/10 text-primary border-primary/30' },
-    teacher: { label: 'Teacher', className: 'bg-success/10 text-success border-success/30' },
-    security_officer: { label: 'Security', className: 'bg-warning/10 text-warning border-warning/30' },
+    admin: {
+        label: 'Admin',
+        className: 'bg-destructive/10 text-destructive border-destructive/30',
+    },
+    engineer: {
+        label: 'Engineer',
+        className: 'bg-primary/10 text-primary border-primary/30',
+    },
+    teacher: {
+        label: 'Teacher',
+        className: 'bg-success/10 text-success border-success/30',
+    },
+    security_officer: {
+        label: 'Security',
+        className: 'bg-warning/10 text-warning border-warning/30',
+    },
 };
-
 export function UserInfo({
     user,
     showEmail = false,
@@ -18,8 +28,10 @@ export function UserInfo({
     showEmail?: boolean;
 }) {
     const getInitials = useInitials();
-    const roleConfig = roleLabels[user.role] || { label: user.role, className: 'bg-muted text-muted-foreground' };
-
+    const roleConfig = roleLabels[user.role] || {
+        label: user.role,
+        className: 'bg-muted text-muted-foreground',
+    };
     return (
         <>
             <Avatar className="h-8 w-8 overflow-hidden rounded-full">
@@ -35,10 +47,15 @@ export function UserInfo({
                         {user.email}
                     </span>
                 )}
-                <Badge variant="outline" className={`mt-0.5 w-fit text-[10px] px-1.5 py-0 ${roleConfig.className}`}>
+                <Badge
+                    variant="outline"
+                    className={`mt-0.5 w-fit px-1.5 py-0 text-[10px] ${roleConfig.className}`}
+                >
                     {roleConfig.label}
                 </Badge>
             </div>
         </>
     );
 }
+
+

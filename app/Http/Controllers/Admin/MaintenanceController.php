@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Camera;
 use App\Models\UsbDevice;
-use App\Models\VMTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -20,22 +19,6 @@ class MaintenanceController extends Controller
     public function index(Request $request): JsonResponse|Response
     {
         Gate::authorize('admin-only');
-
-        $vmTemplates = VMTemplate::with(['proxmoxServer', 'node'])
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($t) => [
-                'type' => 'vm_template',
-                'id' => $t->id,
-                'name' => $t->name,
-                'description' => $t->admin_description,
-                'maintenance_mode' => $t->maintenance_mode,
-                'maintenance_notes' => $t->maintenance_notes,
-                'maintenance_until' => $t->maintenance_until?->toIso8601String(),
-                'is_in_maintenance' => $t->isInMaintenance(),
-                'server' => $t->proxmoxServer?->name,
-                'node' => $t->node?->name,
-            ]);
 
         $usbDevices = UsbDevice::with('gatewayNode')
             ->orderBy('name')
@@ -70,7 +53,6 @@ class MaintenanceController extends Controller
             ]);
 
         $resources = collect()
-            ->merge($vmTemplates)
             ->merge($usbDevices)
             ->merge($cameras)
             ->sortBy('name')
@@ -82,47 +64,6 @@ class MaintenanceController extends Controller
 
         return Inertia::render('admin/MaintenancePage', [
             'resources' => $resources,
-        ]);
-    }
-
-    /**
-     * Set maintenance mode on a VM template.
-     */
-    public function setVMTemplateMaintenance(Request $request, VMTemplate $template): JsonResponse
-    {
-        Gate::authorize('admin-only');
-
-        $request->validate([
-            'notes' => ['required', 'string', 'max:2000'],
-            'until' => ['nullable', 'date', 'after:now'],
-        ]);
-
-        $until = $request->input('until') ? new \DateTime($request->input('until')) : null;
-        $template->setMaintenance($request->input('notes'), $until);
-
-        return response()->json([
-            'message' => 'VM template maintenance mode enabled.',
-            'data' => [
-                'id' => $template->id,
-                'maintenance_mode' => true,
-                'maintenance_notes' => $template->maintenance_notes,
-                'maintenance_until' => $template->maintenance_until?->toIso8601String(),
-            ],
-        ]);
-    }
-
-    /**
-     * Clear maintenance mode on a VM template.
-     */
-    public function clearVMTemplateMaintenance(VMTemplate $template): JsonResponse
-    {
-        Gate::authorize('admin-only');
-
-        $template->clearMaintenance();
-
-        return response()->json([
-            'message' => 'VM template maintenance mode cleared.',
-            'data' => ['id' => $template->id, 'maintenance_mode' => false],
         ]);
     }
 
@@ -216,13 +157,12 @@ class MaintenanceController extends Controller
         Gate::authorize('admin-only');
 
         $request->validate([
-            'type' => ['required', 'in:vm_template,usb_device,camera'],
+            'type' => ['required', 'in:usb_device,camera'],
             'id' => ['required', 'integer'],
             'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $model = match ($request->input('type')) {
-            'vm_template' => VMTemplate::findOrFail($request->input('id')),
             'usb_device' => UsbDevice::findOrFail($request->input('id')),
             'camera' => Camera::findOrFail($request->input('id')),
         };
@@ -246,14 +186,6 @@ class MaintenanceController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $vmTemplates = VMTemplate::inMaintenance()->get()->map(fn ($t) => [
-            'type' => 'vm_template',
-            'id' => $t->id,
-            'name' => $t->name,
-            'maintenance_notes' => $t->maintenance_notes,
-            'maintenance_until' => $t->maintenance_until?->toIso8601String(),
-        ]);
-
         $usbDevices = UsbDevice::inMaintenance()->get()->map(fn ($d) => [
             'type' => 'usb_device',
             'id' => $d->id,
@@ -271,7 +203,7 @@ class MaintenanceController extends Controller
         ]);
 
         return response()->json([
-            'data' => collect()->merge($vmTemplates)->merge($usbDevices)->merge($cameras)->values(),
+            'data' => collect()->merge($usbDevices)->merge($cameras)->values(),
         ]);
     }
 }

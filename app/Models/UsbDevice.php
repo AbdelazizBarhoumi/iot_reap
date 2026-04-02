@@ -18,6 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $vendor_id
  * @property string $product_id
  * @property string $name
+ * @property string|null $admin_description
+ * @property bool $maintenance_mode
+ * @property string|null $maintenance_notes
+ * @property \DateTime|null $maintenance_until
  * @property bool $is_camera
  * @property UsbDeviceStatus $status
  * @property string|null $attached_to
@@ -30,9 +34,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $pending_vm_ip
  * @property string|null $pending_vm_name
  * @property \DateTime|null $pending_since
- * @property int|null $dedicated_vmid       Permanent VM assignment (survives reboots)
- * @property string|null $dedicated_node    Node name for dedicated VM
- * @property int|null $dedicated_server_id  Server ID for dedicated VM
+ * @property int|null $dedicated_vmid Permanent VM assignment (survives reboots)
+ * @property string|null $dedicated_node Node name for dedicated VM
+ * @property int|null $dedicated_server_id Server ID for dedicated VM
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  */
@@ -46,6 +50,10 @@ class UsbDevice extends Model
         'vendor_id',
         'product_id',
         'name',
+        'admin_description',
+        'maintenance_mode',
+        'maintenance_notes',
+        'maintenance_until',
         'is_camera',
         'status',
         'attached_to',
@@ -66,6 +74,8 @@ class UsbDevice extends Model
     protected $casts = [
         'gateway_node_id' => 'integer',
         'is_camera' => 'boolean',
+        'maintenance_mode' => 'boolean',
+        'maintenance_until' => 'datetime',
         'status' => UsbDeviceStatus::class,
         'pending_vmid' => 'integer',
         'pending_server_id' => 'integer',
@@ -164,7 +174,7 @@ class UsbDevice extends Model
      */
     public function canAttach(string $userId): bool
     {
-        if (!$this->isBound()) {
+        if (! $this->isBound()) {
             return false;
         }
 
@@ -228,6 +238,56 @@ class UsbDevice extends Model
     public function scopeNonCameras($query)
     {
         return $query->where('is_camera', false);
+    }
+
+    /**
+     * Scope: Get devices in maintenance.
+     */
+    public function scopeInMaintenance($query)
+    {
+        return $query->where('maintenance_mode', true)
+            ->where(function ($q) {
+                $q->whereNull('maintenance_until')
+                    ->orWhere('maintenance_until', '>', now());
+            });
+    }
+
+    /**
+     * Check if device is currently in maintenance.
+     */
+    public function isInMaintenance(): bool
+    {
+        if (! $this->maintenance_mode) {
+            return false;
+        }
+
+        if ($this->maintenance_until === null) {
+            return true;
+        }
+
+        return $this->maintenance_until->isFuture();
+    }
+
+    /**
+     * Set maintenance mode.
+     */
+    public function setMaintenance(string $notes, ?\DateTime $until = null): void
+    {
+        $this->maintenance_mode = true;
+        $this->maintenance_notes = $notes;
+        $this->maintenance_until = $until;
+        $this->save();
+    }
+
+    /**
+     * Clear maintenance mode.
+     */
+    public function clearMaintenance(): void
+    {
+        $this->maintenance_mode = false;
+        $this->maintenance_notes = null;
+        $this->maintenance_until = null;
+        $this->save();
     }
 
     /**
@@ -389,7 +449,7 @@ class UsbDevice extends Model
 
             // Wildcard pattern check
             if (str_contains($pattern, '*')) {
-                $regex = '/^' . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/';
+                $regex = '/^'.str_replace('*', '.*', preg_quote($pattern, '/')).'$/';
                 if (preg_match($regex, $vidPid)) {
                     return true;
                 }
@@ -405,6 +465,6 @@ class UsbDevice extends Model
      */
     public function canBeAttachedToVm(): bool
     {
-        return !$this->is_camera;
+        return ! $this->is_camera;
     }
 }

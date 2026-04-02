@@ -114,5 +114,8 @@
         "jsx": "react-jsx"
     },
     "include": ["resources/js/**/*.ts", "resources/js/**/*.d.ts", "resources/js/**/*.tsx"],
-    "exclude": ["resources/js/routes/index.ts"]
+    "exclude": [
+        "resources/js/routes/**",
+        "node_modules"
+    ]
 }

@@ -14,12 +14,10 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 export function NavUser() {
     const { auth } = usePage().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
-
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -52,3 +50,5 @@ export function NavUser() {
         </SidebarMenu>
     );
 }
+
+

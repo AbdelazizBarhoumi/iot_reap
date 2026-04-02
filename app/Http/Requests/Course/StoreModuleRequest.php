@@ -2,16 +2,24 @@
 
 namespace App\Http\Requests\Course;
 
+use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Form request for creating or updating a module.
+ * Form request for creating a module.
  */
 class StoreModuleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        $course = $this->route('course');
+
+        if (! $course instanceof Course) {
+            return false;
+        }
+
+        // Only owner or admin can add modules
+        return $course->isOwnedBy($this->user()) || $this->user()->isAdmin();
     }
 
     /**

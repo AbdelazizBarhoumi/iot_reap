@@ -11,13 +11,11 @@ import {
 } from '@/components/ui/card';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 import AlertError from './alert-error';
-
 type Props = {
     recoveryCodesList: string[];
     fetchRecoveryCodes: () => Promise<void>;
     errors: string[];
 };
-
 export default function TwoFactorRecoveryCodes({
     recoveryCodesList,
     fetchRecoveryCodes,
@@ -26,14 +24,11 @@ export default function TwoFactorRecoveryCodes({
     const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false);
     const codesSectionRef = useRef<HTMLDivElement | null>(null);
     const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible;
-
     const toggleCodesVisibility = useCallback(async () => {
         if (!codesAreVisible && !recoveryCodesList.length) {
             await fetchRecoveryCodes();
         }
-
         setCodesAreVisible(!codesAreVisible);
-
         if (!codesAreVisible) {
             setTimeout(() => {
                 codesSectionRef.current?.scrollIntoView({
@@ -43,15 +38,12 @@ export default function TwoFactorRecoveryCodes({
             });
         }
     }, [codesAreVisible, recoveryCodesList.length, fetchRecoveryCodes]);
-
     useEffect(() => {
         if (!recoveryCodesList.length) {
             fetchRecoveryCodes();
         }
     }, [recoveryCodesList.length, fetchRecoveryCodes]);
-
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
-
     return (
         <Card>
             <CardHeader>
@@ -78,7 +70,6 @@ export default function TwoFactorRecoveryCodes({
                         />
                         {codesAreVisible ? 'Hide' : 'View'} Recovery Codes
                     </Button>
-
                     {canRegenerateCodes && (
                         <Form
                             {...regenerateRecoveryCodes.form()}
@@ -142,7 +133,6 @@ export default function TwoFactorRecoveryCodes({
                                         </div>
                                     )}
                                 </div>
-
                                 <div className="text-xs text-muted-foreground select-none">
                                     <p id="regenerate-warning">
                                         Each recovery code can be used once to
@@ -162,3 +152,5 @@ export default function TwoFactorRecoveryCodes({
         </Card>
     );
 }
+
+

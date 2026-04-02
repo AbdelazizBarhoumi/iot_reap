@@ -25,7 +25,7 @@ class CourseFactory extends Factory
         return [
             'title' => $this->faker->sentence(4),
             'description' => $this->faker->paragraphs(2, true),
-            'instructor_id' => User::factory(),
+            'instructor_id' => User::factory(),  // Will be lazy-loaded; can be overridden with ->create(['instructor_id' => $id])
             'thumbnail' => null,
             'category' => $this->faker->randomElement($categories),
             'level' => $this->faker->randomElement(CourseLevel::cases()),
@@ -35,6 +35,17 @@ class CourseFactory extends Factory
             'status' => CourseStatus::DRAFT,
             'admin_feedback' => null,
         ];
+    }
+
+    /**
+     * Course belongs to a specific instructor.
+     */
+    public function forInstructor(User|int $instructor): static
+    {
+        $instructorId = $instructor instanceof User ? $instructor->id : $instructor;
+        return $this->state(fn (array $attributes) => [
+            'instructor_id' => $instructorId,
+        ]);
     }
 
     /**

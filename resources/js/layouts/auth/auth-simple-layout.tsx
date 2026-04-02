@@ -3,14 +3,13 @@ import { Server } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
-
 export default function AuthSimpleLayout({
     children,
     title,
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center bg-hero-gradient p-6 md:p-10">
+        <div className="bg-hero-gradient flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
             <div className="w-full max-w-md">
                 <Card className="border-0 shadow-2xl">
                     <CardContent className="p-8">
@@ -23,11 +22,14 @@ export default function AuthSimpleLayout({
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
                                         <Server className="h-7 w-7 text-white" />
                                     </div>
-                                    <span className="text-xl font-bold text-foreground">IoT-REAP</span>
+                                    <span className="text-xl font-bold text-foreground">
+                                        IoT-REAP
+                                    </span>
                                 </Link>
-
                                 <div className="space-y-2 text-center">
-                                    <h1 className="text-2xl font-heading font-semibold text-foreground">{title}</h1>
+                                    <h1 className="font-heading text-2xl font-semibold text-foreground">
+                                        {title}
+                                    </h1>
                                     <p className="text-sm text-muted-foreground">
                                         {description}
                                     </p>
@@ -44,3 +46,4 @@ export default function AuthSimpleLayout({
         </div>
     );
 }
+

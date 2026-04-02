@@ -10,6 +10,9 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Event dispatched when a VM session is successfully provisioned.
  * Used to trigger downstream processes (Guacamole setup, notifications, etc.)
+ *
+ * @deprecated ORPHAN EVENT - Fired but has no listeners. Consider adding listeners for
+ *             logging, notifications, or analytics, or remove the dispatch points.
  */
 class VMSessionCreated
 {

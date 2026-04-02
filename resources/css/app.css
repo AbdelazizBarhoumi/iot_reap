@@ -13,7 +13,6 @@
 @import '@fontsource/dm-sans/600.css';
 @import '@fontsource/dm-sans/700.css';
 
-
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -95,16 +94,16 @@
 }
 
 :root {
-    --background: hsl(40, 30%, 97%);    
+    --background: hsl(40, 30%, 97%);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     /* default primary/secondary now match learning theme */
-    --primary:  oklch(63.861% 0.11491 179.792);               /* dark‑blue hero */
+    --primary: oklch(63.861% 0.11491 179.792); /* dark‑blue hero */
     --primary-foreground: oklch(0.97 0 0);
-    --secondary:  oklch(18.345% 0.09471 280.992);
+    --secondary: oklch(18.345% 0.09471 280.992);
     --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
@@ -114,7 +113,7 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.56 0.11 180);              /* ring follows accent */
+    --ring: oklch(0.56 0.11 180); /* ring follows accent */
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -146,16 +145,16 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.145 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.60 0.12 180);           /* dark‑mode hero/secondary */
+    --primary: oklch(0.6 0.12 180); /* dark‑mode hero/secondary */
     --primary-foreground: oklch(0.15 0.05 260);
-    --secondary: oklch(18.345% 0.09471 280.992);         /* teal accent even in dark */
+    --secondary: oklch(18.345% 0.09471 280.992); /* teal accent even in dark */
     --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.269 0 0);
     --muted-foreground: oklch(0.708 0 0);
     --accent: oklch(0.56 0.11 180);
     --accent-foreground: oklch(1 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(1 0 0);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
     --ring: oklch(0.56 0.11 180);
@@ -174,10 +173,10 @@
     --sidebar-ring: oklch(0.439 0 0);
 
     /* Learning semantic colors - dark mode */
-    --success: oklch(42.141% 0.18639 300.067);
+    --success: oklch(0.65 0.18 145);
     --success-foreground: oklch(1 0 0);
     --warning: oklch(0.75 0.18 60);
-    --warning-foreground: oklch(1 0 0);
+    --warning-foreground: oklch(0.15 0 0);
     --info: oklch(0.65 0.18 250);
     --info-foreground: oklch(1 0 0);
 }
@@ -234,8 +233,7 @@
             max-width: 1400px;
         }
     }
-    }
-
+}
 
 /* ================================================
    Learning Studio Styles
@@ -247,11 +245,34 @@
 }
 
 /* Apply heading font to all heading elements */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-heading);
 }
-a, button {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+
+/* Focus states for all interactive elements */
+a,
+button {
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
+}
+
+/* Ensure inputs have consistent focus behavior */
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+select {
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
+}
+
+/* Custom focus style for icon buttons and toggles */
+[role='button'],
+[role='switch'],
+[role='checkbox'],
+[role='radio'] {
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
 }
 
 .font-body {
@@ -274,7 +295,12 @@ a, button {
 /* Hero gradient background */
 .bg-hero-gradient {
     /* dark blue to secondary colour (formerly teal) */
-    background: linear-gradient(135deg, hsl(220 70% 15%) 0%, hsl(220 60% 25%) 50%, var(--primary) 100%);
+    background: linear-gradient(
+        135deg,
+        hsl(220 70% 15%) 0%,
+        hsl(220 60% 25%) 50%,
+        var(--primary) 100%
+    );
 }
 
 /* Terminal styling for VM labs */
@@ -283,7 +309,6 @@ a, button {
     color: #4ade80;
     font-family: 'Monaco', 'Cascadia Code', 'Consolas', monospace;
 }
-
 
 /* Legacy accent utilities using secondary color variable */
 .text-secondary-accent {
@@ -303,4 +328,3 @@ a, button {
 }
 
 /* Hover ring effect for learning cards */
-

@@ -125,7 +125,7 @@ class AdminReservationController extends Controller
                 'message' => 'Reservation approved',
                 'data' => new UsbDeviceReservationResource($approved->load(['device.gatewayNode', 'user', 'approver'])),
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

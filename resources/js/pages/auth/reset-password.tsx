@@ -6,12 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { update } from '@/routes/password';
-
 type Props = {
     token: string;
     email: string;
 };
-
 export default function ResetPassword({ token, email }: Props) {
     return (
         <AuthLayout
@@ -19,7 +17,6 @@ export default function ResetPassword({ token, email }: Props) {
             description="Please enter your new password below"
         >
             <Head title="Reset password" />
-
             <Form
                 {...update.form()}
                 transform={(data) => ({ ...data, token, email })}
@@ -43,7 +40,6 @@ export default function ResetPassword({ token, email }: Props) {
                                 className="mt-2"
                             />
                         </div>
-
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
                             <Input
@@ -57,7 +53,6 @@ export default function ResetPassword({ token, email }: Props) {
                             />
                             <InputError message={errors.password} />
                         </div>
-
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">
                                 Confirm password
@@ -75,7 +70,6 @@ export default function ResetPassword({ token, email }: Props) {
                                 className="mt-2"
                             />
                         </div>
-
                         <Button
                             type="submit"
                             className="mt-4 w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
@@ -91,3 +85,4 @@ export default function ResetPassword({ token, email }: Props) {
         </AuthLayout>
     );
 }
+

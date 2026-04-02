@@ -31,6 +31,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'suspended_at',
+        'suspended_reason',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     /**
@@ -57,7 +61,17 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
+            'suspended_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if the user is suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 
     /**
@@ -91,5 +105,51 @@ class User extends Authenticatable
         $allowed = array_map(fn ($r) => $r instanceof UserRole ? $r->value : $r, $roles);
 
         return in_array($current, $allowed, true);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Relationships
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Courses the user is enrolled in.
+     */
+    public function enrolledCourses(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_enrollments')
+            ->withPivot('enrolled_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Courses the user teaches (as instructor).
+     */
+    public function taughtCourses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    /**
+     * User's quiz attempts.
+     */
+    public function quizAttempts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    /**
+     * User's payments.
+     */
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * User's notifications.
+     */
+    public function notifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 }

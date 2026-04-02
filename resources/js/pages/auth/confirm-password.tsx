@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/password/confirm';
-
 export default function ConfirmPassword() {
     return (
         <AuthLayout
@@ -14,7 +13,6 @@ export default function ConfirmPassword() {
             description="This is a secure area of the application. Please confirm your password before continuing."
         >
             <Head title="Confirm password" />
-
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
@@ -28,10 +26,8 @@ export default function ConfirmPassword() {
                                 autoComplete="current-password"
                                 autoFocus
                             />
-
                             <InputError message={errors.password} />
                         </div>
-
                         <div className="flex items-center">
                             <Button
                                 className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
@@ -48,3 +44,4 @@ export default function ConfirmPassword() {
         </AuthLayout>
     );
 }
+

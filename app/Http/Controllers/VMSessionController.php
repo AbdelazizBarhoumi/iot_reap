@@ -16,6 +16,7 @@ use App\Services\ExtendSessionService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
 use App\Services\QuotaService;
+use App\Services\VMSessionCleanupService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class VMSessionController extends Controller
      */
     public function __construct(
         private readonly VMSessionRepository $sessionRepository,
+        private readonly VMSessionCleanupService $cleanupService,
         private readonly ExtendSessionService $extendSessionService,
         private readonly QuotaService $quotaService,
     ) {}
@@ -46,7 +48,7 @@ class VMSessionController extends Controller
     {
         // Lazy expiration: mark overdue sessions before listing so the
         // frontend always sees correct statuses without queue:work.
-        $this->sessionRepository->expireOverdueSessions();
+        $this->cleanupService->expireOverdueSessions();
 
         $sessions = $this->sessionRepository->findByUser($request->user());
 

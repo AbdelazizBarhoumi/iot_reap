@@ -8,7 +8,6 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
-
 export function NavFooter({
     items,
     className,
@@ -27,7 +26,7 @@ export function NavFooter({
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild
-                                className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                             >
                                 <Link href={item.href} prefetch>
                                     {item.icon && (
@@ -43,3 +42,5 @@ export function NavFooter({
         </SidebarGroup>
     );
 }
+
+

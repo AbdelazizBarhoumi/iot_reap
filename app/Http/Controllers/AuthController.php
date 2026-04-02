@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidCredentialsException;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -57,12 +59,8 @@ class AuthController
     /**
      * Send a password reset link. Always return 200 to avoid user enumeration.
      */
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
         // Fire and forget — always return 200 to the client
         Password::sendResetLink($request->only('email'));
 
@@ -72,14 +70,8 @@ class AuthController
     /**
      * Reset a user's password using a valid token (expires per config: 60 minutes).
      */
-    public function resetPassword(Request $request): JsonResponse
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'token' => ['required', 'string'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'confirmed', 'min:6'],
-        ]);
-
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {

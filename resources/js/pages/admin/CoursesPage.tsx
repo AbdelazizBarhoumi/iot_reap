@@ -3,7 +3,6 @@
  * Admin view for reviewing and approving/rejecting course submissions.
  * Uses unified AppLayout.
  */
-
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -34,33 +33,27 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { useAppState, LearningAppProvider, type CourseStatus, type ManagedCourse } from '@/lib/learning/appState';
 import type { BreadcrumbItem } from '@/types';
-
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/infrastructure' },
     { title: 'Course Approvals', href: '/admin/courses' },
 ];
-
 const statusConfig: Record<CourseStatus, { label: string; color: string; icon: React.ElementType }> = {
     draft: { label: 'Draft', color: 'bg-muted text-muted-foreground', icon: Clock },
     pending_review: { label: 'Pending Review', color: 'bg-warning/10 text-warning border-warning/30', icon: Clock },
     approved: { label: 'Approved', color: 'bg-success/10 text-success border-success/30', icon: CheckCircle2 },
     rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive border-destructive/30', icon: XCircle },
 };
-
 function AdminCoursesContent() {
     const { courses, approveCourse, rejectCourse } = useAppState();
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [feedback, setFeedback] = useState('');
     const [previewId, setPreviewId] = useState<string | null>(null);
-
     const pendingCourses = courses.filter((c) => c.status === 'pending_review');
     const approvedCourses = courses.filter((c) => c.status === 'approved');
     const rejectedCourses = courses.filter((c) => c.status === 'rejected');
-
     const handleApprove = (id: string) => {
         approveCourse(id);
     };
-
     const handleReject = () => {
         if (rejectingId) {
             rejectCourse(rejectingId, feedback);
@@ -68,14 +61,11 @@ function AdminCoursesContent() {
             setFeedback('');
         }
     };
-
     const previewCourse = courses.find((c) => c.id === previewId);
-
     const CourseRow = ({ course }: { course: ManagedCourse }) => {
         const status = statusConfig[course.status];
         const StatusIcon = status.icon;
-        const totalLessons = course.modules.reduce((a, m) => a + m.lessons.length, 0);
-
+        const totalLessons = (course.modules ?? []).reduce((a, m) => a + (m.lessons?.length ?? 0), 0);
         return (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="shadow-card hover:shadow-card-hover transition-shadow">
@@ -96,12 +86,12 @@ function AdminCoursesContent() {
                                     {course.description}
                                 </p>
                                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                                    <span>By {course.instructor}</span>
+                                    <span>By {typeof course.instructor === 'string' ? course.instructor : course.instructor?.name}</span>
                                     <span>{course.category}</span>
-                                    <span>{course.modules.length} modules</span>
-                                    <span>{totalLessons} lessons</span>
+                                    <span>{(course.modules || []).length} modules</span>
+                                    <span>{(totalLessons as number) || 0} lessons</span>
                                     <span className="flex items-center gap-1">
-                                        <Users className="h-3 w-3" /> {course.students.toLocaleString()}
+                                        <Users className="h-3 w-3" /> {(course.students ?? 0).toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Star className="h-3 w-3 fill-warning text-warning" />{' '}
@@ -162,7 +152,6 @@ function AdminCoursesContent() {
             </motion.div>
         );
     };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Course Approvals" />
@@ -179,7 +168,6 @@ function AdminCoursesContent() {
                         </p>
                     </div>
                 </div>
-
                 {/* Stats */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
                     <Card className="shadow-card">
@@ -222,7 +210,6 @@ function AdminCoursesContent() {
                         </CardContent>
                     </Card>
                 </div>
-
                 {/* Tabs */}
                 <Tabs defaultValue="pending">
                     <TabsList>
@@ -238,7 +225,6 @@ function AdminCoursesContent() {
                         <TabsTrigger value="rejected">Rejected</TabsTrigger>
                         <TabsTrigger value="all">All Courses</TabsTrigger>
                     </TabsList>
-
                     <TabsContent value="pending" className="space-y-4 mt-6">
                         {pendingCourses.length === 0 ? (
                             <div className="text-center py-12">
@@ -251,13 +237,11 @@ function AdminCoursesContent() {
                             pendingCourses.map((c) => <CourseRow key={c.id} course={c} />)
                         )}
                     </TabsContent>
-
                     <TabsContent value="approved" className="space-y-4 mt-6">
                         {approvedCourses.map((c) => (
                             <CourseRow key={c.id} course={c} />
                         ))}
                     </TabsContent>
-
                     <TabsContent value="rejected" className="space-y-4 mt-6">
                         {rejectedCourses.length === 0 ? (
                             <div className="text-center py-12">
@@ -267,14 +251,12 @@ function AdminCoursesContent() {
                             rejectedCourses.map((c) => <CourseRow key={c.id} course={c} />)
                         )}
                     </TabsContent>
-
                     <TabsContent value="all" className="space-y-4 mt-6">
                         {courses.map((c) => (
                             <CourseRow key={c.id} course={c} />
                         ))}
                     </TabsContent>
                 </Tabs>
-
                 {/* Reject Dialog */}
                 <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
                     <DialogContent>
@@ -304,7 +286,6 @@ function AdminCoursesContent() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-
                 {/* Preview Dialog */}
                 <Dialog open={!!previewId} onOpenChange={(open) => !open && setPreviewId(null)}>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -320,12 +301,12 @@ function AdminCoursesContent() {
                                     <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                                         <Badge variant="outline">{previewCourse.category}</Badge>
                                         <Badge variant="outline">{previewCourse.level}</Badge>
-                                        <span>By {previewCourse.instructor}</span>
+                                        <span>By {typeof previewCourse.instructor === 'string' ? previewCourse.instructor : previewCourse.instructor?.name}</span>
                                         <span>{previewCourse.duration}</span>
                                     </div>
-                                    {previewCourse.modules.map((mod, mi) => (
+                                    {(previewCourse.modules ?? []).map((mod, mi) => (
                                         <div
-                                            key={mod.id}
+                                            key={mod.id ?? mi}
                                             className="rounded-lg border border-border overflow-hidden"
                                         >
                                             <div className="px-4 py-3 bg-muted/30 border-b border-border">
@@ -334,7 +315,7 @@ function AdminCoursesContent() {
                                                 </p>
                                             </div>
                                             <ul className="divide-y divide-border">
-                                                {mod.lessons.map((l) => (
+                                                {mod.lessons?.map((l) => (
                                                     <li key={l.id} className="px-4 py-2.5 text-sm">
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-foreground">{l.title}</span>
@@ -402,7 +383,6 @@ function AdminCoursesContent() {
         </AppLayout>
     );
 }
-
 export default function AdminCoursesPage() {
     return (
         <LearningAppProvider>
@@ -410,3 +390,4 @@ export default function AdminCoursesPage() {
         </LearningAppProvider>
     );
 }
+

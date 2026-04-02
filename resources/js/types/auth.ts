@@ -9,16 +9,13 @@ export type User = {
     created_at: string;
     updated_at: string;
 };
-
 export type Auth = {
     user: User;
 };
-
 export type LoginCredentials = {
     email: string;
     password: string;
 };
-
 export type RegisterData = {
     name: string;
     email: string;
@@ -26,16 +23,14 @@ export type RegisterData = {
     password_confirmation: string;
     role?: 'engineer' | 'teacher' | 'admin' | 'security_officer';
 };
-
 export type AuthResponse = {
     data: User;
 };
-
 export type TwoFactorSetupData = {
     svg: string;
     url: string;
 };
-
 export type TwoFactorSecretKey = {
     secretKey: string;
 };
+

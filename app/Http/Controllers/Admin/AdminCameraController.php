@@ -144,7 +144,7 @@ class AdminCameraController extends Controller
                 'message' => 'Camera reservation approved',
                 'data' => new CameraReservationResource($approved->load(['camera.robot', 'user', 'approver'])),
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -204,7 +204,7 @@ class AdminCameraController extends Controller
                 'message' => 'Camera blocked successfully',
                 'data' => new CameraReservationResource($block->load(['camera.robot', 'user'])),
             ], 201);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

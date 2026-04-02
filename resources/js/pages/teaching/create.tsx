@@ -1,77 +1,588 @@
 /**
- * Create Course Page
- * Form for teachers to create new courses.
- * Uses unified AppLayout.
+ * Create Course Page - Professional Multi-Step Wizard
+ * Form for teachers to create new courses with step-by-step guidance.
+ * Uses unified AppLayout with drag-and-drop reordering.
  */
-
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
+    ArrowRight,
+    BookOpen,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    FileText,
     GripVertical,
+    Image,
+    Info,
+    Layers,
     Plus,
+    Rocket,
     Save,
+    Sparkles,
+    Target,
     Terminal,
     Trash2,
+    Upload,
+    Video,
+    Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import CourseVideoInput from '@/components/courses/CourseVideoInput';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { useAppState, LearningAppProvider } from '@/lib/learning/appState';
-import { categories } from '@/lib/learning/mockData';
+import { LearningAppProvider } from '@/lib/learning/appState';
 import type { BreadcrumbItem } from '@/types';
-
+interface CreateCoursePageProps {
+    categories: string[];
+}
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Teaching', href: '/teaching' },
     { title: 'Create Course', href: '/teaching/create' },
 ];
-
+// Step configuration
+const steps = [
+    { id: 1, title: 'Basics', description: 'Course info', icon: FileText },
+    { id: 2, title: 'Details', description: 'Settings', icon: Target },
+    { id: 3, title: 'Curriculum', description: 'Structure', icon: Layers },
+    { id: 4, title: 'Review', description: 'Finish', icon: Rocket },
+];
+// Lesson type configuration with icons and colors
+const lessonTypes = [
+    {
+        value: 'video',
+        label: 'Video',
+        icon: Video,
+        color: 'text-blue-500',
+        bg: 'bg-blue-500/10',
+    },
+    {
+        value: 'reading',
+        label: 'Reading',
+        icon: FileText,
+        color: 'text-green-500',
+        bg: 'bg-green-500/10',
+    },
+    {
+        value: 'practice',
+        label: 'Practice',
+        icon: Zap,
+        color: 'text-yellow-500',
+        bg: 'bg-yellow-500/10',
+    },
+    {
+        value: 'vm-lab',
+        label: 'VM Lab',
+        icon: Terminal,
+        color: 'text-violet-500',
+        bg: 'bg-violet-500/10',
+    },
+];
+interface Resource {
+    id: string;
+    title: string;
+    url: string;
+}
 interface LessonForm {
     id: string;
     title: string;
     type: string;
     duration: string;
     vmEnabled: boolean;
+    // Content fields for inline editing during creation
+    content: string;           // For reading/article lessons
+    videoUrl: string;          // For video lessons (external URL)
+    teacherNotes: string;      // For VM lab lessons
+    resources: Resource[];     // Optional links/files
 }
-
 interface ModuleForm {
     id: string;
     title: string;
     lessons: LessonForm[];
 }
-
-function CreateCourseContent() {
-    const { addCourse } = useAppState();
+// Sortable Lesson Component for drag-and-drop
+interface SortableLessonProps {
+    lesson: LessonForm;
+    moduleIndex: number;
+    lessonIndex: number;
+    expanded: boolean;
+    onToggleExpand: () => void;
+    onUpdate: (moduleIndex: number, lessonIndex: number, field: keyof LessonForm, value: unknown) => void;
+    onRemove: (moduleIndex: number, lessonIndex: number) => void;
+    canRemove: boolean;
+}
+function SortableLesson({
+    lesson,
+    moduleIndex,
+    lessonIndex,
+    expanded,
+    onToggleExpand,
+    onUpdate,
+    onRemove,
+    canRemove,
+}: SortableLessonProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: lesson.id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+    const lessonType = lessonTypes.find((t) => t.value === lesson.type);
+    const LessonIcon = lessonType?.icon || Video;
+    // Helper to check if content has been added
+    const hasContent = () => {
+        switch (lesson.type) {
+            case 'video':
+                return !!lesson.videoUrl;
+            case 'reading':
+                return lesson.content.length > 0;
+            case 'vm-lab':
+                return lesson.teacherNotes.length > 0;
+            case 'practice':
+                return lesson.content.length > 0;
+            default:
+                return false;
+        }
+    };
+    // Add resource handler
+    const addResource = () => {
+        const newResources = [...lesson.resources, { id: Date.now().toString(), title: '', url: '' }];
+        onUpdate(moduleIndex, lessonIndex, 'resources', newResources);
+    };
+    // Update resource handler
+    const updateResource = (resourceIndex: number, field: keyof Resource, value: string) => {
+        const updated = [...lesson.resources];
+        updated[resourceIndex] = { ...updated[resourceIndex], [field]: value };
+        onUpdate(moduleIndex, lessonIndex, 'resources', updated);
+    };
+    // Remove resource handler
+    const removeResource = (resourceIndex: number) => {
+        const updated = lesson.resources.filter((_, i) => i !== resourceIndex);
+        onUpdate(moduleIndex, lessonIndex, 'resources', updated);
+    };
+    // Content editor based on lesson type
+    const renderContentEditor = () => {
+        switch (lesson.type) {
+            case 'video':
+                return (
+                    <div className="space-y-4">
+                        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Video className="h-4 w-4 text-blue-500" />
+                                <Label className="text-sm font-medium">Video URL</Label>
+                            </div>
+                            <Input
+                                placeholder="https://youtube.com/watch?v=... or external video URL"
+                                value={lesson.videoUrl}
+                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'videoUrl', e.target.value)}
+                                className="bg-background"
+                            />
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Enter an external video URL. You can also upload videos after creating the course.
+                            </p>
+                        </div>
+                    </div>
+                );
+            case 'reading':
+                return (
+                    <div className="space-y-4">
+                        <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <FileText className="h-4 w-4 text-green-500" />
+                                <Label className="text-sm font-medium">Article Content</Label>
+                            </div>
+                            <Textarea
+                                placeholder="Write your article content here. Markdown is supported.&#10;&#10;## Introduction&#10;Start with an overview...&#10;&#10;## Main Content&#10;Explain the concepts..."
+                                value={lesson.content}
+                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'content', e.target.value)}
+                                className="min-h-[200px] resize-y bg-background font-mono text-sm"
+                            />
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                {lesson.content.length} characters • Supports Markdown formatting
+                            </p>
+                        </div>
+                    </div>
+                );
+            case 'practice':
+                return (
+                    <div className="space-y-4">
+                        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                <Label className="text-sm font-medium">Practice Instructions</Label>
+                            </div>
+                            <Textarea
+                                placeholder="Describe the practice exercise or quiz...&#10;&#10;What should students do?&#10;What skills will they practice?&#10;&#10;Full quiz questions can be added after creating the course."
+                                value={lesson.content}
+                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'content', e.target.value)}
+                                className="min-h-[150px] resize-y bg-background"
+                            />
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Add detailed quiz questions and answers in the lesson editor after creation.
+                            </p>
+                        </div>
+                    </div>
+                );
+            case 'vm-lab':
+                return (
+                    <div className="space-y-4">
+                        <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Terminal className="h-4 w-4 text-violet-500" />
+                                <Label className="text-sm font-medium">VM Lab Configuration</Label>
+                            </div>
+                            <div className="rounded-lg border border-dashed border-violet-500/30 bg-violet-500/5 p-4 text-center">
+                                <Terminal className="mx-auto h-8 w-8 text-violet-400 mb-2" />
+                                <p className="text-sm text-muted-foreground">
+                                    VM templates are not available. Configure VM settings after course creation.
+                                </p>
+                            </div>
+                            <div className="mt-3">
+                                <Label className="text-sm font-medium">Lab Instructions</Label>
+                                <Textarea
+                                    placeholder="Describe what students should do in this VM lab...&#10;&#10;- What software is needed?&#10;- What configuration is required?&#10;- What should students accomplish?"
+                                    value={lesson.teacherNotes}
+                                    onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'teacherNotes', e.target.value)}
+                                    className="mt-2 min-h-[100px] resize-y bg-background"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+    // Resources section (common for all types)
+    const renderResourcesSection = () => (
+        <div className="space-y-3 pt-3 border-t">
+            <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Additional Resources</Label>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={addResource}
+                    className="h-7 text-xs"
+                >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Link
+                </Button>
+            </div>
+            {lesson.resources.length > 0 && (
+                <div className="space-y-2">
+                    {lesson.resources.map((resource, ri) => (
+                        <div key={resource.id} className="flex items-center gap-2">
+                            <Input
+                                placeholder="Title (optional)"
+                                value={resource.title}
+                                onChange={(e) => updateResource(ri, 'title', e.target.value)}
+                                className="h-8 w-32 text-xs"
+                            />
+                            <Input
+                                placeholder="https://..."
+                                value={resource.url}
+                                onChange={(e) => updateResource(ri, 'url', e.target.value)}
+                                className="h-8 flex-1 text-xs"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeResource(ri)}
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+    return (
+        <div ref={setNodeRef} style={style}>
+            <Collapsible open={expanded} onOpenChange={onToggleExpand}>
+                <div
+                    className={`group rounded-lg border bg-background transition-all ${
+                        isDragging ? 'border-primary shadow-lg' : 'border-border hover:bg-muted/30'
+                    } ${expanded ? 'border-primary/50' : ''}`}
+                >
+                    {/* Lesson Header - Always visible */}
+                    <div className="flex items-center gap-3 p-3">
+                        <button
+                            {...attributes}
+                            {...listeners}
+                            className="cursor-grab touch-none"
+                        >
+                            <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/50 hover:text-muted-foreground" />
+                        </button>
+                        <div
+                            className={`h-8 w-8 rounded-lg ${lessonType?.bg || 'bg-muted'} flex shrink-0 items-center justify-center`}
+                        >
+                            <LessonIcon
+                                className={`h-4 w-4 ${lessonType?.color || 'text-muted-foreground'}`}
+                            />
+                        </div>
+                        <Input
+                            placeholder="Lesson title"
+                            value={lesson.title}
+                            onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'title', e.target.value)}
+                            className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0"
+                        />
+                        <Select
+                            value={lesson.type}
+                            onValueChange={(v) => onUpdate(moduleIndex, lessonIndex, 'type', v)}
+                        >
+                            <SelectTrigger className="h-8 w-28 text-xs">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {lessonTypes.map((type) => (
+                                    <SelectItem key={type.value} value={type.value}>
+                                        <span className="flex items-center gap-2">
+                                            <type.icon className={`h-3.5 w-3.5 ${type.color}`} />
+                                            {type.label}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            placeholder="10 min"
+                            value={lesson.duration}
+                            onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'duration', e.target.value)}
+                            className="h-8 w-20 text-center text-xs"
+                        />
+                        <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1">
+                            <Terminal
+                                className={`h-3.5 w-3.5 ${lesson.vmEnabled ? 'text-violet-500' : 'text-muted-foreground/50'}`}
+                            />
+                            <Switch
+                                checked={lesson.vmEnabled}
+                                onCheckedChange={(c) => onUpdate(moduleIndex, lessonIndex, 'vmEnabled', c)}
+                                className="scale-75"
+                            />
+                        </div>
+                        <CollapsibleTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                            >
+                                {expanded ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </CollapsibleTrigger>
+                        {canRemove && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 shrink-0 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                                onClick={() => onRemove(moduleIndex, lessonIndex)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+                        {/* Content indicator badge */}
+                        {hasContent() && (
+                            <Badge variant="secondary" className="h-5 text-[10px] bg-green-500/10 text-green-600">
+                                <Check className="h-3 w-3 mr-0.5" />
+                                Content
+                            </Badge>
+                        )}
+                    </div>
+                    {/* Expandable Content Editor */}
+                    <CollapsibleContent>
+                        <div className="border-t bg-muted/20 p-4 space-y-4">
+                            {renderContentEditor()}
+                            {renderResourcesSection()}
+                        </div>
+                    </CollapsibleContent>
+                </div>
+            </Collapsible>
+        </div>
+    );
+}
+function CreateCourseContent({ categories }: { categories: string[] }) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [currentStep, setCurrentStep] = useState(1);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [level, setLevel] = useState('');
+    const [thumbnail, setThumbnail] = useState<string | null>(null);
+    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(null);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [duration, setDuration] = useState('');
+    const [objectives, setObjectives] = useState('');
+    const [requirements, setRequirements] = useState('');
     const [modules, setModules] = useState<ModuleForm[]>([
         {
             id: '1',
             title: '',
-            lessons: [{ id: '1', title: '', type: 'video', duration: '', vmEnabled: false }],
+            lessons: [
+                {
+                    id: '1',
+                    title: '',
+                    type: 'video',
+                    duration: '',
+                    vmEnabled: false,
+                    content: '',
+                    videoUrl: '',
+                    teacherNotes: '',
+                    resources: [],
+                },
+            ],
         },
     ]);
-
+    // Expanded lesson tracking
+    const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+    // DnD sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
+    );
+    // Handle drag end for lesson reordering
+    const handleLessonDragEnd = useCallback(
+        (event: DragEndEvent, moduleIndex: number) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+            setModules((prev) => {
+                const updated = [...prev];
+                const lessonIds = updated[moduleIndex].lessons.map((l) => l.id);
+                const oldIndex = lessonIds.indexOf(active.id as string);
+                const newIndex = lessonIds.indexOf(over.id as string);
+                if (oldIndex !== -1 && newIndex !== -1) {
+                    updated[moduleIndex].lessons = arrayMove(
+                        updated[moduleIndex].lessons,
+                        oldIndex,
+                        newIndex,
+                    );
+                }
+                return updated;
+            });
+        },
+        [],
+    );
+    // Toggle lesson expansion
+    const toggleLessonExpanded = useCallback((lessonId: string) => {
+        setExpandedLessons((prev) => {
+            const next = new Set(prev);
+            if (next.has(lessonId)) {
+                next.delete(lessonId);
+            } else {
+                next.add(lessonId);
+            }
+            return next;
+        });
+    }, []);
+    // Thumbnail handling
+    const handleThumbnailUpload = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setThumbnail(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        [],
+    );
+    const removeThumbnail = useCallback(() => {
+        setThumbnail(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    }, []);
+    // Module/Lesson management
     const addModule = () => {
         setModules([
             ...modules,
             {
                 id: Date.now().toString(),
                 title: '',
-                lessons: [{ id: Date.now().toString() + 'l', title: '', type: 'video', duration: '', vmEnabled: false }],
+                lessons: [
+                    {
+                        id: Date.now().toString() + 'l',
+                        title: '',
+                        type: 'video',
+                        duration: '',
+                        vmEnabled: false,
+                        content: '',
+                        videoUrl: '',
+                        teacherNotes: '',
+                        resources: [],
+                    },
+                ],
             },
         ]);
     };
-
     const addLesson = (moduleIndex: number) => {
         const updated = [...modules];
         updated[moduleIndex].lessons.push({
@@ -80,263 +591,994 @@ function CreateCourseContent() {
             type: 'video',
             duration: '',
             vmEnabled: false,
+            content: '',
+            videoUrl: '',
+            teacherNotes: '',
+            resources: [],
         });
         setModules(updated);
     };
-
     const removeModule = (index: number) => {
         setModules(modules.filter((_, i) => i !== index));
     };
-
     const removeLesson = (moduleIndex: number, lessonIndex: number) => {
         const updated = [...modules];
-        updated[moduleIndex].lessons = updated[moduleIndex].lessons.filter((_, i) => i !== lessonIndex);
+        updated[moduleIndex].lessons = updated[moduleIndex].lessons.filter(
+            (_, i) => i !== lessonIndex,
+        );
         setModules(updated);
     };
-
-    const updateModule = (index: number, field: keyof ModuleForm, value: string) => {
+    const updateModule = (
+        index: number,
+        field: keyof ModuleForm,
+        value: string,
+    ) => {
         const updated = [...modules];
         updated[index] = { ...updated[index], [field]: value };
         setModules(updated);
     };
-
-    const updateLesson = (moduleIndex: number, lessonIndex: number, field: keyof LessonForm, value: unknown) => {
+    const updateLesson = (
+        moduleIndex: number,
+        lessonIndex: number,
+        field: keyof LessonForm,
+        value: unknown,
+    ) => {
         const updated = [...modules];
         const lesson = updated[moduleIndex].lessons[lessonIndex];
-        updated[moduleIndex].lessons[lessonIndex] = { ...lesson, [field]: value as never };
+        updated[moduleIndex].lessons[lessonIndex] = {
+            ...lesson,
+            [field]: value as never,
+        };
         setModules(updated);
     };
-
+    // Step validation
+    const canProceed = () => {
+        switch (currentStep) {
+            case 1:
+                return (
+                    title.trim().length >= 3 && description.trim().length >= 20
+                );
+            case 2:
+                return category && level;
+            case 3:
+                return (
+                    modules.length > 0 &&
+                    modules[0].title.trim() !== '' &&
+                    modules[0].lessons[0].title.trim() !== ''
+                );
+            default:
+                return true;
+        }
+    };
+    // Calculate stats
+    const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
+    const vmLessons = modules.reduce(
+        (acc, m) =>
+            acc +
+            m.lessons.filter((l) => l.vmEnabled || l.type === 'vm-lab').length,
+        0,
+    );
+    const completionPercent = Math.round(
+        ((currentStep - 1) / (steps.length - 1)) * 100,
+    );
+    const [saving, setSaving] = useState(false);
     const handleSave = () => {
-        const newCourse = {
-            id: Date.now().toString(),
+        setSaving(true);
+        // Prepare data for API - maps lesson types correctly with content
+        const courseData = {
             title: title || 'Untitled Course',
             description: description || 'No description',
-            instructor: 'You',
-            thumbnail: '',
             category: category || 'Web Development',
-            level: (level || 'Beginner') as 'Beginner' | 'Intermediate' | 'Advanced',
-            duration: '0 hours',
-            students: 0,
-            rating: 0,
-            hasVirtualMachine: modules.some((m) => m.lessons.some((l) => l.vmEnabled)),
-            status: 'draft' as const,
-            modules: modules.map((m) => ({
-                id: m.id,
+            level: level || 'Beginner', // Must match CourseLevel enum: Beginner, Intermediate, Advanced
+            duration: duration || '0 hours',
+            has_virtual_machine: modules.some((m) =>
+                m.lessons.some((l) => l.vmEnabled || l.type === 'vm-lab'),
+            ),
+            thumbnail: thumbnail || null,
+            video_type: videoType || null,
+            video_url: videoUrl || null,
+            objectives: objectives || null,
+            requirements: requirements || null,
+            modules: modules.map((m, mIndex) => ({
                 title: m.title || 'Untitled Module',
-                lessons: m.lessons.map((l) => ({
-                    id: l.id,
+                sort_order: mIndex,
+                lessons: m.lessons.map((l, lIndex) => ({
                     title: l.title || 'Untitled Lesson',
-                    type: l.type as 'video' | 'reading' | 'practice' | 'vm-lab',
-                    duration: l.duration || '10 min',
-                    vmEnabled: l.vmEnabled,
+                    // Send exactly what the backend LessonType enum expects
+                    type: l.type, // 'video', 'reading', 'practice', 'vm-lab'
+                    duration_minutes: parseInt(l.duration) || 10,
+                    sort_order: lIndex,
+                    is_preview: lIndex === 0 && mIndex === 0, // First lesson is preview
+                    // Content fields
+                    content: l.content || null,
+                    video_url: l.videoUrl || null,
+                    teacher_notes: l.teacherNotes || null,
+                    resources: l.resources.filter(r => r.url.trim() !== '').map(r => r.url) || null,
+                    vm_enabled: l.vmEnabled || l.type === 'vm-lab',
                 })),
             })),
         };
-        addCourse(newCourse);
-        toast.success('Course created!', {
-            description: 'Now add content to your lessons and submit for review.',
+        router.post('/teaching', courseData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('🎉 Course created successfully!', {
+                    description:
+                        'Your course has been created with the content you added.',
+                });
+            },
+            onError: (errors) => {
+                console.error('Course creation errors:', errors);
+                const errorMessages = Object.entries(errors)
+                    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .join('\n');
+                toast.error('Failed to create course', {
+                    description: errorMessages || 'Unknown error',
+                    duration: 10000,
+                });
+            },
+            onFinish: () => setSaving(false),
         });
-        router.visit(`/teaching/${newCourse.id}/edit`);
     };
-
+    // Animation variants
+    const slideVariants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 50 : -50,
+            opacity: 0,
+        }),
+        center: {
+            x: 0,
+            opacity: 1,
+        },
+        exit: (direction: number) => ({
+            x: direction < 0 ? 50 : -50,
+            opacity: 0,
+        }),
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Course" />
-            <div className="min-h-screen bg-background">
-                <div className="container max-w-4xl py-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <Button variant="ghost" size="sm" asChild>
+            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+                <div className="container max-w-5xl py-8">
+                    {/* Header with back button */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 flex items-center gap-3"
+                    >
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="hover:bg-muted/50"
+                        >
                             <Link href="/teaching">
-                                <ArrowLeft className="h-4 w-4" />
+                                <ArrowLeft className="mr-1 h-4 w-4" />
+                                Back
                             </Link>
                         </Button>
-                        <div>
-                            <h1 className="font-heading text-2xl font-bold text-foreground">Create New Course</h1>
-                            <p className="text-sm text-muted-foreground">
-                                Add modules and lessons, then fill in lesson details
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        {/* Course Details */}
-                        <Card className="shadow-card">
-                            <CardHeader>
-                                <CardTitle className="font-heading text-lg">Course Details</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <Label>Course Title</Label>
-                                    <Input
-                                        placeholder="e.g. Full-Stack Web Development"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        className="mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label>Description</Label>
-                                    <Textarea
-                                        placeholder="What will students learn?"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        className="mt-1"
-                                        rows={3}
-                                    />
-                                </div>
-                                <div className="grid gap-4 sm:grid-cols-2">
+                    </motion.div>
+                    {/* Progress header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
+                    >
+                        <Card className="border-0 bg-gradient-to-r from-primary/5 via-background to-violet-500/5 shadow-card">
+                            <CardContent className="py-6">
+                                <div className="mb-4 flex items-center justify-between">
                                     <div>
-                                        <Label>Category</Label>
-                                        <Select value={category} onValueChange={setCategory}>
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select category" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {categories.map((cat) => (
-                                                    <SelectItem key={cat} value={cat}>
-                                                        {cat}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <h1 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
+                                            <Sparkles className="h-6 w-6 text-primary" />
+                                            Create New Course
+                                        </h1>
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            Step {currentStep} of {steps.length}{' '}
+                                            —{' '}
+                                            {steps[currentStep - 1].description}
+                                        </p>
                                     </div>
-                                    <div>
-                                        <Label>Level</Label>
-                                        <Select value={level} onValueChange={setLevel}>
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select level" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Beginner">Beginner</SelectItem>
-                                                <SelectItem value="Intermediate">Intermediate</SelectItem>
-                                                <SelectItem value="Advanced">Advanced</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="text-right">
+                                        <p className="text-2xl font-bold text-primary">
+                                            {completionPercent}%
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Complete
+                                        </p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Modules */}
-                        {modules.map((module, mi) => (
-                            <motion.div
-                                key={module.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                            >
-                                <Card className="shadow-card">
-                                    <CardHeader className="flex-row items-center justify-between">
-                                        <CardTitle className="font-heading text-lg">Module {mi + 1}</CardTitle>
-                                        {modules.length > 1 && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive"
-                                                onClick={() => removeModule(mi)}
+                                {/* Step indicators */}
+                                <div className="mb-3 flex items-center justify-between">
+                                    {steps.map((step, index) => (
+                                        <div
+                                            key={step.id}
+                                            className="flex flex-1 items-center"
+                                        >
+                                            <button
+                                                onClick={() =>
+                                                    step.id <= currentStep &&
+                                                    setCurrentStep(step.id)
+                                                }
+                                                disabled={step.id > currentStep}
+                                                className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all ${
+                                                    step.id === currentStep
+                                                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                                                        : step.id < currentStep
+                                                          ? 'cursor-pointer bg-primary/10 text-primary hover:bg-primary/20'
+                                                          : 'cursor-not-allowed bg-muted/50 text-muted-foreground'
+                                                } `}
                                             >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <Input
-                                            placeholder="Module title"
-                                            value={module.title}
-                                            onChange={(e) => updateModule(mi, 'title', e.target.value)}
-                                        />
-                                        <div className="space-y-3">
-                                            {module.lessons.map((lesson, li) => (
                                                 <div
-                                                    key={lesson.id}
-                                                    className="flex items-center gap-3 rounded-md border border-border p-3 bg-muted/30"
+                                                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                                                        step.id === currentStep
+                                                            ? 'bg-white/20'
+                                                            : step.id <
+                                                                currentStep
+                                                              ? 'bg-primary/20'
+                                                              : 'bg-muted'
+                                                    } `}
                                                 >
-                                                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                    <Input
-                                                        placeholder="Lesson title"
-                                                        value={lesson.title}
-                                                        onChange={(e) => updateLesson(mi, li, 'title', e.target.value)}
-                                                        className="flex-1"
-                                                    />
-                                                    <Select
-                                                        value={lesson.type}
-                                                        onValueChange={(v) => updateLesson(mi, li, 'type', v)}
-                                                    >
-                                                        <SelectTrigger className="w-32">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="video">Video</SelectItem>
-                                                            <SelectItem value="reading">Reading</SelectItem>
-                                                            <SelectItem value="practice">Practice</SelectItem>
-                                                            <SelectItem value="vm-lab">VM Lab</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Input
-                                                        placeholder="Duration"
-                                                        value={lesson.duration}
-                                                        onChange={(e) => updateLesson(mi, li, 'duration', e.target.value)}
-                                                        className="w-24"
-                                                    />
-                                                    <div className="flex items-center gap-1.5 shrink-0">
-                                                        <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-                                                        <Switch
-                                                            checked={lesson.vmEnabled}
-                                                            onCheckedChange={(c) => updateLesson(mi, li, 'vmEnabled', c)}
-                                                        />
-                                                    </div>
-                                                    {module.lessons.length > 1 && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-destructive shrink-0 p-2"
-                                                            onClick={() => removeLesson(mi, li)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                    {step.id < currentStep ? (
+                                                        <Check className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <step.icon className="h-3.5 w-3.5" />
                                                     )}
                                                 </div>
-                                            ))}
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => addLesson(mi)}
-                                            >
-                                                <Plus className="mr-1 h-4 w-4" /> Add Lesson
-                                            </Button>
+                                                <span className="hidden text-sm font-medium sm:inline">
+                                                    {step.title}
+                                                </span>
+                                            </button>
+                                            {index < steps.length - 1 && (
+                                                <div
+                                                    className={`mx-2 h-0.5 flex-1 ${step.id < currentStep ? 'bg-primary' : 'bg-muted'} `}
+                                                />
+                                            )}
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-
-                        <Button variant="outline" onClick={addModule}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Module
+                                    ))}
+                                </div>
+                                <Progress
+                                    value={completionPercent}
+                                    className="h-1"
+                                />
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                    {/* Step content */}
+                    <AnimatePresence mode="wait" custom={currentStep}>
+                        <motion.div
+                            key={currentStep}
+                            custom={currentStep}
+                            variants={slideVariants}
+                            initial="enter"
+                            animate="center"
+                            exit="exit"
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                            {/* Step 1: Basic Info */}
+                            {currentStep === 1 && (
+                                <div className="space-y-6">
+                                    <Card className="shadow-card">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2 font-heading text-lg">
+                                                <BookOpen className="h-5 w-5 text-primary" />
+                                                Course Basics
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Start with a compelling title
+                                                and description
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6">
+                                            {/* Thumbnail upload */}
+                                            <div>
+                                                <Label className="text-sm font-medium">
+                                                    Course Thumbnail
+                                                </Label>
+                                                <div className="mt-2">
+                                                    {thumbnail ? (
+                                                        <div className="group relative overflow-hidden rounded-xl border-2 border-dashed border-primary/30 bg-muted/30">
+                                                            <img
+                                                                src={thumbnail}
+                                                                alt="Course thumbnail"
+                                                                className="h-48 w-full object-cover"
+                                                            />
+                                                            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="secondary"
+                                                                    onClick={() =>
+                                                                        fileInputRef.current?.click()
+                                                                    }
+                                                                >
+                                                                    <Upload className="mr-1 h-4 w-4" />
+                                                                    Replace
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="destructive"
+                                                                    onClick={
+                                                                        removeThumbnail
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="mr-1 h-4 w-4" />
+                                                                    Remove
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() =>
+                                                                fileInputRef.current?.click()
+                                                            }
+                                                            className="group flex h-48 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
+                                                        >
+                                                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                                                                <Image className="h-7 w-7 text-primary" />
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <p className="text-sm font-medium text-foreground">
+                                                                    Upload
+                                                                    thumbnail
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Recommended:
+                                                                    1280×720
+                                                                    (16:9)
+                                                                </p>
+                                                            </div>
+                                                        </button>
+                                                    )}
+                                                    <input
+                                                        ref={fileInputRef}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={
+                                                            handleThumbnailUpload
+                                                        }
+                                                        className="hidden"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <Separator />
+                                            {/* Course Video */}
+                                            <div>
+                                                <CourseVideoInput
+                                                    videoType={videoType}
+                                                    videoUrl={videoUrl}
+                                                    onVideoChange={(type, url) => {
+                                                        setVideoType(type);
+                                                        setVideoUrl(url);
+                                                    }}
+                                                    onUpload={async (file) => {
+                                                        // In a real app, upload the video file to your backend
+                                                        // For now, we'll use data URL
+                                                        return new Promise((resolve) => {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                resolve(reader.result as string);
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        });
+                                                    }}
+                                                />
+                                            </div>
+                                            <Separator />
+                                            {/* Title */}
+                                            <div>
+                                                <Label
+                                                    htmlFor="title"
+                                                    className="text-sm font-medium"
+                                                >
+                                                    Course Title{' '}
+                                                    <span className="text-destructive">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <Input
+                                                    id="title"
+                                                    placeholder="e.g. Industrial IoT with Raspberry Pi & Python"
+                                                    value={title}
+                                                    onChange={(e) =>
+                                                        setTitle(e.target.value)
+                                                    }
+                                                    className="mt-2 h-12 text-lg"
+                                                />
+                                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                                    {title.length}/80 characters
+                                                    • Be specific and
+                                                    keyword-rich
+                                                </p>
+                                            </div>
+                                            {/* Description */}
+                                            <div>
+                                                <Label
+                                                    htmlFor="description"
+                                                    className="text-sm font-medium"
+                                                >
+                                                    Course Description{' '}
+                                                    <span className="text-destructive">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <Textarea
+                                                    id="description"
+                                                    placeholder="What will students learn? What makes this course unique?"
+                                                    value={description}
+                                                    onChange={(e) =>
+                                                        setDescription(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="mt-2 min-h-[120px] resize-none"
+                                                    rows={5}
+                                                />
+                                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                                    {description.length}/500
+                                                    characters • Minimum 20
+                                                    characters required
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )}
+                            {/* Step 2: Course Details */}
+                            {currentStep === 2 && (
+                                <div className="space-y-6">
+                                    <Card className="shadow-card">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2 font-heading text-lg">
+                                                <Target className="h-5 w-5 text-primary" />
+                                                Course Details
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Help students find your course
+                                                with the right settings
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6">
+                                            <div className="grid gap-6 sm:grid-cols-2">
+                                                {/* Category */}
+                                                <div>
+                                                    <Label className="text-sm font-medium">
+                                                        Category{' '}
+                                                        <span className="text-destructive">
+                                                            *
+                                                        </span>
+                                                    </Label>
+                                                    <Select
+                                                        value={category}
+                                                        onValueChange={
+                                                            setCategory
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="mt-2 h-12">
+                                                            <SelectValue placeholder="Select a category" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {categories.map(
+                                                                (cat) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            cat
+                                                                        }
+                                                                        value={
+                                                                            cat
+                                                                        }
+                                                                    >
+                                                                        {cat}
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                {/* Level */}
+                                                <div>
+                                                    <Label className="text-sm font-medium">
+                                                        Difficulty Level{' '}
+                                                        <span className="text-destructive">
+                                                            *
+                                                        </span>
+                                                    </Label>
+                                                    <Select
+                                                        value={level}
+                                                        onValueChange={setLevel}
+                                                    >
+                                                        <SelectTrigger className="mt-2 h-12">
+                                                            <SelectValue placeholder="Select level" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="Beginner">
+                                                                <span className="flex items-center gap-2">
+                                                                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                                                                    Beginner
+                                                                </span>
+                                                            </SelectItem>
+                                                            <SelectItem value="Intermediate">
+                                                                <span className="flex items-center gap-2">
+                                                                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                                    Intermediate
+                                                                </span>
+                                                            </SelectItem>
+                                                            <SelectItem value="Advanced">
+                                                                <span className="flex items-center gap-2">
+                                                                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                                                                    Advanced
+                                                                </span>
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                {/* Duration */}
+                                                <div>
+                                                    <Label className="text-sm font-medium">
+                                                        Estimated Duration
+                                                    </Label>
+                                                    <div className="relative mt-2">
+                                                        <Clock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                        <Input
+                                                            placeholder="e.g. 8 hours"
+                                                            value={duration}
+                                                            onChange={(e) =>
+                                                                setDuration(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-12 pl-10"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Separator />
+                                            {/* Learning objectives */}
+                                            <div>
+                                                <Label className="text-sm font-medium">
+                                                    Learning Objectives
+                                                </Label>
+                                                <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                                                    What will students be able
+                                                    to do after completing this
+                                                    course?
+                                                </p>
+                                                <Textarea
+                                                    placeholder="• Build industrial IoT sensors&#10;• Connect devices to cloud platforms&#10;• Analyze real-time sensor data"
+                                                    value={objectives}
+                                                    onChange={(e) =>
+                                                        setObjectives(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="min-h-[100px] resize-none"
+                                                    rows={4}
+                                                />
+                                            </div>
+                                            {/* Prerequisites */}
+                                            <div>
+                                                <Label className="text-sm font-medium">
+                                                    Prerequisites
+                                                </Label>
+                                                <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                                                    What should students already
+                                                    know?
+                                                </p>
+                                                <Textarea
+                                                    placeholder="• Basic Python programming&#10;• Understanding of electronics&#10;• Computer with admin access"
+                                                    value={requirements}
+                                                    onChange={(e) =>
+                                                        setRequirements(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="min-h-[100px] resize-none"
+                                                    rows={4}
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )}
+                            {/* Step 3: Curriculum */}
+                            {currentStep === 3 && (
+                                <div className="space-y-6">
+                                    {/* Info banner about workflow */}
+                                    <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+                                        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                        <AlertDescription className="text-blue-800 dark:text-blue-200">
+                                            <strong>New!</strong> You can now add content directly while creating your course.
+                                            Expand each lesson to add video URLs, articles, or select VM templates.
+                                            You can also add more content in the edit page later.
+                                        </AlertDescription>
+                                    </Alert>
+                                    {/* Stats bar */}
+                                    <Card className="border-primary/20 bg-primary/5 shadow-sm">
+                                        <CardContent className="py-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                                                            <Layers className="h-4 w-4 text-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-lg font-bold text-foreground">
+                                                                {modules.length}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Modules
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                                            <Video className="h-4 w-4 text-blue-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-lg font-bold text-foreground">
+                                                                {totalLessons}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Lessons
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                                                            <Terminal className="h-4 w-4 text-violet-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-lg font-bold text-foreground">
+                                                                {vmLessons}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                VM Labs
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="bg-background text-xs"
+                                                >
+                                                    <GripVertical className="mr-1 h-3 w-3" />
+                                                    Drag to reorder
+                                                </Badge>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    {/* Modules */}
+                                    {modules.map((module, mi) => (
+                                        <motion.div
+                                            key={module.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: mi * 0.05 }}
+                                        >
+                                            <Card className="overflow-hidden shadow-card">
+                                                <CardHeader className="border-b bg-muted/30 pb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                                            <span className="font-bold text-primary">
+                                                                {mi + 1}
+                                                            </span>
+                                                        </div>
+                                                        <Input
+                                                            placeholder="Module title (e.g. Getting Started)"
+                                                            value={module.title}
+                                                            onChange={(e) =>
+                                                                updateModule(
+                                                                    mi,
+                                                                    'title',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-auto flex-1 border-0 bg-transparent px-0 text-base font-medium focus-visible:ring-0"
+                                                        />
+                                                        {modules.length > 1 && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                                onClick={() =>
+                                                                    removeModule(
+                                                                        mi,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent className="space-y-3 pt-4">
+                                                    <DndContext
+                                                        sensors={sensors}
+                                                        collisionDetection={closestCenter}
+                                                        onDragEnd={(event) =>
+                                                            handleLessonDragEnd(event, mi)
+                                                        }
+                                                    >
+                                                        <SortableContext
+                                                            items={module.lessons.map((l) => l.id)}
+                                                            strategy={verticalListSortingStrategy}
+                                                        >
+                                                            {module.lessons.map((lesson, li) => (
+                                                                <SortableLesson
+                                                                    key={lesson.id}
+                                                                    lesson={lesson}
+                                                                    lessonIndex={li}
+                                                                    moduleIndex={mi}
+                                                                    onUpdate={updateLesson}
+                                                                    onRemove={removeLesson}
+                                                                    canRemove={module.lessons.length > 1}
+                                                                    expanded={expandedLessons.has(lesson.id)}
+                                                                    onToggleExpand={() =>
+                                                                        toggleLessonExpanded(lesson.id)
+                                                                    }
+                                                                />
+                                                            ))}
+                                                        </SortableContext>
+                                                    </DndContext>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            addLesson(mi)
+                                                        }
+                                                        className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
+                                                    >
+                                                        <Plus className="mr-1 h-4 w-4" />{' '}
+                                                        Add Lesson
+                                                    </Button>
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    ))}
+                                    <Button
+                                        variant="outline"
+                                        onClick={addModule}
+                                        className="h-14 w-full border-2 border-dashed hover:border-primary/50 hover:bg-primary/5"
+                                    >
+                                        <Plus className="mr-2 h-5 w-5" /> Add
+                                        New Module
+                                    </Button>
+                                </div>
+                            )}
+                            {/* Step 4: Review */}
+                            {currentStep === 4 && (
+                                <div className="space-y-6">
+                                    <Card className="overflow-hidden shadow-card">
+                                        <div className="border-b bg-gradient-to-r from-primary/10 via-background to-violet-500/10 p-6">
+                                            <div className="flex items-start gap-6">
+                                                {/* Thumbnail preview */}
+                                                <div className="h-28 w-48 shrink-0 overflow-hidden rounded-lg bg-muted">
+                                                    {thumbnail ? (
+                                                        <img
+                                                            src={thumbnail}
+                                                            alt="Course thumbnail"
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center">
+                                                            <Image className="h-8 w-8 text-muted-foreground/50" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h2 className="truncate font-heading text-xl font-bold text-foreground">
+                                                        {title ||
+                                                            'Untitled Course'}
+                                                    </h2>
+                                                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                                                        {description ||
+                                                            'No description provided'}
+                                                    </p>
+                                                    <div className="mt-3 flex items-center gap-3">
+                                                        {category && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-xs"
+                                                            >
+                                                                {category}
+                                                            </Badge>
+                                                        )}
+                                                        {level && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-xs"
+                                                            >
+                                                                {level}
+                                                            </Badge>
+                                                        )}
+                                                        {duration && (
+                                                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                                <Clock className="h-3 w-3" />{' '}
+                                                                {duration}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <CardContent className="py-6">
+                                            {/* Stats summary */}
+                                            <div className="mb-6 grid grid-cols-3 gap-4">
+                                                <div className="rounded-lg bg-muted/50 p-4 text-center">
+                                                    <p className="text-2xl font-bold text-foreground">
+                                                        {modules.length}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Modules
+                                                    </p>
+                                                </div>
+                                                <div className="rounded-lg bg-muted/50 p-4 text-center">
+                                                    <p className="text-2xl font-bold text-foreground">
+                                                        {totalLessons}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Lessons
+                                                    </p>
+                                                </div>
+                                                <div className="rounded-lg bg-muted/50 p-4 text-center">
+                                                    <p className="text-2xl font-bold text-foreground">
+                                                        {vmLessons}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        VM Labs
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Separator className="my-6" />
+                                            {/* Curriculum preview */}
+                                            <h3 className="mb-4 font-heading font-semibold text-foreground">
+                                                Curriculum Overview
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {modules.map((module, mi) => (
+                                                    <div
+                                                        key={module.id}
+                                                        className="rounded-lg border border-border p-4"
+                                                    >
+                                                        <div className="mb-2 flex items-center gap-2">
+                                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                                                {mi + 1}
+                                                            </span>
+                                                            <span className="font-medium text-foreground">
+                                                                {module.title ||
+                                                                    'Untitled Module'}
+                                                            </span>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="ml-auto text-xs"
+                                                            >
+                                                                {
+                                                                    module
+                                                                        .lessons
+                                                                        .length
+                                                                }{' '}
+                                                                lessons
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2 pl-8">
+                                                            {module.lessons.map(
+                                                                (lesson) => {
+                                                                    const type =
+                                                                        lessonTypes.find(
+                                                                            (
+                                                                                t,
+                                                                            ) =>
+                                                                                t.value ===
+                                                                                lesson.type,
+                                                                        );
+                                                                    return (
+                                                                        <span
+                                                                            key={
+                                                                                lesson.id
+                                                                            }
+                                                                            className={`rounded-md px-2 py-1 text-xs ${type?.bg || 'bg-muted'} ${type?.color || 'text-muted-foreground'}`}
+                                                                        >
+                                                                            {lesson.title ||
+                                                                                'Untitled'}
+                                                                        </span>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Separator className="my-6" />
+                                            {/* Ready message */}
+                                            <div className="rounded-xl border border-green-500/20 bg-gradient-to-r from-green-500/10 via-background to-green-500/10 px-4 py-6 text-center">
+                                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20">
+                                                    <Check className="h-6 w-6 text-green-500" />
+                                                </div>
+                                                <h3 className="font-heading font-semibold text-foreground">
+                                                    Ready to Create!
+                                                </h3>
+                                                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                                                    Your course will be saved as
+                                                    a draft. You can add content
+                                                    to each lesson and submit
+                                                    for review when ready.
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                    {/* Navigation buttons */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-8 flex items-center justify-between border-t border-border pt-6"
+                    >
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                setCurrentStep((s) => Math.max(1, s - 1))
+                            }
+                            disabled={currentStep === 1}
+                            className="gap-2"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Previous
                         </Button>
-
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button variant="outline" asChild>
+                        <div className="flex items-center gap-3">
+                            <Button variant="ghost" asChild>
                                 <Link href="/teaching">Cancel</Link>
                             </Button>
-                            <Button
-                                className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                                onClick={handleSave}
-                            >
-                                <Save className="mr-2 h-4 w-4" /> Save Course
-                            </Button>
+                            {currentStep < steps.length ? (
+                                <Button
+                                    onClick={() =>
+                                        setCurrentStep((s) =>
+                                            Math.min(steps.length, s + 1),
+                                        )
+                                    }
+                                    disabled={!canProceed()}
+                                    className="min-w-[140px] gap-2"
+                                >
+                                    Continue
+                                    <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="min-w-[160px] gap-2 bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <span className="animate-spin">
+                                                ⏳
+                                            </span>
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4" />
+                                            Create Course
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </AppLayout>
     );
 }
-
-export default function CreateCoursePage() {
+export default function CreateCoursePage({
+    categories,
+}: CreateCoursePageProps) {
     return (
         <LearningAppProvider>
-            <CreateCourseContent />
+            <CreateCourseContent categories={categories} />
         </LearningAppProvider>
     );
 }
+

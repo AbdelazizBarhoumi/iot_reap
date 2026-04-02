@@ -110,8 +110,16 @@ class ProxmoxServerRepository
     {
         return ProxmoxServer::active()
             ->with([
-                'nodes' => fn ($query) => $query->where('status', 'online'),
-                'vmSessions' => fn ($query) => $query
+                'nodes' => fn ($query) => $query
+                    ->where('status', 'online')
+                    ->withCount([
+                        'vmSessions as active_vms_count' => fn ($q) => $q
+                            ->where('status', 'active')
+                            ->where('expires_at', '>', now()),
+                    ]),
+            ])
+            ->withCount([
+                'vmSessions as active_sessions_count' => fn ($q) => $q
                     ->where('status', 'active')
                     ->where('expires_at', '>', now()),
             ])
@@ -121,15 +129,15 @@ class ProxmoxServerRepository
                 $totalActiveVms = 0;
 
                 foreach ($server->nodes as $node) {
-                    $activeCount = $node->countActiveVMs();
+                    $activeCount = $node->active_vms_count ?? 0;
                     $activeVmsPerNode[$node->id] = $activeCount;
                     $totalActiveVms += $activeCount;
                 }
 
                 return $server
                     ->setAttribute('total_active_vms', $totalActiveVms)
-                    ->setAttribute('active_sessions', $server->vmSessions->count())
-                    ->setAttribute('sessions_remaining', $server->max_concurrent_sessions - $server->vmSessions->count())
+                    ->setAttribute('active_sessions', $server->active_sessions_count)
+                    ->setAttribute('sessions_remaining', $server->max_concurrent_sessions - $server->active_sessions_count)
                     ->setAttribute('online_node_count', $server->nodes->count())
                     ->setAttribute('vms_per_node', $activeVmsPerNode);
             });

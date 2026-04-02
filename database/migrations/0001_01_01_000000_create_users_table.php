@@ -17,8 +17,16 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->enum('role', ['engineer', 'teacher', 'admin', 'security_officer'])
                 ->default('engineer');
+            $table->timestamp('suspended_at')->nullable();
+            $table->string('suspended_reason')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip', 45)->nullable();
+            $table->string('stripe_connect_account_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

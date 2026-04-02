@@ -176,6 +176,8 @@ class GuacamoleClient implements GuacamoleClientInterface
     /**
      * Get connection details by ID.
      *
+     * @deprecated Unused - connection details fetched directly when needed. Candidate for removal.
+     *
      * @return array<string, mixed>
      *
      * @throws GuacamoleApiException
@@ -229,6 +231,8 @@ class GuacamoleClient implements GuacamoleClientInterface
 
     /**
      * Invalidate the cached auth token and resolved data source.
+     *
+     * @deprecated Unused externally - auth retry handled internally. Candidate for removal.
      */
     public function clearAuthToken(): void
     {

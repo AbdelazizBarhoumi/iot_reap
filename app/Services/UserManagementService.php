@@ -1,0 +1,279 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\UserRole;
+use App\Models\User;
+use App\Repositories\UserRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+
+class UserManagementService
+{
+    public function __construct(
+        private readonly UserRepository $userRepository,
+    ) {}
+
+    /**
+     * Get paginated users with filters.
+     */
+    public function getUsers(
+        int $perPage = 15,
+        ?string $search = null,
+        ?string $role = null,
+        ?string $status = null,
+        string $sortBy = 'created_at',
+        string $sortDirection = 'desc',
+    ): LengthAwarePaginator {
+        $roleEnum = $role ? UserRole::tryFrom($role) : null;
+
+        return $this->userRepository->getPaginated(
+            perPage: $perPage,
+            search: $search,
+            role: $roleEnum,
+            status: $status,
+            sortBy: $sortBy,
+            sortDirection: $sortDirection,
+        );
+    }
+
+    /**
+     * Get user with full details.
+     */
+    public function getUserDetail(string $userId): ?User
+    {
+        return $this->userRepository->findWithDetails($userId);
+    }
+
+    /**
+     * Suspend a user account.
+     */
+    public function suspend(User $user, string $reason, User $admin): User
+    {
+        if ($user->id === $admin->id) {
+            throw new \DomainException('You cannot suspend your own account');
+        }
+
+        if ($user->isAdmin()) {
+            throw new \DomainException('Admin accounts cannot be suspended');
+        }
+
+        $user = $this->userRepository->update($user, [
+            'suspended_at' => now(),
+            'suspended_reason' => $reason,
+        ]);
+
+        Log::info('User suspended', [
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'reason' => $reason,
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * Unsuspend a user account.
+     */
+    public function unsuspend(User $user, User $admin): User
+    {
+        $user = $this->userRepository->update($user, [
+            'suspended_at' => null,
+            'suspended_reason' => null,
+        ]);
+
+        Log::info('User unsuspended', [
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * Update user role.
+     */
+    public function updateRole(User $user, UserRole $newRole, User $admin): User
+    {
+        if ($user->id === $admin->id) {
+            throw new \DomainException('You cannot change your own role');
+        }
+
+        $oldRole = $user->role;
+
+        $user = $this->userRepository->update($user, [
+            'role' => $newRole,
+        ]);
+
+        Log::info('User role updated', [
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'old_role' => $oldRole->value,
+            'new_role' => $newRole->value,
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * Start impersonating a user.
+     */
+    public function startImpersonation(User $targetUser, User $admin): void
+    {
+        if ($targetUser->id === $admin->id) {
+            throw new \DomainException('You cannot impersonate yourself');
+        }
+
+        if ($targetUser->isAdmin()) {
+            throw new \DomainException('Admin accounts cannot be impersonated');
+        }
+
+        Session::put('impersonator_id', $admin->id);
+        Auth::login($targetUser);
+
+        Log::info('Impersonation started', [
+            'target_user_id' => $targetUser->id,
+            'admin_id' => $admin->id,
+        ]);
+    }
+
+    /**
+     * Stop impersonating and return to admin.
+     */
+    public function stopImpersonation(): ?User
+    {
+        $impersonatorId = Session::pull('impersonator_id');
+
+        if (! $impersonatorId) {
+            return null;
+        }
+
+        $admin = $this->userRepository->findById($impersonatorId);
+
+        if ($admin) {
+            Auth::login($admin);
+
+            Log::info('Impersonation stopped', [
+                'admin_id' => $admin->id,
+            ]);
+        }
+
+        return $admin;
+    }
+
+    /**
+     * Check if currently impersonating.
+     */
+    public function isImpersonating(): bool
+    {
+        return Session::has('impersonator_id');
+    }
+
+    /**
+     * Get statistics for dashboard.
+     */
+    public function getStats(): array
+    {
+        $countsByRole = $this->userRepository->countByRole();
+        $recentlyActive = $this->userRepository->getRecentlyActive(5);
+
+        return [
+            'total' => array_sum($countsByRole),
+            'by_role' => $countsByRole,
+            'recently_active' => $recentlyActive,
+        ];
+    }
+
+    /**
+     * Record login activity.
+     */
+    public function recordLogin(User $user, string $ip): void
+    {
+        $this->userRepository->update($user, [
+            'last_login_at' => now(),
+            'last_login_ip' => $ip,
+        ]);
+    }
+
+    /**
+     * GDPR user deletion - anonymizes PII while keeping transaction records.
+     *
+     * This method:
+     * - Anonymizes personal data (name, email, IP addresses)
+     * - Keeps transaction records (payments) with anonymized references
+     * - Deletes non-essential data (notes, progress, sessions)
+     * - Logs the deletion action for audit compliance
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function gdprDelete(User $user, User $admin): void
+    {
+        if ($user->id === $admin->id) {
+            throw new \DomainException('You cannot delete your own account');
+        }
+
+        if ($user->isAdmin()) {
+            throw new \DomainException('Admin accounts cannot be deleted');
+        }
+
+        Log::info('GDPR deletion initiated', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'admin_id' => $admin->id,
+        ]);
+
+        // Generate anonymous identifier for references
+        $anonymizedId = 'deleted_user_'.hash('sha256', $user->id.config('app.key'));
+
+        // Anonymize user PII
+        $this->userRepository->update($user, [
+            'name' => 'Deleted User',
+            'email' => $anonymizedId.'@deleted.local',
+            'password' => hash('sha256', random_bytes(32)), // Invalidate password
+            'last_login_ip' => null,
+            'suspended_at' => now(),
+            'suspended_reason' => 'GDPR deletion request',
+            'deleted_at' => now(), // Soft delete marker
+        ]);
+
+        // Delete lesson progress (non-essential)
+        \App\Models\LessonProgress::where('user_id', $user->id)->delete();
+
+        // Delete lesson notes (personal data)
+        \App\Models\LessonNote::where('user_id', $user->id)->delete();
+
+        // Delete quiz attempts (can be anonymized in payments)
+        \App\Models\QuizAttempt::where('user_id', $user->id)->delete();
+
+        // Delete certificates (personal achievement records)
+        \App\Models\Certificate::where('user_id', $user->id)->delete();
+
+        // Delete course reviews (personal opinions)
+        \App\Models\CourseReview::where('user_id', $user->id)->delete();
+
+        // Delete VM sessions (usage logs)
+        \App\Models\VMSession::where('user_id', $user->id)->delete();
+
+        // Delete notifications (personal communications)
+        $user->notifications()->delete();
+
+        // Keep payment records but anonymize (required for accounting/tax)
+        \App\Models\Payment::where('user_id', $user->id)->update([
+            'user_id' => $user->id, // Keep reference but user is anonymized
+        ]);
+
+        // Delete enrollments (but keep payment records)
+        \App\Models\CourseEnrollment::where('user_id', $user->id)->delete();
+
+        // Revoke all tokens
+        $user->tokens()->delete();
+
+        Log::info('GDPR deletion completed', [
+            'user_id' => $user->id,
+            'anonymized_id' => $anonymizedId,
+            'admin_id' => $admin->id,
+        ]);
+    }
+}

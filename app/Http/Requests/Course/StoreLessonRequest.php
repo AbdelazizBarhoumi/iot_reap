@@ -3,17 +3,32 @@
 namespace App\Http\Requests\Course;
 
 use App\Enums\LessonType;
+use App\Models\Course;
+use App\Models\CourseModule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Form request for creating or updating a lesson.
+ * Form request for creating a lesson.
  */
 class StoreLessonRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        $course = $this->route('course');
+        $module = $this->route('module');
+
+        if (! $course instanceof Course || ! $module instanceof CourseModule) {
+            return false;
+        }
+
+        // Verify module belongs to this course
+        if ($module->course_id !== $course->id) {
+            return false;
+        }
+
+        // Only owner or admin can add lessons
+        return $course->isOwnedBy($this->user()) || $this->user()->isAdmin();
     }
 
     /**

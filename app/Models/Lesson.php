@@ -70,44 +70,35 @@ class Lesson extends Model
     }
 
     /**
-     * Get all VM assignments for this lesson.
+     * Get the quiz for this lesson.
+     */
+    public function quiz(): HasOne
+    {
+        return $this->hasOne(Quiz::class);
+    }
+
+    /**
+     * Get the article for this lesson.
+     */
+    public function article(): HasOne
+    {
+        return $this->hasOne(Article::class);
+    }
+
+    /**
+     * Get the video for this lesson.
+     */
+    public function video(): HasOne
+    {
+        return $this->hasOne(Video::class);
+    }
+
+    /**
+     * Get VM assignments for this lesson.
      */
     public function vmAssignments(): HasMany
     {
         return $this->hasMany(LessonVMAssignment::class);
-    }
-
-    /**
-     * Get the approved VM assignment (the one engineers can use).
-     */
-    public function approvedVMAssignment(): HasOne
-    {
-        return $this->hasOne(LessonVMAssignment::class)
-            ->where('status', LessonVMAssignmentStatus::APPROVED);
-    }
-
-    /**
-     * Get the pending VM assignment awaiting admin approval.
-     */
-    public function pendingVMAssignment(): HasOne
-    {
-        return $this->hasOne(LessonVMAssignment::class)
-            ->where('status', LessonVMAssignmentStatus::PENDING);
-    }
-
-    /**
-     * Get the active VM assignment (approved or pending).
-     * Approved takes precedence over pending.
-     */
-    public function vmAssignment(): HasOne
-    {
-        return $this->hasOne(LessonVMAssignment::class)
-            ->whereIn('status', [
-                LessonVMAssignmentStatus::APPROVED,
-                LessonVMAssignmentStatus::PENDING,
-            ])
-            ->orderByRaw("CASE WHEN status = ? THEN 0 ELSE 1 END", [LessonVMAssignmentStatus::APPROVED->value])
-            ->latest();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -134,28 +125,22 @@ class Lesson extends Model
     }
 
     /**
-     * Get the VM template assigned to this lesson (if approved).
-     */
-    public function getAssignedVMTemplate(): ?VMTemplate
-    {
-        $assignment = $this->approvedVMAssignment;
-
-        return $assignment?->vmTemplate;
-    }
-
-    /**
      * Check if this lesson has an approved VM assignment.
      */
     public function hasApprovedVM(): bool
     {
-        return $this->approvedVMAssignment()->exists();
+        return $this->vmAssignments()
+            ->where('status', LessonVMAssignmentStatus::APPROVED)
+            ->exists();
     }
 
     /**
-     * Check if this lesson has a pending VM assignment awaiting approval.
+     * Check if this lesson has a pending VM assignment.
      */
     public function hasPendingVMAssignment(): bool
     {
-        return $this->pendingVMAssignment()->exists();
+        return $this->vmAssignments()
+            ->where('status', LessonVMAssignmentStatus::PENDING)
+            ->exists();
     }
 }

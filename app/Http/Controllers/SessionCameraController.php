@@ -151,99 +151,22 @@ class SessionCameraController extends Controller
      * Restarts the ffmpeg stream with the new settings.
      * "auto" mode picks the best resolution for the camera type.
      */
-    public function changeResolution(Request $request, string $sessionId, int $cameraId): JsonResponse
+    public function changeResolution(\App\Http\Requests\Camera\ChangeResolutionRequest $request, string $sessionId, int $cameraId): JsonResponse
     {
         $session = $this->authorizeSession($request, $sessionId);
 
-        $validated = $request->validate([
-            'mode' => 'required|string|in:auto,manual',
-            'width' => 'required_if:mode,manual|nullable|integer|in:320,640,800,1280,1920',
-            'height' => 'required_if:mode,manual|nullable|integer|in:240,480,600,720,1080',
-            'framerate' => 'nullable|integer|min:5|max:30',
-        ]);
+        $validated = $request->validated();
 
         $camera = app(\App\Repositories\CameraRepository::class)->findOrFail($cameraId);
 
-        // Auto mode: pick optimal resolution based on camera type
-        if ($validated['mode'] === 'auto') {
-            $auto = $this->cameraService->getAutoResolution($camera);
-            $validated['width'] = $auto['width'];
-            $validated['height'] = $auto['height'];
-            $validated['framerate'] = $auto['framerate'];
-        }
-
-        $width = (int) $validated['width'];
-        $height = (int) $validated['height'];
-        $framerate = (int) ($validated['framerate'] ?? $camera->stream_framerate ?? 15);
-
-        // Check if gateway has camera management API available
-        $hasGatewayApi = $camera->gatewayNode && $camera->gatewayNode->api_url;
-        $apiAvailable = false;
-
-        if ($hasGatewayApi) {
-            // Test if camera start endpoint exists before attempting stream restart
-            // Only consider available if we get 200/405 (endpoint exists)
-            // 404 means no camera management API is running
-            try {
-                $startUrl = $camera->gatewayNode->proxmox_camera_api_url
-                    ? "{$camera->gatewayNode->proxmox_camera_api_url}/streams/start"
-                    : "{$camera->gatewayNode->api_url}/camera/start";
-                // Use OPTIONS or HEAD to check if endpoint exists
-                $testResponse = Http::timeout(2)->head($startUrl);
-                // 200, 204, or 405 (method not allowed) means endpoint exists
-                $apiAvailable = in_array($testResponse->status(), [200, 204, 405]);
-            } catch (\Exception $e) {
-                $apiAvailable = false;
-            }
-        }
-
-        // Update camera record (always do this)
-        $camera->update([
-            'stream_width' => $width,
-            'stream_height' => $height,
-            'stream_framerate' => $framerate,
-        ]);
-
-        // Only attempt stream restart if gateway API is available
-        $streamResult = ['success' => false, 'skipped' => true];
-        if ($apiAvailable) {
-            // Stop current stream
-            if ($camera->status === \App\Enums\CameraStatus::ACTIVE) {
-                $this->gatewayService->stopCameraStream($camera->gatewayNode, $camera->stream_key);
-            }
-
-            // Restart stream with new settings
-            $streamResult = $this->gatewayService->startCameraStream(
-                $camera->gatewayNode,
-                $camera->stream_key,
-                $camera->source_url,
-                [
-                    'width' => $width,
-                    'height' => $height,
-                    'framerate' => $framerate,
-                    'input_format' => $camera->stream_input_format ?? 'mjpeg',
-                ]
-            );
-            $streamResult['skipped'] = false;
-
-            // Only mark inactive if restart was attempted and failed
-            if (! $streamResult['success']) {
-                $camera->update(['status' => \App\Enums\CameraStatus::INACTIVE]);
-            }
-        }
-        // If no API available, keep camera status unchanged (stream managed externally)
-
-        $message = match (true) {
-            $streamResult['success'] => "Resolution changed to {$width}x{$height}@{$framerate}fps",
-            $streamResult['skipped'] ?? false => "Settings saved ({$width}x{$height}@{$framerate}fps). Stream managed externally.",
-            default => 'Resolution updated but stream restart failed',
-        };
+        // Delegate to service for business logic
+        $result = $this->cameraService->changeResolution($camera, $validated, $this->gatewayService);
 
         return response()->json([
-            'data' => new CameraResource($camera->fresh()->load(['activeControl', 'gatewayNode', 'usbDevice'])),
-            'message' => $message,
-            'stream_restarted' => $streamResult['success'],
-            'api_available' => $apiAvailable,
+            'data' => new CameraResource($result['camera']),
+            'message' => $result['message'],
+            'stream_restarted' => $result['stream_restarted'],
+            'api_available' => $result['api_available'],
         ]);
     }
 

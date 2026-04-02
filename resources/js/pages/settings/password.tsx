@@ -11,24 +11,19 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
 import type { BreadcrumbItem } from '@/types';
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Password settings',
         href: edit().url,
     },
 ];
-
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Password settings" />
-
             <h1 className="sr-only">Password Settings</h1>
-
             <SettingsLayout>
                 <div className="space-y-6">
                     <Heading
@@ -36,7 +31,6 @@ export default function Password() {
                         title="Update password"
                         description="Ensure your account is using a long, random password to stay secure"
                     />
-
                     <Form
                         {...PasswordController.update.form()}
                         options={{
@@ -52,7 +46,6 @@ export default function Password() {
                             if (errors.password) {
                                 passwordInput.current?.focus();
                             }
-
                             if (errors.current_password) {
                                 currentPasswordInput.current?.focus();
                             }
@@ -65,7 +58,6 @@ export default function Password() {
                                     <Label htmlFor="current_password">
                                         Current password
                                     </Label>
-
                                     <Input
                                         id="current_password"
                                         ref={currentPasswordInput}
@@ -75,17 +67,14 @@ export default function Password() {
                                         autoComplete="current-password"
                                         placeholder="Current password"
                                     />
-
                                     <InputError
                                         message={errors.current_password}
                                     />
                                 </div>
-
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">
                                         New password
                                     </Label>
-
                                     <Input
                                         id="password"
                                         ref={passwordInput}
@@ -95,15 +84,12 @@ export default function Password() {
                                         autoComplete="new-password"
                                         placeholder="New password"
                                     />
-
                                     <InputError message={errors.password} />
                                 </div>
-
                                 <div className="grid gap-2">
                                     <Label htmlFor="password_confirmation">
                                         Confirm password
                                     </Label>
-
                                     <Input
                                         id="password_confirmation"
                                         name="password_confirmation"
@@ -112,12 +98,10 @@ export default function Password() {
                                         autoComplete="new-password"
                                         placeholder="Confirm password"
                                     />
-
                                     <InputError
                                         message={errors.password_confirmation}
                                     />
                                 </div>
-
                                 <div className="flex items-center gap-4">
                                     <Button
                                         disabled={processing}
@@ -125,7 +109,6 @@ export default function Password() {
                                     >
                                         Save password
                                     </Button>
-
                                     <Transition
                                         show={recentlySuccessful}
                                         enter="transition ease-in-out"
@@ -146,3 +129,4 @@ export default function Password() {
         </AppLayout>
     );
 }
+

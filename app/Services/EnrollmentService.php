@@ -10,6 +10,7 @@ use App\Repositories\CourseEnrollmentRepository;
 use App\Repositories\CourseRepository;
 use App\Repositories\LessonProgressRepository;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -31,17 +32,21 @@ class EnrollmentService
         $course = $this->courseRepository->findById($courseId);
 
         if (! $course) {
-            throw new \InvalidArgumentException('Course not found');
+            throw new \DomainException('Course not found');
         }
 
         if (! $course->isPublished()) {
-            throw new \InvalidArgumentException('Cannot enroll in unpublished course');
+            throw new \DomainException('Cannot enroll in unpublished course');
         }
 
         Log::info('User enrolled in course', [
             'user_id' => $user->id,
             'course_id' => $courseId,
         ]);
+
+        // Invalidate enrollment cache
+        Cache::forget("user:{$user->id}:enrolled:{$courseId}");
+        Cache::forget("user:{$user->id}:enrollments");
 
         return $this->enrollmentRepository->enroll($user->id, $courseId);
     }
@@ -56,23 +61,35 @@ class EnrollmentService
             'course_id' => $courseId,
         ]);
 
+        // Invalidate enrollment cache
+        Cache::forget("user:{$user->id}:enrolled:{$courseId}");
+        Cache::forget("user:{$user->id}:enrollments");
+
         return $this->enrollmentRepository->unenroll($user->id, $courseId);
     }
 
     /**
-     * Check if a user is enrolled in a course.
+     * Check if a user is enrolled in a course (cached for 1 hour).
      */
     public function isEnrolled(User $user, int $courseId): bool
     {
-        return $this->enrollmentRepository->isEnrolled($user->id, $courseId);
+        return Cache::remember(
+            "user:{$user->id}:enrolled:{$courseId}",
+            3600,
+            fn () => $this->enrollmentRepository->isEnrolled($user->id, $courseId)
+        );
     }
 
     /**
-     * Get all enrolled courses for a user.
+     * Get all enrolled courses for a user (cached for 30 minutes).
      */
     public function getEnrolledCourses(User $user): Collection
     {
-        return $this->enrollmentRepository->findByUser($user);
+        return Cache::remember(
+            "user:{$user->id}:enrollments",
+            1800,
+            fn () => $this->enrollmentRepository->findByUser($user)
+        );
     }
 
     /**
@@ -99,6 +116,66 @@ class EnrollmentService
     }
 
     /**
+     * Update video watch progress for a lesson.
+     */
+    public function updateVideoProgress(
+        User $user,
+        int $lessonId,
+        int $percentage,
+        int $positionSeconds,
+    ): LessonProgress {
+        $progress = $this->progressRepository->updateVideoProgress(
+            $user->id,
+            $lessonId,
+            $percentage,
+            $positionSeconds
+        );
+
+        Log::info('Video progress updated', [
+            'user_id' => $user->id,
+            'lesson_id' => $lessonId,
+            'percentage' => $percentage,
+            'position_seconds' => $positionSeconds,
+            'completed' => $progress->completed,
+        ]);
+
+        return $progress;
+    }
+
+    /**
+     * Mark article as read for a lesson.
+     */
+    public function markArticleRead(User $user, int $lessonId): LessonProgress
+    {
+        $progress = $this->progressRepository->markArticleRead($user->id, $lessonId);
+
+        Log::info('Article marked as read', [
+            'user_id' => $user->id,
+            'lesson_id' => $lessonId,
+            'completed' => $progress->completed,
+        ]);
+
+        return $progress;
+    }
+
+    /**
+     * Mark quiz as passed for a lesson.
+     */
+    public function markQuizPassed(User $user, int $lessonId, int $attemptId): LessonProgress
+    {
+        $progress = $this->progressRepository->markQuizPassed($user->id, $lessonId, $attemptId);
+
+        Log::info('Quiz passed', [
+            'user_id' => $user->id,
+            'lesson_id' => $lessonId,
+            'attempt_id' => $attemptId,
+            'completed' => $progress->completed,
+        ]);
+
+        return $progress;
+    }
+
+    /**
      * Get progress for a user in a course.
      *
      * @return array{completed: int, total: int, percentage: float}
@@ -117,6 +194,8 @@ class EnrollmentService
 
     /**
      * Get all progress for a user in a course.
+     *
+     * @deprecated Unused - candidate for removal. Use getCompletedLessonIds() or getCourseProgress() instead.
      */
     public function getLessonProgress(User $user, int $courseId): Collection
     {

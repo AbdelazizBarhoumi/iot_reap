@@ -9,7 +9,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { home } from '@/routes';
-
 export default function AuthCardLayout({
     children,
     title,
@@ -20,7 +19,7 @@ export default function AuthCardLayout({
     description?: string;
 }>) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-hero-gradient p-6 md:p-10">
+        <div className="bg-hero-gradient flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
                 <Link
                     href={home()}
@@ -31,7 +30,6 @@ export default function AuthCardLayout({
                     </div>
                     <span className="text-xl font-bold">IoT-REAP</span>
                 </Link>
-
                 <div className="flex flex-col gap-6">
                     <Card className="rounded-xl border-0 shadow-2xl">
                         <CardHeader className="px-10 pt-8 pb-0 text-center">
@@ -50,3 +48,4 @@ export default function AuthCardLayout({
         </div>
     );
 }
+

@@ -43,6 +43,14 @@ class VMSession extends Model
         'expires_at',
     ];
 
+    /**
+     * Hide sensitive fields from serialization.
+     * Credentials contain VM access secrets and should never be exposed via API.
+     */
+    protected $hidden = [
+        'credentials',
+    ];
+
     protected $casts = [
         'status' => VMSessionStatus::class,
         'expires_at' => 'datetime',

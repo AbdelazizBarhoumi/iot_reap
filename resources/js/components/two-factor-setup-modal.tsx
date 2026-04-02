@@ -22,7 +22,6 @@ import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
 import AlertError from './alert-error';
 import { Spinner } from './ui/spinner';
-
 function GridScanIcon() {
     return (
         <div className="mb-3 rounded-full border border-border bg-card p-0.5 shadow-sm">
@@ -48,7 +47,6 @@ function GridScanIcon() {
         </div>
     );
 }
-
 function TwoFactorSetupStep({
     qrCodeSvg,
     manualSetupKey,
@@ -65,7 +63,6 @@ function TwoFactorSetupStep({
     const { resolvedAppearance } = useAppearance();
     const [copiedText, copy] = useClipboard();
     const IconComponent = copiedText === manualSetupKey ? Check : Copy;
-
     return (
         <>
             {errors?.length ? (
@@ -94,20 +91,17 @@ function TwoFactorSetupStep({
                             </div>
                         </div>
                     </div>
-
                     <div className="flex w-full space-x-5">
                         <Button className="w-full" onClick={onNextStep}>
                             {buttonText}
                         </Button>
                     </div>
-
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
                         <span className="relative bg-card px-2 py-1">
                             or, enter the code manually
                         </span>
                     </div>
-
                     <div className="flex w-full space-x-2">
                         <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
                             {!manualSetupKey ? (
@@ -137,7 +131,6 @@ function TwoFactorSetupStep({
         </>
     );
 }
-
 function TwoFactorVerificationStep({
     onClose,
     onBack,
@@ -147,13 +140,11 @@ function TwoFactorVerificationStep({
 }) {
     const [code, setCode] = useState<string>('');
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
         setTimeout(() => {
             pinInputContainerRef.current?.querySelector('input')?.focus();
         }, 0);
     }, []);
-
     return (
         <Form
             {...confirm.form()}
@@ -200,7 +191,6 @@ function TwoFactorVerificationStep({
                                 }
                             />
                         </div>
-
                         <div className="flex w-full space-x-5">
                             <Button
                                 type="button"
@@ -227,7 +217,6 @@ function TwoFactorVerificationStep({
         </Form>
     );
 }
-
 type Props = {
     isOpen: boolean;
     onClose: () => void;
@@ -239,7 +228,6 @@ type Props = {
     fetchSetupData: () => Promise<void>;
     errors: string[];
 };
-
 export default function TwoFactorSetupModal({
     isOpen,
     onClose,
@@ -253,7 +241,6 @@ export default function TwoFactorSetupModal({
 }: Props) {
     const [showVerificationStep, setShowVerificationStep] =
         useState<boolean>(false);
-
     const modalConfig = useMemo<{
         title: string;
         description: string;
@@ -267,7 +254,6 @@ export default function TwoFactorSetupModal({
                 buttonText: 'Close',
             };
         }
-
         if (showVerificationStep) {
             return {
                 title: 'Verify Authentication Code',
@@ -276,7 +262,6 @@ export default function TwoFactorSetupModal({
                 buttonText: 'Continue',
             };
         }
-
         return {
             title: 'Enable Two-Factor Authentication',
             description:
@@ -284,36 +269,29 @@ export default function TwoFactorSetupModal({
             buttonText: 'Continue',
         };
     }, [twoFactorEnabled, showVerificationStep]);
-
     const handleModalNextStep = useCallback(() => {
         if (requiresConfirmation) {
             setShowVerificationStep(true);
             return;
         }
-
         clearSetupData();
         onClose();
     }, [requiresConfirmation, clearSetupData, onClose]);
-
     const resetModalState = useCallback(() => {
         setShowVerificationStep(false);
-
         if (twoFactorEnabled) {
             clearSetupData();
         }
     }, [twoFactorEnabled, clearSetupData]);
-
     useEffect(() => {
         if (isOpen && !qrCodeSvg) {
             fetchSetupData();
         }
     }, [isOpen, qrCodeSvg, fetchSetupData]);
-
     const handleClose = useCallback(() => {
         resetModalState();
         onClose();
     }, [onClose, resetModalState]);
-
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="sm:max-w-md">
@@ -324,7 +302,6 @@ export default function TwoFactorSetupModal({
                         {modalConfig.description}
                     </DialogDescription>
                 </DialogHeader>
-
                 <div className="flex flex-col items-center space-y-5">
                     {showVerificationStep ? (
                         <TwoFactorVerificationStep
@@ -345,3 +322,5 @@ export default function TwoFactorSetupModal({
         </Dialog>
     );
 }
+
+

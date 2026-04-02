@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Repositories\CourseModuleRepository;
 use App\Repositories\CourseRepository;
 use App\Repositories\LessonRepository;
+use App\Services\CourseCacheService;
 use App\Services\CourseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,10 +27,12 @@ class CourseServiceTest extends TestCase
         $this->courseRepository = app(CourseRepository::class);
         $moduleRepository = app(CourseModuleRepository::class);
         $lessonRepository = app(LessonRepository::class);
+        $cacheService = app(CourseCacheService::class);
         $this->courseService = new CourseService(
             $this->courseRepository,
             $moduleRepository,
-            $lessonRepository
+            $lessonRepository,
+            $cacheService
         );
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\CustomDatabaseChannel;
 use App\Models\VMSession;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +27,7 @@ class SessionActivationFailed extends Notification implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', CustomDatabaseChannel::class];
     }
 
     /**
@@ -47,7 +48,26 @@ class SessionActivationFailed extends Notification implements ShouldQueue
     }
 
     /**
-     * Array representation stored in the database notification channel.
+     * Get the data for the custom database channel.
+     */
+    public function toCustomDatabase($notifiable): array
+    {
+        return [
+            'type' => 'session_activation_failed',
+            'title' => 'VM Session Activation Failed',
+            'message' => "Session {$this->session->id} failed: {$this->context}",
+            'session_id' => $this->session->id,
+            'user_id' => $this->session->user_id,
+            'vm_id' => $this->session->vm_id,
+            'node' => $this->session->node?->name,
+            'context' => $this->context,
+            'error' => $this->errorMessage,
+            'action_url' => '/admin/sessions',
+        ];
+    }
+
+    /**
+     * Array representation for other channels.
      */
     public function toArray($notifiable): array
     {

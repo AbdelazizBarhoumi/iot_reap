@@ -39,7 +39,7 @@ class QuotaService
             ->count();
 
         if ($activeCount >= $maxConcurrent) {
-            throw new \Exception(
+            throw new \DomainException(
                 "Maximum concurrent sessions ({$maxConcurrent}) reached. ".
                 'Please terminate an existing session before creating a new one.'
             );
@@ -49,7 +49,7 @@ class QuotaService
         $totalMinutes = $this->getTotalActiveMinutes($user);
 
         if ($totalMinutes + $durationMinutes > $maxMinutes) {
-            throw new \Exception(
+            throw new \DomainException(
                 "Requesting {$durationMinutes} minutes would exceed quota. ".
                 "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m"
             );
@@ -67,7 +67,7 @@ class QuotaService
         $totalMinutes = $this->getTotalActiveMinutes($user);
 
         if ($totalMinutes + $additionalMinutes > $maxMinutes) {
-            throw new \Exception(
+            throw new \DomainException(
                 "Cannot extend by {$additionalMinutes} minutes. ".
                 "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m, ".
                 '(requested total: '.($totalMinutes + $additionalMinutes).'m)'

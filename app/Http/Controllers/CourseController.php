@@ -4,12 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CourseResource;
 use App\Http\Resources\LessonResource;
-use App\Http\Resources\VMTemplateResource;
 use App\Models\Course;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
-use App\Services\LessonVMAssignmentService;
-use App\Services\VMSessionQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,8 +20,6 @@ class CourseController extends Controller
     public function __construct(
         private readonly CourseService $courseService,
         private readonly EnrollmentService $enrollmentService,
-        private readonly LessonVMAssignmentService $vmAssignmentService,
-        private readonly VMSessionQueueService $queueService,
     ) {}
 
     /**
@@ -57,15 +52,21 @@ class CourseController extends Controller
     public function show(Request $request, int $id): JsonResponse|InertiaResponse
     {
         $course = $this->courseService->getCourseWithContent($id);
+        $user = $request->user();
 
-        if (! $course || ! $course->isPublished()) {
+        // Allow access if course exists AND (is published OR user is the instructor OR user is admin)
+        $canAccess = $course && (
+            $course->isPublished() ||
+            ($user && ($course->isOwnedBy($user) || $user->isAdmin()))
+        );
+
+        if (! $canAccess) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Course not found'], 404);
             }
             abort(404);
         }
 
-        $user = $request->user();
         $isEnrolled = $user ? $this->enrollmentService->isEnrolled($user, $id) : false;
         $progress = $user && $isEnrolled ? $this->enrollmentService->getCourseProgress($user, $course) : null;
         $completedLessonIds = $user ? $this->enrollmentService->getCompletedLessonIds($user, $id) : [];
@@ -123,30 +124,11 @@ class CourseController extends Controller
 
         $completedLessonIds = $this->enrollmentService->getCompletedLessonIds($user, $courseId);
 
-        // Get VM template assignment and queue status for engineers
-        $vmInfo = null;
-        if ($lesson->vm_enabled) {
-            $assignment = $this->vmAssignmentService->getApprovedAssignment($lessonId);
-            if ($assignment && $assignment->vmTemplate) {
-                $template = $assignment->vmTemplate;
-                $queueStatus = $this->queueService->getQueueStatus($template);
-                $canStart = $this->queueService->canUserStartSession($template, $user);
-
-                $vmInfo = [
-                    'template' => new VMTemplateResource($template->load(['proxmoxServer', 'node'])),
-                    'queue_status' => $queueStatus,
-                    'can_start' => $canStart,
-                    'my_position' => $this->queueService->getQueuePosition($template->id, $user->id),
-                ];
-            }
-        }
-
         if ($request->wantsJson()) {
             return response()->json([
                 'course' => new CourseResource($course),
                 'lesson' => new LessonResource($lesson),
                 'completed_lesson_ids' => $completedLessonIds,
-                'vm_info' => $vmInfo,
             ]);
         }
 
@@ -156,7 +138,6 @@ class CourseController extends Controller
             'course' => new CourseResource($course),
             'lesson' => new LessonResource($lesson),
             'completedLessonIds' => $completedLessonIds,
-            'vmInfo' => $vmInfo,
         ]);
     }
 
@@ -213,6 +194,56 @@ class CourseController extends Controller
         return response()->json([
             'message' => 'Lesson marked incomplete',
             'progress' => $progress,
+        ]);
+    }
+
+    /**
+     * Update video watch progress for a lesson.
+     */
+    public function updateVideoProgress(\App\Http\Requests\Course\UpdateVideoProgressRequest $request, int $courseId, int $lessonId): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $user = $request->user();
+        $lessonProgress = $this->enrollmentService->updateVideoProgress(
+            $user,
+            $lessonId,
+            $validated['percentage'],
+            $validated['position_seconds']
+        );
+
+        $course = $this->courseService->getCourseWithContent($courseId);
+        $courseProgress = $course ? $this->enrollmentService->getCourseProgress($user, $course) : null;
+
+        return response()->json([
+            'message' => 'Video progress updated',
+            'lesson_progress' => [
+                'video_watch_percentage' => $lessonProgress->video_watch_percentage,
+                'video_position_seconds' => $lessonProgress->video_position_seconds,
+                'completed' => $lessonProgress->completed,
+            ],
+            'course_progress' => $courseProgress,
+        ]);
+    }
+
+    /**
+     * Mark article as read for a lesson.
+     */
+    public function markArticleRead(Request $request, int $courseId, int $lessonId): JsonResponse
+    {
+        $user = $request->user();
+        $lessonProgress = $this->enrollmentService->markArticleRead($user, $lessonId);
+
+        $course = $this->courseService->getCourseWithContent($courseId);
+        $courseProgress = $course ? $this->enrollmentService->getCourseProgress($user, $course) : null;
+
+        return response()->json([
+            'message' => 'Article marked as read',
+            'lesson_progress' => [
+                'article_read' => $lessonProgress->article_read,
+                'completed' => $lessonProgress->completed,
+            ],
+            'course_progress' => $courseProgress,
         ]);
     }
 

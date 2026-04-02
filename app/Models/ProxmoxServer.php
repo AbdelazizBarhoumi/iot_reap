@@ -50,9 +50,9 @@ class ProxmoxServer extends Model
         'description',
         'host',
         'port',
-        'realm',
         'token_id',
         'token_secret',
+        'realm',
         'verify_ssl',
         'is_active',
         'max_vms_per_node',
@@ -60,6 +60,18 @@ class ProxmoxServer extends Model
         'cpu_overcommit_ratio',
         'memory_overcommit_ratio',
         'created_by',
+    ];
+
+    /**
+     * The attributes that are NOT mass assignable (sensitive credentials).
+     *
+     * @var list<string>
+     */
+    protected $guarded = [
+        'host',
+        'port',
+        'token_id',
+        'token_secret',
     ];
 
     /**
@@ -131,6 +143,9 @@ class ProxmoxServer extends Model
      * - Max concurrent sessions limit
      * - Available CPU (considering overcommit ratio)
      * - Available memory (considering overcommit ratio)
+     *
+     * @todo BUSINESS LOGIC - Consider moving to ProxmoxServerProvisioningService for better testability.
+     *       This method queries VMSession model and makes resource allocation decisions.
      */
     public function canProvisionsMore(ProxmoxNode $node, int $requiredCpu = 2, int $requiredMemory = 2048): bool
     {
@@ -167,6 +182,9 @@ class ProxmoxServer extends Model
 
     /**
      * Inactivate this server and close all active sessions.
+     *
+     * @deprecated INCOMPLETE - Dispatch logic commented out. Needs completion and move to
+     *             ProxmoxServerManagementService before use in production.
      *
      * @throws \Exception
      */

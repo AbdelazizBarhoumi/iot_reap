@@ -199,7 +199,7 @@ class SessionExtensionTerminationTest extends TestCase
             'expires_at' => now()->subMinute(),
         ]);
 
-        $count = app(\App\Repositories\VMSessionRepository::class)
+        $count = app(\App\Services\VMSessionCleanupService::class)
             ->expireOverdueSessions();
 
         $this->assertSame(1, $count);

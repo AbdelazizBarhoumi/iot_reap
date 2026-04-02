@@ -48,6 +48,8 @@ class CameraService
     /**
      * Get stream URLs for a camera.
      * Always derived from stream_key — never hardcoded.
+     *
+     * @deprecated Unused - stream URLs built inline in controllers. Candidate for removal.
      */
     public function getStreamUrls(Camera $camera): array
     {
@@ -59,8 +61,8 @@ class CameraService
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
 
         return [
-            'rtsp'   => "rtsp://{$baseHost}:{$rtspPort}/{$camera->stream_key}",
-            'hls'    => "http://{$baseHost}:{$hlsPort}/{$camera->stream_key}/index.m3u8",
+            'rtsp' => "rtsp://{$baseHost}:{$rtspPort}/{$camera->stream_key}",
+            'hls' => "http://{$baseHost}:{$hlsPort}/{$camera->stream_key}/index.m3u8",
             'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$camera->stream_key}",
         ];
     }
@@ -123,6 +125,8 @@ class CameraService
     /**
      * Release all camera controls for a session.
      * Called when a session ends/expires/terminates.
+     *
+     * @deprecated Unused - session cleanup handled elsewhere. Candidate for removal.
      */
     public function releaseAllForSession(string $sessionId): int
     {
@@ -172,7 +176,7 @@ class CameraService
                 sessionId: $sessionId
             );
 
-            if (!$published) {
+            if (! $published) {
                 Log::warning('Failed to publish PTZ command via MQTT', [
                     'camera_id' => $cameraId,
                     'session_id' => $sessionId,
@@ -206,7 +210,7 @@ class CameraService
     ): CameraReservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
-            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+            throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
         $reservation = $this->reservationRepository->create([
@@ -244,7 +248,7 @@ class CameraService
 
         // Check for conflicts (excluding this reservation)
         if ($this->reservationRepository->hasConflict($reservation->camera, $startAt, $endAt, $reservation->id)) {
-            throw new \InvalidArgumentException('Modified time slot conflicts with existing reservation');
+            throw new \DomainException('Modified time slot conflicts with existing reservation');
         }
 
         $this->reservationRepository->update($reservation, [
@@ -292,8 +296,8 @@ class CameraService
      */
     public function cancelReservation(CameraReservation $reservation): CameraReservation
     {
-        if (!$reservation->canModify()) {
-            throw new \InvalidArgumentException('Reservation cannot be cancelled in current state');
+        if (! $reservation->canModify()) {
+            throw new \DomainException('Reservation cannot be cancelled in current state');
         }
 
         $this->reservationRepository->update($reservation, [
@@ -319,7 +323,7 @@ class CameraService
     ): CameraReservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
-            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+            throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
         $reservation = $this->reservationRepository->create([
@@ -347,6 +351,8 @@ class CameraService
 
     /**
      * Check if a user can use a camera now (considering reservations).
+     *
+     * @deprecated Unused - permission checks handled inline in controllers. Candidate for removal.
      */
     public function canUserUseNow(Camera $camera, User $user): array
     {
@@ -363,6 +369,7 @@ class CameraService
             if ($activeReservation->user_id === $user->id) {
                 return ['can_use' => true, 'reason' => 'User has active reservation'];
             }
+
             return [
                 'can_use' => false,
                 'reason' => 'Camera is reserved by another user',
@@ -415,5 +422,136 @@ class CameraService
                 'framerate' => 25,
             ],
         };
+    }
+
+    /**
+     * Change camera stream resolution.
+     *
+     * Handles the business logic for resolution changes:
+     * 1. Auto mode resolution selection based on camera type
+     * 2. Gateway API availability check
+     * 3. Stream restart coordination
+     * 4. Camera status updates
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{camera: Camera, success: bool, message: string, stream_restarted: bool, api_available: bool}
+     */
+    public function changeResolution(Camera $camera, array $validated, GatewayService $gatewayService): array
+    {
+        // Auto mode: pick optimal resolution based on camera type
+        if ($validated['mode'] === 'auto') {
+            $auto = $this->getAutoResolution($camera);
+            $validated['width'] = $auto['width'];
+            $validated['height'] = $auto['height'];
+            $validated['framerate'] = $auto['framerate'];
+        }
+
+        $width = (int) $validated['width'];
+        $height = (int) $validated['height'];
+        $framerate = (int) ($validated['framerate'] ?? $camera->stream_framerate ?? 15);
+
+        // Check if gateway has camera management API available
+        $apiAvailable = $this->checkGatewayApiAvailable($camera);
+
+        // Update camera record (always do this)
+        $camera->update([
+            'stream_width' => $width,
+            'stream_height' => $height,
+            'stream_framerate' => $framerate,
+        ]);
+
+        // Only attempt stream restart if gateway API is available
+        $streamResult = ['success' => false, 'skipped' => true];
+        if ($apiAvailable) {
+            $streamResult = $this->restartCameraStream($camera, $gatewayService, [
+                'width' => $width,
+                'height' => $height,
+                'framerate' => $framerate,
+                'input_format' => $camera->stream_input_format ?? 'mjpeg',
+            ]);
+            $streamResult['skipped'] = false;
+
+            // Only mark inactive if restart was attempted and failed
+            if (! $streamResult['success']) {
+                $camera->update(['status' => \App\Enums\CameraStatus::INACTIVE]);
+            }
+        }
+        // If no API available, keep camera status unchanged (stream managed externally)
+
+        $message = match (true) {
+            $streamResult['success'] => "Resolution changed to {$width}x{$height}@{$framerate}fps",
+            $streamResult['skipped'] ?? false => "Settings saved ({$width}x{$height}@{$framerate}fps). Stream managed externally.",
+            default => 'Resolution updated but stream restart failed',
+        };
+
+        return [
+            'camera' => $camera->fresh()->load(['activeControl', 'gatewayNode', 'usbDevice']),
+            'success' => $streamResult['success'],
+            'message' => $message,
+            'stream_restarted' => $streamResult['success'],
+            'api_available' => $apiAvailable,
+        ];
+    }
+
+    /**
+     * Check if the gateway API is available for camera management.
+     */
+    private function checkGatewayApiAvailable(Camera $camera): bool
+    {
+        // Check if gateway has camera management API available
+        $hasGatewayApi = $camera->gatewayNode && $camera->gatewayNode->api_url;
+        if (! $hasGatewayApi) {
+            return false;
+        }
+
+        // Test if camera start endpoint exists before attempting stream restart
+        // Only consider available if we get 200/405 (endpoint exists)
+        // 404 means no camera management API is running
+        try {
+            $startUrl = $camera->gatewayNode->proxmox_camera_api_url
+                ? "{$camera->gatewayNode->proxmox_camera_api_url}/streams/start"
+                : "{$camera->gatewayNode->api_url}/camera/start";
+
+            // Use OPTIONS or HEAD to check if endpoint exists
+            $testResponse = \Illuminate\Support\Facades\Http::timeout(2)->head($startUrl);
+
+            // 200, 204, or 405 (method not allowed) means endpoint exists
+            return in_array($testResponse->status(), [200, 204, 405]);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Restart camera stream with new settings.
+     *
+     * @param  array<string, mixed>  $streamParams
+     * @return array{success: bool}
+     */
+    private function restartCameraStream(Camera $camera, GatewayService $gatewayService, array $streamParams): array
+    {
+        try {
+            // Stop current stream
+            if ($camera->status === \App\Enums\CameraStatus::ACTIVE) {
+                $gatewayService->stopCameraStream($camera->gatewayNode, $camera->stream_key);
+            }
+
+            // Restart stream with new settings
+            $result = $gatewayService->startCameraStream(
+                $camera->gatewayNode,
+                $camera->stream_key,
+                $camera->source_url,
+                $streamParams
+            );
+
+            return ['success' => $result['success'] ?? false];
+        } catch (\Exception $e) {
+            Log::error('Failed to restart camera stream', [
+                'camera_id' => $camera->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['success' => false];
+        }
     }
 }

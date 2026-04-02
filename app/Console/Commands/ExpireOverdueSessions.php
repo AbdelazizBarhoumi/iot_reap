@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Repositories\VMSessionRepository;
+use App\Services\VMSessionCleanupService;
 use Illuminate\Console\Command;
 
 /**
@@ -22,9 +22,9 @@ class ExpireOverdueSessions extends Command
 
     protected $description = 'Expire VM sessions that have passed their expiration time';
 
-    public function handle(VMSessionRepository $repository): int
+    public function handle(VMSessionCleanupService $cleanupService): int
     {
-        $count = $repository->expireOverdueSessions();
+        $count = $cleanupService->expireOverdueSessions();
 
         if ($count > 0) {
             $this->info("Expired {$count} overdue session(s).");

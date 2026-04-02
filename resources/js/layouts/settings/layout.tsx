@@ -10,7 +10,6 @@ import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem } from '@/types';
-
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
@@ -33,22 +32,18 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
 ];
-
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
-
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
-
     return (
         <div className="px-4 py-6">
             <Heading
                 title="Settings"
                 description="Manage your profile and account settings"
             />
-
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
@@ -62,7 +57,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 variant="ghost"
                                 asChild
                                 className={cn('w-full justify-start', {
-                                    'bg-primary/10 text-primary dark:bg-primary/90 dark:text-primary': isCurrentUrl(item.href),
+                                    'bg-primary/10 text-primary dark:bg-primary/90 dark:text-primary':
+                                        isCurrentUrl(item.href),
                                 })}
                             >
                                 <Link href={item.href}>
@@ -75,9 +71,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         ))}
                     </nav>
                 </aside>
-
                 <Separator className="my-6 lg:hidden" />
-
                 <div className="flex-1 md:max-w-2xl">
                     <section className="max-w-xl space-y-12">
                         {children}
@@ -87,3 +81,4 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         </div>
     );
 }
+

@@ -14,10 +14,17 @@ return new class extends Migration
             $table->foreignId('lesson_id')->constrained()->cascadeOnDelete();
             $table->boolean('completed')->default(false);
             $table->timestamp('completed_at')->nullable();
+            $table->unsignedTinyInteger('video_watch_percentage')->default(0);
+            $table->unsignedInteger('video_position_seconds')->default(0);
+            $table->boolean('quiz_passed')->default(false);
+            $table->foreignId('quiz_attempt_id')->nullable();
+            $table->boolean('article_read')->default(false);
+            $table->timestamp('article_read_at')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'lesson_id']);
             $table->index(['user_id', 'completed']);
+
         });
     }
 

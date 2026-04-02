@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $description
  * @property int $instructor_id
  * @property string|null $thumbnail
+ * @property string|null $video_type 'upload' or 'youtube'
+ * @property string|null $video_url Video file path or YouTube URL
  * @property string $category
  * @property CourseLevel $level
  * @property string|null $duration
@@ -36,6 +38,8 @@ class Course extends Model
         'description',
         'instructor_id',
         'thumbnail',
+        'video_type',
+        'video_url',
         'category',
         'level',
         'duration',
@@ -43,6 +47,12 @@ class Course extends Model
         'has_virtual_machine',
         'status',
         'admin_feedback',
+        'price_cents',
+        'currency',
+        'is_free',
+        'is_featured',
+        'featured_order',
+        'featured_at',
     ];
 
     protected $casts = [
@@ -50,6 +60,11 @@ class Course extends Model
         'status' => CourseStatus::class,
         'rating' => 'decimal:1',
         'has_virtual_machine' => 'boolean',
+        'price_cents' => 'integer',
+        'is_free' => 'boolean',
+        'is_featured' => 'boolean',
+        'featured_order' => 'integer',
+        'featured_at' => 'datetime',
     ];
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -83,6 +98,11 @@ class Course extends Model
             ->withTimestamps();
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Scopes
     // ─────────────────────────────────────────────────────────────────────────
@@ -95,6 +115,16 @@ class Course extends Model
     public function scopePendingReview($query)
     {
         return $query->where('status', CourseStatus::PENDING_REVIEW);
+    }
+
+    public function scopeNotArchived($query)
+    {
+        return $query->where('status', '!=', CourseStatus::ARCHIVED);
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where('status', CourseStatus::ARCHIVED);
     }
 
     public function scopeByInstructor($query, string $instructorId)
@@ -119,6 +149,25 @@ class Course extends Model
     public function getTotalLessonsAttribute(): int
     {
         return $this->lessons()->count();
+    }
+
+    public function getPriceAttribute(): float
+    {
+        return ($this->price_cents ?? 0) / 100;
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        if ($this->is_free || ($this->price_cents ?? 0) === 0) {
+            return 'Free';
+        }
+
+        return '$'.number_format($this->price, 2);
+    }
+
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        return $this->thumbnail;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

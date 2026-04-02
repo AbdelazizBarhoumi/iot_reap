@@ -96,13 +96,13 @@ class ExpireSessions extends Command
                 // 2. Detach USB devices
                 // 3. Optionally stop VM
                 // 4. Mark session as EXPIRED
-                TerminateVMJob::dispatch(
+                TerminateVMJob::dispatchSync(
                     session: $session,
                     stopVm: $stopVms,
                 );
 
                 $expired++;
-                $this->line("  → Dispatched cleanup for session {$session->id}");
+                $this->line("  → Executed cleanup for session {$session->id}");
             } catch (\Throwable $e) {
                 Log::error('ExpireSessions: failed to dispatch cleanup', [
                     'session_id' => $session->id,

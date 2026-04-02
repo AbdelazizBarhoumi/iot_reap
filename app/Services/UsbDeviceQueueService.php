@@ -38,7 +38,7 @@ class UsbDeviceQueueService
     {
         // Check if already in queue
         if ($this->queueRepository->isInQueue($device, $session)) {
-            throw new \InvalidArgumentException('Session is already in queue for this device');
+            throw new \DomainException('Session is already in queue for this device');
         }
 
         $entry = $this->queueRepository->addToQueue($device, $session, $user);
@@ -136,7 +136,7 @@ class UsbDeviceQueueService
     ): UsbDeviceReservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($device, $startAt, $endAt)) {
-            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+            throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
         $reservation = $this->reservationRepository->create([
@@ -174,7 +174,7 @@ class UsbDeviceQueueService
 
         // Check for conflicts (excluding this reservation)
         if ($this->reservationRepository->hasConflict($reservation->device, $startAt, $endAt, $reservation->id)) {
-            throw new \InvalidArgumentException('Modified time slot conflicts with existing reservation');
+            throw new \DomainException('Modified time slot conflicts with existing reservation');
         }
 
         $this->reservationRepository->update($reservation, [
@@ -223,7 +223,7 @@ class UsbDeviceQueueService
     public function cancelReservation(UsbDeviceReservation $reservation): UsbDeviceReservation
     {
         if (! $reservation->canModify()) {
-            throw new \InvalidArgumentException('Reservation cannot be cancelled in current state');
+            throw new \DomainException('Reservation cannot be cancelled in current state');
         }
 
         $this->reservationRepository->update($reservation, [
@@ -249,7 +249,7 @@ class UsbDeviceQueueService
     ): UsbDeviceReservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($device, $startAt, $endAt)) {
-            throw new \InvalidArgumentException('Time slot conflicts with existing reservation');
+            throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
         $reservation = $this->reservationRepository->create([

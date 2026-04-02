@@ -8,5 +8,5 @@
  *  - Extend / Terminate buttons
  *  - Session info sidebar
  */
-
 export { default } from '@/pages/SessionPage';
+

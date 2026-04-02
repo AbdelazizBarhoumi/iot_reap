@@ -3,21 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Course\CreateCourseRequest;
+use App\Http\Requests\Course\ReorderLessonsRequest;
+use App\Http\Requests\Course\ReorderModulesRequest;
 use App\Http\Requests\Course\StoreLessonRequest;
 use App\Http\Requests\Course\StoreModuleRequest;
 use App\Http\Requests\Course\UpdateCourseRequest;
+use App\Http\Requests\Course\UpdateLessonRequest;
+use App\Http\Requests\Course\UpdateModuleRequest;
 use App\Http\Resources\CourseModuleResource;
 use App\Http\Resources\CourseResource;
 use App\Http\Resources\LessonResource;
-use App\Http\Resources\LessonVMAssignmentResource;
-use App\Http\Resources\VMTemplateResource;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Repositories\CourseRepository;
 use App\Services\CourseService;
 use App\Services\LessonService;
-use App\Services\LessonVMAssignmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +33,6 @@ class TeachingController extends Controller
         private readonly CourseService $courseService,
         private readonly LessonService $lessonService,
         private readonly CourseRepository $courseRepository,
-        private readonly LessonVMAssignmentService $vmAssignmentService,
     ) {}
 
     /**
@@ -67,24 +67,58 @@ class TeachingController extends Controller
      */
     public function create(): InertiaResponse
     {
-        return Inertia::render('teaching/create');
+        // Get unique categories from existing courses
+        $categories = Course::query()
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        // Add default categories if none exist
+        if (empty($categories)) {
+            $categories = [
+                'IoT & Embedded Systems',
+                'Industrial Automation',
+                'Robotics',
+                'Networking & Protocols',
+                'Cloud & DevOps',
+                'Programming',
+                'Security',
+            ];
+        }
+
+        return Inertia::render('teaching/create', [
+            'categories' => $categories,
+        ]);
     }
 
     /**
      * Store a new course.
      */
-    public function store(CreateCourseRequest $request): JsonResponse
+    public function store(CreateCourseRequest $request): \Illuminate\Http\RedirectResponse
     {
-        $course = $this->courseService->createCourse(
-            instructor: $request->user(),
-            data: $request->validated(),
-            modules: $request->validated('modules', []),
-        );
+        try {
+            \Log::info('Creating course', ['user' => $request->user()->id, 'data_keys' => array_keys($request->validated())]);
 
-        return response()->json([
-            'data' => new CourseResource($course),
-            'message' => 'Course created successfully',
-        ], 201);
+            $course = $this->courseService->createCourse(
+                instructor: $request->user(),
+                data: $request->validated(),
+                modules: $request->validated('modules', []),
+            );
+
+            \Log::info('Course created successfully', ['id' => $course->id]);
+
+            return redirect()->route('teaching.edit', $course->id)
+                ->with('success', 'Course created successfully! Now add content to your lessons.');
+        } catch (\Exception $e) {
+            \Log::error('Course creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to create course: '.$e->getMessage()]);
+        }
     }
 
     /**
@@ -103,13 +137,39 @@ class TeachingController extends Controller
             abort(403);
         }
 
+        // Get unique categories from existing courses
+        $categories = Course::query()
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        // Add default categories if none exist
+        if (empty($categories)) {
+            $categories = [
+                'IoT & Embedded Systems',
+                'Industrial Automation',
+                'Robotics',
+                'Networking & Protocols',
+                'Cloud & DevOps',
+                'Programming',
+                'Security',
+            ];
+        }
+
         if ($request->wantsJson()) {
-            return response()->json(['data' => new CourseResource($course)]);
+            return response()->json([
+                'data' => new CourseResource($course),
+                'categories' => $categories,
+            ]);
         }
 
         return Inertia::render('teaching/edit', [
             'id' => (string) $id,
             'course' => new CourseResource($course),
+            'categories' => $categories,
         ]);
     }
 
@@ -142,6 +202,42 @@ class TeachingController extends Controller
     }
 
     /**
+     * Archive a course (soft-delete).
+     */
+    public function archive(Request $request, Course $course): JsonResponse
+    {
+        // Only owner or admin can archive
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $updated = $this->courseService->archiveCourse($course);
+
+        return response()->json([
+            'data' => new CourseResource($updated),
+            'message' => 'Course archived successfully',
+        ]);
+    }
+
+    /**
+     * Restore an archived course.
+     */
+    public function restore(Request $request, Course $course): JsonResponse
+    {
+        // Only owner or admin can restore
+        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $updated = $this->courseService->restoreCourse($course);
+
+        return response()->json([
+            'data' => new CourseResource($updated),
+            'message' => 'Course restored successfully',
+        ]);
+    }
+
+    /**
      * Submit course for review.
      */
     public function submitForReview(Request $request, Course $course): JsonResponse
@@ -168,11 +264,7 @@ class TeachingController extends Controller
      */
     public function storeModule(StoreModuleRequest $request, Course $course): JsonResponse
     {
-        // Only owner can modify
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
-            abort(403);
-        }
-
+        // Authorization is handled in StoreModuleRequest
         $module = $this->lessonService->addModule($course->id, $request->validated());
 
         return response()->json([
@@ -184,12 +276,9 @@ class TeachingController extends Controller
     /**
      * Update a module.
      */
-    public function updateModule(StoreModuleRequest $request, Course $course, CourseModule $module): JsonResponse
+    public function updateModule(UpdateModuleRequest $request, Course $course, CourseModule $module): JsonResponse
     {
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
-            abort(403);
-        }
-
+        // Authorization is handled in UpdateModuleRequest
         $updated = $this->lessonService->updateModule($module, $request->validated());
 
         return response()->json([
@@ -210,6 +299,16 @@ class TeachingController extends Controller
         $this->lessonService->deleteModule($module);
 
         return response()->json(['message' => 'Module deleted successfully']);
+    }
+
+    /**
+     * Reorder modules within a course.
+     */
+    public function reorderModules(ReorderModulesRequest $request, Course $course): JsonResponse
+    {
+        $this->lessonService->reorderModules($course->id, $request->validated('order'));
+
+        return response()->json(['message' => 'Modules reordered successfully']);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -233,17 +332,10 @@ class TeachingController extends Controller
             abort(403);
         }
 
-        // Get VM assignment info for this lesson
-        $vmAssignment = $this->vmAssignmentService->getApprovedAssignment($lessonId)
-            ?? $lesson->pendingVMAssignment;
-        $availableTemplates = $this->vmAssignmentService->getAvailableTemplates();
-
         if ($request->wantsJson()) {
             return response()->json([
                 'lesson' => new LessonResource($lesson),
                 'course' => new CourseResource($course->load('modules.lessons')),
-                'vm_assignment' => $vmAssignment ? new LessonVMAssignmentResource($vmAssignment->load(['vmTemplate', 'assignedByUser', 'approvedByUser'])) : null,
-                'available_templates' => VMTemplateResource::collection($availableTemplates),
             ]);
         }
 
@@ -253,8 +345,6 @@ class TeachingController extends Controller
             'lessonId' => (string) $lessonId,
             'lesson' => new LessonResource($lesson),
             'course' => new CourseResource($course->load('modules.lessons')),
-            'vmAssignment' => $vmAssignment ? new LessonVMAssignmentResource($vmAssignment->load(['vmTemplate', 'assignedByUser', 'approvedByUser'])) : null,
-            'availableTemplates' => VMTemplateResource::collection($availableTemplates),
         ]);
     }
 
@@ -263,10 +353,7 @@ class TeachingController extends Controller
      */
     public function storeLesson(StoreLessonRequest $request, Course $course, CourseModule $module): JsonResponse
     {
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
-            abort(403);
-        }
-
+        // Authorization is handled in StoreLessonRequest
         $lesson = $this->lessonService->addLesson($module->id, $request->validated());
 
         return response()->json([
@@ -278,12 +365,9 @@ class TeachingController extends Controller
     /**
      * Update a lesson.
      */
-    public function updateLesson(StoreLessonRequest $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
+    public function updateLesson(UpdateLessonRequest $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
     {
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
-            abort(403);
-        }
-
+        // Authorization is handled in UpdateLessonRequest
         $updated = $this->lessonService->updateLesson($lesson, $request->validated());
 
         return response()->json([
@@ -304,5 +388,15 @@ class TeachingController extends Controller
         $this->lessonService->deleteLesson($lesson);
 
         return response()->json(['message' => 'Lesson deleted successfully']);
+    }
+
+    /**
+     * Reorder lessons within a module.
+     */
+    public function reorderLessons(ReorderLessonsRequest $request, Course $course, CourseModule $module): JsonResponse
+    {
+        $this->lessonService->reorderLessons($module->id, $request->validated('order'));
+
+        return response()->json(['message' => 'Lessons reordered successfully']);
     }
 }

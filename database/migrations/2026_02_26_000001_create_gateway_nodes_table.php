@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('ip');                      // "192.168.50.6"
             $table->unsignedInteger('port')->default(8000);
             $table->boolean('online')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->string('proxmox_vmid')->nullable();
+            $table->string('proxmox_node')->nullable();
+            $table->text('description')->nullable();
+            $table->string('proxmox_camera_api_url')->nullable();
             $table->timestamp('last_seen_at')->nullable();
             $table->timestamps();
 

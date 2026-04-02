@@ -1,13 +1,20 @@
 import { Link } from '@inertiajs/react';
 import {
+    Activity,
+    BanknoteIcon,
     BookOpen,
     CalendarCheck,
     CheckCircle,
     GraduationCap,
     LayoutGrid,
+    Monitor,
     Network,
     PenTool,
+    RotateCcw,
+    Server,
+    Users,
     Usb,
+    Wrench,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -23,13 +30,11 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
-
 /**
  * Admin-only sidebar navigation.
  * Only rendered for the admin role — other roles use the header layout.
  * Admin has full access: VM dashboard, teaching, learning, and admin functions.
  */
-
 const overviewNavItems: NavItem[] = [
     {
         title: 'Dashboard',
@@ -37,20 +42,43 @@ const overviewNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Analytics',
+        href: '/admin/dashboard',
+        icon: Activity,
+    },
+    {
         title: 'Infrastructure',
         href: '/admin/infrastructure',
         icon: Network,
     },
+    {
+        title: 'Users',
+        href: '/admin/users',
+        icon: Users,
+    },
 ];
-
 const managementNavItems: NavItem[] = [
+    {
+        title: 'Proxmox Servers',
+        href: '/admin/proxmox-servers',
+        icon: Server,
+    },
     {
         title: 'Hardware Gateways',
         href: '/hardware',
         icon: Usb,
     },
+    {
+        title: 'VM Templates',
+        href: '/admin/vm-templates',
+        icon: Monitor,
+    },
+    {
+        title: 'Maintenance',
+        href: '/admin/maintenance',
+        icon: Wrench,
+    },
 ];
-
 const contentNavItems: NavItem[] = [
     {
         title: 'Course Approvals',
@@ -58,12 +86,26 @@ const contentNavItems: NavItem[] = [
         icon: CheckCircle,
     },
     {
+        title: 'VM Assignments',
+        href: '/admin/vm-assignments',
+        icon: Monitor,
+    },
+    {
         title: 'Reservations',
         href: '/admin/reservations-page',
         icon: CalendarCheck,
     },
+    {
+        title: 'Payouts',
+        href: '/admin/payouts',
+        icon: BanknoteIcon,
+    },
+    {
+        title: 'Refunds',
+        href: '/admin/refunds',
+        icon: RotateCcw,
+    },
 ];
-
 const learningNavItems: NavItem[] = [
     {
         title: 'Browse Courses',
@@ -81,7 +123,6 @@ const learningNavItems: NavItem[] = [
         icon: PenTool,
     },
 ];
-
 export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -96,17 +137,17 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
-
             <SidebarContent>
                 <NavMain items={overviewNavItems} label="Overview" />
                 <NavMain items={managementNavItems} label="Management" />
                 <NavMain items={contentNavItems} label="Content & Scheduling" />
                 <NavMain items={learningNavItems} label="Learning" />
             </SidebarContent>
-
             <SidebarFooter>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
     );
 }
+
+

@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * API resource for Article model.
+ *
+ * @property \App\Models\Article $resource
+ */
+class ArticleResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->resource->id,
+            'lesson_id' => $this->resource->lesson_id,
+            'content' => $this->resource->content,
+            'word_count' => $this->resource->word_count,
+            'estimated_read_time_minutes' => $this->resource->estimated_read_time_minutes,
+            'created_at' => $this->resource->created_at?->toIso8601String(),
+            'updated_at' => $this->resource->updated_at?->toIso8601String(),
+        ];
+    }
+}

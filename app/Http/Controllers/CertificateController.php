@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Resources\CertificateResource;
+use App\Services\CertificateService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+class CertificateController extends Controller
+{
+    public function __construct(
+        private CertificateService $certificateService,
+    ) {}
+
+    /**
+     * Get user's certificates.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $certificates = $this->certificateService->getUserCertificates($request->user());
+
+        return response()->json([
+            'data' => CertificateResource::collection($certificates),
+        ]);
+    }
+
+    /**
+     * Issue a certificate for a completed course.
+     */
+    public function store(Request $request, int $courseId): JsonResponse
+    {
+        $certificate = $this->certificateService->issueCertificate(
+            user: $request->user(),
+            courseId: $courseId,
+        );
+
+        return response()->json([
+            'data' => new CertificateResource($certificate),
+            'message' => 'Certificate issued successfully. PDF is being generated.',
+        ], 201);
+    }
+
+    /**
+     * Check if user can receive a certificate for a course.
+     */
+    public function check(Request $request, int $courseId): JsonResponse
+    {
+        $certificate = $this->certificateService->getUserCertificateForCourse(
+            $request->user(),
+            $courseId,
+        );
+
+        if ($certificate) {
+            return response()->json([
+                'has_certificate' => true,
+                'data' => new CertificateResource($certificate->load('course')),
+            ]);
+        }
+
+        return response()->json([
+            'has_certificate' => false,
+            'data' => null,
+        ]);
+    }
+
+    /**
+     * Verify a certificate (public).
+     */
+    public function verify(string $hash): InertiaResponse|JsonResponse
+    {
+        $certificate = $this->certificateService->verifyCertificate($hash);
+
+        if (! $certificate) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Certificate not found.',
+                ], 404);
+            }
+
+            return Inertia::render('certificates/verify', [
+                'valid' => false,
+                'certificate' => null,
+            ]);
+        }
+
+        $data = [
+            'valid' => true,
+            'certificate' => new CertificateResource($certificate),
+        ];
+
+        if (request()->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('certificates/verify', $data);
+    }
+
+    /**
+     * Download certificate PDF.
+     */
+    public function download(string $hash): BinaryFileResponse|JsonResponse
+    {
+        $certificate = $this->certificateService->verifyCertificate($hash);
+
+        if (! $certificate) {
+            return response()->json([
+                'message' => 'Certificate not found.',
+            ], 404);
+        }
+
+        $pdfPath = $this->certificateService->getCertificatePdfPath($certificate);
+
+        if (! $pdfPath || ! file_exists($pdfPath)) {
+            return response()->json([
+                'message' => 'Certificate PDF is not ready. Please try again later.',
+            ], 404);
+        }
+
+        $filename = "Certificate-{$certificate->course->title}.pdf";
+
+        return response()->download($pdfPath, $filename);
+    }
+}

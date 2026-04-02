@@ -42,13 +42,13 @@ class PasswordResetApiTest extends TestCase
         $response = $this->postJson('/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'new-secure-password',
-            'password_confirmation' => 'new-secure-password',
+            'password' => 'NewSecure1Password',
+            'password_confirmation' => 'NewSecure1Password',
         ]);
 
         $response->assertOk();
 
-        $this->assertTrue(Hash::check('new-secure-password', $user->refresh()->password));
+        $this->assertTrue(Hash::check('NewSecure1Password', $user->refresh()->password));
     }
 
     public function test_reset_token_expires_after_60_minutes()
@@ -65,8 +65,8 @@ class PasswordResetApiTest extends TestCase
         $response = $this->postJson('/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'newpassword',
-            'password_confirmation' => 'newpassword',
+            'password' => 'NewSecure1Password',
+            'password_confirmation' => 'NewSecure1Password',
         ]);
 
         $response->assertStatus(400);

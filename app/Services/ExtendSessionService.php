@@ -39,13 +39,13 @@ class ExtendSessionService
         // If status is ACTIVE but expires_at has passed, the scheduler hasn't
         // cleaned it up yet — reject the extension request.
         if ($session->status !== VMSessionStatus::ACTIVE) {
-            throw new \Exception(
+            throw new \DomainException(
                 "Cannot extend session with status: {$session->status->value}"
             );
         }
 
         if ($session->expires_at && $session->expires_at->isPast()) {
-            throw new \Exception(
+            throw new \DomainException(
                 'Cannot extend session that has already expired. Please start a new session.'
             );
         }

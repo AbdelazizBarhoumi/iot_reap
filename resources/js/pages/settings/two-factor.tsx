@@ -11,19 +11,16 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { disable, enable, show } from '@/routes/two-factor';
 import type { BreadcrumbItem } from '@/types';
-
 type Props = {
     requiresConfirmation?: boolean;
     twoFactorEnabled?: boolean;
 };
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Two-Factor Authentication',
         href: show.url(),
     },
 ];
-
 export default function TwoFactor({
     requiresConfirmation = false,
     twoFactorEnabled = false,
@@ -39,13 +36,10 @@ export default function TwoFactor({
         errors,
     } = useTwoFactorAuth();
     const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Two-Factor Authentication" />
-
             <h1 className="sr-only">Two-Factor Authentication Settings</h1>
-
             <SettingsLayout>
                 <div className="space-y-6">
                     <Heading
@@ -62,13 +56,11 @@ export default function TwoFactor({
                                 login, which you can retrieve from the
                                 TOTP-supported application on your phone.
                             </p>
-
                             <TwoFactorRecoveryCodes
                                 recoveryCodesList={recoveryCodesList}
                                 fetchRecoveryCodes={fetchRecoveryCodes}
                                 errors={errors}
                             />
-
                             <div className="relative inline">
                                 <Form {...disable.form()}>
                                     {({ processing }) => (
@@ -92,7 +84,6 @@ export default function TwoFactor({
                                 This pin can be retrieved from a TOTP-supported
                                 application on your phone.
                             </p>
-
                             <div>
                                 {hasSetupData ? (
                                     <Button
@@ -122,7 +113,6 @@ export default function TwoFactor({
                             </div>
                         </div>
                     )}
-
                     <TwoFactorSetupModal
                         isOpen={showSetupModal}
                         onClose={() => setShowSetupModal(false)}
@@ -139,3 +129,4 @@ export default function TwoFactor({
         </AppLayout>
     );
 }
+

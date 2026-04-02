@@ -12,11 +12,9 @@ import {
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
-
 export default function TwoFactorChallenge() {
     const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
     const [code, setCode] = useState<string>('');
-
     const authConfigContent = useMemo<{
         title: string;
         description: string;
@@ -30,7 +28,6 @@ export default function TwoFactorChallenge() {
                 toggleText: 'login using an authentication code',
             };
         }
-
         return {
             title: 'Authentication Code',
             description:
@@ -38,20 +35,17 @@ export default function TwoFactorChallenge() {
             toggleText: 'login using a recovery code',
         };
     }, [showRecoveryInput]);
-
     const toggleRecoveryMode = (clearErrors: () => void): void => {
         setShowRecoveryInput(!showRecoveryInput);
         clearErrors();
         setCode('');
     };
-
     return (
         <AuthLayout
             title={authConfigContent.title}
             description={authConfigContent.description}
         >
             <Head title="Two-Factor Authentication" />
-
             <div className="space-y-6">
                 <Form
                     {...store.form()}
@@ -101,7 +95,6 @@ export default function TwoFactorChallenge() {
                                     <InputError message={errors.code} />
                                 </div>
                             )}
-
                             <Button
                                 type="submit"
                                 className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
@@ -109,7 +102,6 @@ export default function TwoFactorChallenge() {
                             >
                                 Continue
                             </Button>
-
                             <div className="text-center text-sm text-muted-foreground">
                                 <span>or you can </span>
                                 <button
@@ -129,3 +121,4 @@ export default function TwoFactorChallenge() {
         </AuthLayout>
     );
 }
+

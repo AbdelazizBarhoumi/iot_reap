@@ -13,4 +13,17 @@ enum UserRole: string
     {
         return array_map(fn (self $c) => $c->value, self::cases());
     }
+
+    /**
+     * Get human-readable label for the role.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::ENGINEER => 'Engineer',
+            self::TEACHER => 'Teacher',
+            self::ADMIN => 'Administrator',
+            self::SECURITY_OFFICER => 'Security Officer',
+        };
+    }
 }

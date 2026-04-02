@@ -1,12 +1,9 @@
 import { useId } from 'react';
-
 interface PlaceholderPatternProps {
     className?: string;
 }
-
 export function PlaceholderPattern({ className }: PlaceholderPatternProps) {
     const patternId = useId();
-
     return (
         <svg className={className} fill="none">
             <defs>
@@ -18,3 +15,5 @@ export function PlaceholderPattern({ className }: PlaceholderPatternProps) {
         </svg>
     );
 }
+
+

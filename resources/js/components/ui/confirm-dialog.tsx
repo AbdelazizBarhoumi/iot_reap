@@ -2,7 +2,6 @@
  * Confirmation Dialog Component
  * Reusable confirmation dialog for destructive actions
  */
-
 import { AlertTriangle } from 'lucide-react';
 import {
     AlertDialog,
@@ -14,7 +13,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
 interface ConfirmDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -26,7 +24,6 @@ interface ConfirmDialogProps {
     variant?: 'destructive' | 'default';
     loading?: boolean;
 }
-
 export function ConfirmDialog({
     open,
     onOpenChange,
@@ -75,3 +72,5 @@ export function ConfirmDialog({
         </AlertDialog>
     );
 }
+
+

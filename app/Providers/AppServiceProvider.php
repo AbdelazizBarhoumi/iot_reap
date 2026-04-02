@@ -14,12 +14,15 @@ use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxLoadBalancer;
 use App\Services\ProxmoxServerSelector;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -113,12 +116,14 @@ class AppServiceProvider extends ServiceProvider
         // model strict
         Model::shouldBeStrict();
         $this->configureDefaults();
+        $this->configureRateLimiting();
 
         // register `role:` route middleware alias
         $this->app->make(Router::class)->aliasMiddleware('role', \App\Http\Middleware\EnsureRole::class);
 
         // gates based on UserRole enum (names per phase-1 spec)
         Gate::define('admin-only', fn (User $user) => $user->hasRole(UserRole::ADMIN));
+        Gate::define('admin', fn (User $user) => $user->hasRole(UserRole::ADMIN));
         Gate::define('security-officer-only', fn (User $user) => $user->hasRole(UserRole::SECURITY_OFFICER));
         Gate::define('provision-vm', fn (User $user) => $user->hasAnyRole([
             UserRole::ENGINEER->value,
@@ -159,5 +164,51 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null
         );
+    }
+
+    /**
+     * Configure rate limiting for API and auth routes.
+     */
+    protected function configureRateLimiting(): void
+    {
+        // General API rate limit: 100 requests per minute for authenticated users
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(100)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Authentication routes: 10 attempts per minute to prevent brute force
+        RateLimiter::for('auth', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        // VM session provisioning: 5 per minute per user (expensive operation)
+        RateLimiter::for('vm-provision', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Search requests: 30 per minute to prevent abuse
+        RateLimiter::for('search', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Forum posting: 10 threads/replies per minute per user
+        RateLimiter::for('forum', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Course creation: 5 per hour per user (to prevent spam)
+        RateLimiter::for('course-creation', function (Request $request) {
+            return Limit::perHour(50000)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Admin endpoints: higher limit for trusted users
+        RateLimiter::for('admin', function (Request $request) {
+            return Limit::perMinute(200)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Global fallback: 60 requests per minute
+        RateLimiter::for('global', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
     }
 }

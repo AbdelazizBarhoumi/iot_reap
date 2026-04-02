@@ -10,6 +10,8 @@ use App\Repositories\UsbDeviceReservationRepository;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Controller for USB device reservations.
@@ -25,13 +27,20 @@ class UsbDeviceReservationController extends Controller
 
     /**
      * List user's reservations.
+     * Returns Inertia page for browser requests, JSON for API requests.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
         $reservations = $this->reservationRepository->findByUser(auth()->user());
 
-        return response()->json([
-            'data' => UsbDeviceReservationResource::collection($reservations),
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => UsbDeviceReservationResource::collection($reservations),
+            ]);
+        }
+
+        return Inertia::render('reservations/MyReservationsPage', [
+            'reservations' => UsbDeviceReservationResource::collection($reservations),
         ]);
     }
 
@@ -67,7 +76,7 @@ class UsbDeviceReservationController extends Controller
                 'message' => 'Reservation request submitted for approval',
                 'data' => new UsbDeviceReservationResource($reservation->load(['device.gatewayNode', 'user'])),
             ], 201);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

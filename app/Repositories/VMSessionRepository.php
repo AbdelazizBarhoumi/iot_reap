@@ -36,6 +36,8 @@ class VMSessionRepository
      * Filters by both status=ACTIVE and expires_at > now() to exclude
      * sessions that are technically still marked active but have passed
      * their expiration time (scheduler may not have run yet).
+     *
+     * @deprecated Unused - VMSession scopes handle this query directly. Candidate for removal.
      */
     public function findActiveByUser(User $user): Collection
     {
@@ -48,6 +50,8 @@ class VMSessionRepository
 
     /**
      * Find all sessions for a user (all statuses).
+     *
+     * @deprecated Unused - VMSession::where() used directly. Candidate for removal.
      */
     public function findByUser(User $user): Collection
     {
@@ -61,6 +65,8 @@ class VMSessionRepository
      * Find all sessions for a user ensuring their server is active.
      *
      * Excludes sessions on inactive servers.
+     *
+     * @deprecated Unused - no service calls this method. Candidate for removal.
      */
     public function allUserSessions(User $user): Collection
     {
@@ -73,6 +79,8 @@ class VMSessionRepository
 
     /**
      * Find all active sessions for a user on active servers.
+     *
+     * @deprecated Unused - VMSessionService queries directly. Candidate for removal.
      */
     public function findActiveByUserOnActiveServers(User $user): Collection
     {
@@ -97,21 +105,30 @@ class VMSessionRepository
     }
 
     /**
-     * Expire sessions that have passed their expiration time.
+     * Get overdue sessions that need to be expired.
      *
-     * Includes PENDING and PROVISIONING sessions that timed out
-     * before they could activate (e.g. Proxmox was slow, listener failed).
+     * Returns sessions that are still active/pending/provisioning but have
+     * passed their expiration time.
      *
-     * Also performs best-effort Guacamole connection cleanup for any
-     * expired sessions that still have a connection ID — this prevents
-     * orphaned connections in Guacamole.
-     *
-     * @return int Number of sessions expired
+     * @deprecated Unused - findOverdueWithGuacamoleConnections() is used instead. Candidate for removal.
      */
-    public function expireOverdueSessions(): int
+    public function findOverdueSessions(): Collection
     {
-        // First, clean up Guacamole connections for sessions that are about to expire
-        $overdueWithGuac = VMSession::whereIn('status', [
+        return VMSession::whereIn('status', [
+            VMSessionStatus::ACTIVE,
+            VMSessionStatus::PENDING,
+            VMSessionStatus::PROVISIONING,
+        ])
+            ->where('expires_at', '<=', now())
+            ->get();
+    }
+
+    /**
+     * Get overdue sessions that have Guacamole connections to clean up.
+     */
+    public function findOverdueWithGuacamoleConnections(): Collection
+    {
+        return VMSession::whereIn('status', [
             VMSessionStatus::ACTIVE,
             VMSessionStatus::PENDING,
             VMSessionStatus::PROVISIONING,
@@ -119,22 +136,15 @@ class VMSessionRepository
             ->where('expires_at', '<=', now())
             ->whereNotNull('guacamole_connection_id')
             ->get();
+    }
 
-        foreach ($overdueWithGuac as $session) {
-            try {
-                app(\App\Services\GuacamoleClientInterface::class)
-                    ->deleteConnection((string) $session->guacamole_connection_id);
-                $session->update(['guacamole_connection_id' => null]);
-            } catch (\Throwable $e) {
-                // Log but don't block — connection may already be gone
-                \Illuminate\Support\Facades\Log::warning('Lazy expiration: Guacamole cleanup failed', [
-                    'session_id' => $session->id,
-                    'connection_id' => $session->guacamole_connection_id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
+    /**
+     * Mark overdue sessions as expired (database-only operation).
+     *
+     * @return int Number of sessions expired
+     */
+    public function markOverdueAsExpired(): int
+    {
         return VMSession::whereIn('status', [
             VMSessionStatus::ACTIVE,
             VMSessionStatus::PENDING,
@@ -156,6 +166,8 @@ class VMSessionRepository
      * Count active sessions for a user.
      *
      * Only counts sessions that are both status=ACTIVE and not past expires_at.
+     *
+     * @deprecated Unused - session limits checked via VMSession::count() directly. Candidate for removal.
      */
     public function countActiveByUser(User $user): int
     {
@@ -167,6 +179,8 @@ class VMSessionRepository
 
     /**
      * Find pending sessions (not yet started).
+     *
+     * @deprecated Unused - admin dashboard queries directly with scopes. Candidate for removal.
      */
     public function findPending(): Collection
     {
@@ -177,6 +191,8 @@ class VMSessionRepository
 
     /**
      * Find sessions that failed to provision.
+     *
+     * @deprecated Unused - admin dashboard queries directly with scopes. Candidate for removal.
      */
     public function findFailed(): Collection
     {

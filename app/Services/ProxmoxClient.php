@@ -58,6 +58,8 @@ class ProxmoxClient implements ProxmoxClientInterface
     /**
      * Clone a template to create a new VM.
      *
+     * @deprecated Unused - current architecture uses pre-existing VMs with snapshots instead of cloning. Candidate for removal.
+     *
      * @throws ProxmoxApiException
      */
     public function cloneTemplate(int $templateVmid, string $nodeName, ?int $newVmid = null): int
@@ -358,6 +360,8 @@ class ProxmoxClient implements ProxmoxClientInterface
      *
      * Proxmox endpoint: GET /nodes/{node}/lxc/{vmid}/config
      *
+     * @deprecated Unused - container config not needed in current architecture. Candidate for removal.
+     *
      * @return array<string, mixed>
      *
      * @throws ProxmoxApiException
@@ -430,6 +434,8 @@ class ProxmoxClient implements ProxmoxClientInterface
      * Get the result of a command executed via guest agent.
      *
      * Proxmox endpoint: GET /nodes/{node}/qemu/{vmid}/agent/exec-status?pid={pid}
+     *
+     * @internal Used internally by execInVmAndWait(). Prefer execInVmAndWait() for external use.
      *
      * @param  string  $nodeName  The node name where the VM is running
      * @param  int  $vmid  The VM ID

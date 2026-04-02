@@ -695,6 +695,15 @@ class ProxmoxClientFake extends ProxmoxClient
             ];
         }
 
+        // Windows and Linux usbip port command - simulate a device attached on port 00
+        if (str_contains($command, 'usbip port') || str_contains($command, 'usbip.exe port')) {
+            return [
+                'exitcode' => 0,
+                'out-data' => "Port 00: <Device in Use> at High Speed(480Mbps)\n    Test Device (0000:0000)\n    1-1 -> usbip://192.168.50.6:3240/1-1\n        -> remote bus/dev 001/002",
+                'err-data' => '',
+            ];
+        }
+
         // Windows batch files for usbip commands (written via writeFileInVm)
         // e.g., C:\usbip-cmd.bat
         if (str_contains($command, 'usbip-cmd') && str_contains($command, '.bat')) {

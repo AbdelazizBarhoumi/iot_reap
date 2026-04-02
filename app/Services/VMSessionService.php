@@ -1,0 +1,238 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use App\Models\VMSession;
+use App\Repositories\VMSessionRepository;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Service for VM session business logic.
+ *
+ * Handles VM session lifecycle, Guacamole integration, and cleanup operations.
+ */
+class VMSessionService
+{
+    public function __construct(
+        private readonly VMSessionRepository $vmSessionRepository,
+        private readonly GuacamoleClientInterface $guacamoleClient,
+        private readonly ProxmoxClientInterface $proxmoxClient,
+    ) {}
+
+    /**
+     * Create a new VM session.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function create(array $data): VMSession
+    {
+        Log::info('Creating VM session', ['user_id' => $data['user_id'] ?? null]);
+
+        return $this->vmSessionRepository->create($data);
+    }
+
+    /**
+     * Find active sessions for a user.
+     */
+    public function getActiveByUser(User $user): Collection
+    {
+        return $this->vmSessionRepository->findActiveByUser($user);
+    }
+
+    /**
+     * Find active sessions for a user on active servers.
+     */
+    public function getActiveByUserOnActiveServers(User $user): Collection
+    {
+        return $this->vmSessionRepository->findActiveByUserOnActiveServers($user);
+    }
+
+    /**
+     * Update a session's status and other fields.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function updateSession(VMSession $session, array $data): VMSession
+    {
+        Log::info('Updating VM session', [
+            'session_id' => $session->id,
+            'old_status' => $session->status?->value,
+            'new_status' => $data['status'] ?? null,
+        ]);
+
+        return $this->vmSessionRepository->update($session, $data);
+    }
+
+    /**
+     * Expire overdue sessions and clean up Guacamole connections.
+     *
+     * This method handles the business logic for session expiry:
+     * 1. Find sessions with Guacamole connections that are overdue
+     * 2. Clean up Guacamole connections
+     * 3. Mark sessions as expired
+     *
+     * @return int Number of sessions expired
+     */
+    public function expireOverdueSessions(): int
+    {
+        $overdueWithConnections = $this->vmSessionRepository->findOverdueWithGuacamoleConnections();
+
+        $cleaned = 0;
+        foreach ($overdueWithConnections as $session) {
+            try {
+                // Clean up Guacamole connection
+                if ($session->guacamole_connection_id) {
+                    $this->cleanupGuacamoleConnection($session);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to cleanup Guacamole connection during expiry', [
+                    'session_id' => $session->id,
+                    'connection_id' => $session->guacamole_connection_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            $cleaned++;
+        }
+
+        // Mark all overdue sessions as expired (database operation only)
+        $totalExpired = $this->vmSessionRepository->markOverdueAsExpired();
+
+        Log::info('Expired overdue VM sessions', [
+            'total_expired' => $totalExpired,
+            'guacamole_cleaned' => $cleaned,
+        ]);
+
+        return $totalExpired;
+    }
+
+    /**
+     * Clean up Guacamole connection for a session.
+     */
+    public function cleanupGuacamoleConnection(VMSession $session): void
+    {
+        if (! $session->guacamole_connection_id) {
+            return;
+        }
+
+        try {
+            Log::info('Cleaning up Guacamole connection', [
+                'session_id' => $session->id,
+                'connection_id' => $session->guacamole_connection_id,
+            ]);
+
+            // Delete Guacamole connection
+            $this->guacamoleClient->deleteConnection($session->guacamole_connection_id);
+
+            // Clear the connection ID from the session
+            $this->vmSessionRepository->update($session, [
+                'guacamole_connection_id' => null,
+            ]);
+
+            Log::info('Guacamole connection cleaned up successfully', [
+                'session_id' => $session->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to cleanup Guacamole connection', [
+                'session_id' => $session->id,
+                'connection_id' => $session->guacamole_connection_id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Create Guacamole connection for a session.
+     *
+     * @param  array<string, mixed>  $connectionParams
+     */
+    public function createGuacamoleConnection(VMSession $session, array $connectionParams): string
+    {
+        try {
+            Log::info('Creating Guacamole connection for session', [
+                'session_id' => $session->id,
+            ]);
+
+            $connectionId = $this->guacamoleClient->createConnection([
+                'name' => "session-{$session->id}",
+                'protocol' => $connectionParams['protocol'] ?? 'rdp',
+                'parameters' => $connectionParams,
+            ]);
+
+            // Update session with connection ID
+            $this->vmSessionRepository->update($session, [
+                'guacamole_connection_id' => $connectionId,
+            ]);
+
+            Log::info('Guacamole connection created successfully', [
+                'session_id' => $session->id,
+                'connection_id' => $connectionId,
+            ]);
+
+            return $connectionId;
+        } catch (\Exception $e) {
+            Log::error('Failed to create Guacamole connection', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Count active sessions for a user.
+     */
+    public function countActiveByUser(User $user): int
+    {
+        return $this->vmSessionRepository->countActiveByUser($user);
+    }
+
+    /**
+     * Delete a session and clean up external resources.
+     */
+    public function deleteSession(VMSession $session): bool
+    {
+        Log::info('Deleting VM session', ['session_id' => $session->id]);
+
+        // Clean up Guacamole connection first
+        if ($session->guacamole_connection_id) {
+            try {
+                $this->cleanupGuacamoleConnection($session);
+            } catch (\Exception $e) {
+                Log::warning('Failed to cleanup Guacamole connection during deletion', [
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Continue with deletion even if Guacamole cleanup fails
+            }
+        }
+
+        return $this->vmSessionRepository->delete($session);
+    }
+
+    /**
+     * Get sessions by user (all statuses).
+     */
+    public function getSessionsByUser(User $user): Collection
+    {
+        return $this->vmSessionRepository->findByUser($user);
+    }
+
+    /**
+     * Get pending sessions.
+     */
+    public function getPendingSessions(): Collection
+    {
+        return $this->vmSessionRepository->findPending();
+    }
+
+    /**
+     * Get failed sessions.
+     */
+    public function getFailedSessions(): Collection
+    {
+        return $this->vmSessionRepository->findFailed();
+    }
+}

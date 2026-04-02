@@ -15,10 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
-
     return (
         <div className="space-y-6">
             <Heading
@@ -33,7 +31,6 @@ export default function DeleteUser() {
                         Please proceed with caution, this cannot be undone.
                     </p>
                 </div>
-
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button
@@ -53,7 +50,6 @@ export default function DeleteUser() {
                             enter your password to confirm you would like to
                             permanently delete your account.
                         </DialogDescription>
-
                         <Form
                             {...ProfileController.destroy.form()}
                             options={{
@@ -72,7 +68,6 @@ export default function DeleteUser() {
                                         >
                                             Password
                                         </Label>
-
                                         <Input
                                             id="password"
                                             type="password"
@@ -81,10 +76,8 @@ export default function DeleteUser() {
                                             placeholder="Password"
                                             autoComplete="current-password"
                                         />
-
                                         <InputError message={errors.password} />
                                     </div>
-
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
                                             <Button
@@ -96,7 +89,6 @@ export default function DeleteUser() {
                                                 Cancel
                                             </Button>
                                         </DialogClose>
-
                                         <Button
                                             variant="destructive"
                                             disabled={processing}
@@ -119,3 +111,5 @@ export default function DeleteUser() {
         </div>
     );
 }
+
+

@@ -1303,6 +1303,8 @@ class GatewayService
      * If the VM is not running, the device will be marked as pending attachment
      * and auto-attached when the VM starts.
      *
+     * @deprecated Unused - use attachToVm() via attachToSession() instead. Candidate for removal.
+     *
      * @param  UsbDevice  $device  The USB device to attach
      * @param  int  $vmid  The Proxmox VM ID
      * @param  string  $nodeName  The Proxmox node name
@@ -1932,6 +1934,8 @@ class GatewayService
      * This should be called when a VM starts to attach any devices
      * that were waiting for it.
      *
+     * @deprecated Unused - pending attachments handled by AutoReattachDedicatedDevicesListener. Candidate for removal.
+     *
      * @param  int  $vmid  The Proxmox VM ID
      * @param  ProxmoxServer  $server  The Proxmox server
      * @return array{attached: int, failed: int, errors: array<string>}
@@ -2321,6 +2325,8 @@ class GatewayService
 
     /**
      * Get status of a camera stream on a gateway node.
+     *
+     * @deprecated Unused - stream status not currently exposed via API. Candidate for removal.
      *
      * @param  GatewayNode  $node  The gateway node
      * @param  string  $streamKey  The stream key to check

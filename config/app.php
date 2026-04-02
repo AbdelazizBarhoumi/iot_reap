@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vite Development Server
+    |--------------------------------------------------------------------------
+    |
+    | Configure the Vite dev server host and port for CSP and HMR.
+    |
+    */
+
+    'vite_host' => env('VITE_HOST', 'localhost'),
+    'vite_port' => env('VITE_PORT', 5173),
+
 ];

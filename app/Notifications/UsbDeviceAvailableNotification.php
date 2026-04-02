@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\CustomDatabaseChannel;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
 use Illuminate\Bus\Queueable;
@@ -26,7 +27,7 @@ class UsbDeviceAvailableNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return [CustomDatabaseChannel::class, 'mail'];
     }
 
     /**
@@ -49,7 +50,25 @@ class UsbDeviceAvailableNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
+     * Get the data for the custom database channel.
+     */
+    public function toCustomDatabase(object $notifiable): array
+    {
+        return [
+            'type' => 'usb_device_available',
+            'title' => 'USB Device Available',
+            'message' => "USB device \"{$this->device->name}\" is now available.",
+            'device_id' => $this->device->id,
+            'device_name' => $this->device->name,
+            'device_busid' => $this->device->busid,
+            'gateway_name' => $this->device->gatewayNode->name,
+            'session_id' => $this->queueEntry->session_id,
+            'action_url' => "/sessions/{$this->queueEntry->session_id}",
+        ];
+    }
+
+    /**
+     * Get the array representation of the notification for other channels.
      */
     public function toArray(object $notifiable): array
     {
