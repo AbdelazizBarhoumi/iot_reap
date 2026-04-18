@@ -30,11 +30,21 @@ class CreateNewUser implements CreatesNewUsers
             ])],
         ])->validate();
 
-        return User::create([
+        $role = $input['role'] ?? UserRole::ENGINEER->value;
+
+        $data = [
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
-            'role' => $input['role'] ?? UserRole::ENGINEER->value,
-        ]);
+            'role' => $role,
+        ];
+
+        // Teacher accounts must be explicitly approved by an admin.
+        if ($role === UserRole::TEACHER->value) {
+            $data['teacher_approved_at'] = null;
+            $data['teacher_approved_by'] = null;
+        }
+
+        return User::create($data);
     }
 }

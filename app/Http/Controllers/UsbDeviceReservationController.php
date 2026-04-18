@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Hardware\CreateReservationRequest;
 use App\Http\Resources\UsbDeviceReservationResource;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
-use App\Models\UsbDeviceReservation;
 use App\Repositories\UsbDeviceReservationRepository;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
@@ -74,7 +74,7 @@ class UsbDeviceReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Reservation request submitted for approval',
-                'data' => new UsbDeviceReservationResource($reservation->load(['device.gatewayNode', 'user'])),
+                'data' => new UsbDeviceReservationResource($reservation->load(['reservable', 'user'])),
             ], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
@@ -87,16 +87,20 @@ class UsbDeviceReservationController extends Controller
     /**
      * Show a specific reservation.
      */
-    public function show(UsbDeviceReservation $reservation): JsonResponse
+    public function show(Reservation $reservation): JsonResponse
     {
-        // Users can only view their own reservations
+        // Users can only view their own reservations, and it must be a USB device reservation
         if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
         }
 
+        if ($reservation->reservable_type !== 'App\Models\UsbDevice') {
+            abort(404);
+        }
+
         return response()->json([
             'data' => new UsbDeviceReservationResource(
-                $reservation->load(['device.gatewayNode', 'user', 'approver'])
+                $reservation->load(['reservable', 'user', 'approver'])
             ),
         ]);
     }
@@ -104,11 +108,15 @@ class UsbDeviceReservationController extends Controller
     /**
      * Cancel a reservation.
      */
-    public function cancel(UsbDeviceReservation $reservation): JsonResponse
+    public function cancel(Reservation $reservation): JsonResponse
     {
         // Users can only cancel their own reservations
         if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
+        }
+
+        if ($reservation->reservable_type !== 'App\Models\UsbDevice') {
+            abort(404);
         }
 
         try {
@@ -135,7 +143,8 @@ class UsbDeviceReservationController extends Controller
         $startDate = $request->query('start', now()->startOfWeek()->toDateString());
         $endDate = $request->query('end', now()->addWeeks(4)->endOfWeek()->toDateString());
 
-        $reservations = UsbDeviceReservation::where('usb_device_id', $device->id)
+        $reservations = Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('reservable_id', $device->id)
             ->whereIn('status', ['pending', 'approved', 'active'])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('requested_start_at', [$startDate, $endDate])

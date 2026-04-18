@@ -15,9 +15,12 @@ class UsbDeviceReservationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // For USB devices, reservable_id is the usb_device_id
+        $usbDeviceId = $this->reservable_id;
+
         return [
             'id' => $this->id,
-            'usb_device_id' => $this->usb_device_id,
+            'usb_device_id' => $usbDeviceId,
             'user_id' => $this->user_id,
             'approved_by' => $this->approved_by,
             'status' => $this->status->value,
@@ -56,7 +59,7 @@ class UsbDeviceReservationResource extends JsonResource
             'can_modify' => $this->canModify(),
 
             // Relations
-            'device' => new UsbDeviceResource($this->whenLoaded('device')),
+            'device' => new UsbDeviceResource($this->whenLoaded('reservable')),
             'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,

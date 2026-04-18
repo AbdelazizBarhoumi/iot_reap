@@ -8,7 +8,7 @@ use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\QuizQuestionOption;
 use App\Models\User;
-use App\Repositories\LessonProgressRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use App\Repositories\QuizAttemptRepository;
 use App\Repositories\QuizQuestionRepository;
 use App\Repositories\QuizRepository;
@@ -31,7 +31,7 @@ class QuizServiceTest extends TestCase
 
     private QuizAttemptRepository $attemptRepository;
 
-    private LessonProgressRepository $progressRepository;
+    private TrainingUnitProgressRepository $progressRepository;
 
     private User $user;
 
@@ -44,7 +44,7 @@ class QuizServiceTest extends TestCase
         $this->quizRepository = $this->createMock(QuizRepository::class);
         $this->questionRepository = $this->createMock(QuizQuestionRepository::class);
         $this->attemptRepository = $this->createMock(QuizAttemptRepository::class);
-        $this->progressRepository = $this->createMock(LessonProgressRepository::class);
+        $this->progressRepository = $this->createMock(TrainingUnitProgressRepository::class);
 
         $this->service = new QuizService(
             $this->quizRepository,
@@ -56,14 +56,14 @@ class QuizServiceTest extends TestCase
         $this->user = User::factory()->create();
         $this->quiz = $this->createMock(Quiz::class);
         $this->quiz->id = 1;
-        $this->quiz->lesson_id = 10;
+        $this->quiz->training_unit_id = 10;
         $this->quiz->passing_score = 70;
         $this->quiz->show_correct_answers = true;
     }
 
     public function test_create_creates_quiz_with_default_values(): void
     {
-        $lessonId = 42;
+        $trainingUnitId = 42;
         $data = [
             'title' => 'Test Quiz',
             'description' => 'A test quiz',
@@ -75,8 +75,8 @@ class QuizServiceTest extends TestCase
         $this->quizRepository
             ->expects($this->once())
             ->method('create')
-            ->with($this->callback(function ($createData) use ($lessonId, $data) {
-                return $createData['lesson_id'] === $lessonId &&
+            ->with($this->callback(function ($createData) use ($trainingUnitId, $data) {
+                return $createData['training_unit_id'] === $trainingUnitId &&
                        $createData['title'] === $data['title'] &&
                        $createData['description'] === $data['description'] &&
                        $createData['passing_score'] === 80 &&
@@ -85,7 +85,7 @@ class QuizServiceTest extends TestCase
             }))
             ->willReturn($expectedQuiz);
 
-        $result = $this->service->create($lessonId, $data);
+        $result = $this->service->create($trainingUnitId, $data);
 
         $this->assertEquals($expectedQuiz, $result);
     }
@@ -188,7 +188,7 @@ class QuizServiceTest extends TestCase
         $this->markTestSkipped('Use integration tests for complex grading logic');
     }
 
-    public function test_submit_attempt_marks_lesson_progress_when_passed_skipped(): void
+    public function test_submit_attempt_marks_training_unit_progress_when_passed_skipped(): void
     {
         // Placeholder - refactor with integration tests
         $this->markTestSkipped('Use integration tests for complex progress logic');
@@ -267,18 +267,18 @@ class QuizServiceTest extends TestCase
         $this->assertEquals($expectedStats, $result);
     }
 
-    public function test_get_quiz_for_lesson_returns_quiz_from_repository(): void
+    public function test_get_quiz_for_training_unit_returns_quiz_from_repository(): void
     {
-        $lessonId = 42;
-        $expectedQuiz = new Quiz(['lesson_id' => $lessonId]);
+        $trainingUnitId = 42;
+        $expectedQuiz = new Quiz(['training_unit_id' => $trainingUnitId]);
 
         $this->quizRepository
             ->expects($this->once())
-            ->method('findByLessonIdWithQuestions')
-            ->with($lessonId)
+            ->method('findByTrainingUnitIdWithQuestions')
+            ->with($trainingUnitId)
             ->willReturn($expectedQuiz);
 
-        $result = $this->service->getQuizForLesson($lessonId);
+        $result = $this->service->getQuizForTrainingUnit($trainingUnitId);
 
         $this->assertEquals($expectedQuiz, $result);
     }

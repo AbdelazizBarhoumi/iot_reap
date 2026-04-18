@@ -73,14 +73,14 @@ class NotificationFactory extends Factory
     }
 
     /**
-     * Set notification type to course approved.
+     * Set notification type to trainingPath approved.
      */
-    public function courseApproved(): static
+    public function trainingPathApproved(): static
     {
         return $this->state(fn (array $attributes) => [
             'type' => NotificationType::COURSE_APPROVED,
-            'title' => 'Course Approved!',
-            'message' => 'Your course has been approved.',
+            'title' => 'TrainingPath Approved!',
+            'message' => 'Your trainingPath has been approved.',
         ]);
     }
 

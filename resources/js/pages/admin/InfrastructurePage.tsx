@@ -27,9 +27,9 @@ import {
     Eye,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import * as adminApi from '@/api/admin.api';
 import { adminCameraApi } from '@/api/camera.api';
 import client from '@/api/client';
-import { adminApi } from '@/api/vm.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -204,11 +204,10 @@ function NodeCard({ node, onSelectNode, selectedNodeId }: NodeCardProps) {
     );
 }
 interface VMsPanelProps {
-    nodeId: number;
     nodeName: string;
     onClose: () => void;
 }
-function VMsPanel({ nodeId, nodeName, onClose }: VMsPanelProps) {
+function VMsPanel({ nodeName, onClose }: VMsPanelProps) {
     const [vms, setVms] = useState<ProxmoxVM[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -217,14 +216,14 @@ function VMsPanel({ nodeId, nodeName, onClose }: VMsPanelProps) {
         setLoading(true);
         setError(null);
         try {
-            const data = await adminApi.getNodeVMs(nodeId);
-            setVms(data);
+            const response = await adminApi.getNodeVMs(nodeName);
+            setVms((response.data as unknown as ProxmoxVM[]) || []);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to load VMs');
         } finally {
             setLoading(false);
         }
-    }, [nodeId]);
+    }, [nodeName]);
     useEffect(() => {
         fetchVMs();
     }, [fetchVMs]);
@@ -236,16 +235,16 @@ function VMsPanel({ nodeId, nodeName, onClose }: VMsPanelProps) {
         try {
             switch (action) {
                 case 'start':
-                    await adminApi.startVM(nodeId, vmid);
+                    await adminApi.startVM(nodeName, vmid);
                     break;
                 case 'stop':
-                    await adminApi.stopVM(nodeId, vmid);
+                    await adminApi.stopVM(nodeName, vmid);
                     break;
                 case 'reboot':
-                    await adminApi.rebootVM(nodeId, vmid);
+                    await adminApi.rebootVM(nodeName, vmid);
                     break;
                 case 'shutdown':
-                    await adminApi.shutdownVM(nodeId, vmid);
+                    await adminApi.shutdownVM(nodeName, vmid);
                     break;
             }
             setTimeout(fetchVMs, 1000); // Refresh after action
@@ -462,7 +461,6 @@ function ServerCard({
                                 </div>
                                 {selectedNode && (
                                     <VMsPanel
-                                        nodeId={selectedNode.id}
                                         nodeName={selectedNode.name}
                                         onClose={() => setSelectedNodeId(null)}
                                     />
@@ -524,14 +522,14 @@ export default function InfrastructurePage() {
     const fetchNodes = useCallback(async () => {
         setNodesLoading(true);
         try {
-            const data = await adminApi.getNodes();
-            setNodes(data);
+            const response = await adminApi.getNodes();
+            setNodes((response.data as unknown as ProxmoxNode[]) || []);
         } catch (err) {
             console.error('Failed to fetch nodes:', err);
         } finally {
             setNodesLoading(false);
         }
-    }, []);
+    }, []);;
     const fetchCameras = useCallback(async () => {
         setCamerasLoading(true);
         try {

@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
-use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use App\Services\ArticleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,9 +21,9 @@ class ArticleControllerTest extends TestCase
 
     private User $admin;
 
-    private Course $course;
+    private TrainingPath $trainingPath;
 
-    private Lesson $lesson;
+    private TrainingUnit $trainingUnit;
 
     protected function setUp(): void
     {
@@ -33,9 +33,9 @@ class ArticleControllerTest extends TestCase
         $this->student = User::factory()->create();
         $this->admin = User::factory()->admin()->create();
 
-        $this->course = Course::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
-        $module = CourseModule::factory()->create(['course_id' => $this->course->id]);
-        $this->lesson = Lesson::factory()->reading()->create(['module_id' => $module->id]);
+        $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $this->trainingPath->id]);
+        $this->trainingUnit = TrainingUnit::factory()->reading()->create(['module_id' => $module->id]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -44,36 +44,36 @@ class ArticleControllerTest extends TestCase
 
     public function test_teacher_can_view_article_show_page(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->teacher)->get("/teaching/lessons/{$this->lesson->id}/article");
+        $response = $this->actingAs($this->teacher)->get("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('teaching/article-edit')
-            ->has('lessonId')
+            ->has('trainingUnitId')
             ->has('article')
         );
     }
 
     public function test_teacher_can_view_article_show_page_with_no_article(): void
     {
-        $response = $this->actingAs($this->teacher)->get("/teaching/lessons/{$this->lesson->id}/article");
+        $response = $this->actingAs($this->teacher)->get("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('teaching/article-edit')
-            ->where('lessonId', (string) $this->lesson->id)
+            ->where('trainingUnitId', (string) $this->trainingUnit->id)
             ->where('article', null)
         );
     }
 
     public function test_show_article_returns_json_when_requested(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->teacher)
-            ->getJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->getJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -84,15 +84,15 @@ class ArticleControllerTest extends TestCase
     public function test_show_article_returns_null_when_no_article_exists(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->getJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->getJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk()
             ->assertJson(['article' => null]);
     }
 
-    public function test_show_article_fails_for_nonexistent_lesson(): void
+    public function test_show_article_fails_for_nonexistent_trainingUnit(): void
     {
-        $response = $this->actingAs($this->teacher)->get('/teaching/lessons/999/article');
+        $response = $this->actingAs($this->teacher)->get('/teaching/trainingUnits/999/article');
 
         $response->assertNotFound();
     }
@@ -116,7 +116,7 @@ class ArticleControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", [
                 'content' => $content,
             ]);
 
@@ -129,17 +129,17 @@ class ArticleControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
-        $article = Article::where('lesson_id', $this->lesson->id)->first();
+        $article = Article::where('training_unit_id', $this->trainingUnit->id)->first();
         $this->assertEquals($content, $article->content);
         $this->assertGreaterThan(0, $article->word_count);
     }
 
     public function test_teacher_can_update_existing_article(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $newContent = [
             'type' => 'doc',
@@ -154,7 +154,7 @@ class ArticleControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", [
                 'content' => $newContent,
             ]);
 
@@ -170,7 +170,7 @@ class ArticleControllerTest extends TestCase
     public function test_upsert_article_validates_content_is_required(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", []);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['content']);
@@ -179,7 +179,7 @@ class ArticleControllerTest extends TestCase
     public function test_upsert_article_validates_content_is_array(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", [
                 'content' => 'not an array',
             ]);
 
@@ -187,12 +187,12 @@ class ArticleControllerTest extends TestCase
             ->assertJsonValidationErrors(['content']);
     }
 
-    public function test_upsert_article_fails_for_nonexistent_lesson(): void
+    public function test_upsert_article_fails_for_nonexistent_trainingUnit(): void
     {
         $content = ['type' => 'doc', 'content' => []];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson('/lessons/999/article', ['content' => $content]);
+            ->postJson('/trainingUnits/999/article', ['content' => $content]);
 
         $response->assertNotFound();
     }
@@ -203,10 +203,10 @@ class ArticleControllerTest extends TestCase
 
     public function test_teacher_can_delete_article(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->teacher)
-            ->deleteJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk()
             ->assertJson([
@@ -219,7 +219,7 @@ class ArticleControllerTest extends TestCase
     public function test_delete_article_returns_404_when_no_article_exists(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->deleteJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertNotFound()
             ->assertJson([
@@ -227,10 +227,10 @@ class ArticleControllerTest extends TestCase
             ]);
     }
 
-    public function test_delete_article_fails_for_nonexistent_lesson(): void
+    public function test_delete_article_fails_for_nonexistent_trainingUnit(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->deleteJson('/lessons/999/article');
+            ->deleteJson('/trainingUnits/999/article');
 
         $response->assertNotFound();
     }
@@ -241,10 +241,10 @@ class ArticleControllerTest extends TestCase
 
     public function test_student_can_read_article(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->student)
-            ->getJson("/lessons/{$this->lesson->id}/article/read");
+            ->getJson("/trainingUnits/{$this->trainingUnit->id}/article/read");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -255,7 +255,7 @@ class ArticleControllerTest extends TestCase
     public function test_read_article_returns_404_when_no_article_exists(): void
     {
         $response = $this->actingAs($this->student)
-            ->getJson("/lessons/{$this->lesson->id}/article/read");
+            ->getJson("/trainingUnits/{$this->trainingUnit->id}/article/read");
 
         $response->assertNotFound()
             ->assertJson([
@@ -265,9 +265,9 @@ class ArticleControllerTest extends TestCase
 
     public function test_guest_cannot_read_article(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->getJson("/lessons/{$this->lesson->id}/article/read");
+        $response = $this->getJson("/trainingUnits/{$this->trainingUnit->id}/article/read");
 
         $response->assertUnauthorized();
     }
@@ -281,23 +281,23 @@ class ArticleControllerTest extends TestCase
         $content = ['type' => 'doc', 'content' => []];
 
         $response = $this->actingAs($this->student)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content]);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
 
         $response->assertForbidden();
     }
 
-    public function test_non_course_owner_cannot_create_article(): void
+    public function test_non_training_path_owner_cannot_create_article(): void
     {
         $otherTeacher = User::factory()->teacher()->create();
         $content = ['type' => 'doc', 'content' => []];
 
         $response = $this->actingAs($otherTeacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content]);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
 
         $response->assertForbidden();
     }
 
-    public function test_admin_can_create_article_for_any_course(): void
+    public function test_admin_can_create_article_for_any_trainingPath(): void
     {
         $content = [
             'type' => 'doc',
@@ -312,7 +312,7 @@ class ArticleControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->admin)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content]);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
 
         $response->assertOk()
             ->assertJson([
@@ -320,23 +320,23 @@ class ArticleControllerTest extends TestCase
             ]);
     }
 
-    public function test_non_course_owner_cannot_delete_article(): void
+    public function test_non_training_path_owner_cannot_delete_article(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
         $otherTeacher = User::factory()->teacher()->create();
 
         $response = $this->actingAs($otherTeacher)
-            ->deleteJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertForbidden();
     }
 
-    public function test_admin_can_delete_article_for_any_course(): void
+    public function test_admin_can_delete_article_for_any_trainingPath(): void
     {
-        $article = Article::factory()->create(['lesson_id' => $this->lesson->id]);
+        $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->admin)
-            ->deleteJson("/teaching/lessons/{$this->lesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article");
 
         $response->assertOk()
             ->assertJson([
@@ -348,13 +348,13 @@ class ArticleControllerTest extends TestCase
     {
         $content = ['type' => 'doc', 'content' => []];
 
-        $this->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content])
+        $this->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content])
             ->assertUnauthorized();
 
-        $this->deleteJson("/teaching/lessons/{$this->lesson->id}/article")
+        $this->deleteJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article")
             ->assertUnauthorized();
 
-        $this->getJson("/teaching/lessons/{$this->lesson->id}/article")
+        $this->getJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article")
             ->assertUnauthorized();
     }
 
@@ -377,11 +377,11 @@ class ArticleControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content]);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
 
         $response->assertOk();
 
-        $article = Article::where('lesson_id', $this->lesson->id)->first();
+        $article = Article::where('training_unit_id', $this->trainingUnit->id)->first();
         $this->assertEquals(10, $article->word_count);
         $this->assertEquals(1, $article->estimated_read_time_minutes);
     }
@@ -394,10 +394,10 @@ class ArticleControllerTest extends TestCase
 
         $articleService->shouldReceive('upsert')
             ->once()
-            ->with($this->lesson->id, $content)
-            ->andReturn(Article::factory()->make(['lesson_id' => $this->lesson->id]));
+            ->with($this->trainingUnit->id, $content)
+            ->andReturn(Article::factory()->make(['training_unit_id' => $this->trainingUnit->id]));
 
         $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/article", ['content' => $content]);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
     }
 }

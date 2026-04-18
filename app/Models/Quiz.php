@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Quiz model for lesson assessments.
+ * Quiz model for trainingUnit assessments.
  *
  * @property int $id
- * @property int $lesson_id
+ * @property int $training_unit_id
  * @property string $title
  * @property string|null $description
  * @property int $passing_score
@@ -27,7 +27,7 @@ class Quiz extends Model
     use HasFactory;
 
     protected $fillable = [
-        'lesson_id',
+        'training_unit_id',
         'title',
         'description',
         'passing_score',
@@ -53,9 +53,9 @@ class Quiz extends Model
     // Relationships
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function lesson(): BelongsTo
+    public function trainingUnit(): BelongsTo
     {
-        return $this->belongsTo(Lesson::class);
+        return $this->belongsTo(TrainingUnit::class);
     }
 
     public function questions(): HasMany

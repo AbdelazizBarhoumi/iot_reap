@@ -4,7 +4,7 @@
  * Dashboard for teachers to manage forum activity:
  * - Flagged posts needing review
  * - Unanswered questions
- * - Recent activity in their courses
+ * - Recent activity in their trainingPaths
  * - Quick actions (pin, lock, resolve)
  */
 import { motion } from 'framer-motion';
@@ -31,7 +31,7 @@ interface TeacherInboxProps {
     flaggedThreads: DiscussionThread[];
     unansweredThreads: DiscussionThread[];
     recentThreads: DiscussionThread[];
-    onViewThread?: (threadId: string, courseSlug: string) => void;
+    onViewThread?: (threadId: string, trainingPathSlug: string) => void;
     onResolveFlag?: (threadId: string) => void;
     onPinThread?: (threadId: string) => void;
     onLockThread?: (threadId: string) => void;
@@ -245,7 +245,7 @@ export function TeacherInbox({
                                         onView={() =>
                                             onViewThread?.(
                                                 thread.id,
-                                                String(thread.courseId),
+                                                String(thread.trainingPathId),
                                             )
                                         }
                                         onAction={() =>
@@ -276,7 +276,7 @@ export function TeacherInbox({
                                         onView={() =>
                                             onViewThread?.(
                                                 thread.id,
-                                                String(thread.courseId),
+                                                String(thread.trainingPathId),
                                             )
                                         }
                                         onAction={() =>
@@ -306,7 +306,7 @@ export function TeacherInbox({
                                         onView={() =>
                                             onViewThread?.(
                                                 thread.id,
-                                                String(thread.courseId),
+                                                String(thread.trainingPathId),
                                             )
                                         }
                                     />

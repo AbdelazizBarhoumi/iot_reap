@@ -1,6 +1,6 @@
 /**
- * Edit Course Page - Professional Curriculum Builder
- * Teacher view for editing course details and managing curriculum with drag-and-drop.
+ * Edit TrainingPath Page - Professional Curriculum Builder
+ * Teacher view for editing trainingPath details and managing curriculum with drag-and-drop.
  * Properly wired to backend API endpoints.
  */
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
@@ -48,9 +48,9 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { teachingApi } from '@/api/course.api';
-import { CourseStatusBanner } from '@/components/courses/CourseStatusBanner';
-import CourseVideoInput from '@/components/courses/CourseVideoInput';
+import * as teachingApi from '@/api/teaching.api';
+import { TrainingPathStatusBanner } from '@/components/TrainingPaths/TrainingPathStatusBanner';
+import TrainingPathVideoInput from '@/components/TrainingPaths/TrainingPathVideoInput';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,13 +85,13 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type {
-    Course,
-    CourseModule,
-    Lesson,
-    CourseStatus,
-} from '@/types/course.types';
+    TrainingPath,
+    TrainingPathModule,
+    TrainingUnit,
+    TrainingPathStatus,
+} from '@/types/TrainingPath.types';
 const statusConfig: Record<
-    CourseStatus,
+    TrainingPathStatus,
     { label: string; color: string; bg: string }
 > = {
     draft: { label: 'Draft', color: 'text-gray-500', bg: 'bg-gray-500/10' },
@@ -112,7 +112,7 @@ const statusConfig: Record<
         bg: 'bg-gray-400/10',
     },
 };
-const lessonTypeConfig = {
+const trainingUnitTypeConfig = {
     video: { icon: Video, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     reading: { icon: FileText, color: 'text-green-500', bg: 'bg-green-500/10' },
     practice: { icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
@@ -122,20 +122,20 @@ const lessonTypeConfig = {
         bg: 'bg-violet-500/10',
     },
 };
-interface SortableLessonProps {
-    lesson: Lesson;
-    courseId: number;
+interface SortableTrainingUnitProps {
+    trainingUnit: TrainingUnit;
+    trainingPathId: number;
     moduleId: string;
     onDelete: () => void;
     isDeleting: boolean;
 }
-function SortableLesson({
-    lesson,
-    courseId,
+function SortableTrainingUnit({
+    trainingUnit,
+    trainingPathId,
     moduleId,
     onDelete,
     isDeleting,
-}: SortableLessonProps) {
+}: SortableTrainingUnitProps) {
     const {
         attributes,
         listeners,
@@ -143,14 +143,14 @@ function SortableLesson({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: lesson.id });
+    } = useSortable({ id: trainingUnit.id });
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
     };
     const typeConfig =
-        lessonTypeConfig[lesson.type as keyof typeof lessonTypeConfig] ||
-        lessonTypeConfig.video;
+        trainingUnitTypeConfig[trainingUnit.type as keyof typeof trainingUnitTypeConfig] ||
+        trainingUnitTypeConfig.video;
     const TypeIcon = typeConfig.icon;
     return (
         <div
@@ -172,10 +172,10 @@ function SortableLesson({
             </div>
             <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">
-                    {lesson.title}
+                    {trainingUnit.title}
                 </p>
                 <div className="mt-0.5 flex items-center gap-2">
-                    {lesson.content ? (
+                    {trainingUnit.content ? (
                         <span className="flex items-center gap-1 text-xs text-green-500">
                             <Check className="h-3 w-3" /> Content added
                         </span>
@@ -190,13 +190,13 @@ function SortableLesson({
                 variant="outline"
                 className={`text-xs ${typeConfig.bg} ${typeConfig.color} border-0`}
             >
-                {lesson.type.replace('-', ' ')}
+                {trainingUnit.type.replace('-', ' ')}
             </Badge>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                {lesson.duration ?? '0 min'}
+                {trainingUnit.duration ?? '0 min'}
             </span>
-            {lesson.vmEnabled && (
+            {trainingUnit.vmEnabled && (
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-violet-500/20">
                     <Terminal className="h-3.5 w-3.5 text-violet-500" />
                 </div>
@@ -208,7 +208,7 @@ function SortableLesson({
                 className="opacity-0 transition-opacity group-hover:opacity-100"
             >
                 <Link
-                    href={`/teaching/${courseId}/module/${moduleId}/lesson/${lesson.id}`}
+                    href={`/teaching/${trainingPathId}/module/${moduleId}/trainingUnit/${trainingUnit.id}`}
                 >
                     <Edit className="h-3.5 w-3.5" />
                 </Link>
@@ -229,18 +229,18 @@ function SortableLesson({
         </div>
     );
 }
-interface EditCoursePageProps {
+interface EditTrainingPathPageProps {
     id: string;
-    course: Course;
+    trainingPath: TrainingPath;
     categories: string[];
 }
-export default function EditCoursePage({
+export default function EditTrainingPathPage({
     id,
-    course: initialCourse,
+    trainingPath: initialTrainingPath,
     categories,
-}: EditCoursePageProps) {
+}: EditTrainingPathPageProps) {
     // Local state for optimistic updates
-    const [course, setCourse] = useState<Course>(initialCourse);
+    const [trainingPath, setTrainingPath] = useState<TrainingPath>(initialTrainingPath);
     const [activeTab, setActiveTab] = useState('curriculum');
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -249,7 +249,7 @@ export default function EditCoursePage({
     );
 
     const [_activeId, setActiveId] = useState<string | null>(null);
-    const [deletingLessonId, setDeletingLessonId] = useState<string | null>(
+    const [deletingTrainingUnitId, setDeletingTrainingUnitId] = useState<string | null>(
         null,
     );
     const [deletingModuleId, setDeletingModuleId] = useState<string | null>(
@@ -257,25 +257,25 @@ export default function EditCoursePage({
     );
     // Module dialog state
     const [showModuleDialog, setShowModuleDialog] = useState(false);
-    const [editingModule, setEditingModule] = useState<CourseModule | null>(
+    const [editingModule, setEditingModule] = useState<TrainingPathModule | null>(
         null,
     );
     const [moduleTitle, setModuleTitle] = useState('');
     const [isModuleSaving, setIsModuleSaving] = useState(false);
-    // Lesson dialog state
-    const [showLessonDialog, setShowLessonDialog] = useState(false);
-    const [lessonModuleId, setLessonModuleId] = useState<string | null>(null);
-    const [lessonTitle, setLessonTitle] = useState('');
-    const [lessonType, setLessonType] = useState<string>('video');
-    const [isLessonSaving, setIsLessonSaving] = useState(false);
+    // TrainingUnit dialog state
+    const [showTrainingUnitDialog, setShowTrainingUnitDialog] = useState(false);
+    const [trainingUnitModuleId, setTrainingUnitModuleId] = useState<string | null>(null);
+    const [trainingUnitTitle, setTrainingUnitTitle] = useState('');
+    const [trainingUnitType, setTrainingUnitType] = useState<'video' | 'article' | 'quiz' | 'interactive'>('video');
+    const [isTrainingUnitSaving, setIsTrainingUnitSaving] = useState(false);
     // Form state for details tab
-    const [title, setTitle] = useState(course.title);
-    const [description, setDescription] = useState(course.description);
-    const [category, setCategory] = useState(course.category);
-    const [level, setLevel] = useState(course.level);
-    const [thumbnail, setThumbnail] = useState<string | null>(course.thumbnail);
-    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(course.video_type || null);
-    const [videoUrl, setVideoUrl] = useState<string | null>(course.video_url || null);
+    const [title, setTitle] = useState(trainingPath.title);
+    const [description, setDescription] = useState(trainingPath.description);
+    const [category, setCategory] = useState(trainingPath.category);
+    const [level, setLevel] = useState(trainingPath.level);
+    const [thumbnail, setThumbnail] = useState<string | null>(trainingPath.thumbnail);
+    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(trainingPath.video_type || null);
+    const [videoUrl, setVideoUrl] = useState<string | null>(trainingPath.video_url || null);
     // Confirmation dialog state
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -294,7 +294,7 @@ export default function EditCoursePage({
     });
     // Get flash messages from the page props
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
-    // Show flash message on page load (e.g., after course creation redirect)
+    // Show flash message on page load (e.g., after trainingPath creation redirect)
     useEffect(() => {
         if (flash?.success) {
             toast.success('🎉 ' + flash.success);
@@ -316,21 +316,21 @@ export default function EditCoursePage({
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
             { title: 'Teaching', href: '/teaching' },
-            { title: course.title, href: `/teaching/${id}/edit` },
+            { title: trainingPath.title, href: `/teaching/${id}/edit` },
         ],
-        [course.title, id],
+        [trainingPath.title, id],
     );
-    const modules = course.modules ?? [];
-    const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
-    const completedLessons = modules.reduce(
-        (acc, m) => acc + m.lessons.filter((l) => l.content).length,
+    const modules = trainingPath.modules ?? [];
+    const totalTrainingUnits = modules.reduce((acc, m) => acc + m.trainingUnits.length, 0);
+    const completedTrainingUnits = modules.reduce(
+        (acc, m) => acc + m.trainingUnits.filter((l) => l.content).length,
         0,
     );
     const completionPercent =
-        totalLessons > 0
-            ? Math.round((completedLessons / totalLessons) * 100)
+        totalTrainingUnits > 0
+            ? Math.round((completedTrainingUnits / totalTrainingUnits) * 100)
             : 0;
-    const statusInfo = statusConfig[course.status] ?? statusConfig.draft;
+    const statusInfo = statusConfig[trainingPath.status] ?? statusConfig.draft;
     const toggleModule = useCallback((moduleId: string) => {
         setExpandedModules((prev) => {
             const next = new Set(prev);
@@ -353,7 +353,7 @@ export default function EditCoursePage({
                 level,
             };
             // Only include thumbnail if it changed (is base64 or different from original)
-            if (thumbnail && thumbnail !== course.thumbnail) {
+            if (thumbnail && thumbnail !== trainingPath.thumbnail) {
                 updateData.thumbnail = thumbnail;
             }
             // Include video if it exists
@@ -365,8 +365,8 @@ export default function EditCoursePage({
                 updateData.video_type = null;
                 updateData.video_url = null;
             }
-            await teachingApi.update(course.id, updateData);
-            setCourse((prev) => ({
+            await teachingApi.updateTrainingPath(String(trainingPath.id), updateData);
+            setTrainingPath((prev) => ({
                 ...prev,
                 title,
                 description,
@@ -378,11 +378,11 @@ export default function EditCoursePage({
             }));
             setLastSaved(new Date());
             toast.success('Changes saved!', {
-                description: 'Your course has been updated.',
+                description: 'Your trainingPath has been updated.',
             });
         } catch {
             toast.error('Failed to save', {
-                description: 'Could not update course. Please try again.',
+                description: 'Could not update trainingPath. Please try again.',
             });
         } finally {
             setIsSaving(false);
@@ -416,18 +416,18 @@ export default function EditCoursePage({
     // === SUBMIT FOR REVIEW ===
     const handleSubmitForReview = async () => {
         try {
-            await teachingApi.submitForReview(course.id);
-            setCourse((prev) => ({
+            await teachingApi.submitTrainingPathForReview(String(trainingPath.id));
+            setTrainingPath((prev) => ({
                 ...prev,
                 status: 'pending_review',
             }));
             toast.success('Submitted for review!', {
                 description:
-                    'An admin will review your course shortly.',
+                    'An admin will review your trainingPath shortly.',
             });
         } catch {
             toast.error('Failed to submit', {
-                description: 'Could not submit course for review.',
+                description: 'Could not submit trainingPath for review.',
             });
         }
     };
@@ -437,7 +437,7 @@ export default function EditCoursePage({
         setModuleTitle('');
         setShowModuleDialog(true);
     };
-    const openEditModuleDialog = (module: CourseModule) => {
+    const openEditModuleDialog = (module: TrainingPathModule) => {
         setEditingModule(module);
         setModuleTitle(module.title);
         setShowModuleDialog(true);
@@ -449,11 +449,11 @@ export default function EditCoursePage({
             if (editingModule) {
                 // Update existing module
                 await teachingApi.updateModule(
-                    course.id,
-                    parseInt(editingModule.id),
+                    String(trainingPath.id),
+                    String(editingModule.id),
                     { title: moduleTitle },
                 );
-                setCourse((prev) => ({
+                setTrainingPath((prev) => ({
                     ...prev,
                     modules: prev.modules?.map((m) =>
                         m.id === editingModule.id
@@ -464,16 +464,16 @@ export default function EditCoursePage({
                 toast.success('Module updated');
             } else {
                 // Create new module
-                const response = await teachingApi.addModule(course.id, {
+                const response = await teachingApi.createModule(String(trainingPath.id), {
                     title: moduleTitle,
                 });
-                const newModule: CourseModule = {
+                const newModule: TrainingPathModule = {
                     id: String(response.data.id),
                     title: moduleTitle,
                     sort_order: modules.length,
-                    lessons: [],
+                    trainingUnits: [],
                 };
-                setCourse((prev) => ({
+                setTrainingPath((prev) => ({
                     ...prev,
                     modules: [...(prev.modules ?? []), newModule],
                 }));
@@ -495,17 +495,17 @@ export default function EditCoursePage({
             open: true,
             title: 'Delete Module',
             description:
-                'Are you sure you want to delete this module and all its lessons? This action cannot be undone.',
+                'Are you sure you want to delete this module and all its trainingUnits? This action cannot be undone.',
             confirmText: 'Delete Module',
             variant: 'destructive',
             onConfirm: async () => {
                 setDeletingModuleId(moduleId);
                 try {
                     await teachingApi.deleteModule(
-                        course.id,
-                        parseInt(moduleId),
+                        String(trainingPath.id),
+                        String(moduleId),
                     );
-                    setCourse((prev) => ({
+                    setTrainingPath((prev) => ({
                         ...prev,
                         modules: prev.modules?.filter((m) => m.id !== moduleId),
                     }));
@@ -519,28 +519,28 @@ export default function EditCoursePage({
         });
     };
     // === LESSON CRUD ===
-    const openAddLessonDialog = (moduleId: string) => {
-        setLessonModuleId(moduleId);
-        setLessonTitle('');
-        setLessonType('video');
-        setShowLessonDialog(true);
+    const openAddTrainingUnitDialog = (moduleId: string) => {
+        setTrainingUnitModuleId(moduleId);
+        setTrainingUnitTitle('');
+        setTrainingUnitType('video');
+        setShowTrainingUnitDialog(true);
     };
-    const handleSaveLesson = async () => {
-        if (!lessonTitle.trim() || !lessonModuleId) return;
-        setIsLessonSaving(true);
+    const handleSaveTrainingUnit = async () => {
+        if (!trainingUnitTitle.trim() || !trainingUnitModuleId) return;
+        setIsTrainingUnitSaving(true);
         try {
-            const response = await teachingApi.addLesson(
-                course.id,
-                parseInt(lessonModuleId),
+            const response = await teachingApi.createTrainingUnit(
+                String(trainingPath.id),
+                trainingUnitModuleId,
                 {
-                    title: lessonTitle,
-                    type: lessonType,
+                    title: trainingUnitTitle,
+                    type: trainingUnitType,
                 },
             );
-            const newLesson: Lesson = {
+            const newTrainingUnit: TrainingUnit = {
                 id: String(response.data.id),
-                title: lessonTitle,
-                type: lessonType as Lesson['type'],
+                title: trainingUnitTitle,
+                type: trainingUnitType as TrainingUnit['type'],
                 duration: null,
                 content: null,
                 objectives: null,
@@ -549,63 +549,63 @@ export default function EditCoursePage({
                 resources: null,
                 sort_order: 0,
             };
-            setCourse((prev) => ({
+            setTrainingPath((prev) => ({
                 ...prev,
                 modules: prev.modules?.map((m) =>
-                    m.id === lessonModuleId
-                        ? { ...m, lessons: [...m.lessons, newLesson] }
+                    m.id === trainingUnitModuleId
+                        ? { ...m, trainingUnits: [...m.trainingUnits, newTrainingUnit] }
                         : m,
                 ),
             }));
-            toast.success('Lesson created');
-            setShowLessonDialog(false);
-            // Expand the module to show the new lesson
-            setExpandedModules((prev) => new Set(prev).add(lessonModuleId));
+            toast.success('TrainingUnit created');
+            setShowTrainingUnitDialog(false);
+            // Expand the module to show the new trainingUnit
+            setExpandedModules((prev) => new Set(prev).add(trainingUnitModuleId));
         } catch {
-            toast.error('Failed to create lesson');
+            toast.error('Failed to create trainingUnit');
         } finally {
-            setIsLessonSaving(false);
+            setIsTrainingUnitSaving(false);
         }
     };
-    const handleDeleteLesson = async (
+    const handleDeleteTrainingUnit = async (
         moduleId: string,
-        lessonId: string,
-        lessonTitle: string,
+        trainingUnitId: string,
+        trainingUnitTitle: string,
     ) => {
         setConfirmDialog({
             open: true,
-            title: 'Delete Lesson',
-            description: `Are you sure you want to delete "${lessonTitle}"? This action cannot be undone.`,
-            confirmText: 'Delete Lesson',
+            title: 'Delete TrainingUnit',
+            description: `Are you sure you want to delete "${trainingUnitTitle}"? This action cannot be undone.`,
+            confirmText: 'Delete TrainingUnit',
             variant: 'destructive',
             onConfirm: async () => {
-                setDeletingLessonId(lessonId);
+                setDeletingTrainingUnitId(trainingUnitId);
                 try {
-                    await teachingApi.deleteLesson(
-                        course.id,
-                        parseInt(moduleId),
-                        parseInt(lessonId),
+                    await teachingApi.deleteTrainingUnit(
+                        String(trainingPath.id),
+                        String(moduleId),
+                        String(trainingUnitId),
                     );
-                    setCourse((prev) => ({
+                    setTrainingPath((prev) => ({
                         ...prev,
                         modules: prev.modules?.map((m) =>
                             m.id === moduleId
                                 ? {
                                       ...m,
-                                      lessons: m.lessons.filter(
-                                          (l) => l.id !== lessonId,
+                                      trainingUnits: m.trainingUnits.filter(
+                                          (l) => l.id !== trainingUnitId,
                                       ),
                                   }
                                 : m,
                         ),
                     }));
-                    toast.success('Lesson deleted', {
-                        description: `"${lessonTitle}" has been removed.`,
+                    toast.success('TrainingUnit deleted', {
+                        description: `"${trainingUnitTitle}" has been removed.`,
                     });
                 } catch {
-                    toast.error('Failed to delete lesson');
+                    toast.error('Failed to delete trainingUnit');
                 } finally {
-                    setDeletingLessonId(null);
+                    setDeletingTrainingUnitId(null);
                 }
             },
         });
@@ -614,46 +614,46 @@ export default function EditCoursePage({
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(event.active.id as string);
     }, []);
-    const handleLessonDragEnd = useCallback(
-        async (event: DragEndEvent, moduleId: string, lessons: Lesson[]) => {
+    const handleTrainingUnitDragEnd = useCallback(
+        async (event: DragEndEvent, moduleId: string, trainingUnits: TrainingUnit[]) => {
             const { active, over } = event;
             setActiveId(null);
             if (over && active.id !== over.id) {
-                const oldIndex = lessons.findIndex((l) => l.id === active.id);
-                const newIndex = lessons.findIndex((l) => l.id === over.id);
-                const newOrder = arrayMove(lessons, oldIndex, newIndex);
+                const oldIndex = trainingUnits.findIndex((l) => l.id === active.id);
+                const newIndex = trainingUnits.findIndex((l) => l.id === over.id);
+                const newOrder = arrayMove(trainingUnits, oldIndex, newIndex);
                 // Optimistic update
-                setCourse((prev) => ({
+                setTrainingPath((prev) => ({
                     ...prev,
                     modules: prev.modules?.map((m) =>
-                        m.id === moduleId ? { ...m, lessons: newOrder } : m,
+                        m.id === moduleId ? { ...m, trainingUnits: newOrder } : m,
                     ),
                 }));
                 // Persist to backend
                 try {
-                    await teachingApi.reorderLessons(
-                        course.id,
-                        parseInt(moduleId),
-                        newOrder.map((l) => parseInt(l.id)),
+                    await teachingApi.reorderTrainingUnits(
+                        String(trainingPath.id),
+                        String(moduleId),
+                        newOrder.map((l) => String(l.id)),
                     );
-                    toast.success('Lesson order updated');
+                    toast.success('TrainingUnit order updated');
                 } catch {
                     // Revert on failure
-                    setCourse((prev) => ({
+                    setTrainingPath((prev) => ({
                         ...prev,
                         modules: prev.modules?.map((m) =>
-                            m.id === moduleId ? { ...m, lessons } : m,
+                            m.id === moduleId ? { ...m, trainingUnits } : m,
                         ),
                     }));
-                    toast.error('Failed to reorder lessons');
+                    toast.error('Failed to reorder trainingUnits');
                 }
             }
         },
-        [course.id],
+        [trainingPath.id],
     );
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit: ${course.title}`} />
+            <Head title={`Edit: ${trainingPath.title}`} />
             <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
                 <div className="container max-w-6xl py-6">
                     {/* Header */}
@@ -675,7 +675,7 @@ export default function EditCoursePage({
                             </Button>
                             <div>
                                 <h1 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
-                                    {course.title}
+                                    {trainingPath.title}
                                 </h1>
                                 <div className="mt-1 flex items-center gap-3">
                                     <Badge
@@ -686,13 +686,13 @@ export default function EditCoursePage({
                                     </Badge>
                                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                         <Users className="h-3.5 w-3.5" />
-                                        {course.students?.toLocaleString() ??
+                                        {trainingPath.students?.toLocaleString() ??
                                             0}{' '}
                                         students
                                     </span>
                                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                         <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
-                                        {course.rating ?? 0}
+                                        {trainingPath.rating ?? 0}
                                     </span>
                                 </div>
                             </div>
@@ -704,7 +704,7 @@ export default function EditCoursePage({
                                 </span>
                             )}
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/courses/${course.id}`}>
+                                <Link href={`/trainingPaths/${trainingPath.id}`}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     Preview
                                 </Link>
@@ -724,9 +724,9 @@ export default function EditCoursePage({
                         </div>
                     </motion.div>
                     {/* Status Banner */}
-                    <CourseStatusBanner
-                        status={course.status}
-                        adminFeedback={course.adminFeedback}
+                    <TrainingPathStatusBanner
+                        status={trainingPath.status}
+                        adminFeedback={trainingPath.adminFeedback}
                     />
                     {/* Main content */}
                     <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -736,7 +736,7 @@ export default function EditCoursePage({
                             <Card className="shadow-card">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="flex items-center justify-between text-sm font-medium">
-                                        <span>Course Completion</span>
+                                            <span>Path Completion</span>
                                         <span className="text-lg font-bold text-primary">
                                             {completionPercent}%
                                         </span>
@@ -755,15 +755,15 @@ export default function EditCoursePage({
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-muted-foreground">
-                                            <span>Lessons</span>
+                                            <span>TrainingUnits</span>
                                             <span className="font-medium text-foreground">
-                                                {totalLessons}
+                                                {totalTrainingUnits}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-muted-foreground">
                                             <span>Content Ready</span>
                                             <span className="font-medium text-green-500">
-                                                {completedLessons}
+                                                {completedTrainingUnits}
                                             </span>
                                         </div>
                                     </div>
@@ -794,7 +794,7 @@ export default function EditCoursePage({
                                         <Image className="mr-2 h-4 w-4" />
                                         Update Thumbnail
                                     </Button>
-                                    {course.status === 'draft' && (
+                                    {trainingPath.status === 'draft' && (
                                         <Button
                                             variant="outline"
                                             className="w-full justify-start border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/10"
@@ -841,7 +841,7 @@ export default function EditCoursePage({
                                             <div className="flex items-center justify-between">
                                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                                                     <GripVertical className="h-4 w-4" />
-                                                    Drag lessons to reorder them
+                                                    Drag trainingUnits to reorder them
                                                     within modules
                                                 </p>
                                                 <Button
@@ -891,15 +891,15 @@ export default function EditCoursePage({
                                         modules.map((module, mi) => {
                                             const isExpanded =
                                                 expandedModules.has(module.id);
-                                            const moduleLessonsWithContent =
-                                                module.lessons.filter(
+                                            const moduleTrainingUnitsWithContent =
+                                                module.trainingUnits.filter(
                                                     (l) => l.content,
                                                 ).length;
                                             const moduleCompletion =
-                                                module.lessons.length > 0
+                                                module.trainingUnits.length > 0
                                                     ? Math.round(
-                                                          (moduleLessonsWithContent /
-                                                              module.lessons
+                                                          (moduleTrainingUnitsWithContent /
+                                                              module.trainingUnits
                                                                   .length) *
                                                               100,
                                                       )
@@ -950,10 +950,10 @@ export default function EditCoursePage({
                                                                             <span>
                                                                                 {
                                                                                     module
-                                                                                        .lessons
+                                                                                        .trainingUnits
                                                                                         .length
                                                                                 }{' '}
-                                                                                lessons
+                                                                                trainingUnits
                                                                             </span>
                                                                             <span className="text-xs">
                                                                                 •
@@ -1059,15 +1059,15 @@ export default function EditCoursePage({
                                                                             onDragEnd={(
                                                                                 e,
                                                                             ) =>
-                                                                                handleLessonDragEnd(
+                                                                                handleTrainingUnitDragEnd(
                                                                                     e,
                                                                                     module.id,
-                                                                                    module.lessons,
+                                                                                    module.trainingUnits,
                                                                                 )
                                                                             }
                                                                         >
                                                                             <SortableContext
-                                                                                items={module.lessons.map(
+                                                                                items={module.trainingUnits.map(
                                                                                     (
                                                                                         l,
                                                                                     ) =>
@@ -1077,33 +1077,33 @@ export default function EditCoursePage({
                                                                                     verticalListSortingStrategy
                                                                                 }
                                                                             >
-                                                                                {module.lessons.map(
+                                                                                {module.trainingUnits.map(
                                                                                     (
-                                                                                        lesson,
+                                                                                        trainingUnit,
                                                                                     ) => (
-                                                                                        <SortableLesson
+                                                                                        <SortableTrainingUnit
                                                                                             key={
-                                                                                                lesson.id
+                                                                                                trainingUnit.id
                                                                                             }
-                                                                                            lesson={
-                                                                                                lesson
+                                                                                            trainingUnit={
+                                                                                                trainingUnit
                                                                                             }
-                                                                                            courseId={
-                                                                                                course.id
+                                                                                            trainingPathId={
+                                                                                                trainingPath.id
                                                                                             }
                                                                                             moduleId={
                                                                                                 module.id
                                                                                             }
                                                                                             onDelete={() =>
-                                                                                                handleDeleteLesson(
+                                                                                                handleDeleteTrainingUnit(
                                                                                                     module.id,
-                                                                                                    lesson.id,
-                                                                                                    lesson.title,
+                                                                                                    trainingUnit.id,
+                                                                                                    trainingUnit.title,
                                                                                                 )
                                                                                             }
                                                                                             isDeleting={
-                                                                                                deletingLessonId ===
-                                                                                                lesson.id
+                                                                                                deletingTrainingUnitId ===
+                                                                                                trainingUnit.id
                                                                                             }
                                                                                         />
                                                                                     ),
@@ -1111,12 +1111,12 @@ export default function EditCoursePage({
                                                                             </SortableContext>
                                                                         </DndContext>
                                                                         {module
-                                                                            .lessons
+                                                                            .trainingUnits
                                                                             .length ===
                                                                             0 && (
                                                                             <p className="py-4 text-center text-sm text-muted-foreground">
                                                                                 No
-                                                                                lessons
+                                                                                trainingUnits
                                                                                 in
                                                                                 this
                                                                                 module
@@ -1128,14 +1128,14 @@ export default function EditCoursePage({
                                                                             size="sm"
                                                                             className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
                                                                             onClick={() =>
-                                                                                openAddLessonDialog(
+                                                                                openAddTrainingUnitDialog(
                                                                                     module.id,
                                                                                 )
                                                                             }
                                                                         >
                                                                             <Plus className="mr-1 h-4 w-4" />{' '}
                                                                             Add
-                                                                            Lesson
+                                                                            TrainingUnit
                                                                         </Button>
                                                                     </CardContent>
                                                                 </motion.div>
@@ -1164,10 +1164,10 @@ export default function EditCoursePage({
                                         <CardHeader>
                                             <CardTitle className="flex items-center gap-2 font-heading text-lg">
                                                 <Settings className="h-5 w-5 text-primary" />
-                                                Course Details
+                                                TrainingPath Details
                                             </CardTitle>
                                             <CardDescription>
-                                                Update your course information
+                                                Update your training path information
                                                 and settings
                                             </CardDescription>
                                         </CardHeader>
@@ -1175,14 +1175,14 @@ export default function EditCoursePage({
                                             {/* Thumbnail */}
                                             <div>
                                                 <Label className="text-sm font-medium">
-                                                    Course Thumbnail
+                                                    Path Thumbnail
                                                 </Label>
                                                 <div className="mt-2 flex items-start gap-4">
                                                     <div className="h-28 w-48 overflow-hidden rounded-lg border bg-muted">
                                                         {thumbnail ? (
                                                             <img
                                                                 src={thumbnail}
-                                                                alt="Course thumbnail"
+                                                                alt="Path thumbnail"
                                                                 className="h-full w-full object-cover"
                                                             />
                                                         ) : (
@@ -1216,9 +1216,9 @@ export default function EditCoursePage({
                                                 </div>
                                             </div>
                                             <Separator />
-                                            {/* Course Video */}
+                                            {/* Path Video */}
                                             <div>
-                                                <CourseVideoInput
+                                                <TrainingPathVideoInput
                                                     videoType={videoType}
                                                     videoUrl={videoUrl}
                                                     onVideoChange={(type, url) => {
@@ -1245,7 +1245,7 @@ export default function EditCoursePage({
                                                     htmlFor="title"
                                                     className="text-sm font-medium"
                                                 >
-                                                    Course Title
+                                                    Path Title
                                                 </Label>
                                                 <Input
                                                     id="title"
@@ -1352,7 +1352,7 @@ export default function EditCoursePage({
                         <DialogDescription>
                             {editingModule
                                 ? 'Update the module title.'
-                                : 'Create a new module for your course curriculum.'}
+                                : 'Create a new module for your trainingPath curriculum.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
@@ -1384,32 +1384,32 @@ export default function EditCoursePage({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            {/* Lesson Dialog */}
-            <Dialog open={showLessonDialog} onOpenChange={setShowLessonDialog}>
+            {/* TrainingUnit Dialog */}
+            <Dialog open={showTrainingUnitDialog} onOpenChange={setShowTrainingUnitDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add New Lesson</DialogTitle>
+                        <DialogTitle>Add New TrainingUnit</DialogTitle>
                         <DialogDescription>
-                            Create a new lesson. You can add content after
+                            Create a new trainingUnit. You can add content after
                             creating.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div>
-                            <Label htmlFor="lesson-title">Lesson Title</Label>
+                            <Label htmlFor="trainingUnit-title">TrainingUnit Title</Label>
                             <Input
-                                id="lesson-title"
-                                value={lessonTitle}
-                                onChange={(e) => setLessonTitle(e.target.value)}
+                                id="trainingUnit-title"
+                                value={trainingUnitTitle}
+                                onChange={(e) => setTrainingUnitTitle(e.target.value)}
                                 placeholder="e.g., Setting up your development environment"
                                 className="mt-2"
                             />
                         </div>
                         <div>
-                            <Label>Lesson Type</Label>
+                            <Label>TrainingUnit Type</Label>
                             <Select
-                                value={lessonType}
-                                onValueChange={setLessonType}
+                                value={trainingUnitType}
+                                onValueChange={(value) => setTrainingUnitType(value as 'video' | 'article' | 'quiz' | 'interactive')}
                             >
                                 <SelectTrigger className="mt-2">
                                     <SelectValue />
@@ -1446,18 +1446,18 @@ export default function EditCoursePage({
                     <DialogFooter>
                         <Button
                             variant="outline"
-                            onClick={() => setShowLessonDialog(false)}
+                            onClick={() => setShowTrainingUnitDialog(false)}
                         >
                             Cancel
                         </Button>
                         <Button
-                            onClick={handleSaveLesson}
-                            disabled={isLessonSaving || !lessonTitle.trim()}
+                            onClick={handleSaveTrainingUnit}
+                            disabled={isTrainingUnitSaving || !trainingUnitTitle.trim()}
                         >
-                            {isLessonSaving && (
+                            {isTrainingUnitSaving && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Create Lesson
+                            Create TrainingUnit
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1472,7 +1472,7 @@ export default function EditCoursePage({
                 description={confirmDialog.description}
                 confirmText={confirmDialog.confirmText}
                 variant={confirmDialog.variant}
-                loading={deletingModuleId !== null || deletingLessonId !== null}
+                loading={deletingModuleId !== null || deletingTrainingUnitId !== null}
             />
         </AppLayout>
     );

@@ -29,6 +29,29 @@ class AuthEndpointsTest extends TestCase
         $this->assertAuthenticated();
     }
 
+    public function test_teacher_registration_requires_admin_approval(): void
+    {
+        $response = $this->postJson('/auth/register', [
+            'name' => 'Teacher User',
+            'email' => 'teacher.pending@example.com',
+            'password' => 'secretpassword',
+            'password_confirmation' => 'secretpassword',
+            'role' => UserRole::TEACHER->value,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.role', UserRole::TEACHER->value)
+            ->assertJsonPath('data.requires_teacher_approval', true)
+            ->assertJsonPath('data.is_teacher_approved', false)
+            ->assertJsonPath('data.teacher_approved_at', null);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'teacher.pending@example.com',
+            'role' => UserRole::TEACHER->value,
+            'teacher_approved_at' => null,
+        ]);
+    }
+
     public function test_register_endpoint_returns_422_on_duplicate_email(): void
     {
         User::factory()->create(['email' => 'taken@example.com']);

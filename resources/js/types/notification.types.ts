@@ -2,8 +2,8 @@
  * Notification types for the notification system
  */
 export type NotificationType =
-    | 'course_approved'
-    | 'course_rejected'
+    | 'training_path_approved'
+    | 'training_path_rejected'
     | 'new_enrollment'
     | 'forum_reply'
     | 'forum_mention'

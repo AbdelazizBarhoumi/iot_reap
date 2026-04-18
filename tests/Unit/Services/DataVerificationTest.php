@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Course;
-use App\Models\DailyCourseStats;
+use App\Models\TrainingPath;
+use App\Models\DailyTrainingPathStats;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,48 +15,48 @@ class DataVerificationTest extends TestCase
     public function test_data_can_be_queried_after_creation(): void
     {
         $teacher = User::factory()->create();
-        $course = Course::factory()->approved()->create(['instructor_id' => $teacher->id]);
+        $trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $teacher->id]);
 
-        DailyCourseStats::factory()
+        DailyTrainingPathStats::factory()
             ->forDate(now()->subDays(3)->toDateString())
-            ->create(['course_id' => $course->id, 'enrollments' => 10]);
+            ->create(['training_path_id' => $trainingPath->id, 'enrollments' => 10]);
 
         // Verify data exists
-        $allStats = DailyCourseStats::all();
+        $allStats = DailyTrainingPathStats::all();
         $this->assertGreaterThan(0, $allStats->count(), 'Stats should exist');
 
-        $allCourses = Course::all();
-        $this->assertGreaterThan(0, $allCourses->count(), 'Courses should exist');
+        $allTrainingPaths = TrainingPath::all();
+        $this->assertGreaterThan(0, $allTrainingPaths->count(), 'TrainingPaths should exist');
 
-        $statsForCourse = DailyCourseStats::where('course_id', $course->id)->get();
-        $this->assertGreaterThan(0, $statsForCourse->count(), 'Stats for course should exist');
+        $statsForTrainingPath = DailyTrainingPathStats::where('training_path_id', $trainingPath->id)->get();
+        $this->assertGreaterThan(0, $statsForTrainingPath->count(), 'Stats for trainingPath should exist');
 
-        $thisTeacherCourses = Course::where('instructor_id', $teacher->id)->get();
-        $this->assertGreaterThan(0, $thisTeacherCourses->count(), 'Courses for teacher should exist');
+        $thisTeacherTrainingPaths = TrainingPath::where('instructor_id', $teacher->id)->get();
+        $this->assertGreaterThan(0, $thisTeacherTrainingPaths->count(), 'TrainingPaths for teacher should exist');
 
         // Now test the JOIN
-        $statsWithCourses = DailyCourseStats::join('courses', 'daily_course_stats.course_id', '=', 'courses.id')
-            ->where('courses.instructor_id', $teacher->id)
+        $statsWithTrainingPaths = DailyTrainingPathStats::join('training_paths', 'daily_training_path_stats.training_path_id', '=', 'training_paths.id')
+            ->where('training_paths.instructor_id', $teacher->id)
             ->get();
 
-        $this->assertGreaterThan(0, $statsWithCourses->count(), 'Stats with course JOIN should exist');
+        $this->assertGreaterThan(0, $statsWithTrainingPaths->count(), 'Stats with trainingPath JOIN should exist');
 
         // Now test with date range
         $startDate = now()->subDays(29)->toDateString();
         $endDate = now()->toDateString();
 
-        $statsWithDateRange = DailyCourseStats::join('courses', 'daily_course_stats.course_id', '=', 'courses.id')
-            ->where('courses.instructor_id', $teacher->id)
-            ->whereBetween('daily_course_stats.date', [$startDate, $endDate])
+        $statsWithDateRange = DailyTrainingPathStats::join('training_paths', 'daily_training_path_stats.training_path_id', '=', 'training_paths.id')
+            ->where('training_paths.instructor_id', $teacher->id)
+            ->whereBetween('daily_training_path_stats.date', [$startDate, $endDate])
             ->get();
 
         $this->assertGreaterThan(0, $statsWithDateRange->count(), 'Stats within date range should exist');
 
         // Finally, test the sum
-        $sumResult = DailyCourseStats::join('courses', 'daily_course_stats.course_id', '=', 'courses.id')
-            ->where('courses.instructor_id', $teacher->id)
-            ->whereBetween('daily_course_stats.date', [$startDate, $endDate])
-            ->sum('daily_course_stats.enrollments');
+        $sumResult = DailyTrainingPathStats::join('training_paths', 'daily_training_path_stats.training_path_id', '=', 'training_paths.id')
+            ->where('training_paths.instructor_id', $teacher->id)
+            ->whereBetween('daily_training_path_stats.date', [$startDate, $endDate])
+            ->sum('daily_training_path_stats.enrollments');
 
         $this->assertEquals(10, $sumResult, 'Sum should match created value');
     }

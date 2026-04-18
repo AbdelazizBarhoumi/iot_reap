@@ -14,8 +14,8 @@ return new class extends Migration
     {
         Schema::create('discussion_threads', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lesson_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('training_unit_id')->nullable()->constrained('training_units')->cascadeOnDelete();
+            $table->foreignId('training_path_id')->constrained('training_paths')->cascadeOnDelete();
             $table->foreignUlid('author_id')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->text('content');
@@ -30,8 +30,8 @@ return new class extends Migration
             $table->foreignUlid('last_reply_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['course_id', 'created_at']);
-            $table->index(['lesson_id', 'created_at']);
+            $table->index(['training_path_id', 'created_at']);
+            $table->index(['training_unit_id', 'created_at']);
             $table->index(['author_id', 'created_at']);
             $table->index('is_flagged');
         });

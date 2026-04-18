@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Enums\VideoStatus;
 use App\Jobs\TranscodeVideoJob;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use App\Repositories\VideoRepository;
 use Illuminate\Http\UploadedFile;
@@ -24,17 +24,17 @@ class VideoService
     /**
      * Upload a video and queue it for transcoding.
      */
-    public function uploadAndQueue(Lesson $lesson, UploadedFile $file): Video
+    public function uploadAndQueue(TrainingUnit $trainingUnit, UploadedFile $file): Video
     {
-        Log::info('Uploading video for lesson', [
-            'lesson_id' => $lesson->id,
+        Log::info('Uploading video for trainingUnit', [
+            'training_unit_id' => $trainingUnit->id,
             'filename' => $file->getClientOriginalName(),
             'size' => $file->getSize(),
         ]);
 
         // Generate unique storage path
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
-        $storagePath = "videos/raw/{$lesson->id}/{$filename}";
+        $storagePath = "videos/raw/{$trainingUnit->id}/{$filename}";
 
         // Store the raw file
         $disk = config('filesystems.default', 'local');
@@ -46,7 +46,7 @@ class VideoService
 
         // Create video record
         $video = $this->videoRepository->create([
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'original_filename' => $file->getClientOriginalName(),
             'storage_path' => $storagePath,
             'storage_disk' => $disk,
@@ -60,7 +60,7 @@ class VideoService
 
         Log::info('Video uploaded and queued for transcoding', [
             'video_id' => $video->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
         ]);
 
         return $video;
@@ -69,7 +69,7 @@ class VideoService
     /**
      * Get a video by ID.
      *
-     * @deprecated Unused - candidate for removal. Use getVideoForLesson() instead.
+     * @deprecated Unused - candidate for removal. Use getVideoForTrainingUnit() instead.
      */
     public function getVideo(int $id): ?Video
     {
@@ -77,11 +77,11 @@ class VideoService
     }
 
     /**
-     * Get video for a lesson.
+     * Get video for a trainingUnit.
      */
-    public function getVideoForLesson(int $lessonId): ?Video
+    public function getVideoForTrainingUnit(int $trainingUnitId): ?Video
     {
-        return $this->videoRepository->findByLessonIdWithCaptions($lessonId);
+        return $this->videoRepository->findByTrainingUnitIdWithCaptions($trainingUnitId);
     }
 
     /**

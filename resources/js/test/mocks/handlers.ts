@@ -4,12 +4,8 @@ export const handlers = [
     http.get('/api/user', () => {
         return HttpResponse.json({
             id: 1,
-            name: 'Test Engineer',
-            email: 'engineer@test.com',
-            role: 'engineer',
-            email_verified_at: '2024-01-01T00:00:00Z',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
+            name: 'Test User',
+            email: 'test@example.com',
         });
     }),
     // Login endpoint
@@ -25,13 +21,13 @@ export const handlers = [
         });
     }),
     // Quiz Builder API endpoints
-    http.post('/teaching/lessons/:lessonId/quiz', ({ params }) => {
+    http.post('/teaching/trainingUnits/:trainingUnitId/quiz', ({ params }) => {
         return HttpResponse.json({
             quiz: {
                 id: 'quiz-1',
                 title: 'Test Quiz',
                 description: 'A test quiz',
-                lesson_id: params.lessonId,
+                training_unit_id: params.trainingUnitId,
                 passing_score: 80,
                 time_limit_minutes: 30,
                 max_attempts: 3,
@@ -49,7 +45,7 @@ export const handlers = [
                 id: params.quizId,
                 title: 'Updated Quiz',
                 description: 'Updated description',
-                lesson_id: 'lesson-1',
+                training_unit_id: 'trainingUnit-1',
                 passing_score: 80,
                 time_limit_minutes: 30,
                 max_attempts: 3,
@@ -150,19 +146,19 @@ export const handlers = [
         const mockResults = [
             {
                 id: '1',
-                type: 'course',
+                type: 'trainingPath',
                 title: 'React Fundamentals',
-                subtitle: 'Web Development',
+                subtitle: 'Smart Manufacturing',
                 description: 'Learn React from scratch',
-                url: '/courses/1',
+                url: '/trainingPaths/1',
             },
             {
                 id: '2',
-                type: 'lesson',
+                type: 'trainingUnit',
                 title: 'Introduction to JSX',
                 subtitle: 'React Fundamentals',
                 description: 'Understanding JSX syntax',
-                url: '/courses/1/lessons/1',
+                url: '/trainingPaths/1/trainingUnits/1',
             },
         ];
         if (query && query.length > 0) {
@@ -213,20 +209,20 @@ export const handlers = [
         const mockNotifications = [
             {
                 id: '1',
-                type: 'course_approved',
-                title: 'Course Approved',
-                message: 'Your course "React Basics" has been approved',
-                link: '/courses/1',
+                type: 'training_path_approved',
+                title: 'TrainingPath Approved',
+                message: 'Your trainingPath "React Basics" has been approved',
+                link: '/trainingPaths/1',
                 read: false,
                 created_at: '2024-01-15T10:00:00Z',
-                data: { course_id: 1 },
+                data: { training_path_id: 1 },
             },
             {
                 id: '2',
                 type: 'new_enrollment',
                 title: 'New Student Enrolled',
-                message: 'John Doe enrolled in your course',
-                link: '/courses/1/students',
+                message: 'John Doe enrolled in your trainingPath',
+                link: '/trainingPaths/1/students',
                 read: false,
                 created_at: '2024-01-15T09:00:00Z',
             },
@@ -253,10 +249,10 @@ export const handlers = [
     http.post('/notifications/:id/read', ({ params }) => {
         const mockNotification = {
             id: params.id,
-            type: 'course_approved',
-            title: 'Course Approved',
-            message: 'Your course "React Basics" has been approved',
-            link: '/courses/1',
+            type: 'training_path_approved',
+            title: 'TrainingPath Approved',
+            message: 'Your trainingPath "React Basics" has been approved',
+            link: '/trainingPaths/1',
             read: true,
             created_at: '2024-01-15T10:00:00Z',
         };

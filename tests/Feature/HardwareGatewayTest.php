@@ -272,6 +272,28 @@ class HardwareGatewayTest extends TestCase
         $response->assertJsonPath('message', 'Failed to discover gateways: boom');
     }
 
+    public function test_admin_can_discover_gateways_and_load_devices(): void
+    {
+        $this->actingAs($this->admin);
+
+        $node = GatewayNode::factory()->online()->create(['name' => 'gateway-1']);
+        UsbDevice::factory()->for($node)->create(['busid' => '1-1']);
+
+        $mock = Mockery::mock(\App\Services\GatewayDiscoveryService::class);
+        $mock->shouldReceive('discoverAll')
+            ->once()
+            ->andReturn(collect([$node]));
+        $this->app->instance(\App\Services\GatewayDiscoveryService::class, $mock);
+
+        $response = $this->postJson('/admin/hardware/discover');
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+        $response->assertJsonPath('discovered_count', 1);
+        $response->assertJsonPath('gateways.0.name', 'gateway-1');
+        $response->assertJsonCount(1, 'gateways.0.devices');
+    }
+
     // ─── POST /hardware/devices/{device}/attach ───────────────────────────────
 
     public function test_user_can_attach_bound_device_to_vm(): void

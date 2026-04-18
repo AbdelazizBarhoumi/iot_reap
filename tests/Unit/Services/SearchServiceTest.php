@@ -2,7 +2,9 @@
 
 namespace Tests\Unit\Services;
 
-use App\Repositories\CourseRepository;
+use App\Models\TrainingPath;
+use App\Models\User;
+use App\Repositories\TrainingPathRepository;
 use App\Repositories\SearchRepository;
 use App\Services\SearchService;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -16,7 +18,7 @@ class SearchServiceTest extends BaseTestCase
 
     private $mockSearchRepository;
 
-    private $mockCourseRepository;
+    private $mockTrainingPathRepository;
 
     protected function setUp(): void
     {
@@ -26,11 +28,11 @@ class SearchServiceTest extends BaseTestCase
         $this->withoutVite();
 
         $this->mockSearchRepository = Mockery::mock(SearchRepository::class);
-        $this->mockCourseRepository = Mockery::mock(CourseRepository::class);
+        $this->mockTrainingPathRepository = Mockery::mock(TrainingPathRepository::class);
 
         $this->service = new SearchService(
             $this->mockSearchRepository,
-            $this->mockCourseRepository
+            $this->mockTrainingPathRepository
         );
 
         Cache::flush();
@@ -49,19 +51,20 @@ class SearchServiceTest extends BaseTestCase
         $this->assertEquals(['results' => collect(), 'total' => 0], $result);
     }
 
-    public function test_search_returns_courses_and_logs_search(): void
+    public function test_search_returns_training_paths_and_logs_search(): void
     {
-        // Create mock course objects
-        $course = Mockery::mock(\App\Models\Course::class)->shouldIgnoreMissing();
-        $course->id = 1;
-        $course->title = 'Laravel Course';
-        $courses = new \Illuminate\Database\Eloquent\Collection([$course]);
+        // Create real model instances (not persisted)
+        $trainingPath = new TrainingPath([
+            'title' => 'Laravel TrainingPath',
+        ]);
+        $trainingPath->id = 1;
+        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath]);
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('searchWithFilters')
             ->once()
             ->with('Laravel', [], 'relevance')
-            ->andReturn($courses);
+            ->andReturn($trainingPaths);
 
         $this->mockSearchRepository
             ->shouldReceive('create')
@@ -93,23 +96,23 @@ class SearchServiceTest extends BaseTestCase
         );
 
         $this->assertEquals([
-            'results' => $courses,
+            'results' => $trainingPaths,
             'total' => 1,
         ], $result);
     }
 
     public function test_search_with_filters(): void
     {
-        $course = Mockery::mock(\App\Models\Course::class)->shouldIgnoreMissing();
-        $course->id = 1;
-        $courses = new \Illuminate\Database\Eloquent\Collection([$course]);
+        $trainingPath = new TrainingPath();
+        $trainingPath->id = 1;
+        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath]);
         $filters = ['category' => 'programming', 'level' => 'beginner'];
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('searchWithFilters')
             ->once()
             ->with('React', $filters, 'popularity')
-            ->andReturn($courses);
+            ->andReturn($trainingPaths);
 
         $this->mockSearchRepository
             ->shouldReceive('create')
@@ -141,11 +144,11 @@ class SearchServiceTest extends BaseTestCase
     {
         $suggestions = ['Laravel Basics', 'Laravel Advanced'];
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('getTitleSuggestions')
             ->once()
             ->with('Laravel', 5)
-            ->andReturn($suggestions);
+            ->andReturnUsing(fn () => $suggestions);
 
         $result = $this->service->suggest('Laravel');
 
@@ -160,11 +163,11 @@ class SearchServiceTest extends BaseTestCase
     {
         $suggestions = ['React Hooks', 'React Router', 'React Testing'];
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('getTitleSuggestions')
             ->once()
             ->with('React', 3)
-            ->andReturn($suggestions);
+            ->andReturnUsing(fn () => $suggestions);
 
         $result = $this->service->suggest('React', 3);
 
@@ -173,19 +176,17 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_recent_searches(): void
     {
-        $user = Mockery::mock(\App\Models\User::class)->makePartial();
-        $user->id = 123;
+        $user = new User();
+        $user->id = '123';
         
-        $search1 = Mockery::mock()->shouldIgnoreMissing();
-        $search1->query = 'Laravel';
-        $search2 = Mockery::mock()->shouldIgnoreMissing();
-        $search2->query = 'React';
+        $search1 = (object) ['query' => 'Laravel'];
+        $search2 = (object) ['query' => 'React'];
         $searches = new \Illuminate\Database\Eloquent\Collection([$search1, $search2]);
 
         $this->mockSearchRepository
             ->shouldReceive('getRecentByUser')
             ->once()
-            ->with(123, 5)
+            ->with('123', 5)
             ->andReturn($searches);
 
         $result = $this->service->getRecentSearches($user);
@@ -195,17 +196,16 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_recent_searches_with_custom_limit(): void
     {
-        $user = Mockery::mock(\App\Models\User::class)->makePartial();
-        $user->id = 123;
+        $user = new User();
+        $user->id = '123';
         
-        $search = Mockery::mock()->shouldIgnoreMissing();
-        $search->query = 'Vue';
+        $search = (object) ['query' => 'Vue'];
         $searches = new \Illuminate\Database\Eloquent\Collection([$search]);
 
         $this->mockSearchRepository
             ->shouldReceive('getRecentByUser')
             ->once()
-            ->with(123, 3)
+            ->with('123', 3)
             ->andReturn($searches);
 
         $result = $this->service->getRecentSearches($user, 3);
@@ -215,10 +215,8 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_trending_searches(): void
     {
-        $trending1 = Mockery::mock()->shouldIgnoreMissing();
-        $trending1->query = 'Laravel';
-        $trending2 = Mockery::mock()->shouldIgnoreMissing();
-        $trending2->query = 'React';
+        $trending1 = (object) ['query' => 'Laravel'];
+        $trending2 = (object) ['query' => 'React'];
         $trending = new \Illuminate\Database\Eloquent\Collection([$trending1, $trending2]);
 
         $this->mockSearchRepository
@@ -234,8 +232,7 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_trending_searches_with_custom_params(): void
     {
-        $trending1 = Mockery::mock()->shouldIgnoreMissing();
-        $trending1->query = 'Vue';
+        $trending1 = (object) ['query' => 'Vue'];
         $trending = new \Illuminate\Database\Eloquent\Collection([$trending1]);
 
         $this->mockSearchRepository
@@ -252,11 +249,11 @@ class SearchServiceTest extends BaseTestCase
     public function test_get_categories(): void
     {
         $categories = [
-            ['slug' => 'web-dev', 'name' => 'Web Development', 'count' => 10],
-            ['slug' => 'data-science', 'name' => 'Data Science', 'count' => 5],
+            ['slug' => 'smart-manufacturing', 'name' => 'Smart Manufacturing', 'count' => 10],
+            ['slug' => 'predictive-maintenance', 'name' => 'Predictive Maintenance', 'count' => 5],
         ];
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('getCategoryStats')
             ->once()
             ->andReturn($categories);
@@ -270,22 +267,20 @@ class SearchServiceTest extends BaseTestCase
         $this->assertEquals($categories, $result2);
     }
 
-    public function test_get_courses_by_category(): void
+    public function test_get_training_paths_by_category(): void
     {
-        $course1 = Mockery::mock(\App\Models\Course::class)->shouldIgnoreMissing();
-        $course1->title = 'Laravel Course';
-        $course2 = Mockery::mock(\App\Models\Course::class)->shouldIgnoreMissing();
-        $course2->title = 'PHP Course';
-        $courses = new \Illuminate\Database\Eloquent\Collection([$course1, $course2]);
+        $trainingPath1 = new TrainingPath(['title' => 'Laravel TrainingPath']);
+        $trainingPath2 = new TrainingPath(['title' => 'PHP TrainingPath']);
+        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath1, $trainingPath2]);
 
-        $this->mockCourseRepository
+        $this->mockTrainingPathRepository
             ->shouldReceive('findByCategorySlug')
             ->once()
-            ->with('web-development')
-            ->andReturn($courses);
+            ->with('smart-manufacturing')
+            ->andReturn($trainingPaths);
 
-        $result = $this->service->getCoursesByCategory('web-development');
+        $result = $this->service->getTrainingPathsByCategory('smart-manufacturing');
 
-        $this->assertEquals($courses, $result);
+        $this->assertEquals($trainingPaths, $result);
     }
 }

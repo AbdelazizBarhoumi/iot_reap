@@ -3,17 +3,17 @@
 namespace Tests\Feature\Security;
 
 use App\Models\Article;
-use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use Tests\TestCase;
 
 /**
  * IDOR security tests for ArticleController.
  *
- * Verifies that teachers cannot edit or delete articles for lessons
- * in courses they do not own.
+ * Verifies that teachers cannot edit or delete articles for trainingUnits
+ * in trainingPaths they do not own.
  */
 class ArticleIdorTest extends TestCase
 {
@@ -21,9 +21,9 @@ class ArticleIdorTest extends TestCase
 
     private User $otherTeacher;
 
-    private Lesson $ownLesson;
+    private TrainingUnit $ownTrainingUnit;
 
-    private Lesson $otherTeachersLesson;
+    private TrainingUnit $otherTeachersTrainingUnit;
 
     protected function setUp(): void
     {
@@ -33,33 +33,33 @@ class ArticleIdorTest extends TestCase
         $this->teacher = User::factory()->teacher()->create();
         $this->otherTeacher = User::factory()->teacher()->create();
 
-        // Create a course owned by the authenticated teacher
-        $ownCourse = Course::factory()->create([
+        // Create a trainingPath owned by the authenticated teacher
+        $ownTrainingPath = TrainingPath::factory()->create([
             'instructor_id' => $this->teacher->id,
         ]);
-        $ownModule = CourseModule::factory()->create([
-            'course_id' => $ownCourse->id,
+        $ownModule = TrainingPathModule::factory()->create([
+            'training_path_id' => $ownTrainingPath->id,
         ]);
-        $this->ownLesson = Lesson::factory()->create([
+        $this->ownTrainingUnit = TrainingUnit::factory()->create([
             'module_id' => $ownModule->id,
         ]);
 
-        // Create a course owned by another teacher
-        $otherCourse = Course::factory()->create([
+        // Create a trainingPath owned by another teacher
+        $otherTrainingPath = TrainingPath::factory()->create([
             'instructor_id' => $this->otherTeacher->id,
         ]);
-        $otherModule = CourseModule::factory()->create([
-            'course_id' => $otherCourse->id,
+        $otherModule = TrainingPathModule::factory()->create([
+            'training_path_id' => $otherTrainingPath->id,
         ]);
-        $this->otherTeachersLesson = Lesson::factory()->create([
+        $this->otherTeachersTrainingUnit = TrainingUnit::factory()->create([
             'module_id' => $otherModule->id,
         ]);
     }
 
-    public function test_teacher_cannot_create_article_for_another_teachers_lesson(): void
+    public function test_teacher_cannot_create_article_for_another_teachers_trainingUnit(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->otherTeachersLesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->otherTeachersTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',
                     'content' => [
@@ -77,14 +77,14 @@ class ArticleIdorTest extends TestCase
 
         // Verify no article was created
         $this->assertDatabaseMissing('articles', [
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
         ]);
     }
 
-    public function test_teacher_can_create_article_for_own_lesson(): void
+    public function test_teacher_can_create_article_for_own_trainingUnit(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->ownLesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',
                     'content' => [
@@ -101,15 +101,15 @@ class ArticleIdorTest extends TestCase
         $response->assertOk();
 
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $this->ownLesson->id,
+            'training_unit_id' => $this->ownTrainingUnit->id,
         ]);
     }
 
-    public function test_teacher_cannot_update_article_for_another_teachers_lesson(): void
+    public function test_teacher_cannot_update_article_for_another_teachers_trainingUnit(): void
     {
-        // Create an article for the other teacher's lesson
+        // Create an article for the other teacher's trainingUnit
         Article::create([
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
             'content' => [
                 'type' => 'doc',
                 'content' => [
@@ -124,7 +124,7 @@ class ArticleIdorTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->otherTeachersLesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->otherTeachersTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',
                     'content' => [
@@ -140,21 +140,21 @@ class ArticleIdorTest extends TestCase
 
         $response->assertForbidden();
 
-        // Verify article was not modified (check lesson_id only since content is JSON)
+        // Verify article was not modified (check training_unit_id only since content is JSON)
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
         ]);
 
         // Verify content wasn't changed by checking the text content
-        $article = Article::where('lesson_id', $this->otherTeachersLesson->id)->first();
+        $article = Article::where('training_unit_id', $this->otherTeachersTrainingUnit->id)->first();
         $this->assertEquals('Original content', $article->content['content'][0]['content'][0]['text']);
     }
 
-    public function test_teacher_cannot_delete_article_for_another_teachers_lesson(): void
+    public function test_teacher_cannot_delete_article_for_another_teachers_trainingUnit(): void
     {
-        // Create an article for the other teacher's lesson
+        // Create an article for the other teacher's trainingUnit
         Article::create([
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
             'content' => [
                 'type' => 'doc',
                 'content' => [
@@ -169,20 +169,20 @@ class ArticleIdorTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->teacher)
-            ->deleteJson("/teaching/lessons/{$this->otherTeachersLesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->otherTeachersTrainingUnit->id}/article");
 
         $response->assertForbidden();
 
         // Verify article still exists
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
         ]);
     }
 
-    public function test_teacher_can_delete_article_for_own_lesson(): void
+    public function test_teacher_can_delete_article_for_own_trainingUnit(): void
     {
         Article::create([
-            'lesson_id' => $this->ownLesson->id,
+            'training_unit_id' => $this->ownTrainingUnit->id,
             'content' => [
                 'type' => 'doc',
                 'content' => [
@@ -197,21 +197,21 @@ class ArticleIdorTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->teacher)
-            ->deleteJson("/teaching/lessons/{$this->ownLesson->id}/article");
+            ->deleteJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article");
 
         $response->assertOk();
 
         $this->assertDatabaseMissing('articles', [
-            'lesson_id' => $this->ownLesson->id,
+            'training_unit_id' => $this->ownTrainingUnit->id,
         ]);
     }
 
-    public function test_admin_can_edit_any_lesson_article(): void
+    public function test_admin_can_edit_any_training_unit_article(): void
     {
         $admin = User::factory()->admin()->create();
 
         Article::create([
-            'lesson_id' => $this->otherTeachersLesson->id,
+            'training_unit_id' => $this->otherTeachersTrainingUnit->id,
             'content' => [
                 'type' => 'doc',
                 'content' => [
@@ -226,7 +226,7 @@ class ArticleIdorTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->postJson("/teaching/lessons/{$this->otherTeachersLesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->otherTeachersTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',
                     'content' => [
@@ -243,13 +243,13 @@ class ArticleIdorTest extends TestCase
         $response->assertOk();
 
         // Verify article was updated by checking the content text
-        $article = Article::where('lesson_id', $this->otherTeachersLesson->id)->first();
+        $article = Article::where('training_unit_id', $this->otherTeachersTrainingUnit->id)->first();
         $this->assertEquals('Admin edited content', $article->content['content'][0]['content'][0]['text']);
     }
 
     public function test_unauthenticated_user_cannot_modify_article(): void
     {
-        $response = $this->postJson("/teaching/lessons/{$this->ownLesson->id}/article", [
+        $response = $this->postJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article", [
             'content' => [
                 'type' => 'doc',
                 'content' => [
@@ -271,7 +271,7 @@ class ArticleIdorTest extends TestCase
         $student = User::factory()->engineer()->create();
 
         $response = $this->actingAs($student)
-            ->postJson("/teaching/lessons/{$this->ownLesson->id}/article", [
+            ->postJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',
                     'content' => [

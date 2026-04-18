@@ -63,7 +63,11 @@ class AuthServiceTest extends TestCase
         ]);
 
         $this->assertEquals(\App\Enums\UserRole::TEACHER, $user->role);
+        $this->assertNull($user->teacher_approved_at);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('super-secret', $user->password));
-        $this->assertDatabaseHas('users', ['email' => 'teacher@example.com']);
+        $this->assertDatabaseHas('users', [
+            'email' => 'teacher@example.com',
+            'teacher_approved_at' => null,
+        ]);
     }
 }

@@ -2,18 +2,20 @@
 
 namespace Database\Factories;
 
-use App\Enums\CameraReservationStatus;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<CameraReservation>
+ * DEPRECATED: This factory now delegates to ReservationFactory.
+ * Use Reservation::factory()->forCamera() instead.
+ *
+ * @extends Factory<Reservation>
  */
 class CameraReservationFactory extends Factory
 {
-    protected $model = CameraReservation::class;
+    protected $model = Reservation::class;
 
     public function definition(): array
     {
@@ -21,9 +23,10 @@ class CameraReservationFactory extends Factory
         $end = (clone $start)->modify('+2 hours');
 
         return [
-            'camera_id' => Camera::factory(),
+            'reservable_type' => 'App\Models\Camera',
+            'reservable_id' => Camera::factory(),
             'user_id' => User::factory(),
-            'status' => CameraReservationStatus::PENDING,
+            'status' => 'pending',
             'requested_start_at' => $start,
             'requested_end_at' => $end,
             'purpose' => $this->faker->sentence(),
@@ -36,7 +39,7 @@ class CameraReservationFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn () => ['status' => CameraReservationStatus::PENDING]);
+        return $this->state(fn () => ['status' => 'pending']);
     }
 
     /**
@@ -46,10 +49,24 @@ class CameraReservationFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => CameraReservationStatus::APPROVED,
+                'status' => 'approved',
                 'approved_by' => User::factory()->admin(),
-                'approved_start_at' => $attributes['requested_start_at'],
-                'approved_end_at' => $attributes['requested_end_at'],
+                'approved_start_at' => $attributes['requested_start_at'] ?? now(),
+                'approved_end_at' => $attributes['requested_end_at'] ?? now()->addHours(2),
+            ];
+        });
+    }
+
+    /**
+     * Set reservation as rejected.
+     */
+    public function rejected(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'status' => 'rejected',
+                'approved_by' => User::factory()->admin(),
+                'admin_notes' => $this->faker->sentence(),
             ];
         });
     }
@@ -59,31 +76,62 @@ class CameraReservationFactory extends Factory
      */
     public function active(): static
     {
-        $start = now()->subHour();
-        $end = now()->addHour();
+        return $this->state(function (array $attributes) {
+            $start = now()->subHour();
+            $end = now()->addHour();
 
-        return $this->state(fn () => [
-            'status' => CameraReservationStatus::ACTIVE,
-            'approved_by' => User::factory()->admin(),
-            'requested_start_at' => $start,
-            'requested_end_at' => $end,
-            'approved_start_at' => $start,
-            'approved_end_at' => $end,
-            'actual_start_at' => $start,
-        ]);
+            return [
+                'status' => 'active',
+                'approved_by' => User::factory()->admin(),
+                'approved_start_at' => $start,
+                'approved_end_at' => $end,
+                'actual_start_at' => $start,
+            ];
+        });
     }
 
     /**
-     * Admin block reservation.
+     * Set reservation as completed.
+     */
+    public function completed(): static
+    {
+        return $this->state(function (array $attributes) {
+            $start = now()->subHours(3);
+            $end = now()->subHours(1);
+
+            return [
+                'status' => 'completed',
+                'approved_by' => User::factory()->admin(),
+                'approved_start_at' => $start,
+                'approved_end_at' => $end,
+                'actual_start_at' => $start,
+                'actual_end_at' => $end,
+            ];
+        });
+    }
+
+    /**
+     * Set reservation as cancelled.
+     */
+    public function cancelled(): static
+    {
+        return $this->state(fn () => ['status' => 'cancelled']);
+    }
+
+    /**
+     * Set reservation as an admin maintenance block.
      */
     public function adminBlock(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function () {
+            $start = now()->addDay();
+            $end = now()->addDay()->addHours(2);
+
             return [
-                'status' => CameraReservationStatus::APPROVED,
-                'approved_by' => $attributes['user_id'],
-                'approved_start_at' => $attributes['requested_start_at'],
-                'approved_end_at' => $attributes['requested_end_at'],
+                'status' => 'approved',
+                'approved_by' => User::factory()->admin(),
+                'approved_start_at' => $start,
+                'approved_end_at' => $end,
                 'purpose' => 'Admin block',
                 'priority' => 100,
             ];

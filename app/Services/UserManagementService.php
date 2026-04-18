@@ -103,9 +103,23 @@ class UserManagementService
 
         $oldRole = $user->role;
 
-        $user = $this->userRepository->update($user, [
+        $updateData = [
             'role' => $newRole,
-        ]);
+        ];
+
+        if ($newRole === UserRole::TEACHER) {
+            // Admin role assignment to teacher implies approval.
+            if ($oldRole !== UserRole::TEACHER || ! $user->isTeacherApproved()) {
+                $updateData['teacher_approved_at'] = now();
+                $updateData['teacher_approved_by'] = $admin->id;
+            }
+        } else {
+            // Non-teacher roles do not need teacher-approval metadata.
+            $updateData['teacher_approved_at'] = null;
+            $updateData['teacher_approved_by'] = null;
+        }
+
+        $user = $this->userRepository->update($user, $updateData);
 
         Log::info('User role updated', [
             'user_id' => $user->id,
@@ -115,6 +129,50 @@ class UserManagementService
         ]);
 
         return $user;
+    }
+
+    /**
+     * Approve a teacher account.
+     */
+    public function approveTeacher(User $teacher, User $admin): User
+    {
+        if (! $teacher->isTeacher()) {
+            throw new \DomainException('Only teacher accounts can be approved');
+        }
+
+        $teacher = $this->userRepository->update($teacher, [
+            'teacher_approved_at' => now(),
+            'teacher_approved_by' => $admin->id,
+        ]);
+
+        Log::info('Teacher account approved', [
+            'teacher_id' => $teacher->id,
+            'admin_id' => $admin->id,
+        ]);
+
+        return $teacher;
+    }
+
+    /**
+     * Revoke teacher approval.
+     */
+    public function revokeTeacherApproval(User $teacher, User $admin): User
+    {
+        if (! $teacher->isTeacher()) {
+            throw new \DomainException('Only teacher accounts can have approval revoked');
+        }
+
+        $teacher = $this->userRepository->update($teacher, [
+            'teacher_approved_at' => null,
+            'teacher_approved_by' => null,
+        ]);
+
+        Log::info('Teacher approval revoked', [
+            'teacher_id' => $teacher->id,
+            'admin_id' => $admin->id,
+        ]);
+
+        return $teacher;
     }
 
     /**
@@ -238,11 +296,11 @@ class UserManagementService
             'deleted_at' => now(), // Soft delete marker
         ]);
 
-        // Delete lesson progress (non-essential)
-        \App\Models\LessonProgress::where('user_id', $user->id)->delete();
+        // Delete trainingUnit progress (non-essential)
+        \App\Models\TrainingUnitProgress::where('user_id', $user->id)->delete();
 
-        // Delete lesson notes (personal data)
-        \App\Models\LessonNote::where('user_id', $user->id)->delete();
+        // Delete trainingUnit notes (personal data)
+        \App\Models\TrainingUnitNote::where('user_id', $user->id)->delete();
 
         // Delete quiz attempts (can be anonymized in payments)
         \App\Models\QuizAttempt::where('user_id', $user->id)->delete();
@@ -250,8 +308,8 @@ class UserManagementService
         // Delete certificates (personal achievement records)
         \App\Models\Certificate::where('user_id', $user->id)->delete();
 
-        // Delete course reviews (personal opinions)
-        \App\Models\CourseReview::where('user_id', $user->id)->delete();
+        // Delete trainingPath reviews (personal opinions)
+        \App\Models\TrainingPathReview::where('user_id', $user->id)->delete();
 
         // Delete VM sessions (usage logs)
         \App\Models\VMSession::where('user_id', $user->id)->delete();
@@ -265,7 +323,7 @@ class UserManagementService
         ]);
 
         // Delete enrollments (but keep payment records)
-        \App\Models\CourseEnrollment::where('user_id', $user->id)->delete();
+        \App\Models\TrainingPathEnrollment::where('user_id', $user->id)->delete();
 
         // Revoke all tokens
         $user->tokens()->delete();

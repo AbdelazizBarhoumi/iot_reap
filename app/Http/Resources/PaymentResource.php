@@ -14,10 +14,10 @@ class PaymentResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'course' => [
-                'id' => $this->course_id,
-                'title' => $this->course->title,
-                'thumbnail_url' => $this->course->thumbnail_url,
+            'trainingPath' => [
+                'id' => $this->training_path_id,
+                'title' => $this->trainingPath->title,
+                'thumbnail_url' => $this->trainingPath->thumbnail_url,
             ],
             'status' => $this->status->value,
             'status_label' => $this->status->label(),

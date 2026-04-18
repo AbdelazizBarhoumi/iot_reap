@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Models\User;
@@ -41,24 +41,24 @@ class RefundServiceTest extends TestCase
     public function test_creates_refund_request_successfully(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->completed()
             ->create();
 
-        $refund = $this->service->requestRefund($user, $payment, 'Not satisfied with the course');
+        $refund = $this->service->requestRefund($user, $payment, 'Not satisfied with the trainingPath');
 
         $this->assertInstanceOf(RefundRequest::class, $refund);
         $this->assertEquals($payment->id, $refund->payment_id);
         $this->assertEquals($user->id, $refund->user_id);
-        $this->assertEquals('Not satisfied with the course', $refund->reason);
+        $this->assertEquals('Not satisfied with the trainingPath', $refund->reason);
         $this->assertEquals(RefundStatus::PENDING, $refund->status);
         $this->assertDatabaseHas('refund_requests', [
             'payment_id' => $payment->id,
             'user_id' => $user->id,
-            'reason' => 'Not satisfied with the course',
+            'reason' => 'Not satisfied with the trainingPath',
             'status' => RefundStatus::PENDING->value,
         ]);
     }
@@ -153,10 +153,10 @@ class RefundServiceTest extends TestCase
         Notification::fake();
 
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->completed()
             ->create(['amount_cents' => 4990]);
 
@@ -165,8 +165,8 @@ class RefundServiceTest extends TestCase
             ->pending()
             ->create();
 
-        // Attach user to course enrollment for detach testing
-        $user->enrolledCourses()->attach($course->id);
+        // Attach user to trainingPath enrollment for detach testing
+        $user->enrolledTrainingPaths()->attach($trainingPath->id);
 
         // Mock Stripe Refund::create
         $stripeRefundMock = Mockery::mock('alias:'.StripeRefund::class);
@@ -193,8 +193,8 @@ class RefundServiceTest extends TestCase
         $payment->refresh();
         $this->assertEquals(PaymentStatus::REFUNDED, $payment->status);
 
-        // Verify user removed from course
-        $this->assertFalse($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        // Verify user removed from trainingPath
+        $this->assertFalse($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
 
         // Verify notification sent
         Notification::assertSentTo($user, RefundApprovedNotification::class);
@@ -414,7 +414,7 @@ class RefundServiceTest extends TestCase
             ->completed()
             ->create();
 
-        $reason = "Course content didn't match description. Expected advanced topics.";
+        $reason = "TrainingPath content didn't match description. Expected advanced topics.";
         $refund = $this->service->requestRefund($user, $payment, $reason);
 
         $this->assertEquals($reason, $refund->reason);

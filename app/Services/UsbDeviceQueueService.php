@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Enums\UsbReservationStatus;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
-use App\Models\UsbDeviceReservation;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Notifications\UsbDeviceAvailableNotification;
@@ -133,7 +133,7 @@ class UsbDeviceQueueService
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
         ?string $purpose = null
-    ): UsbDeviceReservation {
+    ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($device, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
@@ -163,17 +163,17 @@ class UsbDeviceQueueService
      * Approve a reservation (admin action).
      */
     public function approveReservation(
-        UsbDeviceReservation $reservation,
+        Reservation $reservation,
         User $approver,
         ?\DateTimeInterface $modifiedStartAt = null,
         ?\DateTimeInterface $modifiedEndAt = null,
         ?string $adminNotes = null
-    ): UsbDeviceReservation {
+    ): Reservation {
         $startAt = $modifiedStartAt ?? $reservation->requested_start_at;
         $endAt = $modifiedEndAt ?? $reservation->requested_end_at;
 
         // Check for conflicts (excluding this reservation)
-        if ($this->reservationRepository->hasConflict($reservation->device, $startAt, $endAt, $reservation->id)) {
+        if ($this->reservationRepository->hasConflict($reservation->reservable, $startAt, $endAt, $reservation->id)) {
             throw new \DomainException('Modified time slot conflicts with existing reservation');
         }
 
@@ -199,10 +199,10 @@ class UsbDeviceQueueService
      * Reject a reservation (admin action).
      */
     public function rejectReservation(
-        UsbDeviceReservation $reservation,
+        Reservation $reservation,
         User $approver,
         ?string $adminNotes = null
-    ): UsbDeviceReservation {
+    ): Reservation {
         $this->reservationRepository->update($reservation, [
             'status' => UsbReservationStatus::REJECTED->value,
             'approved_by' => $approver->id,
@@ -220,7 +220,7 @@ class UsbDeviceQueueService
     /**
      * Cancel a reservation (user or admin).
      */
-    public function cancelReservation(UsbDeviceReservation $reservation): UsbDeviceReservation
+    public function cancelReservation(Reservation $reservation): Reservation
     {
         if (! $reservation->canModify()) {
             throw new \DomainException('Reservation cannot be cancelled in current state');
@@ -246,7 +246,7 @@ class UsbDeviceQueueService
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
         ?string $notes = null
-    ): UsbDeviceReservation {
+    ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($device, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
@@ -283,7 +283,8 @@ class UsbDeviceQueueService
         $now = now();
 
         // Check if there's an active reservation
-        $activeReservation = UsbDeviceReservation::where('usb_device_id', $device->id)
+        $activeReservation = Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('reservable_id', $device->id)
             ->whereIn('status', [UsbReservationStatus::APPROVED->value, UsbReservationStatus::ACTIVE->value])
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
@@ -299,7 +300,7 @@ class UsbDeviceQueueService
                 'can_attach' => false,
                 'reason' => 'Device is reserved by another user',
                 'reserved_by' => $activeReservation->user->name,
-                'until' => $activeReservation->approved_end_at->toDateTimeString(),
+                'until' => $activeReservation->approved_end_at->format('Y-m-d H:i:s'),
             ];
         }
 

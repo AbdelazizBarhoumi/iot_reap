@@ -1,10 +1,10 @@
 /**
- * Reviews API module for course reviews CRUD operations.
+ * Reviews API module for trainingPath reviews CRUD operations.
  */
 import client from './client';
-export interface CourseReview {
+export interface TrainingPathReview {
     id: number;
-    course_id: number;
+    training_path_id: number;
     rating: number;
     review: string | null;
     is_featured: boolean;
@@ -24,7 +24,7 @@ export interface CreateReviewData {
     review?: string | null;
 }
 interface ReviewsResponse {
-    data: CourseReview[];
+    data: TrainingPathReview[];
     meta: {
         current_page: number;
         last_page: number;
@@ -33,44 +33,44 @@ interface ReviewsResponse {
     };
 }
 interface ReviewResponse {
-    data: CourseReview;
+    data: TrainingPathReview;
     message?: string;
 }
 interface MyReviewResponse {
-    data: CourseReview | null;
+    data: TrainingPathReview | null;
     can_review: boolean;
 }
 interface StatsResponse {
     data: ReviewStats;
 }
 /**
- * Get paginated reviews for a course.
+ * Get paginated reviews for a trainingPath.
  */
 export async function getReviews(
-    courseId: number,
+    trainingPathId: number,
     page = 1,
     perPage = 10,
 ): Promise<ReviewsResponse> {
     const response = await client.get<ReviewsResponse>(
-        `/courses/${courseId}/reviews?page=${page}&per_page=${perPage}`,
+        `/trainingPaths/${trainingPathId}/reviews?page=${page}&per_page=${perPage}`,
     );
     return response.data;
 }
 /**
- * Get review stats for a course.
+ * Get review stats for a trainingPath.
  */
-export async function getReviewStats(courseId: number): Promise<ReviewStats> {
+export async function getReviewStats(trainingPathId: number): Promise<ReviewStats> {
     const response = await client.get<StatsResponse>(
-        `/courses/${courseId}/reviews/stats`,
+        `/trainingPaths/${trainingPathId}/reviews/stats`,
     );
     return response.data.data;
 }
 /**
- * Get current user's review for a course.
+ * Get current user's review for a trainingPath.
  */
-export async function getMyReview(courseId: number): Promise<MyReviewResponse> {
+export async function getMyReview(trainingPathId: number): Promise<MyReviewResponse> {
     const response = await client.get<MyReviewResponse>(
-        `/courses/${courseId}/reviews/my`,
+        `/trainingPaths/${trainingPathId}/reviews/my`,
     );
     return response.data;
 }
@@ -78,11 +78,11 @@ export async function getMyReview(courseId: number): Promise<MyReviewResponse> {
  * Create a new review.
  */
 export async function createReview(
-    courseId: number,
+    trainingPathId: number,
     data: CreateReviewData,
-): Promise<CourseReview> {
+): Promise<TrainingPathReview> {
     const response = await client.post<ReviewResponse>(
-        `/courses/${courseId}/reviews`,
+        `/trainingPaths/${trainingPathId}/reviews`,
         data,
     );
     return response.data.data;
@@ -91,12 +91,12 @@ export async function createReview(
  * Update an existing review.
  */
 export async function updateReview(
-    courseId: number,
+    trainingPathId: number,
     reviewId: number,
     data: CreateReviewData,
-): Promise<CourseReview> {
+): Promise<TrainingPathReview> {
     const response = await client.put<ReviewResponse>(
-        `/courses/${courseId}/reviews/${reviewId}`,
+        `/trainingPaths/${trainingPathId}/reviews/${reviewId}`,
         data,
     );
     return response.data.data;
@@ -105,10 +105,10 @@ export async function updateReview(
  * Delete a review.
  */
 export async function deleteReview(
-    courseId: number,
+    trainingPathId: number,
     reviewId: number,
 ): Promise<void> {
-    await client.delete(`/courses/${courseId}/reviews/${reviewId}`);
+    await client.delete(`/trainingPaths/${trainingPathId}/reviews/${reviewId}`);
 }
 export const reviewsApi = {
     getReviews,

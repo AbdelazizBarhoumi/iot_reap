@@ -55,6 +55,7 @@ export interface Camera {
     gateway_node_id: number | null;
     gateway_name?: string;
     usb_device_id: number | null;
+    assigned_vm_id: number | null;
     is_usb_camera: boolean;
     source_name: string; // Robot name or Gateway name
     name: string;

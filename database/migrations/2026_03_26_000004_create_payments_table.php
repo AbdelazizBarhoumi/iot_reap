@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('course_id')->constrained()->onDelete('cascade');
+            $table->foreignId('training_path_id')->constrained('training_paths')->onDelete('cascade');
             $table->string('stripe_session_id')->unique();
             $table->string('stripe_payment_intent_id')->nullable();
             $table->string('status')->default('pending');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['user_id', 'status']);
-            $table->index(['course_id', 'status']);
+            $table->index(['training_path_id', 'status']);
             $table->index('stripe_session_id');
         });
     }

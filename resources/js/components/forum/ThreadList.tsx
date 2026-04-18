@@ -34,8 +34,8 @@ import type { DiscussionThread } from '@/types/forum.types';
 import { ThreadCard } from './ThreadCard';
 interface ThreadListProps {
     threads: DiscussionThread[];
-    courseSlug?: string;
-    lessonSlug?: string;
+    trainingPathSlug?: string;
+    trainingUnitSlug?: string;
     onNewThread?: () => void;
     onUpvote?: (threadId: string) => void;
     showNewButton?: boolean;
@@ -43,8 +43,8 @@ interface ThreadListProps {
     emptyDescription?: string;
 }
 const sortOptions = [
-    { value: 'recent', label: 'Most Recent', icon: Clock },
-    { value: 'popular', label: 'Most Popular', icon: TrendingUp },
+    { value: 'recent', label: ' Recent', icon: Clock },
+    { value: 'popular', label: ' Popular', icon: TrendingUp },
     { value: 'unanswered', label: 'Unanswered', icon: HelpCircle },
 ];
 const filterTabs = [
@@ -55,8 +55,8 @@ const filterTabs = [
 ];
 export function ThreadList({
     threads,
-    courseSlug,
-    lessonSlug,
+    trainingPathSlug,
+    trainingUnitSlug,
     onNewThread,
     onUpvote,
     showNewButton = true,
@@ -248,8 +248,8 @@ export function ThreadList({
                             <ThreadCard
                                 key={thread.id}
                                 thread={thread}
-                                courseSlug={courseSlug}
-                                lessonSlug={lessonSlug}
+                                trainingPathSlug={trainingPathSlug}
+                                trainingUnitSlug={trainingUnitSlug}
                                 onUpvote={onUpvote}
                                 index={index}
                             />

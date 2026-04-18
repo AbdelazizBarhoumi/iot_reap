@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +16,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $id
  * @property \App\Enums\UserRole $role
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasUlids, Notifiable, TwoFactorAuthenticatable;
@@ -31,10 +31,15 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'email_verified_at',
+        'teacher_approved_at',
+        'teacher_approved_by',
         'suspended_at',
         'suspended_reason',
         'last_login_at',
         'last_login_ip',
+        'google_id',
+        'google_data',
     ];
 
     /**
@@ -61,9 +66,31 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
+            'teacher_approved_at' => 'datetime',
             'suspended_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'google_data' => 'json',
         ];
+    }
+
+    /**
+     * Check whether the user is a teacher.
+     */
+    public function isTeacher(): bool
+    {
+        return $this->hasRole(UserRole::TEACHER);
+    }
+
+    /**
+     * Check whether a teacher account has been approved by an admin.
+     */
+    public function isTeacherApproved(): bool
+    {
+        if (! $this->isTeacher()) {
+            return true;
+        }
+
+        return $this->teacher_approved_at !== null;
     }
 
     /**
@@ -107,26 +134,34 @@ class User extends Authenticatable
         return in_array($current, $allowed, true);
     }
 
+    /**
+     * Admin who approved the teacher account.
+     */
+    public function approvedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'teacher_approved_by');
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Relationships
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Courses the user is enrolled in.
+     * TrainingPaths the user is enrolled in.
      */
-    public function enrolledCourses(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function enrolledTrainingPaths(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(Course::class, 'course_enrollments')
+        return $this->belongsToMany(TrainingPath::class, 'training_path_enrollments')
             ->withPivot('enrolled_at')
             ->withTimestamps();
     }
 
     /**
-     * Courses the user teaches (as instructor).
+     * TrainingPaths the user teaches (as instructor).
      */
-    public function taughtCourses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function taughtTrainingPaths(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Course::class, 'instructor_id');
+        return $this->hasMany(TrainingPath::class, 'instructor_id');
     }
 
     /**

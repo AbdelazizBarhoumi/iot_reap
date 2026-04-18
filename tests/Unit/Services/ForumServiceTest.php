@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Enums\ThreadStatus;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\User;
 use App\Repositories\ForumRepository;
@@ -48,34 +48,34 @@ class ForumServiceTest extends TestCase
     // Thread Operations Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_get_threads_returns_paginated_threads_for_lesson(): void
+    public function test_get_threads_returns_paginated_threads_for_trainingUnit(): void
     {
-        $lessonId = 1;
+        $trainingUnitId = 1;
         $mockPaginator = Mockery::mock(LengthAwarePaginator::class);
 
         $this->mockRepository
-            ->shouldReceive('getThreadsForLesson')
+            ->shouldReceive('getThreadsForTrainingUnit')
             ->once()
-            ->with($lessonId, 'recent', null)
+            ->with($trainingUnitId, 'recent', null)
             ->andReturn($mockPaginator);
 
-        $result = $this->service->getThreads($lessonId);
+        $result = $this->service->getThreads($trainingUnitId);
 
         $this->assertSame($mockPaginator, $result);
     }
 
-    public function test_get_course_threads_returns_paginated_threads_for_course(): void
+    public function test_get_training_path_threads_returns_paginated_threads_for_trainingPath(): void
     {
-        $courseId = 1;
+        $trainingPathId = 1;
         $mockPaginator = Mockery::mock(LengthAwarePaginator::class);
 
         $this->mockRepository
-            ->shouldReceive('getThreadsForCourse')
+            ->shouldReceive('getThreadsForTrainingPath')
             ->once()
-            ->with($courseId, 'recent', null)
+            ->with($trainingPathId, 'recent', null)
             ->andReturn($mockPaginator);
 
-        $result = $this->service->getCourseThreads($courseId);
+        $result = $this->service->getTrainingPathThreads($trainingPathId);
 
         $this->assertSame($mockPaginator, $result);
     }
@@ -112,12 +112,12 @@ class ForumServiceTest extends TestCase
     public function test_create_thread_creates_and_returns_thread_with_author(): void
     {
         $author = User::factory()->create();
-        $lesson = Lesson::factory()->create();
-        $module = $lesson->module;
+        $trainingUnit = TrainingUnit::factory()->create();
+        $module = $trainingUnit->module;
 
         $threadData = [
-            'lesson_id' => $lesson->id,
-            'course_id' => $module->course_id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $module->training_path_id,
             'author_id' => $author->id,
             'title' => 'Test Thread',
             'content' => 'Test content',
@@ -131,7 +131,7 @@ class ForumServiceTest extends TestCase
             ->shouldReceive('createThread')
             ->once()
             ->with(Mockery::subset([
-                'lesson_id' => $lesson->id,
+                'training_unit_id' => $trainingUnit->id,
                 'author_id' => $author->id,
                 'title' => 'Test Thread',
                 'content' => 'Test content',
@@ -143,7 +143,7 @@ class ForumServiceTest extends TestCase
             ->once()
             ->with('Discussion thread created', Mockery::type('array'));
 
-        $result = $this->service->createThread($author, $lesson, 'Test Thread', 'Test content');
+        $result = $this->service->createThread($author, $trainingUnit, 'Test Thread', 'Test content');
 
         $this->assertEquals($threadWithAuthor->id, $result->id);
     }
@@ -165,10 +165,10 @@ class ForumServiceTest extends TestCase
     {
         $author = User::factory()->create(['name' => 'John Doe']);
         $threadAuthor = User::factory()->create();
-        $lesson = Lesson::factory()->create();
+        $trainingUnit = TrainingUnit::factory()->create();
         $thread = DiscussionThread::factory()->create([
             'author_id' => $threadAuthor->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
         ]);
 
         $replyData = [
@@ -203,7 +203,7 @@ class ForumServiceTest extends TestCase
                 Mockery::on(fn ($u) => $u->id === $threadAuthor->id),
                 'John Doe',
                 $thread->id,
-                $lesson->id
+                $trainingUnit->id
             );
 
         $result = $this->service->replyToThread($thread, $author, 'Reply content');

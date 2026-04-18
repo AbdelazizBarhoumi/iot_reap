@@ -160,36 +160,36 @@ class NotificationService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Notify teacher that their course was approved.
+     * Notify teacher that their trainingPath was approved.
      *
-     * @planned Not yet integrated - will be called from CourseService::approveCourse event listener
+     * @planned Not yet integrated - will be called from TrainingPathService::approveTrainingPath event listener
      */
-    public function notifyCourseApproved(User $teacher, string $courseTitle, int $courseId): Notification
+    public function notifyTrainingPathApproved(User $teacher, string $trainingPathTitle, int $trainingPathId): Notification
     {
         return $this->notify(
             user: $teacher,
             type: NotificationType::COURSE_APPROVED,
-            title: 'Course Approved!',
-            message: "Your course \"{$courseTitle}\" has been approved and is now live.",
-            actionUrl: "/courses/{$courseId}",
-            data: ['course_id' => $courseId, 'course_title' => $courseTitle],
+            title: 'TrainingPath Approved!',
+            message: "Your trainingPath \"{$trainingPathTitle}\" has been approved and is now live.",
+            actionUrl: "/trainingPaths/{$trainingPathId}",
+            data: ['training_path_id' => $trainingPathId, 'training_path_title' => $trainingPathTitle],
         );
     }
 
     /**
-     * Notify teacher that their course was rejected.
+     * Notify teacher that their trainingPath was rejected.
      *
-     * @planned Not yet integrated - will be called from CourseService::rejectCourse event listener
+     * @planned Not yet integrated - will be called from TrainingPathService::rejectTrainingPath event listener
      */
-    public function notifyCourseRejected(User $teacher, string $courseTitle, int $courseId, string $feedback): Notification
+    public function notifyTrainingPathRejected(User $teacher, string $trainingPathTitle, int $trainingPathId, string $feedback): Notification
     {
         return $this->notify(
             user: $teacher,
             type: NotificationType::COURSE_REJECTED,
-            title: 'Course Needs Revision',
-            message: "Your course \"{$courseTitle}\" requires changes: {$feedback}",
-            actionUrl: "/teaching/{$courseId}/edit",
-            data: ['course_id' => $courseId, 'course_title' => $courseTitle, 'feedback' => $feedback],
+            title: 'TrainingPath Needs Revision',
+            message: "Your trainingPath \"{$trainingPathTitle}\" requires changes: {$feedback}",
+            actionUrl: "/teaching/{$trainingPathId}/edit",
+            data: ['training_path_id' => $trainingPathId, 'training_path_title' => $trainingPathTitle, 'feedback' => $feedback],
         );
     }
 
@@ -198,29 +198,29 @@ class NotificationService
      *
      * @planned Not yet integrated - will be called from EnrollmentService::enroll event listener
      */
-    public function notifyNewEnrollment(User $teacher, string $studentName, string $courseTitle, int $courseId): Notification
+    public function notifyNewEnrollment(User $teacher, string $studentName, string $trainingPathTitle, int $trainingPathId): Notification
     {
         return $this->notify(
             user: $teacher,
             type: NotificationType::NEW_ENROLLMENT,
             title: 'New Student Enrolled',
-            message: "{$studentName} enrolled in \"{$courseTitle}\".",
-            actionUrl: "/teaching/{$courseId}/edit",
-            data: ['course_id' => $courseId, 'student_name' => $studentName],
+            message: "{$studentName} enrolled in \"{$trainingPathTitle}\".",
+            actionUrl: "/teaching/{$trainingPathId}/edit",
+            data: ['training_path_id' => $trainingPathId, 'student_name' => $studentName],
         );
     }
 
     /**
      * Notify user of a forum reply.
      */
-    public function notifyForumReply(User $user, string $replierName, int $threadId, int $lessonId): Notification
+    public function notifyForumReply(User $user, string $replierName, int $threadId, int $trainingUnitId): Notification
     {
         return $this->notify(
             user: $user,
             type: NotificationType::FORUM_REPLY,
             title: 'New Reply to Your Post',
             message: "{$replierName} replied to your discussion.",
-            actionUrl: "/lessons/{$lessonId}?thread={$threadId}",
+            actionUrl: "/trainingUnits/{$trainingUnitId}?thread={$threadId}",
             data: ['thread_id' => $threadId, 'replier_name' => $replierName],
         );
     }
@@ -230,15 +230,15 @@ class NotificationService
      *
      * @planned Not yet integrated - will be called from CertificateService::issueCertificate event listener
      */
-    public function notifyCertificateReady(User $user, string $courseTitle, string $certificateHash): Notification
+    public function notifyCertificateReady(User $user, string $trainingPathTitle, string $certificateHash): Notification
     {
         return $this->notify(
             user: $user,
             type: NotificationType::CERTIFICATE_READY,
             title: 'Certificate Earned!',
-            message: "Congratulations! You completed \"{$courseTitle}\".",
+            message: "Congratulations! You completed \"{$trainingPathTitle}\".",
             actionUrl: "/certificates/{$certificateHash}/download",
-            data: ['certificate_hash' => $certificateHash, 'course_title' => $courseTitle],
+            data: ['certificate_hash' => $certificateHash, 'training_path_title' => $trainingPathTitle],
         );
     }
 

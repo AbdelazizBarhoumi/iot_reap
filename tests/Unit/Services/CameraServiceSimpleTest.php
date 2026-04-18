@@ -4,8 +4,10 @@ namespace Tests\Unit\Services;
 
 use App\Enums\CameraType;
 use App\Models\Camera;
+use App\Models\VMSession;
 use App\Repositories\CameraRepository;
 use App\Repositories\CameraReservationRepository;
+use App\Repositories\VMSessionRepository;
 use App\Services\CameraService;
 use App\Services\MqttService;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,11 +18,13 @@ class CameraServiceSimpleTest extends TestCase
 {
     private CameraService $service;
 
-    private CameraRepository $cameraRepository;
+    private $cameraRepository;
 
-    private CameraReservationRepository $reservationRepository;
+    private $reservationRepository;
 
-    private MqttService $mqttService;
+    private $vmSessionRepository;
+
+    private $mqttService;
 
     protected function setUp(): void
     {
@@ -29,11 +33,13 @@ class CameraServiceSimpleTest extends TestCase
         $this->cameraRepository = Mockery::mock(CameraRepository::class);
         $this->reservationRepository = Mockery::mock(CameraReservationRepository::class);
         $this->mqttService = Mockery::mock(MqttService::class);
+        $this->vmSessionRepository = Mockery::mock(VMSessionRepository::class);
 
         $this->service = new CameraService(
             $this->cameraRepository,
             $this->reservationRepository,
-            $this->mqttService
+            $this->mqttService,
+            $this->vmSessionRepository,
         );
     }
 
@@ -41,8 +47,19 @@ class CameraServiceSimpleTest extends TestCase
     {
         // Arrange
         $cameras = new Collection;
+        $session = new VMSession();
+        $session->id = 'session-123';
+        $session->vm_id = 1;
+
+        $this->vmSessionRepository
+            ->shouldReceive('findById')
+            ->with('session-123')
+            ->once()
+            ->andReturn($session);
+
         $this->cameraRepository
-            ->shouldReceive('findAll')
+            ->shouldReceive('findByVmId')
+            ->with(1)
             ->once()
             ->andReturn($cameras);
 

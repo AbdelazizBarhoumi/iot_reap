@@ -19,7 +19,7 @@ class VideoResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'lesson_id' => $this->lesson_id,
+            'training_unit_id' => $this->training_unit_id,
             'original_filename' => $this->original_filename,
             'status' => $this->status->value,
             'is_ready' => $this->isReady(),

@@ -250,6 +250,27 @@ class PayoutService
     }
 
     /**
+     * Get admin dashboard statistics for payouts.
+     *
+     * @return array{pending: int, totalPending: int, paidThisMonth: int}
+     */
+    public function getAdminStats(): array
+    {
+        $pendingCount = PayoutRequest::pending()->count();
+        $totalPendingAmount = PayoutRequest::pending()->sum('amount_cents') ?? 0;
+        $paidThisMonth = PayoutRequest::where('status', PayoutStatus::COMPLETED)
+            ->whereMonth('completed_at', now()->month)
+            ->whereYear('completed_at', now()->year)
+            ->sum('amount_cents') ?? 0;
+
+        return [
+            'pending' => $pendingCount,
+            'totalPending' => intdiv($totalPendingAmount, 100), // Convert cents to dollars for display
+            'paidThisMonth' => intdiv($paidThisMonth, 100),
+        ];
+    }
+
+    /**
      * Check if teacher has a pending payout request.
      */
     private function hasPendingRequest(User $teacher): bool

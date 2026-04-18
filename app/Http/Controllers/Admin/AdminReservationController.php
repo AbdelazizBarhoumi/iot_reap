@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Hardware\ApproveReservationRequest;
 use App\Http\Requests\Hardware\CreateAdminReservationRequest;
 use App\Http\Resources\UsbDeviceReservationResource;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
-use App\Models\UsbDeviceReservation;
 use App\Repositories\UsbDeviceReservationRepository;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
@@ -45,7 +45,8 @@ class AdminReservationController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $query = UsbDeviceReservation::with(['device.gatewayNode', 'user', 'approver']);
+        $query = Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->with(['reservable', 'user', 'approver']);
 
         // Filter by status
         if ($status = $request->query('status')) {
@@ -54,7 +55,7 @@ class AdminReservationController extends Controller
 
         // Filter by device
         if ($deviceId = $request->query('device_id')) {
-            $query->where('usb_device_id', $deviceId);
+            $query->where('reservable_id', $deviceId);
         }
 
         // Filter by user
@@ -93,9 +94,14 @@ class AdminReservationController extends Controller
     /**
      * Approve a reservation.
      */
-    public function approve(UsbDeviceReservation $reservation, ApproveReservationRequest $request): JsonResponse
+    public function approve(Reservation $reservation, ApproveReservationRequest $request): JsonResponse
     {
         Gate::authorize('admin-only');
+
+        // Ensure this is a USB device reservation
+        if ($reservation->reservable_type !== 'App\Models\UsbDevice') {
+            abort(404);
+        }
 
         if (! $reservation->isPending()) {
             return response()->json([
@@ -123,7 +129,7 @@ class AdminReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Reservation approved',
-                'data' => new UsbDeviceReservationResource($approved->load(['device.gatewayNode', 'user', 'approver'])),
+                'data' => new UsbDeviceReservationResource($approved->load(['reservable', 'user', 'approver'])),
             ]);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
@@ -136,9 +142,14 @@ class AdminReservationController extends Controller
     /**
      * Reject a reservation.
      */
-    public function reject(UsbDeviceReservation $reservation, Request $request): JsonResponse
+    public function reject(Reservation $reservation, Request $request): JsonResponse
     {
         Gate::authorize('admin-only');
+
+        // Ensure this is a USB device reservation
+        if ($reservation->reservable_type !== 'App\Models\UsbDevice') {
+            abort(404);
+        }
 
         if (! $reservation->isPending()) {
             return response()->json([
@@ -183,7 +194,7 @@ class AdminReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Device blocked successfully',
-                'data' => new UsbDeviceReservationResource($block->load(['device.gatewayNode', 'user'])),
+                'data' => new UsbDeviceReservationResource($block->load(['reservable', 'user'])),
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([

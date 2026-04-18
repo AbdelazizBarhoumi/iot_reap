@@ -26,6 +26,10 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role' => $this->role->value,
             'role_label' => $this->role->label(),
+            'teacher_approved_at' => $this->teacher_approved_at?->toISOString(),
+            'teacher_approved_by' => $this->teacher_approved_by,
+            'is_teacher_approved' => $this->isTeacherApproved(),
+            'requires_teacher_approval' => $this->isTeacher(),
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'two_factor_enabled' => ! is_null($this->two_factor_confirmed_at),
             'suspended_at' => $this->suspended_at?->toISOString(),
@@ -36,7 +40,7 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             // Include relations when loaded
-            'course_enrollments' => $this->whenLoaded('courseEnrollments', fn () => CourseEnrollmentResource::collection($this->courseEnrollments)
+            'training_path_enrollments' => $this->whenLoaded('trainingPathEnrollments', fn () => TrainingPathEnrollmentResource::collection($this->trainingPathEnrollments)
             ),
             'vm_sessions' => $this->whenLoaded('vmSessions', fn () => VMSessionResource::collection($this->vmSessions)
             ),

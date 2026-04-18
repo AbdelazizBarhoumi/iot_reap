@@ -61,6 +61,10 @@ class UserRepository
                 $query->whereNotNull('suspended_at');
             } elseif ($status === 'active') {
                 $query->whereNull('suspended_at');
+            } elseif ($status === 'pending_teacher_approval') {
+                $query->where('role', UserRole::TEACHER->value)
+                    ->whereNull('teacher_approved_at')
+                    ->whereNull('suspended_at');
             }
         }
 
@@ -75,7 +79,7 @@ class UserRepository
      */
     public function findWithDetails(string $id): ?User
     {
-        return User::with(['courseEnrollments.course', 'vmSessions' => function ($q) {
+        return User::with(['trainingPathEnrollments.trainingPath', 'vmSessions' => function ($q) {
             $q->latest()->limit(10);
         }])->find($id);
     }

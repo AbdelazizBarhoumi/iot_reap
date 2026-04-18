@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Course;
-use App\Services\CourseAnalyticsService;
+use App\Models\TrainingPath;
+use App\Services\TrainingPathAnalyticsService;
 use App\Services\RevenueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ use Inertia\Response;
 class TeacherAnalyticsController extends Controller
 {
     public function __construct(
-        protected CourseAnalyticsService $analyticsService,
+        protected TrainingPathAnalyticsService $analyticsService,
         protected RevenueService $revenueService
     ) {}
 
@@ -28,13 +28,13 @@ class TeacherAnalyticsController extends Controller
         $kpis = $this->analyticsService->getTeacherKPIs($teacher, $period);
         $enrollmentChart = $this->analyticsService->getEnrollmentChart($teacher, $period);
         $revenueChart = $this->analyticsService->getRevenueChart($teacher, $period);
-        $topCourses = $this->analyticsService->getTopCourses($teacher, $period, 'enrollments');
+        $topTrainingPaths = $this->analyticsService->getTopTrainingPaths($teacher, $period, 'enrollments');
 
         return Inertia::render('teaching/analytics', [
             'kpis' => $kpis,
             'enrollmentChart' => $enrollmentChart,
             'revenueChart' => $revenueChart,
-            'topCourses' => $topCourses,
+            'topTrainingPaths' => $topTrainingPaths,
             'period' => $period,
         ]);
     }
@@ -79,19 +79,19 @@ class TeacherAnalyticsController extends Controller
     }
 
     /**
-     * Student roster for a course.
+     * Student roster for a trainingPath.
      */
-    public function students(Request $request, Course $course): Response
+    public function students(Request $request, TrainingPath $trainingPath): Response
     {
-        $this->authorizeTeacher($course);
+        $this->authorizeTeacher($trainingPath);
 
         $page = $request->get('page', 1);
-        $roster = $this->analyticsService->getStudentRoster($course, $page);
+        $roster = $this->analyticsService->getStudentRoster($trainingPath, $page);
 
         return Inertia::render('teaching/students', [
-            'course' => [
-                'id' => $course->id,
-                'title' => $course->title,
+            'trainingPath' => [
+                'id' => $trainingPath->id,
+                'title' => $trainingPath->title,
             ],
             'students' => $roster['data'],
             'pagination' => $roster['meta'],
@@ -99,14 +99,14 @@ class TeacherAnalyticsController extends Controller
     }
 
     /**
-     * Completion funnel for a course.
+     * Completion funnel for a trainingPath.
      */
-    public function funnel(Request $request, Course $course): JsonResponse
+    public function funnel(Request $request, TrainingPath $trainingPath): JsonResponse
     {
-        $this->authorizeTeacher($course);
+        $this->authorizeTeacher($trainingPath);
 
         return response()->json([
-            'funnel' => $this->analyticsService->getCompletionFunnel($course),
+            'funnel' => $this->analyticsService->getCompletionFunnel($trainingPath),
         ]);
     }
 
@@ -119,7 +119,7 @@ class TeacherAnalyticsController extends Controller
         $period = $request->get('period', '30d');
 
         $summary = $this->revenueService->getEarningsSummary($teacher, $period);
-        $revenueByCourse = $this->revenueService->getRevenueByCourse(
+        $revenueByTrainingPath = $this->revenueService->getRevenueByTrainingPath(
             $teacher,
             $summary['start_date'],
             $summary['end_date']
@@ -132,7 +132,7 @@ class TeacherAnalyticsController extends Controller
 
         return Inertia::render('teaching/earnings', [
             'summary' => $summary,
-            'revenueByCourse' => $revenueByCourse,
+            'revenueByTrainingPath' => $revenueByTrainingPath,
             'revenueChart' => $revenueChart,
             'period' => $period,
         ]);
@@ -157,12 +157,12 @@ class TeacherAnalyticsController extends Controller
     }
 
     /**
-     * Authorize that the current user owns the course.
+     * Authorize that the current user owns the trainingPath.
      */
-    protected function authorizeTeacher(Course $course): void
+    protected function authorizeTeacher(TrainingPath $trainingPath): void
     {
-        if ($course->instructor_id !== auth()->id()) {
-            abort(403, 'You do not own this course.');
+        if ($trainingPath->instructor_id !== auth()->id()) {
+            abort(403, 'You do not own this trainingPath.');
         }
     }
 }

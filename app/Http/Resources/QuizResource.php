@@ -23,7 +23,7 @@ class QuizResource extends JsonResource
 
         return [
             'id' => $this->resource->id,
-            'lesson_id' => $this->resource->lesson_id,
+            'training_unit_id' => $this->resource->training_unit_id,
             'title' => $this->resource->title,
             'description' => $this->resource->description,
             'passing_score' => $this->resource->passing_score,

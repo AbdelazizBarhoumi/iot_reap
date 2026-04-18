@@ -86,4 +86,16 @@ class CameraFactory extends Factory
             'source_url' => 'rtsp://'.$this->faker->localIpv4().':554/stream',
         ]);
     }
+
+    /**
+     * Configure camera in maintenance mode.
+     */
+    public function maintenance(?string $notes = null, mixed $until = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'maintenance_mode' => true,
+            'maintenance_notes' => $notes ?? 'Camera under maintenance',
+            'maintenance_until' => $until,
+        ]);
+    }
 }

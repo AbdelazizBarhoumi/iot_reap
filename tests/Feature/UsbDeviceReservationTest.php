@@ -53,14 +53,14 @@ class UsbDeviceReservationTest extends TestCase
     public function test_user_can_list_their_reservations(): void
     {
         UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
         UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->approved()
             ->create();
 
@@ -76,8 +76,8 @@ class UsbDeviceReservationTest extends TestCase
         $otherUser = User::factory()->engineer()->create();
 
         UsbDeviceReservation::factory()
-            ->for($otherUser)
-            ->for($this->device, 'device')
+            ->forUser($otherUser)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
@@ -106,10 +106,11 @@ class UsbDeviceReservationTest extends TestCase
         $response->assertCreated();
         $response->assertJson(['success' => true]);
 
-        $this->assertDatabaseHas('usb_device_reservations', [
-            'usb_device_id' => $this->device->id,
+        $this->assertDatabaseHas('reservations', [
+            'reservable_type' => 'App\Models\UsbDevice',
+            'reservable_id' => $this->device->id,
             'user_id' => $this->user->id,
-            'status' => UsbReservationStatus::PENDING->value,
+            'status' => 'pending',
         ]);
     }
 
@@ -120,8 +121,8 @@ class UsbDeviceReservationTest extends TestCase
 
         // Existing approved reservation
         UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->approved()
             ->create([
                 'approved_start_at' => $startTime,
@@ -144,8 +145,8 @@ class UsbDeviceReservationTest extends TestCase
     public function test_user_can_cancel_their_pending_reservation(): void
     {
         $reservation = UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
@@ -162,8 +163,8 @@ class UsbDeviceReservationTest extends TestCase
     {
         $otherUser = User::factory()->engineer()->create();
         $reservation = UsbDeviceReservation::factory()
-            ->for($otherUser)
-            ->for($this->device, 'device')
+            ->forUser($otherUser)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
@@ -178,8 +179,8 @@ class UsbDeviceReservationTest extends TestCase
     public function test_admin_can_list_pending_reservations(): void
     {
         UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
@@ -206,8 +207,8 @@ class UsbDeviceReservationTest extends TestCase
         $endTime = $startTime->copy()->addHours(2);
 
         $reservation = UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->pending()
             ->create([
                 'requested_start_at' => $startTime,
@@ -233,8 +234,8 @@ class UsbDeviceReservationTest extends TestCase
     public function test_admin_can_reject_reservation(): void
     {
         $reservation = UsbDeviceReservation::factory()
-            ->for($this->user)
-            ->for($this->device, 'device')
+            ->forUser($this->user)
+            ->forDevice($this->device)
             ->pending()
             ->create();
 
@@ -266,10 +267,11 @@ class UsbDeviceReservationTest extends TestCase
 
         $response->assertCreated();
 
-        $this->assertDatabaseHas('usb_device_reservations', [
-            'usb_device_id' => $this->device->id,
+        $this->assertDatabaseHas('reservations', [
+            'reservable_type' => 'App\Models\UsbDevice',
+            'reservable_id' => $this->device->id,
             'priority' => 100,
-            'status' => UsbReservationStatus::APPROVED->value,
+            'status' => 'approved',
         ]);
     }
 }

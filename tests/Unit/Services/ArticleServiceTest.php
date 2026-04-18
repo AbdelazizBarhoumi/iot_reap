@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Article;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Services\ArticleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,29 +26,29 @@ class ArticleServiceTest extends TestCase
 
     public function test_creates_article_with_word_count(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
 
         $content = $this->makeTipTapContent(['Hello world this is a test']);
 
-        $article = $this->articleService->create($lesson->id, $content);
+        $article = $this->articleService->create($trainingUnit->id, $content);
 
         $this->assertInstanceOf(Article::class, $article);
-        $this->assertEquals($lesson->id, $article->lesson_id);
+        $this->assertEquals($trainingUnit->id, $article->training_unit_id);
         $this->assertEquals(6, $article->word_count);
         $this->assertEquals(1, $article->estimated_read_time_minutes);
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'word_count' => 6,
         ]);
     }
 
     public function test_creates_article_with_empty_content(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
 
         $content = ['type' => 'doc', 'content' => []];
 
-        $article = $this->articleService->create($lesson->id, $content);
+        $article = $this->articleService->create($trainingUnit->id, $content);
 
         $this->assertEquals(0, $article->word_count);
         $this->assertEquals(1, $article->estimated_read_time_minutes);
@@ -56,7 +56,7 @@ class ArticleServiceTest extends TestCase
 
     public function test_creates_article_with_nested_tiptap_structure(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
 
         $content = [
             'type' => 'doc',
@@ -104,7 +104,7 @@ class ArticleServiceTest extends TestCase
             ],
         ];
 
-        $article = $this->articleService->create($lesson->id, $content);
+        $article = $this->articleService->create($trainingUnit->id, $content);
 
         // "Introduction" + "First paragraph with bold text." + "Item one" + "Item two"
         // = 1 + 5 + 2 + 2 = 10 words
@@ -181,25 +181,25 @@ class ArticleServiceTest extends TestCase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Get Article For Lesson
+    // Get Article For TrainingUnit
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_article_for_lesson(): void
+    public function test_gets_article_for_trainingUnit(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
-        $article = Article::factory()->create(['lesson_id' => $lesson->id]);
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
+        $article = Article::factory()->create(['training_unit_id' => $trainingUnit->id]);
 
-        $found = $this->articleService->getArticleForLesson($lesson->id);
+        $found = $this->articleService->getArticleForTrainingUnit($trainingUnit->id);
 
         $this->assertNotNull($found);
         $this->assertEquals($article->id, $found->id);
     }
 
-    public function test_returns_null_for_lesson_without_article(): void
+    public function test_returns_null_for_training_unit_without_article(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
 
-        $found = $this->articleService->getArticleForLesson($lesson->id);
+        $found = $this->articleService->getArticleForTrainingUnit($trainingUnit->id);
 
         $this->assertNull($found);
     }
@@ -210,28 +210,28 @@ class ArticleServiceTest extends TestCase
 
     public function test_upsert_creates_article_when_none_exists(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
         $content = $this->makeTipTapContent(['New article content here']);
 
-        $article = $this->articleService->upsert($lesson->id, $content);
+        $article = $this->articleService->upsert($trainingUnit->id, $content);
 
         $this->assertInstanceOf(Article::class, $article);
-        $this->assertEquals($lesson->id, $article->lesson_id);
+        $this->assertEquals($trainingUnit->id, $article->training_unit_id);
         $this->assertEquals(4, $article->word_count);
         $this->assertDatabaseHas('articles', [
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
         ]);
     }
 
     public function test_upsert_updates_article_when_exists(): void
     {
-        $lesson = Lesson::factory()->reading()->create();
-        $existingArticle = Article::factory()->create(['lesson_id' => $lesson->id]);
+        $trainingUnit = TrainingUnit::factory()->reading()->create();
+        $existingArticle = Article::factory()->create(['training_unit_id' => $trainingUnit->id]);
         $originalWordCount = $existingArticle->word_count;
 
         $newContent = $this->makeTipTapContent(['Completely different content now']);
 
-        $article = $this->articleService->upsert($lesson->id, $newContent);
+        $article = $this->articleService->upsert($trainingUnit->id, $newContent);
 
         $this->assertEquals($existingArticle->id, $article->id);
         $this->assertNotEquals($originalWordCount, $article->word_count);

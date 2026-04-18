@@ -56,33 +56,33 @@ class RevenueService
     }
 
     /**
-     * Get revenue breakdown by course.
+     * Get revenue breakdown by trainingPath.
      */
-    public function getRevenueByCourse(User $teacher, ?string $startDate = null, ?string $endDate = null): array
+    public function getRevenueByTrainingPath(User $teacher, ?string $startDate = null, ?string $endDate = null): array
     {
         $query = DB::table('payments')
-            ->select('courses.id', 'courses.title', 'courses.thumbnail')
+            ->select('training_paths.id', 'training_paths.title', 'training_paths.thumbnail')
             ->selectRaw('SUM(payments.amount_cents) as total_revenue_cents')
             ->selectRaw('COUNT(*) as sales_count')
-            ->join('courses', 'payments.course_id', '=', 'courses.id')
-            ->where('courses.instructor_id', $teacher->id)
+            ->join('training_paths', 'payments.training_path_id', '=', 'training_paths.id')
+            ->where('training_paths.instructor_id', $teacher->id)
             ->where('payments.status', PaymentStatus::COMPLETED->value);
 
         if ($startDate && $endDate) {
             $query->whereBetween('payments.paid_at', [$startDate, $endDate]);
         }
 
-        $courses = $query
-            ->groupBy('courses.id', 'courses.title', 'courses.thumbnail')
+        $trainingPaths = $query
+            ->groupBy('training_paths.id', 'training_paths.title', 'training_paths.thumbnail')
             ->orderByDesc('total_revenue_cents')
             ->get();
 
-        return $courses->map(fn ($course) => [
-            'id' => $course->id,
-            'title' => $course->title,
-            'thumbnail_url' => $course->thumbnail,
-            'revenue' => $course->total_revenue_cents / 100,
-            'sales_count' => $course->sales_count,
+        return $trainingPaths->map(fn ($trainingPath) => [
+            'id' => $trainingPath->id,
+            'title' => $trainingPath->title,
+            'thumbnail_url' => $trainingPath->thumbnail,
+            'revenue' => $trainingPath->total_revenue_cents / 100,
+            'sales_count' => $trainingPath->sales_count,
         ])->toArray();
     }
 
@@ -130,28 +130,28 @@ class RevenueService
         $payments = DB::table('payments')
             ->select([
                 'payments.id',
-                'courses.title as course_title',
+                'training_paths.title as training_path_title',
                 'users.name as student_name',
                 'users.email as student_email',
                 'payments.amount_cents',
                 'payments.currency',
                 'payments.paid_at',
             ])
-            ->join('courses', 'payments.course_id', '=', 'courses.id')
+            ->join('training_paths', 'payments.training_path_id', '=', 'training_paths.id')
             ->join('users', 'payments.user_id', '=', 'users.id')
-            ->where('courses.instructor_id', $teacher->id)
+            ->where('training_paths.instructor_id', $teacher->id)
             ->where('payments.status', PaymentStatus::COMPLETED->value)
             ->whereBetween('payments.paid_at', [$startDate, $endDate])
             ->orderBy('payments.paid_at', 'desc')
             ->get();
 
-        $csv = "Transaction ID,Course,Student Name,Student Email,Amount,Currency,Date\n";
+        $csv = "Transaction ID,TrainingPath,Student Name,Student Email,Amount,Currency,Date\n";
 
         foreach ($payments as $payment) {
             $csv .= sprintf(
                 "%d,\"%s\",\"%s\",%s,%.2f,%s,%s\n",
                 $payment->id,
-                str_replace('"', '""', $payment->course_title),
+                str_replace('"', '""', $payment->training_path_title),
                 str_replace('"', '""', $payment->student_name),
                 $payment->student_email,
                 $payment->amount_cents / 100,
@@ -169,8 +169,8 @@ class RevenueService
     protected function getRevenueBetweenDates(User $teacher, Carbon $start, Carbon $end): float
     {
         $revenue = DB::table('payments')
-            ->join('courses', 'payments.course_id', '=', 'courses.id')
-            ->where('courses.instructor_id', $teacher->id)
+            ->join('training_paths', 'payments.training_path_id', '=', 'training_paths.id')
+            ->where('training_paths.instructor_id', $teacher->id)
             ->where('payments.status', PaymentStatus::COMPLETED->value)
             ->whereBetween('payments.paid_at', [$start->toDateString(), $end->toDateString()])
             ->sum('payments.amount_cents');

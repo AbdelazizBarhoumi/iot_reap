@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GoogleOAuthController;
 use Illuminate\Support\Facades\Route;
 
 // auth endpoints (session-based JSON)
@@ -15,4 +16,13 @@ Route::prefix('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth');
+});
+
+// Google OAuth routes
+Route::prefix('auth/oauth')->group(function () {
+    Route::get('/google/redirect', [GoogleOAuthController::class, 'redirect'])->name('google.redirect');
+    Route::get('/google/callback', [GoogleOAuthController::class, 'callback'])->name('google.callback');
+    Route::post('/google/auth-code', [GoogleOAuthController::class, 'handleAuthCode'])->name('google.auth-code');
+    Route::get('/google/role-selection', [GoogleOAuthController::class, 'showRoleSelection'])->name('google.role-selection');
+    Route::post('/google/complete-signup', [GoogleOAuthController::class, 'completeSignup'])->name('google.complete-signup');
 });

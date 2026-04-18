@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Payment model for course purchases.
+ * Payment model for trainingPath purchases.
  *
  * @property int $id
  * @property int $user_id
- * @property int $course_id
+ * @property int $training_path_id
  * @property string $stripe_session_id
  * @property string|null $stripe_payment_intent_id
  * @property PaymentStatus $status
@@ -28,7 +28,7 @@ class Payment extends Model
 
     protected $fillable = [
         'user_id',
-        'course_id',
+        'training_path_id',
         'stripe_session_id',
         'stripe_payment_intent_id',
         'status',
@@ -62,9 +62,9 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function course(): BelongsTo
+    public function trainingPath(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(TrainingPath::class);
     }
 
     public function refundRequests(): HasMany

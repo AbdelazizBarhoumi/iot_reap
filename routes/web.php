@@ -3,36 +3,51 @@
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\StripeWebhookController;
-use App\Http\Resources\CourseResource;
-use App\Services\CourseService;
+use App\Http\Resources\TrainingPathResource;
+use App\Models\User;
+use App\Services\TrainingPathService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', function (CourseService $courseService) {
-    // grab a small selection of approved courses for the landing page
-    $featured = $courseService->getApprovedCourses()->take(3);
+Route::get('/', function (TrainingPathService $trainingPathService) {
+    // grab a small selection of approved trainingPaths for the landing page
+    $featured = $trainingPathService->getApprovedTrainingPaths()->take(3);
 
     return Inertia::render('welcome', [
         'canRegister' => Features::enabled(Features::registration()),
-        'featuredCourses' => CourseResource::collection($featured),
+        'featuredTrainingPaths' => TrainingPathResource::collection($featured),
     ]);
 })->name('home');
 
 Route::get('dashboard', function () {
-    $user = auth()->user();
+    $user = Auth::user();
+
+    if (! $user instanceof User) {
+        return redirect()->route('login');
+    }
+
+    // Engineers go to trainingPaths (they must not access dashboard or infra)
+    if ($user->hasRole(\App\Enums\UserRole::ENGINEER)) {
+        return redirect()->route('trainingPaths.index');
+    }
 
     // Teachers go to their teaching dashboard
     if ($user->hasRole(\App\Enums\UserRole::TEACHER)) {
+        if (! $user->isTeacherApproved()) {
+            return redirect()->route('trainingPaths.index');
+        }
+
         return redirect()->route('teaching.index');
     }
 
-    // Security officers go to courses (they review/monitor, not operate VMs)
+    // Security officers go to trainingPaths (they review/monitor, not operate VMs)
     if ($user->hasRole(\App\Enums\UserRole::SECURITY_OFFICER)) {
-        return redirect()->route('courses.index');
+        return redirect()->route('trainingPaths.index');
     }
 
-    // Engineers & admins see the VM browser dashboard
+    // Only admins see the VM browser dashboard
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -49,7 +64,7 @@ Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.web
 // Core domains
 require __DIR__.'/sessions.php';
 require __DIR__.'/admin.php';
-require __DIR__.'/courses.php';
+require __DIR__.'/trainingPaths.php';
 require __DIR__.'/teaching.php';
 
 // Auth and Settings

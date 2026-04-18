@@ -3,7 +3,7 @@
 namespace Tests\Feature\Security;
 
 use App\Enums\PaymentStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\CheckoutService;
@@ -22,14 +22,14 @@ class CheckoutIdorTest extends TestCase
 
     private User $otherUser;
 
-    private Course $course;
+    private TrainingPath $trainingPath;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->engineer()->create();
         $this->otherUser = User::factory()->engineer()->create();
-        $this->course = Course::factory()->approved()->create();
+        $this->trainingPath = TrainingPath::factory()->approved()->create();
 
         // Mock both services to avoid Stripe dependencies in constructor
         $this->mock(CheckoutService::class, function ($mock) {
@@ -47,7 +47,7 @@ class CheckoutIdorTest extends TestCase
         // Create a payment belonging to another user
         $otherUsersPayment = Payment::create([
             'user_id' => $this->otherUser->id,
-            'course_id' => $this->course->id,
+            'training_path_id' => $this->trainingPath->id,
             'stripe_session_id' => 'cs_test_'.uniqid(),
             'stripe_payment_intent_id' => 'pi_test_'.uniqid(),
             'status' => PaymentStatus::COMPLETED,
@@ -60,7 +60,7 @@ class CheckoutIdorTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $otherUsersPayment->id,
-                'reason' => 'I want a refund because the course was not what I expected',
+                'reason' => 'I want a refund because the trainingPath was not what I expected',
             ]);
 
         // Should return 404 (not found) since the query is scoped to user
@@ -85,7 +85,7 @@ class CheckoutIdorTest extends TestCase
         // Create a payment belonging to the authenticated user
         $ownPayment = Payment::create([
             'user_id' => $this->user->id,
-            'course_id' => $this->course->id,
+            'training_path_id' => $this->trainingPath->id,
             'stripe_session_id' => 'cs_test_'.uniqid(),
             'stripe_payment_intent_id' => 'pi_test_'.uniqid(),
             'status' => PaymentStatus::COMPLETED,
@@ -97,7 +97,7 @@ class CheckoutIdorTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $ownPayment->id,
-                'reason' => 'Course did not meet expectations',
+                'reason' => 'TrainingPath did not meet expectations',
             ]);
 
         // Should succeed (201 Created for refund request)

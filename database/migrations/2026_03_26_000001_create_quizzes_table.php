@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lesson_id')->constrained()->onDelete('cascade');
+            $table->foreignId('training_unit_id')->constrained('training_units')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
             $table->unsignedInteger('passing_score')->default(70);
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_published')->default(false);
             $table->timestamps();
 
-            $table->index('lesson_id');
+            $table->index('training_unit_id');
         });
 
         Schema::create('quiz_questions', function (Blueprint $table) {

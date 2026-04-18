@@ -2,88 +2,88 @@
 
 namespace App\Services;
 
-use App\Models\Course;
-use App\Models\CourseEnrollment;
-use App\Models\LessonProgress;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingUnitProgress;
 use App\Models\User;
-use App\Repositories\CourseEnrollmentRepository;
-use App\Repositories\CourseRepository;
-use App\Repositories\LessonProgressRepository;
+use App\Repositories\TrainingPathEnrollmentRepository;
+use App\Repositories\TrainingPathRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Service for course enrollment and progress tracking.
+ * Service for trainingPath enrollment and progress tracking.
  */
 class EnrollmentService
 {
     public function __construct(
-        private readonly CourseEnrollmentRepository $enrollmentRepository,
-        private readonly CourseRepository $courseRepository,
-        private readonly LessonProgressRepository $progressRepository,
+        private readonly TrainingPathEnrollmentRepository $enrollmentRepository,
+        private readonly TrainingPathRepository $trainingPathRepository,
+        private readonly TrainingUnitProgressRepository $progressRepository,
     ) {}
 
     /**
-     * Enroll a user in a course.
+     * Enroll a user in a trainingPath.
      */
-    public function enroll(User $user, int $courseId): CourseEnrollment
+    public function enroll(User $user, int $trainingPathId): TrainingPathEnrollment
     {
-        $course = $this->courseRepository->findById($courseId);
+        $trainingPath = $this->trainingPathRepository->findById($trainingPathId);
 
-        if (! $course) {
-            throw new \DomainException('Course not found');
+        if (! $trainingPath) {
+            throw new \DomainException('TrainingPath not found');
         }
 
-        if (! $course->isPublished()) {
-            throw new \DomainException('Cannot enroll in unpublished course');
+        if (! $trainingPath->isPublished()) {
+            throw new \DomainException('Cannot enroll in unpublished trainingPath');
         }
 
-        Log::info('User enrolled in course', [
+        Log::info('User enrolled in trainingPath', [
             'user_id' => $user->id,
-            'course_id' => $courseId,
+            'training_path_id' => $trainingPathId,
         ]);
 
         // Invalidate enrollment cache
-        Cache::forget("user:{$user->id}:enrolled:{$courseId}");
+        Cache::forget("user:{$user->id}:enrolled:{$trainingPathId}");
         Cache::forget("user:{$user->id}:enrollments");
 
-        return $this->enrollmentRepository->enroll($user->id, $courseId);
+        return $this->enrollmentRepository->enroll($user->id, $trainingPathId);
     }
 
     /**
-     * Unenroll a user from a course.
+     * Unenroll a user from a trainingPath.
      */
-    public function unenroll(User $user, int $courseId): bool
+    public function unenroll(User $user, int $trainingPathId): bool
     {
-        Log::info('User unenrolled from course', [
+        Log::info('User unenrolled from trainingPath', [
             'user_id' => $user->id,
-            'course_id' => $courseId,
+            'training_path_id' => $trainingPathId,
         ]);
 
         // Invalidate enrollment cache
-        Cache::forget("user:{$user->id}:enrolled:{$courseId}");
+        Cache::forget("user:{$user->id}:enrolled:{$trainingPathId}");
         Cache::forget("user:{$user->id}:enrollments");
 
-        return $this->enrollmentRepository->unenroll($user->id, $courseId);
+        return $this->enrollmentRepository->unenroll($user->id, $trainingPathId);
     }
 
     /**
-     * Check if a user is enrolled in a course (cached for 1 hour).
+     * Check if a user is enrolled in a trainingPath (cached for 1 hour).
      */
-    public function isEnrolled(User $user, int $courseId): bool
+    public function isEnrolled(User $user, int $trainingPathId): bool
     {
         return Cache::remember(
-            "user:{$user->id}:enrolled:{$courseId}",
+            "user:{$user->id}:enrolled:{$trainingPathId}",
             3600,
-            fn () => $this->enrollmentRepository->isEnrolled($user->id, $courseId)
+            fn () => $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId)
         );
     }
 
     /**
-     * Get all enrolled courses for a user (cached for 30 minutes).
+     * Get all enrolled trainingPaths for a user (cached for 30 minutes).
      */
-    public function getEnrolledCourses(User $user): Collection
+    public function getEnrolledTrainingPaths(User $user): Collection
     {
         return Cache::remember(
             "user:{$user->id}:enrollments",
@@ -93,47 +93,47 @@ class EnrollmentService
     }
 
     /**
-     * Mark a lesson as complete.
+     * Mark a trainingUnit as complete.
      */
-    public function markLessonComplete(User $user, int $lessonId): LessonProgress
+    public function markTrainingUnitComplete(User $user, int $trainingUnitId): TrainingUnitProgress
     {
-        $progress = $this->progressRepository->markComplete($user->id, $lessonId);
+        $progress = $this->progressRepository->markComplete($user->id, $trainingUnitId);
 
-        Log::info('Lesson marked complete', [
+        Log::info('TrainingUnit marked complete', [
             'user_id' => $user->id,
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
         ]);
 
         return $progress;
     }
 
     /**
-     * Mark a lesson as incomplete.
+     * Mark a trainingUnit as incomplete.
      */
-    public function markLessonIncomplete(User $user, int $lessonId): void
+    public function markTrainingUnitIncomplete(User $user, int $trainingUnitId): void
     {
-        $this->progressRepository->markIncomplete($user->id, $lessonId);
+        $this->progressRepository->markIncomplete($user->id, $trainingUnitId);
     }
 
     /**
-     * Update video watch progress for a lesson.
+     * Update video watch progress for a trainingUnit.
      */
     public function updateVideoProgress(
         User $user,
-        int $lessonId,
+        int $trainingUnitId,
         int $percentage,
         int $positionSeconds,
-    ): LessonProgress {
+    ): TrainingUnitProgress {
         $progress = $this->progressRepository->updateVideoProgress(
             $user->id,
-            $lessonId,
+            $trainingUnitId,
             $percentage,
             $positionSeconds
         );
 
         Log::info('Video progress updated', [
             'user_id' => $user->id,
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
             'percentage' => $percentage,
             'position_seconds' => $positionSeconds,
             'completed' => $progress->completed,
@@ -143,15 +143,15 @@ class EnrollmentService
     }
 
     /**
-     * Mark article as read for a lesson.
+     * Mark article as read for a trainingUnit.
      */
-    public function markArticleRead(User $user, int $lessonId): LessonProgress
+    public function markArticleRead(User $user, int $trainingUnitId): TrainingUnitProgress
     {
-        $progress = $this->progressRepository->markArticleRead($user->id, $lessonId);
+        $progress = $this->progressRepository->markArticleRead($user->id, $trainingUnitId);
 
         Log::info('Article marked as read', [
             'user_id' => $user->id,
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
             'completed' => $progress->completed,
         ]);
 
@@ -159,15 +159,15 @@ class EnrollmentService
     }
 
     /**
-     * Mark quiz as passed for a lesson.
+     * Mark quiz as passed for a trainingUnit.
      */
-    public function markQuizPassed(User $user, int $lessonId, int $attemptId): LessonProgress
+    public function markQuizPassed(User $user, int $trainingUnitId, int $attemptId): TrainingUnitProgress
     {
-        $progress = $this->progressRepository->markQuizPassed($user->id, $lessonId, $attemptId);
+        $progress = $this->progressRepository->markQuizPassed($user->id, $trainingUnitId, $attemptId);
 
         Log::info('Quiz passed', [
             'user_id' => $user->id,
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
             'attempt_id' => $attemptId,
             'completed' => $progress->completed,
         ]);
@@ -176,42 +176,42 @@ class EnrollmentService
     }
 
     /**
-     * Get progress for a user in a course.
+     * Get progress for a user in a trainingPath.
      *
      * @return array{completed: int, total: int, percentage: float}
      */
-    public function getCourseProgress(User $user, Course $course): array
+    public function getTrainingPathProgress(User $user, TrainingPath $trainingPath): array
     {
-        $totalLessons = $course->lessons()->count();
-        $completedLessons = $this->progressRepository->getCompletedCountForCourse($user, $course->id);
+        $totalTrainingUnits = $trainingPath->trainingUnits()->count();
+        $completedTrainingUnits = $this->progressRepository->getCompletedCountForTrainingPath($user, $trainingPath->id);
 
         return [
-            'completed' => $completedLessons,
-            'total' => $totalLessons,
-            'percentage' => $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100, 1) : 0,
+            'completed' => $completedTrainingUnits,
+            'total' => $totalTrainingUnits,
+            'percentage' => $totalTrainingUnits > 0 ? round(($completedTrainingUnits / $totalTrainingUnits) * 100, 1) : 0,
         ];
     }
 
     /**
-     * Get all progress for a user in a course.
+     * Get all progress for a user in a trainingPath.
      *
-     * @deprecated Unused - candidate for removal. Use getCompletedLessonIds() or getCourseProgress() instead.
+     * @deprecated Unused - candidate for removal. Use getCompletedTrainingUnitIds() or getTrainingPathProgress() instead.
      */
-    public function getLessonProgress(User $user, int $courseId): Collection
+    public function getTrainingUnitProgress(User $user, int $trainingPathId): Collection
     {
-        return $this->progressRepository->findByUserAndCourse($user, $courseId);
+        return $this->progressRepository->findByUserAndTrainingPath($user, $trainingPathId);
     }
 
     /**
-     * Get completed lesson IDs for a course.
+     * Get completed trainingUnit IDs for a trainingPath.
      *
      * @return array<int>
      */
-    public function getCompletedLessonIds(User $user, int $courseId): array
+    public function getCompletedTrainingUnitIds(User $user, int $trainingPathId): array
     {
-        return $this->progressRepository->findByUserAndCourse($user, $courseId)
+        return $this->progressRepository->findByUserAndTrainingPath($user, $trainingPathId)
             ->where('completed', true)
-            ->pluck('lesson_id')
+            ->pluck('training_unit_id')
             ->toArray();
     }
 }

@@ -5,6 +5,8 @@ export type User = {
     role: 'engineer' | 'teacher' | 'admin' | 'security_officer';
     avatar?: string;
     email_verified_at: string | null;
+    teacher_approved_at: string | null;
+    teacher_approved_by?: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;

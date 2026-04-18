@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Services\VMSessionCleanupService;
+use App\Enums\VMSessionStatus;
+use App\Jobs\TerminateVMJob;
+use App\Models\VMSession;
 use Illuminate\Console\Command;
 
 /**
@@ -18,19 +20,47 @@ use Illuminate\Console\Command;
  */
 class ExpireOverdueSessions extends Command
 {
-    protected $signature = 'sessions:expire';
+    protected $signature = 'sessions:expire {--dry-run : Show overdue sessions without dispatching cleanup jobs}';
 
     protected $description = 'Expire VM sessions that have passed their expiration time';
 
-    public function handle(VMSessionCleanupService $cleanupService): int
+    public function handle(): int
     {
-        $count = $cleanupService->expireOverdueSessions();
+        $overdueSessions = VMSession::query()
+            ->whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->where('expires_at', '<=', now())
+            ->get();
 
-        if ($count > 0) {
-            $this->info("Expired {$count} overdue session(s).");
-        } else {
-            $this->info('No overdue sessions found.');
+        $count = $overdueSessions->count();
+
+        if ($count === 0) {
+            $this->info('No overdue sessions to expire.');
+
+            return self::SUCCESS;
         }
+
+        $this->info("Found {$count} overdue session(s).");
+
+        if ((bool) $this->option('dry-run')) {
+            $this->line('DRY RUN — no changes will be made.');
+
+            return self::SUCCESS;
+        }
+
+        foreach ($overdueSessions as $session) {
+            TerminateVMJob::dispatch(
+                session: $session,
+                stopVm: false,
+                returnSnapshot: null,
+                scheduledForExpiry: $session->expires_at?->toIso8601String(),
+            );
+        }
+
+        $this->info("Dispatched cleanup for {$count} session(s).");
 
         return self::SUCCESS;
     }

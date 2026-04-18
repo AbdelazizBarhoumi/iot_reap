@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Exceptions\InvalidCredentialsException;
 use App\Models\User;
 use App\Repositories\UserRepository;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,8 +29,16 @@ class AuthService
 
         $data['role'] = $role;
 
+        if ($role === UserRole::TEACHER->value) {
+            $data['teacher_approved_at'] = null;
+            $data['teacher_approved_by'] = null;
+        }
+
         // creation relies on User model for password hashing
         $user = $this->users->create($data);
+
+        // Trigger verification email flow for newly created users.
+        event(new Registered($user));
 
         // Log the newly created user into the session
         Auth::login($user);

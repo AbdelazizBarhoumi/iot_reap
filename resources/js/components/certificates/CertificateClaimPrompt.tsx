@@ -1,5 +1,5 @@
 /**
- * CertificateClaimPrompt - Prompt to claim certificate after course completion.
+ * CertificateClaimPrompt - Prompt to claim certificate after trainingPath completion.
  */
 import { motion } from 'framer-motion';
 import {
@@ -22,15 +22,15 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 interface CertificateClaimPromptProps {
-    courseId: number;
-    courseTitle: string;
+    trainingPathId: number;
+    trainingPathTitle: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onClaimed?: (certificate: Certificate) => void;
 }
 export function CertificateClaimPrompt({
-    courseId,
-    courseTitle,
+    trainingPathId,
+    trainingPathTitle,
     open,
     onOpenChange,
     onClaimed,
@@ -40,7 +40,7 @@ export function CertificateClaimPrompt({
     const handleClaim = async () => {
         setIsIssuing(true);
         try {
-            const cert = await certificatesApi.issueCertificate(courseId);
+            const cert = await certificatesApi.issueCertificate(trainingPathId);
             setCertificate(cert);
             toast.success('Certificate issued! 🎉');
             onClaimed?.(cert);
@@ -70,7 +70,7 @@ export function CertificateClaimPrompt({
                         {certificate ? (
                             <>
                                 <CheckCircle className="h-5 w-5 text-green-500" />
-                                Certificate Ready!
+                                Certification Ready!
                             </>
                         ) : (
                             <>
@@ -82,7 +82,7 @@ export function CertificateClaimPrompt({
                     <DialogDescription>
                         {certificate
                             ? 'Your certificate has been issued.'
-                            : `You've completed "${courseTitle}"`}
+                            : `You've completed "${trainingPathTitle}"`}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-6">
@@ -140,7 +140,7 @@ export function CertificateClaimPrompt({
                             </motion.div>
                             <div>
                                 <p className="text-lg font-medium text-foreground">
-                                    You've earned a certificate!
+                                    You've earned a certification!
                                 </p>
                                 <p className="mt-2 text-sm text-muted-foreground">
                                     Claim your certificate of completion to
@@ -158,7 +158,7 @@ export function CertificateClaimPrompt({
                                 ) : (
                                     <Award className="mr-2 h-4 w-4" />
                                 )}
-                                Claim Certificate
+                                Claim Certification
                             </Button>
                         </div>
                     )}

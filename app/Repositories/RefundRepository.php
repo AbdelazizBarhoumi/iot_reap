@@ -22,7 +22,7 @@ class RefundRepository
     public function findById(int $id): ?RefundRequest
     {
         return $this->model
-            ->with(['payment.course', 'user'])
+            ->with(['payment.trainingPath', 'user'])
             ->find($id);
     }
 
@@ -30,7 +30,7 @@ class RefundRepository
     {
         return $this->model
             ->where('status', RefundStatus::PENDING)
-            ->with(['payment.course', 'payment.user', 'user'])
+            ->with(['payment.trainingPath', 'payment.user', 'user'])
             ->orderBy('created_at', 'asc')
             ->get();
     }
@@ -39,7 +39,7 @@ class RefundRepository
     {
         return $this->model
             ->where('status', RefundStatus::PENDING)
-            ->with(['payment.course', 'payment.user', 'user'])
+            ->with(['payment.trainingPath', 'payment.user', 'user'])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
     }
@@ -48,7 +48,7 @@ class RefundRepository
     {
         return $this->model
             ->where('user_id', $user->id)
-            ->with(['payment.course'])
+            ->with(['payment.trainingPath'])
             ->orderBy('created_at', 'desc')
             ->get();
     }

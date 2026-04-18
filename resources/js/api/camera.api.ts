@@ -169,6 +169,59 @@ export const adminCameraApi = {
             await client.get<ApiResponse<Camera[]>>('/admin/cameras');
         return response.data.data;
     },
+
+    /**
+     * Assign a camera to a specific VM ID.
+     */
+    async assignToVm(
+        cameraId: number,
+        vmId: number,
+    ): Promise<ActionResponse & { data: Camera }> {
+        const response = await client.put<ActionResponse & { data: Camera }>(
+            `/admin/cameras/${cameraId}/assign`,
+            { vm_id: vmId },
+        );
+        return response.data;
+    },
+
+    /**
+     * Unassign a camera from its VM.
+     */
+    async unassignFromVm(
+        cameraId: number,
+    ): Promise<ActionResponse & { data: Camera }> {
+        const response = await client.delete<ActionResponse & { data: Camera }>(
+            `/admin/cameras/${cameraId}/assign`,
+        );
+        return response.data;
+    },
+
+    /**
+     * Bulk assign cameras to VMs.
+     */
+    async bulkAssign(
+        assignments: Array<{ camera_id: number; vm_id: number | null }>,
+    ): Promise<{
+        success: boolean;
+        message: string;
+        results: Array<{
+            camera_id: number;
+            success: boolean;
+            message: string;
+        }>;
+    }> {
+        const response = await client.post<{
+            success: boolean;
+            message: string;
+            results: Array<{
+                camera_id: number;
+                success: boolean;
+                message: string;
+            }>;
+        }>('/admin/cameras/bulk-assign', { assignments });
+        return response.data;
+    },
+
     /**
      * Get all camera reservations with optional status filter.
      */

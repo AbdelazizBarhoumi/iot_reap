@@ -120,7 +120,7 @@
             line-height: 1.6;
         }
         
-        .course-name {
+        .trainingPath-name {
             font-size: 28px;
             font-weight: 600;
             color: #ffd700;
@@ -214,9 +214,9 @@
                 <p class="presented-to">This is to certify that</p>
                 <h2 class="recipient-name">{{ $user->name }}</h2>
                 <p class="completion-text">
-                    has successfully completed the course
+                    has successfully completed the trainingPath
                 </p>
-                <h3 class="course-name">{{ $course->title }}</h3>
+                <h3 class="trainingPath-name">{{ $trainingPath->title }}</h3>
                 <p class="date">
                     Issued on {{ $issuedAt->format('F j, Y') }}
                 </p>
@@ -224,7 +224,7 @@
             
             <div class="footer">
                 <div class="signature-block">
-                    <div class="signature-line">Course Instructor</div>
+                    <div class="signature-line">TrainingPath Instructor</div>
                     <div class="instructor-name">{{ $instructor->name }}</div>
                 </div>
                 

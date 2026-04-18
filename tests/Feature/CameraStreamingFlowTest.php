@@ -34,11 +34,13 @@ class CameraStreamingFlowTest extends TestCase
         $this->user = User::factory()->engineer()->create();
         $this->session = VMSession::factory()->active()->create([
             'user_id' => $this->user->id,
+            'vm_id' => 100, // Use fixed VM ID for predictable testing
         ]);
 
         $robot = Robot::factory()->create();
         $this->camera = Camera::factory()->active()->usb()->create([
             'robot_id' => $robot->id,
+            'assigned_vm_id' => 100, // Assign to session's VM
             'stream_width' => 640,
             'stream_height' => 480,
             'stream_framerate' => 15,

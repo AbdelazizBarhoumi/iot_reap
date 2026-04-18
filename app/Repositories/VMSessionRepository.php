@@ -31,68 +31,6 @@ class VMSessionRepository
     }
 
     /**
-     * Find all active sessions for a user.
-     *
-     * Filters by both status=ACTIVE and expires_at > now() to exclude
-     * sessions that are technically still marked active but have passed
-     * their expiration time (scheduler may not have run yet).
-     *
-     * @deprecated Unused - VMSession scopes handle this query directly. Candidate for removal.
-     */
-    public function findActiveByUser(User $user): Collection
-    {
-        return VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE)
-            ->where('expires_at', '>', now())
-            ->with(['node'])
-            ->get();
-    }
-
-    /**
-     * Find all sessions for a user (all statuses).
-     *
-     * @deprecated Unused - VMSession::where() used directly. Candidate for removal.
-     */
-    public function findByUser(User $user): Collection
-    {
-        return VMSession::where('user_id', $user->id)
-            ->with(['node'])
-            ->orderByDesc('created_at')
-            ->get();
-    }
-
-    /**
-     * Find all sessions for a user ensuring their server is active.
-     *
-     * Excludes sessions on inactive servers.
-     *
-     * @deprecated Unused - no service calls this method. Candidate for removal.
-     */
-    public function allUserSessions(User $user): Collection
-    {
-        return VMSession::where('user_id', $user->id)
-            ->whereHas('proxmoxServer', fn ($q) => $q->active())
-            ->with(['node', 'proxmoxServer'])
-            ->orderByDesc('created_at')
-            ->get();
-    }
-
-    /**
-     * Find all active sessions for a user on active servers.
-     *
-     * @deprecated Unused - VMSessionService queries directly. Candidate for removal.
-     */
-    public function findActiveByUserOnActiveServers(User $user): Collection
-    {
-        return VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE)
-            ->where('expires_at', '>', now())
-            ->whereHas('proxmoxServer', fn ($q) => $q->active())
-            ->with(['node', 'proxmoxServer'])
-            ->get();
-    }
-
-    /**
      * Update a session's status and other fields.
      *
      * @param  array<string, mixed>  $data
@@ -102,25 +40,6 @@ class VMSessionRepository
         $session->update($data);
 
         return $session->fresh();
-    }
-
-    /**
-     * Get overdue sessions that need to be expired.
-     *
-     * Returns sessions that are still active/pending/provisioning but have
-     * passed their expiration time.
-     *
-     * @deprecated Unused - findOverdueWithGuacamoleConnections() is used instead. Candidate for removal.
-     */
-    public function findOverdueSessions(): Collection
-    {
-        return VMSession::whereIn('status', [
-            VMSessionStatus::ACTIVE,
-            VMSessionStatus::PENDING,
-            VMSessionStatus::PROVISIONING,
-        ])
-            ->where('expires_at', '<=', now())
-            ->get();
     }
 
     /**
@@ -163,42 +82,69 @@ class VMSessionRepository
     }
 
     /**
-     * Count active sessions for a user.
-     *
-     * Only counts sessions that are both status=ACTIVE and not past expires_at.
-     *
-     * @deprecated Unused - session limits checked via VMSession::count() directly. Candidate for removal.
+     * Find all sessions for a user (all statuses).
      */
-    public function countActiveByUser(User $user): int
+    public function findByUser(User $user): Collection
     {
         return VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE)
-            ->where('expires_at', '>', now())
-            ->count();
-    }
-
-    /**
-     * Find pending sessions (not yet started).
-     *
-     * @deprecated Unused - admin dashboard queries directly with scopes. Candidate for removal.
-     */
-    public function findPending(): Collection
-    {
-        return VMSession::where('status', VMSessionStatus::PENDING)
-            ->with(['user', 'template', 'node'])
+            ->with(['proxmoxServer', 'node'])
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
     /**
-     * Find sessions that failed to provision.
-     *
-     * @deprecated Unused - admin dashboard queries directly with scopes. Candidate for removal.
+     * Find active sessions for a user.
+     */
+    public function findActiveByUser(User $user): Collection
+    {
+        return VMSession::where('user_id', $user->id)
+            ->whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->with(['proxmoxServer', 'node'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Find active sessions for a user on active/verified nodes.
+     */
+    public function findActiveByUserOnActiveServers(User $user): Collection
+    {
+        return VMSession::where('user_id', $user->id)
+            ->whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->with(['proxmoxServer' => function ($q) {
+                $q->where('is_verified', true);
+            }, 'node'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Find pending sessions.
+     */
+    public function findPending(): Collection
+    {
+        return VMSession::where('status', VMSessionStatus::PENDING)
+            ->with(['proxmoxServer', 'node', 'user'])
+            ->orderBy('created_at')
+            ->get();
+    }
+
+    /**
+     * Find failed sessions.
      */
     public function findFailed(): Collection
     {
         return VMSession::where('status', VMSessionStatus::FAILED)
-            ->with(['user', 'template', 'node'])
-            ->orderByDesc('created_at')
+            ->with(['proxmoxServer', 'node', 'user'])
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 }

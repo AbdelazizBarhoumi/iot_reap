@@ -10,7 +10,7 @@ use App\Http\Requests\Quiz\UpdateQuizRequest;
 use App\Http\Resources\QuizAttemptResource;
 use App\Http\Resources\QuizQuestionResource;
 use App\Http\Resources\QuizResource;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
@@ -36,14 +36,14 @@ class QuizController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Get or create quiz for a lesson (teacher).
+     * Get or create quiz for a trainingUnit (teacher).
      */
-    public function show(Request $request, int $lessonId): JsonResponse|InertiaResponse
+    public function show(Request $request, int $trainingUnitId): JsonResponse|InertiaResponse
     {
-        $lesson = Lesson::findOrFail($lessonId);
-        $this->authorizeTeacher($lesson);
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
+        $this->authorizeTeacher($trainingUnit);
 
-        $quiz = $this->quizService->getQuizForLesson($lessonId);
+        $quiz = $this->quizService->getQuizForTrainingUnit($trainingUnitId);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -52,25 +52,25 @@ class QuizController extends Controller
         }
 
         return Inertia::render('teaching/quiz-edit', [
-            'lessonId' => (string) $lessonId,
+            'trainingUnitId' => (string) $trainingUnitId,
             'quiz' => $quiz ? new QuizResource($quiz) : null,
         ]);
     }
 
     /**
-     * Create a quiz for a lesson.
+     * Create a quiz for a trainingUnit.
      */
-    public function store(CreateQuizRequest $request, int $lessonId): JsonResponse
+    public function store(CreateQuizRequest $request, int $trainingUnitId): JsonResponse
     {
-        $lesson = Lesson::findOrFail($lessonId);
-        $this->authorizeTeacher($lesson);
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
+        $this->authorizeTeacher($trainingUnit);
 
         // Check if quiz already exists
-        if ($this->quizService->getQuizForLesson($lessonId)) {
-            return response()->json(['error' => 'Quiz already exists for this lesson'], 422);
+        if ($this->quizService->getQuizForTrainingUnit($trainingUnitId)) {
+            return response()->json(['error' => 'Quiz already exists for this trainingUnit'], 422);
         }
 
-        $quiz = $this->quizService->create($lessonId, $request->validated());
+        $quiz = $this->quizService->create($trainingUnitId, $request->validated());
 
         return response()->json([
             'message' => 'Quiz created successfully',
@@ -83,7 +83,7 @@ class QuizController extends Controller
      */
     public function update(UpdateQuizRequest $request, Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $quiz = $this->quizService->update($quiz, $request->validated());
 
@@ -98,7 +98,7 @@ class QuizController extends Controller
      */
     public function destroy(Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $this->quizService->delete($quiz);
 
@@ -110,7 +110,7 @@ class QuizController extends Controller
      */
     public function publish(Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         try {
             $quiz = $this->quizService->publish($quiz);
@@ -129,7 +129,7 @@ class QuizController extends Controller
      */
     public function unpublish(Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $quiz = $this->quizService->unpublish($quiz);
 
@@ -148,7 +148,7 @@ class QuizController extends Controller
      */
     public function storeQuestion(CreateQuestionRequest $request, Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $question = $this->questionService->create(
             $quiz,
@@ -167,7 +167,7 @@ class QuizController extends Controller
      */
     public function updateQuestion(UpdateQuestionRequest $request, QuizQuestion $question): JsonResponse
     {
-        $this->authorizeTeacher($question->quiz->lesson);
+        $this->authorizeTeacher($question->quiz->trainingUnit);
 
         $question = $this->questionService->update(
             $question,
@@ -186,7 +186,7 @@ class QuizController extends Controller
      */
     public function destroyQuestion(QuizQuestion $question): JsonResponse
     {
-        $this->authorizeTeacher($question->quiz->lesson);
+        $this->authorizeTeacher($question->quiz->trainingUnit);
 
         $this->questionService->delete($question);
 
@@ -198,7 +198,7 @@ class QuizController extends Controller
      */
     public function reorderQuestions(\App\Http\Requests\Quiz\ReorderQuestionsRequest $request, Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $this->questionService->reorder($request->validated('items'));
 
@@ -212,9 +212,9 @@ class QuizController extends Controller
     /**
      * Get quiz for taking (student view).
      */
-    public function take(Request $request, int $lessonId): JsonResponse|InertiaResponse
+    public function take(Request $request, int $trainingUnitId): JsonResponse|InertiaResponse
     {
-        $quiz = $this->quizService->getQuizForLesson($lessonId);
+        $quiz = $this->quizService->getQuizForTrainingUnit($trainingUnitId);
 
         if (! $quiz || ! $quiz->is_published) {
             if ($request->wantsJson()) {
@@ -239,8 +239,8 @@ class QuizController extends Controller
             ]);
         }
 
-        return Inertia::render('courses/quiz', [
-            'lessonId' => (string) $lessonId,
+        return Inertia::render('trainingPaths/quiz', [
+            'trainingUnitId' => (string) $trainingUnitId,
             'quiz' => new QuizResource($quiz),
             'canAttempt' => $canAttempt,
             'attemptCount' => $quiz->getAttemptCount($user),
@@ -332,7 +332,7 @@ class QuizController extends Controller
      */
     public function stats(Quiz $quiz): JsonResponse
     {
-        $this->authorizeTeacher($quiz->lesson);
+        $this->authorizeTeacher($quiz->trainingUnit);
 
         $stats = $this->quizService->getQuizStats($quiz);
 
@@ -343,12 +343,12 @@ class QuizController extends Controller
     // Authorization Helper
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function authorizeTeacher(Lesson $lesson): void
+    private function authorizeTeacher(TrainingUnit $trainingUnit): void
     {
         $user = auth()->user();
-        $course = $lesson->module->course;
+        $trainingPath = $trainingUnit->module->trainingPath;
 
-        if (! $course->isOwnedBy($user) && ! $user->hasRole('admin')) {
+        if (! $trainingPath->isOwnedBy($user) && ! $user->hasRole('admin')) {
             abort(403, 'You do not have permission to manage this quiz');
         }
     }

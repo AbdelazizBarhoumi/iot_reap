@@ -16,7 +16,7 @@ export type RefundStatus =
     | 'failed';
 export interface Payment {
     id: number;
-    course: {
+    trainingPath: {
         id: number;
         title: string;
         thumbnail_url: string | null;
@@ -48,7 +48,7 @@ export interface CheckoutResponse {
     redirect_url?: string;
     error?: string;
 }
-export interface CourseWithPrice {
+export interface TrainingPathWithPrice {
     id: number;
     title: string;
     description: string;

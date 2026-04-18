@@ -46,11 +46,11 @@ const typeConfig = {
         bg: 'bg-emerald-500/10',
         label: 'User',
     },
-    course: {
+    trainingPath: {
         icon: BookOpen,
         color: 'text-violet-500',
         bg: 'bg-violet-500/10',
-        label: 'Course',
+        label: 'TrainingPath',
     },
     system: {
         icon: Settings,

@@ -1,6 +1,6 @@
 /**
  * Refund Requests Page
- * Shows user's refund request history.
+ * Shows the user's training path refund request history.
  */
 import { Head } from '@inertiajs/react';
 import { RotateCcw, Clock, CheckCircle2, XCircle } from 'lucide-react';
@@ -17,7 +17,7 @@ import type { BreadcrumbItem } from '@/types';
 interface RefundRequest {
     id: string;
     payment_id: string;
-    course: {
+    trainingPath: {
         id: number;
         title: string;
     };
@@ -71,16 +71,16 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
     const refundList = refunds?.data ?? [];
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="My Refund Requests" />
+            <Head title="My Training Refund Requests" />
             <div className="container max-w-4xl space-y-6 py-8">
                 <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-primary/10 p-2">
                         <RotateCcw className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">Refund Requests</h1>
+                        <h1 className="text-2xl font-bold">Training Path Refund Requests</h1>
                         <p className="text-muted-foreground">
-                            Track the status of your refund requests
+                            Track the status of your training path refund requests
                         </p>
                     </div>
                 </div>
@@ -89,7 +89,7 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                         <CardContent className="flex flex-col items-center justify-center py-12">
                             <RotateCcw className="mb-4 h-12 w-12 text-muted-foreground/50" />
                             <h3 className="mb-1 text-lg font-medium">
-                                No Refund Requests
+                                No Training Path Refund Requests
                             </h3>
                             <p className="text-sm text-muted-foreground">
                                 You haven't requested any refunds yet.
@@ -107,7 +107,7 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <CardTitle className="text-base">
-                                                    {refund.course.title}
+                                                    {refund.trainingPath.title}
                                                 </CardTitle>
                                                 <CardDescription>
                                                     Requested on{' '}

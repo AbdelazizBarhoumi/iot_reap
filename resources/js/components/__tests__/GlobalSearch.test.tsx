@@ -1,10 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { server } from '@/test/mocks/server';
-import type { SearchResult, SearchSuggestion } from '@/types/search.types';
+import type { SearchResult } from '@/types/search.types';
 import { GlobalSearch } from '../GlobalSearch';
+
+const mockVisit = vi.hoisted(() => vi.fn());
+
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
     motion: {
@@ -15,88 +16,71 @@ vi.mock('framer-motion', () => ({
     },
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
 }));
+
 // Mock Inertia router
 vi.mock('@inertiajs/react', () => {
-    const mockVisit = vi.fn();
     return {
         router: {
             visit: mockVisit,
         },
     };
 });
-const mockVisit = vi.fn();
+
+// Mock authenticated user so recent searches render
+vi.mock('@/store/authStore', () => ({
+    useAuthStore: {
+        getState: () => ({
+            user: {
+                id: '1',
+                name: 'Test User',
+                email: 'test@example.com',
+            },
+        }),
+    },
+}));
+
 describe('GlobalSearch Component', () => {
     const mockSearchResults: SearchResult[] = [
         {
             id: '1',
-            type: 'course',
+            type: 'trainingPath',
             title: 'React Fundamentals',
-            subtitle: 'Web Development',
+            subtitle: 'Smart Manufacturing',
             description: 'Learn React from scratch',
-            url: '/courses/1',
+            url: '/trainingPaths/1',
         },
         {
             id: '2',
-            type: 'lesson',
+            type: 'trainingUnit',
             title: 'Introduction to JSX',
             subtitle: 'React Fundamentals',
             description: 'Understanding JSX syntax',
-            url: '/courses/1/lessons/1',
+            url: '/trainingPaths/1/trainingUnits/1',
         },
     ];
-    const mockSuggestions: SearchSuggestion[] = [
-        { query: 'react', type: 'trending' },
-        { query: 'javascript', type: 'recent' },
-        { query: 'typescript', type: 'suggested' },
-    ];
-    beforeEach(() => {
+
+    beforeEach(async () => {
         vi.clearAllMocks();
-        // Setup MSW handlers
-        server.use(
-            http.get('/search', ({ request }) => {
-                const url = new URL(request.url);
-                const query = url.searchParams.get('q');
-                if (query && query.length > 0) {
-                    return HttpResponse.json({
-                        results: mockSearchResults,
-                        total: 2,
-                        query,
-                        filters: {},
-                        sort: 'relevance',
-                        categories: [],
-                    });
-                }
-                return HttpResponse.json({
-                    results: [],
-                    total: 0,
-                    query: '',
-                    filters: {},
-                    sort: 'relevance',
-                    categories: [],
-                });
-            }),
-            http.get('/search/suggest', ({ request }) => {
-                const url = new URL(request.url);
-                const query = url.searchParams.get('q');
-                return HttpResponse.json({
-                    suggestions: query ? mockSuggestions : [],
-                });
-            }),
-            http.get('/search/recent', () => {
-                return HttpResponse.json({
-                    searches: ['javascript', 'react hooks', 'css grid'],
-                });
-            }),
-            http.get('/search/trending', () => {
-                return HttpResponse.json({
-                    trending: ['react', 'typescript', 'node.js'],
-                });
-            })
-        );
+        // Mock the search API
+        const { searchApi } = await import('@/api/search.api');
+        vi.spyOn(searchApi, 'search').mockResolvedValue({
+            results: mockSearchResults,
+            total: 2,
+            query: 'react',
+            filters: {},
+            sort: 'relevance',
+            categories: [],
+        });
+        vi.spyOn(searchApi, 'getRecent').mockResolvedValue(['javascript', 'react hooks', 'css grid']);
+        vi.spyOn(searchApi, 'getTrending').mockResolvedValue(['react', 'typescript', 'node.js']);
+        vi.spyOn(searchApi, 'suggest').mockResolvedValue([]);
     });
-    it('renders search input field', () => {
+    it('renders search input field', async () => {
+        const user = userEvent.setup();
         render(<GlobalSearch />);
-        const searchInput = screen.getByPlaceholderText(/search courses|search/i);
+        const searchButton = screen.getByRole('button', { name: /search/i });
+        await user.click(searchButton);
+        const searchInput = screen.getByPlaceholderText(/search paths/i);
         expect(searchInput).toBeInTheDocument();
     });
     it('renders search trigger button', () => {
@@ -136,10 +120,9 @@ describe('GlobalSearch Component', () => {
         // Type in search input
         const searchInput = screen.getByRole('textbox');
         await user.type(searchInput, 'react');
-        await waitFor(() => {
-            expect(screen.getByText('React Fundamentals')).toBeInTheDocument();
-            expect(screen.getByText('Introduction to JSX')).toBeInTheDocument();
-        });
+        // Wait for debounce and API response (300ms debounce + API call)
+        expect((await screen.findAllByText('React Fundamentals')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText('Introduction to JSX')).length).toBeGreaterThan(0);
     });
     it('shows loading state while searching', async () => {
         const user = userEvent.setup();
@@ -147,12 +130,11 @@ describe('GlobalSearch Component', () => {
         // Open search dialog
         const searchButton = screen.getByRole('button', { name: /search/i });
         await user.click(searchButton);
-        // Type in search input
+        // Type in search input (need at least 2 chars to trigger search)
         const searchInput = screen.getByRole('textbox');
-        await user.type(searchInput, 'r');
-        // Should show loading indicator
-        expect(screen.getByTestId('loading') || 
-               screen.getByLabelText(/loading/i)).toBeInTheDocument();
+        await user.type(searchInput, 'react');
+        // Should show loading indicator - findByLabelText waits for it to appear
+        expect(await screen.findByLabelText(/searching/i)).toBeInTheDocument();
     });
     it('displays recent searches when input is empty', async () => {
         const user = userEvent.setup();
@@ -161,7 +143,7 @@ describe('GlobalSearch Component', () => {
         const searchButton = screen.getByRole('button', { name: /search/i });
         await user.click(searchButton);
         await waitFor(() => {
-            expect(screen.getByText(/recent searches|recent/i)).toBeInTheDocument();
+            expect(screen.getByText(/recent activity/i)).toBeInTheDocument();
             expect(screen.getByText('javascript')).toBeInTheDocument();
             expect(screen.getByText('react hooks')).toBeInTheDocument();
         });
@@ -178,7 +160,7 @@ describe('GlobalSearch Component', () => {
             expect(screen.getByText('typescript')).toBeInTheDocument();
         });
     });
-    it('navigates to course when search result is clicked', async () => {
+    it('navigates to trainingPath when search result is clicked', async () => {
         const user = userEvent.setup();
         render(<GlobalSearch />);
         // Open search dialog and search
@@ -186,11 +168,9 @@ describe('GlobalSearch Component', () => {
         await user.click(searchButton);
         const searchInput = screen.getByRole('textbox');
         await user.type(searchInput, 'react');
-        await waitFor(async () => {
-            const courseResult = screen.getByText('React Fundamentals');
-            await user.click(courseResult);
-            expect(mockVisit).toHaveBeenCalledWith('/courses/1');
-        });
+        const trainingPathResult = (await screen.findAllByText('React Fundamentals'))[0];
+        await user.click(trainingPathResult);
+        expect(mockVisit).toHaveBeenCalledWith('/trainingPaths/1');
     });
     it('closes dialog when escape key is pressed', async () => {
         const user = userEvent.setup();
@@ -212,15 +192,13 @@ describe('GlobalSearch Component', () => {
         const searchButton = screen.getByRole('button', { name: /search/i });
         await user.click(searchButton);
         expect(screen.getByRole('dialog')).toBeInTheDocument();
-        // Click close button
-        const closeButton = screen.getByLabelText(/close/i) || 
-                           screen.getByRole('button', { name: /close/i });
-        await user.click(closeButton);
+        // Press Escape to close dialog
+        await user.keyboard('{Escape}');
         await waitFor(() => {
             expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         });
     });
-    it('shows different icons for different result types', async () => {
+    it('shows industrial labels for different result types', async () => {
         const user = userEvent.setup();
         render(<GlobalSearch />);
         // Open search dialog and search
@@ -228,27 +206,23 @@ describe('GlobalSearch Component', () => {
         await user.click(searchButton);
         const searchInput = screen.getByRole('textbox');
         await user.type(searchInput, 'react');
-        await waitFor(() => {
-            // Should show course and lesson results with different icons
-            expect(screen.getByText('React Fundamentals')).toBeInTheDocument();
-            expect(screen.getByText('Introduction to JSX')).toBeInTheDocument();
-        });
+        expect((await screen.findAllByText('React Fundamentals')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText('Introduction to JSX')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText('Path')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText('Lab')).length).toBeGreaterThan(0);
     });
     it('handles empty search results gracefully', async () => {
         const user = userEvent.setup();
-        // Mock empty results
-        server.use(
-            http.get('/search', () => {
-                return HttpResponse.json({
-                    results: [],
-                    total: 0,
-                    query: 'nonexistent',
-                    filters: {},
-                    sort: 'relevance',
-                    categories: [],
-                });
-            })
-        );
+        const { searchApi } = await import('@/api/search.api');
+        // Update mock to return empty results for "nonexistent" query
+        vi.spyOn(searchApi, 'search').mockResolvedValueOnce({
+            results: [],
+            total: 0,
+            query: 'nonexistent',
+            filters: {},
+            sort: 'relevance',
+            categories: [],
+        });
         render(<GlobalSearch />);
         // Open search dialog and search
         const searchButton = screen.getByRole('button', { name: /search/i });
@@ -256,28 +230,14 @@ describe('GlobalSearch Component', () => {
         const searchInput = screen.getByRole('textbox');
         await user.type(searchInput, 'nonexistent');
         await waitFor(() => {
-            expect(screen.getByText(/no results|nothing found/i)).toBeInTheDocument();
-        });
+            expect(
+                screen.getByText(/no industrial results found|no results|nothing found/i),
+            ).toBeInTheDocument();
+        }, { timeout: 2000 });
     });
     it('debounces search input to avoid excessive API calls', async () => {
         const user = userEvent.setup();
-        let searchCallCount = 0;
-        // Track API calls
-        server.use(
-            http.get('/search', ({ request }) => {
-                searchCallCount++;
-                const url = new URL(request.url);
-                const query = url.searchParams.get('q');
-                return HttpResponse.json({
-                    results: query ? mockSearchResults : [],
-                    total: query ? 2 : 0,
-                    query: query || '',
-                    filters: {},
-                    sort: 'relevance',
-                    categories: [],
-                });
-            })
-        );
+        const { searchApi } = await import('@/api/search.api');
         render(<GlobalSearch />);
         // Open search dialog
         const searchButton = screen.getByRole('button', { name: /search/i });
@@ -285,12 +245,12 @@ describe('GlobalSearch Component', () => {
         const searchInput = screen.getByRole('textbox');
         // Type quickly - should be debounced
         await user.type(searchInput, 'react');
-        // Wait for debounce
+        // Wait for debounce and results
         await waitFor(() => {
-            expect(screen.getByText('React Fundamentals')).toBeInTheDocument();
-        }, { timeout: 1000 });
-        // Should not call API for every keystroke
-        expect(searchCallCount).toBeLessThan(5);
+            expect(screen.getAllByText('React Fundamentals')[0]).toBeInTheDocument();
+        }, { timeout: 2000 });
+        // Should only call API once after debounce, not for every keystroke
+        expect(searchApi.search).toHaveBeenCalledTimes(1);
     });
 });
 

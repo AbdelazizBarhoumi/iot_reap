@@ -2233,9 +2233,14 @@ class GatewayService
                 $error = $this->extractErrorMessage($response);
                 Log::warning('Failed to start camera stream', [
                     'node_id' => $node->id,
+                    'node_ip' => $node->ip,
                     'stream_key' => $streamKey,
+                    'device_path' => $devicePath,
                     'api_url' => $startEndpoint,
+                    'http_status' => $response->status(),
+                    'response_body' => $response->body(),
                     'error' => $error,
+                    'payload' => $payload,
                 ]);
 
                 return [
@@ -2248,7 +2253,9 @@ class GatewayService
 
             Log::info('Camera stream started', [
                 'node_id' => $node->id,
+                'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
+                'device_path' => $devicePath,
                 'api_url' => $startEndpoint,
                 'pid' => $data['pid'] ?? null,
             ]);
@@ -2262,8 +2269,12 @@ class GatewayService
         } catch (\Exception $e) {
             Log::error('Camera stream start failed', [
                 'node_id' => $node->id,
+                'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
+                'device_path' => $devicePath,
+                'api_url' => $startEndpoint,
                 'error' => $e->getMessage(),
+                'exception_class' => get_class($e),
             ]);
 
             return [
@@ -2296,6 +2307,15 @@ class GatewayService
             if (! $response->ok()) {
                 $error = $this->extractErrorMessage($response);
 
+                Log::warning('Failed to stop camera stream', [
+                    'node_id' => $node->id,
+                    'node_ip' => $node->ip,
+                    'stream_key' => $streamKey,
+                    'api_url' => $stopEndpoint,
+                    'http_status' => $response->status(),
+                    'error' => $error,
+                ]);
+
                 return [
                     'success' => false,
                     'error' => $error,
@@ -2304,6 +2324,7 @@ class GatewayService
 
             Log::info('Camera stream stopped', [
                 'node_id' => $node->id,
+                'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
                 'api_url' => $stopEndpoint,
             ]);
@@ -2312,8 +2333,10 @@ class GatewayService
         } catch (\Exception $e) {
             Log::error('Camera stream stop failed', [
                 'node_id' => $node->id,
+                'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
                 'error' => $e->getMessage(),
+                'exception_class' => get_class($e),
             ]);
 
             return [
@@ -2325,37 +2348,88 @@ class GatewayService
 
     /**
      * Get status of a camera stream on a gateway node.
-     *
-     * @deprecated Unused - stream status not currently exposed via API. Candidate for removal.
+     * Query both the gateway agent and MediaMTX to determine if stream is running.
      *
      * @param  GatewayNode  $node  The gateway node
      * @param  string  $streamKey  The stream key to check
-     * @return array{running: bool, pid?: int, rtsp_url?: string}
+     * @return array{running: bool, pid?: int, rtsp_url?: string, mediamtx_status?: array}
      */
     public function getCameraStreamStatus(GatewayNode $node, string $streamKey): array
     {
-        // Use Proxmox camera API if configured
+        // First check the gateway agent's status
         $statusEndpoint = $node->proxmox_camera_api_url
             ? "{$node->proxmox_camera_api_url}/streams/status/{$streamKey}"
             : "{$node->api_url}/camera/status/{$streamKey}";
+
+        $gatewayStatus = ['running' => false];
 
         try {
             $response = Http::timeout($this->timeout())
                 ->get($statusEndpoint);
 
-            if (! $response->ok()) {
-                return ['running' => false];
+            if ($response->ok()) {
+                $data = $response->json();
+                $gatewayStatus = [
+                    'running' => $data['running'] ?? false,
+                    'pid' => $data['pid'] ?? null,
+                    'rtsp_url' => $data['rtsp_url'] ?? null,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::debug('Gateway stream status check failed', [
+                'node_id' => $node->id,
+                'stream_key' => $streamKey,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Also check MediaMTX directly for incoming path status
+        $mediamtxStatus = $this->checkMediaMTXPath($node, $streamKey);
+
+        return [
+            'running' => $gatewayStatus['running'] ?? false,
+            'pid' => $gatewayStatus['pid'] ?? null,
+            'rtsp_url' => $gatewayStatus['rtsp_url'] ?? null,
+            'mediamtx_status' => $mediamtxStatus,
+        ];
+    }
+
+    /**
+     * Check if a path is being published to MediaMTX.
+     * This verifies that FFmpeg is actually connected and streaming.
+     */
+    private function checkMediaMTXPath(GatewayNode $node, string $streamKey): array
+    {
+        // MediaMTX /list endpoint returns all active paths
+        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
+        $listEndpoint = "http://{$node->ip}:{$hlsPort}/list";
+
+        try {
+            $response = Http::timeout(3)->get($listEndpoint);
+
+            if ($response->ok()) {
+                $list = $response->json();
+
+                // Check if our stream key is in the list of active paths
+                $paths = $list['paths'] ?? [];
+                $hasPath = isset($paths[$streamKey]);
+
+                if ($hasPath) {
+                    $pathInfo = $paths[$streamKey];
+
+                    return [
+                        'exists' => true,
+                        'publishing' => $pathInfo['publish'] ?? false,
+                        'sources' => array_keys($pathInfo['sources'] ?? []),
+                    ];
+                }
+
+                return ['exists' => false];
             }
 
-            $data = $response->json();
-
-            return [
-                'running' => $data['running'] ?? false,
-                'pid' => $data['pid'] ?? null,
-                'rtsp_url' => $data['rtsp_url'] ?? null,
-            ];
+            return ['exists' => false, 'error' => "HTTP {$response->status()}"];
         } catch (\Exception $e) {
-            return ['running' => false];
+            return ['exists' => false, 'error' => $e->getMessage()];
         }
     }
 }

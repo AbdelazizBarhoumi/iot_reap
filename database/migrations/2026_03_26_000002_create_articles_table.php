@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('articles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lesson_id')->constrained()->onDelete('cascade');
+            $table->foreignId('training_unit_id')->constrained('training_units')->onDelete('cascade');
             $table->json('content');
             $table->unsignedInteger('word_count')->default(0);
             $table->unsignedInteger('estimated_read_time_minutes')->default(1);
             $table->timestamps();
 
-            $table->unique('lesson_id');
+            $table->unique('training_unit_id');
         });
     }
 

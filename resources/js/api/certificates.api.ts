@@ -9,7 +9,7 @@ export interface Certificate {
     verification_url: string;
     download_url: string;
     has_pdf: boolean;
-    course?: {
+    trainingPath?: {
         id: number;
         title: string;
         thumbnail: string | null;
@@ -43,22 +43,22 @@ export async function getCertificates(): Promise<Certificate[]> {
     return response.data.data;
 }
 /**
- * Issue a certificate for a completed course.
+ * Issue a certificate for a completed trainingPath.
  */
-export async function issueCertificate(courseId: number): Promise<Certificate> {
+export async function issueCertificate(trainingPathId: number): Promise<Certificate> {
     const response = await client.post<CertificateResponse>(
-        `/certificates/courses/${courseId}`,
+        `/certificates/trainingPaths/${trainingPathId}`,
     );
     return response.data.data;
 }
 /**
- * Check if user has a certificate for a course.
+ * Check if user has a certificate for a trainingPath.
  */
 export async function checkCertificate(
-    courseId: number,
+    trainingPathId: number,
 ): Promise<CheckCertificateResponse> {
     const response = await client.get<CheckCertificateResponse>(
-        `/certificates/courses/${courseId}/check`,
+        `/certificates/trainingPaths/${trainingPathId}/check`,
     );
     return response.data;
 }

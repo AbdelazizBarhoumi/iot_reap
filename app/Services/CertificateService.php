@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Jobs\GenerateCertificatePdfJob;
 use App\Models\Certificate;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\CertificateRepository;
-use App\Repositories\LessonProgressRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -16,7 +16,7 @@ class CertificateService
 {
     public function __construct(
         private CertificateRepository $certificateRepository,
-        private LessonProgressRepository $progressRepository,
+        private TrainingUnitProgressRepository $progressRepository,
     ) {}
 
     /**
@@ -38,41 +38,41 @@ class CertificateService
     }
 
     /**
-     * Get user's certificate for a course.
+     * Get user's certificate for a trainingPath.
      */
-    public function getUserCertificateForCourse(User $user, int $courseId): ?Certificate
+    public function getUserCertificateForTrainingPath(User $user, int $trainingPathId): ?Certificate
     {
-        return $this->certificateRepository->getUserCertificateForCourse($user, $courseId);
+        return $this->certificateRepository->getUserCertificateForTrainingPath($user, $trainingPathId);
     }
 
     /**
-     * Check if user has completed a course and can receive a certificate.
+     * Check if user has completed a trainingPath and can receive a certificate.
      */
-    public function canIssueCertificate(User $user, Course $course): bool
+    public function canIssueCertificate(User $user, TrainingPath $trainingPath): bool
     {
         // Check if already has certificate
-        if ($this->certificateRepository->hasCertificate($user, $course->id)) {
+        if ($this->certificateRepository->hasCertificate($user, $trainingPath->id)) {
             return false;
         }
 
-        // Check if course is completed (100% progress)
-        $progress = $this->progressRepository->getCourseProgressPercentage($user, $course->id);
+        // Check if trainingPath is completed (100% progress)
+        $progress = $this->progressRepository->getTrainingPathProgressPercentage($user, $trainingPath->id);
 
         return $progress >= 100;
     }
 
     /**
-     * Issue a certificate for completing a course.
+     * Issue a certificate for completing a trainingPath.
      *
      * @throws AuthorizationException
      */
-    public function issueCertificate(User $user, int $courseId): Certificate
+    public function issueCertificate(User $user, int $trainingPathId): Certificate
     {
-        $course = Course::findOrFail($courseId);
+        $trainingPath = TrainingPath::findOrFail($trainingPathId);
 
         // Verify completion
-        if (! $this->canIssueCertificate($user, $course)) {
-            throw new AuthorizationException('Cannot issue certificate. Course not completed or already issued.');
+        if (! $this->canIssueCertificate($user, $trainingPath)) {
+            throw new AuthorizationException('Cannot issue certificate. TrainingPath not completed or already issued.');
         }
 
         // Generate unique hash
@@ -81,7 +81,7 @@ class CertificateService
         // Create certificate record
         $certificate = $this->certificateRepository->create([
             'user_id' => $user->id,
-            'course_id' => $courseId,
+            'training_path_id' => $trainingPathId,
             'hash' => $hash,
             'issued_at' => now(),
         ]);
@@ -89,7 +89,7 @@ class CertificateService
         // Execute PDF generation synchronously
         GenerateCertificatePdfJob::dispatchSync($certificate);
 
-        return $certificate->load(['user:id,name', 'course:id,title']);
+        return $certificate->load(['user:id,name', 'trainingPath:id,title']);
     }
 
     /**

@@ -45,8 +45,8 @@ import type {
 } from '@/types/notification.types';
 // Icon mapping for notification types
 const typeIcons: Record<NotificationType, typeof Bell> = {
-    course_approved: BookCheck,
-    course_rejected: XCircle,
+    training_path_approved: BookCheck,
+    training_path_rejected: XCircle,
     new_enrollment: Users,
     forum_reply: MessageSquare,
     forum_mention: AtSign,
@@ -56,8 +56,8 @@ const typeIcons: Record<NotificationType, typeof Bell> = {
     announcement: Megaphone,
 };
 const typeColors: Record<NotificationType, string> = {
-    course_approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    course_rejected: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    training_path_approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    training_path_rejected: 'bg-red-500/10 text-red-600 dark:text-red-400',
     new_enrollment: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     forum_reply: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
     forum_mention: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',

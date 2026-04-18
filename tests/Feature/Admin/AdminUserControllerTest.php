@@ -216,6 +216,51 @@ class AdminUserControllerTest extends TestCase
             ]);
     }
 
+    public function test_admin_can_approve_teacher_account(): void
+    {
+        $teacher = User::factory()->pendingTeacherApproval()->create();
+        $approvedTeacher = $teacher->fresh();
+        $approvedTeacher->teacher_approved_at = now();
+        $approvedTeacher->teacher_approved_by = $this->admin->id;
+
+        $this->userManagementServiceMock
+            ->shouldReceive('approveTeacher')
+            ->once()
+            ->andReturn($approvedTeacher);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/admin/users/{$teacher->id}/approve-teacher");
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => 'Teacher account approved successfully',
+            ]);
+    }
+
+    public function test_admin_can_revoke_teacher_approval(): void
+    {
+        $teacher = User::factory()->teacher()->create([
+            'teacher_approved_by' => $this->admin->id,
+        ]);
+
+        $updatedTeacher = $teacher->fresh();
+        $updatedTeacher->teacher_approved_at = null;
+        $updatedTeacher->teacher_approved_by = null;
+
+        $this->userManagementServiceMock
+            ->shouldReceive('revokeTeacherApproval')
+            ->once()
+            ->andReturn($updatedTeacher);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/admin/users/{$teacher->id}/revoke-teacher-approval");
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => 'Teacher approval revoked successfully',
+            ]);
+    }
+
     public function test_update_role_validates_role(): void
     {
         $response = $this->actingAs($this->admin)

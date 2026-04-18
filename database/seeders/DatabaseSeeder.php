@@ -15,13 +15,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create test user
-        $testUser = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create test user (or use existing one)
+        $testUser = User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+                'role' => 'engineer',
+            ]
+        );
 
-        // Create admin user
+        // Create admin users (all roles)
         $this->call(\Database\Seeders\AdminUserSeeder::class);
 
         // Seed 7 Proxmox nodes
@@ -32,11 +36,36 @@ class DatabaseSeeder extends Seeder
         // Seed 2 demo VM sessions
         $this->seedVMSessions($testUser);
 
-        // Seed courses with modules and lessons
-        $this->call(\Database\Seeders\CourseSeeder::class);
+        // Seed trainingPaths with modules and trainingUnits
+        $this->call(\Database\Seeders\TrainingPathSeeder::class);
 
-        // Seed robots and cameras (mock data for camera streaming feature)
+        // Seed robots and cameras
         $this->call(\Database\Seeders\CameraSeeder::class);
+
+        // ── COMPREHENSIVE SEEDING FOR ALL MODELS ──
+
+        // Learning & Progress
+        $this->call(\Database\Seeders\EnrollmentSeeder::class);
+        $this->call(\Database\Seeders\QuizSeeder::class);
+        $this->call(\Database\Seeders\ContentSeeder::class);
+
+        // Community & Discussion
+        $this->call(\Database\Seeders\ForumSeeder::class);
+
+        // Infrastructure & Hardware
+        $this->call(\Database\Seeders\HardwareSeeder::class);
+        $this->call(\Database\Seeders\ReservationSeeder::class);
+
+        // Payments & Finance
+        $this->call(\Database\Seeders\PaymentSeeder::class);
+
+        // Notifications & Alerts
+        $this->call(\Database\Seeders\NotificationSeeder::class);
+
+        // Complete model coverage - all remaining models with all status variations
+        $this->call(\Database\Seeders\ComprehensiveModelSeeder::class);
+
+        $this->command->info('✅ Database seeding completed with comprehensive test data for ALL 45 models!');
     }
 
     /**

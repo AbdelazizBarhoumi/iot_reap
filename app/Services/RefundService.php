@@ -123,7 +123,7 @@ class RefundService
             $payment->update(['status' => PaymentStatus::REFUNDED]);
 
             // Remove enrollment
-            $payment->user->enrolledCourses()->detach($payment->course_id);
+            $payment->user->enrolledTrainingPaths()->detach($payment->training_path_id);
 
             Log::info('Refund processed successfully', [
                 'refund_request_id' => $refundRequest->id,
@@ -161,5 +161,25 @@ class RefundService
     public function getUserRefundRequests(User $user): \Illuminate\Database\Eloquent\Collection
     {
         return $this->refundRepository->getByUser($user);
+    }
+
+    /**
+     * Get refund statistics.
+     */
+    public function getRefundStats(): array
+    {
+        $pending = RefundRequest::where('status', RefundStatus::PENDING)->count();
+        $approved = RefundRequest::where('status', RefundStatus::APPROVED)->count();
+        $rejected = RefundRequest::where('status', RefundStatus::REJECTED)->count();
+        
+        $totalRefunded = RefundRequest::where('status', RefundStatus::COMPLETED)
+            ->sum('refund_amount_cents') / 100;
+
+        return [
+            'pending' => $pending,
+            'approved' => $approved,
+            'rejected' => $rejected,
+            'totalRefunded' => (int) $totalRefunded,
+        ];
     }
 }

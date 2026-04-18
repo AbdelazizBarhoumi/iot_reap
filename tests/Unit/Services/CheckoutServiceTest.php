@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -36,10 +36,10 @@ class CheckoutServiceTest extends TestCase
     // Stripe Checkout Session Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_creates_stripe_checkout_session_for_paid_course(): void
+    public function test_creates_stripe_checkout_session_for_paid_trainingPath(): void
     {
         $user = User::factory()->create(['email' => 'test@example.com']);
-        $course = Course::factory()->approved()->create([
+        $trainingPath = TrainingPath::factory()->approved()->create([
             'title' => 'Laravel Mastery',
             'price_cents' => 9900,
             'currency' => 'USD',
@@ -52,7 +52,7 @@ class CheckoutServiceTest extends TestCase
         // Mock the static StripeSession::create method
         $this->mockStripeSession($mockSessionId, $mockCheckoutUrl);
 
-        $result = $this->service->createCheckoutSession($user, $course);
+        $result = $this->service->createCheckoutSession($user, $trainingPath);
 
         $this->assertArrayHasKey('session_id', $result);
         $this->assertArrayHasKey('checkout_url', $result);
@@ -63,8 +63,8 @@ class CheckoutServiceTest extends TestCase
     public function test_creates_pending_payment_record_for_checkout(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
-            'title' => 'Testing Course',
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Testing TrainingPath',
             'price_cents' => 4990,
             'currency' => 'USD',
             'is_free' => false,
@@ -73,11 +73,11 @@ class CheckoutServiceTest extends TestCase
         $mockSessionId = 'cs_test_'.uniqid();
         $this->mockStripeSession($mockSessionId, 'https://checkout.stripe.com/pay/test');
 
-        $this->service->createCheckoutSession($user, $course);
+        $this->service->createCheckoutSession($user, $trainingPath);
 
         $this->assertDatabaseHas('payments', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'stripe_session_id' => $mockSessionId,
             'status' => PaymentStatus::PENDING->value,
             'amount_cents' => 4990,
@@ -85,10 +85,10 @@ class CheckoutServiceTest extends TestCase
         ]);
     }
 
-    public function test_payment_metadata_includes_course_info(): void
+    public function test_payment_metadata_includes_training_path_info(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
+        $trainingPath = TrainingPath::factory()->approved()->create([
             'title' => 'Advanced Laravel',
             'price_cents' => 9900,
             'currency' => 'USD',
@@ -97,53 +97,53 @@ class CheckoutServiceTest extends TestCase
 
         $this->mockStripeSession('cs_test_123', 'https://checkout.stripe.com/test');
 
-        $this->service->createCheckoutSession($user, $course);
+        $this->service->createCheckoutSession($user, $trainingPath);
 
         $payment = Payment::where('user_id', $user->id)->first();
         $this->assertNotNull($payment->metadata);
-        $this->assertEquals('Advanced Laravel', $payment->metadata['course_title']);
+        $this->assertEquals('Advanced Laravel', $payment->metadata['training_path_title']);
         $this->assertArrayHasKey('checkout_created_at', $payment->metadata);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Free Course Enrollment Tests
+    // Free TrainingPath Enrollment Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_enrolls_user_in_free_course(): void
+    public function test_enrolls_user_in_free_trainingPath(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
-            'title' => 'Free Intro Course',
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Free Intro TrainingPath',
             'price_cents' => 0,
             'is_free' => true,
             'currency' => 'USD',
         ]);
 
-        $result = $this->service->createCheckoutSession($user, $course);
+        $result = $this->service->createCheckoutSession($user, $trainingPath);
 
         $this->assertArrayHasKey('enrolled', $result);
         $this->assertTrue($result['enrolled']);
-        $this->assertArrayHasKey('course_url', $result);
+        $this->assertArrayHasKey('training_path_url', $result);
 
         // Verify enrollment was created
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
-    public function test_creates_zero_amount_payment_for_free_course(): void
+    public function test_creates_zero_amount_payment_for_free_trainingPath(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
-            'title' => 'Free Course',
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Free TrainingPath',
             'price_cents' => 0,
             'is_free' => true,
             'currency' => 'USD',
         ]);
 
-        $this->service->createCheckoutSession($user, $course);
+        $this->service->createCheckoutSession($user, $trainingPath);
 
         $this->assertDatabaseHas('payments', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'status' => PaymentStatus::COMPLETED->value,
             'amount_cents' => 0,
         ]);
@@ -157,57 +157,57 @@ class CheckoutServiceTest extends TestCase
     public function test_free_enrollment_with_zero_price_cents(): void
     {
         $user = User::factory()->create();
-        // Course with is_free = false but price_cents = 0 should still be free
-        $course = Course::factory()->approved()->create([
+        // TrainingPath with is_free = false but price_cents = 0 should still be free
+        $trainingPath = TrainingPath::factory()->approved()->create([
             'price_cents' => 0,
             'is_free' => false,
             'currency' => 'USD',
         ]);
 
-        $result = $this->service->createCheckoutSession($user, $course);
+        $result = $this->service->createCheckoutSession($user, $trainingPath);
 
         $this->assertTrue($result['enrolled']);
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Duplicate Enrollment Prevention Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_prevents_duplicate_enrollment_for_paid_course(): void
+    public function test_prevents_duplicate_enrollment_for_paid_trainingPath(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
+        $trainingPath = TrainingPath::factory()->approved()->create([
             'price_cents' => 9900,
             'is_free' => false,
             'currency' => 'USD',
         ]);
 
         // Pre-enroll the user
-        $user->enrolledCourses()->attach($course->id, ['enrolled_at' => now()]);
+        $user->enrolledTrainingPaths()->attach($trainingPath->id, ['enrolled_at' => now()]);
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('You are already enrolled in this course.');
+        $this->expectExceptionMessage('You are already enrolled in this trainingPath.');
 
-        $this->service->createCheckoutSession($user, $course);
+        $this->service->createCheckoutSession($user, $trainingPath);
     }
 
-    public function test_prevents_duplicate_enrollment_for_free_course(): void
+    public function test_prevents_duplicate_enrollment_for_free_trainingPath(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
+        $trainingPath = TrainingPath::factory()->approved()->create([
             'price_cents' => 0,
             'is_free' => true,
             'currency' => 'USD',
         ]);
 
         // Pre-enroll the user
-        $user->enrolledCourses()->attach($course->id, ['enrolled_at' => now()]);
+        $user->enrolledTrainingPaths()->attach($trainingPath->id, ['enrolled_at' => now()]);
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('You are already enrolled in this course.');
+        $this->expectExceptionMessage('You are already enrolled in this trainingPath.');
 
-        $this->service->createCheckoutSession($user, $course);
+        $this->service->createCheckoutSession($user, $trainingPath);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -240,64 +240,64 @@ class CheckoutServiceTest extends TestCase
     public function test_has_purchased_returns_true_for_completed_payment(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
 
         Payment::factory()->completed()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $this->assertTrue($this->service->hasPurchased($user, $course));
+        $this->assertTrue($this->service->hasPurchased($user, $trainingPath));
     }
 
     public function test_has_purchased_returns_false_for_pending_payment(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
 
         Payment::factory()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'status' => PaymentStatus::PENDING,
         ]);
 
-        $this->assertFalse($this->service->hasPurchased($user, $course));
+        $this->assertFalse($this->service->hasPurchased($user, $trainingPath));
     }
 
     public function test_has_purchased_returns_false_for_failed_payment(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
 
         Payment::factory()->failed()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $this->assertFalse($this->service->hasPurchased($user, $course));
+        $this->assertFalse($this->service->hasPurchased($user, $trainingPath));
     }
 
     public function test_has_purchased_returns_false_when_no_payment_exists(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
 
-        $this->assertFalse($this->service->hasPurchased($user, $course));
+        $this->assertFalse($this->service->hasPurchased($user, $trainingPath));
     }
 
     public function test_has_purchased_is_user_specific(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
 
         Payment::factory()->completed()->create([
             'user_id' => $user1->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $this->assertTrue($this->service->hasPurchased($user1, $course));
-        $this->assertFalse($this->service->hasPurchased($user2, $course));
+        $this->assertTrue($this->service->hasPurchased($user1, $trainingPath));
+        $this->assertFalse($this->service->hasPurchased($user2, $trainingPath));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -307,8 +307,8 @@ class CheckoutServiceTest extends TestCase
     public function test_free_enrollment_uses_database_transaction(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create([
-            'title' => 'Transaction Test Course',
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Transaction Test TrainingPath',
             'price_cents' => 0,
             'is_free' => true,
             'currency' => 'USD',
@@ -324,17 +324,17 @@ class CheckoutServiceTest extends TestCase
         $service = app(CheckoutService::class);
 
         try {
-            $service->createCheckoutSession($user, $course);
+            $service->createCheckoutSession($user, $trainingPath);
             $this->fail('Expected exception was not thrown');
         } catch (\Exception $e) {
             $this->assertEquals('Simulated failure', $e->getMessage());
         }
 
         // Verify no enrollment was created due to transaction rollback
-        $this->assertFalse($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertFalse($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
         $this->assertDatabaseMissing('payments', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
     }
 

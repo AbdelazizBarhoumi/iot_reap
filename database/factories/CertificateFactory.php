@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Certificate;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -22,7 +22,7 @@ class CertificateFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'course_id' => Course::factory(),
+            'training_path_id' => TrainingPath::factory(),
             'hash' => Str::random(64),
             'pdf_path' => null,
             'issued_at' => now(),

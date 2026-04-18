@@ -37,7 +37,7 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                         </CardTitle>
                         <CardDescription>
                             {payment
-                                ? `You are now enrolled in "${payment.course.title}"`
+                                ? `You are now enrolled in "${payment.trainingPath.title}"`
                                 : 'Your payment has been processed successfully.'}
                         </CardDescription>
                     </CardHeader>
@@ -45,10 +45,10 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                         {payment && (
                             <div className="rounded-lg border bg-muted/50 p-4">
                                 <div className="flex items-center gap-4">
-                                    {payment.course.thumbnail_url ? (
+                                    {payment.trainingPath.thumbnail_url ? (
                                         <img
-                                            src={payment.course.thumbnail_url}
-                                            alt={payment.course.title}
+                                            src={payment.trainingPath.thumbnail_url}
+                                            alt={payment.trainingPath.title}
                                             className="h-16 w-16 rounded-lg object-cover"
                                         />
                                     ) : (
@@ -58,7 +58,7 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                                     )}
                                     <div className="flex-1 text-left">
                                         <p className="font-medium">
-                                            {payment.course.title}
+                                            {payment.trainingPath.title}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
                                             {payment.formatted_amount}
@@ -71,9 +71,9 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                             {payment && (
                                 <Button asChild className="w-full">
                                     <Link
-                                        href={`/courses/${payment.course.id}`}
+                                        href={`/trainingPaths/${payment.trainingPath.id}`}
                                     >
-                                        Start Learning
+                                        Start Training
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Link>
                                 </Button>
@@ -83,8 +83,8 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                                 asChild
                                 className="w-full"
                             >
-                                <Link href="/my-courses">
-                                    Go to My Learning
+                                <Link href="/my-trainingPaths">
+                                    Go to My Training
                                 </Link>
                             </Button>
                         </div>

@@ -8,6 +8,10 @@ export interface AdminUser {
     email: string;
     role: UserRole;
     role_label: string;
+    teacher_approved_at: string | null;
+    teacher_approved_by: string | null;
+    is_teacher_approved: boolean;
+    requires_teacher_approval: boolean;
     email_verified_at: string | null;
     two_factor_enabled: boolean;
     suspended_at: string | null;
@@ -18,13 +22,13 @@ export interface AdminUser {
     created_at: string;
     updated_at: string;
     // Optional relations
-    course_enrollments?: CourseEnrollmentSummary[];
+    training_path_enrollments?: TrainingPathEnrollmentSummary[];
     vm_sessions?: VMSessionSummary[];
 }
-export interface CourseEnrollmentSummary {
+export interface TrainingPathEnrollmentSummary {
     id: string;
-    course_id: string;
-    course_title: string;
+    training_path_id: string;
+    training_path_title: string;
     progress_percentage: number;
     enrolled_at: string;
     completed_at: string | null;

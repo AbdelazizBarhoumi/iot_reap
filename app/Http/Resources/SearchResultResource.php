@@ -16,14 +16,17 @@ class SearchResultResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'type' => 'course',
+            'id' => (string) $this->id,
+            'type' => 'trainingPath',
             'title' => $this->title,
+            'subtitle' => $this->instructor->name,
             'description' => $this->when(
                 strlen($this->description) > 200,
                 substr($this->description, 0, 200).'...',
                 $this->description
             ),
+            'url' => route('trainingPaths.show', $this->id),
+            'image' => $this->thumbnail,
             'instructor' => $this->instructor->name,
             'instructorId' => $this->instructor_id,
             'thumbnail' => $this->thumbnail,

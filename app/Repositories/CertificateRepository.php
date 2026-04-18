@@ -14,19 +14,9 @@ class CertificateRepository
     public function getUserCertificates(User $user): Collection
     {
         return Certificate::where('user_id', $user->id)
-            ->with('course:id,title,thumbnail,instructor_id')
+            ->with('trainingPath:id,title,thumbnail,instructor_id')
             ->orderBy('issued_at', 'desc')
             ->get();
-    }
-
-    /**
-     * Get certificate by ID.
-     *
-     * @deprecated Unused - route model binding handles this. Candidate for removal.
-     */
-    public function find(int $id): ?Certificate
-    {
-        return Certificate::find($id);
     }
 
     /**
@@ -35,27 +25,27 @@ class CertificateRepository
     public function findByHash(string $hash): ?Certificate
     {
         return Certificate::byHash($hash)
-            ->with(['user:id,name', 'course:id,title,instructor_id'])
+            ->with(['user:id,name', 'trainingPath:id,title,instructor_id'])
             ->first();
     }
 
     /**
-     * Get user's certificate for a specific course.
+     * Get user's certificate for a specific trainingPath.
      */
-    public function getUserCertificateForCourse(User $user, int $courseId): ?Certificate
+    public function getUserCertificateForTrainingPath(User $user, int $trainingPathId): ?Certificate
     {
         return Certificate::where('user_id', $user->id)
-            ->where('course_id', $courseId)
+            ->where('training_path_id', $trainingPathId)
             ->first();
     }
 
     /**
-     * Check if user has certificate for a course.
+     * Check if user has certificate for a trainingPath.
      */
-    public function hasCertificate(User $user, int $courseId): bool
+    public function hasCertificate(User $user, int $trainingPathId): bool
     {
         return Certificate::where('user_id', $user->id)
-            ->where('course_id', $courseId)
+            ->where('training_path_id', $trainingPathId)
             ->exists();
     }
 
@@ -67,25 +57,4 @@ class CertificateRepository
         return Certificate::create($data);
     }
 
-    /**
-     * Update certificate PDF path.
-     *
-     * @deprecated Unused - Certificate model updated directly in job. Candidate for removal.
-     */
-    public function updatePdfPath(Certificate $certificate, string $pdfPath): Certificate
-    {
-        $certificate->update(['pdf_path' => $pdfPath]);
-
-        return $certificate->fresh();
-    }
-
-    /**
-     * Delete a certificate.
-     *
-     * @deprecated Unused - no certificate deletion feature implemented. Candidate for removal.
-     */
-    public function delete(Certificate $certificate): bool
-    {
-        return $certificate->delete();
-    }
 }

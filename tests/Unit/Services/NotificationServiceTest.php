@@ -315,20 +315,20 @@ class NotificationServiceTest extends TestCase
     // Convenience Methods Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_notify_course_approved_creates_correct_notification(): void
+    public function test_notify_training_path_approved_creates_correct_notification(): void
     {
         Event::fake();
 
         $teacher = User::factory()->create();
-        $notification = Notification::factory()->courseApproved()->make();
+        $notification = Notification::factory()->trainingPathApproved()->make();
 
         $expectedData = [
             'user_id' => $teacher->id,
             'type' => NotificationType::COURSE_APPROVED,
-            'title' => 'Course Approved!',
-            'message' => 'Your course "Laravel Basics" has been approved and is now live.',
-            'action_url' => '/courses/123',
-            'data' => ['course_id' => 123, 'course_title' => 'Laravel Basics'],
+            'title' => 'TrainingPath Approved!',
+            'message' => 'Your trainingPath "Laravel Basics" has been approved and is now live.',
+            'action_url' => '/trainingPaths/123',
+            'data' => ['training_path_id' => 123, 'training_path_title' => 'Laravel Basics'],
         ];
 
         $this->mockRepository
@@ -339,13 +339,13 @@ class NotificationServiceTest extends TestCase
 
         Log::shouldReceive('info')->once();
 
-        $result = $this->service->notifyCourseApproved($teacher, 'Laravel Basics', 123);
+        $result = $this->service->notifyTrainingPathApproved($teacher, 'Laravel Basics', 123);
 
         $this->assertSame($notification, $result);
         Event::assertDispatched(NotificationCreated::class);
     }
 
-    public function test_notify_course_rejected_creates_correct_notification(): void
+    public function test_notify_training_path_rejected_creates_correct_notification(): void
     {
         Event::fake();
 
@@ -355,10 +355,10 @@ class NotificationServiceTest extends TestCase
         $expectedData = [
             'user_id' => $teacher->id,
             'type' => NotificationType::COURSE_REJECTED,
-            'title' => 'Course Needs Revision',
-            'message' => 'Your course "Laravel Advanced" requires changes: Content needs more examples',
+            'title' => 'TrainingPath Needs Revision',
+            'message' => 'Your trainingPath "Laravel Advanced" requires changes: Content needs more examples',
             'action_url' => '/teaching/123/edit',
-            'data' => ['course_id' => 123, 'course_title' => 'Laravel Advanced', 'feedback' => 'Content needs more examples'],
+            'data' => ['training_path_id' => 123, 'training_path_title' => 'Laravel Advanced', 'feedback' => 'Content needs more examples'],
         ];
 
         $this->mockRepository
@@ -369,7 +369,7 @@ class NotificationServiceTest extends TestCase
 
         Log::shouldReceive('info')->once();
 
-        $result = $this->service->notifyCourseRejected($teacher, 'Laravel Advanced', 123, 'Content needs more examples');
+        $result = $this->service->notifyTrainingPathRejected($teacher, 'Laravel Advanced', 123, 'Content needs more examples');
 
         $this->assertSame($notification, $result);
         Event::assertDispatched(NotificationCreated::class);
@@ -388,7 +388,7 @@ class NotificationServiceTest extends TestCase
             'title' => 'New Student Enrolled',
             'message' => 'John Doe enrolled in "React Fundamentals".',
             'action_url' => '/teaching/456/edit',
-            'data' => ['course_id' => 456, 'student_name' => 'John Doe'],
+            'data' => ['training_path_id' => 456, 'student_name' => 'John Doe'],
         ];
 
         $this->mockRepository
@@ -417,7 +417,7 @@ class NotificationServiceTest extends TestCase
             'type' => NotificationType::FORUM_REPLY,
             'title' => 'New Reply to Your Post',
             'message' => 'Jane Smith replied to your discussion.',
-            'action_url' => '/lessons/789?thread=101',
+            'action_url' => '/trainingUnits/789?thread=101',
             'data' => ['thread_id' => 101, 'replier_name' => 'Jane Smith'],
         ];
 
@@ -448,7 +448,7 @@ class NotificationServiceTest extends TestCase
             'title' => 'Certificate Earned!',
             'message' => 'Congratulations! You completed "Vue.js Mastery".',
             'action_url' => '/certificates/abc123/download',
-            'data' => ['certificate_hash' => 'abc123', 'course_title' => 'Vue.js Mastery'],
+            'data' => ['certificate_hash' => 'abc123', 'training_path_title' => 'Vue.js Mastery'],
         ];
 
         $this->mockRepository

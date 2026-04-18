@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Camera\CreateCameraReservationRequest;
 use App\Http\Resources\CameraReservationResource;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Repositories\CameraReservationRepository;
 use App\Services\CameraService;
 use Illuminate\Http\JsonResponse;
@@ -57,7 +57,7 @@ class CameraReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Camera reservation request submitted for approval',
-                'data' => new CameraReservationResource($reservation->load(['camera.robot', 'user'])),
+                'data' => new CameraReservationResource($reservation->load(['reservable', 'user'])),
             ], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
@@ -70,8 +70,13 @@ class CameraReservationController extends Controller
     /**
      * Show a specific camera reservation.
      */
-    public function show(CameraReservation $reservation): JsonResponse
+    public function show(Reservation $reservation): JsonResponse
     {
+        // Ensure this is a camera reservation
+        if ($reservation->reservable_type !== 'App\Models\Camera') {
+            abort(404);
+        }
+
         // Users can only view their own reservations
         if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
@@ -79,7 +84,7 @@ class CameraReservationController extends Controller
 
         return response()->json([
             'data' => new CameraReservationResource(
-                $reservation->load(['camera.robot', 'user', 'approver'])
+                $reservation->load(['reservable', 'user', 'approver'])
             ),
         ]);
     }
@@ -87,8 +92,13 @@ class CameraReservationController extends Controller
     /**
      * Cancel a camera reservation.
      */
-    public function cancel(CameraReservation $reservation): JsonResponse
+    public function cancel(Reservation $reservation): JsonResponse
     {
+        // Ensure this is a camera reservation
+        if ($reservation->reservable_type !== 'App\Models\Camera') {
+            abort(404);
+        }
+
         // Users can only cancel their own reservations
         if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
@@ -118,7 +128,8 @@ class CameraReservationController extends Controller
         $startDate = $request->query('start', now()->startOfWeek()->toDateString());
         $endDate = $request->query('end', now()->addWeeks(4)->endOfWeek()->toDateString());
 
-        $reservations = CameraReservation::where('camera_id', $camera->id)
+        $reservations = Reservation::where('reservable_type', 'App\Models\Camera')
+            ->where('reservable_id', $camera->id)
             ->whereIn('status', ['pending', 'approved', 'active'])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('requested_start_at', [$startDate, $endDate])

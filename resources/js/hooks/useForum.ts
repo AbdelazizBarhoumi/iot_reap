@@ -15,10 +15,10 @@ import type { DiscussionThread, ThreadReply } from '@/types/forum.types';
 // Hook Options & Return Types
 // ─────────────────────────────────────────────────────────────────────────────
 interface UseForumOptions {
-    /** Lesson ID (for lesson-level threads) */
-    lessonId?: number;
-    /** Course ID (for course-level threads) */
-    courseId?: number;
+    /** TrainingUnit ID (for trainingUnit-level threads) */
+    trainingUnitId?: number;
+    /** TrainingPath ID (for trainingPath-level threads) */
+    trainingPathId?: number;
     /** Initial sort option */
     initialSort?: ThreadSort;
     /** Initial filter option */
@@ -67,8 +67,8 @@ interface UseForumReturn {
 // Hook Implementation
 // ─────────────────────────────────────────────────────────────────────────────
 export function useForum({
-    lessonId,
-    courseId,
+    trainingUnitId,
+    trainingPathId,
     initialSort = 'recent',
     initialFilter = 'all',
     autoFetch = true,
@@ -96,16 +96,16 @@ export function useForum({
     // ─────────────────────────────────────────────────────────────────────────
     const fetchThreads = useCallback(
         async (page = 1) => {
-            if (!lessonId && !courseId) {
-                setError('Either lessonId or courseId is required');
+            if (!trainingUnitId && !trainingPathId) {
+                setError('Either trainingUnitId or trainingPathId is required');
                 return;
             }
             setLoading(true);
             setError(null);
             try {
-                const response = lessonId
-                    ? await forumApi.getLessonThreads(lessonId, sort, filter, page)
-                    : await forumApi.getCourseThreads(courseId!, sort, filter, page);
+                const response = trainingUnitId
+                    ? await forumApi.getTrainingUnitThreads(trainingUnitId, sort, filter, page)
+                    : await forumApi.getTrainingPathThreads(trainingPathId!, sort, filter, page);
                 setThreads(response.data);
                 setCurrentPage(response.pagination.current_page);
                 setTotalPages(response.pagination.last_page);
@@ -121,14 +121,14 @@ export function useForum({
                 setLoading(false);
             }
         },
-        [lessonId, courseId, sort, filter],
+        [trainingUnitId, trainingPathId, sort, filter],
     );
     // Auto-fetch on mount and when sort/filter changes
     useEffect(() => {
-        if (autoFetch && (lessonId || courseId)) {
+        if (autoFetch && (trainingUnitId || trainingPathId)) {
             fetchThreads(1);
         }
-    }, [autoFetch, lessonId, courseId, sort, filter, fetchThreads]);
+    }, [autoFetch, trainingUnitId, trainingPathId, sort, filter, fetchThreads]);
     // ─────────────────────────────────────────────────────────────────────────
     // Single Thread Operations
     // ─────────────────────────────────────────────────────────────────────────
@@ -154,13 +154,13 @@ export function useForum({
     }, []);
     const createThread = useCallback(
         async (data: CreateThreadData): Promise<DiscussionThread | null> => {
-            if (!lessonId) {
-                toast.error('Cannot create thread: lesson not specified');
+            if (!trainingUnitId) {
+                toast.error('Cannot create thread: trainingUnit not specified');
                 return null;
             }
             setIsSubmitting(true);
             try {
-                const newThread = await forumApi.createThread(lessonId, data);
+                const newThread = await forumApi.createThread(trainingUnitId, data);
                 setThreads((prev) => [newThread, ...prev]);
                 setTotalThreads((prev) => prev + 1);
                 toast.success('Discussion started successfully');
@@ -176,7 +176,7 @@ export function useForum({
                 setIsSubmitting(false);
             }
         },
-        [lessonId],
+        [trainingUnitId],
     );
     const deleteThread = useCallback(
         async (threadId: string): Promise<boolean> => {

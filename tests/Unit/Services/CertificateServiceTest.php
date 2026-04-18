@@ -4,13 +4,13 @@ namespace Tests\Unit\Services;
 
 use App\Jobs\GenerateCertificatePdfJob;
 use App\Models\Certificate;
-use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
-use App\Models\LessonProgress;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
+use App\Models\TrainingUnitProgress;
 use App\Models\User;
 use App\Repositories\CertificateRepository;
-use App\Repositories\LessonProgressRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use App\Services\CertificateService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,7 +26,7 @@ class CertificateServiceTest extends TestCase
 
     private CertificateRepository $certificateRepository;
 
-    private LessonProgressRepository $progressRepository;
+    private TrainingUnitProgressRepository $progressRepository;
 
     protected function setUp(): void
     {
@@ -36,7 +36,7 @@ class CertificateServiceTest extends TestCase
         Queue::fake();
 
         $this->certificateRepository = app(CertificateRepository::class);
-        $this->progressRepository = app(LessonProgressRepository::class);
+        $this->progressRepository = app(TrainingUnitProgressRepository::class);
         $this->service = new CertificateService(
             $this->certificateRepository,
             $this->progressRepository
@@ -73,19 +73,19 @@ class CertificateServiceTest extends TestCase
         $this->assertTrue($certificates->isEmpty());
     }
 
-    public function test_get_user_certificates_loads_course_relationship(): void
+    public function test_get_user_certificates_loads_training_path_relationship(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create(['title' => 'Test Course']);
+        $trainingPath = TrainingPath::factory()->create(['title' => 'Test TrainingPath']);
         Certificate::factory()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
         $certificates = $this->service->getUserCertificates($user);
 
-        $this->assertTrue($certificates->first()->relationLoaded('course'));
-        $this->assertEquals('Test Course', $certificates->first()->course->title);
+        $this->assertTrue($certificates->first()->relationLoaded('trainingPath'));
+        $this->assertEquals('Test TrainingPath', $certificates->first()->trainingPath->title);
     }
 
     // =========================================================================
@@ -112,46 +112,46 @@ class CertificateServiceTest extends TestCase
     }
 
     // =========================================================================
-    // getUserCertificateForCourse() tests
+    // getUserCertificateForTrainingPath() tests
     // =========================================================================
 
-    public function test_get_user_certificate_for_course_returns_certificate(): void
+    public function test_get_user_certificate_for_training_path_returns_certificate(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
         $certificate = Certificate::factory()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $result = $this->service->getUserCertificateForCourse($user, $course->id);
+        $result = $this->service->getUserCertificateForTrainingPath($user, $trainingPath->id);
 
         $this->assertNotNull($result);
         $this->assertEquals($certificate->id, $result->id);
     }
 
-    public function test_get_user_certificate_for_course_returns_null_when_not_found(): void
+    public function test_get_user_certificate_for_training_path_returns_null_when_not_found(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
 
-        $result = $this->service->getUserCertificateForCourse($user, $course->id);
+        $result = $this->service->getUserCertificateForTrainingPath($user, $trainingPath->id);
 
         $this->assertNull($result);
     }
 
-    public function test_get_user_certificate_for_course_does_not_return_other_users_certificate(): void
+    public function test_get_user_certificate_for_training_path_does_not_return_other_users_certificate(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
 
         Certificate::factory()->create([
             'user_id' => $otherUser->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $result = $this->service->getUserCertificateForCourse($user, $course->id);
+        $result = $this->service->getUserCertificateForTrainingPath($user, $trainingPath->id);
 
         $this->assertNull($result);
     }
@@ -160,22 +160,22 @@ class CertificateServiceTest extends TestCase
     // canIssueCertificate() tests
     // =========================================================================
 
-    public function test_can_issue_certificate_returns_true_when_course_completed_and_no_existing_certificate(): void
+    public function test_can_issue_certificate_returns_true_when_training_path_completed_and_no_existing_certificate(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        // Complete all lessons (100% progress)
-        LessonProgress::factory()->create([
+        // Complete all trainingUnits (100% progress)
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $result = $this->service->canIssueCertificate($user, $course);
+        $result = $this->service->canIssueCertificate($user, $trainingPath);
 
         $this->assertTrue($result);
     }
@@ -183,14 +183,14 @@ class CertificateServiceTest extends TestCase
     public function test_can_issue_certificate_returns_false_when_certificate_already_exists(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        // Complete all lessons
-        LessonProgress::factory()->create([
+        // Complete all trainingUnits
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
@@ -198,33 +198,33 @@ class CertificateServiceTest extends TestCase
         // Already has certificate
         Certificate::factory()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
-        $result = $this->service->canIssueCertificate($user, $course);
+        $result = $this->service->canIssueCertificate($user, $trainingPath);
 
         $this->assertFalse($result);
     }
 
-    public function test_can_issue_certificate_returns_false_when_course_not_completed(): void
+    public function test_can_issue_certificate_returns_false_when_training_path_not_completed(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
 
-        // Create 2 lessons, complete only 1
-        $lesson1 = Lesson::factory()->create(['module_id' => $module->id]);
-        $lesson2 = Lesson::factory()->create(['module_id' => $module->id]);
+        // Create 2 trainingUnits, complete only 1
+        $trainingUnit1 = TrainingUnit::factory()->create(['module_id' => $module->id]);
+        $trainingUnit2 = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson1->id,
+            'training_unit_id' => $trainingUnit1->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
-        // lesson2 not completed - only 50% progress
+        // trainingUnit2 not completed - only 50% progress
 
-        $result = $this->service->canIssueCertificate($user, $course);
+        $result = $this->service->canIssueCertificate($user, $trainingPath);
 
         $this->assertFalse($result);
     }
@@ -232,13 +232,13 @@ class CertificateServiceTest extends TestCase
     public function test_can_issue_certificate_returns_false_when_no_progress(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        TrainingUnit::factory()->create(['module_id' => $module->id]);
 
         // No progress at all
 
-        $result = $this->service->canIssueCertificate($user, $course);
+        $result = $this->service->canIssueCertificate($user, $trainingPath);
 
         $this->assertFalse($result);
     }
@@ -247,131 +247,131 @@ class CertificateServiceTest extends TestCase
     // issueCertificate() tests
     // =========================================================================
 
-    public function test_issue_certificate_creates_certificate_for_completed_course(): void
+    public function test_issue_certificate_creates_certificate_for_completed_trainingPath(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        // Complete the course
-        LessonProgress::factory()->create([
+        // Complete the trainingPath
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $certificate = $this->service->issueCertificate($user, $course->id);
+        $certificate = $this->service->issueCertificate($user, $trainingPath->id);
 
         $this->assertInstanceOf(Certificate::class, $certificate);
         $this->assertEquals($user->id, $certificate->user_id);
-        $this->assertEquals($course->id, $certificate->course_id);
+        $this->assertEquals($trainingPath->id, $certificate->training_path_id);
         $this->assertNotNull($certificate->hash);
         $this->assertEquals(64, strlen($certificate->hash));
         $this->assertNotNull($certificate->issued_at);
         $this->assertDatabaseHas('certificates', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
     }
 
     public function test_issue_certificate_dispatches_pdf_generation_job(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $certificate = $this->service->issueCertificate($user, $course->id);
+        $certificate = $this->service->issueCertificate($user, $trainingPath->id);
 
         Queue::assertPushed(GenerateCertificatePdfJob::class, function ($job) use ($certificate) {
             return $job->certificate->id === $certificate->id;
         });
     }
 
-    public function test_issue_certificate_loads_user_and_course_relationships(): void
+    public function test_issue_certificate_loads_user_and_training_path_relationships(): void
     {
         $user = User::factory()->create(['name' => 'Test User']);
-        $course = Course::factory()->create(['title' => 'Test Course']);
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create(['title' => 'Test TrainingPath']);
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $certificate = $this->service->issueCertificate($user, $course->id);
+        $certificate = $this->service->issueCertificate($user, $trainingPath->id);
 
         $this->assertTrue($certificate->relationLoaded('user'));
-        $this->assertTrue($certificate->relationLoaded('course'));
+        $this->assertTrue($certificate->relationLoaded('trainingPath'));
         $this->assertEquals('Test User', $certificate->user->name);
-        $this->assertEquals('Test Course', $certificate->course->title);
+        $this->assertEquals('Test TrainingPath', $certificate->trainingPath->title);
     }
 
     public function test_issue_certificate_generates_unique_hash(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        // Complete course for both users
-        LessonProgress::factory()->create([
+        // Complete trainingPath for both users
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user1->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user2->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $cert1 = $this->service->issueCertificate($user1, $course->id);
-        $cert2 = $this->service->issueCertificate($user2, $course->id);
+        $cert1 = $this->service->issueCertificate($user1, $trainingPath->id);
+        $cert2 = $this->service->issueCertificate($user2, $trainingPath->id);
 
         $this->assertNotEquals($cert1->hash, $cert2->hash);
     }
 
-    public function test_issue_certificate_throws_exception_when_course_not_completed(): void
+    public function test_issue_certificate_throws_exception_when_training_path_not_completed(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        TrainingUnit::factory()->create(['module_id' => $module->id]);
 
         // No progress
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Cannot issue certificate. Course not completed or already issued.');
+        $this->expectExceptionMessage('Cannot issue certificate. TrainingPath not completed or already issued.');
 
-        $this->service->issueCertificate($user, $course->id);
+        $this->service->issueCertificate($user, $trainingPath->id);
     }
 
     public function test_issue_certificate_throws_exception_when_certificate_already_exists(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
@@ -379,12 +379,12 @@ class CertificateServiceTest extends TestCase
         // Already has certificate
         Certificate::factory()->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
         $this->expectException(AuthorizationException::class);
 
-        $this->service->issueCertificate($user, $course->id);
+        $this->service->issueCertificate($user, $trainingPath->id);
     }
 
     // =========================================================================
@@ -400,7 +400,7 @@ class CertificateServiceTest extends TestCase
         $this->assertNotNull($result);
         $this->assertEquals($certificate->id, $result->id);
         $this->assertTrue($result->relationLoaded('user'));
-        $this->assertTrue($result->relationLoaded('course'));
+        $this->assertTrue($result->relationLoaded('trainingPath'));
     }
 
     public function test_verify_certificate_returns_null_for_invalid_hash(): void
@@ -449,80 +449,80 @@ class CertificateServiceTest extends TestCase
     // Edge cases & integration scenarios
     // =========================================================================
 
-    public function test_multiple_courses_can_have_separate_certificates(): void
+    public function test_multiple_training_paths_can_have_separate_certificates(): void
     {
         $user = User::factory()->create();
 
-        $course1 = Course::factory()->create();
-        $module1 = CourseModule::factory()->create(['course_id' => $course1->id]);
-        $lesson1 = Lesson::factory()->create(['module_id' => $module1->id]);
+        $trainingPath1 = TrainingPath::factory()->create();
+        $module1 = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath1->id]);
+        $trainingUnit1 = TrainingUnit::factory()->create(['module_id' => $module1->id]);
 
-        $course2 = Course::factory()->create();
-        $module2 = CourseModule::factory()->create(['course_id' => $course2->id]);
-        $lesson2 = Lesson::factory()->create(['module_id' => $module2->id]);
+        $trainingPath2 = TrainingPath::factory()->create();
+        $module2 = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath2->id]);
+        $trainingUnit2 = TrainingUnit::factory()->create(['module_id' => $module2->id]);
 
-        // Complete both courses
-        LessonProgress::factory()->create([
+        // Complete both trainingPaths
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson1->id,
+            'training_unit_id' => $trainingUnit1->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson2->id,
+            'training_unit_id' => $trainingUnit2->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $cert1 = $this->service->issueCertificate($user, $course1->id);
-        $cert2 = $this->service->issueCertificate($user, $course2->id);
+        $cert1 = $this->service->issueCertificate($user, $trainingPath1->id);
+        $cert2 = $this->service->issueCertificate($user, $trainingPath2->id);
 
         $this->assertNotEquals($cert1->id, $cert2->id);
-        $this->assertEquals($course1->id, $cert1->course_id);
-        $this->assertEquals($course2->id, $cert2->course_id);
+        $this->assertEquals($trainingPath1->id, $cert1->training_path_id);
+        $this->assertEquals($trainingPath2->id, $cert2->training_path_id);
 
         $userCertificates = $this->service->getUserCertificates($user);
         $this->assertCount(2, $userCertificates);
     }
 
-    public function test_course_with_multiple_modules_requires_all_lessons_completed(): void
+    public function test_training_path_with_multiple_modules_requires_all_training_units_completed(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $trainingPath = TrainingPath::factory()->create();
 
-        $module1 = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson1 = Lesson::factory()->create(['module_id' => $module1->id]);
-        $lesson2 = Lesson::factory()->create(['module_id' => $module1->id]);
+        $module1 = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit1 = TrainingUnit::factory()->create(['module_id' => $module1->id]);
+        $trainingUnit2 = TrainingUnit::factory()->create(['module_id' => $module1->id]);
 
-        $module2 = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson3 = Lesson::factory()->create(['module_id' => $module2->id]);
+        $module2 = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $trainingUnit3 = TrainingUnit::factory()->create(['module_id' => $module2->id]);
 
-        // Complete only lessons in module 1
-        LessonProgress::factory()->create([
+        // Complete only trainingUnits in module 1
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson1->id,
+            'training_unit_id' => $trainingUnit1->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
-        LessonProgress::factory()->create([
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson2->id,
+            'training_unit_id' => $trainingUnit2->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
-        // lesson3 not completed
+        // trainingUnit3 not completed
 
-        $this->assertFalse($this->service->canIssueCertificate($user, $course));
+        $this->assertFalse($this->service->canIssueCertificate($user, $trainingPath));
 
-        // Now complete lesson3
-        LessonProgress::factory()->create([
+        // Now complete trainingUnit3
+        TrainingUnitProgress::factory()->create([
             'user_id' => $user->id,
-            'lesson_id' => $lesson3->id,
+            'training_unit_id' => $trainingUnit3->id,
             'completed' => true,
             'completed_at' => now(),
         ]);
 
-        $this->assertTrue($this->service->canIssueCertificate($user, $course));
+        $this->assertTrue($this->service->canIssueCertificate($user, $trainingPath));
     }
 }

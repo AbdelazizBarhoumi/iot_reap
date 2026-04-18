@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Enums\ThreadStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,8 +24,8 @@ class DiscussionThreadFactory extends Factory
     public function definition(): array
     {
         return [
-            'lesson_id' => Lesson::factory(),
-            'course_id' => Course::factory(),
+            'training_unit_id' => TrainingUnit::factory(),
+            'training_path_id' => TrainingPath::factory(),
             'author_id' => User::factory(),
             'title' => fake()->sentence(6),
             'content' => fake()->paragraphs(3, true),
@@ -86,12 +86,12 @@ class DiscussionThreadFactory extends Factory
     }
 
     /**
-     * Thread without a lesson (course-level).
+     * Thread without a trainingUnit (trainingPath-level).
      */
-    public function courseLevel(): static
+    public function trainingPathLevel(): static
     {
         return $this->state(fn (array $attributes) => [
-            'lesson_id' => null,
+            'training_unit_id' => null,
         ]);
     }
 }

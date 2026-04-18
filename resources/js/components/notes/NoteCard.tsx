@@ -4,7 +4,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Edit2, Trash2, Check, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import type { LessonNote } from '@/api/notes.api';
+import type { TrainingUnitNote } from '@/api/notes.api';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,7 +21,7 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 interface NoteCardProps {
-    note: LessonNote;
+    note: TrainingUnitNote;
     onUpdate: (
         noteId: number,
         content: string,

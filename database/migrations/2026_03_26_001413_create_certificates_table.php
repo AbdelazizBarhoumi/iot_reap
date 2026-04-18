@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('certificates', function (Blueprint $table) {
             $table->id();
             $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('training_path_id')->constrained('training_paths')->cascadeOnDelete();
             $table->string('hash', 64)->unique()->comment('Unique verification hash');
             $table->string('pdf_path')->nullable()->comment('Path to generated PDF');
             $table->timestamp('issued_at');
             $table->timestamps();
 
-            $table->unique(['user_id', 'course_id']);
+            $table->unique(['user_id', 'training_path_id']);
             $table->index('hash');
         });
     }

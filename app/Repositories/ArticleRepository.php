@@ -10,21 +10,11 @@ use App\Models\Article;
 class ArticleRepository
 {
     /**
-     * Find an article by ID.
-     *
-     * @deprecated Unused - findByLessonId() is used instead. Candidate for removal.
+     * Find an article by trainingUnit ID.
      */
-    public function findById(int $id): ?Article
+    public function findByTrainingUnitId(int $trainingUnitId): ?Article
     {
-        return Article::find($id);
-    }
-
-    /**
-     * Find an article by lesson ID.
-     */
-    public function findByLessonId(int $lessonId): ?Article
-    {
-        return Article::where('lesson_id', $lessonId)->first();
+        return Article::where('training_unit_id', $trainingUnitId)->first();
     }
 
     /**

@@ -29,21 +29,21 @@ import type {
     KPIs,
     EnrollmentChartPoint,
     RevenueChartPoint,
-    TopCourse,
+    TopTrainingPath,
     AnalyticsPeriod,
 } from '@/types/analytics.types';
 interface AnalyticsPageProps {
     kpis: KPIs;
     enrollmentChart: EnrollmentChartPoint[];
     revenueChart: RevenueChartPoint[];
-    topCourses: TopCourse[];
+    topTrainingPaths: TopTrainingPath[];
     period: AnalyticsPeriod;
 }
 export default function AnalyticsPage({
     kpis,
     enrollmentChart,
     revenueChart,
-    topCourses,
+    topTrainingPaths,
     period,
 }: AnalyticsPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
@@ -70,7 +70,7 @@ export default function AnalyticsPage({
             },
             {
                 stage: 'In Progress',
-                count: Math.round(totalStudents * 0.65), // Estimate 65% started courses
+                count: Math.round(totalStudents * 0.65), // Estimate 65% started trainingPaths
                 percentage: 65,
             },
             {
@@ -107,7 +107,7 @@ export default function AnalyticsPage({
                             Analytics Dashboard
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Track your course performance and revenue
+                            Track your trainingPath performance and revenue
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -186,34 +186,34 @@ export default function AnalyticsPage({
                 {/* Completion Funnel */}
                 <CompletionFunnel
                     data={funnelData}
-                    title="Student Completion Funnel"
+                    title="Operator Completion Funnel"
                 />
-                {/* Top Courses */}
+                {/* Top TrainingPaths */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">
-                            Top Performing Courses
+                            Top Performing Paths
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {topCourses.length === 0 ? (
+                        {topTrainingPaths.length === 0 ? (
                             <p className="py-8 text-center text-sm text-muted-foreground">
-                                No course data available for this period.
+                                No path data available for this period.
                             </p>
                         ) : (
                             <div className="space-y-4">
-                                {topCourses.map((course, index) => (
+                                {topTrainingPaths.map((trainingPath, index) => (
                                     <div
-                                        key={course.id}
+                                        key={trainingPath.id}
                                         className="flex items-center gap-4"
                                     >
                                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
                                             {index + 1}
                                         </span>
-                                        {course.thumbnail_url ? (
+                                        {trainingPath.thumbnail_url ? (
                                             <img
-                                                src={course.thumbnail_url}
-                                                alt={course.title}
+                                                src={trainingPath.thumbnail_url}
+                                                alt={trainingPath.title}
                                                 className="h-10 w-10 rounded object-cover"
                                             />
                                         ) : (
@@ -221,14 +221,14 @@ export default function AnalyticsPage({
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <Link
-                                                href={`/teaching/analytics/courses/${course.id}/students`}
+                                                href={`/teaching/analytics/trainingPaths/${trainingPath.id}/students`}
                                                 className="block truncate text-sm font-medium hover:underline"
                                             >
-                                                {course.title}
+                                                {trainingPath.title}
                                             </Link>
                                         </div>
                                         <div className="text-sm font-medium">
-                                            {course.formatted_value} enrollments
+                                            {trainingPath.formatted_value} enrollments
                                         </div>
                                     </div>
                                 ))}

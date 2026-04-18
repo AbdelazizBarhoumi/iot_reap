@@ -1,5 +1,5 @@
 /**
- * ReviewSection - Complete reviews section for course pages.
+ * ReviewSection - Complete reviews section for trainingPath pages.
  */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronDown, Loader2 } from 'lucide-react';
@@ -24,10 +24,10 @@ import { ReviewCard } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
 import { StarRatingDisplay } from './StarRating';
 interface ReviewSectionProps {
-    courseId: number;
+    trainingPathId: number;
     className?: string;
 }
-export function ReviewSection({ courseId, className }: ReviewSectionProps) {
+export function ReviewSection({ trainingPathId, className }: ReviewSectionProps) {
     const {
         reviews,
         stats,
@@ -43,7 +43,7 @@ export function ReviewSection({ courseId, className }: ReviewSectionProps) {
         updateReview,
         deleteReview,
         isSubmitting,
-    } = useReviews({ courseId });
+    } = useReviews({ trainingPathId });
     const [isEditing, setIsEditing] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const handleCreateReview = async (data: CreateReviewData) => {

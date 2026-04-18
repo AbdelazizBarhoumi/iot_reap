@@ -21,7 +21,7 @@ class ArticleResource extends JsonResource
     {
         return [
             'id' => $this->resource->id,
-            'lesson_id' => $this->resource->lesson_id,
+            'training_unit_id' => $this->resource->training_unit_id,
             'content' => $this->resource->content,
             'word_count' => $this->resource->word_count,
             'estimated_read_time_minutes' => $this->resource->estimated_read_time_minutes,

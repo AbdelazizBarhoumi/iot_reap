@@ -26,6 +26,8 @@ interface CameraViewerProps {
     camera: Camera;
     /** Session ID — needed to build the WHEP proxy URL */
     sessionId: string;
+    /** Whether the session is active (streaming only allowed when true) */
+    sessionIsActive?: boolean;
     /** Available resolution presets from API */
     resolutions?: CameraResolutionPreset[];
     /** Called when user picks a new resolution */
@@ -36,6 +38,7 @@ interface CameraViewerProps {
 export function CameraViewer({
     camera,
     sessionId,
+    sessionIsActive = true,
     resolutions,
     onResolutionChange,
     changingResolution,
@@ -206,14 +209,15 @@ export function CameraViewer({
         if (Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
-                lowLatencyMode: true,
-                // Reduce HLS latency as much as possible
-                liveSyncDurationCount: 1,
-                liveMaxLatencyDurationCount: 3,
+                lowLatencyMode: false,  // Disable aggressive low-latency for stability
+                // Balance latency and reliability
+                liveSyncDurationCount: 3,
+                liveMaxLatencyDurationCount: 10,
                 liveDurationInfinity: true,
                 // Include credentials for Laravel session auth
                 xhrSetup: (xhr, _url) => {
                     xhr.withCredentials = true;
+                    xhr.timeout = 15000;  // Set XHR timeout explicitly
                     // Add XSRF token for Laravel CSRF protection
                     const xsrfToken =
                         document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
@@ -226,12 +230,18 @@ export function CameraViewer({
                 },
             });
             hlsRef.current = hls;
+            
+            // Add retry logic for manifest loading
+            let manifestRetries = 0;
+            const maxRetries = 3;
+            
             hls.loadSource(hlsUrl);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 console.log(
                     '[CameraViewer] HLS manifest parsed, starting playback',
                 );
+                manifestRetries = 0; // Reset retries on success
                 video.play().catch((e) => {
                     console.warn('[CameraViewer] Autoplay blocked:', e.message);
                 });
@@ -239,6 +249,9 @@ export function CameraViewer({
             hls.on(Hls.Events.FRAG_LOADED, () => {
                 if (!connected) {
                     console.log('[CameraViewer] HLS first fragment loaded');
+                    connected = true;
+                    setIsLoading(false);
+                    setStreamError(false);
                 }
             });
             hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -248,7 +261,35 @@ export function CameraViewer({
                     data.details,
                     data.fatal ? '(fatal)' : '',
                 );
-                if (data.fatal) {
+                
+                // Handle timeout errors with retry logic
+                if (
+                    data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+                    (data.details.includes('levelLoadTimeOut') ||
+                        data.details.includes('audioTrackLoadTimeOut') ||
+                        data.details.includes('fragLoadTimeOut'))
+                ) {
+                    console.warn(
+                        `[CameraViewer] Network timeout (${data.details}), retrying...`,
+                    );
+                    manifestRetries++;
+                    
+                    if (manifestRetries < maxRetries) {
+                        // Exponential backoff: 1s, 2s, 4s
+                        const delay = Math.pow(2, manifestRetries - 1) * 1000;
+                        setTimeout(() => {
+                            console.log(
+                                `[CameraViewer] Retrying manifest load (attempt ${manifestRetries}/${maxRetries})`,
+                            );
+                            hls.startLoad();
+                        }, delay);
+                    } else {
+                        console.error(
+                            '[CameraViewer] Max retries exceeded, stream unavailable',
+                        );
+                        handleError();
+                    }
+                } else if (data.fatal) {
                     switch (data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
                             console.log(
@@ -263,6 +304,7 @@ export function CameraViewer({
                             hls.recoverMediaError();
                             break;
                         default:
+                            console.error('[CameraViewer] Fatal error, stopping');
                             handleError();
                             break;
                     }
@@ -271,13 +313,20 @@ export function CameraViewer({
             video.addEventListener('canplay', handleCanPlay);
             video.addEventListener('error', handleError);
             const timeout = setTimeout(() => {
-                if (!connected) handleError();
-            }, 15000);
+                if (!connected) {
+                    console.warn(
+                        '[CameraViewer] HLS playback timeout after 20s',
+                    );
+                    handleError();
+                }
+            }, 20000);  // Increased from 15s to 20s to match HLS timeout
             return () => {
+                if (video) {
+                    video.removeEventListener('canplay', handleCanPlay);
+                    video.removeEventListener('error', handleError);
+                }
                 hls.destroy();
                 hlsRef.current = null;
-                video.removeEventListener('canplay', handleCanPlay);
-                video.removeEventListener('error', handleError);
                 clearTimeout(timeout);
             };
         }
@@ -302,6 +351,14 @@ export function CameraViewer({
     }, [hlsUrl, cleanupWebRTC, cleanupHLS]);
     // ─── Start stream based on mode ──────────────────────────
     useEffect(() => {
+        // Don't start stream if session is not active
+        if (!sessionIsActive) {
+            setStreamError(true);
+            setIsLoading(false);
+            setErrorMessage('Session is not active');
+            return;
+        }
+
         if (camera.status !== 'active') {
             setStreamError(true);
             setIsLoading(false);
@@ -323,7 +380,7 @@ export function CameraViewer({
             cleanupWebRTC();
             cleanupHLS();
         };
-    }, [mode, camera.status, camera.stream_key, startWebRTC, startHLS, cleanupWebRTC, cleanupHLS]);
+    }, [mode, camera.status, camera.stream_key, sessionIsActive, startWebRTC, startHLS, cleanupWebRTC, cleanupHLS]);
     // ─── Fullscreen toggle ───────────────────────────────────
     const toggleFullscreen = useCallback(() => {
         if (!containerRef.current) return;
@@ -338,21 +395,30 @@ export function CameraViewer({
     // ─── Resolution label ────────────────────────────────────
     const currentRes = camera.stream_settings;
     const resLabel = `${currentRes.width}x${currentRes.height}@${currentRes.framerate}fps`;
+
+    // Helper: determine what kind of error state we're in
+    const isSessionInactive = !sessionIsActive;
+    const isCameraInactive = camera.status !== 'active';
+
     // ─── Stream error state ──────────────────────────────────
     if (streamError) {
         return (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 p-8">
                 <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                    {camera.status === 'active' ? (
+                    {isSessionInactive ? (
+                        <Video className="h-8 w-8 text-muted-foreground" />
+                    ) : camera.status === 'active' ? (
                         <WifiOff className="h-8 w-8 text-muted-foreground" />
                     ) : (
                         <Video className="h-8 w-8 text-muted-foreground" />
                     )}
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">
-                    {camera.status === 'active'
-                        ? 'Stream connecting...'
-                        : 'Camera is inactive'}
+                    {isSessionInactive
+                        ? 'Session not active'
+                        : isCameraInactive
+                          ? 'Camera is inactive'
+                          : 'Stream connecting...'}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground/70">
                     {camera.name} — {resLabel}
@@ -363,7 +429,8 @@ export function CameraViewer({
                         {errorMessage}
                     </p>
                 )}
-                {camera.status === 'active' && (
+                {/* Only show retry if session is active and camera is active */}
+                {sessionIsActive && camera.status === 'active' && (
                     <button
                         onClick={() => {
                             setStreamError(false);

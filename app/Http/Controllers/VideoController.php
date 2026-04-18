@@ -6,7 +6,7 @@ use App\Http\Requests\StoreCaptionRequest;
 use App\Http\Requests\StoreVideoRequest;
 use App\Http\Resources\CaptionResource;
 use App\Http\Resources\VideoResource;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use App\Services\CaptionService;
 use App\Services\VideoService;
@@ -27,11 +27,11 @@ class VideoController extends Controller
     ) {}
 
     /**
-     * Get video for a lesson.
+     * Get video for a trainingUnit.
      */
-    public function show(int $lessonId): JsonResponse
+    public function show(int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json(['data' => null]);
@@ -43,27 +43,27 @@ class VideoController extends Controller
     }
 
     /**
-     * Upload a video for a lesson.
+     * Upload a video for a trainingUnit.
      *
      * @throws AuthorizationException
      */
-    public function store(StoreVideoRequest $request, int $lessonId): JsonResponse
+    public function store(StoreVideoRequest $request, int $trainingUnitId): JsonResponse
     {
-        $lesson = Lesson::findOrFail($lessonId);
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
 
-        // Verify user owns the course
-        $this->authorizeLessonOwnership($lesson);
+        // Verify user owns the trainingPath
+        $this->authorizeTrainingUnitOwnership($trainingUnit);
 
-        // Check if lesson already has a video
-        $existingVideo = $this->videoService->getVideoForLesson($lessonId);
+        // Check if trainingUnit already has a video
+        $existingVideo = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
         if ($existingVideo) {
             return response()->json([
-                'message' => 'Lesson already has a video. Delete it first to upload a new one.',
+                'message' => 'TrainingUnit already has a video. Delete it first to upload a new one.',
             ], 422);
         }
 
         $video = $this->videoService->uploadAndQueue(
-            $lesson,
+            $trainingUnit,
             $request->file('video'),
         );
 
@@ -78,18 +78,18 @@ class VideoController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function destroy(int $lessonId): JsonResponse
+    public function destroy(int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json([
-                'message' => 'No video found for this lesson.',
+                'message' => 'No video found for this trainingUnit.',
             ], 404);
         }
 
-        // Verify user owns the course
-        $this->authorizeLessonOwnership($video->lesson);
+        // Verify user owns the trainingPath
+        $this->authorizeTrainingUnitOwnership($video->trainingUnit);
 
         $this->videoService->delete($video);
 
@@ -103,18 +103,18 @@ class VideoController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function retry(int $lessonId): JsonResponse
+    public function retry(int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json([
-                'message' => 'No video found for this lesson.',
+                'message' => 'No video found for this trainingUnit.',
             ], 404);
         }
 
-        // Verify user owns the course
-        $this->authorizeLessonOwnership($video->lesson);
+        // Verify user owns the trainingPath
+        $this->authorizeTrainingUnitOwnership($video->trainingUnit);
 
         if (! $video->hasFailed()) {
             return response()->json([
@@ -133,9 +133,9 @@ class VideoController extends Controller
     /**
      * Get video transcoding status.
      */
-    public function status(int $lessonId): JsonResponse
+    public function status(int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json([
@@ -237,9 +237,9 @@ class VideoController extends Controller
     /**
      * Get captions for a video.
      */
-    public function captions(int $lessonId): JsonResponse
+    public function captions(int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json(['data' => []]);
@@ -255,17 +255,17 @@ class VideoController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function storeCaption(StoreCaptionRequest $request, int $lessonId): JsonResponse
+    public function storeCaption(StoreCaptionRequest $request, int $trainingUnitId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json([
-                'message' => 'No video found for this lesson.',
+                'message' => 'No video found for this trainingUnit.',
             ], 404);
         }
 
-        $this->authorizeLessonOwnership($video->lesson);
+        $this->authorizeTrainingUnitOwnership($video->trainingUnit);
 
         $caption = $this->captionService->uploadCaption(
             $video,
@@ -285,17 +285,17 @@ class VideoController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function destroyCaption(int $lessonId, int $captionId): JsonResponse
+    public function destroyCaption(int $trainingUnitId, int $captionId): JsonResponse
     {
-        $video = $this->videoService->getVideoForLesson($lessonId);
+        $video = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
 
         if (! $video) {
             return response()->json([
-                'message' => 'No video found for this lesson.',
+                'message' => 'No video found for this trainingUnit.',
             ], 404);
         }
 
-        $this->authorizeLessonOwnership($video->lesson);
+        $this->authorizeTrainingUnitOwnership($video->trainingUnit);
 
         $caption = $video->captions()->findOrFail($captionId);
         $this->captionService->deleteCaption($caption);
@@ -318,15 +318,15 @@ class VideoController extends Controller
     }
 
     /**
-     * Verify that the authenticated user owns the course containing the lesson.
+     * Verify that the authenticated user owns the trainingPath containing the trainingUnit.
      *
      * @throws AuthorizationException
      */
-    private function authorizeLessonOwnership(Lesson $lesson): void
+    private function authorizeTrainingUnitOwnership(TrainingUnit $trainingUnit): void
     {
-        $course = $lesson->module->course;
+        $trainingPath = $trainingUnit->module->trainingPath;
 
-        if ($course->instructor_id !== auth()->id()) {
+        if ($trainingPath->instructor_id !== auth()->id()) {
             Gate::authorize('admin-only');
         }
     }

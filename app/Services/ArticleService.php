@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Models\Article;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Repositories\ArticleRepository;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Service for article (reading lesson) management.
+ * Service for article (reading trainingUnit) management.
  */
 class ArticleService
 {
@@ -17,20 +17,20 @@ class ArticleService
     ) {}
 
     /**
-     * Create a new article for a lesson.
+     * Create a new article for a trainingUnit.
      *
      * @param  array<string, mixed>  $content  TipTap JSON content
      */
-    public function create(int $lessonId, array $content): Article
+    public function create(int $trainingUnitId, array $content): Article
     {
-        Log::info('Creating article', ['lesson_id' => $lessonId]);
+        Log::info('Creating article', ['training_unit_id' => $trainingUnitId]);
 
         // Calculate word count and read time (business logic)
         $wordCount = $this->calculateWordCount($content);
         $readTime = $this->calculateReadTime($wordCount);
 
         return $this->articleRepository->create([
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
             'content' => $content,
             'word_count' => $wordCount,
             'estimated_read_time_minutes' => $readTime,
@@ -68,27 +68,27 @@ class ArticleService
     }
 
     /**
-     * Get article for a lesson.
+     * Get article for a trainingUnit.
      */
-    public function getArticleForLesson(int $lessonId): ?Article
+    public function getArticleForTrainingUnit(int $trainingUnitId): ?Article
     {
-        return $this->articleRepository->findByLessonId($lessonId);
+        return $this->articleRepository->findByTrainingUnitId($trainingUnitId);
     }
 
     /**
-     * Create or update article for a lesson.
+     * Create or update article for a trainingUnit.
      *
      * @param  array<string, mixed>  $content  TipTap JSON content
      */
-    public function upsert(int $lessonId, array $content): Article
+    public function upsert(int $trainingUnitId, array $content): Article
     {
-        $existing = $this->articleRepository->findByLessonId($lessonId);
+        $existing = $this->articleRepository->findByTrainingUnitId($trainingUnitId);
 
         if ($existing) {
             return $this->update($existing, $content);
         }
 
-        return $this->create($lessonId, $content);
+        return $this->create($trainingUnitId, $content);
     }
 
     /**

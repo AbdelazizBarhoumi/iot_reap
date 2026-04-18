@@ -1,6 +1,6 @@
 /**
- * Create Course Page - Professional Multi-Step Wizard
- * Form for teachers to create new courses with step-by-step guidance.
+ * Create TrainingPath Page - Professional Multi-Step Wizard
+ * Form for teachers to create new trainingPaths with step-by-step guidance.
  * Uses unified AppLayout with drag-and-drop reordering.
  */
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import CourseVideoInput from '@/components/courses/CourseVideoInput';
+import TrainingPathVideoInput from '@/components/TrainingPaths/TrainingPathVideoInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,22 +80,22 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { LearningAppProvider } from '@/lib/learning/appState';
 import type { BreadcrumbItem } from '@/types';
-interface CreateCoursePageProps {
+interface CreateTrainingPathPageProps {
     categories: string[];
 }
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Teaching', href: '/teaching' },
-    { title: 'Create Course', href: '/teaching/create' },
+    { title: 'Create Path', href: '/teaching/create' },
 ];
 // Step configuration
 const steps = [
-    { id: 1, title: 'Basics', description: 'Course info', icon: FileText },
+    { id: 1, title: 'Basics', description: 'TrainingPath info', icon: FileText },
     { id: 2, title: 'Details', description: 'Settings', icon: Target },
     { id: 3, title: 'Curriculum', description: 'Structure', icon: Layers },
     { id: 4, title: 'Review', description: 'Finish', icon: Rocket },
 ];
-// Lesson type configuration with icons and colors
-const lessonTypes = [
+// TrainingUnit type configuration with icons and colors
+const trainingUnitTypes = [
     {
         value: 'video',
         label: 'Video',
@@ -130,44 +130,44 @@ interface Resource {
     title: string;
     url: string;
 }
-interface LessonForm {
+interface TrainingUnitForm {
     id: string;
     title: string;
     type: string;
     duration: string;
     vmEnabled: boolean;
     // Content fields for inline editing during creation
-    content: string;           // For reading/article lessons
-    videoUrl: string;          // For video lessons (external URL)
-    teacherNotes: string;      // For VM lab lessons
+    content: string;           // For reading/article trainingUnits
+    videoUrl: string;          // For video trainingUnits (external URL)
+    teacherNotes: string;      // For VM lab trainingUnits
     resources: Resource[];     // Optional links/files
 }
 interface ModuleForm {
     id: string;
     title: string;
-    lessons: LessonForm[];
+    trainingUnits: TrainingUnitForm[];
 }
-// Sortable Lesson Component for drag-and-drop
-interface SortableLessonProps {
-    lesson: LessonForm;
+// Sortable TrainingUnit Component for drag-and-drop
+interface SortableTrainingUnitProps {
+    trainingUnit: TrainingUnitForm;
     moduleIndex: number;
-    lessonIndex: number;
+    trainingUnitIndex: number;
     expanded: boolean;
     onToggleExpand: () => void;
-    onUpdate: (moduleIndex: number, lessonIndex: number, field: keyof LessonForm, value: unknown) => void;
-    onRemove: (moduleIndex: number, lessonIndex: number) => void;
+    onUpdate: (moduleIndex: number, trainingUnitIndex: number, field: keyof TrainingUnitForm, value: unknown) => void;
+    onRemove: (moduleIndex: number, trainingUnitIndex: number) => void;
     canRemove: boolean;
 }
-function SortableLesson({
-    lesson,
+function SortableTrainingUnit({
+    trainingUnit,
     moduleIndex,
-    lessonIndex,
+    trainingUnitIndex,
     expanded,
     onToggleExpand,
     onUpdate,
     onRemove,
     canRemove,
-}: SortableLessonProps) {
+}: SortableTrainingUnitProps) {
     const {
         attributes,
         listeners,
@@ -175,48 +175,48 @@ function SortableLesson({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: lesson.id });
+    } = useSortable({ id: trainingUnit.id });
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
     };
-    const lessonType = lessonTypes.find((t) => t.value === lesson.type);
-    const LessonIcon = lessonType?.icon || Video;
+    const trainingUnitType = trainingUnitTypes.find((t) => t.value === trainingUnit.type);
+    const TrainingUnitIcon = trainingUnitType?.icon || Video;
     // Helper to check if content has been added
     const hasContent = () => {
-        switch (lesson.type) {
+        switch (trainingUnit.type) {
             case 'video':
-                return !!lesson.videoUrl;
+                return !!trainingUnit.videoUrl;
             case 'reading':
-                return lesson.content.length > 0;
+                return trainingUnit.content.length > 0;
             case 'vm-lab':
-                return lesson.teacherNotes.length > 0;
+                return trainingUnit.teacherNotes.length > 0;
             case 'practice':
-                return lesson.content.length > 0;
+                return trainingUnit.content.length > 0;
             default:
                 return false;
         }
     };
     // Add resource handler
     const addResource = () => {
-        const newResources = [...lesson.resources, { id: Date.now().toString(), title: '', url: '' }];
-        onUpdate(moduleIndex, lessonIndex, 'resources', newResources);
+        const newResources = [...trainingUnit.resources, { id: Date.now().toString(), title: '', url: '' }];
+        onUpdate(moduleIndex, trainingUnitIndex, 'resources', newResources);
     };
     // Update resource handler
     const updateResource = (resourceIndex: number, field: keyof Resource, value: string) => {
-        const updated = [...lesson.resources];
+        const updated = [...trainingUnit.resources];
         updated[resourceIndex] = { ...updated[resourceIndex], [field]: value };
-        onUpdate(moduleIndex, lessonIndex, 'resources', updated);
+        onUpdate(moduleIndex, trainingUnitIndex, 'resources', updated);
     };
     // Remove resource handler
     const removeResource = (resourceIndex: number) => {
-        const updated = lesson.resources.filter((_, i) => i !== resourceIndex);
-        onUpdate(moduleIndex, lessonIndex, 'resources', updated);
+        const updated = trainingUnit.resources.filter((_, i) => i !== resourceIndex);
+        onUpdate(moduleIndex, trainingUnitIndex, 'resources', updated);
     };
-    // Content editor based on lesson type
+    // Content editor based on trainingUnit type
     const renderContentEditor = () => {
-        switch (lesson.type) {
+        switch (trainingUnit.type) {
             case 'video':
                 return (
                     <div className="space-y-4">
@@ -227,12 +227,12 @@ function SortableLesson({
                             </div>
                             <Input
                                 placeholder="https://youtube.com/watch?v=... or external video URL"
-                                value={lesson.videoUrl}
-                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'videoUrl', e.target.value)}
+                                value={trainingUnit.videoUrl}
+                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'videoUrl', e.target.value)}
                                 className="bg-background"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                Enter an external video URL. You can also upload videos after creating the course.
+                                Enter an external video URL. You can also upload videos after creating the trainingPath.
                             </p>
                         </div>
                     </div>
@@ -247,12 +247,12 @@ function SortableLesson({
                             </div>
                             <Textarea
                                 placeholder="Write your article content here. Markdown is supported.&#10;&#10;## Introduction&#10;Start with an overview...&#10;&#10;## Main Content&#10;Explain the concepts..."
-                                value={lesson.content}
-                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'content', e.target.value)}
+                                value={trainingUnit.content}
+                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'content', e.target.value)}
                                 className="min-h-[200px] resize-y bg-background font-mono text-sm"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                {lesson.content.length} characters • Supports Markdown formatting
+                                {trainingUnit.content.length} characters • Supports Markdown formatting
                             </p>
                         </div>
                     </div>
@@ -266,13 +266,13 @@ function SortableLesson({
                                 <Label className="text-sm font-medium">Practice Instructions</Label>
                             </div>
                             <Textarea
-                                placeholder="Describe the practice exercise or quiz...&#10;&#10;What should students do?&#10;What skills will they practice?&#10;&#10;Full quiz questions can be added after creating the course."
-                                value={lesson.content}
-                                onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'content', e.target.value)}
+                                placeholder="Describe the practical exercise or quiz...&#10;&#10;What should operators do?&#10;What skills will they practice?&#10;&#10;Full quiz questions can be added after creating the path."
+                                value={trainingUnit.content}
+                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'content', e.target.value)}
                                 className="min-h-[150px] resize-y bg-background"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                Add detailed quiz questions and answers in the lesson editor after creation.
+                                Add detailed quiz questions and answers in the trainingUnit editor after creation.
                             </p>
                         </div>
                     </div>
@@ -288,15 +288,15 @@ function SortableLesson({
                             <div className="rounded-lg border border-dashed border-violet-500/30 bg-violet-500/5 p-4 text-center">
                                 <Terminal className="mx-auto h-8 w-8 text-violet-400 mb-2" />
                                 <p className="text-sm text-muted-foreground">
-                                    VM templates are not available. Configure VM settings after course creation.
+                                    VM templates are not available. Configure VM settings after trainingPath creation.
                                 </p>
                             </div>
                             <div className="mt-3">
                                 <Label className="text-sm font-medium">Lab Instructions</Label>
                                 <Textarea
                                     placeholder="Describe what students should do in this VM lab...&#10;&#10;- What software is needed?&#10;- What configuration is required?&#10;- What should students accomplish?"
-                                    value={lesson.teacherNotes}
-                                    onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'teacherNotes', e.target.value)}
+                                    value={trainingUnit.teacherNotes}
+                                    onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'teacherNotes', e.target.value)}
                                     className="mt-2 min-h-[100px] resize-y bg-background"
                                 />
                             </div>
@@ -323,9 +323,9 @@ function SortableLesson({
                     Add Link
                 </Button>
             </div>
-            {lesson.resources.length > 0 && (
+            {trainingUnit.resources.length > 0 && (
                 <div className="space-y-2">
-                    {lesson.resources.map((resource, ri) => (
+                    {trainingUnit.resources.map((resource, ri) => (
                         <div key={resource.id} className="flex items-center gap-2">
                             <Input
                                 placeholder="Title (optional)"
@@ -362,7 +362,7 @@ function SortableLesson({
                         isDragging ? 'border-primary shadow-lg' : 'border-border hover:bg-muted/30'
                     } ${expanded ? 'border-primary/50' : ''}`}
                 >
-                    {/* Lesson Header - Always visible */}
+                    {/* TrainingUnit Header - Always visible */}
                     <div className="flex items-center gap-3 p-3">
                         <button
                             {...attributes}
@@ -372,27 +372,27 @@ function SortableLesson({
                             <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/50 hover:text-muted-foreground" />
                         </button>
                         <div
-                            className={`h-8 w-8 rounded-lg ${lessonType?.bg || 'bg-muted'} flex shrink-0 items-center justify-center`}
+                            className={`h-8 w-8 rounded-lg ${trainingUnitType?.bg || 'bg-muted'} flex shrink-0 items-center justify-center`}
                         >
-                            <LessonIcon
-                                className={`h-4 w-4 ${lessonType?.color || 'text-muted-foreground'}`}
+                            <TrainingUnitIcon
+                                className={`h-4 w-4 ${trainingUnitType?.color || 'text-muted-foreground'}`}
                             />
                         </div>
                         <Input
-                            placeholder="Lesson title"
-                            value={lesson.title}
-                            onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'title', e.target.value)}
+                            placeholder="TrainingUnit title"
+                            value={trainingUnit.title}
+                            onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'title', e.target.value)}
                             className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0"
                         />
                         <Select
-                            value={lesson.type}
-                            onValueChange={(v) => onUpdate(moduleIndex, lessonIndex, 'type', v)}
+                            value={trainingUnit.type}
+                            onValueChange={(v) => onUpdate(moduleIndex, trainingUnitIndex, 'type', v)}
                         >
                             <SelectTrigger className="h-8 w-28 text-xs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {lessonTypes.map((type) => (
+                                {trainingUnitTypes.map((type) => (
                                     <SelectItem key={type.value} value={type.value}>
                                         <span className="flex items-center gap-2">
                                             <type.icon className={`h-3.5 w-3.5 ${type.color}`} />
@@ -404,17 +404,17 @@ function SortableLesson({
                         </Select>
                         <Input
                             placeholder="10 min"
-                            value={lesson.duration}
-                            onChange={(e) => onUpdate(moduleIndex, lessonIndex, 'duration', e.target.value)}
+                            value={trainingUnit.duration}
+                            onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'duration', e.target.value)}
                             className="h-8 w-20 text-center text-xs"
                         />
                         <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1">
                             <Terminal
-                                className={`h-3.5 w-3.5 ${lesson.vmEnabled ? 'text-violet-500' : 'text-muted-foreground/50'}`}
+                                className={`h-3.5 w-3.5 ${trainingUnit.vmEnabled ? 'text-violet-500' : 'text-muted-foreground/50'}`}
                             />
                             <Switch
-                                checked={lesson.vmEnabled}
-                                onCheckedChange={(c) => onUpdate(moduleIndex, lessonIndex, 'vmEnabled', c)}
+                                checked={trainingUnit.vmEnabled}
+                                onCheckedChange={(c) => onUpdate(moduleIndex, trainingUnitIndex, 'vmEnabled', c)}
                                 className="scale-75"
                             />
                         </div>
@@ -436,7 +436,7 @@ function SortableLesson({
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 shrink-0 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                                onClick={() => onRemove(moduleIndex, lessonIndex)}
+                                onClick={() => onRemove(moduleIndex, trainingUnitIndex)}
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -461,7 +461,7 @@ function SortableLesson({
         </div>
     );
 }
-function CreateCourseContent({ categories }: { categories: string[] }) {
+function CreateTrainingPathContent({ categories }: { categories: string[] }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [title, setTitle] = useState('');
@@ -478,7 +478,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
         {
             id: '1',
             title: '',
-            lessons: [
+            trainingUnits: [
                 {
                     id: '1',
                     title: '',
@@ -493,8 +493,8 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
             ],
         },
     ]);
-    // Expanded lesson tracking
-    const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+    // Expanded trainingUnit tracking
+    const [expandedTrainingUnits, setExpandedTrainingUnits] = useState<Set<string>>(new Set());
     // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -506,19 +506,19 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
-    // Handle drag end for lesson reordering
-    const handleLessonDragEnd = useCallback(
+    // Handle drag end for trainingUnit reordering
+    const handleTrainingUnitDragEnd = useCallback(
         (event: DragEndEvent, moduleIndex: number) => {
             const { active, over } = event;
             if (!over || active.id === over.id) return;
             setModules((prev) => {
                 const updated = [...prev];
-                const lessonIds = updated[moduleIndex].lessons.map((l) => l.id);
-                const oldIndex = lessonIds.indexOf(active.id as string);
-                const newIndex = lessonIds.indexOf(over.id as string);
+                const trainingUnitIds = updated[moduleIndex].trainingUnits.map((l) => l.id);
+                const oldIndex = trainingUnitIds.indexOf(active.id as string);
+                const newIndex = trainingUnitIds.indexOf(over.id as string);
                 if (oldIndex !== -1 && newIndex !== -1) {
-                    updated[moduleIndex].lessons = arrayMove(
-                        updated[moduleIndex].lessons,
+                    updated[moduleIndex].trainingUnits = arrayMove(
+                        updated[moduleIndex].trainingUnits,
                         oldIndex,
                         newIndex,
                     );
@@ -528,14 +528,14 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
         },
         [],
     );
-    // Toggle lesson expansion
-    const toggleLessonExpanded = useCallback((lessonId: string) => {
-        setExpandedLessons((prev) => {
+    // Toggle trainingUnit expansion
+    const toggleTrainingUnitExpanded = useCallback((trainingUnitId: string) => {
+        setExpandedTrainingUnits((prev) => {
             const next = new Set(prev);
-            if (next.has(lessonId)) {
-                next.delete(lessonId);
+            if (next.has(trainingUnitId)) {
+                next.delete(trainingUnitId);
             } else {
-                next.add(lessonId);
+                next.add(trainingUnitId);
             }
             return next;
         });
@@ -560,14 +560,14 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
             fileInputRef.current.value = '';
         }
     }, []);
-    // Module/Lesson management
+    // Module/TrainingUnit management
     const addModule = () => {
         setModules([
             ...modules,
             {
                 id: Date.now().toString(),
                 title: '',
-                lessons: [
+                trainingUnits: [
                     {
                         id: Date.now().toString() + 'l',
                         title: '',
@@ -583,9 +583,9 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
             },
         ]);
     };
-    const addLesson = (moduleIndex: number) => {
+    const addTrainingUnit = (moduleIndex: number) => {
         const updated = [...modules];
-        updated[moduleIndex].lessons.push({
+        updated[moduleIndex].trainingUnits.push({
             id: Date.now().toString(),
             title: '',
             type: 'video',
@@ -601,10 +601,10 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
     const removeModule = (index: number) => {
         setModules(modules.filter((_, i) => i !== index));
     };
-    const removeLesson = (moduleIndex: number, lessonIndex: number) => {
+    const removeTrainingUnit = (moduleIndex: number, trainingUnitIndex: number) => {
         const updated = [...modules];
-        updated[moduleIndex].lessons = updated[moduleIndex].lessons.filter(
-            (_, i) => i !== lessonIndex,
+        updated[moduleIndex].trainingUnits = updated[moduleIndex].trainingUnits.filter(
+            (_, i) => i !== trainingUnitIndex,
         );
         setModules(updated);
     };
@@ -617,16 +617,16 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
         updated[index] = { ...updated[index], [field]: value };
         setModules(updated);
     };
-    const updateLesson = (
+    const updateTrainingUnit = (
         moduleIndex: number,
-        lessonIndex: number,
-        field: keyof LessonForm,
+        trainingUnitIndex: number,
+        field: keyof TrainingUnitForm,
         value: unknown,
     ) => {
         const updated = [...modules];
-        const lesson = updated[moduleIndex].lessons[lessonIndex];
-        updated[moduleIndex].lessons[lessonIndex] = {
-            ...lesson,
+        const trainingUnit = updated[moduleIndex].trainingUnits[trainingUnitIndex];
+        updated[moduleIndex].trainingUnits[trainingUnitIndex] = {
+            ...trainingUnit,
             [field]: value as never,
         };
         setModules(updated);
@@ -644,18 +644,18 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                 return (
                     modules.length > 0 &&
                     modules[0].title.trim() !== '' &&
-                    modules[0].lessons[0].title.trim() !== ''
+                    modules[0].trainingUnits[0].title.trim() !== ''
                 );
             default:
                 return true;
         }
     };
     // Calculate stats
-    const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
-    const vmLessons = modules.reduce(
+    const totalTrainingUnits = modules.reduce((acc, m) => acc + m.trainingUnits.length, 0);
+    const vmTrainingUnits = modules.reduce(
         (acc, m) =>
             acc +
-            m.lessons.filter((l) => l.vmEnabled || l.type === 'vm-lab').length,
+            m.trainingUnits.filter((l) => l.vmEnabled || l.type === 'vm-lab').length,
         0,
     );
     const completionPercent = Math.round(
@@ -664,15 +664,15 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
     const [saving, setSaving] = useState(false);
     const handleSave = () => {
         setSaving(true);
-        // Prepare data for API - maps lesson types correctly with content
-        const courseData = {
-            title: title || 'Untitled Course',
+        // Prepare data for API - maps trainingUnit types correctly with content
+        const trainingPathData = {
+            title: title || 'Untitled Path',
             description: description || 'No description',
-            category: category || 'Web Development',
-            level: level || 'Beginner', // Must match CourseLevel enum: Beginner, Intermediate, Advanced
+            category: category || 'Smart Manufacturing',
+            level: level || 'Beginner', // Must match TrainingPathLevel enum: Beginner, Intermediate, Advanced
             duration: duration || '0 hours',
             has_virtual_machine: modules.some((m) =>
-                m.lessons.some((l) => l.vmEnabled || l.type === 'vm-lab'),
+                m.trainingUnits.some((l) => l.vmEnabled || l.type === 'vm-lab'),
             ),
             thumbnail: thumbnail || null,
             video_type: videoType || null,
@@ -682,13 +682,13 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
             modules: modules.map((m, mIndex) => ({
                 title: m.title || 'Untitled Module',
                 sort_order: mIndex,
-                lessons: m.lessons.map((l, lIndex) => ({
-                    title: l.title || 'Untitled Lesson',
-                    // Send exactly what the backend LessonType enum expects
+                trainingUnits: m.trainingUnits.map((l, lIndex) => ({
+                    title: l.title || 'Untitled TrainingUnit',
+                    // Send exactly what the backend TrainingUnitType enum expects
                     type: l.type, // 'video', 'reading', 'practice', 'vm-lab'
                     duration_minutes: parseInt(l.duration) || 10,
                     sort_order: lIndex,
-                    is_preview: lIndex === 0 && mIndex === 0, // First lesson is preview
+                    is_preview: lIndex === 0 && mIndex === 0, // First trainingUnit is preview
                     // Content fields
                     content: l.content || null,
                     video_url: l.videoUrl || null,
@@ -698,20 +698,20 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                 })),
             })),
         };
-        router.post('/teaching', courseData, {
+        router.post('/teaching', trainingPathData, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('🎉 Course created successfully!', {
+                toast.success('🎉 TrainingPath created successfully!', {
                     description:
-                        'Your course has been created with the content you added.',
+                        'Your trainingPath has been created with the content you added.',
                 });
             },
             onError: (errors) => {
-                console.error('Course creation errors:', errors);
+                console.error('TrainingPath creation errors:', errors);
                 const errorMessages = Object.entries(errors)
                     .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
                     .join('\n');
-                toast.error('Failed to create course', {
+                toast.error('Failed to create path', {
                     description: errorMessages || 'Unknown error',
                     duration: 10000,
                 });
@@ -736,7 +736,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Course" />
+            <Head title="Create Path" />
             <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
                 <div className="container max-w-5xl py-8">
                     {/* Header with back button */}
@@ -769,7 +769,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                     <div>
                                         <h1 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
                                             <Sparkles className="h-6 w-6 text-primary" />
-                                            Create New Course
+                                            Create New Path
                                         </h1>
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             Step {currentStep} of {steps.length}{' '}
@@ -860,7 +860,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                         <CardHeader>
                                             <CardTitle className="flex items-center gap-2 font-heading text-lg">
                                                 <BookOpen className="h-5 w-5 text-primary" />
-                                                Course Basics
+                                                Path Basics
                                             </CardTitle>
                                             <CardDescription>
                                                 Start with a compelling title
@@ -871,14 +871,14 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                             {/* Thumbnail upload */}
                                             <div>
                                                 <Label className="text-sm font-medium">
-                                                    Course Thumbnail
+                                                    Path Thumbnail
                                                 </Label>
                                                 <div className="mt-2">
                                                     {thumbnail ? (
                                                         <div className="group relative overflow-hidden rounded-xl border-2 border-dashed border-primary/30 bg-muted/30">
                                                             <img
                                                                 src={thumbnail}
-                                                                alt="Course thumbnail"
+                                                                alt="Path thumbnail"
                                                                 className="h-48 w-full object-cover"
                                                             />
                                                             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -939,9 +939,9 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                 </div>
                                             </div>
                                             <Separator />
-                                            {/* Course Video */}
+                                            {/* Path Video */}
                                             <div>
-                                                <CourseVideoInput
+                                                <TrainingPathVideoInput
                                                     videoType={videoType}
                                                     videoUrl={videoUrl}
                                                     onVideoChange={(type, url) => {
@@ -968,7 +968,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                     htmlFor="title"
                                                     className="text-sm font-medium"
                                                 >
-                                                    Course Title{' '}
+                                                    Path Title{' '}
                                                     <span className="text-destructive">
                                                         *
                                                     </span>
@@ -994,14 +994,14 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                     htmlFor="description"
                                                     className="text-sm font-medium"
                                                 >
-                                                    Course Description{' '}
+                                                    Path Description{' '}
                                                     <span className="text-destructive">
                                                         *
                                                     </span>
                                                 </Label>
                                                 <Textarea
                                                     id="description"
-                                                    placeholder="What will students learn? What makes this course unique?"
+                                                    placeholder="What will operators learn? What makes this path unique?"
                                                     value={description}
                                                     onChange={(e) =>
                                                         setDescription(
@@ -1021,17 +1021,17 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                     </Card>
                                 </div>
                             )}
-                            {/* Step 2: Course Details */}
+                            {/* Step 2: Path Details */}
                             {currentStep === 2 && (
                                 <div className="space-y-6">
                                     <Card className="shadow-card">
                                         <CardHeader>
                                             <CardTitle className="flex items-center gap-2 font-heading text-lg">
                                                 <Target className="h-5 w-5 text-primary" />
-                                                Course Details
+                                                Path Details
                                             </CardTitle>
                                             <CardDescription>
-                                                Help students find your course
+                                                Help operators find your path
                                                 with the right settings
                                             </CardDescription>
                                         </CardHeader>
@@ -1134,12 +1134,12 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                             {/* Learning objectives */}
                                             <div>
                                                 <Label className="text-sm font-medium">
-                                                    Learning Objectives
+                                                    Training Objectives
                                                 </Label>
                                                 <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                                                    What will students be able
+                                                    What will operators be able
                                                     to do after completing this
-                                                    course?
+                                                    path?
                                                 </p>
                                                 <Textarea
                                                     placeholder="• Build industrial IoT sensors&#10;• Connect devices to cloud platforms&#10;• Analyze real-time sensor data"
@@ -1185,8 +1185,8 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                     <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
                                         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                         <AlertDescription className="text-blue-800 dark:text-blue-200">
-                                            <strong>New!</strong> You can now add content directly while creating your course.
-                                            Expand each lesson to add video URLs, articles, or select VM templates.
+                                            <strong>New!</strong> You can now add content directly while creating your path.
+                                            Expand each module to add video URLs, articles, or select VM templates.
                                             You can also add more content in the edit page later.
                                         </AlertDescription>
                                     </Alert>
@@ -1214,10 +1214,10 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                         </div>
                                                         <div>
                                                             <p className="text-lg font-bold text-foreground">
-                                                                {totalLessons}
+                                                                {totalTrainingUnits}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
-                                                                Lessons
+                                                                Modules
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1227,7 +1227,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                         </div>
                                                         <div>
                                                             <p className="text-lg font-bold text-foreground">
-                                                                {vmLessons}
+                                                                {vmTrainingUnits}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 VM Labs
@@ -1295,25 +1295,25 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                         sensors={sensors}
                                                         collisionDetection={closestCenter}
                                                         onDragEnd={(event) =>
-                                                            handleLessonDragEnd(event, mi)
+                                                            handleTrainingUnitDragEnd(event, mi)
                                                         }
                                                     >
                                                         <SortableContext
-                                                            items={module.lessons.map((l) => l.id)}
+                                                            items={module.trainingUnits.map((l) => l.id)}
                                                             strategy={verticalListSortingStrategy}
                                                         >
-                                                            {module.lessons.map((lesson, li) => (
-                                                                <SortableLesson
-                                                                    key={lesson.id}
-                                                                    lesson={lesson}
-                                                                    lessonIndex={li}
+                                                            {module.trainingUnits.map((trainingUnit, li) => (
+                                                                <SortableTrainingUnit
+                                                                    key={trainingUnit.id}
+                                                                    trainingUnit={trainingUnit}
+                                                                    trainingUnitIndex={li}
                                                                     moduleIndex={mi}
-                                                                    onUpdate={updateLesson}
-                                                                    onRemove={removeLesson}
-                                                                    canRemove={module.lessons.length > 1}
-                                                                    expanded={expandedLessons.has(lesson.id)}
+                                                                    onUpdate={updateTrainingUnit}
+                                                                    onRemove={removeTrainingUnit}
+                                                                    canRemove={module.trainingUnits.length > 1}
+                                                                    expanded={expandedTrainingUnits.has(trainingUnit.id)}
                                                                     onToggleExpand={() =>
-                                                                        toggleLessonExpanded(lesson.id)
+                                                                        toggleTrainingUnitExpanded(trainingUnit.id)
                                                                     }
                                                                 />
                                                             ))}
@@ -1323,12 +1323,12 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() =>
-                                                            addLesson(mi)
+                                                            addTrainingUnit(mi)
                                                         }
                                                         className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
                                                     >
                                                         <Plus className="mr-1 h-4 w-4" />{' '}
-                                                        Add Lesson
+                                                            Add Module
                                                     </Button>
                                                 </CardContent>
                                             </Card>
@@ -1355,7 +1355,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                     {thumbnail ? (
                                                         <img
                                                             src={thumbnail}
-                                                            alt="Course thumbnail"
+                                                            alt="Path thumbnail"
                                                             className="h-full w-full object-cover"
                                                         />
                                                     ) : (
@@ -1367,7 +1367,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                 <div className="min-w-0 flex-1">
                                                     <h2 className="truncate font-heading text-xl font-bold text-foreground">
                                                         {title ||
-                                                            'Untitled Course'}
+                                                            'Untitled Path'}
                                                     </h2>
                                                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                                         {description ||
@@ -1413,15 +1413,15 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                 </div>
                                                 <div className="rounded-lg bg-muted/50 p-4 text-center">
                                                     <p className="text-2xl font-bold text-foreground">
-                                                        {totalLessons}
+                                                        {totalTrainingUnits}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Lessons
+                                                        Modules
                                                     </p>
                                                 </div>
                                                 <div className="rounded-lg bg-muted/50 p-4 text-center">
                                                     <p className="text-2xl font-bold text-foreground">
-                                                        {vmLessons}
+                                                        {vmTrainingUnits}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         VM Labs
@@ -1453,31 +1453,31 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                             >
                                                                 {
                                                                     module
-                                                                        .lessons
+                                                                        .trainingUnits
                                                                         .length
                                                                 }{' '}
-                                                                lessons
+                                                                trainingUnits
                                                             </Badge>
                                                         </div>
                                                         <div className="flex flex-wrap gap-2 pl-8">
-                                                            {module.lessons.map(
-                                                                (lesson) => {
+                                                            {module.trainingUnits.map(
+                                                                (trainingUnit) => {
                                                                     const type =
-                                                                        lessonTypes.find(
+                                                                        trainingUnitTypes.find(
                                                                             (
                                                                                 t,
                                                                             ) =>
                                                                                 t.value ===
-                                                                                lesson.type,
+                                                                                trainingUnit.type,
                                                                         );
                                                                     return (
                                                                         <span
                                                                             key={
-                                                                                lesson.id
+                                                                                trainingUnit.id
                                                                             }
                                                                             className={`rounded-md px-2 py-1 text-xs ${type?.bg || 'bg-muted'} ${type?.color || 'text-muted-foreground'}`}
                                                                         >
-                                                                            {lesson.title ||
+                                                                            {trainingUnit.title ||
                                                                                 'Untitled'}
                                                                         </span>
                                                                     );
@@ -1497,9 +1497,9 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                                     Ready to Create!
                                                 </h3>
                                                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                                                    Your course will be saved as
+                                                    Your trainingPath will be saved as
                                                     a draft. You can add content
-                                                    to each lesson and submit
+                                                    to each trainingUnit and submit
                                                     for review when ready.
                                                 </p>
                                             </div>
@@ -1560,7 +1560,7 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4" />
-                                            Create Course
+                                            Create Path
                                         </>
                                     )}
                                 </Button>
@@ -1572,12 +1572,12 @@ function CreateCourseContent({ categories }: { categories: string[] }) {
         </AppLayout>
     );
 }
-export default function CreateCoursePage({
+export default function CreateTrainingPathPage({
     categories,
-}: CreateCoursePageProps) {
+}: CreateTrainingPathPageProps) {
     return (
         <LearningAppProvider>
-            <CreateCourseContent categories={categories} />
+            <CreateTrainingPathContent categories={categories} />
         </LearningAppProvider>
     );
 }

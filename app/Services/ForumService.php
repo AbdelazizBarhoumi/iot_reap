@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Enums\NotificationType;
 use App\Enums\ThreadStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\User;
 use App\Repositories\ForumRepository;
@@ -29,15 +29,15 @@ class ForumService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Get threads for a lesson.
+     * Get threads for a trainingUnit.
      */
     public function getThreads(
-        int $lessonId,
+        int $trainingUnitId,
         string $sort = 'recent',
         ?string $filter = null,
         ?User $currentUser = null,
     ): LengthAwarePaginator {
-        $threads = $this->forumRepository->getThreadsForLesson($lessonId, $sort, $filter);
+        $threads = $this->forumRepository->getThreadsForTrainingUnit($trainingUnitId, $sort, $filter);
 
         if ($currentUser) {
             $this->attachUserVotes($threads, $currentUser);
@@ -47,15 +47,15 @@ class ForumService
     }
 
     /**
-     * Get threads for a course.
+     * Get threads for a trainingPath.
      */
-    public function getCourseThreads(
-        int $courseId,
+    public function getTrainingPathThreads(
+        int $trainingPathId,
         string $sort = 'recent',
         ?string $filter = null,
         ?User $currentUser = null,
     ): LengthAwarePaginator {
-        $threads = $this->forumRepository->getThreadsForCourse($courseId, $sort, $filter);
+        $threads = $this->forumRepository->getThreadsForTrainingPath($trainingPathId, $sort, $filter);
 
         if ($currentUser) {
             $this->attachUserVotes($threads, $currentUser);
@@ -117,13 +117,13 @@ class ForumService
      */
     public function createThread(
         User $author,
-        Lesson $lesson,
+        TrainingUnit $trainingUnit,
         string $title,
         string $content,
     ): DiscussionThread {
         $thread = $this->forumRepository->createThread([
-            'lesson_id' => $lesson->id,
-            'course_id' => $lesson->module->course_id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingUnit->module->training_path_id,
             'author_id' => $author->id,
             'title' => $title,
             'content' => $content,
@@ -132,7 +132,7 @@ class ForumService
 
         Log::info('Discussion thread created', [
             'thread_id' => $thread->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'author_id' => $author->id,
         ]);
 
@@ -173,7 +173,7 @@ class ForumService
                 $thread->author,
                 $author->name,
                 $thread->id,
-                $thread->lesson_id ?? 0,
+                $thread->training_unit_id ?? 0,
             );
         }
 
@@ -185,7 +185,7 @@ class ForumService
                     $parentReply->author,
                     $author->name,
                     $thread->id,
-                    $thread->lesson_id ?? 0,
+                    $thread->training_unit_id ?? 0,
                 );
             }
         }

@@ -11,11 +11,11 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Article } from '@/types/article.types';
 interface ArticleEditPageProps {
-    lessonId: string;
+    trainingUnitId: string;
     article: Article | null;
 }
 export default function ArticleEditPage({
-    lessonId,
+    trainingUnitId,
     article,
 }: ArticleEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
@@ -23,10 +23,10 @@ export default function ArticleEditPage({
             { title: 'Teaching', href: '/teaching' },
             {
                 title: article ? 'Edit Article' : 'Create Article',
-                href: `/teaching/lessons/${lessonId}/article`,
+                href: `/teaching/trainingUnits/${trainingUnitId}/article`,
             },
         ],
-        [lessonId, article],
+        [trainingUnitId, article],
     );
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -43,12 +43,12 @@ export default function ArticleEditPage({
                             {article ? 'Edit Article' : 'Create Article'}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Write the reading content for this lesson
+                            Write the reading content for this module
                         </p>
                     </div>
                 </div>
                 <div className="max-w-4xl">
-                    <ArticleEditor lessonId={lessonId} article={article} />
+                    <ArticleEditor trainingUnitId={trainingUnitId} article={article} />
                 </div>
             </div>
         </AppLayout>

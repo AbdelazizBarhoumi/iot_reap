@@ -4,8 +4,8 @@ namespace App\Enums;
 
 enum NotificationType: string
 {
-    case COURSE_APPROVED = 'course_approved';
-    case COURSE_REJECTED = 'course_rejected';
+    case COURSE_APPROVED = 'training_path_approved';
+    case COURSE_REJECTED = 'training_path_rejected';
     case NEW_ENROLLMENT = 'new_enrollment';
     case FORUM_REPLY = 'forum_reply';
     case FORUM_MENTION = 'forum_mention';
@@ -58,8 +58,8 @@ enum NotificationType: string
     public function label(): string
     {
         return match ($this) {
-            self::COURSE_APPROVED => 'Course Approved',
-            self::COURSE_REJECTED => 'Course Rejected',
+            self::COURSE_APPROVED => 'TrainingPath Approved',
+            self::COURSE_REJECTED => 'TrainingPath Rejected',
             self::NEW_ENROLLMENT => 'New Enrollment',
             self::FORUM_REPLY => 'Forum Reply',
             self::FORUM_MENTION => 'Forum Mention',

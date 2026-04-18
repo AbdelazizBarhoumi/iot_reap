@@ -1,16 +1,16 @@
 /**
- * Notes API module for lesson notes CRUD operations.
+ * Notes API module for trainingUnit notes CRUD operations.
  */
 import client from './client';
-export interface LessonNote {
+export interface TrainingUnitNote {
     id: number;
-    lesson_id: number;
+    training_unit_id: number;
     content: string;
     timestamp_seconds: number | null;
     formatted_timestamp: string | null;
     created_at: string;
     updated_at: string;
-    lesson?: {
+    trainingUnit?: {
         id: number;
         title: string;
     };
@@ -24,43 +24,43 @@ export interface UpdateNoteData {
     timestamp_seconds?: number | null;
 }
 interface NotesResponse {
-    data: LessonNote[];
+    data: TrainingUnitNote[];
 }
 interface NoteResponse {
-    data: LessonNote;
+    data: TrainingUnitNote;
     message?: string;
 }
 /**
- * Get all notes for a specific lesson.
+ * Get all notes for a specific trainingUnit.
  */
-export async function getNotesForLesson(
-    lessonId: number,
-): Promise<LessonNote[]> {
+export async function getNotesForTrainingUnit(
+    trainingUnitId: number,
+): Promise<TrainingUnitNote[]> {
     const response = await client.get<NotesResponse>(
-        `/lessons/${lessonId}/notes`,
+        `/trainingUnits/${trainingUnitId}/notes`,
     );
     return response.data.data;
 }
 /**
- * Get all notes for a course.
+ * Get all notes for a trainingPath.
  */
-export async function getNotesForCourse(
-    courseId: number,
-): Promise<LessonNote[]> {
+export async function getNotesForTrainingPath(
+    trainingPathId: number,
+): Promise<TrainingUnitNote[]> {
     const response = await client.get<NotesResponse>(
-        `/courses/${courseId}/notes`,
+        `/trainingPaths/${trainingPathId}/notes`,
     );
     return response.data.data;
 }
 /**
- * Create a new note for a lesson.
+ * Create a new note for a trainingUnit.
  */
 export async function createNote(
-    lessonId: number,
+    trainingUnitId: number,
     data: CreateNoteData,
-): Promise<LessonNote> {
+): Promise<TrainingUnitNote> {
     const response = await client.post<NoteResponse>(
-        `/lessons/${lessonId}/notes`,
+        `/trainingUnits/${trainingUnitId}/notes`,
         data,
     );
     return response.data.data;
@@ -69,12 +69,12 @@ export async function createNote(
  * Update an existing note.
  */
 export async function updateNote(
-    lessonId: number,
+    trainingUnitId: number,
     noteId: number,
     data: UpdateNoteData,
-): Promise<LessonNote> {
+): Promise<TrainingUnitNote> {
     const response = await client.put<NoteResponse>(
-        `/lessons/${lessonId}/notes/${noteId}`,
+        `/trainingUnits/${trainingUnitId}/notes/${noteId}`,
         data,
     );
     return response.data.data;
@@ -83,14 +83,14 @@ export async function updateNote(
  * Delete a note.
  */
 export async function deleteNote(
-    lessonId: number,
+    trainingUnitId: number,
     noteId: number,
 ): Promise<void> {
-    await client.delete(`/lessons/${lessonId}/notes/${noteId}`);
+    await client.delete(`/trainingUnits/${trainingUnitId}/notes/${noteId}`);
 }
 export const notesApi = {
-    getNotesForLesson,
-    getNotesForCourse,
+    getNotesForTrainingUnit,
+    getNotesForTrainingPath,
     createNote,
     updateNote,
     deleteNote,

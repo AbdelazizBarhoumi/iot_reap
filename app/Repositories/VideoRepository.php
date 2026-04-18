@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\VideoStatus;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -29,20 +29,20 @@ class VideoRepository
     }
 
     /**
-     * Find a video by lesson ID.
+     * Find a video by trainingUnit ID.
      */
-    public function findByLessonId(int $lessonId): ?Video
+    public function findByTrainingUnitId(int $trainingUnitId): ?Video
     {
-        return Video::where('lesson_id', $lessonId)->first();
+        return Video::where('training_unit_id', $trainingUnitId)->first();
     }
 
     /**
-     * Find a video by lesson ID with captions.
+     * Find a video by trainingUnit ID with captions.
      */
-    public function findByLessonIdWithCaptions(int $lessonId): ?Video
+    public function findByTrainingUnitIdWithCaptions(int $trainingUnitId): ?Video
     {
         return Video::with('captions')
-            ->where('lesson_id', $lessonId)
+            ->where('training_unit_id', $trainingUnitId)
             ->first();
     }
 
@@ -121,12 +121,12 @@ class VideoRepository
     }
 
     /**
-     * Get videos for a course (via lessons).
+     * Get videos for a trainingPath (via trainingUnits).
      */
-    public function getForCourse(int $courseId): Collection
+    public function getForTrainingPath(int $trainingPathId): Collection
     {
-        return Video::whereHas('lesson.module', function ($query) use ($courseId) {
-            $query->where('course_id', $courseId);
+        return Video::whereHas('trainingUnit.module', function ($query) use ($trainingPathId) {
+            $query->where('training_path_id', $trainingPathId);
         })->with('captions')->get();
     }
 

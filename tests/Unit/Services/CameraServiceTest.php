@@ -8,11 +8,13 @@ use App\Enums\CameraType;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Models\CameraSessionControl;
 use App\Models\User;
+use App\Models\VMSession;
 use App\Repositories\CameraRepository;
 use App\Repositories\CameraReservationRepository;
+use App\Repositories\VMSessionRepository;
 use App\Services\CameraService;
 use App\Services\MqttService;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,11 +26,13 @@ class CameraServiceTest extends BaseTestCase
 {
     private CameraService $service;
 
-    private CameraRepository $cameraRepository;
+    private $cameraRepository;
 
-    private CameraReservationRepository $reservationRepository;
+    private $reservationRepository;
 
-    private MqttService $mqttService;
+    private $vmSessionRepository;
+
+    private $mqttService;
 
     protected function setUp(): void
     {
@@ -39,12 +43,14 @@ class CameraServiceTest extends BaseTestCase
 
         $this->cameraRepository = Mockery::mock(CameraRepository::class);
         $this->reservationRepository = Mockery::mock(CameraReservationRepository::class);
+        $this->vmSessionRepository = Mockery::mock(VMSessionRepository::class);
         $this->mqttService = Mockery::mock(MqttService::class);
 
         $this->service = new CameraService(
             $this->cameraRepository,
             $this->reservationRepository,
-            $this->mqttService
+            $this->mqttService,
+            $this->vmSessionRepository,
         );
     }
 
@@ -52,8 +58,19 @@ class CameraServiceTest extends BaseTestCase
     {
         // Arrange
         $cameras = new Collection;
+        $session = new VMSession();
+        $session->id = 'session-123';
+        $session->vm_id = 1;
+
+        $this->vmSessionRepository
+            ->shouldReceive('findById')
+            ->with('session-123')
+            ->once()
+            ->andReturn($session);
+
         $this->cameraRepository
-            ->shouldReceive('findAll')
+            ->shouldReceive('findByVmId')
+            ->with(1)
             ->once()
             ->andReturn($cameras);
 
@@ -290,7 +307,8 @@ class CameraServiceTest extends BaseTestCase
 
     public function test_move_publishes_mqtt_command_and_logs(): void
     {
-        // Arrange - use partial mock to allow real property setting
+        // Arrange - use partial mock with explicit intersection typing
+        /** @var Camera&\Mockery\MockInterface $camera */
         $camera = Mockery::mock(Camera::class)->makePartial();
         // Allow the Model's __set and setAttribute to work normally
         $camera->shouldAllowMockingProtectedMethods();
@@ -341,7 +359,7 @@ class CameraServiceTest extends BaseTestCase
             ->once()
             ->andReturn(false);
 
-        $reservation = Mockery::mock(CameraReservation::class);
+        $reservation = Mockery::mock(Reservation::class);
         $reservation->makePartial();
         $reservation->id = 123;
 

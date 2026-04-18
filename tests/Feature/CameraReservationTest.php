@@ -69,8 +69,9 @@ class CameraReservationTest extends TestCase
             ->assertJsonPath('data.status', 'pending')
             ->assertJsonPath('data.camera_id', $this->camera->id);
 
-        $this->assertDatabaseHas('camera_reservations', [
-            'camera_id' => $this->camera->id,
+        $this->assertDatabaseHas('reservations', [
+            'reservable_type' => 'App\Models\Camera',
+            'reservable_id' => $this->camera->id,
             'user_id' => $this->user->id,
             'status' => 'pending',
         ]);
@@ -225,7 +226,7 @@ class CameraReservationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.status', 'approved');
 
-        $this->assertDatabaseHas('camera_reservations', [
+        $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
             'status' => 'approved',
             'approved_by' => $this->admin->id,
@@ -251,7 +252,7 @@ class CameraReservationTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseHas('camera_reservations', [
+        $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
             'status' => 'approved',
         ]);
@@ -303,8 +304,9 @@ class CameraReservationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.is_admin_block', true);
 
-        $this->assertDatabaseHas('camera_reservations', [
-            'camera_id' => $this->camera->id,
+        $this->assertDatabaseHas('reservations', [
+            'reservable_type' => 'App\Models\Camera',
+            'reservable_id' => $this->camera->id,
             'purpose' => 'Admin block',
             'priority' => 100,
         ]);
@@ -326,9 +328,9 @@ class CameraReservationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.status', 'cancelled');
 
-        $this->assertDatabaseHas('camera_reservations', [
+        $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
-            'status' => CameraReservationStatus::CANCELLED,
+            'status' => 'cancelled',
         ]);
     }
 

@@ -9,24 +9,38 @@ const client = axios.create({
         'X-Requested-With': 'XMLHttpRequest',
     },
 });
-// Response interceptor: handle auth errors
+// Response interceptor: handle auth errors intelligently
 client.interceptors.response.use(
     (res) => res,
     (error) => {
         const status = error?.response?.status;
-        // 401: Clear auth state (session expired or unauthenticated)
+        
+        // 401: Unauthorized
         if (status === 401) {
             useAuthStore.getState().clear();
-            // Redirect to login if not already there
-            if (window.location.pathname !== '/login') {
+            
+            // Only redirect to login for certain paths that definitely require auth
+            // Don't redirect for API calls that guests should be able to make
+            const pathname = window.location.pathname;
+            const isAuthRequiredPage = 
+                pathname.includes('/my-') || 
+                pathname.includes('/checkout') ||
+                pathname.includes('/profile') ||
+                pathname.includes('/dashboard') ||
+                pathname.includes('/admin') ||
+                pathname.includes('/teaching');
+            
+            if (isAuthRequiredPage && pathname !== '/login') {
                 window.location.href = '/login';
             }
         }
+        
         // 419: CSRF token mismatch - refresh the page to get new token
         if (status === 419) {
             useAuthStore.getState().clear();
             window.location.reload();
         }
+        
         return Promise.reject(error);
     },
 );

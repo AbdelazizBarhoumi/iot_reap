@@ -1,5 +1,5 @@
 /**
- * NotesPanel - Collapsible sidebar panel for lesson notes.
+ * NotesPanel - Collapsible sidebar panel for trainingUnit notes.
  */
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -17,13 +17,13 @@ import { cn } from '@/lib/utils';
 import { NoteCard } from './NoteCard';
 import { NoteEditor } from './NoteEditor';
 interface NotesPanelProps {
-    lessonId: number;
+    trainingUnitId: number;
     currentTimestamp?: number | null;
     onSeekToTimestamp?: (seconds: number) => void;
     className?: string;
 }
 export function NotesPanel({
-    lessonId,
+    trainingUnitId,
     currentTimestamp = null,
     onSeekToTimestamp,
     className,
@@ -39,7 +39,7 @@ export function NotesPanel({
         isCreating,
         isUpdating,
         isDeleting,
-    } = useNotes({ lessonId });
+    } = useNotes({ trainingUnitId });
     const handleCreate = async (
         content: string,
         timestampSeconds: number | null,
@@ -71,7 +71,7 @@ export function NotesPanel({
                 variant="outline"
                 size="sm"
                 className={cn(
-                    'fixed top-1/2 right-0 z-40 -translate-y-1/2 rounded-l-lg rounded-r-none transition-transform',
+                    'fixed bottom-8 right-0 z-50 rounded-l-lg rounded-r-none transition-transform',
                     isOpen && 'translate-x-80',
                 )}
                 onClick={() => setIsOpen(!isOpen)}
@@ -99,7 +99,7 @@ export function NotesPanel({
                             stiffness: 300,
                         }}
                         className={cn(
-                            'fixed top-0 right-0 z-30 flex h-full w-80 flex-col border-l bg-background shadow-lg',
+                            'fixed top-20 right-0 bottom-0 z-50 flex w-80 flex-col border-l bg-background shadow-lg',
                             className,
                         )}
                     >
@@ -192,14 +192,14 @@ export function NotesPanel({
                     </motion.div>
                 )}
             </AnimatePresence>
-            {/* Backdrop */}
+            {/* Backdrop - Click outside to close */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-20 bg-black/20 md:hidden"
+                        className="fixed inset-0 z-40 bg-black/20"
                         onClick={() => setIsOpen(false)}
                     />
                 )}

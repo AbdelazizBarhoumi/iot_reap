@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
@@ -25,9 +25,9 @@ class QuizControllerTest extends TestCase
 
     private User $admin;
 
-    private Course $course;
+    private TrainingPath $trainingPath;
 
-    private Lesson $lesson;
+    private TrainingUnit $trainingUnit;
 
     protected function setUp(): void
     {
@@ -37,9 +37,9 @@ class QuizControllerTest extends TestCase
         $this->student = User::factory()->create();
         $this->admin = User::factory()->admin()->create();
 
-        $this->course = Course::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
-        $module = CourseModule::factory()->create(['course_id' => $this->course->id]);
-        $this->lesson = Lesson::factory()->practice()->create(['module_id' => $module->id]);
+        $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $this->trainingPath->id]);
+        $this->trainingUnit = TrainingUnit::factory()->practice()->create(['module_id' => $module->id]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -50,24 +50,24 @@ class QuizControllerTest extends TestCase
     {
         $quiz = $this->createQuizWithQuestions();
 
-        $response = $this->actingAs($this->teacher)->get("/teaching/lessons/{$this->lesson->id}/quiz");
+        $response = $this->actingAs($this->teacher)->get("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('teaching/quiz-edit')
-            ->has('lessonId')
+            ->has('trainingUnitId')
             ->has('quiz')
         );
     }
 
     public function test_teacher_can_view_quiz_edit_page_with_no_quiz(): void
     {
-        $response = $this->actingAs($this->teacher)->get("/teaching/lessons/{$this->lesson->id}/quiz");
+        $response = $this->actingAs($this->teacher)->get("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('teaching/quiz-edit')
-            ->where('lessonId', (string) $this->lesson->id)
+            ->where('trainingUnitId', (string) $this->trainingUnit->id)
             ->where('quiz', null)
         );
     }
@@ -86,7 +86,7 @@ class QuizControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", $quizData);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", $quizData);
 
         $response->assertStatus(201)
             ->assertJson([
@@ -97,7 +97,7 @@ class QuizControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('quizzes', [
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'title' => 'Test Quiz',
             'passing_score' => 70,
         ]);
@@ -113,11 +113,11 @@ class QuizControllerTest extends TestCase
         ];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", $quizData);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", $quizData);
 
         $response->assertStatus(422)
             ->assertJson([
-                'error' => 'Quiz already exists for this lesson',
+                'error' => 'Quiz already exists for this trainingUnit',
             ]);
     }
 
@@ -194,7 +194,7 @@ class QuizControllerTest extends TestCase
 
     public function test_cannot_publish_quiz_without_questions(): void
     {
-        $quiz = Quiz::factory()->create(['lesson_id' => $this->lesson->id]);
+        $quiz = Quiz::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->teacher)
             ->postJson("/teaching/quizzes/{$quiz->id}/publish");
@@ -209,7 +209,7 @@ class QuizControllerTest extends TestCase
 
     public function test_teacher_can_add_question_to_quiz(): void
     {
-        $quiz = Quiz::factory()->create(['lesson_id' => $this->lesson->id]);
+        $quiz = Quiz::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $questionData = [
             'question' => 'What is 2 + 2?',
@@ -320,7 +320,7 @@ class QuizControllerTest extends TestCase
         $quiz->update(['is_published' => true]);
 
         $response = $this->actingAs($this->student)
-            ->getJson("/lessons/{$this->lesson->id}/quiz");
+            ->getJson("/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -336,7 +336,7 @@ class QuizControllerTest extends TestCase
         $quiz = $this->createQuizWithQuestions();
 
         $response = $this->actingAs($this->student)
-            ->getJson("/lessons/{$this->lesson->id}/quiz");
+            ->getJson("/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertNotFound()
             ->assertJson(['error' => 'Quiz not found']);
@@ -506,13 +506,13 @@ class QuizControllerTest extends TestCase
     // Authorization Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_non_course_owner_cannot_manage_quiz(): void
+    public function test_non_training_path_owner_cannot_manage_quiz(): void
     {
         $otherTeacher = User::factory()->teacher()->create();
         $quiz = $this->createQuizWithQuestions();
 
         $this->actingAs($otherTeacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", ['title' => 'Test'])
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", ['title' => 'Test'])
             ->assertForbidden();
 
         $this->actingAs($otherTeacher)
@@ -544,10 +544,10 @@ class QuizControllerTest extends TestCase
     {
         $quiz = $this->createQuizWithQuestions();
 
-        $this->postJson("/teaching/lessons/{$this->lesson->id}/quiz", ['title' => 'Test'])
+        $this->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", ['title' => 'Test'])
             ->assertUnauthorized();
 
-        $this->getJson("/lessons/{$this->lesson->id}/quiz")
+        $this->getJson("/trainingUnits/{$this->trainingUnit->id}/quiz")
             ->assertUnauthorized();
 
         $this->postJson("/quizzes/{$quiz->id}/start")
@@ -561,7 +561,7 @@ class QuizControllerTest extends TestCase
     public function test_create_quiz_validates_required_fields(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", []);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['title']);
@@ -569,7 +569,7 @@ class QuizControllerTest extends TestCase
 
     public function test_create_question_validates_required_fields(): void
     {
-        $quiz = Quiz::factory()->create(['lesson_id' => $this->lesson->id]);
+        $quiz = Quiz::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->teacher)
             ->postJson("/teaching/quizzes/{$quiz->id}/questions", []);
@@ -581,7 +581,7 @@ class QuizControllerTest extends TestCase
     public function test_quiz_creation_validates_score_range(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", [
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", [
                 'title' => 'Test Quiz',
                 'passing_score' => 150, // Invalid - over 100
             ]);
@@ -600,7 +600,7 @@ class QuizControllerTest extends TestCase
         $quizData = ['title' => 'Test Quiz', 'passing_score' => 70];
 
         $response = $this->actingAs($this->teacher)
-            ->postJson("/teaching/lessons/{$this->lesson->id}/quiz", $quizData);
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/quiz", $quizData);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('quizzes', ['title' => 'Test Quiz']);
@@ -609,7 +609,7 @@ class QuizControllerTest extends TestCase
     public function test_question_service_is_called_for_question_operations(): void
     {
         // This is a functional test - services are called through the request
-        $quiz = Quiz::factory()->create(['lesson_id' => $this->lesson->id]);
+        $quiz = Quiz::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $questionData = [
             'question' => 'Test Question',
@@ -634,17 +634,19 @@ class QuizControllerTest extends TestCase
 
     private function createQuizWithQuestions(): Quiz
     {
-        $quiz = Quiz::factory()->create(['lesson_id' => $this->lesson->id]);
+        $quiz = Quiz::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        // Create questions with options
+        // Create consistent multiple-choice questions with correct and incorrect options
         for ($i = 0; $i < 2; $i++) {
-            $question = QuizQuestion::factory()->create([
-                'quiz_id' => $quiz->id,
-                'question' => 'Question '.($i + 1).'?',
-                'sort_order' => $i,
-            ]);
+            $question = QuizQuestion::factory()
+                ->multipleChoice()
+                ->withPoints(5)
+                ->create([
+                    'quiz_id' => $quiz->id,
+                    'question' => 'Question '.($i + 1).'?',
+                    'sort_order' => $i,
+                ]);
 
-            // Create options for each question
             QuizQuestionOption::factory()->create([
                 'question_id' => $question->id,
                 'option_text' => 'Correct Answer',

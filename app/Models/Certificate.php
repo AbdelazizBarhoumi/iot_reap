@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Certificate model for course completion certificates.
+ * Certificate model for trainingPath completion certificates.
  *
  * @property int $id
  * @property string $user_id
- * @property int $course_id
+ * @property int $training_path_id
  * @property string $hash
  * @property string|null $pdf_path
  * @property \Carbon\Carbon $issued_at
@@ -24,7 +24,7 @@ class Certificate extends Model
 
     protected $fillable = [
         'user_id',
-        'course_id',
+        'training_path_id',
         'hash',
         'pdf_path',
         'issued_at',
@@ -39,9 +39,9 @@ class Certificate extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function course(): BelongsTo
+    public function trainingPath(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(TrainingPath::class, 'training_path_id');
     }
 
     /**

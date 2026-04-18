@@ -11,19 +11,19 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Quiz } from '@/types/quiz.types';
 interface QuizEditPageProps {
-    lessonId: string;
+    trainingUnitId: string;
     quiz: Quiz | null;
 }
-export default function QuizEditPage({ lessonId, quiz }: QuizEditPageProps) {
+export default function QuizEditPage({ trainingUnitId, quiz }: QuizEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
             { title: 'Teaching', href: '/teaching' },
             {
                 title: quiz ? 'Edit Quiz' : 'Create Quiz',
-                href: `/teaching/lessons/${lessonId}/quiz`,
+                href: `/teaching/trainingUnits/${trainingUnitId}/quiz`,
             },
         ],
-        [lessonId, quiz],
+        [trainingUnitId, quiz],
     );
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -42,12 +42,12 @@ export default function QuizEditPage({ lessonId, quiz }: QuizEditPageProps) {
                         <p className="text-sm text-muted-foreground">
                             {quiz
                                 ? 'Modify quiz settings and questions'
-                                : 'Create a new quiz for this lesson'}
+                                : 'Create a new quiz for this trainingUnit'}
                         </p>
                     </div>
                 </div>
                 <div className="max-w-4xl">
-                    <QuizBuilder lessonId={lessonId} quiz={quiz} />
+                    <QuizBuilder trainingUnitId={trainingUnitId} quiz={quiz} />
                 </div>
             </div>
         </AppLayout>

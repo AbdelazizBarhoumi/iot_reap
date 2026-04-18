@@ -57,6 +57,7 @@ class SessionCameraTest extends TestCase
             'name' => 'PTZ Camera',
             'stream_key' => 'test-ptz-cam',
             'status' => CameraStatus::ACTIVE,
+            'assigned_vm_id' => $this->session->vm_id,
         ]);
 
         $this->viewOnlyCamera = Camera::factory()->create([
@@ -65,6 +66,7 @@ class SessionCameraTest extends TestCase
             'stream_key' => 'test-view-cam',
             'status' => CameraStatus::ACTIVE,
             'ptz_capable' => false,
+            'assigned_vm_id' => $this->session->vm_id,
         ]);
     }
 

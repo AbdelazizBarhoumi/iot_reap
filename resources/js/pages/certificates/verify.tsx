@@ -36,8 +36,8 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
         if (navigator.share && certificate) {
             try {
                 await navigator.share({
-                    title: `Certificate of Completion - ${certificate.course?.title}`,
-                    text: `${certificate.user?.name} completed ${certificate.course?.title}`,
+                    title: `Certificate of Completion - ${certificate.trainingPath?.title}`,
+                    text: `${certificate.user?.name} completed ${certificate.trainingPath?.title}`,
                     url: window.location.href,
                 });
             } catch {
@@ -121,7 +121,7 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
                                                 </p>
                                             </div>
                                         </div>
-                                        {/* Course */}
+                                        {/* TrainingPath */}
                                         <div className="flex items-start gap-3">
                                             <div className="rounded-lg bg-primary/10 p-2">
                                                 <BookOpen className="h-5 w-5 text-primary" />
@@ -131,9 +131,9 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
                                                     For completing
                                                 </p>
                                                 <p className="text-lg font-semibold text-foreground">
-                                                    {certificate.course
+                                                    {certificate.trainingPath
                                                         ?.title ||
-                                                        'Unknown Course'}
+                                                                'Unknown Path'}
                                                 </p>
                                             </div>
                                         </div>
@@ -214,7 +214,7 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
                     {/* Footer */}
                     <p className="mt-8 text-center text-sm text-muted-foreground">
                         Certificates are issued by IoT-REAP upon successful
-                        course completion.
+                        training path completion.
                     </p>
                 </div>
             </div>

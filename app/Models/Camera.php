@@ -10,16 +10,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * Camera model — represents a camera that can be:
  * 1. Attached to a robot (robot_id set, gateway_node_id null)
  * 2. A USB webcam from a gateway node (gateway_node_id set, robot_id null)
  *
+ * Cameras can be assigned to specific VMs (assigned_vm_id). Users only see
+ * cameras assigned to their session's VM. PTZ control is exclusive (one session),
+ * but viewing is shared across all sessions on the same VM.
+ *
  * @property int $id
  * @property int|null $robot_id
  * @property int|null $gateway_node_id
  * @property int|null $usb_device_id
+ * @property int|null $assigned_vm_id VM this camera is assigned to (admin-configured)
  * @property string $name
  * @property string $stream_key
  * @property string $source_url
@@ -41,6 +48,7 @@ class Camera extends Model
         'robot_id',
         'gateway_node_id',
         'usb_device_id',
+        'assigned_vm_id',
         'name',
         'admin_description',
         'maintenance_mode',
@@ -67,6 +75,7 @@ class Camera extends Model
         'stream_width' => 'integer',
         'stream_height' => 'integer',
         'stream_framerate' => 'integer',
+        'assigned_vm_id' => 'integer',
         'ptz_capable' => 'boolean',
         'recording_enabled' => 'boolean',
         'detection_enabled' => 'boolean',
@@ -199,9 +208,9 @@ class Camera extends Model
     /**
      * Get all reservations for this camera.
      */
-    public function reservations(): HasMany
+    public function reservations(): MorphMany
     {
-        return $this->hasMany(CameraReservation::class);
+        return $this->morphMany(Reservation::class, 'reservable');
     }
 
     /**
@@ -225,15 +234,12 @@ class Camera extends Model
     /**
      * Get the currently active reservation (if any).
      */
-    public function activeReservation(): HasOne
+    public function activeReservation(): MorphOne
     {
         $now = now();
 
-        return $this->hasOne(CameraReservation::class)
-            ->whereIn('status', [
-                CameraReservationStatus::APPROVED->value,
-                CameraReservationStatus::ACTIVE->value,
-            ])
+        return $this->morphOne(Reservation::class, 'reservable')
+            ->where('status', 'approved')
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
             ->where('approved_end_at', '>=', $now);
@@ -252,7 +258,7 @@ class Camera extends Model
             return true;
         }
 
-        return $this->maintenance_until->isFuture();
+        return $this->maintenance_until->getTimestamp() > now()->getTimestamp();
     }
 
     /**
@@ -302,5 +308,79 @@ class Camera extends Model
                         ->where('maintenance_until', '<', now());
                 });
         });
+    }
+
+    /**
+     * Scope: Get cameras assigned to a specific VM ID.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int|null  $vmId  The VM ID to filter by
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForVmId($query, ?int $vmId)
+    {
+        if ($vmId === null) {
+            // If no VM ID, return no cameras (session not yet provisioned)
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('assigned_vm_id', $vmId);
+    }
+
+    /**
+     * Scope: Get cameras that are unassigned (no VM assignment).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnassigned($query)
+    {
+        return $query->whereNull('assigned_vm_id');
+    }
+
+    /**
+     * Check if this camera is assigned to a specific VM ID.
+     *
+     * @param  int  $vmId  The VM ID to check
+     * @return bool
+     */
+    public function isAssignedTo(int $vmId): bool
+    {
+        return $this->assigned_vm_id === $vmId;
+    }
+
+    /**
+     * Check if this camera is assigned to any VM.
+     *
+     * @return bool
+     */
+    public function isAssigned(): bool
+    {
+        return $this->assigned_vm_id !== null;
+    }
+
+    /**
+     * Assign this camera to a specific VM ID.
+     *
+     * @param  int  $vmId  The VM ID to assign to
+     * @return bool
+     */
+    public function assignToVm(int $vmId): bool
+    {
+        $this->assigned_vm_id = $vmId;
+
+        return $this->save();
+    }
+
+    /**
+     * Unassign this camera from its current VM.
+     *
+     * @return bool
+     */
+    public function unassignFromVm(): bool
+    {
+        $this->assigned_vm_id = null;
+
+        return $this->save();
     }
 }

@@ -44,24 +44,46 @@ class AdminPayoutControllerTest extends TestCase
             ['path' => request()->url()]
         );
 
-        $this->payoutServiceMock
-            ->shouldReceive('getPendingPayouts')
-            ->once()
-            ->andReturn($payouts);
+        // Mock both methods returning expected values
+        $this->app->instance(PayoutService::class, Mockery::mock(PayoutService::class, function ($mock) use ($payouts) {
+            $mock->shouldReceive('getPendingPayouts')->andReturn($payouts);
+            $mock->shouldReceive('getAdminStats')->andReturn([
+                'pending' => 1,
+                'totalPending' => 100,
+                'paidThisMonth' => 500,
+            ]);
+        }));
 
         $response = $this->actingAs($this->admin)
             ->getJson('/admin/payouts');
 
         $response->assertOk()
             ->assertJsonStructure([
-                'payouts',
+                'payouts' => [
+                    '*' => [
+                        'id',
+                        'teacher' => ['id', 'name', 'email'],
+                        'amount',
+                        'status',
+                        'requestedAt',
+                        'processedAt',
+                    ],
+                ],
+                'stats' => [
+                    'pending',
+                    'totalPending',
+                    'paidThisMonth',
+                ],
                 'pagination' => [
                     'current_page',
                     'last_page',
                     'per_page',
                     'total',
                 ],
-            ]);
+            ])
+            ->assertJsonPath('stats.pending', 1)
+            ->assertJsonPath('stats.totalPending', 100)
+            ->assertJsonPath('stats.paidThisMonth', 500);
     }
 
     public function test_admin_can_list_payouts_with_pagination(): void
@@ -74,10 +96,14 @@ class AdminPayoutControllerTest extends TestCase
             ['path' => request()->url()]
         );
 
-        $this->payoutServiceMock
-            ->shouldReceive('getPendingPayouts')
-            ->once()
-            ->andReturn($payouts);
+        $this->app->instance(PayoutService::class, Mockery::mock(PayoutService::class, function ($mock) use ($payouts) {
+            $mock->shouldReceive('getPendingPayouts')->andReturn($payouts);
+            $mock->shouldReceive('getAdminStats')->andReturn([
+                'pending' => 0,
+                'totalPending' => 0,
+                'paidThisMonth' => 0,
+            ]);
+        }));
 
         $response = $this->actingAs($this->admin)
             ->getJson('/admin/payouts', [

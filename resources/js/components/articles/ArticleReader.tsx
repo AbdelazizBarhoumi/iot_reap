@@ -17,7 +17,7 @@ export function ArticleReader({ article, _onComplete }: ArticleReaderProps) {
                 <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-primary" />
                     <CardTitle className="font-heading text-lg">
-                        Reading Material
+                        Reference Material
                     </CardTitle>
                 </div>
                 <div className="flex items-center gap-3">

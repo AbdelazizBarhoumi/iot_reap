@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Enums\VideoStatus;
 use App\Jobs\TranscodeVideoJob;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use App\Repositories\VideoRepository;
 use App\Services\VideoService;
@@ -22,7 +22,7 @@ class VideoServiceTest extends TestCase
 
     private VideoRepository $repository;
 
-    private Lesson $lesson;
+    private TrainingUnit $trainingUnit;
 
     protected function setUp(): void
     {
@@ -30,7 +30,7 @@ class VideoServiceTest extends TestCase
 
         $this->repository = $this->createMock(VideoRepository::class);
         $this->service = new VideoService($this->repository);
-        $this->lesson = Lesson::factory()->create();
+        $this->trainingUnit = TrainingUnit::factory()->create();
     }
 
     public function test_upload_and_queue_stores_file_and_creates_video_record(): void
@@ -42,22 +42,22 @@ class VideoServiceTest extends TestCase
 
         $expectedVideo = $this->createMock(Video::class);
         $expectedVideo->id = 1;
-        $expectedVideo->lesson_id = $this->lesson->id;
+        $expectedVideo->training_unit_id = $this->trainingUnit->id;
 
         $this->repository
             ->expects($this->once())
             ->method('create')
             ->with($this->callback(function ($data) use ($file) {
-                return $data['lesson_id'] === $this->lesson->id &&
+                return $data['training_unit_id'] === $this->trainingUnit->id &&
                        $data['original_filename'] === 'test.mp4' &&
                        $data['file_size_bytes'] === $file->getSize() &&
                        $data['mime_type'] === $file->getMimeType() &&
                        $data['status'] === VideoStatus::PENDING &&
-                       str_contains($data['storage_path'], 'videos/raw/'.$this->lesson->id.'/');
+                       str_contains($data['storage_path'], 'videos/raw/'.$this->trainingUnit->id.'/');
             }))
             ->willReturn($expectedVideo);
 
-        $result = $this->service->uploadAndQueue($this->lesson, $file);
+        $result = $this->service->uploadAndQueue($this->trainingUnit, $file);
 
         $this->assertEquals($expectedVideo, $result);
 
@@ -93,8 +93,8 @@ class VideoServiceTest extends TestCase
                 return $video;
             });
 
-        $this->service->uploadAndQueue($this->lesson, $file1);
-        $this->service->uploadAndQueue($this->lesson, $file2);
+        $this->service->uploadAndQueue($this->trainingUnit, $file1);
+        $this->service->uploadAndQueue($this->trainingUnit, $file2);
 
         // Verify paths are different
         $this->assertNotEquals('path1', 'path2');
@@ -131,20 +131,20 @@ class VideoServiceTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_get_video_for_lesson_returns_video_from_repository(): void
+    public function test_get_video_for_training_unit_returns_video_from_repository(): void
     {
-        $lessonId = 123;
+        $trainingUnitId = 123;
         $expectedVideo = $this->createMock(Video::class);
         $expectedVideo->id = 1;
-        $expectedVideo->lesson_id = $lessonId;
+        $expectedVideo->training_unit_id = $trainingUnitId;
 
         $this->repository
             ->expects($this->once())
-            ->method('findByLessonIdWithCaptions')
-            ->with($lessonId)
+            ->method('findByTrainingUnitIdWithCaptions')
+            ->with($trainingUnitId)
             ->willReturn($expectedVideo);
 
-        $result = $this->service->getVideoForLesson($lessonId);
+        $result = $this->service->getVideoForTrainingUnit($trainingUnitId);
 
         $this->assertEquals($expectedVideo, $result);
     }

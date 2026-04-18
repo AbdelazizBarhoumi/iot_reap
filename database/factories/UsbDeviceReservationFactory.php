@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\UsbReservationStatus;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceReservation;
 use App\Models\User;
@@ -10,11 +10,14 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UsbDeviceReservation>
+ * DEPRECATED: This factory now delegates to ReservationFactory.
+ * Use Reservation::factory()->forUsbDevice() instead.
+ *
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Reservation>
  */
 class UsbDeviceReservationFactory extends Factory
 {
-    protected $model = UsbDeviceReservation::class;
+    protected $model = Reservation::class;
 
     /**
      * Define the model's default state.
@@ -27,9 +30,10 @@ class UsbDeviceReservationFactory extends Factory
         $requestedEnd = $requestedStart->copy()->addHours(rand(1, 4));
 
         return [
-            'usb_device_id' => UsbDevice::factory(),
+            'reservable_type' => 'App\Models\UsbDevice',
+            'reservable_id' => UsbDevice::factory(),
             'user_id' => User::factory(),
-            'status' => UsbReservationStatus::PENDING,
+            'status' => 'pending',
             'requested_start_at' => $requestedStart,
             'requested_end_at' => $requestedEnd,
             'approved_start_at' => null,
@@ -47,7 +51,7 @@ class UsbDeviceReservationFactory extends Factory
     public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => UsbReservationStatus::PENDING,
+            'status' => 'pending',
             'approved_start_at' => null,
             'approved_end_at' => null,
             'approved_by' => null,
@@ -64,7 +68,7 @@ class UsbDeviceReservationFactory extends Factory
             $approvedEnd = $attributes['requested_end_at'] ?? Carbon::now()->addDay()->addHours(2);
 
             return [
-                'status' => UsbReservationStatus::APPROVED,
+                'status' => 'approved',
                 'approved_start_at' => $approvedStart,
                 'approved_end_at' => $approvedEnd,
                 'approved_by' => User::factory()->admin(),
@@ -78,7 +82,7 @@ class UsbDeviceReservationFactory extends Factory
     public function rejected(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => UsbReservationStatus::REJECTED,
+            'status' => 'rejected',
             'admin_notes' => $this->faker->sentence(),
             'approved_by' => User::factory()->admin(),
         ]);
@@ -94,10 +98,11 @@ class UsbDeviceReservationFactory extends Factory
             $approvedEnd = Carbon::now()->addHours(2);
 
             return [
-                'status' => UsbReservationStatus::ACTIVE,
+                'status' => 'active',
                 'approved_start_at' => $approvedStart,
                 'approved_end_at' => $approvedEnd,
                 'approved_by' => User::factory()->admin(),
+                'actual_start_at' => $approvedStart,
             ];
         });
     }
@@ -108,14 +113,16 @@ class UsbDeviceReservationFactory extends Factory
     public function completed(): static
     {
         return $this->state(function (array $attributes) {
-            $approvedStart = Carbon::now()->subHours(4);
-            $approvedEnd = Carbon::now()->subHour();
+            $approvedStart = $attributes['requested_start_at'] ?? Carbon::now()->subHours(4);
+            $approvedEnd = $attributes['requested_end_at'] ?? Carbon::now()->subHour();
 
             return [
-                'status' => UsbReservationStatus::COMPLETED,
+                'status' => 'completed',
                 'approved_start_at' => $approvedStart,
                 'approved_end_at' => $approvedEnd,
                 'approved_by' => User::factory()->admin(),
+                'actual_start_at' => $approvedStart,
+                'actual_end_at' => $approvedEnd,
             ];
         });
     }
@@ -126,27 +133,29 @@ class UsbDeviceReservationFactory extends Factory
     public function cancelled(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => UsbReservationStatus::CANCELLED,
+            'status' => 'cancelled',
         ]);
     }
 
     /**
-     * Configure as an admin block (not a user reservation).
+     * Bind reservation to a specific USB device.
      */
-    public function adminBlock(): static
+    public function forDevice(UsbDevice $device): static
     {
-        return $this->state(function (array $attributes) {
-            $approvedStart = Carbon::now()->addDay();
-            $approvedEnd = $approvedStart->copy()->addHours(4);
-
-            return [
-                'status' => UsbReservationStatus::APPROVED,
-                'approved_start_at' => $approvedStart,
-                'approved_end_at' => $approvedEnd,
-                'approved_by' => User::factory()->admin(),
-                'purpose' => 'Admin block',
-                'priority' => 100,
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'reservable_type' => 'App\Models\UsbDevice',
+            'reservable_id' => $device->id,
+        ]);
     }
+
+    /**
+     * Bind reservation to a specific user.
+     */
+    public function forUser(User $user): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => $user->id,
+        ]);
+    }
+
 }

@@ -7,11 +7,13 @@ use App\Enums\CameraReservationStatus;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Models\CameraSessionControl;
 use App\Models\User;
 use App\Repositories\CameraRepository;
 use App\Repositories\CameraReservationRepository;
+use App\Repositories\VMSessionRepository;
+use App\Services\MqttService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -28,21 +30,27 @@ class CameraService
         private readonly CameraRepository $cameraRepository,
         private readonly CameraReservationRepository $reservationRepository,
         private readonly MqttService $mqttService,
+        private readonly VMSessionRepository $vmSessionRepository,
     ) {}
 
     /**
-     * Get all cameras available for a session (all cameras from all robots).
-     * Returns cameras with their control state so the frontend knows
-     * which ones are controllable.
+     * Get cameras available for a session.
+     *
+     * Returns only cameras assigned to the session's VM ID. If the session
+     * has no VM ID yet (pending/provisioning), returns an empty collection.
+     *
+     * Multiple sessions on the same VM will see the same cameras (shared viewing).
+     * PTZ control remains exclusive via CameraSessionControl.
      */
     public function getCamerasForSession(string $sessionId): Collection
     {
-        $cameras = $this->cameraRepository->findAll();
+        $session = $this->vmSessionRepository->findById($sessionId);
 
-        // Eager-load the control info is already handled in the repository.
-        // Each camera will have `activeControl` loaded — either null (free)
-        // or a CameraSessionControl record with session_id.
-        return $cameras;
+        if (! $session || $session->vm_id === null) {
+            return new Collection();
+        }
+
+        return $this->cameraRepository->findByVmId($session->vm_id);
     }
 
     /**
@@ -207,7 +215,7 @@ class CameraService
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
         ?string $purpose = null
-    ): CameraReservation {
+    ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
@@ -237,17 +245,17 @@ class CameraService
      * Approve a camera reservation (admin action).
      */
     public function approveReservation(
-        CameraReservation $reservation,
+        Reservation $reservation,
         User $approver,
         ?\DateTimeInterface $modifiedStartAt = null,
         ?\DateTimeInterface $modifiedEndAt = null,
         ?string $adminNotes = null
-    ): CameraReservation {
+    ): Reservation {
         $startAt = $modifiedStartAt ?? $reservation->requested_start_at;
         $endAt = $modifiedEndAt ?? $reservation->requested_end_at;
 
         // Check for conflicts (excluding this reservation)
-        if ($this->reservationRepository->hasConflict($reservation->camera, $startAt, $endAt, $reservation->id)) {
+        if ($this->reservationRepository->hasConflict($reservation->reservable, $startAt, $endAt, $reservation->id)) {
             throw new \DomainException('Modified time slot conflicts with existing reservation');
         }
 
@@ -273,10 +281,10 @@ class CameraService
      * Reject a camera reservation (admin action).
      */
     public function rejectReservation(
-        CameraReservation $reservation,
+        Reservation $reservation,
         User $approver,
         ?string $adminNotes = null
-    ): CameraReservation {
+    ): Reservation {
         $this->reservationRepository->update($reservation, [
             'status' => CameraReservationStatus::REJECTED->value,
             'approved_by' => $approver->id,
@@ -294,7 +302,7 @@ class CameraService
     /**
      * Cancel a camera reservation (user or admin).
      */
-    public function cancelReservation(CameraReservation $reservation): CameraReservation
+    public function cancelReservation(Reservation $reservation): Reservation
     {
         if (! $reservation->canModify()) {
             throw new \DomainException('Reservation cannot be cancelled in current state');
@@ -320,7 +328,7 @@ class CameraService
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
         ?string $notes = null
-    ): CameraReservation {
+    ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
@@ -358,7 +366,8 @@ class CameraService
     {
         $now = now();
 
-        $activeReservation = CameraReservation::where('camera_id', $camera->id)
+        $activeReservation = Reservation::where('reservable_type', Camera::class)
+            ->where('reservable_id', $camera->id)
             ->whereIn('status', [CameraReservationStatus::APPROVED->value, CameraReservationStatus::ACTIVE->value])
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
@@ -374,7 +383,7 @@ class CameraService
                 'can_use' => false,
                 'reason' => 'Camera is reserved by another user',
                 'reserved_by' => $activeReservation->user->name,
-                'until' => $activeReservation->approved_end_at->toDateTimeString(),
+                'until' => $activeReservation->approved_end_at?->format('Y-m-d H:i:s'),
             ];
         }
 

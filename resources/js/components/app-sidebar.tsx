@@ -11,7 +11,6 @@ import {
     Network,
     PenTool,
     RotateCcw,
-    Server,
     Users,
     Usb,
     Wrench,
@@ -33,7 +32,7 @@ import AppLogo from './app-logo';
 /**
  * Admin-only sidebar navigation.
  * Only rendered for the admin role — other roles use the header layout.
- * Admin has full access: VM dashboard, teaching, learning, and admin functions.
+ * Admin has full access: VM dashboard, studio, training, and admin functions.
  */
 const overviewNavItems: NavItem[] = [
     {
@@ -59,19 +58,9 @@ const overviewNavItems: NavItem[] = [
 ];
 const managementNavItems: NavItem[] = [
     {
-        title: 'Proxmox Servers',
-        href: '/admin/proxmox-servers',
-        icon: Server,
-    },
-    {
         title: 'Hardware Gateways',
         href: '/hardware',
         icon: Usb,
-    },
-    {
-        title: 'VM Templates',
-        href: '/admin/vm-templates',
-        icon: Monitor,
     },
     {
         title: 'Maintenance',
@@ -81,8 +70,8 @@ const managementNavItems: NavItem[] = [
 ];
 const contentNavItems: NavItem[] = [
     {
-        title: 'Course Approvals',
-        href: '/admin/courses',
+        title: 'Path Reviews',
+        href: '/admin/trainingPaths',
         icon: CheckCircle,
     },
     {
@@ -91,7 +80,7 @@ const contentNavItems: NavItem[] = [
         icon: Monitor,
     },
     {
-        title: 'Reservations',
+        title: 'Lab Reservations',
         href: '/admin/reservations-page',
         icon: CalendarCheck,
     },
@@ -108,17 +97,17 @@ const contentNavItems: NavItem[] = [
 ];
 const learningNavItems: NavItem[] = [
     {
-        title: 'Browse Courses',
-        href: '/courses',
+        title: 'Training Paths',
+        href: '/trainingPaths',
         icon: GraduationCap,
     },
     {
-        title: 'My Learning',
-        href: '/my-courses',
+        title: 'My Training',
+        href: '/my-trainingPaths',
         icon: BookOpen,
     },
     {
-        title: 'Teaching',
+        title: 'Content Studio',
         href: '/teaching',
         icon: PenTool,
     },
@@ -138,10 +127,10 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={overviewNavItems} label="Overview" />
-                <NavMain items={managementNavItems} label="Management" />
-                <NavMain items={contentNavItems} label="Content & Scheduling" />
-                <NavMain items={learningNavItems} label="Learning" />
+                <NavMain items={overviewNavItems} label="Operations" />
+                <NavMain items={managementNavItems} label="Infrastructure" />
+                <NavMain items={contentNavItems} label="Studio" />
+                <NavMain items={learningNavItems} label="Academy" />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />

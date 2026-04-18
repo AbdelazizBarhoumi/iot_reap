@@ -114,18 +114,18 @@ class VideoProgressService
     }
 
     /**
-     * Get user's video progress for a course.
+     * Get user's video progress for a trainingPath.
      *
      * @return array<int, array{video_id: int, watched_seconds: int, completed: bool, percentage: int}>
      */
-    public function getProgressForCourse(User $user, int $courseId): array
+    public function getProgressForTrainingPath(User $user, int $trainingPathId): array
     {
-        $progressRecords = $this->progressRepository->getForUserAndCourse($user, $courseId);
+        $progressRecords = $this->progressRepository->getForUserAndTrainingPath($user, $trainingPathId);
 
         return $progressRecords->map(function ($progress) {
             return [
                 'video_id' => $progress->video_id,
-                'lesson_id' => $progress->video?->lesson_id,
+                'training_unit_id' => $progress->video?->training_unit_id,
                 'watched_seconds' => $progress->watched_seconds,
                 'completed' => $progress->completed,
                 'percentage' => $progress->percentage,

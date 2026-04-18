@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -20,18 +20,18 @@ class CheckoutService
     }
 
     /**
-     * Create a Stripe checkout session for course enrollment.
+     * Create a Stripe checkout session for trainingPath enrollment.
      */
-    public function createCheckoutSession(User $user, Course $course): array
+    public function createCheckoutSession(User $user, TrainingPath $trainingPath): array
     {
         // Check if user already enrolled (either paid or free)
-        if ($user->enrolledCourses()->where('course_id', $course->id)->exists()) {
-            throw new \DomainException('You are already enrolled in this course.');
+        if ($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists()) {
+            throw new \DomainException('You are already enrolled in this trainingPath.');
         }
 
-        // If course is free, enroll directly
-        if ($course->is_free || $course->price_cents === 0) {
-            return $this->enrollFree($user, $course);
+        // If trainingPath is free, enroll directly
+        if ($trainingPath->is_free || $trainingPath->price_cents === 0) {
+            return $this->enrollFree($user, $trainingPath);
         }
 
         // Create Stripe checkout session
@@ -39,44 +39,44 @@ class CheckoutService
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => strtolower($course->currency),
+                    'currency' => strtolower($trainingPath->currency),
                     'product_data' => [
-                        'name' => $course->title,
-                        'description' => $course->description ? substr($course->description, 0, 500) : 'Course enrollment',
-                        'images' => $course->thumbnail_url ? [$course->thumbnail_url] : [],
+                        'name' => $trainingPath->title,
+                        'description' => $trainingPath->description ? substr($trainingPath->description, 0, 500) : 'TrainingPath enrollment',
+                        'images' => $trainingPath->thumbnail_url ? [$trainingPath->thumbnail_url] : [],
                     ],
-                    'unit_amount' => $course->price_cents,
+                    'unit_amount' => $trainingPath->price_cents,
                 ],
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
             'success_url' => route('checkout.success', ['session_id' => '{CHECKOUT_SESSION_ID}']),
-            'cancel_url' => route('checkout.cancelled', ['course' => $course->id]),
+            'cancel_url' => route('checkout.cancelled', ['trainingPath' => $trainingPath->id]),
             'customer_email' => $user->email,
             'client_reference_id' => (string) $user->id,
             'metadata' => [
                 'user_id' => $user->id,
-                'course_id' => $course->id,
+                'training_path_id' => $trainingPath->id,
             ],
         ]);
 
         // Create pending payment record
         $this->paymentRepository->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'stripe_session_id' => $session->id,
             'status' => PaymentStatus::PENDING,
-            'amount_cents' => $course->price_cents,
-            'currency' => $course->currency,
+            'amount_cents' => $trainingPath->price_cents,
+            'currency' => $trainingPath->currency,
             'metadata' => [
-                'course_title' => $course->title,
+                'training_path_title' => $trainingPath->title,
                 'checkout_created_at' => now()->toIso8601String(),
             ],
         ]);
 
         Log::info('Checkout session created', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'session_id' => $session->id,
         ]);
 
@@ -87,39 +87,39 @@ class CheckoutService
     }
 
     /**
-     * Enroll user in a free course.
+     * Enroll user in a free trainingPath.
      * Wrapped in transaction to ensure payment record and enrollment are atomic.
      */
-    protected function enrollFree(User $user, Course $course): array
+    protected function enrollFree(User $user, TrainingPath $trainingPath): array
     {
         // Create a payment record for tracking (zero amount)
         $this->paymentRepository->create([
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
             'stripe_session_id' => 'free_'.uniqid(),
             'status' => PaymentStatus::COMPLETED,
             'amount_cents' => 0,
-            'currency' => $course->currency,
+            'currency' => $trainingPath->currency,
             'paid_at' => now(),
             'metadata' => [
-                'course_title' => $course->title,
+                'training_path_title' => $trainingPath->title,
                 'enrollment_type' => 'free',
             ],
         ]);
 
         // Enroll the user
-        $user->enrolledCourses()->attach($course->id, [
+        $user->enrolledTrainingPaths()->attach($trainingPath->id, [
             'enrolled_at' => now(),
         ]);
 
-        Log::info('Free course enrollment', [
+        Log::info('Free trainingPath enrollment', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
 
         return [
             'enrolled' => true,
-            'course_url' => route('courses.show', $course),
+            'training_path_url' => route('trainingPaths.show', $trainingPath),
         ];
     }
 
@@ -132,11 +132,11 @@ class CheckoutService
     }
 
     /**
-     * Check if user has purchased a course.
+     * Check if user has purchased a trainingPath.
      */
-    public function hasPurchased(User $user, Course $course): bool
+    public function hasPurchased(User $user, TrainingPath $trainingPath): bool
     {
         return $this->paymentRepository
-            ->findCompletedByUserAndCourse($user->id, $course->id) !== null;
+            ->findCompletedByUserAndTrainingPath($user->id, $trainingPath->id) !== null;
     }
 }

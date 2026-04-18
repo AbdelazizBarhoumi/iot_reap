@@ -24,16 +24,6 @@ class NotificationRepository
     }
 
     /**
-     * Find a notification by ID.
-     *
-     * @deprecated Unused - findByIdForUser() enforces user ownership. Candidate for removal.
-     */
-    public function findById(string $id): ?Notification
-    {
-        return Notification::find($id);
-    }
-
-    /**
      * Find a notification by ID for a specific user.
      */
     public function findByIdForUser(string $id, string $userId): ?Notification
@@ -71,19 +61,6 @@ class NotificationRepository
             ->orderByRaw('CASE WHEN read_at IS NULL THEN 0 ELSE 1 END')
             ->orderByDesc('created_at')
             ->limit($limit)
-            ->get();
-    }
-
-    /**
-     * Get unread notifications for a user.
-     *
-     * @deprecated Unused - getRecentForUser() provides same data with better UX. Candidate for removal.
-     */
-    public function getUnreadForUser(User $user): Collection
-    {
-        return Notification::forUser($user->id)
-            ->unread()
-            ->orderByDesc('created_at')
             ->get();
     }
 
@@ -136,27 +113,4 @@ class NotificationRepository
         return $notification->delete();
     }
 
-    /**
-     * Delete old notifications (for cleanup).
-     *
-     * @deprecated Unused - no scheduled cleanup implemented yet. Candidate for removal.
-     */
-    public function deleteOlderThan(int $days = 90): int
-    {
-        return Notification::where('created_at', '<', now()->subDays($days))
-            ->delete();
-    }
-
-    /**
-     * Get notifications by type for a user.
-     *
-     * @deprecated Unused - no type filtering feature implemented. Candidate for removal.
-     */
-    public function getByTypeForUser(User $user, NotificationType $type): Collection
-    {
-        return Notification::forUser($user->id)
-            ->ofType($type)
-            ->orderByDesc('created_at')
-            ->get();
-    }
 }

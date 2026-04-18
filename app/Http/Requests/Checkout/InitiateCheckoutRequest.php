@@ -14,15 +14,15 @@ class InitiateCheckoutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'course_id' => ['required', 'integer', 'exists:courses,id'],
+            'training_path_id' => ['required', 'integer', 'exists:training_paths,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'course_id.required' => 'Please select a course to purchase.',
-            'course_id.exists' => 'The selected course does not exist.',
+            'training_path_id.required' => 'Please select a trainingPath to purchase.',
+            'training_path_id.exists' => 'The selected trainingPath does not exist.',
         ];
     }
 }

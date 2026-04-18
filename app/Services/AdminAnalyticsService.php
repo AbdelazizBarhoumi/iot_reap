@@ -3,19 +3,19 @@
 namespace App\Services;
 
 use App\Models\Certificate;
-use App\Models\Course;
-use App\Models\CourseEnrollment;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Repositories\CourseStatsRepository;
+use App\Repositories\TrainingPathStatsRepository;
 use App\Support\DateRangeHelper;
 use Illuminate\Support\Carbon;
 
 class AdminAnalyticsService
 {
     public function __construct(
-        protected CourseStatsRepository $statsRepository,
+        protected TrainingPathStatsRepository $statsRepository,
         protected SystemHealthService $systemHealthService,
     ) {}
 
@@ -43,7 +43,7 @@ class AdminAnalyticsService
             'revenue_change' => DateRangeHelper::calculatePercentageChange($currentStats['revenue'], $previousStats['revenue']),
             'total_vm_sessions' => $currentStats['vm_sessions'],
             'vm_sessions_change' => DateRangeHelper::calculatePercentageChange($currentStats['vm_sessions'], $previousStats['vm_sessions']),
-            'active_courses' => Course::where('status', 'approved')->count(),
+            'active_trainingPaths' => TrainingPath::where('status', 'approved')->count(),
             'certificates_issued' => $currentStats['certificates'],
             'period' => $period,
         ];
@@ -56,8 +56,8 @@ class AdminAnalyticsService
     {
         return [
             'new_users' => User::whereBetween('created_at', [$startDate, $endDate->endOfDay()])->count(),
-            'enrollments' => CourseEnrollment::whereBetween('enrolled_at', [$startDate, $endDate->endOfDay()])->count(),
-            'completions' => CourseEnrollment::whereNotNull('completed_at')
+            'enrollments' => TrainingPathEnrollment::whereBetween('enrolled_at', [$startDate, $endDate->endOfDay()])->count(),
+            'completions' => TrainingPathEnrollment::whereNotNull('completed_at')
                 ->whereBetween('completed_at', [$startDate, $endDate->endOfDay()])
                 ->count(),
             'revenue' => Payment::where('status', 'completed')
@@ -75,7 +75,7 @@ class AdminAnalyticsService
     {
         [$startDate, $endDate] = DateRangeHelper::getPeriodDates($period);
 
-        $enrollments = CourseEnrollment::selectRaw('DATE(enrolled_at) as date, COUNT(*) as count')
+        $enrollments = TrainingPathEnrollment::selectRaw('DATE(enrolled_at) as date, COUNT(*) as count')
             ->whereBetween('enrolled_at', [$startDate, $endDate->endOfDay()])
             ->groupByRaw('DATE(enrolled_at)')
             ->pluck('count', 'date')
@@ -112,43 +112,44 @@ class AdminAnalyticsService
     }
 
     /**
-     * Get top courses by enrollments.
+     * Get top trainingPaths by enrollments.
      */
-    public function getTopCourses(string $period = '30d', int $limit = 5): array
+    public function getTopTrainingPaths(string $period = '30d', int $limit = 5): array
     {
         [$startDate, $endDate] = DateRangeHelper::getPeriodDates($period);
 
-        return Course::select('courses.*')
-            ->selectRaw('COUNT(course_enrollments.id) as enrollment_count')
-            ->leftJoin('course_enrollments', 'courses.id', '=', 'course_enrollments.course_id')
-            ->whereBetween('course_enrollments.enrolled_at', [$startDate, $endDate->endOfDay()])
-            ->where('courses.status', 'approved')
-            ->groupBy('courses.id')
+        return TrainingPath::select(['training_paths.id', 'training_paths.title', 'training_paths.thumbnail', 'training_paths.instructor_id'])
+            ->selectRaw('COUNT(training_path_enrollments.id) as enrollment_count')
+            ->with('instructor')
+            ->leftJoin('training_path_enrollments', 'training_paths.id', '=', 'training_path_enrollments.training_path_id')
+            ->whereBetween('training_path_enrollments.enrolled_at', [$startDate, $endDate->endOfDay()])
+            ->where('training_paths.status', 'approved')
+            ->groupBy(['training_paths.id', 'training_paths.title', 'training_paths.thumbnail', 'training_paths.instructor_id'])
             ->orderByDesc('enrollment_count')
             ->limit($limit)
             ->get()
-            ->map(fn ($course) => [
-                'id' => $course->id,
-                'title' => $course->title,
-                'thumbnail_url' => $course->thumbnail_url,
-                'enrollments' => $course->enrollment_count,
-                'instructor' => $course->instructor?->name ?? 'Unknown',
+            ->map(fn ($trainingPath) => [
+                'id' => $trainingPath->id,
+                'title' => $trainingPath->title,
+                'thumbnail_url' => $trainingPath->thumbnail_url,
+                'enrollments' => $trainingPath->enrollment_count,
+                'instructor' => $trainingPath->instructor?->name ?? 'Unknown',
             ])
             ->toArray();
     }
 
     /**
-     * Get revenue breakdown by course.
+     * Get revenue breakdown by trainingPath.
      */
     public function getRevenueByCategory(string $period = '30d'): array
     {
         [$startDate, $endDate] = DateRangeHelper::getPeriodDates($period);
 
-        return Payment::selectRaw('courses.category, SUM(payments.amount_cents) as total')
-            ->join('courses', 'payments.course_id', '=', 'courses.id')
+        return Payment::selectRaw('training_paths.category, SUM(payments.amount_cents) as total')
+            ->join('training_paths', 'payments.training_path_id', '=', 'training_paths.id')
             ->where('payments.status', 'completed')
             ->whereBetween('payments.paid_at', [$startDate, $endDate->endOfDay()])
-            ->groupBy('courses.category')
+            ->groupBy('training_paths.category')
             ->orderByDesc('total')
             ->get()
             ->map(fn ($row) => [
@@ -180,25 +181,25 @@ class AdminAnalyticsService
         $activities = collect();
 
         // Recent enrollments
-        $enrollments = CourseEnrollment::with(['user', 'course'])
+        $enrollments = TrainingPathEnrollment::with(['user', 'trainingPath'])
             ->latest('enrolled_at')
             ->limit($limit)
             ->get()
             ->map(fn ($e) => [
                 'type' => 'enrollment',
-                'message' => "{$e->user?->name} enrolled in {$e->course?->title}",
+                'message' => "{$e->user?->name} enrolled in {$e->trainingPath?->title}",
                 'timestamp' => $e->enrolled_at,
             ]);
 
         // Recent payments
-        $payments = Payment::with(['user', 'course'])
+        $payments = Payment::with(['user', 'trainingPath'])
             ->where('status', 'completed')
             ->latest('paid_at')
             ->limit($limit)
             ->get()
             ->map(fn ($p) => [
                 'type' => 'payment',
-                'message' => "{$p->user?->name} purchased {$p->course?->title}",
+                'message' => "{$p->user?->name} purchased {$p->trainingPath?->title}",
                 'amount' => $p->amount_cents / 100,
                 'timestamp' => $p->paid_at,
             ]);
@@ -238,7 +239,7 @@ class AdminAnalyticsService
             'status' => $systemHealth['status'],
             'active_vm_sessions' => $activeVMSessions,
             'queued_sessions' => 0, // VM session queue is not available
-            'pending_courses' => Course::where('status', 'pending_review')->count(),
+            'pending_trainingPaths' => TrainingPath::where('status', 'pending_review')->count(),
             'suspended_users' => User::whereNotNull('suspended_at')->count(),
             'services' => $systemHealth['services'],
             'metrics' => $systemHealth['metrics'],

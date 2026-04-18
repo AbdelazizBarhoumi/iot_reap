@@ -3,7 +3,7 @@
  */
 export interface Article {
     id: number;
-    lesson_id: number;
+    training_unit_id: number;
     content: TipTapContent;
     word_count: number;
     estimated_read_time_minutes: number;

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Course;
-use App\Models\CourseModule;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\User;
 use App\Services\ForumService;
@@ -22,9 +22,9 @@ class ForumControllerTest extends TestCase
 
     private User $admin;
 
-    private Course $course;
+    private TrainingPath $trainingPath;
 
-    private Lesson $lesson;
+    private TrainingUnit $trainingUnit;
 
     protected function setUp(): void
     {
@@ -34,12 +34,12 @@ class ForumControllerTest extends TestCase
         $this->teacher = User::factory()->teacher()->create();
         $this->admin = User::factory()->admin()->create();
 
-        $this->course = Course::factory()->approved()->create([
+        $this->trainingPath = TrainingPath::factory()->approved()->create([
             'instructor_id' => $this->teacher->id,
         ]);
 
-        $module = CourseModule::factory()->create(['course_id' => $this->course->id]);
-        $this->lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $this->trainingPath->id]);
+        $this->trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ class ForumControllerTest extends TestCase
     public function test_authenticated_user_can_create_thread(): void
     {
         $response = $this->actingAs($this->student)
-            ->postJson("/forum/lessons/{$this->lesson->id}/threads", [
+            ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", [
                 'title' => 'Need help with assignment',
                 'content' => 'I am struggling with the IoT sensor setup.',
             ]);
@@ -64,13 +64,13 @@ class ForumControllerTest extends TestCase
             'title' => 'Need help with assignment',
             'content' => 'I am struggling with the IoT sensor setup.',
             'author_id' => $this->student->id,
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
     }
 
     public function test_unauthenticated_user_cannot_create_thread(): void
     {
-        $response = $this->postJson("/forum/lessons/{$this->lesson->id}/threads", [
+        $response = $this->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", [
             'title' => 'Test Thread',
             'content' => 'Test content',
         ]);
@@ -81,7 +81,7 @@ class ForumControllerTest extends TestCase
     public function test_thread_creation_validates_required_fields(): void
     {
         $response = $this->actingAs($this->student)
-            ->postJson("/forum/lessons/{$this->lesson->id}/threads", []);
+            ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['title', 'content']);
@@ -94,8 +94,8 @@ class ForumControllerTest extends TestCase
     public function test_authenticated_user_can_reply_to_thread(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $response = $this->actingAs($this->student)
@@ -119,8 +119,8 @@ class ForumControllerTest extends TestCase
     public function test_user_can_reply_to_existing_reply(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $parentReply = ThreadReply::factory()->create([
@@ -145,7 +145,7 @@ class ForumControllerTest extends TestCase
     public function test_reply_creation_validates_content(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         $response = $this->actingAs($this->student)
@@ -162,7 +162,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_upvote_thread(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'upvote_count' => 0,
         ]);
 
@@ -179,7 +179,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_toggle_thread_upvote(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'upvote_count' => 1,
         ]);
 
@@ -199,7 +199,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_upvote_reply(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         $reply = ThreadReply::factory()->create([
@@ -221,15 +221,15 @@ class ForumControllerTest extends TestCase
     // Thread Listing Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_user_can_list_threads_for_lesson(): void
+    public function test_user_can_list_threads_for_trainingUnit(): void
     {
         DiscussionThread::factory()->count(3)->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $response = $this->actingAs($this->student)
-            ->getJson("/forum/lessons/{$this->lesson->id}/threads");
+            ->getJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -241,14 +241,14 @@ class ForumControllerTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_user_can_list_threads_for_course(): void
+    public function test_user_can_list_threads_for_trainingPath(): void
     {
         DiscussionThread::factory()->count(2)->create([
-            'course_id' => $this->course->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $response = $this->actingAs($this->student)
-            ->getJson("/forum/courses/{$this->course->id}/threads");
+            ->getJson("/forum/trainingPaths/{$this->trainingPath->id}/threads");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -263,7 +263,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_view_single_thread_with_replies(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         ThreadReply::factory()->count(2)->create([
@@ -283,11 +283,11 @@ class ForumControllerTest extends TestCase
     // Teacher Actions Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_teacher_can_pin_thread_in_their_course(): void
+    public function test_teacher_can_pin_thread_in_their_trainingPath(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
             'is_pinned' => false,
         ]);
 
@@ -301,11 +301,11 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_can_lock_thread_in_their_course(): void
+    public function test_teacher_can_lock_thread_in_their_trainingPath(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
             'is_locked' => false,
         ]);
 
@@ -322,8 +322,8 @@ class ForumControllerTest extends TestCase
     public function test_teacher_can_mark_reply_as_answer(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $reply = ThreadReply::factory()->create([
@@ -344,8 +344,8 @@ class ForumControllerTest extends TestCase
     public function test_student_cannot_perform_teacher_actions(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $response = $this->actingAs($this->student)
@@ -357,7 +357,7 @@ class ForumControllerTest extends TestCase
     public function test_teacher_can_access_teacher_inbox(): void
     {
         DiscussionThread::factory()->count(3)->create([
-            'course_id' => $this->course->id,
+            'training_path_id' => $this->trainingPath->id,
         ]);
 
         $response = $this->actingAs($this->teacher)
@@ -379,7 +379,7 @@ class ForumControllerTest extends TestCase
     public function test_admin_can_view_flagged_threads(): void
     {
         DiscussionThread::factory()->count(2)->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'is_flagged' => true,
         ]);
 
@@ -399,7 +399,7 @@ class ForumControllerTest extends TestCase
     public function test_admin_can_unflag_thread(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'is_flagged' => true,
         ]);
 
@@ -428,7 +428,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_flag_inappropriate_thread(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         $response = $this->actingAs($this->student)
@@ -441,7 +441,7 @@ class ForumControllerTest extends TestCase
     public function test_user_can_flag_inappropriate_reply(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         $reply = ThreadReply::factory()->create([
@@ -462,7 +462,7 @@ class ForumControllerTest extends TestCase
     public function test_author_can_delete_own_thread(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'author_id' => $this->student->id,
         ]);
 
@@ -476,7 +476,7 @@ class ForumControllerTest extends TestCase
     public function test_author_can_delete_own_reply(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
         ]);
 
         $reply = ThreadReply::factory()->create([
@@ -495,7 +495,7 @@ class ForumControllerTest extends TestCase
     {
         $otherUser = User::factory()->create();
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
+            'training_unit_id' => $this->trainingUnit->id,
             'author_id' => $otherUser->id,
         ]);
 
@@ -505,11 +505,11 @@ class ForumControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_teacher_can_delete_any_content_in_their_course(): void
+    public function test_teacher_can_delete_any_content_in_their_trainingPath(): void
     {
         $thread = DiscussionThread::factory()->create([
-            'lesson_id' => $this->lesson->id,
-            'course_id' => $this->course->id,
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
             'author_id' => $this->student->id,
         ]);
 
@@ -532,10 +532,10 @@ class ForumControllerTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_returns_404_for_nonexistent_lesson_threads(): void
+    public function test_returns_404_for_nonexistent_training_unit_threads(): void
     {
         $response = $this->actingAs($this->student)
-            ->getJson('/forum/lessons/999999/threads');
+            ->getJson('/forum/trainingUnits/999999/threads');
 
         $response->assertNotFound();
     }
@@ -548,7 +548,7 @@ class ForumControllerTest extends TestCase
             ->once()
             ->with(
                 \Mockery::type(User::class),
-                \Mockery::type(Lesson::class),
+                \Mockery::type(TrainingUnit::class),
                 'Test Thread',
                 'Test Content'
             )
@@ -557,7 +557,7 @@ class ForumControllerTest extends TestCase
         $this->app->instance(ForumService::class, $mockForumService);
 
         $this->actingAs($this->student)
-            ->postJson("/forum/lessons/{$this->lesson->id}/threads", [
+            ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", [
                 'title' => 'Test Thread',
                 'content' => 'Test Content',
             ]);

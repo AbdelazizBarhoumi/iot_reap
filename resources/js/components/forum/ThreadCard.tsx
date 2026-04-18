@@ -27,8 +27,8 @@ import { cn } from '@/lib/utils';
 import type { DiscussionThread } from '@/types/forum.types';
 interface ThreadCardProps {
     thread: DiscussionThread;
-    courseSlug?: string;
-    lessonSlug?: string;
+    trainingPathSlug?: string;
+    trainingUnitSlug?: string;
     onUpvote?: (threadId: string) => void;
     index?: number;
 }
@@ -50,14 +50,14 @@ function formatRelativeTime(dateStr: string): string {
 }
 export function ThreadCard({
     thread,
-    courseSlug,
-    lessonSlug,
+    trainingPathSlug,
+    trainingUnitSlug,
     onUpvote,
     index = 0,
 }: ThreadCardProps) {
-    const threadUrl = lessonSlug
-        ? `/courses/${courseSlug}/lessons/${lessonSlug}/discussion/${thread.id}`
-        : `/courses/${courseSlug}/discussion/${thread.id}`;
+    const threadUrl = trainingUnitSlug
+        ? `/trainingPaths/${trainingPathSlug}/trainingUnits/${trainingUnitSlug}/discussion/${thread.id}`
+        : `/trainingPaths/${trainingPathSlug}/discussion/${thread.id}`;
     const getInitials = (name: string) => {
         return name
             .split(' ')

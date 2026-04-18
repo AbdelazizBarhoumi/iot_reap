@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         Route::post('/devices/{device}/detach', 'detach')->name('devices.detach');
         Route::post('/devices/{device}/cancel-pending', 'cancelPending')->name('devices.cancel-pending');
         Route::post('/devices/{device}/convert-to-camera', 'convertToCamera')->name('devices.convert-to-camera');
+        Route::post('/devices/{device}/activate-camera', 'activateCamera')->name('devices.activate-camera');
         Route::put('/devices/{device}/camera-settings', 'updateCameraSettings')->name('devices.update-camera-settings');
         Route::delete('/devices/{device}/camera', 'removeCamera')->name('devices.remove-camera');
     });

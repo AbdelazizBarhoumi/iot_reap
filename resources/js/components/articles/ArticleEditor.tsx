@@ -24,12 +24,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import type { Article, TipTapContent, TipTapNode } from '@/types/article.types';
 interface ArticleEditorProps {
-    lessonId: string;
+    trainingUnitId: string;
     article: Article | null;
     onSave?: (article: Article) => void;
 }
 export function ArticleEditor({
-    lessonId,
+    trainingUnitId,
     article: initialArticle,
     onSave,
 }: ArticleEditorProps) {
@@ -49,7 +49,7 @@ export function ArticleEditor({
             // Convert plain text to TipTap-like JSON structure
             const tipTapContent = convertToTipTapContent(content);
             const response = await fetch(
-                `/teaching/lessons/${lessonId}/article`,
+                `/teaching/trainingUnits/${trainingUnitId}/article`,
                 {
                     method: 'POST',
                     headers: {

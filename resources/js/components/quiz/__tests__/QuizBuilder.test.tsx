@@ -253,7 +253,7 @@ describe('QuizBuilder Component', () => {
     });
     describe('Question Management', () => {
         const editorProps = {
-            lessonId: 'lesson-123',
+            trainingUnitId: 'trainingUnit-123',
             quiz: sampleQuiz,
             onQuizCreated: mockOnQuizCreated,
         };

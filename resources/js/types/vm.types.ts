@@ -10,7 +10,11 @@ export type VMSessionStatus =
     | 'expired'
     | 'failed'
     | 'terminated';
-export type VMTemplateProtocol = 'rdp' | 'vnc' | 'ssh';
+export type VMProtocol = 'rdp' | 'vnc' | 'ssh';
+
+/** @deprecated Use VMProtocol instead */
+export type VMTemplateProtocol = VMProtocol;
+
 /**
  * Connection profile for Guacamole preferences (multi-profile support).
  */
@@ -32,7 +36,7 @@ export interface VMSession {
     status: VMSessionStatus;
     vm_id: number; // proxmox VMID
     // protocol stored directly on session
-    protocol: VMTemplateProtocol;
+    protocol: VMProtocol;
     node_name: string;
     expires_at: string;
     time_remaining_seconds: number;
@@ -40,6 +44,8 @@ export interface VMSession {
     guacamole_connection_id: string | null;
     guacamole_url: string | null;
     created_at: string;
+    template?: { name: string; id: number };
+    node?: { node_name: string; name: string; id: number };
 }
 export interface ProxmoxNode {
     id: number;
@@ -188,5 +194,86 @@ export interface ExtendSessionRequest {
 export interface TerminateSessionRequest {
     stop_vm?: boolean;
     return_snapshot?: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrainingUnit VM Assignment Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type TrainingUnitVMAssignmentStatus = 'pending' | 'approved' | 'rejected';
+
+/**
+ * TrainingUnit VM Assignment - teacher assigns a VM to a trainingUnit, admin approves.
+ */
+export interface TrainingUnitVMAssignment {
+    id: number;
+    training_unit_id: number;
+    vm_id: number;
+    node_id: number;
+    vm_name: string | null;
+    status: TrainingUnitVMAssignmentStatus;
+    status_label: string;
+    status_color: 'yellow' | 'green' | 'red';
+    teacher_notes: string | null;
+    admin_feedback: string | null;
+    is_pending: boolean;
+    is_approved: boolean;
+    is_rejected: boolean;
+    trainingUnit?: {
+        id: number;
+        title: string;
+        type: string;
+        module?: {
+            id: number;
+            title: string;
+            trainingPath?: {
+                id: number;
+                title: string;
+                instructor?: {
+                    id: string;
+                    name: string;
+                };
+            };
+        };
+    };
+    node?: {
+        id: number;
+        name: string;
+        hostname: string;
+        server?: {
+            id: number;
+            name: string;
+        };
+    };
+    assigned_by?: {
+        id: string;
+        name: string;
+    };
+    approved_by?: {
+        id: string;
+        name: string;
+    } | null;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Request to assign a VM to a trainingUnit.
+ */
+export interface AssignVMToTrainingUnitRequest {
+    training_unit_id: number;
+    vm_id: number;
+    node_id: number;
+    vm_name: string;
+    teacher_notes?: string;
+}
+
+/**
+ * VM info for trainingUnit display (after assignment is approved).
+ */
+export interface TrainingUnitVMInfo {
+    vm_id: number;
+    node_id: number;
+    vm_name: string | null;
 }
 

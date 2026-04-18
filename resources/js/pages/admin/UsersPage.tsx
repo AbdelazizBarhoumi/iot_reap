@@ -85,6 +85,8 @@ export default function UsersPage() {
         loading,
         suspendUser,
         unsuspendUser,
+        approveTeacher,
+        revokeTeacherApproval,
         updateUserRole,
         impersonateUser,
         error,
@@ -157,6 +159,12 @@ export default function UsersPage() {
     const handleUnsuspend = async (user: AdminUser) => {
         await unsuspendUser(user.id);
     };
+    const handleApproveTeacher = async (user: AdminUser) => {
+        await approveTeacher(user.id);
+    };
+    const handleRevokeTeacherApproval = async (user: AdminUser) => {
+        await revokeTeacherApproval(user.id);
+    };
     const handleRoleChange = async () => {
         if (!roleChangeUser || !newRole) return;
         const success = await updateUserRole(roleChangeUser.id, newRole);
@@ -209,6 +217,15 @@ export default function UsersPage() {
                                         Suspended
                                     </Badge>
                                 )}
+                                {user.requires_teacher_approval &&
+                                    !user.is_teacher_approved && (
+                                        <Badge
+                                            variant="outline"
+                                            className="border-amber-500/40 bg-amber-500/10 text-xs text-amber-500"
+                                        >
+                                            Pending teacher approval
+                                        </Badge>
+                                    )}
                                 {user.two_factor_enabled && (
                                     <Badge
                                         variant="outline"
@@ -265,6 +282,30 @@ export default function UsersPage() {
                                         <UserCog className="mr-2 h-4 w-4" />
                                         Change Role
                                     </DropdownMenuItem>
+                                    {user.requires_teacher_approval &&
+                                        !user.is_teacher_approved && (
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    handleApproveTeacher(user)
+                                                }
+                                            >
+                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                Approve Teacher
+                                            </DropdownMenuItem>
+                                        )}
+                                    {user.requires_teacher_approval &&
+                                        user.is_teacher_approved && (
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    handleRevokeTeacherApproval(
+                                                        user,
+                                                    )
+                                                }
+                                            >
+                                                <UserX className="mr-2 h-4 w-4" />
+                                                Revoke Teacher Approval
+                                            </DropdownMenuItem>
+                                        )}
                                     {!user.is_suspended &&
                                         user.role !== 'admin' && (
                                             <DropdownMenuItem
@@ -447,6 +488,9 @@ export default function UsersPage() {
                                         <SelectItem value="suspended">
                                             Suspended
                                         </SelectItem>
+                                        <SelectItem value="pending_teacher_approval">
+                                            Pending Teacher Approval
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Button
@@ -568,6 +612,22 @@ export default function UsersPage() {
                                             : 'Not verified'}
                                     </p>
                                 </div>
+                                {detailUser.requires_teacher_approval && (
+                                    <div>
+                                        <p className="text-muted-foreground">
+                                            Teacher Approval
+                                        </p>
+                                        <p className="font-medium">
+                                            {detailUser.is_teacher_approved
+                                                ? detailUser.teacher_approved_at
+                                                    ? formatDate(
+                                                          detailUser.teacher_approved_at,
+                                                      )
+                                                    : 'Approved'
+                                                : 'Pending approval'}
+                                        </p>
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-muted-foreground">
                                         2FA Enabled

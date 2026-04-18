@@ -118,4 +118,16 @@ class UsbDeviceFactory extends Factory
             'name' => 'Samsung Galaxy (MTP mode)',
         ]);
     }
+
+    /**
+     * Configure device in maintenance mode.
+     */
+    public function maintenance(?string $notes = null, mixed $until = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'maintenance_mode' => true,
+            'maintenance_notes' => $notes ?? 'Device under maintenance',
+            'maintenance_until' => $until,
+        ]);
+    }
 }

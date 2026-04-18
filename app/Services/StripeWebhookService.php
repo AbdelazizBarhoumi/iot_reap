@@ -72,13 +72,13 @@ class StripeWebhookService
         // Mark payment as completed
         $payment->markAsCompleted($session->payment_intent);
 
-        // Enroll the user in the course
+        // Enroll the user in the trainingPath
         $this->enrollUser($payment);
 
         Log::info('Checkout completed and user enrolled', [
             'payment_id' => $payment->id,
             'user_id' => $payment->user_id,
-            'course_id' => $payment->course_id,
+            'training_path_id' => $payment->training_path_id,
         ]);
     }
 
@@ -156,15 +156,15 @@ class StripeWebhookService
     }
 
     /**
-     * Enroll user in course after successful payment.
+     * Enroll user in trainingPath after successful payment.
      */
     protected function enrollUser(Payment $payment): void
     {
         $user = $payment->user;
-        $course = $payment->course;
+        $trainingPath = $payment->trainingPath;
 
-        if (! $user->enrolledCourses()->where('course_id', $course->id)->exists()) {
-            $user->enrolledCourses()->attach($course->id, [
+        if (! $user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists()) {
+            $user->enrolledTrainingPaths()->attach($trainingPath->id, [
                 'enrolled_at' => now(),
             ]);
         }
@@ -175,6 +175,6 @@ class StripeWebhookService
      */
     protected function unenrollUser(Payment $payment): void
     {
-        $payment->user->enrolledCourses()->detach($payment->course_id);
+        $payment->user->enrolledTrainingPaths()->detach($payment->training_path_id);
     }
 }

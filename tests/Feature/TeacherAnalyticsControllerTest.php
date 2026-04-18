@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\User;
-use App\Services\CourseAnalyticsService;
+use App\Services\TrainingPathAnalyticsService;
 use App\Services\RevenueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -18,9 +18,9 @@ class TeacherAnalyticsControllerTest extends TestCase
 
     private User $otherTeacher;
 
-    private Course $course;
+    private TrainingPath $trainingPath;
 
-    private Course $otherCourse;
+    private TrainingPath $otherTrainingPath;
 
     private $analyticsServiceMock;
 
@@ -32,12 +32,12 @@ class TeacherAnalyticsControllerTest extends TestCase
 
         $this->teacher = User::factory()->teacher()->create();
         $this->otherTeacher = User::factory()->teacher()->create();
-        $this->course = Course::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
-        $this->otherCourse = Course::factory()->approved()->create(['instructor_id' => $this->otherTeacher->id]);
+        $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
+        $this->otherTrainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->otherTeacher->id]);
 
         // Mock services
-        $this->analyticsServiceMock = Mockery::mock(CourseAnalyticsService::class);
-        $this->app->instance(CourseAnalyticsService::class, $this->analyticsServiceMock);
+        $this->analyticsServiceMock = Mockery::mock(TrainingPathAnalyticsService::class);
+        $this->app->instance(TrainingPathAnalyticsService::class, $this->analyticsServiceMock);
 
         $this->revenueServiceMock = Mockery::mock(RevenueService::class);
         $this->app->instance(RevenueService::class, $this->revenueServiceMock);
@@ -49,7 +49,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             'total_enrollments' => 150,
             'total_revenue' => 3500.00,
             'active_students' => 85,
-            'course_count' => 3,
+            'training_path_count' => 3,
         ];
 
         $enrollmentChart = [
@@ -62,7 +62,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ['date' => '2024-01-02', 'revenue' => 449.00],
         ];
 
-        $topCourses = [
+        $topTrainingPaths = [
             ['title' => 'Laravel Basics', 'enrollments' => 50],
             ['title' => 'Advanced PHP', 'enrollments' => 35],
         ];
@@ -83,9 +83,9 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->andReturn($revenueChart);
 
         $this->analyticsServiceMock
-            ->shouldReceive('getTopCourses')
+            ->shouldReceive('getTopTrainingPaths')
             ->once()
-            ->andReturn($topCourses);
+            ->andReturn($topTrainingPaths);
 
         $response = $this->actingAs($this->teacher)
             ->get('/teaching/analytics');
@@ -163,7 +163,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_can_view_student_roster_for_owned_course(): void
+    public function test_teacher_can_view_student_roster_for_owned_trainingPath(): void
     {
         $roster = [
             'data' => [
@@ -183,20 +183,20 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->andReturn($roster);
 
         $response = $this->actingAs($this->teacher)
-            ->get("/teaching/analytics/courses/{$this->course->id}/students");
+            ->get("/teaching/analytics/trainingPaths/{$this->trainingPath->id}/students");
 
         $response->assertOk();
     }
 
-    public function test_teacher_cannot_view_student_roster_for_unowned_course(): void
+    public function test_teacher_cannot_view_student_roster_for_unowned_trainingPath(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->get("/teaching/analytics/courses/{$this->otherCourse->id}/students");
+            ->get("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/students");
 
         $response->assertForbidden();
     }
 
-    public function test_teacher_can_get_completion_funnel_for_owned_course(): void
+    public function test_teacher_can_get_completion_funnel_for_owned_trainingPath(): void
     {
         $funnel = [
             'enrolled' => 100,
@@ -211,7 +211,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->andReturn($funnel);
 
         $response = $this->actingAs($this->teacher)
-            ->getJson("/teaching/analytics/courses/{$this->course->id}/funnel");
+            ->getJson("/teaching/analytics/trainingPaths/{$this->trainingPath->id}/funnel");
 
         $response->assertOk()
             ->assertJson([
@@ -219,10 +219,10 @@ class TeacherAnalyticsControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_cannot_get_completion_funnel_for_unowned_course(): void
+    public function test_teacher_cannot_get_completion_funnel_for_unowned_trainingPath(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->getJson("/teaching/analytics/courses/{$this->otherCourse->id}/funnel");
+            ->getJson("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/funnel");
 
         $response->assertForbidden();
     }
@@ -236,9 +236,9 @@ class TeacherAnalyticsControllerTest extends TestCase
             'end_date' => '2024-01-31',
         ];
 
-        $revenueByCourse = [
-            ['course_title' => 'Laravel Basics', 'revenue' => 1500.00],
-            ['course_title' => 'Advanced PHP', 'revenue' => 1000.00],
+        $revenueByTrainingPath = [
+            ['training_path_title' => 'Laravel Basics', 'revenue' => 1500.00],
+            ['training_path_title' => 'Advanced PHP', 'revenue' => 1000.00],
         ];
 
         $revenueChart = [
@@ -252,9 +252,9 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->andReturn($summary);
 
         $this->revenueServiceMock
-            ->shouldReceive('getRevenueByCourse')
+            ->shouldReceive('getRevenueByTrainingPath')
             ->once()
-            ->andReturn($revenueByCourse);
+            ->andReturn($revenueByTrainingPath);
 
         $this->revenueServiceMock
             ->shouldReceive('getRevenueByDateRange')
@@ -269,7 +269,7 @@ class TeacherAnalyticsControllerTest extends TestCase
 
     public function test_teacher_can_export_earnings_csv(): void
     {
-        $csvData = "Date,Course,Revenue\n2024-01-01,Laravel Basics,29.99\n";
+        $csvData = "Date,TrainingPath,Revenue\n2024-01-01,Laravel Basics,29.99\n";
 
         $this->revenueServiceMock
             ->shouldReceive('generateEarningsCSV')
@@ -285,7 +285,7 @@ class TeacherAnalyticsControllerTest extends TestCase
 
     public function test_teacher_can_export_earnings_csv_with_date_range(): void
     {
-        $csvData = "Date,Course,Revenue\n2024-01-01,Laravel Basics,29.99\n";
+        $csvData = "Date,TrainingPath,Revenue\n2024-01-01,Laravel Basics,29.99\n";
 
         $this->revenueServiceMock
             ->shouldReceive('generateEarningsCSV')
@@ -357,7 +357,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->andReturn([]);
 
         $this->analyticsServiceMock
-            ->shouldReceive('getTopCourses')
+            ->shouldReceive('getTopTrainingPaths')
             ->once()
             ->andReturn([]);
 

@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Article;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +22,7 @@ class ArticleFactory extends Factory
         $wordCount = Article::calculateWordCount($content);
 
         return [
-            'lesson_id' => Lesson::factory()->reading(),
+            'training_unit_id' => TrainingUnit::factory()->reading(),
             'content' => $content,
             'word_count' => $wordCount,
             'estimated_read_time_minutes' => Article::calculateReadTime($wordCount),

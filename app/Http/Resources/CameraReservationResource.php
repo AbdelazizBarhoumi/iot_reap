@@ -15,9 +15,12 @@ class CameraReservationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // For camera reservations, reservable_id maps to camera_id.
+        $cameraId = $this->reservable_id ?? $this->camera_id;
+
         return [
             'id' => $this->id,
-            'camera_id' => $this->camera_id,
+            'camera_id' => $cameraId,
             'user_id' => $this->user_id,
             'approved_by' => $this->approved_by,
             'status' => $this->status->value,
@@ -55,7 +58,7 @@ class CameraReservationResource extends JsonResource
             'can_modify' => $this->canModify(),
 
             // Relations
-            'camera' => new CameraResource($this->whenLoaded('camera')),
+            'camera' => new CameraResource($this->whenLoaded('reservable')),
             'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,

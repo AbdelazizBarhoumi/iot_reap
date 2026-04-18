@@ -1,5 +1,5 @@
 /**
- * Course Students Page
+ * TrainingPath Students Page
  * Student roster with progress tracking.
  */
 import { Head, Link, router } from '@inertiajs/react';
@@ -24,7 +24,7 @@ import type {
     PaginationMeta,
 } from '@/types/analytics.types';
 interface StudentsPageProps {
-    course: {
+    trainingPath: {
         id: number;
         title: string;
     };
@@ -32,7 +32,7 @@ interface StudentsPageProps {
     pagination: PaginationMeta;
 }
 export default function StudentsPage({
-    course,
+    trainingPath,
     students,
     pagination,
 }: StudentsPageProps) {
@@ -42,11 +42,11 @@ export default function StudentsPage({
             { title: 'Teaching', href: '/teaching' },
             { title: 'Analytics', href: '/teaching/analytics' },
             {
-                title: course.title,
-                href: `/teaching/analytics/courses/${course.id}/students`,
+                title: trainingPath.title,
+                href: `/teaching/analytics/trainingPaths/${trainingPath.id}/students`,
             },
         ],
-        [course],
+        [trainingPath],
     );
     const filteredStudents = useMemo(() => {
         if (!searchQuery) return students;
@@ -59,7 +59,7 @@ export default function StudentsPage({
     }, [students, searchQuery]);
     const handlePageChange = (page: number) => {
         router.get(
-            `/teaching/analytics/courses/${course.id}/students`,
+            `/teaching/analytics/trainingPaths/${trainingPath.id}/students`,
             { page },
             { preserveState: true },
         );
@@ -82,7 +82,7 @@ export default function StudentsPage({
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Students - ${course.title}`} />
+            <Head title={`Students - ${trainingPath.title}`} />
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default function StudentsPage({
                     </Button>
                     <div className="flex-1">
                         <h1 className="font-heading text-2xl font-semibold text-foreground">
-                            {course.title}
+                            {trainingPath.title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             {pagination.total} students enrolled

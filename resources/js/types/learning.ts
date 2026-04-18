@@ -2,7 +2,7 @@
  * Learning module type definitions
  * Extracted from mockData.ts for use across the application
  */
-export interface Course {
+export interface TrainingPath {
     id: string;
     title: string;
     description: string;
@@ -15,14 +15,14 @@ export interface Course {
     rating: number;
     modules: Module[];
     hasVirtualMachine?: boolean;
-    status?: CourseStatus;
+    status?: TrainingPathStatus;
 }
 export interface Module {
     id: string;
     title: string;
-    lessons: Lesson[];
+    trainingUnits: TrainingUnit[];
 }
-export interface Lesson {
+export interface TrainingUnit {
     id: string;
     title: string;
     type: 'video' | 'reading' | 'practice' | 'vm-lab';
@@ -34,13 +34,13 @@ export interface Lesson {
     videoUrl?: string;
     resources?: string[];
 }
-export type CourseStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
+export type TrainingPathStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
 export interface TeacherStats {
-    totalCourses: number;
+    totalTrainingPaths: number;
     totalStudents: number;
     totalRevenue: number;
     averageRating: number;
     pendingReviews: number;
-    coursesThisMonth: number;
+    trainingPathsThisMonth: number;
 }
 

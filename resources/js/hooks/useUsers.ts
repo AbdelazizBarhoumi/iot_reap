@@ -52,6 +52,51 @@ export function useUsers(initialData?: PaginatedUsers) {
         },
         [],
     );
+    const approveTeacher = useCallback(
+        async (userId: string): Promise<boolean> => {
+            setLoading(true);
+            try {
+                const response = await usersApi.approveTeacher(userId);
+                setUsers((prev) =>
+                    prev.map((u) => (u.id === userId ? response.data : u)),
+                );
+                return true;
+            } catch (e) {
+                setError(
+                    e instanceof Error
+                        ? e.message
+                        : 'Failed to approve teacher account',
+                );
+                return false;
+            } finally {
+                setLoading(false);
+            }
+        },
+        [],
+    );
+    const revokeTeacherApproval = useCallback(
+        async (userId: string): Promise<boolean> => {
+            setLoading(true);
+            try {
+                const response =
+                    await usersApi.revokeTeacherApproval(userId);
+                setUsers((prev) =>
+                    prev.map((u) => (u.id === userId ? response.data : u)),
+                );
+                return true;
+            } catch (e) {
+                setError(
+                    e instanceof Error
+                        ? e.message
+                        : 'Failed to revoke teacher approval',
+                );
+                return false;
+            } finally {
+                setLoading(false);
+            }
+        },
+        [],
+    );
     const unsuspendUser = useCallback(
         async (userId: string): Promise<boolean> => {
             setLoading(true);
@@ -105,6 +150,8 @@ export function useUsers(initialData?: PaginatedUsers) {
         fetchUsers,
         suspendUser,
         unsuspendUser,
+        approveTeacher,
+        revokeTeacherApproval,
         updateUserRole,
         impersonateUser,
         setError,

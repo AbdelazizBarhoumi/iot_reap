@@ -11,14 +11,14 @@ import { cn } from '@/lib/utils';
 interface CertificateCardProps {
     certificate: Certificate;
     onDownload?: () => void;
-    onViewCourse?: () => void;
+    onViewTrainingPath?: () => void;
     isDownloading?: boolean;
     className?: string;
 }
 export function CertificateCard({
     certificate,
     onDownload,
-    onViewCourse,
+    onViewTrainingPath,
     isDownloading = false,
     className,
 }: CertificateCardProps) {
@@ -48,8 +48,8 @@ export function CertificateCard({
                         </div>
                         <div>
                             <h3 className="line-clamp-2 font-semibold text-foreground">
-                                {certificate.course?.title ||
-                                    'Course Certificate'}
+                                {certificate.trainingPath?.title ||
+                                    'Industrial Certification'}
                             </h3>
                             <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <Calendar className="h-3.5 w-3.5" />
@@ -93,11 +93,11 @@ export function CertificateCard({
                                 Generating...
                             </Button>
                         )}
-                        {onViewCourse && (
+                        {onViewTrainingPath && (
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={onViewCourse}
+                                onClick={onViewTrainingPath}
                             >
                                 <ExternalLink className="h-4 w-4" />
                             </Button>

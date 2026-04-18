@@ -29,16 +29,6 @@ class ForumRepository
     }
 
     /**
-     * Find a thread by ID.
-     *
-     * @deprecated Unused - findThreadWithReplies() used instead. Candidate for removal.
-     */
-    public function findThreadById(int $id): ?DiscussionThread
-    {
-        return DiscussionThread::with(['author', 'course', 'lesson'])->find($id);
-    }
-
-    /**
      * Find thread with replies.
      */
     public function findThreadWithReplies(int $id): ?DiscussionThread
@@ -50,15 +40,15 @@ class ForumRepository
     }
 
     /**
-     * Get paginated threads for a lesson.
+     * Get paginated threads for a trainingUnit.
      */
-    public function getThreadsForLesson(
-        int $lessonId,
+    public function getThreadsForTrainingUnit(
+        int $trainingUnitId,
         string $sort = 'recent',
         ?string $filter = null,
         int $perPage = 20,
     ): LengthAwarePaginator {
-        $query = DiscussionThread::forLesson($lessonId)
+        $query = DiscussionThread::forTrainingUnit($trainingUnitId)
             ->with(['author', 'lastReplyAuthor']);
 
         $query = $this->applyFilters($query, $filter);
@@ -68,16 +58,16 @@ class ForumRepository
     }
 
     /**
-     * Get paginated threads for a course.
+     * Get paginated threads for a trainingPath.
      */
-    public function getThreadsForCourse(
-        int $courseId,
+    public function getThreadsForTrainingPath(
+        int $trainingPathId,
         string $sort = 'recent',
         ?string $filter = null,
         int $perPage = 20,
     ): LengthAwarePaginator {
-        $query = DiscussionThread::forCourse($courseId)
-            ->with(['author', 'lastReplyAuthor', 'lesson']);
+        $query = DiscussionThread::forTrainingPath($trainingPathId)
+            ->with(['author', 'lastReplyAuthor', 'trainingUnit']);
 
         $query = $this->applyFilters($query, $filter);
         $query = $this->applySorting($query, $sort);
@@ -86,17 +76,17 @@ class ForumRepository
     }
 
     /**
-     * Get threads by teacher (across all their courses).
+     * Get threads by teacher (across all their trainingPaths).
      */
     public function getThreadsForTeacher(
         User $teacher,
         ?string $filter = null,
         int $perPage = 20,
     ): LengthAwarePaginator {
-        $courseIds = $teacher->taughtCourses()->pluck('id');
+        $trainingPathIds = $teacher->taughtTrainingPaths()->pluck('id');
 
-        $query = DiscussionThread::whereIn('course_id', $courseIds)
-            ->with(['author', 'course', 'lesson', 'lastReplyAuthor']);
+        $query = DiscussionThread::whereIn('training_path_id', $trainingPathIds)
+            ->with(['author', 'trainingPath', 'trainingUnit', 'lastReplyAuthor']);
 
         $query = $this->applyFilters($query, $filter);
         $query = $query->orderByDesc('created_at');
@@ -264,7 +254,7 @@ class ForumRepository
     public function getFlaggedThreads(int $perPage = 20): LengthAwarePaginator
     {
         return DiscussionThread::flagged()
-            ->with(['author', 'course', 'lesson'])
+            ->with(['author', 'trainingPath', 'trainingUnit'])
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -275,7 +265,7 @@ class ForumRepository
     public function getFlaggedReplies(int $perPage = 20): LengthAwarePaginator
     {
         return ThreadReply::flagged()
-            ->with(['author', 'thread.course'])
+            ->with(['author', 'thread.trainingPath'])
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -300,7 +290,7 @@ class ForumRepository
         return match ($sort) {
             'popular' => $query->orderByDesc('upvote_count')->orderByDesc('reply_count'),
             'unanswered' => $query->orderBy('reply_count')->orderByDesc('created_at'),
-            default => $query->orderByDesc('is_pinned')->orderByDesc('created_at'),
+            default => $query->orderByRaw("CASE WHEN status = 'pinned' THEN 0 ELSE 1 END")->orderByDesc('created_at'),
         };
     }
 

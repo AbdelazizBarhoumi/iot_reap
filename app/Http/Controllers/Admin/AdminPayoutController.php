@@ -23,15 +23,42 @@ class AdminPayoutController extends Controller
     public function index(Request $request): InertiaResponse|JsonResponse
     {
         $perPage = $request->integer('per_page', 20);
-        $payouts = $this->payoutService->getPendingPayouts($perPage);
+        $paginatedPayouts = $this->payoutService->getPendingPayouts($perPage);
+
+        // Transform payouts to match React component structure
+        $payouts = $paginatedPayouts->map(function (PayoutRequest $payout) {
+            return [
+                'id' => (string) $payout->id,
+                'teacher' => [
+                    'id' => $payout->user->id,
+                    'name' => $payout->user->name,
+                    'email' => $payout->user->email,
+                ],
+                'amount' => $payout->amount_cents / 100, // Convert cents to dollars
+                'status' => match ($payout->status->value) {
+                    'pending' => 'pending',
+                    'approved' => 'approved',
+                    'processing' => 'approved', // Treat processing as approved in UI
+                    'completed' => 'paid',
+                    'rejected' => 'rejected',
+                    'failed' => 'rejected',
+                    default => 'pending',
+                },
+                'requestedAt' => $payout->created_at->toIso8601String(),
+                'processedAt' => $payout->processed_at?->toIso8601String() ?? null,
+            ];
+        })->toArray();
+
+        $stats = $this->payoutService->getAdminStats();
 
         $data = [
             'payouts' => $payouts,
+            'stats' => $stats,
             'pagination' => [
-                'current_page' => $payouts->currentPage(),
-                'last_page' => $payouts->lastPage(),
-                'per_page' => $payouts->perPage(),
-                'total' => $payouts->total(),
+                'current_page' => $paginatedPayouts->currentPage(),
+                'last_page' => $paginatedPayouts->lastPage(),
+                'per_page' => $paginatedPayouts->perPage(),
+                'total' => $paginatedPayouts->total(),
             ],
         ];
 

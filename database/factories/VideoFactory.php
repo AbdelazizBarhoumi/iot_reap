@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\VideoStatus;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,7 +22,7 @@ class VideoFactory extends Factory
         $filename = $this->faker->word().'.mp4';
 
         return [
-            'lesson_id' => Lesson::factory()->video(),
+            'training_unit_id' => TrainingUnit::factory()->video(),
             'original_filename' => $filename,
             'storage_path' => "videos/raw/{$this->faker->uuid()}/{$filename}",
             'storage_disk' => 'local',

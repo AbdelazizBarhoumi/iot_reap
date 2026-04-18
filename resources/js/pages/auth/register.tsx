@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import {
     User,
     Mail,
@@ -7,6 +7,7 @@ import {
     Wrench,
     ArrowRight,
 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,12 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import { toast } from 'sonner';
 export default function Register() {
     return (
         <AuthLayout
             title="Join IoT-REAP"
-            description="Create your account to access virtual labs and courses"
+            description="Create your account to access virtual labs and training paths"
         >
             <Head title="Register" />
             <Form
@@ -151,7 +153,7 @@ export default function Register() {
                                                 Learn & Practice
                                             </span>
                                             <span className="text-center text-xs text-muted-foreground">
-                                                Access labs & courses
+                                                Access labs & training paths
                                             </span>
                                         </div>
                                     </label>
@@ -168,16 +170,22 @@ export default function Register() {
                                                 <GraduationCap className="h-5 w-5 text-primary" />
                                             </div>
                                             <span className="text-sm font-medium">
-                                                Teach & Create
+                                                Build & Create
                                             </span>
                                             <span className="text-center text-xs text-muted-foreground">
-                                                Build courses & labs
+                                                Build training paths & labs
+                                                (admin approval required)
                                             </span>
                                         </div>
                                     </label>
                                 </div>
                                 <InputError message={errors.role} />
                             </div>
+                            <p className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                New accounts must verify email before accessing
+                                protected areas. Teacher accounts also require
+                                admin approval for Content Studio access.
+                            </p>
                             {/* Submit button */}
                             <Button
                                 type="submit"
@@ -192,6 +200,30 @@ export default function Register() {
                                 )}
                                 Create account
                             </Button>
+                            {/* Google OAuth button */}
+                            <GoogleLogin
+                                onSuccess={(credentialResponse) => {
+                                    // Exchange the authorization code for tokens on backend
+                                    router.post(
+                                        route('google.auth-code'),
+                                        {
+                                            credential: credentialResponse.credential,
+                                        },
+                                        {
+                                            onError: () => {
+                                                toast.error('Authentication failed. Please try again.');
+                                            },
+                                        }
+                                    );
+                                }}
+                                onError={() => {
+                                    toast.error('Failed to authenticate with Google. Please try again.');
+                                }}
+                                locale="en"
+                                text="signup_with"
+                                size="large"
+                                theme="outline"
+                            />
                         </div>
                         {/* Terms notice */}
                         <p className="text-center text-xs text-muted-foreground">

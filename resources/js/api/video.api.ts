@@ -2,15 +2,16 @@
  * Video Management API
  *
  * API functions for video upload, management, and captions.
- * Used by teachers to manage lesson videos.
+ * Used by teachers to manage trainingUnit videos.
  */
-import axios from './client';
+import type { AxiosProgressEvent } from 'axios';
+import client from './client';
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 export interface Video {
     id: number;
-    lesson_id: number;
+    training_unit_id: number;
     original_filename: string;
     status: 'pending' | 'processing' | 'ready' | 'failed';
     is_ready: boolean;
@@ -59,47 +60,47 @@ export interface ProcessingStats {
 // Video API
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Get video for a lesson.
+ * Get video for a trainingUnit.
  */
-export async function getVideoForLesson(
-    lessonId: number,
+export async function getVideoForTrainingUnit(
+    trainingUnitId: number,
 ): Promise<Video | null> {
-    const response = await axios.get<{ data: Video | null }>(
-        `/teaching/lessons/${lessonId}/video`,
+    const response = await client.get<{ data: Video | null }>(
+        `/teaching/trainingUnits/${trainingUnitId}/video`,
     );
     return response.data.data;
 }
 /**
  * Get video transcoding status.
  */
-export async function getVideoStatus(lessonId: number): Promise<VideoStatus> {
-    const response = await axios.get<VideoStatus>(
-        `/teaching/lessons/${lessonId}/video/status`,
+export async function getVideoStatus(trainingUnitId: number): Promise<VideoStatus> {
+    const response = await client.get<VideoStatus>(
+        `/teaching/trainingUnits/${trainingUnitId}/video/status`,
     );
     return response.data;
 }
 /**
- * Upload a video for a lesson.
+ * Upload a video for a trainingUnit.
  *
- * @param lessonId - The lesson ID
+ * @param trainingUnitId - The trainingUnit ID
  * @param file - The video file
  * @param onProgress - Optional progress callback (0-100)
  */
 export async function uploadVideo(
-    lessonId: number,
+    trainingUnitId: number,
     file: File,
     onProgress?: (progress: number) => void,
 ): Promise<Video> {
     const formData = new FormData();
     formData.append('video', file);
-    const response = await axios.post<{ data: Video; message: string }>(
-        `/teaching/lessons/${lessonId}/video`,
+    const response = await client.post<{ data: Video; message: string }>(
+        `/teaching/trainingUnits/${trainingUnitId}/video`,
         formData,
         {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-            onUploadProgress: (progressEvent) => {
+            onUploadProgress: (progressEvent: AxiosProgressEvent) => {
                 if (onProgress && progressEvent.total) {
                     const percent = Math.round(
                         (progressEvent.loaded * 100) / progressEvent.total,
@@ -109,20 +110,20 @@ export async function uploadVideo(
             },
         },
     );
-    return response.data.data;
+    return (response.data as { data: Video }).data;
 }
 /**
- * Delete a video from a lesson.
+ * Delete a video from a trainingUnit.
  */
-export async function deleteVideo(lessonId: number): Promise<void> {
-    await axios.delete(`/teaching/lessons/${lessonId}/video`);
+export async function deleteVideo(trainingUnitId: number): Promise<void> {
+    await client.delete(`/teaching/trainingUnits/${trainingUnitId}/video`);
 }
 /**
  * Retry transcoding for a failed video.
  */
-export async function retryTranscoding(lessonId: number): Promise<Video> {
-    const response = await axios.post<{ data: Video; message: string }>(
-        `/teaching/lessons/${lessonId}/video/retry`,
+export async function retryTranscoding(trainingUnitId: number): Promise<Video> {
+    const response = await client.post<{ data: Video; message: string }>(
+        `/teaching/trainingUnits/${trainingUnitId}/video/retry`,
     );
     return response.data.data;
 }
@@ -130,11 +131,11 @@ export async function retryTranscoding(lessonId: number): Promise<Video> {
 // Caption API
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Get captions for a lesson's video.
+ * Get captions for a trainingUnit's video.
  */
-export async function getCaptions(lessonId: number): Promise<Caption[]> {
-    const response = await axios.get<{ data: Caption[] }>(
-        `/teaching/lessons/${lessonId}/video/captions`,
+export async function getCaptions(trainingUnitId: number): Promise<Caption[]> {
+    const response = await client.get<{ data: Caption[] }>(
+        `/teaching/trainingUnits/${trainingUnitId}/video/captions`,
     );
     return response.data.data;
 }
@@ -142,7 +143,7 @@ export async function getCaptions(lessonId: number): Promise<Caption[]> {
  * Upload a caption file for a video.
  */
 export async function uploadCaption(
-    lessonId: number,
+    trainingUnitId: number,
     file: File,
     language: string,
     label?: string,
@@ -153,8 +154,8 @@ export async function uploadCaption(
     if (label) {
         formData.append('label', label);
     }
-    const response = await axios.post<{ data: Caption; message: string }>(
-        `/teaching/lessons/${lessonId}/video/captions`,
+    const response = await client.post<{ data: Caption; message: string }>(
+        `/teaching/trainingUnits/${trainingUnitId}/video/captions`,
         formData,
         {
             headers: {
@@ -168,11 +169,11 @@ export async function uploadCaption(
  * Delete a caption.
  */
 export async function deleteCaption(
-    lessonId: number,
+    trainingUnitId: number,
     captionId: number,
 ): Promise<void> {
-    await axios.delete(
-        `/teaching/lessons/${lessonId}/video/captions/${captionId}`,
+    await client.delete(
+        `/teaching/trainingUnits/${trainingUnitId}/video/captions/${captionId}`,
     );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,7 +183,7 @@ export async function deleteCaption(
  * Get video processing statistics (admin only).
  */
 export async function getProcessingStats(): Promise<ProcessingStats> {
-    const response = await axios.get<{ data: ProcessingStats }>(
+    const response = await client.get<{ data: ProcessingStats }>(
         '/admin/videos/processing-stats',
     );
     return response.data.data;
@@ -199,20 +200,20 @@ export function getStreamUrl(videoId: number): string {
 /**
  * Poll video status until ready or failed.
  *
- * @param lessonId - The lesson ID
+ * @param trainingUnitId - The trainingUnit ID
  * @param intervalMs - Polling interval in milliseconds (default: 3000)
  * @param maxAttempts - Maximum polling attempts (default: 100)
  * @param onStatusChange - Optional callback when status changes
  */
 export async function pollUntilReady(
-    lessonId: number,
+    trainingUnitId: number,
     intervalMs = 3000,
     maxAttempts = 100,
     onStatusChange?: (status: VideoStatus) => void,
 ): Promise<VideoStatus> {
     let attempts = 0;
     while (attempts < maxAttempts) {
-        const status = await getVideoStatus(lessonId);
+        const status = await getVideoStatus(trainingUnitId);
         if (onStatusChange) {
             onStatusChange(status);
         }

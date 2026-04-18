@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +19,7 @@ class QuizFactory extends Factory
     public function definition(): array
     {
         return [
-            'lesson_id' => Lesson::factory()->practice(),
+            'training_unit_id' => TrainingUnit::factory()->practice(),
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(2),
             'passing_score' => $this->faker->randomElement([60, 70, 75, 80, 85]),

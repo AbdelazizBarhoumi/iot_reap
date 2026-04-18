@@ -3,10 +3,10 @@
 namespace Tests\Unit;
 
 use App\Enums\ThreadStatus;
-use App\Models\Course;
-use App\Models\CourseModule;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\ThreadVote;
 use App\Models\User;
@@ -43,29 +43,29 @@ class ForumServiceTest extends TestCase
     // Thread Creation
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_creates_thread_for_lesson(): void
+    public function test_creates_thread_for_trainingUnit(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->for($course)->create();
-        $lesson = Lesson::factory()->for($module, 'module')->create();
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->for($trainingPath)->create();
+        $trainingUnit = TrainingUnit::factory()->for($module, 'module')->create();
 
         $thread = $this->service->createThread(
             author: $user,
-            lesson: $lesson,
+            trainingUnit: $trainingUnit,
             title: 'How do I configure GPIO pins?',
             content: 'I need help with the GPIO setup on the Raspberry Pi.',
         );
 
         $this->assertInstanceOf(DiscussionThread::class, $thread);
-        $this->assertEquals($lesson->id, $thread->lesson_id);
-        $this->assertEquals($course->id, $thread->course_id);
+        $this->assertEquals($trainingUnit->id, $thread->training_unit_id);
+        $this->assertEquals($trainingPath->id, $thread->training_path_id);
         $this->assertEquals($user->id, $thread->author_id);
         $this->assertEquals('How do I configure GPIO pins?', $thread->title);
         $this->assertEquals(ThreadStatus::OPEN, $thread->status);
         $this->assertDatabaseHas('discussion_threads', [
             'id' => $thread->id,
-            'lesson_id' => $lesson->id,
+            'training_unit_id' => $trainingUnit->id,
             'author_id' => $user->id,
         ]);
     }
@@ -87,7 +87,7 @@ class ForumServiceTest extends TestCase
                 Mockery::on(fn ($user) => $user->id === $author->id),
                 $replier->name,
                 $thread->id,
-                $thread->lesson_id
+                $thread->training_unit_id
             );
 
         $reply = $this->service->replyToThread(
@@ -444,32 +444,32 @@ class ForumServiceTest extends TestCase
     // Thread Retrieval
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_threads_for_lesson(): void
+    public function test_gets_threads_for_trainingUnit(): void
     {
         $author = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->for($course)->create();
-        $lesson = Lesson::factory()->for($module, 'module')->create();
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->for($trainingPath)->create();
+        $trainingUnit = TrainingUnit::factory()->for($module, 'module')->create();
 
-        // Create threads for the lesson
+        // Create threads for the trainingUnit
         DiscussionThread::create([
-            'lesson_id' => $lesson->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
             'title' => 'Thread 1',
             'content' => 'Content 1',
             'status' => ThreadStatus::OPEN,
         ]);
         DiscussionThread::create([
-            'lesson_id' => $lesson->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
             'title' => 'Thread 2',
             'content' => 'Content 2',
             'status' => ThreadStatus::OPEN,
         ]);
 
-        $threads = $this->service->getThreads($lesson->id);
+        $threads = $this->service->getThreads($trainingUnit->id);
 
         $this->assertEquals(2, $threads->total());
     }
@@ -477,14 +477,14 @@ class ForumServiceTest extends TestCase
     public function test_filters_unanswered_threads(): void
     {
         $author = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->for($course)->create();
-        $lesson = Lesson::factory()->for($module, 'module')->create();
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->for($trainingPath)->create();
+        $trainingUnit = TrainingUnit::factory()->for($module, 'module')->create();
 
         // Create answered thread (has replies)
         $answeredThread = DiscussionThread::create([
-            'lesson_id' => $lesson->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
             'title' => 'Answered thread',
             'content' => 'Content',
@@ -494,8 +494,8 @@ class ForumServiceTest extends TestCase
 
         // Create unanswered thread (no replies)
         $unansweredThread = DiscussionThread::create([
-            'lesson_id' => $lesson->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
             'title' => 'Unanswered thread',
             'content' => 'Content',
@@ -503,56 +503,56 @@ class ForumServiceTest extends TestCase
             'reply_count' => 0,
         ]);
 
-        $threads = $this->service->getThreads($lesson->id, filter: 'unanswered');
+        $threads = $this->service->getThreads($trainingUnit->id, filter: 'unanswered');
 
         $this->assertEquals(1, $threads->total());
         $this->assertEquals($unansweredThread->id, $threads->first()->id);
     }
 
-    public function test_gets_teacher_threads_across_courses(): void
+    public function test_gets_teacher_threads_across_trainingPaths(): void
     {
         $teacher = User::factory()->teacher()->create();
         $student = User::factory()->create();
 
-        // Create two courses for the teacher
-        $course1 = Course::factory()->create(['instructor_id' => $teacher->id]);
-        $course2 = Course::factory()->create(['instructor_id' => $teacher->id]);
+        // Create two trainingPaths for the teacher
+        $trainingPath1 = TrainingPath::factory()->create(['instructor_id' => $teacher->id]);
+        $trainingPath2 = TrainingPath::factory()->create(['instructor_id' => $teacher->id]);
 
-        $module1 = CourseModule::factory()->for($course1)->create();
-        $module2 = CourseModule::factory()->for($course2)->create();
+        $module1 = TrainingPathModule::factory()->for($trainingPath1)->create();
+        $module2 = TrainingPathModule::factory()->for($trainingPath2)->create();
 
-        $lesson1 = Lesson::factory()->for($module1, 'module')->create();
-        $lesson2 = Lesson::factory()->for($module2, 'module')->create();
+        $trainingUnit1 = TrainingUnit::factory()->for($module1, 'module')->create();
+        $trainingUnit2 = TrainingUnit::factory()->for($module2, 'module')->create();
 
-        // Thread in course 1
+        // Thread in trainingPath 1
         DiscussionThread::create([
-            'lesson_id' => $lesson1->id,
-            'course_id' => $course1->id,
+            'training_unit_id' => $trainingUnit1->id,
+            'training_path_id' => $trainingPath1->id,
             'author_id' => $student->id,
-            'title' => 'Course 1 Thread',
+            'title' => 'TrainingPath 1 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
         ]);
 
-        // Thread in course 2
+        // Thread in trainingPath 2
         DiscussionThread::create([
-            'lesson_id' => $lesson2->id,
-            'course_id' => $course2->id,
+            'training_unit_id' => $trainingUnit2->id,
+            'training_path_id' => $trainingPath2->id,
             'author_id' => $student->id,
-            'title' => 'Course 2 Thread',
+            'title' => 'TrainingPath 2 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
         ]);
 
-        // Thread in another teacher's course
+        // Thread in another teacher's trainingPath
         $otherTeacher = User::factory()->teacher()->create();
-        $otherCourse = Course::factory()->create(['instructor_id' => $otherTeacher->id]);
-        $otherModule = CourseModule::factory()->for($otherCourse)->create();
-        $otherLesson = Lesson::factory()->for($otherModule, 'module')->create();
+        $otherTrainingPath = TrainingPath::factory()->create(['instructor_id' => $otherTeacher->id]);
+        $otherModule = TrainingPathModule::factory()->for($otherTrainingPath)->create();
+        $otherTrainingUnit = TrainingUnit::factory()->for($otherModule, 'module')->create();
 
         DiscussionThread::create([
-            'lesson_id' => $otherLesson->id,
-            'course_id' => $otherCourse->id,
+            'training_unit_id' => $otherTrainingUnit->id,
+            'training_path_id' => $otherTrainingPath->id,
             'author_id' => $student->id,
             'title' => 'Other Teacher Thread',
             'content' => 'Content',
@@ -664,37 +664,37 @@ class ForumServiceTest extends TestCase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Course Threads
+    // TrainingPath Threads
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_threads_for_course(): void
+    public function test_gets_threads_for_trainingPath(): void
     {
         $author = User::factory()->create();
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->for($course)->create();
-        $lesson1 = Lesson::factory()->for($module, 'module')->create();
-        $lesson2 = Lesson::factory()->for($module, 'module')->create();
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->for($trainingPath)->create();
+        $trainingUnit1 = TrainingUnit::factory()->for($module, 'module')->create();
+        $trainingUnit2 = TrainingUnit::factory()->for($module, 'module')->create();
 
-        // Threads across different lessons in the same course
+        // Threads across different trainingUnits in the same trainingPath
         DiscussionThread::create([
-            'lesson_id' => $lesson1->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit1->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
-            'title' => 'Lesson 1 Thread',
+            'title' => 'TrainingUnit 1 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
         ]);
 
         DiscussionThread::create([
-            'lesson_id' => $lesson2->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit2->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
-            'title' => 'Lesson 2 Thread',
+            'title' => 'TrainingUnit 2 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
         ]);
 
-        $threads = $this->service->getCourseThreads($course->id);
+        $threads = $this->service->getTrainingPathThreads($trainingPath->id);
 
         $this->assertEquals(2, $threads->total());
     }
@@ -708,13 +708,13 @@ class ForumServiceTest extends TestCase
      */
     private function createThread(User $author): DiscussionThread
     {
-        $course = Course::factory()->create();
-        $module = CourseModule::factory()->for($course)->create();
-        $lesson = Lesson::factory()->for($module, 'module')->create();
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->for($trainingPath)->create();
+        $trainingUnit = TrainingUnit::factory()->for($module, 'module')->create();
 
         return DiscussionThread::create([
-            'lesson_id' => $lesson->id,
-            'course_id' => $course->id,
+            'training_unit_id' => $trainingUnit->id,
+            'training_path_id' => $trainingPath->id,
             'author_id' => $author->id,
             'title' => 'Test Thread',
             'content' => 'Test content',

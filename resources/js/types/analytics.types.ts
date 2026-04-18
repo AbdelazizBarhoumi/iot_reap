@@ -23,7 +23,7 @@ export interface RevenueChartPoint {
     revenue: number;
     sales_count?: number;
 }
-export interface TopCourse {
+export interface TopTrainingPath {
     id: number;
     title: string;
     thumbnail_url: string | null;
@@ -53,7 +53,7 @@ export interface EarningsSummary {
     start_date: string;
     end_date: string;
 }
-export interface RevenueByCourse {
+export interface RevenueByTrainingPath {
     id: number;
     title: string;
     thumbnail_url: string | null;

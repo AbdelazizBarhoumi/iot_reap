@@ -6,7 +6,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Helper class for analytics date range calculations.
- * Consolidates duplicate logic from AdminAnalyticsService and CourseAnalyticsService.
+ * Consolidates duplicate logic from AdminAnalyticsService and TrainingPathAnalyticsService.
  */
 final class DateRangeHelper
 {

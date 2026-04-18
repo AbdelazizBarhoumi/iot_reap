@@ -10,34 +10,34 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('teaching.')->group(function () {
 
-    // Dashboard and course management
+    // Dashboard and trainingPath management
     Route::controller(TeachingController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->middleware('throttle:course-creation')->name('store');
+        Route::post('/', 'store')->middleware('throttle:trainingPath-creation')->name('store');
         Route::get('/{id}/edit', 'edit')->name('edit');
-        Route::patch('/{course}', 'update')->name('update');
-        Route::delete('/{course}', 'destroy')->name('destroy');
-        Route::post('/{course}/submit', 'submitForReview')->name('submit');
-        Route::post('/{course}/archive', 'archive')->name('archive');
-        Route::post('/{course}/restore', 'restore')->name('restore');
+        Route::patch('/{trainingPath}', 'update')->name('update');
+        Route::delete('/{trainingPath}', 'destroy')->name('destroy');
+        Route::post('/{trainingPath}/submit', 'submitForReview')->name('submit');
+        Route::post('/{trainingPath}/archive', 'archive')->name('archive');
+        Route::post('/{trainingPath}/restore', 'restore')->name('restore');
 
         // Module management
-        Route::post('/{course}/modules', 'storeModule')->name('modules.store');
-        Route::patch('/{course}/modules/{module}', 'updateModule')->name('modules.update');
-        Route::delete('/{course}/modules/{module}', 'destroyModule')->name('modules.destroy');
-        Route::patch('/{course}/modules/reorder', 'reorderModules')->name('modules.reorder');
+        Route::post('/{trainingPath}/modules', 'storeModule')->name('modules.store');
+        Route::patch('/{trainingPath}/modules/{module}', 'updateModule')->name('modules.update');
+        Route::delete('/{trainingPath}/modules/{module}', 'destroyModule')->name('modules.destroy');
+        Route::patch('/{trainingPath}/modules/reorder', 'reorderModules')->name('modules.reorder');
 
-        // Lesson management
-        Route::get('/{courseId}/module/{moduleId}/lesson/{lessonId}', 'editLesson')->name('lesson.edit');
-        Route::post('/{course}/modules/{module}/lessons', 'storeLesson')->name('lessons.store');
-        Route::patch('/{course}/modules/{module}/lessons/{lesson}', 'updateLesson')->name('lessons.update');
-        Route::delete('/{course}/modules/{module}/lessons/{lesson}', 'destroyLesson')->name('lessons.destroy');
-        Route::patch('/{course}/modules/{module}/lessons/reorder', 'reorderLessons')->name('lessons.reorder');
+        // TrainingUnit management
+        Route::get('/{trainingPathId}/module/{moduleId}/trainingUnit/{trainingUnitId}', 'editTrainingUnit')->name('trainingUnit.edit');
+        Route::post('/{trainingPath}/modules/{module}/trainingUnits', 'storeTrainingUnit')->name('trainingUnits.store');
+        Route::patch('/{trainingPath}/modules/{module}/trainingUnits/{trainingUnit}', 'updateTrainingUnit')->name('trainingUnits.update');
+        Route::delete('/{trainingPath}/modules/{module}/trainingUnits/{trainingUnit}', 'destroyTrainingUnit')->name('trainingUnits.destroy');
+        Route::patch('/{trainingPath}/modules/{module}/trainingUnits/reorder', 'reorderTrainingUnits')->name('trainingUnits.reorder');
     });
 
     // Quiz management (teacher)
-    Route::prefix('lessons/{lessonId}/quiz')->name('quiz.')->controller(QuizController::class)->group(function () {
+    Route::prefix('trainingUnits/{trainingUnitId}/quiz')->name('quiz.')->controller(QuizController::class)->group(function () {
         Route::get('/', 'show')->name('show');
         Route::post('/', 'store')->name('store');
     });
@@ -58,14 +58,14 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
     });
 
     // Article management (teacher)
-    Route::prefix('lessons/{lessonId}/article')->name('article.')->controller(ArticleController::class)->group(function () {
+    Route::prefix('trainingUnits/{trainingUnitId}/article')->name('article.')->controller(ArticleController::class)->group(function () {
         Route::get('/', 'show')->name('show');
         Route::post('/', 'upsert')->name('upsert');
         Route::delete('/', 'destroy')->name('destroy');
     });
 
     // Video management (teacher)
-    Route::prefix('lessons/{lessonId}/video')->name('video.')->controller(VideoController::class)->group(function () {
+    Route::prefix('trainingUnits/{trainingUnitId}/video')->name('video.')->controller(VideoController::class)->group(function () {
         Route::get('/', 'show')->name('show');
         Route::get('/status', 'status')->name('status');
         Route::post('/', 'store')->middleware('throttle:10,1')->name('store');
@@ -94,9 +94,20 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
         Route::get('/kpis', 'kpis')->name('kpis');
         Route::get('/enrollment-chart', 'enrollmentChart')->name('enrollment-chart');
         Route::get('/revenue-chart', 'revenueChart')->name('revenue-chart');
-        Route::get('/courses/{course}/students', 'students')->name('students');
-        Route::get('/courses/{course}/funnel', 'funnel')->name('funnel');
+        Route::get('/trainingPaths/{trainingPath}/students', 'students')->name('students');
+        Route::get('/trainingPaths/{trainingPath}/funnel', 'funnel')->name('funnel');
         Route::get('/earnings', 'earnings')->name('earnings');
         Route::get('/earnings/export', 'exportEarnings')->name('earnings.export');
     });
+
+    // TrainingUnit VM Assignments (teacher submission)
+    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(\App\Http\Controllers\TrainingUnitVMAssignmentController::class)->group(function () {
+        Route::get('/available-vms', 'availableVMs')->name('available-vms');
+        Route::post('/', 'store')->name('store');
+        Route::get('/my-assignments', 'myAssignments')->name('my');
+        Route::delete('/{assignment}', 'destroy')->name('destroy');
+    });
+
+    // Get assignment for a trainingUnit (to check if VM is enabled)
+    Route::get('/trainingUnits/{trainingUnitId}/vm-assignment', [\App\Http\Controllers\TrainingUnitVMAssignmentController::class, 'forTrainingUnit'])->name('trainingUnit.vm-assignment');
 });

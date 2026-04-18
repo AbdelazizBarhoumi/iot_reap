@@ -179,6 +179,8 @@ class SessionCameraController extends Controller
      */
     public function hlsProxy(Request $request, string $sessionId, int $cameraId, ?string $path = null): \Illuminate\Http\Response
     {
+        $startTime = microtime(true);
+        
         \Illuminate\Support\Facades\Log::info('HLS proxy request received', [
             'session_id' => $sessionId,
             'camera_id' => $cameraId,
@@ -201,8 +203,14 @@ class SessionCameraController extends Controller
 
         try {
             $response = Http::timeout(10)->get($upstreamUrl);
+            
+            $elapsed = microtime(true) - $startTime;
 
             if (! $response->successful()) {
+                \Illuminate\Support\Facades\Log::warning('HLS upstream returned error', [
+                    'status' => $response->status(),
+                    'elapsed_ms' => round($elapsed * 1000, 2),
+                ]);
                 return response($response->body(), $response->status())
                     ->header('Content-Type', 'text/plain');
             }
@@ -249,21 +257,38 @@ class SessionCameraController extends Controller
                     $body
                 );
             }
+            
+            $elapsed = microtime(true) - $startTime;
+            \Illuminate\Support\Facades\Log::info('HLS proxy response sent', [
+                'camera_id' => $cameraId,
+                'path' => $streamPath,
+                'size_bytes' => strlen($body),
+                'elapsed_ms' => round($elapsed * 1000, 2),
+            ]);
 
             return response($body, 200)
                 ->header('Content-Type', $contentType)
-                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                ->header('Access-Control-Allow-Origin', '*');
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT')
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, X-XSRF-TOKEN')
+                ->header('X-Content-Type-Options', 'nosniff');
         } catch (\Exception $e) {
+            $elapsed = microtime(true) - $startTime;
             \Illuminate\Support\Facades\Log::error('HLS proxy failed', [
                 'camera_id' => $cameraId,
                 'stream_key' => $camera->stream_key,
                 'upstream_url' => $upstreamUrl,
                 'error' => $e->getMessage(),
+                'elapsed_ms' => round($elapsed * 1000, 2),
             ]);
 
             return response('HLS proxy error: '.$e->getMessage(), 502)
-                ->header('Content-Type', 'text/plain');
+                ->header('Content-Type', 'text/plain')
+                ->header('Access-Control-Allow-Origin', '*');
         }
     }
 

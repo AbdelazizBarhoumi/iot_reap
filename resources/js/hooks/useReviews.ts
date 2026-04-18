@@ -1,22 +1,23 @@
 /**
- * useReviews hook for managing course reviews.
+ * useReviews hook for managing trainingPath reviews.
  */
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type {
-    CourseReview,
+    TrainingPathReview,
     ReviewStats,
     CreateReviewData,
 } from '@/api/reviews.api';
 import { reviewsApi } from '@/api/reviews.api';
+import { useAuthStore } from '@/store/authStore';
 interface UseReviewsOptions {
-    courseId: number;
+    trainingPathId: number;
     autoFetch?: boolean;
 }
 interface UseReviewsReturn {
-    reviews: CourseReview[];
+    reviews: TrainingPathReview[];
     stats: ReviewStats | null;
-    myReview: CourseReview | null;
+    myReview: TrainingPathReview | null;
     canReview: boolean;
     loading: boolean;
     statsLoading: boolean;
@@ -27,21 +28,21 @@ interface UseReviewsReturn {
     fetchReviews: (page?: number) => Promise<void>;
     fetchStats: () => Promise<void>;
     fetchMyReview: () => Promise<void>;
-    createReview: (data: CreateReviewData) => Promise<CourseReview | null>;
+    createReview: (data: CreateReviewData) => Promise<TrainingPathReview | null>;
     updateReview: (
         reviewId: number,
         data: CreateReviewData,
-    ) => Promise<CourseReview | null>;
+    ) => Promise<TrainingPathReview | null>;
     deleteReview: (reviewId: number) => Promise<boolean>;
     isSubmitting: boolean;
 }
 export function useReviews({
-    courseId,
+    trainingPathId,
     autoFetch = true,
 }: UseReviewsOptions): UseReviewsReturn {
-    const [reviews, setReviews] = useState<CourseReview[]>([]);
+    const [reviews, setReviews] = useState<TrainingPathReview[]>([]);
     const [stats, setStats] = useState<ReviewStats | null>(null);
-    const [myReview, setMyReview] = useState<CourseReview | null>(null);
+    const [myReview, setMyReview] = useState<TrainingPathReview | null>(null);
     const [canReview, setCanReview] = useState(false);
     const [loading, setLoading] = useState(false);
     const [statsLoading, setStatsLoading] = useState(false);
@@ -55,7 +56,7 @@ export function useReviews({
             setLoading(true);
             setError(null);
             try {
-                const response = await reviewsApi.getReviews(courseId, page);
+                const response = await reviewsApi.getReviews(trainingPathId, page);
                 setReviews(response.data);
                 setCurrentPage(response.meta.current_page);
                 setTotalPages(response.meta.last_page);
@@ -66,45 +67,53 @@ export function useReviews({
                         ? err.message
                         : 'Failed to load reviews';
                 setError(message);
-                console.error('Error fetching reviews:', err);
             } finally {
                 setLoading(false);
             }
         },
-        [courseId],
+        [trainingPathId],
     );
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         try {
-            const data = await reviewsApi.getReviewStats(courseId);
+            const data = await reviewsApi.getReviewStats(trainingPathId);
             setStats(data);
-        } catch (err) {
-            console.error('Error fetching review stats:', err);
+        } catch {
+            // Silently fail - stats are non-critical
         } finally {
             setStatsLoading(false);
         }
-    }, [courseId]);
+    }, [trainingPathId]);
     const fetchMyReview = useCallback(async () => {
+        const user = useAuthStore.getState().user;
+        // Only fetch if authenticated - endpoint requires auth
+        if (!user) {
+            setMyReview(null);
+            setCanReview(false);
+            return;
+        }
         try {
-            const response = await reviewsApi.getMyReview(courseId);
+            const response = await reviewsApi.getMyReview(trainingPathId);
             setMyReview(response.data);
             setCanReview(response.can_review);
-        } catch (err) {
-            console.error('Error fetching my review:', err);
+        } catch {
+            // Silently fail - endpoint is auth-only
+            setMyReview(null);
+            setCanReview(false);
         }
-    }, [courseId]);
+    }, [trainingPathId]);
     useEffect(() => {
-        if (autoFetch && courseId) {
+        if (autoFetch && trainingPathId) {
             fetchReviews();
             fetchStats();
             fetchMyReview();
         }
-    }, [autoFetch, courseId, fetchReviews, fetchStats, fetchMyReview]);
+    }, [autoFetch, trainingPathId, fetchReviews, fetchStats, fetchMyReview]);
     const createReview = useCallback(
-        async (data: CreateReviewData): Promise<CourseReview | null> => {
+        async (data: CreateReviewData): Promise<TrainingPathReview | null> => {
             setIsSubmitting(true);
             try {
-                const newReview = await reviewsApi.createReview(courseId, data);
+                const newReview = await reviewsApi.createReview(trainingPathId, data);
                 setReviews((prev) => [newReview, ...prev]);
                 setMyReview(newReview);
                 setCanReview(false);
@@ -124,17 +133,17 @@ export function useReviews({
                 setIsSubmitting(false);
             }
         },
-        [courseId, fetchStats],
+        [trainingPathId, fetchStats],
     );
     const updateReview = useCallback(
         async (
             reviewId: number,
             data: CreateReviewData,
-        ): Promise<CourseReview | null> => {
+        ): Promise<TrainingPathReview | null> => {
             setIsSubmitting(true);
             try {
                 const updatedReview = await reviewsApi.updateReview(
-                    courseId,
+                    trainingPathId,
                     reviewId,
                     data,
                 );
@@ -157,13 +166,13 @@ export function useReviews({
                 setIsSubmitting(false);
             }
         },
-        [courseId, fetchStats],
+        [trainingPathId, fetchStats],
     );
     const deleteReview = useCallback(
         async (reviewId: number): Promise<boolean> => {
             setIsSubmitting(true);
             try {
-                await reviewsApi.deleteReview(courseId, reviewId);
+                await reviewsApi.deleteReview(trainingPathId, reviewId);
                 setReviews((prev) => prev.filter((r) => r.id !== reviewId));
                 setMyReview(null);
                 setCanReview(true);
@@ -183,7 +192,7 @@ export function useReviews({
                 setIsSubmitting(false);
             }
         },
-        [courseId, fetchStats],
+        [trainingPathId, fetchStats],
     );
     return {
         reviews,

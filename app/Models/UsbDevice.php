@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * USB device model for USB/IP devices on gateway nodes.
@@ -111,9 +113,9 @@ class UsbDevice extends Model
     /**
      * Get the reservations for this device.
      */
-    public function reservations(): HasMany
+    public function reservations(): MorphMany
     {
-        return $this->hasMany(UsbDeviceReservation::class);
+        return $this->morphMany(Reservation::class, 'reservable');
     }
 
     /**
@@ -265,7 +267,7 @@ class UsbDevice extends Model
             return true;
         }
 
-        return $this->maintenance_until->isFuture();
+        return $this->maintenance_until->getTimestamp() > now()->getTimestamp();
     }
 
     /**

@@ -7,7 +7,7 @@ use App\Http\Requests\Forum\CreateThreadRequest;
 use App\Http\Resources\DiscussionThreadResource;
 use App\Http\Resources\ThreadReplyResource;
 use App\Models\DiscussionThread;
-use App\Models\Lesson;
+use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Services\ForumService;
 use Illuminate\Http\JsonResponse;
@@ -24,17 +24,17 @@ class ForumController extends Controller
     ) {}
 
     /**
-     * List threads for a lesson.
+     * List threads for a trainingUnit.
      */
-    public function index(Request $request, int $lessonId): JsonResponse
+    public function index(Request $request, int $trainingUnitId): JsonResponse
     {
-        $lesson = Lesson::findOrFail($lessonId);
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
         
         $sort = $request->query('sort', 'recent');
         $filter = $request->query('filter');
 
         $threads = $this->forumService->getThreads(
-            lessonId: $lessonId,
+            trainingUnitId: $trainingUnitId,
             sort: $sort,
             filter: $filter,
             currentUser: $request->user(),
@@ -52,15 +52,15 @@ class ForumController extends Controller
     }
 
     /**
-     * List threads for a course.
+     * List threads for a trainingPath.
      */
-    public function courseThreads(Request $request, int $courseId): JsonResponse
+    public function trainingPathThreads(Request $request, int $trainingPathId): JsonResponse
     {
         $sort = $request->query('sort', 'recent');
         $filter = $request->query('filter');
 
-        $threads = $this->forumService->getCourseThreads(
-            courseId: $courseId,
+        $threads = $this->forumService->getTrainingPathThreads(
+            trainingPathId: $trainingPathId,
             sort: $sort,
             filter: $filter,
             currentUser: $request->user(),
@@ -96,14 +96,14 @@ class ForumController extends Controller
     /**
      * Create a new thread.
      */
-    public function store(CreateThreadRequest $request, int $lessonId): JsonResponse
+    public function store(CreateThreadRequest $request, int $trainingUnitId): JsonResponse
     {
-        $lesson = Lesson::findOrFail($lessonId);
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
         $user = $request->user();
 
         $thread = $this->forumService->createThread(
             author: $user,
-            lesson: $lesson,
+            trainingUnit: $trainingUnit,
             title: $request->validated('title'),
             content: $request->validated('content'),
         );
@@ -397,15 +397,15 @@ class ForumController extends Controller
 
     private function authorizeTeacherAction($user, DiscussionThread $thread): void
     {
-        $course = $thread->course;
+        $trainingPath = $thread->trainingPath;
 
         // Admin can manage any thread
         if ($user->hasRole(\App\Enums\UserRole::ADMIN)) {
             return;
         }
 
-        // Teacher can only manage threads in their own courses
-        if ($user->hasRole(\App\Enums\UserRole::TEACHER) && $course->instructor_id === $user->id) {
+        // Teacher can only manage threads in their own trainingPaths
+        if ($user->hasRole(\App\Enums\UserRole::TEACHER) && $trainingPath->instructor_id === $user->id) {
             return;
         }
 

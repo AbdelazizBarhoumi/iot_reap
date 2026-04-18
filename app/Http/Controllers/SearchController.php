@@ -21,7 +21,7 @@ class SearchController extends Controller
     ) {}
 
     /**
-     * Search courses.
+     * Search trainingPaths.
      */
     public function search(SearchRequest $request): JsonResponse|InertiaResponse
     {
@@ -53,7 +53,7 @@ class SearchController extends Controller
             return response()->json($responseData);
         }
 
-        return Inertia::render('courses/search', $responseData);
+        return Inertia::render('trainingPaths/search', $responseData);
     }
 
     /**
@@ -114,11 +114,11 @@ class SearchController extends Controller
     }
 
     /**
-     * Get courses by category.
+     * Get trainingPaths by category.
      */
     public function byCategory(Request $request, string $slug): JsonResponse|InertiaResponse
     {
-        $courses = $this->searchService->getCoursesByCategory($slug);
+        $trainingPaths = $this->searchService->getTrainingPathsByCategory($slug);
         $categories = $this->searchService->getCategories();
 
         $categoryName = collect($categories)
@@ -126,13 +126,13 @@ class SearchController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'courses' => SearchResultResource::collection($courses),
+                'trainingPaths' => SearchResultResource::collection($trainingPaths),
                 'category' => $categoryName,
             ]);
         }
 
-        return Inertia::render('courses/category', [
-            'courses' => SearchResultResource::collection($courses),
+        return Inertia::render('trainingPaths/category', [
+            'trainingPaths' => SearchResultResource::collection($trainingPaths),
             'category' => $categoryName,
             'slug' => $slug,
             'categories' => $categories,

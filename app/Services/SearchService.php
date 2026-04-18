@@ -3,24 +3,24 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Repositories\CourseRepository;
+use App\Repositories\TrainingPathRepository;
 use App\Repositories\SearchRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Service for searching courses and tracking search queries.
+ * Service for searching trainingPaths and tracking search queries.
  */
 class SearchService
 {
     public function __construct(
         private readonly SearchRepository $searchRepository,
-        private readonly CourseRepository $courseRepository,
+        private readonly TrainingPathRepository $trainingPathRepository,
     ) {}
 
     /**
-     * Search courses using FULLTEXT search (MySQL) or LIKE fallback (SQLite).
+     * Search trainingPaths using FULLTEXT search (MySQL) or LIKE fallback (SQLite).
      *
      * @param  array<string, mixed>  $filters
      * @return array{results: Collection, total: int}
@@ -40,7 +40,7 @@ class SearchService
         }
 
         // Use repository for search
-        $results = $this->courseRepository->searchWithFilters($query, $filters, $sort);
+        $results = $this->trainingPathRepository->searchWithFilters($query, $filters, $sort);
         $total = $results->count();
 
         // Log the search
@@ -75,7 +75,7 @@ class SearchService
         // Cache suggestions for 15 minutes
         $cacheKey = 'search:suggest:'.md5($query);
 
-        return Cache::remember($cacheKey, 900, fn () => $this->courseRepository->getTitleSuggestions($query, $limit)
+        return Cache::remember($cacheKey, 900, fn () => $this->trainingPathRepository->getTitleSuggestions($query, $limit)
         );
     }
 
@@ -105,22 +105,22 @@ class SearchService
     }
 
     /**
-     * Get all categories with course counts.
+     * Get all categories with trainingPath counts.
      *
      * @return array<array{slug: string, name: string, count: int}>
      */
     public function getCategories(): array
     {
-        return Cache::remember('search:categories', 3600, fn () => $this->courseRepository->getCategoryStats()
+        return Cache::remember('search:categories', 3600, fn () => $this->trainingPathRepository->getCategoryStats()
         );
     }
 
     /**
-     * Get courses by category.
+     * Get trainingPaths by category.
      */
-    public function getCoursesByCategory(string $slug): Collection
+    public function getTrainingPathsByCategory(string $slug): Collection
     {
-        return $this->courseRepository->findByCategorySlug($slug);
+        return $this->trainingPathRepository->findByCategorySlug($slug);
     }
 
     /**

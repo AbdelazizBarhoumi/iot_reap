@@ -32,6 +32,10 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { ActivityLog } from '@/components/monitoring/ActivityLog';
+import { AlertsPanel } from '@/components/monitoring/AlertsPanel';
+import { MetricsChart } from '@/components/monitoring/MetricsChart';
+import { SystemHealthOverview } from '@/components/monitoring/SystemHealthOverview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +64,7 @@ interface KPIs {
     revenue_change: number;
     total_vm_sessions: number;
     vm_sessions_change: number;
-    active_courses: number;
+    active_trainingPaths: number;
     certificates_issued: number;
     period: string;
 }
@@ -70,7 +74,7 @@ interface ChartDataPoint {
     revenue: number;
     vm_sessions: number;
 }
-interface TopCourse {
+interface TopTrainingPath {
     id: number;
     title: string;
     thumbnail_url: string | null;
@@ -90,13 +94,13 @@ interface ActivityItem {
 interface SystemHealth {
     active_vm_sessions: number;
     queued_sessions: number;
-    pending_courses: number;
+    pending_trainingPaths: number;
     suspended_users: number;
 }
 interface DashboardPageProps extends PageProps {
     kpis: KPIs;
     chartData: ChartDataPoint[];
-    topCourses: TopCourse[];
+    topTrainingPaths: TopTrainingPath[];
     revenueByCategory: RevenueCategory[];
     userGrowthByRole: Record<string, number>;
     recentActivity: ActivityItem[];
@@ -153,7 +157,7 @@ export default function DashboardPage() {
     const {
         kpis,
         chartData,
-        topCourses,
+        topTrainingPaths,
         userGrowthByRole,
         recentActivity,
         systemHealth,
@@ -361,7 +365,7 @@ export default function DashboardPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">
-                                        Course Completions
+                                        Path Completions
                                     </p>
                                     <p className="font-heading text-xl font-bold text-foreground">
                                         {kpis.total_completions}
@@ -542,23 +546,23 @@ export default function DashboardPage() {
                     </div>
                     {/* Bottom Row */}
                     <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Top Courses */}
+                        {/* Top TrainingPaths */}
                         <Card className="shadow-card lg:col-span-2">
                             <CardHeader>
                                 <CardTitle className="text-lg">
-                                    Top Courses
+                                    Top Training Paths
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {topCourses.length === 0 ? (
+                                    {topTrainingPaths.length === 0 ? (
                                         <p className="py-8 text-center text-muted-foreground">
-                                            No course data available
+                                            No path data available
                                         </p>
                                     ) : (
-                                        topCourses.map((course, idx) => (
+                                        topTrainingPaths.map((trainingPath, idx) => (
                                             <div
-                                                key={course.id}
+                                                key={trainingPath.id}
                                                 className="flex items-center gap-4"
                                             >
                                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
@@ -566,14 +570,14 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className="truncate font-medium text-foreground">
-                                                        {course.title}
+                                                        {trainingPath.title}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        by {course.instructor}
+                                                        by {trainingPath.instructor}
                                                     </p>
                                                 </div>
                                                 <Badge variant="secondary">
-                                                    {course.enrollments}{' '}
+                                                    {trainingPath.enrollments}{' '}
                                                     enrollments
                                                 </Badge>
                                             </div>
@@ -623,21 +627,21 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">
-                                            Pending Course Reviews
+                                            Pending Path Reviews
                                         </span>
                                         <Badge
                                             variant={
-                                                systemHealth.pending_courses > 0
+                                                systemHealth.pending_trainingPaths > 0
                                                     ? 'default'
                                                     : 'secondary'
                                             }
                                             className={
-                                                systemHealth.pending_courses > 0
+                                                systemHealth.pending_trainingPaths > 0
                                                     ? 'bg-warning text-warning-foreground'
                                                     : ''
                                             }
                                         >
-                                            {systemHealth.pending_courses}
+                                            {systemHealth.pending_trainingPaths}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -724,6 +728,49 @@ export default function DashboardPage() {
                             </div>
                         </CardContent>
                     </Card>
+                    {/* Infrastructure Monitoring Section */}
+                    <div className="mt-8 space-y-6">
+                        <h2 className="font-heading text-xl font-bold text-foreground">
+                            Infrastructure Monitoring
+                        </h2>
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            {/* System Health Overview */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                <SystemHealthOverview health={systemHealth as any} />
+                            </motion.div>
+                            {/* System Alerts */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                <AlertsPanel alerts={[]} />
+                            </motion.div>
+                        </div>
+                        {/* Metrics Charts */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                        >
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            <MetricsChart metrics={chartData as any} />
+                        </motion.div>
+                        {/* Activity Log */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7 }}
+                        >
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            <ActivityLog activities={recentActivity as any} />
+                        </motion.div>
+                    </div>
                 </div>
             </div>
         </AppLayout>

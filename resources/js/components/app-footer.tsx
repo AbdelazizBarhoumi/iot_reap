@@ -9,7 +9,9 @@ export function AppFooter() {
     const { auth } = usePage().props;
     const isAuthenticated = !!auth.user;
     const role = auth.user?.role;
-    const isTeacher = role === 'teacher' || role === 'admin';
+    const isTeacher =
+        role === 'admin' ||
+        (role === 'teacher' && !!auth.user?.teacher_approved_at);
     const isEngineer = role === 'engineer' || role === 'admin';
     return (
         <footer className="mt-auto border-t border-border bg-card/50 py-6">
@@ -19,18 +21,15 @@ export function AppFooter() {
                     <span>IoT-REAP</span>
                 </div>
                 <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-                    <Link
-                        href="/courses"
-                        className="transition-colors hover:text-foreground"
-                    >
-                        Courses
-                    </Link>
+                        <Link href="/trainingPaths" className="transition-colors hover:text-foreground">
+                            Training Paths
+                        </Link>
                     {isAuthenticated && (
                         <Link
-                            href="/my-courses"
+                            href="/my-trainingPaths"
                             className="transition-colors hover:text-foreground"
                         >
-                            My Learning
+                            My Training
                         </Link>
                     )}
                     {isTeacher && (
@@ -38,7 +37,7 @@ export function AppFooter() {
                             href="/teaching"
                             className="transition-colors hover:text-foreground"
                         >
-                            Teaching
+                            Content Studio
                         </Link>
                     )}
                     {isEngineer && (

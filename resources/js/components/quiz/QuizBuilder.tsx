@@ -30,7 +30,7 @@ import type {
 } from '@/types/quiz.types';
 import { QuestionEditor } from './QuestionEditor';
 interface QuizBuilderProps {
-    lessonId: string;
+    trainingUnitId: string;
     quiz: Quiz | null;
     onQuizCreated?: (quiz: Quiz) => void;
 }
@@ -40,7 +40,7 @@ const questionTypeIcons: Record<QuizQuestionType, React.ReactNode> = {
     short_answer: <Type className="h-4 w-4" />,
 };
 export function QuizBuilder({
-    lessonId,
+    trainingUnitId,
     quiz: initialQuiz,
     onQuizCreated,
 }: QuizBuilderProps) {
@@ -111,7 +111,7 @@ export function QuizBuilder({
     const createQuiz = async () => {
         setIsCreating(true);
         try {
-            const response = await fetch(`/teaching/lessons/${lessonId}/quiz`, {
+            const response = await fetch(`/teaching/trainingUnits/${trainingUnitId}/quiz`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

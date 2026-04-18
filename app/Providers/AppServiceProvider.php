@@ -134,11 +134,11 @@ class AppServiceProvider extends ServiceProvider
             UserRole::ADMIN->value,
         ]));
 
-        // Teaching gate — only teachers and admins can manage courses
-        Gate::define('teach', fn (User $user) => $user->hasAnyRole([
-            UserRole::TEACHER->value,
-            UserRole::ADMIN->value,
-        ]));
+        // Teaching gate — admins always allowed; teachers must be approved.
+        Gate::define('teach', fn (User $user) =>
+            $user->hasRole(UserRole::ADMIN)
+            || ($user->hasRole(UserRole::TEACHER) && $user->isTeacherApproved())
+        );
 
         // generic role gate for programmatic checks: Gate::allows('role', 'admin')
         Gate::define('role', fn (User $user, string $role) => $user->hasRole($role));
@@ -196,8 +196,8 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
 
-        // Course creation: 5 per hour per user (to prevent spam)
-        RateLimiter::for('course-creation', function (Request $request) {
+        // TrainingPath creation: 5 per hour per user (to prevent spam)
+        RateLimiter::for('trainingPath-creation', function (Request $request) {
             return Limit::perHour(50000)->by($request->user()?->id ?: $request->ip());
         });
 

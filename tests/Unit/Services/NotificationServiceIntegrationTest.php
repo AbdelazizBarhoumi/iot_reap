@@ -437,36 +437,36 @@ class NotificationServiceIntegrationTest extends TestCase
     // Convenience method tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_notify_course_approved(): void
+    public function test_notify_training_path_approved(): void
     {
         Event::fake([NotificationCreated::class]);
 
         $teacher = User::factory()->teacher()->create();
 
-        $notification = $this->service->notifyCourseApproved($teacher, 'Laravel 101', 42);
+        $notification = $this->service->notifyTrainingPathApproved($teacher, 'Laravel 101', 42);
 
         $this->assertEquals(NotificationType::COURSE_APPROVED, $notification->type);
-        $this->assertEquals('Course Approved!', $notification->title);
+        $this->assertEquals('TrainingPath Approved!', $notification->title);
         $this->assertStringContainsString('Laravel 101', $notification->message);
-        $this->assertEquals('/courses/42', $notification->action_url);
-        $this->assertEquals(42, $notification->data['course_id']);
+        $this->assertEquals('/trainingPaths/42', $notification->action_url);
+        $this->assertEquals(42, $notification->data['training_path_id']);
     }
 
-    public function test_notify_course_rejected(): void
+    public function test_notify_training_path_rejected(): void
     {
         Event::fake([NotificationCreated::class]);
 
         $teacher = User::factory()->teacher()->create();
 
-        $notification = $this->service->notifyCourseRejected(
+        $notification = $this->service->notifyTrainingPathRejected(
             $teacher,
-            'My Course',
+            'My TrainingPath',
             10,
             'Needs better content',
         );
 
         $this->assertEquals(NotificationType::COURSE_REJECTED, $notification->type);
-        $this->assertStringContainsString('My Course', $notification->message);
+        $this->assertStringContainsString('My TrainingPath', $notification->message);
         $this->assertStringContainsString('Needs better content', $notification->message);
         $this->assertEquals('Needs better content', $notification->data['feedback']);
     }
@@ -480,7 +480,7 @@ class NotificationServiceIntegrationTest extends TestCase
         $notification = $this->service->notifyNewEnrollment(
             $teacher,
             'John Doe',
-            'React Course',
+            'React TrainingPath',
             5,
         );
 

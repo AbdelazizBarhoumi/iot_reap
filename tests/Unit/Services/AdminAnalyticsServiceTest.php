@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Models\VMSession;
-use App\Repositories\CourseStatsRepository;
+use App\Repositories\TrainingPathStatsRepository;
 use App\Services\AdminAnalyticsService;
 use App\Services\SystemHealthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +19,7 @@ class AdminAnalyticsServiceTest extends TestCase
 
     private AdminAnalyticsService $service;
 
-    private CourseStatsRepository|MockInterface $mockStatsRepository;
+    private TrainingPathStatsRepository|MockInterface $mockStatsRepository;
 
     private SystemHealthService|MockInterface $mockSystemHealthService;
 
@@ -27,7 +27,7 @@ class AdminAnalyticsServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->mockStatsRepository = Mockery::mock(CourseStatsRepository::class);
+        $this->mockStatsRepository = Mockery::mock(TrainingPathStatsRepository::class);
         $this->mockSystemHealthService = Mockery::mock(SystemHealthService::class);
 
         $this->service = new AdminAnalyticsService(
@@ -37,7 +37,7 @@ class AdminAnalyticsServiceTest extends TestCase
 
         // Create test data
         User::factory()->count(5)->create();
-        Course::factory()->count(3)->create(['status' => 'approved']);
+        TrainingPath::factory()->count(3)->create(['status' => 'approved']);
     }
 
     public function test_get_platform_kpis_returns_comprehensive_metrics(): void
@@ -57,12 +57,12 @@ class AdminAnalyticsServiceTest extends TestCase
         $this->assertArrayHasKey('revenue_change', $result);
         $this->assertArrayHasKey('total_vm_sessions', $result);
         $this->assertArrayHasKey('vm_sessions_change', $result);
-        $this->assertArrayHasKey('active_courses', $result);
+        $this->assertArrayHasKey('active_trainingPaths', $result);
         $this->assertArrayHasKey('certificates_issued', $result);
         $this->assertArrayHasKey('period', $result);
 
         $this->assertEquals('30d', $result['period']);
-        $this->assertEquals(3, $result['active_courses']);
+        $this->assertEquals(3, $result['active_trainingPaths']);
         $this->assertIsNumeric($result['total_revenue']);
     }
 
@@ -89,7 +89,7 @@ class AdminAnalyticsServiceTest extends TestCase
     {
         // Arrange
         VMSession::factory()->count(3)->create(['status' => 'active']);
-        Course::factory()->count(1)->create(['status' => 'pending_review']);
+        TrainingPath::factory()->count(1)->create(['status' => 'pending_review']);
         User::factory()->count(1)->create(['suspended_at' => now()]);
 
         $systemHealthData = [
@@ -115,7 +115,7 @@ class AdminAnalyticsServiceTest extends TestCase
         // Assert
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('active_vm_sessions', $result);
-        $this->assertArrayHasKey('pending_courses', $result);
+        $this->assertArrayHasKey('pending_trainingPaths', $result);
         $this->assertArrayHasKey('suspended_users', $result);
         $this->assertArrayHasKey('services', $result);
         $this->assertArrayHasKey('metrics', $result);
@@ -123,7 +123,7 @@ class AdminAnalyticsServiceTest extends TestCase
 
         $this->assertEquals('healthy', $result['status']);
         $this->assertEquals(3, $result['active_vm_sessions']);
-        $this->assertEquals(1, $result['pending_courses']);
+        $this->assertEquals(1, $result['pending_trainingPaths']);
         $this->assertEquals(1, $result['suspended_users']);
         $this->assertEquals($systemHealthData['services'], $result['services']);
         $this->assertEquals($systemHealthData['metrics'], $result['metrics']);

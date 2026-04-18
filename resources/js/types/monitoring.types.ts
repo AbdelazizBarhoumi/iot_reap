@@ -44,7 +44,7 @@ export interface AlertItem {
 }
 export interface ActivityLogItem {
     id: string;
-    type: 'vm' | 'user' | 'course' | 'system' | 'security';
+    type: 'vm' | 'user' | 'trainingPath' | 'system' | 'security';
     action: string;
     details: string;
     user?: string;

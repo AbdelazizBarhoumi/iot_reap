@@ -505,6 +505,38 @@ class ProxmoxServerControllerTest extends TestCase
         $this->assertDatabaseMissing('vm_sessions', ['id' => $session2->id]);
     }
 
+    /**
+     * Deleting a server also removes sessions that still reference the server
+     * directly via proxmox_server_id.
+     */
+    public function test_deleting_server_removes_sessions_referenced_by_server_id(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['proxmox_server_id' => $server->id]);
+        $otherServer = ProxmoxServer::factory()->create();
+        $otherNode = ProxmoxNode::factory()->create(['proxmox_server_id' => $otherServer->id]);
+
+        $session = \App\Models\VMSession::factory()->create([
+            'node_id' => $node->id,
+            'proxmox_server_id' => $server->id,
+        ]);
+
+        $staleSession = \App\Models\VMSession::factory()->create([
+            'node_id' => $otherNode->id,
+            'proxmox_server_id' => $server->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->deleteJson("/admin/proxmox-servers/{$server->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Proxmox server deleted successfully');
+
+        $this->assertDatabaseMissing('proxmox_servers', ['id' => $server->id]);
+        $this->assertDatabaseMissing('vm_sessions', ['id' => $session->id]);
+        $this->assertDatabaseMissing('vm_sessions', ['id' => $staleSession->id]);
+    }
+
     // The force-delete behaviour is no longer necessary because nodes are
     // removed alongside the server. Any lingering references would be a bug,
     // so we simply rely on the cascade logic above and no longer test for

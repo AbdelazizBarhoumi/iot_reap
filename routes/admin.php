@@ -2,14 +2,17 @@
 
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminCameraController;
-use App\Http\Controllers\Admin\AdminCourseController;
+use App\Http\Controllers\Admin\AdminTrainingPathController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\Admin\AdminReservationController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminVMAssignmentController;
 use App\Http\Controllers\Admin\MaintenanceController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
+use App\Http\Controllers\AlertController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\HardwareController;
 use App\Http\Controllers\VideoController;
@@ -30,14 +33,19 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         return Inertia::render('admin/InfrastructurePage');
     })->name('infrastructure');
 
-    // Course Approvals page and API
-    Route::prefix('courses')->name('courses.')->controller(AdminCourseController::class)->group(function () {
+    // TrainingPath Approvals page and API
+    Route::prefix('trainingPaths')->name('trainingPaths.')->controller(AdminTrainingPathController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::post('/{course}/approve', 'approve')->name('approve');
-        Route::post('/{course}/reject', 'reject')->name('reject');
-        Route::post('/{course}/feature', 'feature')->name('feature');
-        Route::delete('/{course}/feature', 'unfeature')->name('unfeature');
+        Route::post('/{trainingPath}/approve', 'approve')->name('approve');
+        Route::post('/{trainingPath}/reject', 'reject')->name('reject');
+        Route::post('/{trainingPath}/feature', 'feature')->name('feature');
+        Route::delete('/{trainingPath}/feature', 'unfeature')->name('unfeature');
         Route::put('/featured/order', 'updateFeaturedOrder')->name('featured.order');
+    });
+
+    // VM Assignments approval workflow
+    Route::prefix('vm-assignments')->name('vm-assignments.')->controller(AdminVMAssignmentController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
     });
 
     // Reservations page (Inertia render)
@@ -94,6 +102,9 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
     // Admin camera management + camera reservations
     Route::prefix('cameras')->name('cameras.')->controller(AdminCameraController::class)->group(function () {
         Route::get('/', 'cameras')->name('index');
+        Route::put('/{camera}/assign', 'assignToVm')->name('assign');
+        Route::delete('/{camera}/assign', 'unassignFromVm')->name('unassign');
+        Route::post('/bulk-assign', 'bulkAssign')->name('bulk-assign');
         Route::get('/reservations', 'index')->name('reservations.index');
         Route::get('/reservations/pending', 'pending')->name('reservations.pending');
         Route::get('/reservations/upcoming', 'upcoming')->name('reservations.upcoming');
@@ -106,6 +117,8 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
     Route::prefix('users')->name('users.')->controller(AdminUserController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{user}', 'show')->name('show');
+        Route::post('/{user}/approve-teacher', 'approveTeacher')->name('approve-teacher');
+        Route::post('/{user}/revoke-teacher-approval', 'revokeTeacherApproval')->name('revoke-teacher-approval');
         Route::post('/{user}/suspend', 'suspend')->name('suspend');
         Route::post('/{user}/unsuspend', 'unsuspend')->name('unsuspend');
         Route::patch('/{user}/role', 'updateRole')->name('update-role');
@@ -149,5 +162,31 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::get('/flagged', 'flaggedThreads')->name('flagged');
         Route::post('/threads/{threadId}/unflag', 'unflagThread')->name('threads.unflag');
         Route::post('/replies/{replyId}/unflag', 'unflagReply')->name('replies.unflag');
+    });
+
+    // TrainingUnit VM Assignment Approvals
+    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(\App\Http\Controllers\TrainingUnitVMAssignmentController::class)->group(function () {
+        Route::get('/pending', 'pending')->name('pending');
+        Route::post('/{assignment}/approve', 'approve')->name('approve');
+        Route::post('/{assignment}/reject', 'reject')->name('reject');
+    });
+
+    // System Alerts Management
+    Route::prefix('alerts')->name('alerts.')->controller(\App\Http\Controllers\AlertController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/unacknowledged', 'unacknowledged')->name('unacknowledged');
+        Route::get('/stats', 'stats')->name('stats');
+        Route::post('/{alert}/acknowledge', 'acknowledge')->name('acknowledge');
+        Route::post('/acknowledge-all', 'acknowledgeAll')->name('acknowledge-all');
+        Route::post('/{alert}/resolve', 'resolve')->name('resolve');
+        Route::delete('/{alert}', 'destroy')->name('destroy');
+    });
+
+    // Activity Logs
+    Route::prefix('activity-logs')->name('activity-logs.')->controller(\App\Http\Controllers\ActivityLogController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/recent', 'recent')->name('recent');
+        Route::get('/stats', 'stats')->name('stats');
+        Route::get('/user', 'userActivity')->name('user-activity');
     });
 });

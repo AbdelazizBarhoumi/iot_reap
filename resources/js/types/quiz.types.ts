@@ -26,7 +26,7 @@ export interface QuizQuestion {
 }
 export interface Quiz {
     id: number;
-    lesson_id: number;
+    training_unit_id: number;
     title: string;
     description: string | null;
     passing_score: number;

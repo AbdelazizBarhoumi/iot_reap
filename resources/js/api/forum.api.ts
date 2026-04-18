@@ -47,10 +47,10 @@ export type ThreadFilter = 'all' | 'open' | 'resolved' | 'pinned';
 // Thread Operations
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Get threads for a specific lesson.
+ * Get threads for a specific trainingUnit.
  */
-export async function getLessonThreads(
-    lessonId: number,
+export async function getTrainingUnitThreads(
+    trainingUnitId: number,
     sort: ThreadSort = 'recent',
     filter?: ThreadFilter,
     page = 1,
@@ -63,15 +63,15 @@ export async function getLessonThreads(
         params.append('filter', filter);
     }
     const response = await client.get<ThreadsResponse>(
-        `/forum/lessons/${lessonId}/threads?${params.toString()}`,
+        `/forum/trainingUnits/${trainingUnitId}/threads?${params.toString()}`,
     );
     return response.data;
 }
 /**
- * Get threads for an entire course.
+ * Get threads for an entire trainingPath.
  */
-export async function getCourseThreads(
-    courseId: number,
+export async function getTrainingPathThreads(
+    trainingPathId: number,
     sort: ThreadSort = 'recent',
     filter?: ThreadFilter,
     page = 1,
@@ -84,7 +84,7 @@ export async function getCourseThreads(
         params.append('filter', filter);
     }
     const response = await client.get<ThreadsResponse>(
-        `/forum/courses/${courseId}/threads?${params.toString()}`,
+        `/forum/trainingPaths/${trainingPathId}/threads?${params.toString()}`,
     );
     return response.data;
 }
@@ -98,14 +98,14 @@ export async function getThread(threadId: string): Promise<DiscussionThread> {
     return response.data.data;
 }
 /**
- * Create a new thread in a lesson.
+ * Create a new thread in a trainingUnit.
  */
 export async function createThread(
-    lessonId: number,
+    trainingUnitId: number,
     data: CreateThreadData,
 ): Promise<DiscussionThread> {
     const response = await client.post<ThreadResponse>(
-        `/forum/lessons/${lessonId}/threads`,
+        `/forum/trainingUnits/${trainingUnitId}/threads`,
         data,
     );
     return response.data.data;
@@ -184,7 +184,7 @@ export async function flagReply(replyId: string): Promise<MessageResponse> {
 // Teacher Operations (require teaching routes)
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Get teacher's forum inbox (threads from their courses).
+ * Get teacher's forum inbox (threads from their trainingPaths).
  */
 export async function getTeacherInbox(
     filter?: 'flagged' | 'unanswered' | 'recent',
@@ -247,8 +247,8 @@ export async function markAsAnswer(replyId: string): Promise<ThreadReply> {
 // ─────────────────────────────────────────────────────────────────────────────
 export const forumApi = {
     // Thread operations
-    getLessonThreads,
-    getCourseThreads,
+    getTrainingUnitThreads,
+    getTrainingPathThreads,
     getThread,
     createThread,
     deleteThread,

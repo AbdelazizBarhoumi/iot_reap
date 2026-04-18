@@ -32,32 +32,34 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { login } from '@/routes';
-import { dashboard } from '@/routes';
+import { login, dashboard, home } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 /**
  * Build nav items based on user role.
- * Engineers see: Dashboard, Sessions, Hardware, My Learning, Courses
- * Teachers see: Dashboard, My Courses (teaching), Courses (browse)
- * Security Officers see: Dashboard, Courses
+ * Engineers see: Dashboard, Sessions, Hardware, My Training, Training Paths
+ * Teachers see: Dashboard, Content Studio, Training Paths
+ * Security Officers see: Dashboard, Training Paths
  * Admin uses sidebar layout (not this header)
  */
 function useNavItems(): NavItem[] {
     const { auth } = usePage().props;
     const role = auth.user?.role;
-    const isTeacher = role === 'teacher';
+    const isTeacher =
+        role === 'teacher' && !!auth.user?.teacher_approved_at;
     const isEngineer = role === 'engineer';
-    const items: NavItem[] = [
-        {
+    const items: NavItem[] = [];
+
+    if (auth.user) {
+        items.push({
             title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
-        },
-    ];
-    // Engineers see VM sessions, hardware, and their enrolled courses
+        });
+    }
+    // Engineers see VM sessions, hardware, and their enrolled trainingPaths
     if (isEngineer) {
         items.push(
             {
@@ -76,24 +78,24 @@ function useNavItems(): NavItem[] {
                 icon: CalendarCheck,
             },
             {
-                title: 'My Learning',
-                href: '/my-courses',
+                title: 'My Training',
+                href: '/my-trainingPaths',
                 icon: GraduationCap,
             },
         );
     }
-    // Teachers see Teaching (their courses) prominently
+    // Teachers see Content Studio (their paths) prominently
     if (isTeacher) {
         items.push({
-            title: 'My Courses',
+            title: 'Content Studio',
             href: '/teaching',
             icon: PenTool,
         });
     }
-    // Everyone can browse courses
+    // Everyone can browse trainingPaths
     items.push({
-        title: 'Browse Courses',
-        href: '/courses',
+        title: 'Training Paths',
+        href: '/trainingPaths',
         icon: GraduationCap,
     });
     return items;
@@ -133,7 +135,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </button>
                     {/* Logo */}
                     <Link
-                        href={dashboard()}
+                        href={user ? dashboard() : home()}
                         prefetch
                         className="flex items-center gap-2"
                     >
@@ -160,7 +162,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                 'h-9 cursor-pointer gap-2 px-3 font-medium',
                                                 isCurrentUrl(item.href)
                                                     ? activeItemStyles
-                                                    : 'text-muted-foreground hover:text-foreground',
+                                                    : 'text-muted-foreground hover:text-white',
                                             )}
                                         >
                                             {item.icon && (
@@ -187,7 +189,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 variant="ghost"
                                 size="sm"
                                 asChild
-                                className="hidden gap-1.5 text-muted-foreground hover:text-foreground sm:flex"
+                                className="hidden gap-1.5 text-muted-foreground hover:text-white sm:flex"
                             >
                                 <Link href="/connection-preferences">
                                     <Settings2 className="h-4 w-4" />
@@ -226,12 +228,20 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         ) : (
-                            <Link
-                                href={login()}
-                                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:border-foreground hover:text-foreground"
+                            <Button
+                                size="sm"
+                                className="flex-1 bg-primary text-white hover:bg-primary/90"
+                                asChild
                             >
-                                Sign in
-                            </Link>
+                                <Link
+                                    href={login()}
+                                    onClick={() =>
+                                        setMobileOpen(false)
+                                    }
+                                >
+                                    Log in
+                                </Link>
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -248,7 +258,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                         'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                                         isCurrentUrl(item.href)
                                             ? 'bg-primary/10 text-primary'
-                                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                                            : 'text-muted-foreground hover:bg-accent hover:text-white',
                                     )}
                                 >
                                     {item.icon && (
@@ -261,7 +271,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 <Link
                                     href="/connection-preferences"
                                     onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
+                                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-white sm:hidden"
                                 >
                                     <Settings2 className="h-4 w-4" />
                                     Preferences

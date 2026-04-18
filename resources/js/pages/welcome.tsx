@@ -17,58 +17,58 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import heroBg from '@/assets/hero-bg.jpg';
-import CourseCard from '@/components/courses/CourseCard';
+import TrainingPathCard from '@/components/TrainingPaths/TrainingPathCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { dashboard, login, register, logout } from '@/routes';
-import type { Course } from '@/types/course.types';
+import type { TrainingPath } from '@/types/TrainingPath.types';
 const features = [
     {
         icon: Monitor,
-        title: 'Virtual Machine Labs',
+        title: 'Virtual Lab Environments',
         description:
-            'Access pre-configured VMs via browser. No local setup required — just click and connect.',
+            'Access pre-configured industrial lab VMs via browser. No local setup required — just click and connect.',
     },
     {
         icon: BookOpen,
-        title: 'Interactive Learning',
+        title: 'Hands-On Operations Training',
         description:
-            'Structured courses with hands-on labs. Learn by doing with real-world scenarios.',
+            'Structured industrial paths with hands-on labs. Learn by doing with real factory scenarios.',
     },
     {
         icon: Terminal,
-        title: 'Remote Operations',
+        title: 'Remote Industrial Control',
         description:
-            'Control industrial equipment remotely. RDP, VNC, and SSH access through secure tunnels.',
+            'Monitor and coordinate equipment remotely through secure tunnels and telemetry streams.',
     },
     {
         icon: Shield,
-        title: 'Enterprise Security',
+        title: 'OT Security and Compliance',
         description:
-            'SSO integration, role-based access, and audit logging for compliance requirements.',
+            'Role-based access, audit logging, and industrial security controls for production environments.',
     },
 ];
 const stats = [
-    { icon: Server, label: 'Active VMs', value: '50+' },
-    { icon: BookOpen, label: 'Courses', value: '200+' },
-    { icon: Users, label: 'Students', value: '10,000+' },
+    { icon: Server, label: 'Active Labs', value: '50+' },
+    { icon: BookOpen, label: 'Training Paths', value: '200+' },
+    { icon: Users, label: 'Operators', value: '10,000+' },
     { icon: Clock, label: 'Uptime', value: '99.9%' },
 ];
 interface Props {
     canRegister?: boolean;
-    featuredCourses?: Course[]; // passed from backend
+    featuredTrainingPaths?: TrainingPath[]; // passed from backend
 }
 export default function Welcome({
     canRegister = true,
-    featuredCourses = [],
+    featuredTrainingPaths = [],
 }: Props) {
     const { auth } = usePage().props;
     const [mobileOpen, setMobileOpen] = useState(false);
-    // fallback for legacy dev mode: if no courses provided, don't crash
-    const showcase = featuredCourses || [];
+    // fallback for legacy dev mode: if no trainingPaths provided, don't crash
+    const showcase = featuredTrainingPaths || [];
     return (
         <>
-            <Head title="IoT-REAP | Remote Engineering Access Platform" />
+            <Head title="IoT-REAP | Industry 4.0 Academy" />
             <div className="min-h-screen bg-background">
                 {/* Header */}
                 <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
@@ -82,16 +82,16 @@ export default function Welcome({
                         </Link>
                         <nav className="hidden items-center gap-6 md:flex">
                             <Link
-                                href="/courses"
+                                href="/trainingPaths"
                                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                             >
-                                Browse Courses
+                                Training Paths
                             </Link>
                             {auth.user && (
                                 <Button asChild>
                                     <Link href={dashboard()}>
                                         <Home className="mr-2 h-4 w-4" />{' '}
-                                        Dashboard
+                                        Operations Dashboard
                                     </Link>
                                 </Button>
                             )}
@@ -155,11 +155,11 @@ export default function Welcome({
                             >
                                 <div className="container flex flex-col gap-3 py-4">
                                     <Link
-                                        href="/courses"
+                                        href="/trainingPaths"
                                         className="text-sm font-medium text-muted-foreground hover:text-primary"
                                         onClick={() => setMobileOpen(false)}
                                     >
-                                        Browse Courses
+                                        Training Paths
                                     </Link>
                                     {auth.user && (
                                         <Link
@@ -167,7 +167,7 @@ export default function Welcome({
                                             className="text-sm font-medium text-muted-foreground hover:text-primary"
                                             onClick={() => setMobileOpen(false)}
                                         >
-                                            Dashboard
+                                            Operations Dashboard
                                         </Link>
                                     )}
                                     <div className="flex gap-2 pt-2">
@@ -251,33 +251,32 @@ export default function Welcome({
                                 <Zap className="h-4 w-4" />
                                 Industry 4.0 Remote Operations
                             </div>
-                            <h1 className="text-4xl leading-tight font-bold text-white md:text-6xl">
-                                Remote Engineering{' '}
+                            <h1 className="text-[clamp(2.75rem,5vw,4.75rem)] leading-[1.02] font-bold text-white">
+                                Industrial Remote{' '}
                                 <span className="text-primary">
-                                    Access Platform
+                                    Operations Platform
                                 </span>
                             </h1>
-                            <p className="mt-6 max-w-2xl text-lg text-white/70">
-                                IoT-REAP provides secure remote access to
-                                virtual machines, industrial equipment, and
-                                hands-on learning labs. Built for Industry 4.0
-                                education and operations.
+                            <p className="mt-6 max-w-[min(46rem,100%)] text-[clamp(1rem,2vw,1.2rem)] leading-relaxed text-white/80">
+                                IoT-REAP provides secure access to virtual labs,
+                                production dashboards, and industrial equipment.
+                                Built for Industry 4.0 training and operations.
                             </p>
-                            <div className="mt-8 flex flex-wrap gap-4">
+                            <div className="mt-8 flex flex-col flex-wrap gap-4 sm:flex-row">
                                 <Button
                                     size="lg"
                                     className="bg-primary text-white hover:bg-primary/90"
                                     asChild
                                 >
-                                    <Link href="/courses">
+                                    <Link href="/trainingPaths">
                                         <BookOpen className="mr-2 h-4 w-4" />
-                                        Explore Courses
+                                        Explore Training Paths
                                     </Link>
                                 </Button>
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="border-white/20 text-white hover:bg-white/10"
+                                    className="border-white/20 hover:bg-white/10"
                                     asChild
                                 >
                                     <Link
@@ -285,7 +284,7 @@ export default function Welcome({
                                     >
                                         <Monitor className="mr-2 h-4 w-4" />
                                         {auth.user
-                                            ? 'Open VM Labs'
+                                            ? 'Open Lab Console'
                                             : 'Sign In to Labs'}
                                     </Link>
                                 </Button>
@@ -312,10 +311,10 @@ export default function Welcome({
                                 className="text-center"
                             >
                                 <stat.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
-                                <p className="font-heading text-2xl font-bold text-foreground">
+                                <p className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-foreground">
                                     {stat.value}
                                 </p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[clamp(0.85rem,1.2vw,1rem)] text-muted-foreground">
                                     {stat.label}
                                 </p>
                             </motion.div>
@@ -326,12 +325,12 @@ export default function Welcome({
                 <section className="bg-background py-20">
                     <div className="container">
                         <div className="mb-12 text-center">
-                            <h2 className="text-3xl font-bold text-foreground">
+                            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold text-foreground">
                                 Platform Capabilities
                             </h2>
-                            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-                                Everything you need for remote engineering
-                                education and industrial operations
+                            <p className="mx-auto mt-2 max-w-[min(42rem,100%)] text-[clamp(0.95rem,1.5vw,1.1rem)] text-muted-foreground">
+                                Everything you need for connected industrial
+                                training and operations
                             </p>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -347,10 +346,10 @@ export default function Welcome({
                                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                                                 <feature.icon className="h-6 w-6 text-primary" />
                                             </div>
-                                            <h3 className="mb-2 font-semibold text-foreground">
+                                            <h3 className="mb-2 text-[clamp(1.05rem,1.4vw,1.25rem)] font-semibold text-foreground">
                                                 {feature.title}
                                             </h3>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-[clamp(0.95rem,1.3vw,1rem)] text-muted-foreground">
                                                 {feature.description}
                                             </p>
                                         </CardContent>
@@ -360,16 +359,16 @@ export default function Welcome({
                         </div>
                     </div>
                 </section>
-                {/* Featured Courses Section */}
+                {/* Featured Training Paths Section */}
                 <section className="bg-muted/30 py-20">
                     <div className="container">
                         <div className="mb-10 flex items-end justify-between">
                             <div>
-                                <h2 className="text-3xl font-bold text-foreground">
-                                    Featured Courses
+                                <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold text-foreground">
+                                    Featured Training Paths
                                 </h2>
-                                <p className="mt-2 text-muted-foreground">
-                                    Hands-on courses with virtual machine labs
+                                <p className="mt-2 text-[clamp(0.95rem,1.4vw,1.05rem)] text-muted-foreground">
+                                    Hands-on paths with virtual machine labs
                                 </p>
                             </div>
                             <Button
@@ -377,17 +376,17 @@ export default function Welcome({
                                 className="text-primary"
                                 asChild
                             >
-                                <Link href="/courses">
+                                <Link href="/trainingPaths">
                                     View all{' '}
                                     <ArrowRight className="ml-1 h-4 w-4" />
                                 </Link>
                             </Button>
                         </div>
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {showcase.slice(0, 3).map((course, i) => (
-                                <CourseCard
-                                    key={course.id}
-                                    course={course}
+                            {showcase.slice(0, 3).map((trainingPath, i) => (
+                                <TrainingPathCard
+                                    key={trainingPath.id}
+                                    trainingPath={trainingPath}
                                     index={i}
                                 />
                             ))}
@@ -402,11 +401,11 @@ export default function Welcome({
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                         >
-                            <h2 className="text-3xl font-bold text-white md:text-4xl">
-                                Ready to start your journey?
+                            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold text-white">
+                                Ready to modernize your operations?
                             </h2>
-                            <p className="mx-auto mt-4 max-w-md text-white/70">
-                                Join thousands of learners and engineers
+                            <p className="mx-auto mt-4 max-w-[min(36rem,100%)] text-[clamp(1rem,1.6vw,1.15rem)] text-white/75">
+                                Join engineers, operators, and automation teams
                                 building the next generation of industrial
                                 systems.
                             </p>
@@ -416,20 +415,20 @@ export default function Welcome({
                                     className="bg-primary text-white hover:bg-primary/90"
                                     asChild
                                 >
-                                    <Link href="/courses">
+                                    <Link href="/trainingPaths">
                                         <GraduationCap className="mr-2 h-4 w-4" />
-                                        Start Learning
+                                        Explore Paths
                                     </Link>
                                 </Button>
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="border-white/20 text-white hover:bg-white/10"
+                                    className="border-white/20 hover:bg-white/10"
                                     asChild
                                 >
                                     <Link href="/teaching">
                                         <Users className="mr-2 h-4 w-4" />
-                                        Become an Instructor
+                                        Create a Path
                                     </Link>
                                 </Button>
                             </div>
@@ -445,23 +444,25 @@ export default function Welcome({
                         </div>
                         <nav className="flex items-center gap-6 text-sm text-muted-foreground">
                             <Link
-                                href="/courses"
+                                href="/trainingPaths"
                                 className="transition-colors hover:text-foreground"
                             >
-                                Courses
+                                Training Paths
                             </Link>
                             <Link
                                 href="/teaching"
                                 className="transition-colors hover:text-foreground"
                             >
-                                Teach
+                                Content Studio
                             </Link>
-                            <Link
-                                href={dashboard()}
-                                className="transition-colors hover:text-foreground"
-                            >
-                                Dashboard
-                            </Link>
+                            {auth.user && (
+                                <Link
+                                    href={dashboard()}
+                                    className="transition-colors hover:text-foreground"
+                                >
+                                    Dashboard
+                                </Link>
+                            )}
                         </nav>
                         <p className="text-sm text-muted-foreground">
                             © 2026 IoT-REAP. All rights reserved.

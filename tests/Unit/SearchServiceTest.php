@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Enums\CourseLevel;
-use App\Models\Course;
-use App\Models\CourseEnrollment;
+use App\Enums\TrainingPathLevel;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
 use App\Models\Search;
 use App\Models\User;
 use App\Services\SearchService;
@@ -29,10 +29,10 @@ class SearchServiceTest extends TestCase
     // search() method tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_searches_courses_by_title(): void
+    public function test_searches_training_paths_by_title(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel for Beginners']);
-        Course::factory()->approved()->create(['title' => 'React Masterclass']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel for Beginners']);
+        TrainingPath::factory()->approved()->create(['title' => 'React Masterclass']);
 
         $result = $this->service->search('Laravel', [], 'relevance');
 
@@ -40,26 +40,26 @@ class SearchServiceTest extends TestCase
         $this->assertEquals('Laravel for Beginners', $result['results']->first()->title);
     }
 
-    public function test_searches_courses_by_description(): void
+    public function test_searches_training_paths_by_description(): void
     {
-        Course::factory()->approved()->create([
-            'title' => 'Web Development',
-            'description' => 'Learn advanced Laravel techniques and best practices',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Smart Manufacturing',
+            'description' => 'Learn advanced industrial control techniques and best practices',
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Mobile Apps',
             'description' => 'Build iOS and Android applications',
         ]);
 
-        $result = $this->service->search('Laravel', [], 'relevance');
+        $result = $this->service->search('industrial', [], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertStringContainsString('Laravel', $result['results']->first()->description);
+        $this->assertStringContainsString('industrial', $result['results']->first()->description);
     }
 
     public function test_returns_empty_for_short_queries(): void
     {
-        Course::factory()->approved()->create(['title' => 'A Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'A TrainingPath']);
 
         $result = $this->service->search('A', [], 'relevance');
 
@@ -69,44 +69,44 @@ class SearchServiceTest extends TestCase
 
     public function test_trims_whitespace_from_query(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Basics']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel Basics']);
 
         $result = $this->service->search('   Laravel   ', [], 'relevance');
 
         $this->assertCount(1, $result['results']);
     }
 
-    public function test_excludes_draft_courses(): void
+    public function test_excludes_draft_trainingPaths(): void
     {
-        Course::factory()->create(['title' => 'Draft Laravel Course']); // Default status is DRAFT
-        Course::factory()->approved()->create(['title' => 'Published Laravel Course']);
+        TrainingPath::factory()->create(['title' => 'Draft Laravel TrainingPath']); // Default status is DRAFT
+        TrainingPath::factory()->approved()->create(['title' => 'Published Laravel TrainingPath']);
 
         $result = $this->service->search('Laravel', [], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Published Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('Published Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_excludes_pending_review_courses(): void
+    public function test_excludes_pending_review_trainingPaths(): void
     {
-        Course::factory()->pendingReview()->create(['title' => 'Pending Laravel Course']);
-        Course::factory()->approved()->create(['title' => 'Approved Laravel Course']);
+        TrainingPath::factory()->pendingReview()->create(['title' => 'Pending Laravel TrainingPath']);
+        TrainingPath::factory()->approved()->create(['title' => 'Approved Laravel TrainingPath']);
 
         $result = $this->service->search('Laravel', [], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Approved Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('Approved Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_excludes_rejected_courses(): void
+    public function test_excludes_rejected_trainingPaths(): void
     {
-        Course::factory()->rejected()->create(['title' => 'Rejected Laravel Course']);
-        Course::factory()->approved()->create(['title' => 'Good Laravel Course']);
+        TrainingPath::factory()->rejected()->create(['title' => 'Rejected Laravel TrainingPath']);
+        TrainingPath::factory()->approved()->create(['title' => 'Good Laravel TrainingPath']);
 
         $result = $this->service->search('Laravel', [], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Good Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('Good Laravel TrainingPath', $result['results']->first()->title);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -115,47 +115,47 @@ class SearchServiceTest extends TestCase
 
     public function test_filters_by_category(): void
     {
-        Course::factory()->approved()->create([
-            'title' => 'Laravel Web Development',
-            'category' => 'Web Development',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Laravel Smart Manufacturing',
+            'category' => 'Smart Manufacturing',
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Laravel for Data Science',
-            'category' => 'Data Science',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Laravel for Predictive Maintenance',
+            'category' => 'Predictive Maintenance',
         ]);
 
-        $result = $this->service->search('Laravel', ['category' => 'Web Development'], 'relevance');
+        $result = $this->service->search('Laravel', ['category' => 'Smart Manufacturing'], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Web Development', $result['results']->first()->category);
+        $this->assertEquals('Smart Manufacturing', $result['results']->first()->category);
     }
 
     public function test_filters_by_level(): void
     {
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Laravel Fundamentals',
-            'level' => CourseLevel::BEGINNER,
+            'level' => TrainingPathLevel::BEGINNER,
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Laravel Advanced Patterns',
-            'level' => CourseLevel::ADVANCED,
+            'level' => TrainingPathLevel::ADVANCED,
         ]);
 
-        $result = $this->service->search('Laravel', ['level' => CourseLevel::BEGINNER], 'relevance');
+        $result = $this->service->search('Laravel', ['level' => TrainingPathLevel::BEGINNER], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals(CourseLevel::BEGINNER, $result['results']->first()->level);
+        $this->assertEquals(TrainingPathLevel::BEGINNER, $result['results']->first()->level);
     }
 
     public function test_filters_by_price_range(): void
     {
-        Course::factory()->approved()->create([
-            'title' => 'Budget Laravel Course',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Budget Laravel TrainingPath',
             'price_cents' => 1999, // $19.99
             'is_free' => false,
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Premium Laravel Course',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Premium Laravel TrainingPath',
             'price_cents' => 9999, // $99.99
             'is_free' => false,
         ]);
@@ -166,18 +166,18 @@ class SearchServiceTest extends TestCase
         ], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Budget Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('Budget Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_filters_by_free_courses(): void
+    public function test_filters_by_free_trainingPaths(): void
     {
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Free Laravel Tutorial',
             'is_free' => true,
             'price_cents' => 0,
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Paid Laravel Course',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Paid Laravel TrainingPath',
             'is_free' => false,
             'price_cents' => 4999,
         ]);
@@ -190,10 +190,10 @@ class SearchServiceTest extends TestCase
 
     public function test_filters_by_has_virtual_machine(): void
     {
-        Course::factory()->approved()->withVirtualMachine()->create([
+        TrainingPath::factory()->approved()->withVirtualMachine()->create([
             'title' => 'Laravel with VM Labs',
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Laravel Theory Only',
             'has_virtual_machine' => false,
         ]);
@@ -206,29 +206,29 @@ class SearchServiceTest extends TestCase
 
     public function test_applies_multiple_filters(): void
     {
-        Course::factory()->approved()->create([
-            'title' => 'Beginner Web Laravel',
-            'category' => 'Web Development',
-            'level' => CourseLevel::BEGINNER,
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Beginner Smart Laravel',
+            'category' => 'Smart Manufacturing',
+            'level' => TrainingPathLevel::BEGINNER,
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Advanced Web Laravel',
-            'category' => 'Web Development',
-            'level' => CourseLevel::ADVANCED,
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Advanced Smart Laravel',
+            'category' => 'Smart Manufacturing',
+            'level' => TrainingPathLevel::ADVANCED,
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Beginner Data Laravel',
-            'category' => 'Data Science',
-            'level' => CourseLevel::BEGINNER,
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Beginner Predictive Laravel',
+            'category' => 'Predictive Maintenance',
+            'level' => TrainingPathLevel::BEGINNER,
         ]);
 
         $result = $this->service->search('Laravel', [
-            'category' => 'Web Development',
-            'level' => CourseLevel::BEGINNER,
+            'category' => 'Smart Manufacturing',
+            'level' => TrainingPathLevel::BEGINNER,
         ], 'relevance');
 
         $this->assertCount(1, $result['results']);
-        $this->assertEquals('Beginner Web Laravel', $result['results']->first()->title);
+        $this->assertEquals('Beginner Smart Laravel', $result['results']->first()->title);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -237,28 +237,28 @@ class SearchServiceTest extends TestCase
 
     public function test_sorts_by_newest(): void
     {
-        $oldCourse = Course::factory()->approved()->create([
-            'title' => 'Old Laravel Course',
+        $oldTrainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Old Laravel TrainingPath',
             'created_at' => now()->subDays(30),
         ]);
-        $newCourse = Course::factory()->approved()->create([
-            'title' => 'New Laravel Course',
+        $newTrainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'New Laravel TrainingPath',
             'created_at' => now(),
         ]);
 
         $result = $this->service->search('Laravel', [], 'newest');
 
         $this->assertCount(2, $result['results']);
-        $this->assertEquals('New Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('New Laravel TrainingPath', $result['results']->first()->title);
     }
 
     public function test_sorts_by_rating(): void
     {
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Low Rated Laravel',
             'rating' => 3.5,
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Top Rated Laravel',
             'rating' => 4.9,
         ]);
@@ -271,30 +271,30 @@ class SearchServiceTest extends TestCase
 
     public function test_sorts_by_enrollments(): void
     {
-        $popularCourse = Course::factory()->approved()->create([
-            'title' => 'Popular Laravel Course',
+        $popularTrainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Popular Laravel TrainingPath',
         ]);
-        $unpopularCourse = Course::factory()->approved()->create([
-            'title' => 'Unpopular Laravel Course',
+        $unpopularTrainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Unpopular Laravel TrainingPath',
         ]);
 
-        // Create enrollments for popular course
-        CourseEnrollment::factory()->count(10)->create(['course_id' => $popularCourse->id]);
-        CourseEnrollment::factory()->count(2)->create(['course_id' => $unpopularCourse->id]);
+        // Create enrollments for popular trainingPath
+        TrainingPathEnrollment::factory()->count(10)->create(['training_path_id' => $popularTrainingPath->id]);
+        TrainingPathEnrollment::factory()->count(2)->create(['training_path_id' => $unpopularTrainingPath->id]);
 
         $result = $this->service->search('Laravel', [], 'enrollments');
 
         $this->assertCount(2, $result['results']);
-        $this->assertEquals('Popular Laravel Course', $result['results']->first()->title);
+        $this->assertEquals('Popular Laravel TrainingPath', $result['results']->first()->title);
     }
 
     public function test_sorts_by_price_low_to_high(): void
     {
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Expensive Laravel',
             'price_cents' => 9999,
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Cheap Laravel',
             'price_cents' => 999,
         ]);
@@ -307,11 +307,11 @@ class SearchServiceTest extends TestCase
 
     public function test_sorts_by_price_high_to_low(): void
     {
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Expensive Laravel',
             'price_cents' => 9999,
         ]);
-        Course::factory()->approved()->create([
+        TrainingPath::factory()->approved()->create([
             'title' => 'Cheap Laravel',
             'price_cents' => 999,
         ]);
@@ -324,7 +324,7 @@ class SearchServiceTest extends TestCase
 
     public function test_defaults_to_relevance_sort_for_unknown(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         // Should not throw with unknown sort value
         $result = $this->service->search('Laravel', [], 'invalid_sort');
@@ -338,7 +338,7 @@ class SearchServiceTest extends TestCase
 
     public function test_logs_search_query(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $this->service->search('Laravel', [], 'relevance');
 
@@ -351,7 +351,7 @@ class SearchServiceTest extends TestCase
     public function test_logs_search_with_user_info(): void
     {
         $user = User::factory()->create();
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $this->service->search(
             query: 'Laravel',
@@ -372,7 +372,7 @@ class SearchServiceTest extends TestCase
 
     public function test_logs_search_without_user(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $this->service->search(
             query: 'Laravel',
@@ -392,7 +392,7 @@ class SearchServiceTest extends TestCase
     public function test_truncates_long_user_agent(): void
     {
         $longUserAgent = str_repeat('A', 600);
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $this->service->search(
             query: 'Laravel',
@@ -424,7 +424,7 @@ class SearchServiceTest extends TestCase
                     && array_key_exists('results_count', $context);
             });
 
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $this->service->search('Laravel', [], 'relevance');
     }
@@ -435,9 +435,9 @@ class SearchServiceTest extends TestCase
 
     public function test_suggests_matching_titles(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Basics']);
-        Course::factory()->approved()->create(['title' => 'Laravel Advanced']);
-        Course::factory()->approved()->create(['title' => 'React Fundamentals']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel Basics']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel Advanced']);
+        TrainingPath::factory()->approved()->create(['title' => 'React Fundamentals']);
 
         Cache::flush();
         $suggestions = $this->service->suggest('Laravel');
@@ -449,7 +449,7 @@ class SearchServiceTest extends TestCase
 
     public function test_suggest_returns_empty_for_short_query(): void
     {
-        Course::factory()->approved()->create(['title' => 'A Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'A TrainingPath']);
 
         $suggestions = $this->service->suggest('A');
 
@@ -459,7 +459,7 @@ class SearchServiceTest extends TestCase
     public function test_suggest_limits_results(): void
     {
         for ($i = 1; $i <= 10; $i++) {
-            Course::factory()->approved()->create(['title' => "Laravel Course $i"]);
+            TrainingPath::factory()->approved()->create(['title' => "Laravel TrainingPath $i"]);
         }
 
         Cache::flush();
@@ -468,11 +468,11 @@ class SearchServiceTest extends TestCase
         $this->assertCount(3, $suggestions);
     }
 
-    public function test_suggest_only_includes_approved_courses(): void
+    public function test_suggest_only_includes_approved_trainingPaths(): void
     {
-        Course::factory()->create(['title' => 'Draft Laravel']); // DRAFT
-        Course::factory()->pendingReview()->create(['title' => 'Pending Laravel']);
-        Course::factory()->approved()->create(['title' => 'Approved Laravel']);
+        TrainingPath::factory()->create(['title' => 'Draft Laravel']); // DRAFT
+        TrainingPath::factory()->pendingReview()->create(['title' => 'Pending Laravel']);
+        TrainingPath::factory()->approved()->create(['title' => 'Approved Laravel']);
 
         Cache::flush();
         $suggestions = $this->service->suggest('Laravel');
@@ -483,13 +483,13 @@ class SearchServiceTest extends TestCase
 
     public function test_suggest_caches_results(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         Cache::flush();
         $first = $this->service->suggest('Laravel');
 
-        // Add another course (should not appear due to cache)
-        Course::factory()->approved()->create(['title' => 'Laravel Second Course']);
+        // Add another trainingPath (should not appear due to cache)
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel Second TrainingPath']);
 
         $second = $this->service->suggest('Laravel');
 
@@ -498,7 +498,7 @@ class SearchServiceTest extends TestCase
 
     public function test_suggest_trims_query_whitespace(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         Cache::flush();
         $suggestions = $this->service->suggest('   Laravel   ');
@@ -606,53 +606,53 @@ class SearchServiceTest extends TestCase
 
     public function test_gets_categories_with_counts(): void
     {
-        Course::factory()->approved()->count(3)->create(['category' => 'Web Development']);
-        Course::factory()->approved()->count(2)->create(['category' => 'Data Science']);
-        Course::factory()->create(['category' => 'Draft Category']); // Not approved
+        TrainingPath::factory()->approved()->count(3)->create(['category' => 'Smart Manufacturing']);
+        TrainingPath::factory()->approved()->count(2)->create(['category' => 'Predictive Maintenance']);
+        TrainingPath::factory()->create(['category' => 'Draft Category']); // Not approved
 
         Cache::flush();
         $categories = $this->service->getCategories();
 
         $this->assertCount(2, $categories);
 
-        $webDev = collect($categories)->firstWhere('name', 'Web Development');
-        $this->assertEquals(3, $webDev['count']);
-        $this->assertEquals('web-development', $webDev['slug']);
+        $smartManufacturing = collect($categories)->firstWhere('name', 'Smart Manufacturing');
+        $this->assertEquals(3, $smartManufacturing['count']);
+        $this->assertEquals('smart-manufacturing', $smartManufacturing['slug']);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // getCoursesByCategory() method tests
+    // getTrainingPathsByCategory() method tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_courses_by_category_slug(): void
+    public function test_gets_training_paths_by_category_slug(): void
     {
-        Course::factory()->approved()->create([
-            'title' => 'Web Course 1',
-            'category' => 'Web Development',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Smart TrainingPath 1',
+            'category' => 'Smart Manufacturing',
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Web Course 2',
-            'category' => 'Web Development',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Smart TrainingPath 2',
+            'category' => 'Smart Manufacturing',
         ]);
-        Course::factory()->approved()->create([
-            'title' => 'Data Course',
-            'category' => 'Data Science',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Predictive TrainingPath',
+            'category' => 'Predictive Maintenance',
         ]);
 
-        $courses = $this->service->getCoursesByCategory('web-development');
+        $trainingPaths = $this->service->getTrainingPathsByCategory('smart-manufacturing');
 
-        $this->assertCount(2, $courses);
-        $courses->each(fn ($course) => $this->assertEquals('Web Development', $course->category));
+        $this->assertCount(2, $trainingPaths);
+        $trainingPaths->each(fn ($trainingPath) => $this->assertEquals('Smart Manufacturing', $trainingPath->category));
     }
 
     public function test_category_search_only_returns_approved(): void
     {
-        Course::factory()->create(['category' => 'Web Development']); // Draft
-        Course::factory()->approved()->create(['category' => 'Web Development']);
+        TrainingPath::factory()->create(['category' => 'Smart Manufacturing']); // Draft
+        TrainingPath::factory()->approved()->create(['category' => 'Smart Manufacturing']);
 
-        $courses = $this->service->getCoursesByCategory('web-development');
+        $trainingPaths = $this->service->getTrainingPathsByCategory('smart-manufacturing');
 
-        $this->assertCount(1, $courses);
+        $this->assertCount(1, $trainingPaths);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -661,7 +661,7 @@ class SearchServiceTest extends TestCase
 
     public function test_search_returns_correct_structure(): void
     {
-        Course::factory()->approved()->create(['title' => 'Laravel Course']);
+        TrainingPath::factory()->approved()->create(['title' => 'Laravel TrainingPath']);
 
         $result = $this->service->search('Laravel', [], 'relevance');
 
@@ -674,8 +674,8 @@ class SearchServiceTest extends TestCase
     public function test_search_loads_instructor_relationship(): void
     {
         $instructor = User::factory()->create(['name' => 'John Instructor']);
-        Course::factory()->approved()->create([
-            'title' => 'Laravel Course',
+        TrainingPath::factory()->approved()->create([
+            'title' => 'Laravel TrainingPath',
             'instructor_id' => $instructor->id,
         ]);
 

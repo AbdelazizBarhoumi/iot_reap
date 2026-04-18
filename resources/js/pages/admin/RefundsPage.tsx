@@ -1,6 +1,6 @@
 /**
  * Admin Refunds Page
- * View and manage course refund requests.
+ * View and manage training path refund requests.
  */
 import { Head, router } from '@inertiajs/react';
 import {
@@ -33,7 +33,7 @@ interface RefundRequest {
         name: string;
         email: string;
     };
-    course: {
+    trainingPath: {
         id: number;
         title: string;
     };
@@ -80,7 +80,7 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
         (r) =>
             r.user.name.toLowerCase().includes(search.toLowerCase()) ||
             r.user.email.toLowerCase().includes(search.toLowerCase()) ||
-            r.course.title.toLowerCase().includes(search.toLowerCase()),
+            r.trainingPath.title.toLowerCase().includes(search.toLowerCase()),
     );
     const handleApprove = (id: string) => {
         setProcessing(id);
@@ -108,9 +108,9 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
             <div className="container space-y-6 py-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">Refund Requests</h1>
+                        <h1 className="text-3xl font-bold">Training Path Refund Requests</h1>
                         <p className="text-muted-foreground">
-                            Review and process course refunds
+                            Review and process training path refunds
                         </p>
                     </div>
                     <Button variant="outline">
@@ -173,7 +173,7 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
                 <div className="relative max-w-sm">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                        placeholder="Search by user or course..."
+                        placeholder="Search by user or training path..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-10"
@@ -185,7 +185,7 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>User</TableHead>
-                                <TableHead>Course</TableHead>
+                                <TableHead>Training Path</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Reason</TableHead>
                                 <TableHead>Status</TableHead>
@@ -222,7 +222,7 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-[200px] truncate">
-                                                {refund.course.title}
+                                                {refund.trainingPath.title}
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 $

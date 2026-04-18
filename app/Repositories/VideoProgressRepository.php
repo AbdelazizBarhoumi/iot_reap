@@ -61,15 +61,15 @@ class VideoProgressRepository
     }
 
     /**
-     * Get user's video progress for a course.
+     * Get user's video progress for a trainingPath.
      */
-    public function getForUserAndCourse(User $user, int $courseId): Collection
+    public function getForUserAndTrainingPath(User $user, int $trainingPathId): Collection
     {
         return VideoProgress::where('user_id', $user->id)
-            ->whereHas('video.lesson.module', function ($query) use ($courseId) {
-                $query->where('course_id', $courseId);
+            ->whereHas('video.trainingUnit.module', function ($query) use ($trainingPathId) {
+                $query->where('training_path_id', $trainingPathId);
             })
-            ->with('video.lesson')
+            ->with('video.trainingUnit')
             ->get();
     }
 

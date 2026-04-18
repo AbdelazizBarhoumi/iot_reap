@@ -29,13 +29,13 @@ class CertificateController extends Controller
     }
 
     /**
-     * Issue a certificate for a completed course.
+     * Issue a certificate for a completed trainingPath.
      */
-    public function store(Request $request, int $courseId): JsonResponse
+    public function store(Request $request, int $trainingPathId): JsonResponse
     {
         $certificate = $this->certificateService->issueCertificate(
             user: $request->user(),
-            courseId: $courseId,
+            trainingPathId: $trainingPathId,
         );
 
         return response()->json([
@@ -45,19 +45,19 @@ class CertificateController extends Controller
     }
 
     /**
-     * Check if user can receive a certificate for a course.
+     * Check if user can receive a certificate for a trainingPath.
      */
-    public function check(Request $request, int $courseId): JsonResponse
+    public function check(Request $request, int $trainingPathId): JsonResponse
     {
-        $certificate = $this->certificateService->getUserCertificateForCourse(
+        $certificate = $this->certificateService->getUserCertificateForTrainingPath(
             $request->user(),
-            $courseId,
+            $trainingPathId,
         );
 
         if ($certificate) {
             return response()->json([
                 'has_certificate' => true,
-                'data' => new CertificateResource($certificate->load('course')),
+                'data' => new CertificateResource($certificate->load('trainingPath')),
             ]);
         }
 
@@ -121,7 +121,7 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        $filename = "Certificate-{$certificate->course->title}.pdf";
+        $filename = "Certificate-{$certificate->trainingPath->title}.pdf";
 
         return response()->download($pdfPath, $filename);
     }

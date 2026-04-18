@@ -35,6 +35,8 @@ class UserFactory extends Factory
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'teacher_approved_at' => now(),
+            'teacher_approved_by' => null,
             'suspended_at' => null,
             'suspended_reason' => null,
         ];
@@ -89,6 +91,19 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::TEACHER->value,
+            'teacher_approved_at' => now(),
+        ]);
+    }
+
+    /**
+     * Set a teacher account to pending admin approval.
+     */
+    public function pendingTeacherApproval(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::TEACHER->value,
+            'teacher_approved_at' => null,
+            'teacher_approved_by' => null,
         ]);
     }
 

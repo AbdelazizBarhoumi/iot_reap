@@ -235,13 +235,15 @@ export function SessionCameraPanel({
                             <CameraViewer
                                 camera={selectedCamera}
                                 sessionId={sessionId}
+                                sessionIsActive={isActive}
                                 resolutions={resolutions}
                                 onResolutionChange={handleResolutionChange}
                                 changingResolution={changingResolution}
                             />
-                            {/* PTZ Controls — only shown if user controls this camera */}
+                            {/* PTZ Controls — only shown if user controls this camera and session is active */}
                             {isControlledByMe(selectedCamera) &&
-                                selectedCamera.ptz_capable && (
+                                selectedCamera.ptz_capable &&
+                                isActive && (
                                     <div className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4">
                                         <p className="text-xs font-medium text-muted-foreground">
                                             <Gamepad2 className="mr-1 inline h-3 w-3" />

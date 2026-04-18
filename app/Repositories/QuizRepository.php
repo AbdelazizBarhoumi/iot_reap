@@ -18,20 +18,20 @@ class QuizRepository
     }
 
     /**
-     * Find a quiz by lesson ID.
+     * Find a quiz by trainingUnit ID.
      */
-    public function findByLessonId(int $lessonId): ?Quiz
+    public function findByTrainingUnitId(int $trainingUnitId): ?Quiz
     {
-        return Quiz::where('lesson_id', $lessonId)->first();
+        return Quiz::where('training_unit_id', $trainingUnitId)->first();
     }
 
     /**
-     * Find a quiz by lesson ID with questions.
+     * Find a quiz by trainingUnit ID with questions.
      */
-    public function findByLessonIdWithQuestions(int $lessonId): ?Quiz
+    public function findByTrainingUnitIdWithQuestions(int $trainingUnitId): ?Quiz
     {
         return Quiz::with(['questions.options'])
-            ->where('lesson_id', $lessonId)
+            ->where('training_unit_id', $trainingUnitId)
             ->first();
     }
 

@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -95,5 +96,28 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertTooManyRequests();
+    }
+
+    public function test_unverified_users_are_redirected_to_verification_notice(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unapproved_teacher_cannot_pass_teach_gate(): void
+    {
+        $teacher = User::factory()->pendingTeacherApproval()->create();
+
+        $this->assertFalse(Gate::forUser($teacher)->allows('teach'));
+
+        $teacher->update([
+            'teacher_approved_at' => now(),
+            'teacher_approved_by' => User::factory()->admin()->create()->id,
+        ]);
+
+        $this->assertTrue(Gate::forUser($teacher->fresh())->allows('teach'));
     }
 }

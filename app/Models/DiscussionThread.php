@@ -12,14 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Discussion thread model for forum functionality.
  *
  * @property int $id
- * @property int|null $lesson_id
- * @property int $course_id
+ * @property int|null $training_unit_id
+ * @property int $training_path_id
  * @property string $author_id
  * @property string $title
  * @property string $content
- * @property ThreadStatus $status
- * @property bool $is_pinned
- * @property bool $is_locked
+ * @property ThreadStatus $status (open, resolved, pinned, locked)
  * @property bool $is_flagged
  * @property int $view_count
  * @property int $reply_count
@@ -32,8 +30,8 @@ class DiscussionThread extends Model
     use HasFactory;
 
     protected $fillable = [
-        'lesson_id',
-        'course_id',
+        'training_unit_id',
+        'training_path_id',
         'author_id',
         'title',
         'content',
@@ -72,14 +70,14 @@ class DiscussionThread extends Model
     // Relationships
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function lesson(): BelongsTo
+    public function trainingUnit(): BelongsTo
     {
-        return $this->belongsTo(Lesson::class);
+        return $this->belongsTo(TrainingUnit::class, 'training_unit_id');
     }
 
-    public function course(): BelongsTo
+    public function trainingPath(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(TrainingPath::class, 'training_path_id');
     }
 
     public function author(): BelongsTo
@@ -107,14 +105,14 @@ class DiscussionThread extends Model
     // Scopes
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function scopeForCourse($query, int $courseId)
+    public function scopeForTrainingPath($query, int $trainingPathId)
     {
-        return $query->where('course_id', $courseId);
+        return $query->where('training_path_id', $trainingPathId);
     }
 
-    public function scopeForLesson($query, int $lessonId)
+    public function scopeForTrainingUnit($query, int $trainingUnitId)
     {
-        return $query->where('lesson_id', $lessonId);
+        return $query->where('training_unit_id', $trainingUnitId);
     }
 
     public function scopeOpen($query)
@@ -129,12 +127,17 @@ class DiscussionThread extends Model
 
     public function scopePinned($query)
     {
-        return $query->where('is_pinned', true);
+        return $query->where('status', ThreadStatus::PINNED);
+    }
+
+    public function scopeLocked($query)
+    {
+        return $query->where('status', ThreadStatus::LOCKED);
     }
 
     public function scopeNotLocked($query)
     {
-        return $query->where('is_locked', false);
+        return $query->where('status', '!=', ThreadStatus::LOCKED);
     }
 
     public function scopeFlagged($query)

@@ -1,6 +1,7 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { toast } from 'sonner';
 type Props = {
     status?: string;
     canResetPassword: boolean;
@@ -133,6 +135,30 @@ export default function Login({
                                 )}
                                 Sign in to workspace
                             </Button>
+                            {/* Google OAuth button */}
+                            <GoogleLogin
+                                onSuccess={(credentialResponse) => {
+                                    // Exchange the authorization code for tokens on backend
+                                    router.post(
+                                        route('google.auth-code'),
+                                        {
+                                            credential: credentialResponse.credential,
+                                        },
+                                        {
+                                            onError: () => {
+                                                toast.error('Authentication failed. Please try again.');
+                                            },
+                                        }
+                                    );
+                                }}
+                                onError={() => {
+                                    toast.error('Failed to authenticate with Google. Please try again.');
+                                }}
+                                locale="en"
+                                text="signin_with"
+                                size="large"
+                                theme="outline"
+                            />
                         </div>
                         {/* Divider */}
                         {canRegister && (

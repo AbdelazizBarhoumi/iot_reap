@@ -36,6 +36,7 @@ class CameraResource extends JsonResource
             'gateway_node_id' => $this->gateway_node_id,
             'gateway_name' => $this->whenLoaded('gatewayNode', fn () => $this->gatewayNode->name),
             'usb_device_id' => $this->usb_device_id,
+            'assigned_vm_id' => $this->assigned_vm_id,
             'is_usb_camera' => $this->gateway_node_id !== null,
             'source_name' => $this->source_name, // Robot name or Gateway name
             'name' => $this->name,

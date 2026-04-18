@@ -3,40 +3,40 @@
  * Centralized toast helpers for consistent UX across the app
  */
 import { toast } from 'sonner';
-export const courseToasts = {
-    // Course Creation
+export const trainingPathToasts = {
+    // Path creation
     created: () =>
-        toast.success('Course created successfully!', {
-            description: 'Your course has been saved as a draft.',
+        toast.success('Training path created successfully!', {
+            description: 'Your path has been saved as a draft.',
         }),
     updated: () =>
-        toast.success('Course updated!', {
+        toast.success('Training path updated!', {
             description: 'Your changes have been saved.',
         }),
     deleted: () =>
-        toast.success('Course deleted', {
-            description: 'The course has been removed.',
+        toast.success('Training path removed', {
+            description: 'The path has been removed.',
         }),
-    // Submission & Approval
+    // Submission & approval
     submitted: () =>
         toast.success('Submitted for review', {
-            description: 'An admin will review your course soon.',
+            description: 'An admin will review your path soon.',
             duration: 5000,
         }),
-    approved: (courseTitle: string) =>
-        toast.success('Course approved! 🎉', {
-            description: `"${courseTitle}" is now live and visible to students.`,
+    approved: (trainingPathTitle: string) =>
+        toast.success('Training path approved! 🎉', {
+            description: `"${trainingPathTitle}" is now live and visible to operators.`,
             duration: 6000,
         }),
-    rejected: (courseTitle: string) =>
-        toast.error('Course rejected', {
-            description: `"${courseTitle}" needs revisions. Check admin feedback.`,
+    rejected: (trainingPathTitle: string) =>
+        toast.error('Training path rejected', {
+            description: `"${trainingPathTitle}" needs revisions. Check admin feedback.`,
             duration: 6000,
         }),
     // Enrollment
-    enrolled: (courseTitle: string) =>
+    enrolled: (trainingPathTitle: string) =>
         toast.success('Enrollment successful!', {
-            description: `You're now enrolled in "${courseTitle}". Happy learning!`,
+            description: `You're now enrolled in "${trainingPathTitle}". Happy building!`,
             duration: 5000,
         }),
     unenrolled: () =>
@@ -44,13 +44,13 @@ export const courseToasts = {
             description: 'Your progress has been saved.',
         }),
     // Progress
-    lessonCompleted: (lessonTitle: string) =>
-        toast.success('Lesson completed! ✓', {
-            description: `"${lessonTitle}" marked as complete.`,
+    trainingUnitCompleted: (trainingUnitTitle: string) =>
+        toast.success('Milestone completed! ✓', {
+            description: `"${trainingUnitTitle}" marked as complete.`,
         }),
-    courseCompleted: (courseTitle: string) =>
-        toast.success('Course completed! 🎓', {
-            description: `Congratulations on completing "${courseTitle}"!`,
+    trainingPathCompleted: (trainingPathTitle: string) =>
+        toast.success('Training path completed! 🎓', {
+            description: `Congratulations on completing "${trainingPathTitle}"!`,
             duration: 8000,
         }),
     // Errors
@@ -68,7 +68,7 @@ export const courseToasts = {
         }),
     notFound: () =>
         toast.error('Not Found', {
-            description: 'The requested course could not be found.',
+            description: 'The requested training path could not be found.',
         }),
     // Auto-save
     autoSaving: () =>
@@ -109,11 +109,11 @@ export const vmToasts = {
 };
 export const adminToasts = {
     bulkApproved: (count: number) =>
-        toast.success(`${count} courses approved`, {
+        toast.success(`${count} paths approved`, {
             description: 'Instructors have been notified.',
         }),
     bulkRejected: (count: number) =>
-        toast.info(`${count} courses rejected`, {
+        toast.info(`${count} paths rejected`, {
             description: 'Feedback has been sent to instructors.',
         }),
 };

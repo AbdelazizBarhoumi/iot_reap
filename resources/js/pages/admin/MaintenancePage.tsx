@@ -1,24 +1,17 @@
 /**
  * Admin Maintenance Page
- * System maintenance and health checks.
+ * Manage USB devices and cameras in maintenance mode.
  */
 import { Head, router } from '@inertiajs/react';
 import {
-    Activity,
     AlertTriangle,
-    CheckCircle2,
-    Database,
-    HardDrive,
+    Calendar,
+    Check,
+    FileText,
+    Loader2,
     RefreshCw,
-    Server,
-    Trash2,
-    Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
-import { ActivityLog } from '@/components/monitoring/ActivityLog';
-import { AlertsPanel } from '@/components/monitoring/AlertsPanel';
-import { MetricsChart } from '@/components/monitoring/MetricsChart';
-import { SystemHealthOverview } from '@/components/monitoring/SystemHealthOverview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,166 +21,185 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import * as maintenanceRoutes from '@/routes/admin/maintenance';
+import * as camerasRoutes from '@/routes/admin/maintenance/cameras';
+import * as usbDevicesRoutes from '@/routes/admin/maintenance/usb-devices';
 import type { BreadcrumbItem } from '@/types';
-interface HealthCheck {
+
+interface Resource {
+    id: number;
+    type: 'usb_device' | 'camera';
     name: string;
-    status: 'healthy' | 'warning' | 'critical';
-    message: string;
-    lastChecked: string;
+    description: string | null;
+    maintenance_mode: boolean;
+    maintenance_notes: string | null;
+    maintenance_until: string | null;
+    is_in_maintenance: boolean;
+    gateway?: string;
+    source?: string;
+    status: string;
 }
+
 interface Props {
-    health: HealthCheck[];
-    storage: {
-        used: number;
-        total: number;
-        percentage: number;
-    };
-    cache: {
-        size: string;
-        entries: number;
-    };
-    queue: {
-        pending: number;
-        failed: number;
-    };
+    resources: Resource[];
 }
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/infrastructure' },
     { title: 'Maintenance', href: '/admin/maintenance' },
 ];
-const statusConfig = {
-    healthy: { color: 'text-success', bg: 'bg-success/10', icon: CheckCircle2 },
-    warning: {
-        color: 'text-warning',
-        bg: 'bg-warning/10',
-        icon: AlertTriangle,
-    },
-    critical: {
-        color: 'text-destructive',
-        bg: 'bg-destructive/10',
-        icon: AlertTriangle,
-    },
-};
 
-// Mock data for monitoring components - replace with real data from backend
-const mockSystemHealth = {
-    overall: 'healthy' as const,
-    lastChecked: new Date().toISOString(),
-    services: [
-        { id: '1', name: 'Database', status: 'healthy' as const },
-        { id: '2', name: 'Cache', status: 'healthy' as const },
-        { id: '3', name: 'Queue', status: 'warning' as const },
-        { id: '4', name: 'Proxmox API', status: 'healthy' as const },
-    ],
-    metrics: [
-        {
-            id: '1',
-            name: 'CPU Usage',
-            value: 45,
-            unit: '%',
-            max: 100,
-            status: 'healthy' as const,
-            trend: 'stable' as const,
-        },
-        {
-            id: '2',
-            name: 'Memory Usage',
-            value: 62,
-            unit: '%',
-            max: 100,
-            status: 'healthy' as const,
-            trend: 'up' as const,
-            trendValue: 2,
-        },
-    ],
-};
+interface MaintenanceFormState {
+    resourceId: number | null;
+    resourceType: 'usb_device' | 'camera' | null;
+    notes: string;
+    until: string;
+    isSubmitting: boolean;
+}
 
-const mockMetrics = [
-    {
-        id: '1',
-        name: 'CPU Usage',
-        value: 45,
-        unit: '%',
-        max: 100,
-        status: 'healthy' as const,
-        trend: 'stable' as const,
-    },
-    {
-        id: '2',
-        name: 'Memory Usage',
-        value: 62,
-        unit: '%',
-        max: 100,
-        status: 'healthy' as const,
-        trend: 'up' as const,
-    },
-];
+interface DescriptionEditState {
+    resourceId: number | null;
+    resourceType: 'usb_device' | 'camera' | null;
+    description: string;
+    isSubmitting: boolean;
+}
 
-const mockAlerts = [
-    {
-        id: '1',
-        severity: 'warning' as const,
-        title: 'High queue backlog',
-        message: 'VM provisioning queue has 12 pending jobs',
-        source: 'queue-monitor',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        acknowledged: false,
-    },
-    {
-        id: '2',
-        severity: 'info' as const,
-        title: 'Database backup completed',
-        message: 'Daily backup successfully completed at 2:30 AM',
-        source: 'backup-service',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        acknowledged: true,
-    },
-];
+export default function MaintenancePage({ resources = [] }: Props) {
+    const [maintenanceForm, setMaintenanceForm] =
+        useState<MaintenanceFormState>({
+            resourceId: null,
+            resourceType: null,
+            notes: '',
+            until: '',
+            isSubmitting: false,
+        });
 
-const mockActivityLog = [
-    {
-        id: '1',
-        type: 'vm' as const,
-        action: 'Created VM',
-        details: 'Ubuntu-22.04-Web-Server provisioned successfully',
-        user: 'admin@example.com',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-        id: '2',
-        type: 'security' as const,
-        action: 'User login',
-        details: 'Successful login from 192.168.1.100',
-        user: 'admin@example.com',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-        id: '3',
-        type: 'system' as const,
-        action: 'Cache cleared',
-        details: 'Automatic cache clearing executed',
-        timestamp: new Date(Date.now() - 14400000).toISOString(),
-    },
-];
-export default function MaintenancePage({
-    health = [],
-    storage,
-    cache,
-    queue,
-}: Props) {
-    const [running, setRunning] = useState<string | null>(null);
-    const runTask = (task: string, endpoint: string) => {
-        setRunning(task);
+    const [descriptionEdit, setDescriptionEdit] =
+        useState<DescriptionEditState>({
+            resourceId: null,
+            resourceType: null,
+            description: '',
+            isSubmitting: false,
+        });
+
+    const inMaintenanceCount = resources.filter(
+        (r) => r.is_in_maintenance,
+    ).length;
+
+    const openMaintenanceForm = (resource: Resource) => {
+        setMaintenanceForm({
+            resourceId: resource.id,
+            resourceType: resource.type,
+            notes: resource.maintenance_notes || '',
+            until: resource.maintenance_until
+                ? new Date(resource.maintenance_until).toISOString().split('T')[0]
+                : '',
+            isSubmitting: false,
+        });
+    };
+
+    const closeMaintenanceForm = () => {
+        setMaintenanceForm({
+            resourceId: null,
+            resourceType: null,
+            notes: '',
+            until: '',
+            isSubmitting: false,
+        });
+    };
+
+    const submitMaintenanceForm = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!maintenanceForm.resourceId || !maintenanceForm.resourceType) {
+            return;
+        }
+
+        setMaintenanceForm((prev) => ({ ...prev, isSubmitting: true }));
+
+        const url =
+            maintenanceForm.resourceType === 'usb_device'
+                ? usbDevicesRoutes.set({ device: maintenanceForm.resourceId }).url
+                : camerasRoutes.set({ camera: maintenanceForm.resourceId }).url;
+
         router.post(
-            endpoint,
-            {},
+            url,
             {
-                onFinish: () => setRunning(null),
+                notes: maintenanceForm.notes,
+                until: maintenanceForm.until || null,
+            },
+            {
+                onSuccess: () => {
+                    closeMaintenanceForm();
+                },
+                onFinish: () => {
+                    setMaintenanceForm((prev) => ({
+                        ...prev,
+                        isSubmitting: false,
+                    }));
+                },
             },
         );
     };
+
+    const clearMaintenance = (resource: Resource) => {
+        const url =
+            resource.type === 'usb_device'
+                ? usbDevicesRoutes.clear({ device: resource.id }).url
+                : camerasRoutes.clear({ camera: resource.id }).url;
+
+        router.delete(url);
+    };
+
+    const openDescriptionEdit = (resource: Resource) => {
+        setDescriptionEdit({
+            resourceId: resource.id,
+            resourceType: resource.type,
+            description: resource.description || '',
+            isSubmitting: false,
+        });
+    };
+
+    const closeDescriptionEdit = () => {
+        setDescriptionEdit({
+            resourceId: null,
+            resourceType: null,
+            description: '',
+            isSubmitting: false,
+        });
+    };
+
+    const submitDescriptionEdit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!descriptionEdit.resourceId || !descriptionEdit.resourceType) {
+            return;
+        }
+
+        setDescriptionEdit((prev) => ({ ...prev, isSubmitting: true }));
+
+        router.post(
+            maintenanceRoutes.description().url,
+            {
+                type: descriptionEdit.resourceType,
+                id: descriptionEdit.resourceId,
+                description: descriptionEdit.description,
+            },
+            {
+                onSuccess: () => {
+                    closeDescriptionEdit();
+                },
+                onFinish: () => {
+                    setDescriptionEdit((prev) => ({
+                        ...prev,
+                        isSubmitting: false,
+                    }));
+                },
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Maintenance - Admin" />
@@ -195,224 +207,334 @@ export default function MaintenancePage({
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold">
-                            System Maintenance
+                            Device Maintenance
                         </h1>
                         <p className="text-muted-foreground">
-                            Health checks and maintenance tasks
+                            Manage USB devices and cameras in maintenance mode
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => router.reload()}>
+                    <Button
+                        variant="outline"
+                        onClick={() => router.reload()}
+                    >
                         <RefreshCw className="mr-2 h-4 w-4" />
                         Refresh
                     </Button>
                 </div>
-                {/* Health Checks */}
+
+                {/* Summary Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Activity className="h-5 w-5" />
-                            Health Checks
-                        </CardTitle>
+                        <CardTitle>Maintenance Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-3 gap-4">
+                        <div>
+                            <div className="text-2xl font-bold">
+                                {resources.length}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Total Resources
+                            </p>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-warning">
+                                {inMaintenanceCount}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                In Maintenance
+                            </p>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-success">
+                                {resources.length - inMaintenanceCount}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Available
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Resources Table */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Resources</CardTitle>
                         <CardDescription>
-                            System component status
+                            USB devices and cameras with maintenance status
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {health.length === 0 ? (
-                                <p className="py-4 text-center text-muted-foreground">
-                                    No health checks configured
-                                </p>
-                            ) : (
-                                health.map((check) => {
-                                    const status = statusConfig[check.status];
-                                    const StatusIcon = status.icon;
-                                    return (
-                                        <div
-                                            key={check.name}
-                                            className="flex items-center justify-between rounded-lg border p-4"
-                                        >
+                        {resources.length === 0 ? (
+                            <p className="py-4 text-center text-muted-foreground">
+                                No resources found
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {resources.map((resource) => (
+                                    <div
+                                        key={`${resource.type}-${resource.id}`}
+                                        className="flex items-center justify-between rounded-lg border p-4"
+                                    >
+                                        <div className="flex-1">
                                             <div className="flex items-center gap-3">
-                                                <div
-                                                    className={`rounded-full p-2 ${status.bg}`}
-                                                >
-                                                    <StatusIcon
-                                                        className={`h-4 w-4 ${status.color}`}
-                                                    />
-                                                </div>
                                                 <div>
-                                                    <div className="font-medium">
-                                                        {check.name}
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">
+                                                            {resource.name}
+                                                        </span>
+                                                        <Badge
+                                                            variant={
+                                                                resource.is_in_maintenance
+                                                                    ? 'destructive'
+                                                                    : 'default'
+                                                            }
+                                                        >
+                                                            {resource.is_in_maintenance
+                                                                ? 'IN MAINTENANCE'
+                                                                : 'AVAILABLE'}
+                                                        </Badge>
+                                                        <Badge
+                                                            variant="outline"
+                                                        >
+                                                            {resource.type ===
+                                                            'usb_device'
+                                                                ? 'USB Device'
+                                                                : 'Camera'}
+                                                        </Badge>
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {check.message}
+                                                        {resource.gateway ||
+                                                            resource.source ||
+                                                            'N/A'}
                                                     </div>
+                                                    {resource.description && (
+                                                        <div className="mt-2 text-sm">
+                                                            <span className="font-medium">
+                                                                Admin Notes:
+                                                            </span>{' '}
+                                                            {
+                                                                resource.description
+                                                            }
+                                                        </div>
+                                                    )}
+                                                    {resource.maintenance_notes && (
+                                                        <div className="mt-1 text-sm">
+                                                            <span className="font-medium">
+                                                                Maintenance Notes:
+                                                            </span>{' '}
+                                                            {
+                                                                resource.maintenance_notes
+                                                            }
+                                                        </div>
+                                                    )}
+                                                    {resource.maintenance_until && (
+                                                        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                                                            <Calendar className="h-4 w-4" />
+                                                            Until{' '}
+                                                            {new Date(
+                                                                resource.maintenance_until,
+                                                            ).toLocaleDateString()}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <Badge
-                                                variant="outline"
-                                                className={`${status.bg} ${status.color} border-0`}
-                                            >
-                                                {check.status}
-                                            </Badge>
                                         </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-                <div className="grid gap-6 md:grid-cols-2">
-                    {/* Storage */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <HardDrive className="h-5 w-5" />
-                                Storage
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex justify-between text-sm">
-                                <span>Used</span>
-                                <span>
-                                    {storage?.used ?? 0} GB /{' '}
-                                    {storage?.total ?? 0} GB
-                                </span>
+
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    openDescriptionEdit(
+                                                        resource,
+                                                    )
+                                                }
+                                            >
+                                                <FileText className="h-4 w-4" />
+                                            </Button>
+                                            {resource.is_in_maintenance ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        clearMaintenance(
+                                                            resource,
+                                                        )
+                                                    }
+                                                >
+                                                    <Check className="h-4 w-4 text-success" />
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        openMaintenanceForm(
+                                                            resource,
+                                                        )
+                                                    }
+                                                >
+                                                    <AlertTriangle className="h-4 w-4 text-warning" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <Progress value={storage?.percentage ?? 0} />
-                            <p className="text-sm text-muted-foreground">
-                                {storage?.percentage ?? 0}% of storage used
-                            </p>
-                        </CardContent>
-                    </Card>
-                    {/* Cache */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Database className="h-5 w-5" />
-                                Cache
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-2xl font-bold">
-                                        {cache?.size ?? '0 MB'}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                        Cache Size
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-bold">
-                                        {cache?.entries ?? 0}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                        Entries
-                                    </div>
-                                </div>
-                            </div>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                disabled={running === 'cache'}
-                                onClick={() =>
-                                    runTask(
-                                        'cache',
-                                        '/admin/maintenance/clear-cache',
-                                    )
-                                }
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Clear Cache
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-                {/* Maintenance Tasks */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Wrench className="h-5 w-5" />
-                            Maintenance Tasks
-                        </CardTitle>
-                        <CardDescription>
-                            Run system maintenance operations
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <Button
-                                variant="outline"
-                                className="flex h-auto flex-col items-center gap-2 py-4"
-                                disabled={running === 'optimize'}
-                                onClick={() =>
-                                    runTask(
-                                        'optimize',
-                                        '/admin/maintenance/optimize',
-                                    )
-                                }
-                            >
-                                <RefreshCw
-                                    className={`h-6 w-6 ${running === 'optimize' ? 'animate-spin' : ''}`}
-                                />
-                                <span>Optimize System</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="flex h-auto flex-col items-center gap-2 py-4"
-                                disabled={running === 'sessions'}
-                                onClick={() =>
-                                    runTask(
-                                        'sessions',
-                                        '/admin/maintenance/cleanup-sessions',
-                                    )
-                                }
-                            >
-                                <Server
-                                    className={`h-6 w-6 ${running === 'sessions' ? 'animate-spin' : ''}`}
-                                />
-                                <span>Cleanup Sessions</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="flex h-auto flex-col items-center gap-2 py-4"
-                                disabled={running === 'queue'}
-                                onClick={() =>
-                                    runTask(
-                                        'queue',
-                                        '/admin/maintenance/retry-failed-jobs',
-                                    )
-                                }
-                            >
-                                <Activity
-                                    className={`h-6 w-6 ${running === 'queue' ? 'animate-spin' : ''}`}
-                                />
-                                <span>
-                                    Retry Failed Jobs ({queue?.failed ?? 0})
-                                </span>
-                            </Button>
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Monitoring Components */}
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {/* System Health Overview */}
-                    <SystemHealthOverview
-                        health={mockSystemHealth}
-                        onRefresh={() => router.reload()}
-                    />
+                {/* Description Edit Modal */}
+                {descriptionEdit.resourceId !== null && (
+                    <Card className="border-primary bg-white shadow-lg">
+                        <CardHeader>
+                            <CardTitle>Edit Admin Notes</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <form
+                                onSubmit={submitDescriptionEdit}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <Label htmlFor="description">
+                                        Admin Description
+                                    </Label>
+                                    <Textarea
+                                        id="description"
+                                        value={descriptionEdit.description}
+                                        onChange={(e) =>
+                                            setDescriptionEdit((prev) => ({
+                                                ...prev,
+                                                description: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Enter admin notes (e.g., repairs needed, replacement pending, etc.)"
+                                        maxLength={5000}
+                                    />
+                                </div>
 
-                    {/* Metrics Chart */}
-                    <MetricsChart metrics={mockMetrics} />
-                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="submit"
+                                        disabled={
+                                            descriptionEdit.isSubmitting
+                                        }
+                                    >
+                                        {descriptionEdit.isSubmitting && (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        Save
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={closeDescriptionEdit}
+                                        disabled={
+                                            descriptionEdit.isSubmitting
+                                        }
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                )}
 
-                {/* Alerts Panel */}
-                <AlertsPanel alerts={mockAlerts} />
+                {/* Maintenance Form Modal */}
+                {maintenanceForm.resourceId !== null && (
+                    <Card className="border-destructive bg-white shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-destructive" />
+                                Enable Maintenance Mode
+                            </CardTitle>
+                            <CardDescription>
+                                This will prevent the device from being used
+                                until maintenance is cleared.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form
+                                onSubmit={submitMaintenanceForm}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <Label htmlFor="notes">
+                                        Maintenance Notes *
+                                    </Label>
+                                    <Textarea
+                                        id="notes"
+                                        value={maintenanceForm.notes}
+                                        onChange={(e) =>
+                                            setMaintenanceForm((prev) => ({
+                                                ...prev,
+                                                notes: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Describe the maintenance work (repairs, replacements, etc.)"
+                                        maxLength={2000}
+                                        required
+                                    />
+                                    <div className="text-xs text-muted-foreground">
+                                        {maintenanceForm.notes.length}/2000
+                                    </div>
+                                </div>
 
-                {/* Activity Log */}
-                <ActivityLog activities={mockActivityLog} />
+                                <div>
+                                    <Label htmlFor="until">
+                                        Maintenance Until (Optional)
+                                    </Label>
+                                    <Input
+                                        id="until"
+                                        type="date"
+                                        value={maintenanceForm.until}
+                                        onChange={(e) =>
+                                            setMaintenanceForm((prev) => ({
+                                                ...prev,
+                                                until: e.target.value,
+                                            }))
+                                        }
+                                        min={new Date()
+                                            .toISOString()
+                                            .split('T')[0]}
+                                    />
+                                    <div className="text-xs text-muted-foreground">
+                                        If set, maintenance will auto-clear on
+                                        this date
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="submit"
+                                        variant="destructive"
+                                        disabled={
+                                            maintenanceForm.isSubmitting ||
+                                            !maintenanceForm.notes
+                                        }
+                                    >
+                                        {maintenanceForm.isSubmitting && (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        Enable Maintenance
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={closeMaintenanceForm}
+                                        disabled={
+                                            maintenanceForm.isSubmitting
+                                        }
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

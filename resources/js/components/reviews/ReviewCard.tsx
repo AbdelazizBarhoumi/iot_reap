@@ -1,9 +1,9 @@
 /**
- * ReviewCard - Display a single course review.
+ * ReviewCard - Display a single trainingPath review.
  */
 import { formatDistanceToNow } from 'date-fns';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
-import type { CourseReview } from '@/api/reviews.api';
+import type { TrainingPathReview } from '@/api/reviews.api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { StarRating } from './StarRating';
 interface ReviewCardProps {
-    review: CourseReview;
+    review: TrainingPathReview;
     isOwnReview?: boolean;
     onEdit?: () => void;
     onDelete?: () => void;

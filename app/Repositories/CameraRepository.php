@@ -48,6 +48,22 @@ class CameraRepository
     }
 
     /**
+     * Find cameras assigned to a specific VM ID.
+     *
+     * @param  int|null  $vmId  The VM ID to filter by (null returns empty collection)
+     */
+    public function findByVmId(?int $vmId): Collection
+    {
+        if ($vmId === null) {
+            return new Collection();
+        }
+
+        return Camera::forVmId($vmId)
+            ->with(['robot', 'gatewayNode', 'activeControl.session'])
+            ->get();
+    }
+
+    /**
      * Find a camera with its current control state.
      */
     public function findWithControl(int $id): Camera

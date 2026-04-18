@@ -32,6 +32,8 @@ return new class extends Migration
             $table->boolean('ptz_capable')->default(false);   // can this camera pan/tilt?
             $table->boolean('recording_enabled')->default(false);
             $table->boolean('detection_enabled')->default(false);
+            // Proxmox VM numeric ID (vm_sessions.vm_id), not vm_sessions primary ULID.
+            $table->unsignedInteger('assigned_vm_id')->nullable()->index();
             $table->timestamps();
         });
     }

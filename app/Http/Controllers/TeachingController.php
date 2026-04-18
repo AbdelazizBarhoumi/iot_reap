@@ -2,73 +2,75 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Course\CreateCourseRequest;
-use App\Http\Requests\Course\ReorderLessonsRequest;
-use App\Http\Requests\Course\ReorderModulesRequest;
-use App\Http\Requests\Course\StoreLessonRequest;
-use App\Http\Requests\Course\StoreModuleRequest;
-use App\Http\Requests\Course\UpdateCourseRequest;
-use App\Http\Requests\Course\UpdateLessonRequest;
-use App\Http\Requests\Course\UpdateModuleRequest;
-use App\Http\Resources\CourseModuleResource;
-use App\Http\Resources\CourseResource;
-use App\Http\Resources\LessonResource;
-use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
-use App\Repositories\CourseRepository;
-use App\Services\CourseService;
-use App\Services\LessonService;
+use App\Http\Requests\TrainingPath\CreateTrainingPathRequest;
+use App\Http\Requests\TrainingPath\ReorderTrainingUnitsRequest;
+use App\Http\Requests\TrainingPath\ReorderModulesRequest;
+use App\Http\Requests\TrainingPath\StoreTrainingUnitRequest;
+use App\Http\Requests\TrainingPath\StoreModuleRequest;
+use App\Http\Requests\TrainingPath\UpdateTrainingPathRequest;
+use App\Http\Requests\TrainingPath\UpdateTrainingUnitRequest;
+use App\Http\Requests\TrainingPath\UpdateModuleRequest;
+use App\Http\Resources\TrainingPathModuleResource;
+use App\Http\Resources\TrainingPathResource;
+use App\Http\Resources\TrainingUnitResource;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
+use App\Repositories\TrainingPathRepository;
+use App\Services\TrainingPathService;
+use App\Services\TrainingUnitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 /**
- * Controller for teaching/course management (instructor-facing).
+ * Controller for teaching/trainingPath management (instructor-facing).
  */
 class TeachingController extends Controller
 {
     public function __construct(
-        private readonly CourseService $courseService,
-        private readonly LessonService $lessonService,
-        private readonly CourseRepository $courseRepository,
+        private readonly TrainingPathService $trainingPathService,
+        private readonly TrainingUnitService $trainingUnitService,
+        private readonly TrainingPathRepository $trainingPathRepository,
     ) {}
 
     /**
-     * Teaching dashboard - show instructor's courses.
+     * Teaching dashboard - show instructor's trainingPaths.
      */
     public function index(Request $request): JsonResponse|InertiaResponse
     {
-        $courses = $this->courseService->getCoursesByInstructor($request->user());
+        $trainingPaths = $this->trainingPathService->getTrainingPathsByInstructor($request->user());
 
         // Calculate stats
         $stats = [
-            'totalCourses' => $courses->count(),
-            'totalStudents' => $courses->sum('student_count'),
-            'avgRating' => $courses->avg('rating') ? round($courses->avg('rating'), 1) : 0,
+            'totalTrainingPaths' => $trainingPaths->count(),
+            'totalStudents' => $trainingPaths->sum('student_count'),
+            'avgRating' => $trainingPaths->avg('rating') ? round($trainingPaths->avg('rating'), 1) : 0,
+            'completionRate' => $this->trainingPathService->getInstructorCompletionRate($request->user()),
         ];
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => CourseResource::collection($courses),
+                'data' => TrainingPathResource::collection($trainingPaths),
                 'stats' => $stats,
             ]);
         }
 
         return Inertia::render('teaching/index', [
-            'courses' => CourseResource::collection($courses),
+            'trainingPaths' => TrainingPathResource::collection($trainingPaths),
             'stats' => $stats,
         ]);
     }
 
     /**
-     * Create course form.
+     * Create trainingPath form.
      */
     public function create(): InertiaResponse
     {
-        // Get unique categories from existing courses
-        $categories = Course::query()
+        // Get unique categories from existing trainingPaths
+        $categories = TrainingPath::query()
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category')
@@ -79,13 +81,12 @@ class TeachingController extends Controller
         // Add default categories if none exist
         if (empty($categories)) {
             $categories = [
-                'IoT & Embedded Systems',
-                'Industrial Automation',
-                'Robotics',
-                'Networking & Protocols',
-                'Cloud & DevOps',
-                'Programming',
-                'Security',
+                'Smart Manufacturing',
+                'Industrial IoT',
+                'Predictive Maintenance',
+                'OT Cybersecurity',
+                'Robotics & Automation',
+                'Edge AI & Digital Twins',
             ];
         }
 
@@ -95,50 +96,50 @@ class TeachingController extends Controller
     }
 
     /**
-     * Store a new course.
+     * Store a new trainingPath.
      */
-    public function store(CreateCourseRequest $request): \Illuminate\Http\RedirectResponse
+    public function store(CreateTrainingPathRequest $request): \Illuminate\Http\RedirectResponse
     {
         try {
-            \Log::info('Creating course', ['user' => $request->user()->id, 'data_keys' => array_keys($request->validated())]);
+            Log::info('Creating trainingPath', ['user' => $request->user()->id, 'data_keys' => array_keys($request->validated())]);
 
-            $course = $this->courseService->createCourse(
+            $trainingPath = $this->trainingPathService->createTrainingPath(
                 instructor: $request->user(),
                 data: $request->validated(),
                 modules: $request->validated('modules', []),
             );
 
-            \Log::info('Course created successfully', ['id' => $course->id]);
+            Log::info('TrainingPath created successfully', ['id' => $trainingPath->id]);
 
-            return redirect()->route('teaching.edit', $course->id)
-                ->with('success', 'Course created successfully! Now add content to your lessons.');
+            return redirect()->route('teaching.edit', $trainingPath->id)
+                ->with('success', 'TrainingPath created successfully! Now add content to your trainingUnits.');
         } catch (\Exception $e) {
-            \Log::error('Course creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('TrainingPath creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => 'Failed to create course: '.$e->getMessage()]);
+                ->withErrors(['error' => 'Failed to create trainingPath: '.$e->getMessage()]);
         }
     }
 
     /**
-     * Edit course form.
+     * Edit trainingPath form.
      */
     public function edit(Request $request, int $id): JsonResponse|InertiaResponse
     {
-        $course = $this->courseService->getCourseWithContent($id);
+        $trainingPath = $this->trainingPathService->getTrainingPathWithContent($id);
 
-        if (! $course) {
+        if (! $trainingPath) {
             abort(404);
         }
 
         // Only owner or admin can edit
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        // Get unique categories from existing courses
-        $categories = Course::query()
+        // Get unique categories from existing trainingPaths
+        $categories = TrainingPath::query()
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category')
@@ -149,109 +150,108 @@ class TeachingController extends Controller
         // Add default categories if none exist
         if (empty($categories)) {
             $categories = [
-                'IoT & Embedded Systems',
-                'Industrial Automation',
-                'Robotics',
-                'Networking & Protocols',
-                'Cloud & DevOps',
-                'Programming',
-                'Security',
+                'Smart Manufacturing',
+                'Industrial IoT',
+                'Predictive Maintenance',
+                'OT Cybersecurity',
+                'Robotics & Automation',
+                'Edge AI & Digital Twins',
             ];
         }
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => new CourseResource($course),
+                'data' => new TrainingPathResource($trainingPath),
                 'categories' => $categories,
             ]);
         }
 
         return Inertia::render('teaching/edit', [
             'id' => (string) $id,
-            'course' => new CourseResource($course),
+            'trainingPath' => new TrainingPathResource($trainingPath),
             'categories' => $categories,
         ]);
     }
 
     /**
-     * Update a course.
+     * Update a trainingPath.
      */
-    public function update(UpdateCourseRequest $request, Course $course): JsonResponse
+    public function update(UpdateTrainingPathRequest $request, TrainingPath $trainingPath): JsonResponse
     {
-        $updated = $this->courseService->updateCourse($course, $request->validated());
+        $updated = $this->trainingPathService->updateTrainingPath($trainingPath, $request->validated());
 
         return response()->json([
-            'data' => new CourseResource($updated),
-            'message' => 'Course updated successfully',
+            'data' => new TrainingPathResource($updated),
+            'message' => 'TrainingPath updated successfully',
         ]);
     }
 
     /**
-     * Delete a course.
+     * Delete a trainingPath.
      */
-    public function destroy(Request $request, Course $course): JsonResponse
+    public function destroy(Request $request, TrainingPath $trainingPath): JsonResponse
     {
         // Only owner or admin can delete
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        $this->courseService->deleteCourse($course);
+        $this->trainingPathService->deleteTrainingPath($trainingPath);
 
-        return response()->json(['message' => 'Course deleted successfully']);
+        return response()->json(['message' => 'TrainingPath deleted successfully']);
     }
 
     /**
-     * Archive a course (soft-delete).
+     * Archive a trainingPath (soft-delete).
      */
-    public function archive(Request $request, Course $course): JsonResponse
+    public function archive(Request $request, TrainingPath $trainingPath): JsonResponse
     {
         // Only owner or admin can archive
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        $updated = $this->courseService->archiveCourse($course);
+        $updated = $this->trainingPathService->archiveTrainingPath($trainingPath);
 
         return response()->json([
-            'data' => new CourseResource($updated),
-            'message' => 'Course archived successfully',
+            'data' => new TrainingPathResource($updated),
+            'message' => 'TrainingPath archived successfully',
         ]);
     }
 
     /**
-     * Restore an archived course.
+     * Restore an archived trainingPath.
      */
-    public function restore(Request $request, Course $course): JsonResponse
+    public function restore(Request $request, TrainingPath $trainingPath): JsonResponse
     {
         // Only owner or admin can restore
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        $updated = $this->courseService->restoreCourse($course);
+        $updated = $this->trainingPathService->restoreTrainingPath($trainingPath);
 
         return response()->json([
-            'data' => new CourseResource($updated),
-            'message' => 'Course restored successfully',
+            'data' => new TrainingPathResource($updated),
+            'message' => 'TrainingPath restored successfully',
         ]);
     }
 
     /**
-     * Submit course for review.
+     * Submit trainingPath for review.
      */
-    public function submitForReview(Request $request, Course $course): JsonResponse
+    public function submitForReview(Request $request, TrainingPath $trainingPath): JsonResponse
     {
         // Only owner can submit
-        if (! $course->isOwnedBy($request->user())) {
+        if (! $trainingPath->isOwnedBy($request->user())) {
             abort(403);
         }
 
-        $updated = $this->courseService->submitForReview($course);
+        $updated = $this->trainingPathService->submitForReview($trainingPath);
 
         return response()->json([
-            'data' => new CourseResource($updated),
-            'message' => 'Course submitted for review',
+            'data' => new TrainingPathResource($updated),
+            'message' => 'TrainingPath submitted for review',
         ]);
     }
 
@@ -260,15 +260,15 @@ class TeachingController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Add a module to a course.
+     * Add a module to a trainingPath.
      */
-    public function storeModule(StoreModuleRequest $request, Course $course): JsonResponse
+    public function storeModule(StoreModuleRequest $request, TrainingPath $trainingPath): JsonResponse
     {
         // Authorization is handled in StoreModuleRequest
-        $module = $this->lessonService->addModule($course->id, $request->validated());
+        $module = $this->trainingUnitService->addModule($trainingPath->id, $request->validated());
 
         return response()->json([
-            'data' => new CourseModuleResource($module->load('lessons')),
+            'data' => new TrainingPathModuleResource($module->load('trainingUnits')),
             'message' => 'Module added successfully',
         ], 201);
     }
@@ -276,13 +276,13 @@ class TeachingController extends Controller
     /**
      * Update a module.
      */
-    public function updateModule(UpdateModuleRequest $request, Course $course, CourseModule $module): JsonResponse
+    public function updateModule(UpdateModuleRequest $request, TrainingPath $trainingPath, TrainingPathModule $module): JsonResponse
     {
         // Authorization is handled in UpdateModuleRequest
-        $updated = $this->lessonService->updateModule($module, $request->validated());
+        $updated = $this->trainingUnitService->updateModule($module, $request->validated());
 
         return response()->json([
-            'data' => new CourseModuleResource($updated->load('lessons')),
+            'data' => new TrainingPathModuleResource($updated->load('trainingUnits')),
             'message' => 'Module updated successfully',
         ]);
     }
@@ -290,113 +290,113 @@ class TeachingController extends Controller
     /**
      * Delete a module.
      */
-    public function destroyModule(Request $request, Course $course, CourseModule $module): JsonResponse
+    public function destroyModule(Request $request, TrainingPath $trainingPath, TrainingPathModule $module): JsonResponse
     {
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        $this->lessonService->deleteModule($module);
+        $this->trainingUnitService->deleteModule($module);
 
         return response()->json(['message' => 'Module deleted successfully']);
     }
 
     /**
-     * Reorder modules within a course.
+     * Reorder modules within a trainingPath.
      */
-    public function reorderModules(ReorderModulesRequest $request, Course $course): JsonResponse
+    public function reorderModules(ReorderModulesRequest $request, TrainingPath $trainingPath): JsonResponse
     {
-        $this->lessonService->reorderModules($course->id, $request->validated('order'));
+        $this->trainingUnitService->reorderModules($trainingPath->id, $request->validated('order'));
 
         return response()->json(['message' => 'Modules reordered successfully']);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Lesson Management
+    // TrainingUnit Management
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Lesson edit page.
+     * TrainingUnit edit page.
      */
-    public function editLesson(Request $request, int $courseId, int $moduleId, int $lessonId): JsonResponse|InertiaResponse
+    public function editTrainingUnit(Request $request, int $trainingPathId, int $moduleId, int $trainingUnitId): JsonResponse|InertiaResponse
     {
-        $lesson = $this->lessonService->getLessonWithContext($lessonId);
+        $trainingUnit = $this->trainingUnitService->getTrainingUnitWithContext($trainingUnitId);
 
-        if (! $lesson || $lesson->module->course_id !== $courseId) {
+        if (! $trainingUnit || $trainingUnit->module->training_path_id !== $trainingPathId) {
             abort(404);
         }
 
-        $course = $lesson->module->course;
+        $trainingPath = $trainingUnit->module->trainingPath;
 
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
         if ($request->wantsJson()) {
             return response()->json([
-                'lesson' => new LessonResource($lesson),
-                'course' => new CourseResource($course->load('modules.lessons')),
+                'trainingUnit' => new TrainingUnitResource($trainingUnit),
+                'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
             ]);
         }
 
-        return Inertia::render('teaching/lesson-edit', [
-            'courseId' => (string) $courseId,
+        return Inertia::render('teaching/trainingUnit-edit', [
+            'trainingPathId' => (string) $trainingPathId,
             'moduleId' => (string) $moduleId,
-            'lessonId' => (string) $lessonId,
-            'lesson' => new LessonResource($lesson),
-            'course' => new CourseResource($course->load('modules.lessons')),
+            'trainingUnitId' => (string) $trainingUnitId,
+            'trainingUnit' => new TrainingUnitResource($trainingUnit),
+            'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
         ]);
     }
 
     /**
-     * Add a lesson to a module.
+     * Add a trainingUnit to a module.
      */
-    public function storeLesson(StoreLessonRequest $request, Course $course, CourseModule $module): JsonResponse
+    public function storeTrainingUnit(StoreTrainingUnitRequest $request, TrainingPath $trainingPath, TrainingPathModule $module): JsonResponse
     {
-        // Authorization is handled in StoreLessonRequest
-        $lesson = $this->lessonService->addLesson($module->id, $request->validated());
+        // Authorization is handled in StoreTrainingUnitRequest
+        $trainingUnit = $this->trainingUnitService->addTrainingUnit($module->id, $request->validated());
 
         return response()->json([
-            'data' => new LessonResource($lesson),
-            'message' => 'Lesson added successfully',
+            'data' => new TrainingUnitResource($trainingUnit),
+            'message' => 'TrainingUnit added successfully',
         ], 201);
     }
 
     /**
-     * Update a lesson.
+     * Update a trainingUnit.
      */
-    public function updateLesson(UpdateLessonRequest $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
+    public function updateTrainingUnit(UpdateTrainingUnitRequest $request, TrainingPath $trainingPath, TrainingPathModule $module, TrainingUnit $trainingUnit): JsonResponse
     {
-        // Authorization is handled in UpdateLessonRequest
-        $updated = $this->lessonService->updateLesson($lesson, $request->validated());
+        // Authorization is handled in UpdateTrainingUnitRequest
+        $updated = $this->trainingUnitService->updateTrainingUnit($trainingUnit, $request->validated());
 
         return response()->json([
-            'data' => new LessonResource($updated),
-            'message' => 'Lesson updated successfully',
+            'data' => new TrainingUnitResource($updated),
+            'message' => 'TrainingUnit updated successfully',
         ]);
     }
 
     /**
-     * Delete a lesson.
+     * Delete a trainingUnit.
      */
-    public function destroyLesson(Request $request, Course $course, CourseModule $module, Lesson $lesson): JsonResponse
+    public function destroyTrainingUnit(Request $request, TrainingPath $trainingPath, TrainingPathModule $module, TrainingUnit $trainingUnit): JsonResponse
     {
-        if (! $course->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
+        if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
         }
 
-        $this->lessonService->deleteLesson($lesson);
+        $this->trainingUnitService->deleteTrainingUnit($trainingUnit);
 
-        return response()->json(['message' => 'Lesson deleted successfully']);
+        return response()->json(['message' => 'TrainingUnit deleted successfully']);
     }
 
     /**
-     * Reorder lessons within a module.
+     * Reorder trainingUnits within a module.
      */
-    public function reorderLessons(ReorderLessonsRequest $request, Course $course, CourseModule $module): JsonResponse
+    public function reorderTrainingUnits(ReorderTrainingUnitsRequest $request, TrainingPath $trainingPath, TrainingPathModule $module): JsonResponse
     {
-        $this->lessonService->reorderLessons($module->id, $request->validated('order'));
+        $this->trainingUnitService->reorderTrainingUnits($module->id, $request->validated('order'));
 
-        return response()->json(['message' => 'Lessons reordered successfully']);
+        return response()->json(['message' => 'TrainingUnits reordered successfully']);
     }
 }

@@ -1,9 +1,16 @@
 /**
  * Admin VM Assignment Approvals Page
- * Approve/reject teacher requests to assign VMs to lessons.
+ * Approve/reject teacher requests to assign VMs to trainingUnits.
  */
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Clock, Monitor, Search, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Clock,
+    Monitor,
+    Search,
+    Server,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,42 +26,22 @@ import {
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-interface VMAssignmentRequest {
-    id: string;
-    lesson: {
-        id: number;
-        title: string;
-        course: {
-            id: number;
-            title: string;
-        };
-    };
-    template: {
-        id: number;
-        name: string;
-        os_type: string;
-    };
-    teacher: {
-        id: string;
-        name: string;
-        email: string;
-    };
-    status: 'pending' | 'approved' | 'rejected';
-    requestedAt: string;
-    notes: string | null;
-}
+import type { TrainingUnitVMAssignment } from '@/types/vm.types';
+
 interface Props {
-    requests: VMAssignmentRequest[];
-    stats: {
+    assignments: TrainingUnitVMAssignment[];
+    stats?: {
         pending: number;
         approved: number;
         rejected: number;
     };
 }
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/infrastructure' },
     { title: 'VM Assignments', href: '/admin/vm-assignments' },
 ];
+
 const statusConfig = {
     pending: {
         label: 'Pending',
@@ -72,41 +59,49 @@ const statusConfig = {
         icon: XCircle,
     },
 };
+
 export default function VMAssignmentApprovalsPage({
-    requests = [],
+    assignments = [],
     stats,
 }: Props) {
     const [search, setSearch] = useState('');
-    const [processing, setProcessing] = useState<string | null>(null);
-    const filtered = requests.filter(
-        (r) =>
-            r.lesson.title.toLowerCase().includes(search.toLowerCase()) ||
-            r.lesson.course.title
-                .toLowerCase()
+    const [processing, setProcessing] = useState<number | null>(null);
+
+    const filtered = assignments.filter(
+        (a) =>
+            a.trainingUnit?.title?.toLowerCase().includes(search.toLowerCase()) ||
+            a.trainingUnit?.module?.trainingPath?.title
+                ?.toLowerCase()
                 .includes(search.toLowerCase()) ||
-            r.teacher.name.toLowerCase().includes(search.toLowerCase()) ||
-            r.template.name.toLowerCase().includes(search.toLowerCase()),
+            a.assigned_by?.name?.toLowerCase().includes(search.toLowerCase()) ||
+            a.vm_name?.toLowerCase().includes(search.toLowerCase()),
     );
-    const handleApprove = (id: string) => {
+
+    const handleApprove = (id: number) => {
         setProcessing(id);
         router.post(
-            `/admin/vm-assignments/${id}/approve`,
+            `/admin/trainingUnit-assignments/${id}/approve`,
             {},
             {
                 onFinish: () => setProcessing(null),
             },
         );
     };
-    const handleReject = (id: string) => {
+
+    const handleReject = (id: number) => {
+        const notes = prompt('Please provide a reason for rejection:');
+        if (!notes) return;
+
         setProcessing(id);
         router.post(
-            `/admin/vm-assignments/${id}/reject`,
-            {},
+            `/admin/trainingUnit-assignments/${id}/reject`,
+            { admin_notes: notes },
             {
                 onFinish: () => setProcessing(null),
             },
         );
     };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="VM Assignment Approvals - Admin" />
@@ -116,9 +111,10 @@ export default function VMAssignmentApprovalsPage({
                         VM Assignment Approvals
                     </h1>
                     <p className="text-muted-foreground">
-                        Review teacher requests to assign VMs to course lessons
+                        Review instructor requests to assign VMs to training modules
                     </p>
                 </div>
+
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
@@ -158,24 +154,26 @@ export default function VMAssignmentApprovalsPage({
                         </CardContent>
                     </Card>
                 </div>
+
                 {/* Search */}
                 <div className="relative max-w-sm">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                        placeholder="Search by course, lesson, or teacher..."
+                        placeholder="Search by path, module, or instructor..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-10"
                     />
                 </div>
+
                 {/* Table */}
                 <Card>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Lesson</TableHead>
-                                <TableHead>VM Template</TableHead>
-                                <TableHead>Teacher</TableHead>
+                                <TableHead>Module</TableHead>
+                                <TableHead>VM</TableHead>
+                                <TableHead>Instructor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Requested</TableHead>
                                 <TableHead className="text-right">
@@ -194,21 +192,22 @@ export default function VMAssignmentApprovalsPage({
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filtered.map((request) => {
-                                    const status = statusConfig[request.status];
+                                filtered.map((assignment) => {
+                                    const status =
+                                        statusConfig[assignment.status];
                                     const StatusIcon = status.icon;
                                     return (
-                                        <TableRow key={request.id}>
+                                        <TableRow key={assignment.id}>
                                             <TableCell>
                                                 <div>
                                                     <div className="font-medium">
-                                                        {request.lesson.title}
+                                                        {assignment.trainingUnit
+                                                            ?.title ?? 'N/A'}
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {
-                                                            request.lesson
-                                                                .course.title
-                                                        }
+                                                        {assignment.trainingUnit
+                                                            ?.module?.trainingPath
+                                                            ?.title ?? 'N/A'}
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -217,16 +216,14 @@ export default function VMAssignmentApprovalsPage({
                                                     <Monitor className="h-4 w-4 text-muted-foreground" />
                                                     <div>
                                                         <div className="font-medium">
-                                                            {
-                                                                request.template
-                                                                    .name
-                                                            }
+                                                            {assignment.vm_name ??
+                                                                `VM ${assignment.vm_id}`}
                                                         </div>
-                                                        <div className="text-sm text-muted-foreground">
-                                                            {
-                                                                request.template
-                                                                    .os_type
-                                                            }
+                                                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                            <Server className="h-3 w-3" />
+                                                            {assignment.node
+                                                                ?.name ??
+                                                                'Unknown node'}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -234,10 +231,8 @@ export default function VMAssignmentApprovalsPage({
                                             <TableCell>
                                                 <div>
                                                     <div className="font-medium">
-                                                        {request.teacher.name}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {request.teacher.email}
+                                                        {assignment.assigned_by
+                                                            ?.name ?? 'N/A'}
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -252,23 +247,22 @@ export default function VMAssignmentApprovalsPage({
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {new Date(
-                                                    request.requestedAt,
+                                                    assignment.created_at,
                                                 ).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {request.status ===
-                                                    'pending' && (
+                                                {assignment.is_pending && (
                                                     <div className="flex justify-end gap-2">
                                                         <Button
                                                             size="sm"
                                                             onClick={() =>
                                                                 handleApprove(
-                                                                    request.id,
+                                                                    assignment.id,
                                                                 )
                                                             }
                                                             disabled={
                                                                 processing ===
-                                                                request.id
+                                                                assignment.id
                                                             }
                                                         >
                                                             Approve
@@ -278,12 +272,12 @@ export default function VMAssignmentApprovalsPage({
                                                             variant="outline"
                                                             onClick={() =>
                                                                 handleReject(
-                                                                    request.id,
+                                                                    assignment.id,
                                                                 )
                                                             }
                                                             disabled={
                                                                 processing ===
-                                                                request.id
+                                                                assignment.id
                                                             }
                                                         >
                                                             Reject

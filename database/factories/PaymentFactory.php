@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\PaymentStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +23,7 @@ class PaymentFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'course_id' => Course::factory(),
+            'training_path_id' => TrainingPath::factory(),
             'stripe_session_id' => 'cs_'.Str::random(24),
             'stripe_payment_intent_id' => 'pi_'.Str::random(24),
             'status' => PaymentStatus::PENDING,
@@ -109,13 +109,13 @@ class PaymentFactory extends Factory
     }
 
     /**
-     * Assign to specific course.
+     * Assign to specific trainingPath.
      */
-    public function forCourse(Course $course): static
+    public function forTrainingPath(TrainingPath $trainingPath): static
     {
         return $this->state(fn (array $attributes) => [
-            'course_id' => $course->id,
-            'amount_cents' => $course->price_cents ?? $attributes['amount_cents'],
+            'training_path_id' => $trainingPath->id,
+            'amount_cents' => $trainingPath->price_cents ?? $attributes['amount_cents'],
         ]);
     }
 

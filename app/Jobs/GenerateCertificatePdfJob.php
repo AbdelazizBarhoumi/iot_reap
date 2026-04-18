@@ -29,14 +29,14 @@ class GenerateCertificatePdfJob implements ShouldQueue
     {
         try {
             // Load relationships
-            $this->certificate->loadMissing(['user', 'course.instructor']);
+            $this->certificate->loadMissing(['user', 'trainingPath.instructor']);
 
             // Generate PDF
             $pdf = Pdf::loadView('certificates.template', [
                 'certificate' => $this->certificate,
                 'user' => $this->certificate->user,
-                'course' => $this->certificate->course,
-                'instructor' => $this->certificate->course->instructor,
+                'trainingPath' => $this->certificate->trainingPath,
+                'instructor' => $this->certificate->trainingPath->instructor,
                 'issuedAt' => $this->certificate->issued_at,
                 'verificationUrl' => $this->certificate->verification_url,
             ]);

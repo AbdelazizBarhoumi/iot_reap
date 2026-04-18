@@ -268,18 +268,22 @@ class ProxmoxServerController extends Controller
                 ->pluck('id');
 
             $nodeCount = $nodeIds->count();
-            $sessionsRemoved = 0;
+
+            // Delete any sessions still tied to this Proxmox server, even if the
+            // session row is only referencing the server through proxmox_server_id.
+            $sessionsQuery = VMSession::where('proxmox_server_id', $proxmox_server->id);
 
             if ($nodeCount > 0) {
-                // drop any VM sessions tied to the nodes before removing them.
-                // this guarantees we won't accidentally leave orphaned rows and
-                // matches the user's requirement to remove both nodes and
-                // associated sessions when the server is deleted.
-                $sessionsRemoved = VMSession::whereIn('node_id', $nodeIds)->count();
-                if ($sessionsRemoved > 0) {
-                    VMSession::whereIn('node_id', $nodeIds)->delete();
-                }
+                $sessionsQuery->orWhereIn('node_id', $nodeIds);
+            }
 
+            $sessionsRemoved = $sessionsQuery->count();
+
+            if ($sessionsRemoved > 0) {
+                $sessionsQuery->delete();
+            }
+
+            if ($nodeCount > 0) {
                 ProxmoxNode::whereIn('id', $nodeIds)->delete();
 
                 Log::info('Proxmox server deleted along with its nodes and sessions', [

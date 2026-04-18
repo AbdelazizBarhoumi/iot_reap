@@ -125,6 +125,50 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Approve a teacher account.
+     */
+    public function approveTeacher(Request $request, User $user): JsonResponse
+    {
+        try {
+            $approved = $this->userManagementService->approveTeacher(
+                teacher: $user,
+                admin: $request->user(),
+            );
+
+            return response()->json([
+                'data' => new UserResource($approved),
+                'message' => 'Teacher account approved successfully',
+            ]);
+        } catch (\DomainException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Revoke teacher account approval.
+     */
+    public function revokeTeacherApproval(Request $request, User $user): JsonResponse
+    {
+        try {
+            $updated = $this->userManagementService->revokeTeacherApproval(
+                teacher: $user,
+                admin: $request->user(),
+            );
+
+            return response()->json([
+                'data' => new UserResource($updated),
+                'message' => 'Teacher approval revoked successfully',
+            ]);
+        } catch (\DomainException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
      * Start impersonating a user.
      */
     public function impersonate(Request $request, User $user): RedirectResponse

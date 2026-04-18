@@ -3,8 +3,8 @@
  *
  * Provides API calls for the global search functionality.
  */
-import axios from 'axios';
 import type { SearchResult, SearchSuggestion } from '@/types/search.types';
+import client from './client';
 interface SearchFilters {
     category?: string;
     level?: string;
@@ -34,7 +34,7 @@ interface CategoriesResponse {
 }
 export const searchApi = {
     /**
-     * Full-text search across courses, lessons, articles.
+     * Full-text search across trainingPaths, trainingUnits, articles.
      */
     async search(params: {
         q: string;
@@ -44,7 +44,7 @@ export const searchApi = {
         page?: number;
         per_page?: number;
     }): Promise<SearchResponse> {
-        const response = await axios.get<SearchResponse>('/search', {
+        const response = await client.get<SearchResponse>('/search', {
             params,
             headers: { Accept: 'application/json' },
         });
@@ -57,7 +57,7 @@ export const searchApi = {
         query: string,
         limit: number = 5,
     ): Promise<SearchSuggestion[]> {
-        const response = await axios.get<SuggestResponse>('/search/suggest', {
+        const response = await client.get<SuggestResponse>('/search/suggest', {
             params: { q: query, limit },
         });
         return response.data.suggestions;
@@ -66,33 +66,33 @@ export const searchApi = {
      * Get recent searches for the authenticated user.
      */
     async getRecent(): Promise<string[]> {
-        const response = await axios.get<RecentResponse>('/search/recent');
+        const response = await client.get<RecentResponse>('/search/recent');
         return response.data.searches;
     },
     /**
      * Get trending searches.
      */
     async getTrending(): Promise<string[]> {
-        const response = await axios.get<TrendingResponse>('/search/trending');
+        const response = await client.get<TrendingResponse>('/search/trending');
         return response.data.trending;
     },
     /**
-     * Get all categories with course counts.
+     * Get all categories with trainingPath counts.
      */
     async getCategories(): Promise<CategoriesResponse['categories']> {
         const response =
-            await axios.get<CategoriesResponse>('/search/categories');
+            await client.get<CategoriesResponse>('/search/categories');
         return response.data.categories;
     },
     /**
-     * Get courses by category slug.
+     * Get trainingPaths by category slug.
      */
-    async getCoursesByCategory(slug: string): Promise<SearchResult[]> {
-        const response = await axios.get<{ courses: SearchResult[] }>(
+    async getTrainingPathsByCategory(slug: string): Promise<SearchResult[]> {
+        const response = await client.get<{ trainingPaths: SearchResult[] }>(
             `/search/category/${slug}`,
             { headers: { Accept: 'application/json' } },
         );
-        return response.data.courses;
+        return response.data.trainingPaths;
     },
 };
 

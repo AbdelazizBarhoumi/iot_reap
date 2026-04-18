@@ -2,8 +2,8 @@
  * Search types for the global search system
  */
 export type SearchResultType =
-    | 'course'
-    | 'lesson'
+    | 'trainingPath'
+    | 'trainingUnit'
     | 'article'
     | 'instructor'
     | 'category';

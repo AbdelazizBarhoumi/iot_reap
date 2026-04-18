@@ -6,7 +6,7 @@ use App\Http\Requests\Checkout\InitiateCheckoutRequest;
 use App\Http\Requests\Checkout\RequestRefundRequest;
 use App\Http\Resources\PaymentResource;
 use App\Http\Resources\RefundRequestResource;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
 use App\Services\CheckoutService;
@@ -24,21 +24,21 @@ class CheckoutController extends Controller
     ) {}
 
     /**
-     * Initiate checkout for a course.
+     * Initiate checkout for a trainingPath.
      */
     public function checkout(InitiateCheckoutRequest $request): JsonResponse
     {
-        $course = Course::findOrFail($request->validated('course_id'));
+        $trainingPath = TrainingPath::findOrFail($request->validated('training_path_id'));
         $user = $request->user();
 
         try {
-            $result = $this->checkoutService->createCheckoutSession($user, $course);
+            $result = $this->checkoutService->createCheckoutSession($user, $trainingPath);
 
             if (isset($result['enrolled'])) {
-                // Free course - enrolled directly
+                // Free trainingPath - enrolled directly
                 return response()->json([
                     'enrolled' => true,
-                    'redirect_url' => $result['course_url'],
+                    'redirect_url' => $result['training_path_url'],
                 ]);
             }
 
@@ -71,13 +71,13 @@ class CheckoutController extends Controller
      */
     public function cancelled(): Response
     {
-        $courseId = request('course');
-        $course = $courseId ? Course::find($courseId) : null;
+        $trainingPathId = request('trainingPath');
+        $trainingPath = $trainingPathId ? TrainingPath::find($trainingPathId) : null;
 
         return Inertia::render('checkout/cancelled', [
-            'course' => $course ? [
-                'id' => $course->id,
-                'title' => $course->title,
+            'trainingPath' => $trainingPath ? [
+                'id' => $trainingPath->id,
+                'title' => $trainingPath->title,
             ] : null,
         ]);
     }

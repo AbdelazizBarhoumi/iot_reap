@@ -53,6 +53,11 @@ class AdminRefundControllerTest extends TestCase
             ->once()
             ->andReturn($refunds);
 
+        $this->refundServiceMock
+            ->shouldReceive('getRefundStats')
+            ->once()
+            ->andReturn([]);
+
         $response = $this->actingAs($this->admin)
             ->getJson('/admin/refunds');
 
@@ -83,10 +88,13 @@ class AdminRefundControllerTest extends TestCase
             ->once()
             ->andReturn($refunds);
 
+        $this->refundServiceMock
+            ->shouldReceive('getRefundStats')
+            ->once()
+            ->andReturn([]);
+
         $response = $this->actingAs($this->admin)
-            ->getJson('/admin/refunds', [
-                'per_page' => 10,
-            ]);
+            ->getJson('/admin/refunds?per_page=10');
 
         $response->assertOk();
     }
@@ -234,9 +242,7 @@ class AdminRefundControllerTest extends TestCase
     public function test_admin_can_get_all_refunds_with_status_filter(): void
     {
         $response = $this->actingAs($this->admin)
-            ->getJson('/admin/refunds/all', [
-                'status' => 'approved',
-            ]);
+            ->getJson('/admin/refunds/all?status=approved');
 
         $response->assertOk();
     }
@@ -244,9 +250,7 @@ class AdminRefundControllerTest extends TestCase
     public function test_admin_can_get_all_refunds_with_pagination(): void
     {
         $response = $this->actingAs($this->admin)
-            ->getJson('/admin/refunds/all', [
-                'per_page' => 5,
-            ]);
+            ->getJson('/admin/refunds/all?per_page=5');
 
         $response->assertOk();
     }

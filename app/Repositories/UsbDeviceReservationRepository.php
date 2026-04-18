@@ -2,34 +2,36 @@
 
 namespace App\Repositories;
 
-use App\Enums\UsbReservationStatus;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
-use App\Models\UsbDeviceReservation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Repository for USB device reservation database access.
+ * DEPRECATED: Repository for USB device reservation database access.
+ * Now delegates to polymorphic Reservation model.
  */
 class UsbDeviceReservationRepository
 {
     /**
-     * Get all reservations with relations.
+     * Get all USB device reservations.
      */
     public function all(): Collection
     {
-        return UsbDeviceReservation::with(['device.gatewayNode', 'user', 'approver'])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->with(['reservable', 'user'])
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
     /**
-     * Get pending reservations for admin review.
+     * Get pending USB device reservations for admin review.
      */
     public function findPending(): Collection
     {
-        return UsbDeviceReservation::pending()
-            ->with(['device.gatewayNode', 'user'])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('status', 'pending')
+            ->with(['reservable', 'user'])
             ->orderBy('requested_start_at')
             ->get();
     }
@@ -39,8 +41,9 @@ class UsbDeviceReservationRepository
      */
     public function findByDevice(UsbDevice $device): Collection
     {
-        return UsbDeviceReservation::where('usb_device_id', $device->id)
-            ->with(['user', 'approver'])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('reservable_id', $device->id)
+            ->with(['user'])
             ->orderBy('requested_start_at', 'desc')
             ->get();
     }
@@ -50,8 +53,9 @@ class UsbDeviceReservationRepository
      */
     public function findByUser(User $user): Collection
     {
-        return UsbDeviceReservation::where('user_id', $user->id)
-            ->with(['device.gatewayNode', 'approver'])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('user_id', $user->id)
+            ->with(['reservable'])
             ->orderBy('requested_start_at', 'desc')
             ->get();
     }
@@ -59,24 +63,33 @@ class UsbDeviceReservationRepository
     /**
      * Find a reservation by ID.
      */
-    public function findById(int $id): ?UsbDeviceReservation
+    public function findById(int $id): ?Reservation
     {
-        return UsbDeviceReservation::with(['device.gatewayNode', 'user', 'approver'])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->with(['reservable', 'user'])
             ->find($id);
     }
 
     /**
      * Create a new reservation request.
      */
-    public function create(array $data): UsbDeviceReservation
+    public function create(array $data): Reservation
     {
-        return UsbDeviceReservation::create($data);
+        // Convert old schema to polymorphic schema
+        $reservationData = array_merge($data, [
+            'reservable_type' => 'App\Models\UsbDevice',
+            'reservable_id' => $data['usb_device_id'] ?? null,
+        ]);
+        
+        unset($reservationData['usb_device_id']);
+        
+        return Reservation::create($reservationData);
     }
 
     /**
      * Update a reservation.
      */
-    public function update(UsbDeviceReservation $reservation, array $data): bool
+    public function update(Reservation $reservation, array $data): bool
     {
         return $reservation->update($data);
     }
@@ -84,7 +97,7 @@ class UsbDeviceReservationRepository
     /**
      * Delete a reservation.
      */
-    public function delete(UsbDeviceReservation $reservation): bool
+    public function delete(Reservation $reservation): bool
     {
         return $reservation->delete();
     }
@@ -94,11 +107,9 @@ class UsbDeviceReservationRepository
      */
     public function hasConflict(UsbDevice $device, \DateTimeInterface $start, \DateTimeInterface $end, ?int $excludeId = null): bool
     {
-        $query = UsbDeviceReservation::where('usb_device_id', $device->id)
-            ->whereIn('status', [
-                UsbReservationStatus::APPROVED->value,
-                UsbReservationStatus::ACTIVE->value,
-            ])
+        $query = Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('reservable_id', $device->id)
+            ->whereIn('status', ['approved', 'active'])
             ->where(function ($q) use ($start, $end) {
                 $q->where(function ($inner) use ($start, $end) {
                     // Approved schedule overlaps
@@ -122,14 +133,12 @@ class UsbDeviceReservationRepository
     {
         $now = now();
 
-        return UsbDeviceReservation::whereIn('status', [
-            UsbReservationStatus::APPROVED->value,
-            UsbReservationStatus::ACTIVE->value,
-        ])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->whereIn('status', ['approved', 'active'])
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
             ->where('approved_end_at', '>=', $now)
-            ->with(['device.gatewayNode', 'user'])
+            ->with(['reservable', 'user'])
             ->get();
     }
 
@@ -141,14 +150,45 @@ class UsbDeviceReservationRepository
         $now = now();
         $cutoff = now()->addHours($hoursAhead);
 
-        return UsbDeviceReservation::whereIn('status', [
-            UsbReservationStatus::APPROVED->value,
-        ])
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->whereIn('status', ['approved'])
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '>', $now)
             ->where('approved_start_at', '<=', $cutoff)
-            ->with(['device.gatewayNode', 'user'])
+            ->with(['reservable', 'user'])
             ->orderBy('approved_start_at')
+            ->get();
+    }
+
+    /**
+     * Get reservations expiring soon (ending within next N hours).
+     */
+    public function findExpiringSoon(int $hoursAhead = 1): Collection
+    {
+        $now = now();
+        $cutoff = now()->addHours($hoursAhead);
+
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('status', 'active')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_end_at', '>', $now)
+            ->where('approved_end_at', '<=', $cutoff)
+            ->with(['reservable', 'user'])
+            ->orderBy('approved_end_at')
+            ->get();
+    }
+
+    /**
+     * Get overdue reservations (should have ended but still marked active).
+     */
+    public function findOverdue(): Collection
+    {
+        return Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('status', 'active')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_end_at', '<', now())
+            ->with(['reservable', 'user'])
+            ->orderBy('approved_end_at', 'desc')
             ->get();
     }
 }

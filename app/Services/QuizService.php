@@ -7,7 +7,7 @@ use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\User;
-use App\Repositories\LessonProgressRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use App\Repositories\QuizAttemptRepository;
 use App\Repositories\QuizQuestionRepository;
 use App\Repositories\QuizRepository;
@@ -23,20 +23,20 @@ class QuizService
         private readonly QuizRepository $quizRepository,
         private readonly QuizQuestionRepository $questionRepository,
         private readonly QuizAttemptRepository $attemptRepository,
-        private readonly LessonProgressRepository $progressRepository,
+        private readonly TrainingUnitProgressRepository $progressRepository,
     ) {}
 
     /**
-     * Create a new quiz for a lesson.
+     * Create a new quiz for a trainingUnit.
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(int $lessonId, array $data): Quiz
+    public function create(int $trainingUnitId, array $data): Quiz
     {
-        Log::info('Creating quiz', ['lesson_id' => $lessonId]);
+        Log::info('Creating quiz', ['training_unit_id' => $trainingUnitId]);
 
         return $this->quizRepository->create([
-            'lesson_id' => $lessonId,
+            'training_unit_id' => $trainingUnitId,
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'passing_score' => $data['passing_score'] ?? 70,
@@ -96,11 +96,11 @@ class QuizService
     }
 
     /**
-     * Get a quiz for a lesson.
+     * Get a quiz for a trainingUnit.
      */
-    public function getQuizForLesson(int $lessonId): ?Quiz
+    public function getQuizForTrainingUnit(int $trainingUnitId): ?Quiz
     {
-        return $this->quizRepository->findByLessonIdWithQuestions($lessonId);
+        return $this->quizRepository->findByTrainingUnitIdWithQuestions($trainingUnitId);
     }
 
     /**
@@ -234,12 +234,12 @@ class QuizService
             'completed_at' => now(),
         ]);
 
-        // If passed, mark lesson progress
+        // If passed, mark trainingUnit progress
         if ($passed) {
-            $lessonId = $quiz->lesson_id;
+            $trainingUnitId = $quiz->training_unit_id;
             $this->progressRepository->markQuizPassed(
                 $attempt->user_id,
-                $lessonId,
+                $trainingUnitId,
                 $attempt->id
             );
         }

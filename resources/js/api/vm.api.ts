@@ -5,10 +5,12 @@
 import type { AxiosResponse } from 'axios';
 import type {
     ApiResponse,
+    AssignVMToTrainingUnitRequest,
     ConnectionProfile,
     CreateVMSessionRequest,
     ExtendSessionRequest,
     GuacamoleTokenResponse,
+    TrainingUnitVMAssignment,
     ProxmoxNode,
     ProxmoxVM,
     ProxmoxVMInfo,
@@ -229,6 +231,97 @@ export const adminApi = {
      */
     async shutdownVM(nodeId: number, vmid: number): Promise<void> {
         await client.post(`/admin/nodes/${nodeId}/vms/${vmid}/shutdown`);
+    },
+};
+
+/**
+ * TrainingUnit VM Assignment API (teacher/admin workflow)
+ */
+export const trainingUnitVMAssignmentApi = {
+    /**
+     * Get available VMs for assignment (from Proxmox).
+     */
+    async getAvailableVMs(): Promise<ProxmoxVMInfo[]> {
+        const response = await client.get<ApiResponse<ProxmoxVMInfo[]>>(
+            '/teaching/trainingUnit-assignments/available-vms',
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Assign a VM to a trainingUnit (teacher action).
+     */
+    async assign(data: AssignVMToTrainingUnitRequest): Promise<TrainingUnitVMAssignment> {
+        const response = await client.post<ApiResponse<TrainingUnitVMAssignment>>(
+            '/teaching/trainingUnit-assignments',
+            data,
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Get teacher's VM assignments.
+     */
+    async getMyAssignments(): Promise<TrainingUnitVMAssignment[]> {
+        const response = await client.get<ApiResponse<TrainingUnitVMAssignment[]>>(
+            '/teaching/trainingUnit-assignments/my-assignments',
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Get assignment for a specific trainingUnit.
+     */
+    async getForTrainingUnit(trainingUnitId: number): Promise<TrainingUnitVMAssignment | null> {
+        const response = await client.get<
+            ApiResponse<TrainingUnitVMAssignment | null>
+        >(`/teaching/trainingUnits/${trainingUnitId}/vm-assignment`);
+        return response.data.data;
+    },
+
+    /**
+     * Remove an assignment (teacher can remove pending, admin can remove any).
+     */
+    async remove(assignmentId: number): Promise<void> {
+        await client.delete(`/teaching/trainingUnit-assignments/${assignmentId}`);
+    },
+
+    /**
+     * Get pending assignments (admin).
+     */
+    async getPending(): Promise<TrainingUnitVMAssignment[]> {
+        const response = await client.get<ApiResponse<TrainingUnitVMAssignment[]>>(
+            '/admin/trainingUnit-assignments/pending',
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Approve an assignment (admin).
+     */
+    async approve(
+        assignmentId: number,
+        adminNotes?: string,
+    ): Promise<TrainingUnitVMAssignment> {
+        const response = await client.post<ApiResponse<TrainingUnitVMAssignment>>(
+            `/admin/trainingUnit-assignments/${assignmentId}/approve`,
+            { admin_notes: adminNotes },
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Reject an assignment (admin).
+     */
+    async reject(
+        assignmentId: number,
+        adminNotes: string,
+    ): Promise<TrainingUnitVMAssignment> {
+        const response = await client.post<ApiResponse<TrainingUnitVMAssignment>>(
+            `/admin/trainingUnit-assignments/${assignmentId}/reject`,
+            { admin_notes: adminNotes },
+        );
+        return response.data.data;
     },
 };
 

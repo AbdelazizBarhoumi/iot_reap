@@ -5,7 +5,7 @@ namespace Tests\Unit\Resources;
 use App\Enums\CameraReservationStatus;
 use App\Http\Resources\CameraResource;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Models\Robot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,9 +30,8 @@ class CameraResourceTest extends TestCase
         $this->assertNull($array['active_reservation_id']);
 
         // create an active reservation overlapping now
-        CameraReservation::factory()->create([
-            'camera_id' => $camera->id,
-            'status' => CameraReservationStatus::APPROVED,
+        $createdReservation = Reservation::factory()->forCamera($camera)->create([
+            'status' => CameraReservationStatus::APPROVED->value,
             'approved_by' => $user->id,
             'requested_start_at' => now()->subHour(),
             'requested_end_at' => now()->addHour(),
@@ -45,9 +44,6 @@ class CameraResourceTest extends TestCase
         $array = $resource->toArray(request());
         $this->assertTrue($array['has_active_reservation']);
         // reservation id should be included and match what we just created
-        $this->assertEquals(
-            CameraReservation::where('camera_id', $camera->id)->first()->id,
-            $array['active_reservation_id']
-        );
+        $this->assertEquals($createdReservation->id, $array['active_reservation_id']);
     }
 }

@@ -4,8 +4,8 @@ namespace App\Listeners;
 
 use App\Enums\UsbReservationStatus;
 use App\Events\VMSessionActivated;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
-use App\Models\UsbDeviceReservation;
 use App\Services\GatewayService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -91,7 +91,8 @@ class AutoReattachDedicatedDevicesListener
     private function attachReservedDevices($session, array &$stats): void
     {
         $now = now();
-        $activeReservations = UsbDeviceReservation::where('user_id', $session->user_id)
+        $activeReservations = Reservation::where('reservable_type', 'App\Models\UsbDevice')
+            ->where('user_id', $session->user_id)
             ->whereIn('status', [
                 UsbReservationStatus::APPROVED->value,
                 UsbReservationStatus::ACTIVE->value,
@@ -99,11 +100,11 @@ class AutoReattachDedicatedDevicesListener
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
             ->where('approved_end_at', '>=', $now)
-            ->with(['device', 'device.gatewayNode'])
+            ->with(['reservable', 'reservable.gatewayNode'])
             ->get();
 
         foreach ($activeReservations as $reservation) {
-            $device = $reservation->device;
+            $device = $reservation->reservable;
 
             if (! $device || ! $device->gatewayNode?->is_verified) {
                 $stats['skipped']++;

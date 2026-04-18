@@ -8,7 +8,7 @@ use App\Http\Requests\Camera\CreateAdminCameraBlockRequest;
 use App\Http\Resources\CameraReservationResource;
 use App\Http\Resources\CameraResource;
 use App\Models\Camera;
-use App\Models\CameraReservation;
+use App\Models\Reservation;
 use App\Repositories\CameraReservationRepository;
 use App\Services\CameraService;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +43,120 @@ class AdminCameraController extends Controller
         ]);
     }
 
+    /**
+     * Assign a camera to a specific VM ID.
+     *
+     * PUT /admin/cameras/{camera}/assign
+     */
+    public function assignToVm(Camera $camera, \App\Http\Requests\Admin\AssignCameraToVmRequest $request): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $vmId = $request->validated('vm_id');
+
+        $camera->assignToVm($vmId);
+
+        \Illuminate\Support\Facades\Log::info('Camera assigned to VM', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+            'assigned_vm_id' => $vmId,
+            'admin_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Camera '{$camera->name}' assigned to VM {$vmId}",
+            'data' => new CameraResource($camera->fresh()->load(['robot', 'gatewayNode', 'activeControl'])),
+        ]);
+    }
+
+    /**
+     * Unassign a camera from its VM.
+     *
+     * DELETE /admin/cameras/{camera}/assign
+     */
+    public function unassignFromVm(Camera $camera): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $previousVmId = $camera->assigned_vm_id;
+
+        if ($previousVmId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => "Camera '{$camera->name}' is not assigned to any VM",
+            ], 422);
+        }
+
+        $camera->unassignFromVm();
+
+        \Illuminate\Support\Facades\Log::info('Camera unassigned from VM', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+            'previous_vm_id' => $previousVmId,
+            'admin_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Camera '{$camera->name}' unassigned from VM {$previousVmId}",
+            'data' => new CameraResource($camera->fresh()->load(['robot', 'gatewayNode', 'activeControl'])),
+        ]);
+    }
+
+    /**
+     * Bulk assign cameras to VMs.
+     *
+     * POST /admin/cameras/bulk-assign
+     */
+    public function bulkAssign(\App\Http\Requests\Admin\BulkAssignCamerasRequest $request): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $assignments = $request->validated('assignments');
+        $results = [];
+
+        foreach ($assignments as $assignment) {
+            $camera = Camera::find($assignment['camera_id']);
+            if (! $camera) {
+                $results[] = [
+                    'camera_id' => $assignment['camera_id'],
+                    'success' => false,
+                    'message' => 'Camera not found',
+                ];
+                continue;
+            }
+
+            $vmId = $assignment['vm_id'] ?? null;
+            if ($vmId === null) {
+                $camera->unassignFromVm();
+                $results[] = [
+                    'camera_id' => $camera->id,
+                    'success' => true,
+                    'message' => "Unassigned from VM",
+                ];
+            } else {
+                $camera->assignToVm($vmId);
+                $results[] = [
+                    'camera_id' => $camera->id,
+                    'success' => true,
+                    'message' => "Assigned to VM {$vmId}",
+                ];
+            }
+        }
+
+        \Illuminate\Support\Facades\Log::info('Bulk camera assignment', [
+            'admin_id' => auth()->id(),
+            'assignment_count' => count($assignments),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bulk assignment completed',
+            'results' => $results,
+        ]);
+    }
+
     // ────────────────────────────────────────────────────────────────────
     // Reservation Management
     // ────────────────────────────────────────────────────────────────────
@@ -68,14 +182,15 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $query = CameraReservation::with(['camera.robot', 'user', 'approver']);
+        $query = Reservation::where('reservable_type', 'App\Models\Camera')
+            ->with(['reservable', 'user', 'approver']);
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
         }
 
         if ($cameraId = $request->query('camera_id')) {
-            $query->where('camera_id', $cameraId);
+            $query->where('reservable_id', $cameraId);
         }
 
         if ($userId = $request->query('user_id')) {
@@ -112,9 +227,14 @@ class AdminCameraController extends Controller
     /**
      * Approve a camera reservation.
      */
-    public function approve(CameraReservation $reservation, ApproveCameraReservationRequest $request): JsonResponse
+    public function approve(Reservation $reservation, ApproveCameraReservationRequest $request): JsonResponse
     {
         Gate::authorize('admin-only');
+
+        // Ensure this is a camera reservation
+        if ($reservation->reservable_type !== 'App\Models\Camera') {
+            abort(404);
+        }
 
         if (! $reservation->isPending()) {
             return response()->json([
@@ -142,7 +262,7 @@ class AdminCameraController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Camera reservation approved',
-                'data' => new CameraReservationResource($approved->load(['camera.robot', 'user', 'approver'])),
+                'data' => new CameraReservationResource($approved->load(['reservable', 'user', 'approver'])),
             ]);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
@@ -155,9 +275,14 @@ class AdminCameraController extends Controller
     /**
      * Reject a camera reservation.
      */
-    public function reject(CameraReservation $reservation, Request $request): JsonResponse
+    public function reject(Reservation $reservation, Request $request): JsonResponse
     {
         Gate::authorize('admin-only');
+
+        // Ensure this is a camera reservation
+        if ($reservation->reservable_type !== 'App\Models\Camera') {
+            abort(404);
+        }
 
         if (! $reservation->isPending()) {
             return response()->json([
@@ -202,7 +327,7 @@ class AdminCameraController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Camera blocked successfully',
-                'data' => new CameraReservationResource($block->load(['camera.robot', 'user'])),
+                'data' => new CameraReservationResource($block->load(['reservable', 'user'])),
             ], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([

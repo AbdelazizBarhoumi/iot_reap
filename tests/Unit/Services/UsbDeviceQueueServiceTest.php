@@ -3,9 +3,9 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\UsbReservationStatus;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
-use App\Models\UsbDeviceReservation;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Notifications\UsbDeviceAvailableNotification;
@@ -276,7 +276,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $endAt = now()->addDay()->addHours(2);
         $purpose = 'Testing hardware compatibility';
 
-        $reservation = UsbDeviceReservation::factory()->make();
+        $reservation = Reservation::factory()->forUsbDevice($device)->make();
 
         $this->mockReservationRepository->shouldReceive('hasConflict')
             ->once()
@@ -329,14 +329,15 @@ class UsbDeviceQueueServiceTest extends TestCase
     {
         // Arrange
         $device = UsbDevice::factory()->make();
-        $reservation = Mockery::mock(UsbDeviceReservation::class)->shouldIgnoreMissing();
-        $reservation->id = fake()->uuid();
+        /** @var Reservation&MockInterface $reservation */
+        $reservation = Mockery::mock(Reservation::class)->shouldIgnoreMissing();
+        $reservationId = 123;
         $reservation->shouldReceive('getAttribute')
-            ->with('device')
+            ->with('id')
+            ->andReturn($reservationId);
+        $reservation->shouldReceive('getAttribute')
+            ->with('reservable')
             ->andReturn($device);
-        $reservation->device = $device; // Set directly for normal access
-        $reservation->requested_start_at = now()->addDay();
-        $reservation->requested_end_at = now()->addDay()->addHours(2);
 
         $approver = User::factory()->create();
         $modifiedStart = now()->addDay()->addHour();
@@ -345,12 +346,12 @@ class UsbDeviceQueueServiceTest extends TestCase
 
         $this->mockReservationRepository->shouldReceive('hasConflict')
             ->once()
-            ->with(Mockery::type(UsbDevice::class), $modifiedStart, $modifiedEnd, $reservation->id)
+            ->with(Mockery::type(UsbDevice::class), $modifiedStart, $modifiedEnd, $reservationId)
             ->andReturn(false);
 
         $this->mockReservationRepository->shouldReceive('update')
             ->once()
-            ->with(Mockery::type(UsbDeviceReservation::class), [
+            ->with(Mockery::type(Reservation::class), [
                 'status' => UsbReservationStatus::APPROVED->value,
                 'approved_by' => $approver->id,
                 'approved_start_at' => $modifiedStart,
@@ -379,8 +380,8 @@ class UsbDeviceQueueServiceTest extends TestCase
     public function test_reject_reservation_updates_status(): void
     {
         // Arrange
-        $reservation = Mockery::mock(UsbDeviceReservation::class)->shouldIgnoreMissing();
-        $reservation->id = fake()->uuid();
+        /** @var Reservation&MockInterface $reservation */
+        $reservation = Mockery::mock(Reservation::class)->shouldIgnoreMissing();
         $approver = User::factory()->create();
         $adminNotes = 'Rejected due to maintenance window';
 
@@ -407,8 +408,12 @@ class UsbDeviceQueueServiceTest extends TestCase
     public function test_cancel_reservation_updates_status(): void
     {
         // Arrange
-        $reservation = Mockery::mock(UsbDeviceReservation::class)->shouldIgnoreMissing();
-        $reservation->id = fake()->uuid();
+        /** @var Reservation&MockInterface $reservation */
+        $reservation = Mockery::mock(Reservation::class)->shouldIgnoreMissing();
+        $reservationId = 456;
+        $reservation->shouldReceive('getAttribute')
+            ->with('id')
+            ->andReturn($reservationId);
         $reservation->shouldReceive('canModify')->once()->andReturn(true);
 
         $this->mockReservationRepository->shouldReceive('update')
@@ -426,13 +431,14 @@ class UsbDeviceQueueServiceTest extends TestCase
         $this->assertSame($reservation, $result);
         Log::shouldHaveReceived('info')
             ->once()
-            ->with('Reservation cancelled', ['reservation_id' => $reservation->id]);
+            ->with('Reservation cancelled', ['reservation_id' => $reservationId]);
     }
 
     public function test_cancel_reservation_throws_exception_if_cannot_modify(): void
     {
         // Arrange
-        $reservation = Mockery::mock(UsbDeviceReservation::class);
+        /** @var Reservation&MockInterface $reservation */
+        $reservation = Mockery::mock(Reservation::class);
         $reservation->shouldReceive('canModify')->once()->andReturn(false);
 
         // Act & Assert
@@ -451,7 +457,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $endAt = now()->addHours(3);
         $notes = 'Maintenance work';
 
-        $reservation = UsbDeviceReservation::factory()->make();
+        $reservation = Reservation::factory()->forUsbDevice($device)->make();
 
         $this->mockReservationRepository->shouldReceive('hasConflict')
             ->once()
@@ -491,8 +497,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $device = UsbDevice::factory()->create();
         $user = User::factory()->create();
 
-        $activeReservation = UsbDeviceReservation::factory()->create([
-            'usb_device_id' => $device->id,
+        $activeReservation = Reservation::factory()->forUsbDevice($device)->create([
             'user_id' => $user->id,
             'status' => UsbReservationStatus::APPROVED->value,
             'approved_start_at' => now()->subHour(),
@@ -515,8 +520,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create(['name' => 'Other User']);
 
-        $activeReservation = UsbDeviceReservation::factory()->create([
-            'usb_device_id' => $device->id,
+        $activeReservation = Reservation::factory()->forUsbDevice($device)->create([
             'user_id' => $otherUser->id,
             'status' => UsbReservationStatus::APPROVED->value,
             'approved_start_at' => now()->subHour(),

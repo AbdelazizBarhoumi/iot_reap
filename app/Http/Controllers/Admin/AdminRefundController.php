@@ -24,9 +24,11 @@ class AdminRefundController extends Controller
     {
         $perPage = $request->integer('per_page', 20);
         $refunds = $this->refundService->getPendingRefunds($perPage);
+        $stats = $this->refundService->getRefundStats();
 
         $data = [
             'refunds' => RefundRequestResource::collection($refunds),
+            'stats' => $stats,
             'pagination' => [
                 'current_page' => $refunds->currentPage(),
                 'last_page' => $refunds->lastPage(),
@@ -99,7 +101,7 @@ class AdminRefundController extends Controller
      */
     public function all(Request $request): JsonResponse
     {
-        $query = RefundRequest::with(['user', 'payment.course']);
+        $query = RefundRequest::with(['user', 'payment.trainingPath']);
 
         if ($request->has('status')) {
             $query->where('status', $request->string('status'));

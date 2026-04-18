@@ -239,37 +239,37 @@ class VideoProgressServiceTest extends TestCase
         $this->assertEquals($expectedCount, $result);
     }
 
-    public function test_get_progress_for_course_returns_mapped_progress_array(): void
+    public function test_get_progress_for_training_path_returns_mapped_progress_array(): void
     {
-        $courseId = 42;
+        $trainingPathId = 42;
         $progressRecords = new Collection([
             (object) [
                 'video_id' => 1,
                 'watched_seconds' => 120,
                 'completed' => true,
                 'percentage' => 80,
-                'video' => (object) ['lesson_id' => 10],
+                'video' => (object) ['training_unit_id' => 10],
             ],
             (object) [
                 'video_id' => 2,
                 'watched_seconds' => 60,
                 'completed' => false,
                 'percentage' => 40,
-                'video' => (object) ['lesson_id' => 11],
+                'video' => (object) ['training_unit_id' => 11],
             ],
         ]);
 
         $expectedResult = [
             [
                 'video_id' => 1,
-                'lesson_id' => 10,
+                'training_unit_id' => 10,
                 'watched_seconds' => 120,
                 'completed' => true,
                 'percentage' => 80,
             ],
             [
                 'video_id' => 2,
-                'lesson_id' => 11,
+                'training_unit_id' => 11,
                 'watched_seconds' => 60,
                 'completed' => false,
                 'percentage' => 40,
@@ -278,11 +278,11 @@ class VideoProgressServiceTest extends TestCase
 
         $this->repository
             ->expects($this->once())
-            ->method('getForUserAndCourse')
-            ->with($this->user, $courseId)
+            ->method('getForUserAndTrainingPath')
+            ->with($this->user, $trainingPathId)
             ->willReturn($progressRecords);
 
-        $result = $this->service->getProgressForCourse($this->user, $courseId);
+        $result = $this->service->getProgressForTrainingPath($this->user, $trainingPathId);
 
         $this->assertEquals($expectedResult, $result);
     }

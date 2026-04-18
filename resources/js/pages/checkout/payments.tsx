@@ -130,13 +130,13 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
                                 <CardHeader className="pb-2">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
-                                            {payment.course.thumbnail_url ? (
+                                            {payment.trainingPath.thumbnail_url ? (
                                                 <img
                                                     src={
-                                                        payment.course
+                                                        payment.trainingPath
                                                             .thumbnail_url
                                                     }
-                                                    alt={payment.course.title}
+                                                    alt={payment.trainingPath.title}
                                                     className="h-12 w-12 rounded-lg object-cover"
                                                 />
                                             ) : (
@@ -146,7 +146,7 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
                                             )}
                                             <div>
                                                 <CardTitle className="text-base">
-                                                    {payment.course.title}
+                                                    {payment.trainingPath.title}
                                                 </CardTitle>
                                                 <CardDescription>
                                                     {payment.paid_at
@@ -229,7 +229,7 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
                         {refundDialog && (
                             <div className="rounded-lg border bg-muted/50 p-4">
                                 <p className="font-medium">
-                                    {refundDialog.course.title}
+                                    {refundDialog.trainingPath.title}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     {refundDialog.formatted_amount}

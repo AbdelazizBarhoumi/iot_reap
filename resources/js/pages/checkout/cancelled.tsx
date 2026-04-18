@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 interface CancelledPageProps {
-    course: {
+    trainingPath: {
         id: number;
         title: string;
     } | null;
 }
-export default function CancelledPage({ course }: CancelledPageProps) {
+export default function CancelledPage({ trainingPath }: CancelledPageProps) {
     return (
         <AppLayout
             breadcrumbs={[
@@ -48,11 +48,11 @@ export default function CancelledPage({ course }: CancelledPageProps) {
                             please don't hesitate to contact our support team.
                         </p>
                         <div className="flex flex-col gap-3">
-                            {course && (
+                            {trainingPath && (
                                 <Button asChild className="w-full">
-                                    <Link href={`/courses/${course.id}`}>
+                                    <Link href={`/trainingPaths/${trainingPath.id}`}>
                                         <ArrowLeft className="mr-2 h-4 w-4" />
-                                        Return to {course.title}
+                                        Return to {trainingPath.title}
                                     </Link>
                                 </Button>
                             )}
@@ -61,7 +61,7 @@ export default function CancelledPage({ course }: CancelledPageProps) {
                                 asChild
                                 className="w-full"
                             >
-                                <Link href="/courses">Browse Courses</Link>
+                                <Link href="/trainingPaths">Browse Training Paths</Link>
                             </Button>
                             <Button variant="ghost" asChild className="w-full">
                                 <a href="mailto:support@iot-reap.com">

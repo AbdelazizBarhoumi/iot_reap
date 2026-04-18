@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -51,10 +51,10 @@ class StripeWebhookServiceTest extends TestCase
     public function test_handles_checkout_session_completed(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->create([
                 'stripe_session_id' => 'cs_test_checkout_123',
                 'status' => PaymentStatus::PENDING,
@@ -76,10 +76,10 @@ class StripeWebhookServiceTest extends TestCase
     public function test_enrolls_user_after_successful_payment(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->create([
                 'stripe_session_id' => 'cs_test_enroll_123',
                 'status' => PaymentStatus::PENDING,
@@ -93,21 +93,21 @@ class StripeWebhookServiceTest extends TestCase
         $this->service->handleEvent($event);
 
         $this->assertTrue(
-            $user->enrolledCourses()->where('course_id', $course->id)->exists()
+            $user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists()
         );
-        $this->assertDatabaseHas('course_enrollments', [
+        $this->assertDatabaseHas('training_path_enrollments', [
             'user_id' => $user->id,
-            'course_id' => $course->id,
+            'training_path_id' => $trainingPath->id,
         ]);
     }
 
     public function test_does_not_duplicate_enrollment_on_repeated_webhook(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->create([
                 'stripe_session_id' => 'cs_test_duplicate_123',
                 'status' => PaymentStatus::PENDING,
@@ -124,7 +124,7 @@ class StripeWebhookServiceTest extends TestCase
         // Second webhook call (duplicate)
         $this->service->handleEvent($event);
 
-        $enrollmentCount = $user->enrolledCourses()->where('course_id', $course->id)->count();
+        $enrollmentCount = $user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->count();
         $this->assertEquals(1, $enrollmentCount);
     }
 
@@ -278,10 +278,10 @@ class StripeWebhookServiceTest extends TestCase
     public function test_handles_full_refund(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->completed()
             ->create([
                 'stripe_payment_intent_id' => 'pi_test_refund_full',
@@ -289,7 +289,7 @@ class StripeWebhookServiceTest extends TestCase
             ]);
 
         // Enroll user first
-        $user->enrolledCourses()->attach($course->id, ['enrolled_at' => now()]);
+        $user->enrolledTrainingPaths()->attach($trainingPath->id, ['enrolled_at' => now()]);
 
         $event = $this->createStripeEvent('charge.refunded', [
             'payment_intent' => 'pi_test_refund_full',
@@ -301,16 +301,16 @@ class StripeWebhookServiceTest extends TestCase
 
         $payment->refresh();
         $this->assertEquals(PaymentStatus::REFUNDED, $payment->status);
-        $this->assertFalse($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertFalse($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
     public function test_handles_partial_refund(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->completed()
             ->create([
                 'stripe_payment_intent_id' => 'pi_test_refund_partial',
@@ -318,7 +318,7 @@ class StripeWebhookServiceTest extends TestCase
             ]);
 
         // Enroll user first
-        $user->enrolledCourses()->attach($course->id, ['enrolled_at' => now()]);
+        $user->enrolledTrainingPaths()->attach($trainingPath->id, ['enrolled_at' => now()]);
 
         $event = $this->createStripeEvent('charge.refunded', [
             'payment_intent' => 'pi_test_refund_partial',
@@ -331,7 +331,7 @@ class StripeWebhookServiceTest extends TestCase
         $payment->refresh();
         $this->assertEquals(PaymentStatus::PARTIALLY_REFUNDED, $payment->status);
         // User should remain enrolled for partial refund
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
     public function test_logs_warning_when_payment_not_found_for_refund(): void
@@ -417,10 +417,10 @@ class StripeWebhookServiceTest extends TestCase
     public function test_handles_multiple_events_for_same_payment(): void
     {
         $user = User::factory()->create();
-        $course = Course::factory()->approved()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
         $payment = Payment::factory()
             ->forUser($user)
-            ->forCourse($course)
+            ->forTrainingPath($trainingPath)
             ->create([
                 'stripe_session_id' => 'cs_test_multi_event',
                 'stripe_payment_intent_id' => 'pi_test_multi_event',
@@ -437,7 +437,7 @@ class StripeWebhookServiceTest extends TestCase
 
         $payment->refresh();
         $this->assertEquals(PaymentStatus::COMPLETED, $payment->status);
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
 
         // Then: refund
         $refundEvent = $this->createStripeEvent('charge.refunded', [
@@ -449,47 +449,47 @@ class StripeWebhookServiceTest extends TestCase
 
         $payment->refresh();
         $this->assertEquals(PaymentStatus::REFUNDED, $payment->status);
-        $this->assertFalse($user->enrolledCourses()->where('course_id', $course->id)->exists());
+        $this->assertFalse($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
-    public function test_handles_concurrent_user_enrollment_in_multiple_courses(): void
+    public function test_handles_concurrent_user_enrollment_in_multiple_trainingPaths(): void
     {
         $user = User::factory()->create();
-        $course1 = Course::factory()->approved()->create();
-        $course2 = Course::factory()->approved()->create();
+        $trainingPath1 = TrainingPath::factory()->approved()->create();
+        $trainingPath2 = TrainingPath::factory()->approved()->create();
 
         $payment1 = Payment::factory()
             ->forUser($user)
-            ->forCourse($course1)
+            ->forTrainingPath($trainingPath1)
             ->create([
-                'stripe_session_id' => 'cs_test_course1',
+                'stripe_session_id' => 'cs_test_trainingPath1',
                 'status' => PaymentStatus::PENDING,
             ]);
 
         $payment2 = Payment::factory()
             ->forUser($user)
-            ->forCourse($course2)
+            ->forTrainingPath($trainingPath2)
             ->create([
-                'stripe_session_id' => 'cs_test_course2',
+                'stripe_session_id' => 'cs_test_trainingPath2',
                 'status' => PaymentStatus::PENDING,
             ]);
 
         $event1 = $this->createStripeEvent('checkout.session.completed', [
-            'id' => 'cs_test_course1',
-            'payment_intent' => 'pi_test_course1',
+            'id' => 'cs_test_trainingPath1',
+            'payment_intent' => 'pi_test_trainingPath1',
         ]);
 
         $event2 = $this->createStripeEvent('checkout.session.completed', [
-            'id' => 'cs_test_course2',
-            'payment_intent' => 'pi_test_course2',
+            'id' => 'cs_test_trainingPath2',
+            'payment_intent' => 'pi_test_trainingPath2',
         ]);
 
         $this->service->handleEvent($event1);
         $this->service->handleEvent($event2);
 
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course1->id)->exists());
-        $this->assertTrue($user->enrolledCourses()->where('course_id', $course2->id)->exists());
-        $this->assertEquals(2, $user->enrolledCourses()->count());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath1->id)->exists());
+        $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath2->id)->exists());
+        $this->assertEquals(2, $user->enrolledTrainingPaths()->count());
     }
 
     // ─────────────────────────────────────────────────────────────────────────

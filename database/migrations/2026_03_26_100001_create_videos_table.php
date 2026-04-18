@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('videos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lesson_id')->constrained()->onDelete('cascade');
+            $table->foreignId('training_unit_id')->constrained('training_units')->onDelete('cascade');
             $table->string('original_filename');
             $table->string('storage_path');
             $table->string('storage_disk')->default('local');
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->unsignedInteger('resolution_height')->nullable();
             $table->timestamps();
 
-            $table->index('lesson_id');
+            $table->index('training_unit_id');
             $table->index('status');
         });
 

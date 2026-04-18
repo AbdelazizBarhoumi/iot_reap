@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
-use App\Models\Course;
+use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Models\User;
@@ -19,9 +19,9 @@ class CheckoutControllerTest extends TestCase
 
     private User $user;
 
-    private Course $paidCourse;
+    private TrainingPath $paidTrainingPath;
 
-    private Course $freeCourse;
+    private TrainingPath $freeTrainingPath;
 
     protected function setUp(): void
     {
@@ -29,12 +29,12 @@ class CheckoutControllerTest extends TestCase
 
         $this->user = User::factory()->create();
 
-        $this->paidCourse = Course::factory()->approved()->create([
+        $this->paidTrainingPath = TrainingPath::factory()->approved()->create([
             'price_cents' => 9999, // $99.99
             'title' => 'Advanced IoT Programming',
         ]);
 
-        $this->freeCourse = Course::factory()->approved()->create([
+        $this->freeTrainingPath = TrainingPath::factory()->approved()->create([
             'price_cents' => 0,
             'title' => 'Free IoT Basics',
         ]);
@@ -57,7 +57,7 @@ class CheckoutControllerTest extends TestCase
     public function test_unauthenticated_user_cannot_initiate_checkout(): void
     {
         $response = $this->postJson('/checkout/initiate', [
-            'course_id' => $this->paidCourse->id,
+            'training_path_id' => $this->paidTrainingPath->id,
         ]);
 
         $response->assertUnauthorized();
@@ -67,12 +67,12 @@ class CheckoutControllerTest extends TestCase
     {
         $payment = Payment::factory()->create([
             'user_id' => $this->user->id,
-            'course_id' => $this->paidCourse->id,
+            'training_path_id' => $this->paidTrainingPath->id,
         ]);
 
         $response = $this->postJson('/checkout/refund', [
             'payment_id' => $payment->id,
-            'reason' => 'Course not as expected',
+            'reason' => 'TrainingPath not as expected',
         ]);
 
         $response->assertUnauthorized();
@@ -82,7 +82,7 @@ class CheckoutControllerTest extends TestCase
     // Checkout Initiation Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_user_can_initiate_checkout_for_paid_course(): void
+    public function test_user_can_initiate_checkout_for_paid_trainingPath(): void
     {
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
@@ -96,7 +96,7 @@ class CheckoutControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => $this->paidCourse->id,
+                'training_path_id' => $this->paidTrainingPath->id,
             ]);
 
         $response->assertOk()
@@ -106,27 +106,27 @@ class CheckoutControllerTest extends TestCase
             ]);
     }
 
-    public function test_user_can_enroll_in_free_course_directly(): void
+    public function test_user_can_enroll_in_free_training_path_directly(): void
     {
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
             ->once()
             ->andReturn([
                 'enrolled' => true,
-                'course_url' => "/courses/{$this->freeCourse->id}",
+                'training_path_url' => "/trainingPaths/{$this->freeTrainingPath->id}",
             ]);
 
         $this->app->instance(CheckoutService::class, $mockCheckoutService);
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => $this->freeCourse->id,
+                'training_path_id' => $this->freeTrainingPath->id,
             ]);
 
         $response->assertOk()
             ->assertJson([
                 'enrolled' => true,
-                'redirect_url' => "/courses/{$this->freeCourse->id}",
+                'redirect_url' => "/trainingPaths/{$this->freeTrainingPath->id}",
             ]);
     }
 
@@ -136,14 +136,14 @@ class CheckoutControllerTest extends TestCase
             ->postJson('/checkout/initiate', []);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['course_id']);
+            ->assertJsonValidationErrors(['training_path_id']);
     }
 
-    public function test_checkout_validates_course_exists(): void
+    public function test_checkout_validates_training_path_exists(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => 999999,
+                'training_path_id' => 999999,
             ]);
 
         $response->assertUnprocessable();
@@ -154,17 +154,17 @@ class CheckoutControllerTest extends TestCase
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
             ->once()
-            ->andThrow(new \DomainException('User already enrolled in course'));
+            ->andThrow(new \DomainException('User already enrolled in trainingPath'));
 
         $this->app->instance(CheckoutService::class, $mockCheckoutService);
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => $this->paidCourse->id,
+                'training_path_id' => $this->paidTrainingPath->id,
             ]);
 
         $response->assertUnprocessable()
-            ->assertJson(['error' => 'User already enrolled in course']);
+            ->assertJson(['error' => 'User already enrolled in trainingPath']);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ class CheckoutControllerTest extends TestCase
     {
         $payment = Payment::factory()->create([
             'user_id' => $this->user->id,
-            'course_id' => $this->paidCourse->id,
+            'training_path_id' => $this->paidTrainingPath->id,
             'status' => PaymentStatus::COMPLETED,
         ]);
 
@@ -183,7 +183,7 @@ class CheckoutControllerTest extends TestCase
             'payment_id' => $payment->id,
             'user_id' => $this->user->id,
             'status' => RefundStatus::PENDING,
-            'reason' => 'Course not as expected',
+            'reason' => 'TrainingPath not as expected',
         ]);
 
         // Create a fresh mock for this specific test
@@ -197,7 +197,7 @@ class CheckoutControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $payment->id,
-                'reason' => 'Course not as expected',
+                'reason' => 'TrainingPath not as expected',
             ]);
 
         $response->assertCreated()
@@ -213,13 +213,13 @@ class CheckoutControllerTest extends TestCase
         $otherUser = User::factory()->create();
         $payment = Payment::factory()->create([
             'user_id' => $otherUser->id,
-            'course_id' => $this->paidCourse->id,
+            'training_path_id' => $this->paidTrainingPath->id,
         ]);
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $payment->id,
-                'reason' => 'Course not as expected',
+                'reason' => 'TrainingPath not as expected',
             ]);
 
         $response->assertNotFound();
@@ -249,7 +249,7 @@ class CheckoutControllerTest extends TestCase
     {
         $payment = Payment::factory()->create([
             'user_id' => $this->user->id,
-            'course_id' => $this->paidCourse->id,
+            'training_path_id' => $this->paidTrainingPath->id,
         ]);
 
         $mockRefundService = \Mockery::mock(RefundService::class);
@@ -262,7 +262,7 @@ class CheckoutControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $payment->id,
-                'reason' => 'Course not as expected',
+                'reason' => 'TrainingPath not as expected',
             ]);
 
         $response->assertUnprocessable()
@@ -319,27 +319,27 @@ class CheckoutControllerTest extends TestCase
     // Cancelled Page Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_checkout_cancelled_page_renders_with_course(): void
+    public function test_checkout_cancelled_page_renders_with_trainingPath(): void
     {
-        $response = $this->get("/checkout/cancelled?course={$this->paidCourse->id}");
+        $response = $this->get("/checkout/cancelled?trainingPath={$this->paidTrainingPath->id}");
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('checkout/cancelled')
-                ->has('course')
-                ->where('course.id', $this->paidCourse->id)
-                ->where('course.title', $this->paidCourse->title)
+                ->has('trainingPath')
+                ->where('trainingPath.id', $this->paidTrainingPath->id)
+                ->where('trainingPath.title', $this->paidTrainingPath->title)
             );
     }
 
-    public function test_checkout_cancelled_page_renders_without_course(): void
+    public function test_checkout_cancelled_page_renders_without_trainingPath(): void
     {
         $response = $this->get('/checkout/cancelled');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('checkout/cancelled')
-                ->where('course', null)
+                ->where('trainingPath', null)
             );
     }
 
@@ -370,7 +370,7 @@ class CheckoutControllerTest extends TestCase
                     ->has('amount')
                     ->has('status')
                     ->has('created_at')
-                    ->has('course')
+                    ->has('trainingPath')
                     ->has('status_label')
                     ->has('formatted_amount')
                     ->has('currency')
@@ -464,7 +464,7 @@ class CheckoutControllerTest extends TestCase
             ->once()
             ->with(
                 \Mockery::on(fn ($user) => $user->id === $this->user->id),
-                \Mockery::on(fn ($course) => $course->id === $this->paidCourse->id)
+                \Mockery::on(fn ($trainingPath) => $trainingPath->id === $this->paidTrainingPath->id)
             )
             ->andReturn([
                 'session_id' => 'cs_test_123',
@@ -475,7 +475,7 @@ class CheckoutControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => $this->paidCourse->id,
+                'training_path_id' => $this->paidTrainingPath->id,
             ]);
 
         $response->assertOk();
@@ -497,7 +497,7 @@ class CheckoutControllerTest extends TestCase
         $this->actingAs($this->user)
             ->postJson('/checkout/refund', [
                 'payment_id' => $payment->id,
-                'reason' => 'Course quality issue',
+                'reason' => 'TrainingPath quality issue',
             ]);
     }
 
@@ -516,7 +516,7 @@ class CheckoutControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->postJson('/checkout/initiate', [
-                'course_id' => $this->paidCourse->id,
+                'training_path_id' => $this->paidTrainingPath->id,
             ]);
 
         $response->assertServerError();
@@ -541,14 +541,14 @@ class CheckoutControllerTest extends TestCase
             );
     }
 
-    public function test_cancelled_page_handles_invalid_course_id(): void
+    public function test_cancelled_page_handles_invalid_training_path_id(): void
     {
-        $response = $this->get('/checkout/cancelled?course=999999');
+        $response = $this->get('/checkout/cancelled?trainingPath=999999');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('checkout/cancelled')
-                ->where('course', null)
+                ->where('trainingPath', null)
             );
     }
 }

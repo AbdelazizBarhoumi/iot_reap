@@ -71,27 +71,46 @@ class SecurityHeaders
     {
         $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval'"; // Required for Vite/React
         $styleSrc = "'self' 'unsafe-inline'"; // Required for inline styles
-        $connectSrc = "'self' wss: https:";
+        $connectSrc = "'self' wss: https: ws:"; // Allow ws: for Guacamole WebSocket
+        $imgSrc = "'self' data: https: blob:";
+        $fontSrc = "'self' data:";
 
-        // In development, allow Vite dev server
+        // In development, allow Vite dev server on any local interface
         if (! app()->isProduction()) {
-            $viteHost = config('app.vite_host', 'localhost');
             $vitePort = config('app.vite_port', 5173);
-            $viteUrl = "http://{$viteHost}:{$vitePort}";
+            
+            // Allow Vite on localhost and 127.0.0.1 for any port (development flexibility)
+            $viteUrls = [
+                "http://localhost:{$vitePort}",
+                "http://127.0.0.1:{$vitePort}",
+            ];
 
-            $scriptSrc .= " {$viteUrl}";
-            $styleSrc .= " {$viteUrl}";
-            $connectSrc .= " {$viteUrl} ws://{$viteHost}:{$vitePort}";
+            foreach ($viteUrls as $viteUrl) {
+                $scriptSrc .= " {$viteUrl}";
+                $styleSrc .= " {$viteUrl}";
+                $connectSrc .= " {$viteUrl} ws://" . str_replace('http://', '', $viteUrl);
+                $imgSrc .= " {$viteUrl}";
+                $fontSrc .= " {$viteUrl}";
+            }
+        }
+
+        // Add Guacamole WebSocket URL (convert http:/https: to ws:/wss:)
+        $guacUrl = config('guacamole.url');
+        if ($guacUrl) {
+            $guacWsUrl = preg_replace('#^https?://#', '', $guacUrl);
+            $connectSrc .= " ws://{$guacWsUrl} wss://{$guacWsUrl}";
         }
 
         $directives = [
             "default-src 'self'",
             "script-src $scriptSrc",
             "style-src $styleSrc",
-            "img-src 'self' data: https: blob:",
-            "font-src 'self' data:",
+            "img-src $imgSrc",
+            "font-src $fontSrc",
             "connect-src $connectSrc",
             "media-src 'self' blob:",
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+            "child-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
             "object-src 'none'",
             "frame-ancestors 'self'",
             "base-uri 'self'",

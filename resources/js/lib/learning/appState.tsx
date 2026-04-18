@@ -7,14 +7,14 @@
  */
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-// Status types for courses
-export type CourseStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
-// Managed course interface (for admin views)
-export interface ManagedCourse {
+// Status types for trainingPaths
+export type TrainingPathStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
+// Managed trainingPath interface (for admin views)
+export interface ManagedTrainingPath {
     id: string;
     title: string;
     description: string;
-    status: CourseStatus;
+    status: TrainingPathStatus;
     instructor: {
         name: string;
         avatar?: string;
@@ -27,7 +27,7 @@ export interface ManagedCourse {
     modules?: Array<{
         id?: string;
         title?: string;
-        lessons?: Array<{
+        trainingUnits?: Array<{
             id: string;
             title: string;
             type: string;
@@ -43,9 +43,9 @@ export interface ManagedCourse {
 }
 // Context for backward compatibility (passthrough)
 interface LearningAppContextType {
-    courses: ManagedCourse[];
-    approveCourse: (id: string) => void;
-    rejectCourse: (id: string, feedback: string) => void;
+    trainingPaths: ManagedTrainingPath[];
+    approveTrainingPath: (id: string) => void;
+    rejectTrainingPath: (id: string, feedback: string) => void;
 }
 /**
  * Provider that wraps children but doesn't manage state.
@@ -60,19 +60,19 @@ export function LearningAppProvider({ children }: { children: ReactNode }) {
  */
 export function useAppState(): LearningAppContextType {
     const { props } = usePage<{
-        pendingCourses?: ManagedCourse[];
-        featuredCourses?: ManagedCourse[];
-        courses?: ManagedCourse[];
+        pendingTrainingPaths?: ManagedTrainingPath[];
+        featuredTrainingPaths?: ManagedTrainingPath[];
+        trainingPaths?: ManagedTrainingPath[];
     }>();
-    // Combine courses from different prop sources
-    const courses = props.courses ?? props.pendingCourses ?? [];
+    // Combine trainingPaths from different prop sources
+    const trainingPaths = props.trainingPaths ?? props.pendingTrainingPaths ?? [];
     return {
-        courses: courses as ManagedCourse[],
-        approveCourse: () => {
-            console.warn('approveCourse: Use Inertia router.post() instead');
+        trainingPaths: trainingPaths as ManagedTrainingPath[],
+        approveTrainingPath: () => {
+            console.warn('approveTrainingPath: Use Inertia router.post() instead');
         },
-        rejectCourse: () => {
-            console.warn('rejectCourse: Use Inertia router.post() instead');
+        rejectTrainingPath: () => {
+            console.warn('rejectTrainingPath: Use Inertia router.post() instead');
         },
     };
 }

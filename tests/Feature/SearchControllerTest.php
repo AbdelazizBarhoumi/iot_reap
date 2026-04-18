@@ -34,14 +34,14 @@ class SearchControllerTest extends TestCase
             'total' => 0,
         ];
 
-        $categories = [
-            ['name' => 'Web Development', 'slug' => 'web-development'],
-        ];
+            $categories = [
+                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
+            ];
 
         $this->searchServiceMock
             ->shouldReceive('search')
             ->once()
-            ->andReturn($searchResult);
+            ->andReturnUsing(fn () => $searchResult);
 
         $this->searchServiceMock
             ->shouldReceive('getCategories')
@@ -90,7 +90,7 @@ class SearchControllerTest extends TestCase
         $categories = [];
 
         $expectedFilters = [
-            'category' => 'web-development',
+                'category' => 'smart-manufacturing',
             'level' => 'Beginner',
             'price_min' => 10.0,
             'price_max' => 100.0,
@@ -101,7 +101,7 @@ class SearchControllerTest extends TestCase
         $this->searchServiceMock
             ->shouldReceive('search')
             ->once()
-            ->andReturn($searchResult);
+            ->andReturnUsing(fn () => $searchResult);
 
         $this->searchServiceMock
             ->shouldReceive('getCategories')
@@ -111,7 +111,7 @@ class SearchControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->getJson('/search?'.http_build_query([
                 'q' => 'laravel',
-                'category' => 'web-development',
+                    'category' => 'smart-manufacturing',
                 'level' => 'Beginner',
                 'price_min' => 10,
                 'price_max' => 100,
@@ -130,7 +130,7 @@ class SearchControllerTest extends TestCase
         $this->searchServiceMock
             ->shouldReceive('suggest')
             ->once()
-            ->andReturn($suggestions);
+            ->andReturnUsing(fn () => $suggestions);
 
         $response = $this->actingAs($this->user)
             ->getJson('/search/suggest?q=lar');
@@ -148,7 +148,7 @@ class SearchControllerTest extends TestCase
         $this->searchServiceMock
             ->shouldReceive('suggest')
             ->once()
-            ->andReturn($suggestions);
+            ->andReturnUsing(fn () => $suggestions);
 
         $response = $this->actingAs($this->user)
             ->getJson('/search/suggest?q=lar&limit=2');
@@ -197,7 +197,7 @@ class SearchControllerTest extends TestCase
         $this->searchServiceMock
             ->shouldReceive('getTrendingSearches')
             ->once()
-            ->andReturn($trending);
+            ->andReturnUsing(fn () => $trending);
 
         $response = $this->getJson('/search/trending');
 
@@ -210,8 +210,8 @@ class SearchControllerTest extends TestCase
     public function test_categories_endpoint(): void
     {
         $categories = [
-            ['name' => 'Web Development', 'slug' => 'web-development', 'count' => 15],
-            ['name' => 'Data Science', 'slug' => 'data-science', 'count' => 8],
+                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing', 'count' => 15],
+                ['name' => 'Predictive Maintenance', 'slug' => 'predictive-maintenance', 'count' => 8],
         ];
 
         $this->searchServiceMock
@@ -229,42 +229,42 @@ class SearchControllerTest extends TestCase
 
     public function test_by_category_endpoint_returns_json(): void
     {
-        $courses = \Illuminate\Database\Eloquent\Collection::make([]);
+        $trainingPaths = \Illuminate\Database\Eloquent\Collection::make([]);
         $categories = [
-            ['name' => 'Web Development', 'slug' => 'web-development'],
+                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
         ];
 
         $this->searchServiceMock
-            ->shouldReceive('getCoursesByCategory')
+            ->shouldReceive('getTrainingPathsByCategory')
             ->once()
-            ->andReturn($courses);
+            ->andReturn($trainingPaths);
 
         $this->searchServiceMock
             ->shouldReceive('getCategories')
             ->once()
             ->andReturn($categories);
 
-        $response = $this->getJson('/search/category/web-development');
+        $response = $this->getJson('/search/category/smart-manufacturing');
 
         $response->assertOk()
             ->assertJsonStructure([
-                'courses',
+                'trainingPaths',
                 'category',
             ])
             ->assertJson([
-                'category' => 'Web Development',
+                    'category' => 'Smart Manufacturing',
             ]);
     }
 
     public function test_by_category_endpoint_with_unknown_category(): void
     {
-        $courses = \Illuminate\Database\Eloquent\Collection::make([]);
+        $trainingPaths = \Illuminate\Database\Eloquent\Collection::make([]);
         $categories = [];
 
         $this->searchServiceMock
-            ->shouldReceive('getCoursesByCategory')
+            ->shouldReceive('getTrainingPathsByCategory')
             ->once()
-            ->andReturn($courses);
+            ->andReturn($trainingPaths);
 
         $this->searchServiceMock
             ->shouldReceive('getCategories')

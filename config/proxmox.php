@@ -21,7 +21,7 @@ return [
     'timeout' => env('PROXMOX_TIMEOUT', 30),
 
     // VMID ranges for different purposes
-    'template_vmid_range' => [100, 199],
+    // template_vmid_range removed - only using existing VMs via sessions
     'session_vmid_range' => [200, 999],
 
     // Load balancing thresholds

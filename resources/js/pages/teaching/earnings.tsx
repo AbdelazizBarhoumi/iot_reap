@@ -25,19 +25,19 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type {
     EarningsSummary,
-    RevenueByCourse,
+    RevenueByTrainingPath,
     RevenueChartPoint,
     AnalyticsPeriod,
 } from '@/types/analytics.types';
 interface EarningsPageProps {
     summary: EarningsSummary;
-    revenueByCourse: RevenueByCourse[];
+    revenueByTrainingPath: RevenueByTrainingPath[];
     revenueChart: RevenueChartPoint[];
     period: AnalyticsPeriod;
 }
 export default function EarningsPage({
     summary,
-    revenueByCourse,
+    revenueByTrainingPath,
     revenueChart,
     period,
 }: EarningsPageProps) {
@@ -70,7 +70,7 @@ export default function EarningsPage({
             minimumFractionDigits: 2,
         }).format(value);
     };
-    const totalSales = revenueByCourse.reduce(
+    const totalSales = revenueByTrainingPath.reduce(
         (sum, c) => sum + c.sales_count,
         0,
     );
@@ -143,15 +143,15 @@ export default function EarningsPage({
                 </div>
                 {/* Revenue Chart */}
                 <RevenueChart data={revenueChart} title="Daily Revenue" />
-                {/* Revenue by Course */}
+                {/* Revenue by TrainingPath */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">
-                            Revenue by Course
+                            Revenue by TrainingPath
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {revenueByCourse.length === 0 ? (
+                        {revenueByTrainingPath.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12">
                                 <DollarSign className="mb-4 h-12 w-12 text-muted-foreground" />
                                 <p className="text-muted-foreground">
@@ -160,15 +160,15 @@ export default function EarningsPage({
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {revenueByCourse.map((course) => (
+                                {revenueByTrainingPath.map((trainingPath) => (
                                     <div
-                                        key={course.id}
+                                        key={trainingPath.id}
                                         className="flex items-center gap-4"
                                     >
-                                        {course.thumbnail_url ? (
+                                        {trainingPath.thumbnail_url ? (
                                             <img
-                                                src={course.thumbnail_url}
-                                                alt={course.title}
+                                                src={trainingPath.thumbnail_url}
+                                                alt={trainingPath.title}
                                                 className="h-12 w-12 rounded object-cover"
                                             />
                                         ) : (
@@ -178,15 +178,15 @@ export default function EarningsPage({
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate font-medium">
-                                                {course.title}
+                                                {trainingPath.title}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {course.sales_count} sales
+                                                {trainingPath.sales_count} sales
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold">
-                                                {formatCurrency(course.revenue)}
+                                                {formatCurrency(trainingPath.revenue)}
                                             </p>
                                         </div>
                                     </div>

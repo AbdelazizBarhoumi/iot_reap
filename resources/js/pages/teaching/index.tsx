@@ -1,6 +1,6 @@
 /**
  * Teaching Dashboard
- * Shows teacher's courses with stats, quick actions, and course management.
+ * Shows teacher's trainingPaths with stats, quick actions, and trainingPath management.
  * Professional design with animations and modern UI.
  */
 import { Head, Link, usePage, router } from '@inertiajs/react';
@@ -19,7 +19,6 @@ import {
     Rocket,
     Send,
     Star,
-    Target,
     Terminal,
     TrendingUp,
     Trash2,
@@ -28,8 +27,8 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { teachingApi } from '@/api/course.api';
 import { forumApi } from '@/api/forum.api';
+import type { TrainingPathEditing } from '@/api/teaching.api';
 import { TeacherInbox } from '@/components/forum/TeacherInbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,17 +42,20 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
+import { useMyTrainingPaths } from '@/hooks/useTeaching';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import type { Course, CourseStatus } from '@/types/course.types';
 import type { DiscussionThread } from '@/types/forum.types';
+import type { TrainingPath } from '@/types/TrainingPath.types';
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Teaching', href: '/teaching' },
 ];
-const statusConfig: Record<
-    CourseStatus,
+type TeachingPathStatus = TrainingPathEditing['status'];
+
+const statusConfig: Partial<Record<
+    TeachingPathStatus,
     { label: string; icon: React.ElementType; className: string; bg: string }
-> = {
+>> = {
     draft: {
         label: 'Draft',
         icon: FileEdit,
@@ -72,12 +74,6 @@ const statusConfig: Record<
         className: 'text-emerald-600 dark:text-emerald-400',
         bg: 'bg-emerald-50 dark:bg-emerald-900/20',
     },
-    rejected: {
-        label: 'Needs Changes',
-        icon: Target,
-        className: 'text-rose-600 dark:text-rose-400',
-        bg: 'bg-rose-50 dark:bg-rose-900/20',
-    },
     archived: {
         label: 'Archived',
         icon: Archive,
@@ -86,17 +82,19 @@ const statusConfig: Record<
     },
 };
 interface TeacherStats {
-    totalCourses: number;
+    totalTrainingPaths: number;
     totalStudents: number;
     avgRating: number;
+    completionRate: number;
 }
 interface PageProps {
-    courses: Course[];
+    trainingPaths: TrainingPath[];
     stats: TeacherStats;
 }
 export default function TeachingPage() {
-    const { courses, stats } = usePage<{ props: PageProps }>()
+    const { stats } = usePage<{ props: PageProps }>()
         .props as unknown as PageProps;
+    const { trainingPaths, loading: _loading, error: _error, deleteTrainingPath, archiveTrainingPath, restoreTrainingPath, submitForReview } = useMyTrainingPaths();
     const [deletingId, setDeletingId] = useState<string | number | null>(null);
     const [archivingId, setArchivingId] = useState<string | number | null>(
         null,
@@ -152,80 +150,76 @@ export default function TeachingPage() {
         variant: 'default',
         onConfirm: () => {},
     });
-    const activeCourses = courses.filter((c) => c.status !== 'archived');
-    const publishedCourses = activeCourses.filter(
+    const activeTrainingPaths = trainingPaths.filter((c) => c.status !== 'archived');
+    const publishedTrainingPaths = activeTrainingPaths.filter(
         (c) => c.status === 'approved',
     );
-    const draftCourses = activeCourses.filter(
-        (c) => c.status === 'draft' || c.status === 'rejected',
+    const draftTrainingPaths = activeTrainingPaths.filter(
+        (c) => c.status === 'draft',
     );
-    const pendingCourses = activeCourses.filter(
+    const pendingTrainingPaths = activeTrainingPaths.filter(
         (c) => c.status === 'pending_review',
     );
-    const handleSubmitForReview = async (courseId: string | number) => {
-        setSubmittingId(courseId);
+    const handleSubmitForReview = async (trainingPathId: string | number) => {
+        setSubmittingId(trainingPathId);
         try {
-            await teachingApi.submitForReview(Number(courseId));
-            toast.success('Course submitted for review');
-            router.reload({ only: ['courses'] });
+            await submitForReview(trainingPathId);
+            toast.success('Training path submitted for review');
         } catch {
-            toast.error('Failed to submit course');
+            toast.error('Failed to submit training path');
         } finally {
             setSubmittingId(null);
         }
     };
-    const handleDelete = (courseId: string | number) => {
+    const handleDelete = (trainingPathId: string | number) => {
         setConfirmDialog({
             open: true,
-            title: 'Delete Course',
+            title: 'Delete TrainingPath',
             description:
-                'Are you sure you want to delete this course? This action cannot be undone and all associated content will be permanently removed.',
-            confirmText: 'Delete Course',
+                'Are you sure you want to delete this training path? This action cannot be undone and all associated content will be permanently removed.',
+            confirmText: 'Delete Path',
             variant: 'destructive',
             onConfirm: async () => {
-                setDeletingId(courseId);
+                setDeletingId(trainingPathId);
                 try {
-                    await teachingApi.delete(Number(courseId));
-                    toast.success('Course deleted');
-                    router.reload({ only: ['courses'] });
+                    await deleteTrainingPath(trainingPathId);
+                    toast.success('Training path deleted');
                 } catch {
-                    toast.error('Failed to delete course');
+                    toast.error('Failed to delete training path');
                 } finally {
                     setDeletingId(null);
                 }
             },
         });
     };
-    const handleArchive = (courseId: string | number) => {
+    const handleArchive = (trainingPathId: string | number) => {
         setConfirmDialog({
             open: true,
-            title: 'Archive Course',
+            title: 'Archive TrainingPath',
             description:
-                'Archive this course? It will be hidden from students but can be restored later.',
+                'Archive this training path? It will be hidden from operators but can be restored later.',
             confirmText: 'Archive',
             variant: 'default',
             onConfirm: async () => {
-                setArchivingId(courseId);
+                setArchivingId(trainingPathId);
                 try {
-                    await teachingApi.archive(Number(courseId));
-                    toast.success('Course archived');
-                    router.reload({ only: ['courses'] });
+                    await archiveTrainingPath(trainingPathId);
+                    toast.success('Training path archived');
                 } catch {
-                    toast.error('Failed to archive course');
+                    toast.error('Failed to archive training path');
                 } finally {
                     setArchivingId(null);
                 }
             },
         });
     };
-    const handleRestore = async (courseId: string | number) => {
-        setArchivingId(courseId);
+    const handleRestore = async (trainingPathId: string | number) => {
+        setArchivingId(trainingPathId);
         try {
-            await teachingApi.restore(Number(courseId));
-            toast.success('Course restored to draft');
-            router.reload({ only: ['courses'] });
+            await restoreTrainingPath(trainingPathId);
+            toast.success('Training path restored to draft');
         } catch {
-            toast.error('Failed to restore course');
+            toast.error('Failed to restore training path');
         } finally {
             setArchivingId(null);
         }
@@ -233,9 +227,9 @@ export default function TeachingPage() {
     const statCards = [
         {
             icon: BookOpen,
-            label: 'Published Courses',
-            value: publishedCourses.length,
-            subtext: `${draftCourses.length} drafts`,
+            label: 'Published Paths',
+            value: publishedTrainingPaths.length,
+            subtext: `${draftTrainingPaths.length} drafts`,
             gradient: 'from-violet-500 to-purple-600',
             iconBg: 'bg-violet-500/10',
             iconColor: 'text-violet-500',
@@ -244,7 +238,7 @@ export default function TeachingPage() {
             icon: Users,
             label: 'Total Students',
             value: stats.totalStudents,
-            subtext: 'enrolled across all courses',
+            subtext: 'enrolled across all paths',
             gradient: 'from-cyan-500 to-blue-600',
             iconBg: 'bg-cyan-500/10',
             iconColor: 'text-cyan-500',
@@ -260,8 +254,8 @@ export default function TeachingPage() {
         },
         {
             icon: TrendingUp,
-            label: 'Course Completion',
-            value: '78%',
+            label: 'Path Completion',
+            value: `${stats.completionRate.toFixed(0)}%`,
             subtext: 'average completion rate',
             gradient: 'from-emerald-500 to-teal-600',
             iconBg: 'bg-emerald-500/10',
@@ -284,7 +278,7 @@ export default function TeachingPage() {
                                 Teaching Dashboard
                             </h1>
                             <p className="mt-1 text-muted-foreground">
-                                Create courses, track students, and grow your
+                                Create training paths, track operators, and grow your
                                 impact
                             </p>
                         </div>
@@ -294,7 +288,7 @@ export default function TeachingPage() {
                         >
                             <Link href="/teaching/create">
                                 <Plus className="mr-2 h-4 w-4" />
-                                Create New Course
+                                Create New Path
                             </Link>
                         </Button>
                     </motion.div>
@@ -353,9 +347,9 @@ export default function TeachingPage() {
                                 flaggedThreads={forumInbox.flagged}
                                 unansweredThreads={forumInbox.unanswered}
                                 recentThreads={forumInbox.recent}
-                                onViewThread={(threadId, courseSlug) => {
+                                onViewThread={(threadId, trainingPathSlug) => {
                                     router.visit(
-                                        `/courses/${courseSlug}?thread=${threadId}`,
+                                        `/trainingPaths/${trainingPathSlug}?thread=${threadId}`,
                                     );
                                 }}
                                 onResolveFlag={async (threadId) => {
@@ -390,8 +384,8 @@ export default function TeachingPage() {
                             />
                         </motion.div>
                         {/* Quick Actions for pending/drafts */}
-                        {(pendingCourses.length > 0 ||
-                            draftCourses.length > 0) && (
+                        {(pendingTrainingPaths.length > 0 ||
+                            draftTrainingPaths.length > 0) && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -408,24 +402,24 @@ export default function TeachingPage() {
                                                 Quick Actions
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                You have courses that need
+                                                You have paths that need
                                                 attention
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {pendingCourses.length > 0 && (
+                                        {pendingTrainingPaths.length > 0 && (
                                             <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                                 <Clock className="mr-1 h-3 w-3" />
-                                                {pendingCourses.length} awaiting
+                                                {pendingTrainingPaths.length} awaiting
                                                 review
                                             </Badge>
                                         )}
-                                        {draftCourses.length > 0 && (
+                                        {draftTrainingPaths.length > 0 && (
                                             <Badge variant="secondary">
                                                 <FileEdit className="mr-1 h-3 w-3" />
-                                                {draftCourses.length} draft
-                                                {draftCourses.length > 1
+                                                {draftTrainingPaths.length} draft
+                                                {draftTrainingPaths.length > 1
                                                     ? 's'
                                                     : ''}{' '}
                                                 to complete
@@ -437,17 +431,17 @@ export default function TeachingPage() {
                         </motion.div>
                     )}
                     </div>
-                    {/* Courses List */}
+                    {/* TrainingPaths List */}
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="font-heading text-xl font-semibold text-foreground">
-                                My Courses
+                                My Paths
                             </h2>
                             <span className="text-sm text-muted-foreground">
-                                {courses.length} total
+                                {trainingPaths.length} total
                             </span>
                         </div>
-                        {courses.length === 0 ? (
+                        {trainingPaths.length === 0 ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -457,11 +451,11 @@ export default function TeachingPage() {
                                     <BookOpen className="h-10 w-10 text-muted-foreground" />
                                 </div>
                                 <h3 className="mb-2 font-heading text-xl font-semibold">
-                                    Create your first course
+                                    Create your first training path
                                 </h3>
                                 <p className="mx-auto mb-6 max-w-md text-muted-foreground">
-                                    Share your knowledge with engineers around
-                                    the world. Create interactive courses with
+                                    Share your industrial expertise with engineers around
+                                    the world. Create interactive training paths with
                                     VM labs and hands-on projects.
                                 </p>
                                 <Button asChild>
@@ -474,24 +468,24 @@ export default function TeachingPage() {
                         ) : (
                             <div className="space-y-3">
                                 <AnimatePresence>
-                                    {courses.map((course, i) => {
+                                                                    {trainingPaths.map((trainingPath, i) => {
                                         const status =
-                                            statusConfig[course.status];
-                                        const StatusIcon = status.icon;
+                                            statusConfig[trainingPath.status!];
+                                        const StatusIcon = status?.icon || FileEdit;
                                         const moduleCount =
-                                            course.modules?.length ?? 0;
-                                        const lessonCount =
-                                            course.modules?.reduce(
-                                                (a, m) => a + m.lessons.length,
+                                            trainingPath.modules?.length ?? 0;
+                                        const trainingUnitCount =
+                                            trainingPath.modules?.reduce(
+                                                (a, m) => a + (m.trainingUnits?.length ?? 0),
                                                 0,
                                             ) ?? 0;
                                         const completeness = Math.min(
                                             100,
-                                            (lessonCount / 10) * 100,
-                                        ); // Assume 10 lessons = 100%
+                                            (trainingUnitCount / 10) * 100,
+                                        ); // Assume 10 trainingUnits = 100%
                                         return (
                                             <motion.div
-                                                key={course.id}
+                                                key={trainingPath.id}
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, x: -20 }}
@@ -500,9 +494,9 @@ export default function TeachingPage() {
                                                 <Card className="group overflow-hidden border-border/50 shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
                                                     <CardContent className="p-0">
                                                         <div className="flex flex-col lg:flex-row lg:items-center">
-                                                            {/* Course thumbnail/placeholder */}
+                                                            {/* TrainingPath thumbnail/placeholder */}
                                                             <div className="hidden h-full w-32 shrink-0 items-center justify-center border-r border-border/50 bg-gradient-to-br from-primary/10 to-secondary/10 lg:flex">
-                                                                {course.hasVirtualMachine ? (
+                                                                {trainingPath.hasVirtualMachine ? (
                                                                     <Terminal className="h-8 w-8 text-primary/60" />
                                                                 ) : (
                                                                     <BookOpen className="h-8 w-8 text-muted-foreground/60" />
@@ -515,23 +509,23 @@ export default function TeachingPage() {
                                                                         {/* Title row */}
                                                                         <div className="mb-2 flex flex-wrap items-center gap-2">
                                                                             <Link
-                                                                                href={`/teaching/${course.id}/edit`}
+                                                                                href={`/teaching/${trainingPath.id}/edit`}
                                                                                 className="font-heading font-semibold text-foreground transition-colors hover:text-primary"
                                                                             >
                                                                                 {
-                                                                                    course.title
+                                                                                    trainingPath.title
                                                                                 }
                                                                             </Link>
                                                                             <Badge
                                                                                 variant="outline"
-                                                                                className={`text-xs ${status.className} ${status.bg} border-0`}
+                                                                                className={`text-xs ${status?.className ?? ''} ${status?.bg ?? ''} border-0`}
                                                                             >
                                                                                 <StatusIcon className="mr-1 h-3 w-3" />
                                                                                 {
-                                                                                    status.label
+                                                                                    status?.label
                                                                                 }
                                                                             </Badge>
-                                                                            {course.hasVirtualMachine && (
+                                                                            {trainingPath.hasVirtualMachine && (
                                                                                 <Badge
                                                                                     variant="secondary"
                                                                                     className="text-xs"
@@ -552,14 +546,14 @@ export default function TeachingPage() {
                                                                                 modules
                                                                                 ·{' '}
                                                                                 {
-                                                                                    lessonCount
+                                                                                    trainingUnitCount
                                                                                 }{' '}
-                                                                                lessons
+                                                                                trainingUnits
                                                                             </span>
                                                                             <span className="flex items-center gap-1">
                                                                                 <Users className="h-3.5 w-3.5" />
                                                                                 {(
-                                                                                    course.students ??
+                                                                                    trainingPath.students ??
                                                                                     0
                                                                                 ).toLocaleString()}{' '}
                                                                                 students
@@ -567,7 +561,7 @@ export default function TeachingPage() {
                                                                             <span className="flex items-center gap-1">
                                                                                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                                                                                 {(
-                                                                                    course.rating ??
+                                                                                    trainingPath.rating ??
                                                                                     0
                                                                                 ).toFixed(
                                                                                     1,
@@ -575,7 +569,7 @@ export default function TeachingPage() {
                                                                             </span>
                                                                         </div>
                                                                         {/* Progress bar for drafts */}
-                                                                        {course.status ===
+                                                                        {trainingPath.status ===
                                                                             'draft' && (
                                                                             <div className="flex items-center gap-3">
                                                                                 <Progress
@@ -594,13 +588,13 @@ export default function TeachingPage() {
                                                                             </div>
                                                                         )}
                                                                         {/* Admin feedback */}
-                                                                        {course.adminFeedback && (
+                                                                        {trainingPath.adminFeedback && (
                                                                             <div className="mt-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
                                                                                 <p className="text-xs font-medium text-destructive">
                                                                                     Admin
                                                                                     Feedback:{' '}
                                                                                     {
-                                                                                        course.adminFeedback
+                                                                                        trainingPath.adminFeedback
                                                                                     }
                                                                                 </p>
                                                                             </div>
@@ -608,20 +602,20 @@ export default function TeachingPage() {
                                                                     </div>
                                                                     {/* Actions */}
                                                                     <div className="flex shrink-0 items-center gap-2">
-                                                                        {course.status ===
+                                                                        {trainingPath.status ===
                                                                             'draft' && (
                                                                             <Button
                                                                                 size="sm"
                                                                                 onClick={() =>
                                                                                     handleSubmitForReview(
-                                                                                        course.id,
+                                                                                        trainingPath.id,
                                                                                     )
                                                                                 }
-                                                                                disabled={submittingId === course.id}
+                                                                                disabled={submittingId === trainingPath.id}
                                                                                 className="hidden sm:flex"
                                                                             >
                                                                                 <Send className="mr-1 h-4 w-4" />
-                                                                                {submittingId === course.id ? 'Submitting...' : 'Submit'}
+                                                                                {submittingId === trainingPath.id ? 'Submitting...' : 'Submit'}
                                                                             </Button>
                                                                         )}
                                                                         <Button
@@ -630,7 +624,7 @@ export default function TeachingPage() {
                                                                             asChild
                                                                         >
                                                                             <Link
-                                                                                href={`/teaching/${course.id}/edit`}
+                                                                                href={`/teaching/${trainingPath.id}/edit`}
                                                                             >
                                                                                 <Edit className="h-4 w-4 sm:mr-1" />
                                                                                 <span className="hidden sm:inline">
@@ -638,7 +632,7 @@ export default function TeachingPage() {
                                                                                 </span>
                                                                             </Link>
                                                                         </Button>
-                                                                        {course.status ===
+                                                                        {trainingPath.status ===
                                                                             'approved' && (
                                                                             <Button
                                                                                 variant="ghost"
@@ -646,7 +640,7 @@ export default function TeachingPage() {
                                                                                 asChild
                                                                             >
                                                                                 <Link
-                                                                                    href={`/courses/${course.id}`}
+                                                                                    href={`/trainingPaths/${trainingPath.id}`}
                                                                                 >
                                                                                     <Eye className="h-4 w-4" />
                                                                                 </Link>
@@ -659,7 +653,7 @@ export default function TeachingPage() {
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    aria-label="Course options"
+                                                                                    aria-label="TrainingPath options"
                                                                                 >
                                                                                     <MoreHorizontal className="h-4 w-4" />
                                                                                 </Button>
@@ -669,42 +663,42 @@ export default function TeachingPage() {
                                                                                     asChild
                                                                                 >
                                                                                     <Link
-                                                                                        href={`/teaching/${course.id}/edit`}
+                                                                                        href={`/teaching/${trainingPath.id}/edit`}
                                                                                     >
                                                                                         <Edit className="mr-2 h-4 w-4" />
                                                                                         Edit
-                                                                                        Course
+                                                                                        TrainingPath
                                                                                     </Link>
                                                                                 </DropdownMenuItem>
-                                                                                {(course.status === 'draft' || course.status === 'rejected') && (
+                                                                                {trainingPath.status === 'draft' && (
                                                                                     <DropdownMenuItem
                                                                                         onClick={() =>
-                                                                                            handleSubmitForReview(course.id)
+                                                                                            handleSubmitForReview(trainingPath.id)
                                                                                         }
-                                                                                        disabled={submittingId === course.id}
+                                                                                        disabled={submittingId === trainingPath.id}
                                                                                     >
                                                                                         <Send className="mr-2 h-4 w-4" />
-                                                                                        {submittingId === course.id ? 'Submitting...' : 'Submit for Review'}
+                                                                                        {submittingId === trainingPath.id ? 'Submitting...' : 'Submit for Review'}
                                                                                     </DropdownMenuItem>
                                                                                 )}
                                                                                 <DropdownMenuItem
                                                                                     asChild
                                                                                 >
                                                                                     <Link
-                                                                                        href={`/teaching/analytics/courses/${course.id}/students`}
+                                                                                        href={`/teaching/analytics/trainingPaths/${trainingPath.id}/students`}
                                                                                     >
                                                                                         <BarChart3 className="mr-2 h-4 w-4" />
                                                                                         View
                                                                                         Analytics
                                                                                     </Link>
                                                                                 </DropdownMenuItem>
-                                                                                {course.status ===
+                                                                                {trainingPath.status ===
                                                                                     'approved' && (
                                                                                     <DropdownMenuItem
                                                                                         asChild
                                                                                     >
                                                                                         <Link
-                                                                                            href={`/courses/${course.id}`}
+                                                                                            href={`/trainingPaths/${trainingPath.id}`}
                                                                                         >
                                                                                             <Eye className="mr-2 h-4 w-4" />
                                                                                             View
@@ -714,55 +708,55 @@ export default function TeachingPage() {
                                                                                     </DropdownMenuItem>
                                                                                 )}
                                                                                 <DropdownMenuSeparator />
-                                                                                {course.status ===
+                                                                                {trainingPath.status ===
                                                                                 'archived' ? (
                                                                                     <DropdownMenuItem
                                                                                         onClick={() =>
                                                                                             handleRestore(
-                                                                                                course.id,
+                                                                                                trainingPath.id,
                                                                                             )
                                                                                         }
                                                                                         disabled={
                                                                                             archivingId ===
-                                                                                            course.id
+                                                                                            trainingPath.id
                                                                                         }
                                                                                     >
                                                                                         <ArchiveRestore className="mr-2 h-4 w-4" />
                                                                                         Restore
-                                                                                        Course
+                                                                                        TrainingPath
                                                                                     </DropdownMenuItem>
                                                                                 ) : (
                                                                                     <DropdownMenuItem
                                                                                         onClick={() =>
                                                                                             handleArchive(
-                                                                                                course.id,
+                                                                                                trainingPath.id,
                                                                                             )
                                                                                         }
                                                                                         disabled={
                                                                                             archivingId ===
-                                                                                            course.id
+                                                                                            trainingPath.id
                                                                                         }
                                                                                     >
                                                                                         <Archive className="mr-2 h-4 w-4" />
                                                                                         Archive
-                                                                                        Course
+                                                                                        TrainingPath
                                                                                     </DropdownMenuItem>
                                                                                 )}
                                                                                 <DropdownMenuItem
                                                                                     className="text-destructive focus:text-destructive"
                                                                                     onClick={() =>
                                                                                         handleDelete(
-                                                                                            course.id,
+                                                                                            trainingPath.id,
                                                                                         )
                                                                                     }
                                                                                     disabled={
                                                                                         deletingId ===
-                                                                                        course.id
+                                                                                        trainingPath.id
                                                                                     }
                                                                                 >
                                                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                                                     Delete
-                                                                                    Course
+                                                                                    TrainingPath
                                                                                 </DropdownMenuItem>
                                                                             </DropdownMenuContent>
                                                                         </DropdownMenu>

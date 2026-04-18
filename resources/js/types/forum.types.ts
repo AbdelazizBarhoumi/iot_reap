@@ -1,5 +1,5 @@
 /**
- * Discussion Forum types for lesson and course discussions
+ * Discussion Forum types for trainingUnit and trainingPath discussions
  */
 export type ThreadStatus = 'open' | 'resolved' | 'pinned' | 'locked';
 export interface ThreadAuthor {
@@ -25,8 +25,8 @@ export interface ThreadReply {
 }
 export interface DiscussionThread {
     id: string;
-    lessonId?: number;
-    courseId: number;
+    trainingUnitId?: number;
+    trainingPathId: number;
     title: string;
     content: string;
     author: ThreadAuthor;

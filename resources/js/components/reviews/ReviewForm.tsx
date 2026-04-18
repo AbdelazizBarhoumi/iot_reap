@@ -1,10 +1,10 @@
 /**
- * ReviewForm - Form for creating/editing course reviews.
+ * ReviewForm - Form for creating/editing trainingPath reviews.
  */
 import { motion } from 'framer-motion';
 import { Send, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import type { CourseReview, CreateReviewData } from '@/api/reviews.api';
+import type { TrainingPathReview, CreateReviewData } from '@/api/reviews.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,7 +17,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { StarRating } from './StarRating';
 interface ReviewFormProps {
-    existingReview?: CourseReview | null;
+    existingReview?: TrainingPathReview | null;
     onSubmit: (data: CreateReviewData) => Promise<boolean>;
     onCancel?: () => void;
     isSubmitting?: boolean;
@@ -82,7 +82,7 @@ export function ReviewForm({
                 <Textarea
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
-                    placeholder="Share your experience with this course..."
+                    placeholder="Share your experience with this trainingPath..."
                     className="min-h-[120px] resize-none"
                     maxLength={5000}
                 />

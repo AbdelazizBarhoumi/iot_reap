@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Video model for lesson video content.
+ * Video model for trainingUnit video content.
  *
  * @property int $id
- * @property int $lesson_id
+ * @property int $training_unit_id
  * @property string $original_filename
  * @property string $storage_path
  * @property string $storage_disk
@@ -33,7 +33,7 @@ class Video extends Model
     use HasFactory;
 
     protected $fillable = [
-        'lesson_id',
+        'training_unit_id',
         'original_filename',
         'storage_path',
         'storage_disk',
@@ -62,9 +62,9 @@ class Video extends Model
     // Relationships
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function lesson(): BelongsTo
+    public function trainingUnit(): BelongsTo
     {
-        return $this->belongsTo(Lesson::class);
+        return $this->belongsTo(TrainingUnit::class);
     }
 
     public function captions(): HasMany

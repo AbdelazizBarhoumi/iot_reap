@@ -37,6 +37,26 @@ export const usersApi = {
         return data;
     },
     /**
+     * Approve a teacher account.
+     */
+    async approveTeacher(
+        userId: string,
+    ): Promise<{ data: AdminUser; message: string }> {
+        const { data } = await client.post(`/${userId}/approve-teacher`);
+        return data;
+    },
+    /**
+     * Revoke teacher approval.
+     */
+    async revokeTeacherApproval(
+        userId: string,
+    ): Promise<{ data: AdminUser; message: string }> {
+        const { data } = await client.post(
+            `/${userId}/revoke-teacher-approval`,
+        );
+        return data;
+    },
+    /**
      * Suspend a user.
      */
     async suspendUser(
