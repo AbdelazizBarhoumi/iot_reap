@@ -1,7 +1,8 @@
 import { Form, Head, router } from '@inertiajs/react';
+import { GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,6 @@ import { register } from '@/routes';
 import { authCode } from '@/routes/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { toast } from 'sonner';
 type Props = {
     status?: string;
     canResetPassword: boolean;
@@ -155,7 +155,6 @@ export default function Login({
                                 onError={() => {
                                     toast.error('Failed to authenticate with Google. Please try again.');
                                 }}
-                                locale="en"
                                 text="signin_with"
                                 size="large"
                                 theme="outline"

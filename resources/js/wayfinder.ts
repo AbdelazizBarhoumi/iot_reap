@@ -2,19 +2,23 @@
  * Route generation utilities used by auto-generated routes
  */
 
+export type QueryParamValue = string | number | boolean | null | undefined;
+
 export type RouteQueryOptions = {
-    query?: Record<string, any>;
-    mergeQuery?: Record<string, any>;
+    query?: Record<string, QueryParamValue>;
+    mergeQuery?: Record<string, QueryParamValue>;
 };
 
-export type RouteDefinition<T extends string = string> = {
+export type RouteDefinition<T extends string | readonly string[] = string> = {
     url: string;
-    method: T;
+    method?: T extends readonly string[] ? T[number] : T;
+    methods?: T extends readonly string[] ? T : readonly T[];
 };
 
-export type RouteFormDefinition<T extends string = string> = {
+export type RouteFormDefinition<T extends string | readonly string[] = string> = {
     action: string;
-    method: T;
+    method?: T extends readonly string[] ? T[number] : T;
+    methods?: T extends readonly string[] ? T : readonly T[];
 };
 
 /**
@@ -42,8 +46,8 @@ export function queryParams(options?: RouteQueryOptions): string {
  * Apply default values to URL parameters
  */
 export function applyUrlDefaults(
-    args: Record<string, any> | undefined,
-): Record<string, any> {
+    args: Record<string, QueryParamValue> | undefined,
+): Record<string, QueryParamValue> {
     return args || {};
 }
 
@@ -51,7 +55,7 @@ export function applyUrlDefaults(
  * Validate that required parameters are provided
  */
 export function validateParameters(
-    args: Record<string, any> | undefined,
+    args: Record<string, QueryParamValue> | undefined,
     requiredParams: string[],
 ): void {
     if (!args) return;

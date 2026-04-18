@@ -1,4 +1,5 @@
 import { Form, Head, router } from '@inertiajs/react';
+import { GoogleLogin } from '@react-oauth/google';
 import {
     User,
     Mail,
@@ -7,7 +8,7 @@ import {
     Wrench,
     ArrowRight,
 } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import AuthLayout from '@/layouts/auth-layout';
 import { login, terms, privacy } from '@/routes';
 import { authCode } from '@/routes/google';
 import { store } from '@/routes/register';
-import { toast } from 'sonner';
 export default function Register() {
     return (
         <AuthLayout
@@ -175,7 +175,6 @@ export default function Register() {
                                             </span>
                                             <span className="text-center text-xs text-muted-foreground">
                                                 Build training paths & labs
-                                                (admin approval required)
                                             </span>
                                         </div>
                                     </label>
@@ -215,7 +214,6 @@ export default function Register() {
                                 onError={() => {
                                     toast.error('Failed to authenticate with Google. Please try again.');
                                 }}
-                                locale="en"
                                 text="signup_with"
                                 size="large"
                                 theme="outline"

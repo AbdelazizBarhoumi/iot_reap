@@ -45,7 +45,7 @@ Route::get('dashboard', function () {
     // Teachers go to their teaching dashboard
     if ($user->hasRole(\App\Enums\UserRole::TEACHER)) {
         if (! $user->isTeacherApproved()) {
-            return redirect()->route('trainingPaths.index');
+            return redirect()->route('teacher.pending-approval');
         }
 
         return redirect()->route('teaching.index');
@@ -59,6 +59,11 @@ Route::get('dashboard', function () {
     // Only admins see the VM browser dashboard
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Teacher pending approval page
+Route::get('teacher/pending-approval', function () {
+    return Inertia::render('auth/TeacherPendingApprovalPage');
+})->middleware(['auth', 'verified'])->name('teacher.pending-approval');
 
 // Browser error logging - rate limited to prevent abuse
 Route::post('/browser-log', [BrowserLogController::class, 'store'])

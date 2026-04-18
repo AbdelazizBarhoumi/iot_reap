@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Exceptions\InvalidCredentialsException;
 use App\Models\User;
+use App\Notifications\TeacherAccountPendingApprovalNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,11 @@ class AuthService
 
         // Trigger verification email flow for newly created users.
         event(new Registered($user));
+
+        // Send pending approval notification to new teachers
+        if ($role === UserRole::TEACHER->value) {
+            $user->notify(new TeacherAccountPendingApprovalNotification($user));
+        }
 
         // Log the newly created user into the session
         Auth::login($user);

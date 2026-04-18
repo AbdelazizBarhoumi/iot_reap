@@ -34,11 +34,16 @@ class RedirectBasedOnRole
         // If already on a dashboard/home page after login, redirect based on role
         $path = $request->path();
         if ($path === 'dashboard' || $path === '/') {
+            if ($user->role === UserRole::TEACHER) {
+                if ($user->isTeacherApproved()) {
+                    return redirect()->route('teaching.index');
+                } else {
+                    return redirect()->route('teacher.pending-approval');
+                }
+            }
+
             return match ($user->role) {
                 UserRole::ENGINEER => redirect()->route('trainingPaths.index'),
-                UserRole::TEACHER => $user->isTeacherApproved()
-                    ? redirect()->route('teaching.index')
-                    : redirect()->route('trainingPaths.index'),
                 UserRole::SECURITY_OFFICER => redirect()->route('trainingPaths.index'),
                 UserRole::ADMIN => $next($request),
                 default => $next($request),

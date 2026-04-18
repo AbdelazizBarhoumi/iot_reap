@@ -1,5 +1,4 @@
 import client from './client';
-import type { AuthResponse } from '@/types/auth';
 
 export const authApi = {
     /**

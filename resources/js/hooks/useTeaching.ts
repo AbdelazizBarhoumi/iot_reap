@@ -11,11 +11,11 @@ export function useMyTrainingPaths() {
       try {
         setLoading(true);
         const response = await teachingApi.getMyTrainingPaths();
-        // Handle both response formats: direct array or wrapped in { data: [...] }
-        const trainingPathsData = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data?.data || []);
-        setTrainingPaths(Array.isArray(trainingPathsData) ? trainingPathsData : []);
+        const payload = response.data;
+        const trainingPathsData = Array.isArray(payload)
+          ? payload
+          : ('data' in payload && Array.isArray((payload as any).data) ? (payload as any).data : []);
+        setTrainingPaths(trainingPathsData);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load trainingPaths');

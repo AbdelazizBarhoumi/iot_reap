@@ -1,6 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
@@ -18,12 +18,12 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(
-            <StrictMode>
-                <GoogleOAuthProvider clientId={googleClientId}>
+            <GoogleOAuthProvider clientId={googleClientId}>
+                <StrictMode>
                     <App {...props} />
                     <Toaster richColors position="top-right" />
-                </GoogleOAuthProvider>
-            </StrictMode>,
+                </StrictMode>
+            </GoogleOAuthProvider>,
         );
     },
     progress: {
