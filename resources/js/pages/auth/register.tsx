@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
-import { login } from '@/routes';
+import { login, terms, privacy } from '@/routes';
+import { authCode } from '@/routes/google';
 import { store } from '@/routes/register';
 import { toast } from 'sonner';
 export default function Register() {
@@ -181,11 +182,6 @@ export default function Register() {
                                 </div>
                                 <InputError message={errors.role} />
                             </div>
-                            <p className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                                New accounts must verify email before accessing
-                                protected areas. Teacher accounts also require
-                                admin approval for Content Studio access.
-                            </p>
                             {/* Submit button */}
                             <Button
                                 type="submit"
@@ -205,7 +201,7 @@ export default function Register() {
                                 onSuccess={(credentialResponse) => {
                                     // Exchange the authorization code for tokens on backend
                                     router.post(
-                                        route('google.auth-code'),
+                                        authCode().url,
                                         {
                                             credential: credentialResponse.credential,
                                         },
@@ -229,14 +225,14 @@ export default function Register() {
                         <p className="text-center text-xs text-muted-foreground">
                             By creating an account, you agree to our{' '}
                             <TextLink
-                                href="#"
+                                href={terms()}
                                 className="text-primary hover:underline"
                             >
                                 Terms of Service
                             </TextLink>{' '}
                             and{' '}
                             <TextLink
-                                href="#"
+                                href={privacy()}
                                 className="text-primary hover:underline"
                             >
                                 Privacy Policy

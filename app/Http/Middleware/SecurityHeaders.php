@@ -69,8 +69,8 @@ class SecurityHeaders
      */
     protected function buildCsp(): string
     {
-        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval'"; // Required for Vite/React
-        $styleSrc = "'self' 'unsafe-inline'"; // Required for inline styles
+        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com"; // Required for Vite/React + Google OAuth
+        $styleSrc = "'self' 'unsafe-inline' https://accounts.google.com"; // Required for inline styles + Google OAuth
         $connectSrc = "'self' wss: https: ws:"; // Allow ws: for Guacamole WebSocket
         $imgSrc = "'self' data: https: blob:";
         $fontSrc = "'self' data:";
@@ -109,7 +109,7 @@ class SecurityHeaders
             "font-src $fontSrc",
             "connect-src $connectSrc",
             "media-src 'self' blob:",
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com",
             "child-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
             "object-src 'none'",
             "frame-ancestors 'self'",

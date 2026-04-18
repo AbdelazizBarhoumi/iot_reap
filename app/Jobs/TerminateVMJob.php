@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
+use App\Services\AdminAlertService;
 use App\Services\GatewayService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientInterface;
@@ -424,6 +425,7 @@ class TerminateVMJob implements ShouldQueue
         $session = $this->session->fresh();
         $session->update(['status' => VMSessionStatus::EXPIRED]);
 
-        // TODO: Alert admin about orphaned VM or failed Guacamole cleanup
+        // Alert admin about failed termination
+        app(AdminAlertService::class)->alertVMTerminationFailed($session, $e);
     }
 }

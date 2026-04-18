@@ -4,8 +4,10 @@ namespace App\Listeners;
 
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionActivated;
+use App\Events\VMSessionReady;
 use App\Exceptions\GuacamoleApiException;
 use App\Exceptions\ProxmoxApiException;
+use App\Services\AdminAlertService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\GuacamoleConnectionParamsBuilder;
 use App\Services\ProxmoxClientInterface;
@@ -132,8 +134,8 @@ class CreateGuacamoleConnectionListener
                 'user_id' => $session->user_id,
             ]);
 
-            // TODO: Broadcast VMSessionReady via Laravel Echo with vm_ip_address
-            // event(new VMSessionReady($session));
+            // Broadcast VMSessionReady event to user and session channels
+            event(new VMSessionReady($session));
 
         } catch (ProxmoxApiException $e) {
             $this->handleFailure($session, 'Proxmox error during VM start or IP resolution', $e);
@@ -158,6 +160,16 @@ class CreateGuacamoleConnectionListener
             'vm_id' => $session->vm_id,
             'error' => $e->getMessage(),
         ]);
+
+        // Create system alert for admins (non-blocking)
+        try {
+            app(AdminAlertService::class)->alertGuacamoleConnectionFailed($session, $context, $e);
+        } catch (\Throwable $alertEx) {
+            Log::error('Failed to create admin alert for Guacamole connection failure', [
+                'session_id' => $session->id,
+                'error' => $alertEx->getMessage(),
+            ]);
+        }
 
         // Notify admins so ops can investigate (non-blocking)
         try {

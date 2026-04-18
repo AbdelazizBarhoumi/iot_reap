@@ -8,6 +8,7 @@ use App\Events\VMSessionCreated;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
+use App\Services\AdminAlertService;
 use App\Services\ProxmoxClientInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -132,8 +133,7 @@ class ProvisionVMJob implements ShouldQueue
         $session = $this->session->fresh();
         $session->update(['status' => VMSessionStatus::FAILED]);
 
-        // TODO: Notify admin via email
-        // Mail::to(config('app.admin_email'))
-        //     ->send(new VMProvisioningFailedMail($session, $e));
+        // Alert admin about provisioning failure
+        app(AdminAlertService::class)->alertVMProvisioningFailed($session, $e);
     }
 }

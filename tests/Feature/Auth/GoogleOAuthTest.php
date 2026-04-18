@@ -394,7 +394,12 @@ class GoogleOAuthTest extends TestCase
 
         // Should render Inertia page
         $response->assertStatus(200);
-        $response->assertViewHas('oauthUser');
+        $response->assertInertia(fn ($page) => $page
+            ->component('auth/oauth-select-role')
+            ->has('oauthUser')
+            ->where('oauthUser.email', 'john@example.com')
+            ->where('oauthUser.name', 'John Doe')
+        );
     }
 
     /**

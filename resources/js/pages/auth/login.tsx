@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
+import { authCode } from '@/routes/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { toast } from 'sonner';
@@ -140,7 +141,7 @@ export default function Login({
                                 onSuccess={(credentialResponse) => {
                                     // Exchange the authorization code for tokens on backend
                                     router.post(
-                                        route('google.auth-code'),
+                                        authCode().url,
                                         {
                                             credential: credentialResponse.credential,
                                         },

@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Server } from 'lucide-react';
-import { dashboard } from '@/routes';
+import { dashboard, terms, privacy } from '@/routes';
 /**
  * Global footer for authenticated app pages.
  * Shows contextual links based on user role.
@@ -56,6 +56,19 @@ export function AppFooter() {
                             Dashboard
                         </Link>
                     )}
+                    <span className="text-muted-foreground/30">•</span>
+                    <Link
+                        href={terms()}
+                        className="transition-colors hover:text-foreground"
+                    >
+                        Terms of Service
+                    </Link>
+                    <Link
+                        href={privacy()}
+                        className="transition-colors hover:text-foreground"
+                    >
+                        Privacy Policy
+                    </Link>
                 </nav>
                 <p className="text-xs text-muted-foreground">
                     © {new Date().getFullYear()} IoT-REAP

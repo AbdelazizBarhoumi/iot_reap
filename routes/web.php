@@ -21,6 +21,15 @@ Route::get('/', function (TrainingPathService $trainingPathService) {
     ]);
 })->name('home');
 
+// Legal pages
+Route::get('/terms', function () {
+    return Inertia::render('legal/TermsOfService');
+})->name('terms');
+
+Route::get('/privacy', function () {
+    return Inertia::render('legal/PrivacyPolicy');
+})->name('privacy');
+
 Route::get('dashboard', function () {
     $user = Auth::user();
 

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
+use App\Services\AdminAlertService;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientInterface;
 use App\Services\UsbDeviceQueueService;
@@ -118,7 +119,8 @@ class CleanupVMJob implements ShouldQueue
         $session = $this->session->fresh();
         $session->update(['status' => VMSessionStatus::EXPIRED]);
 
-        // TODO: Alert admin about orphaned VM
+        // Alert admin about orphaned VM
+        app(AdminAlertService::class)->alertOrphanedVMAfterCleanupFailure($session, $e);
     }
 
     /**
