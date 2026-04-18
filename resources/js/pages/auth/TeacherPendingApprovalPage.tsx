@@ -92,14 +92,6 @@ export default function TeacherPendingApprovalPage() {
                     Explore Learning Resources
                     <ArrowRight className="h-4 w-4" />
                   </Button>
-                  <Button
-                    onClick={handleHome}
-                    variant="outline"
-                    className="w-full h-11 gap-2"
-                  >
-                    <Home className="h-4 w-4" />
-                    Go to Home
-                  </Button>
                 </motion.div>
 
                 {/* Support link */}
@@ -121,21 +113,6 @@ export default function TeacherPendingApprovalPage() {
                 </motion.div>
               </CardContent>
             </Card>
-
-            {/* Footer link */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="mt-6 text-center"
-            >
-              <Link
-                href={home().url}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Back to home
-              </Link>
-            </motion.div>
           </motion.div>
         </div>
       </div>
