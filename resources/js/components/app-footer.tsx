@@ -1,6 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Server } from 'lucide-react';
 import { dashboard, terms, privacy } from '@/routes';
+import sessions from '@/routes/sessions';
+import teaching from '@/routes/teaching';
+import trainingPaths from '@/routes/trainingPaths';
 /**
  * Global footer for authenticated app pages.
  * Shows contextual links based on user role.
@@ -21,12 +24,12 @@ export function AppFooter() {
                     <span>IoT-REAP</span>
                 </div>
                 <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-                        <Link href="/trainingPaths" className="transition-colors hover:text-foreground">
+                        <Link href={trainingPaths.index.url()} className="transition-colors hover:text-foreground">
                             Training Paths
                         </Link>
                     {isAuthenticated && (
                         <Link
-                            href="/my-trainingPaths"
+                            href={trainingPaths.my.url()}
                             className="transition-colors hover:text-foreground"
                         >
                             My Training
@@ -34,7 +37,7 @@ export function AppFooter() {
                     )}
                     {isTeacher && (
                         <Link
-                            href="/teaching"
+                            href={teaching.index.url()}
                             className="transition-colors hover:text-foreground"
                         >
                             Content Studio
@@ -42,7 +45,7 @@ export function AppFooter() {
                     )}
                     {isEngineer && (
                         <Link
-                            href="/sessions"
+                            href={sessions.index.url()}
                             className="transition-colors hover:text-foreground"
                         >
                             Sessions
@@ -50,7 +53,7 @@ export function AppFooter() {
                     )}
                     {isAuthenticated && (
                         <Link
-                            href={dashboard()}
+                            href={dashboard().url}
                             className="transition-colors hover:text-foreground"
                         >
                             Dashboard
@@ -58,13 +61,13 @@ export function AppFooter() {
                     )}
                     <span className="text-muted-foreground/30">•</span>
                     <Link
-                        href={terms()}
+                        href={terms().url}
                         className="transition-colors hover:text-foreground"
                     >
                         Terms of Service
                     </Link>
                     <Link
-                        href={privacy()}
+                        href={privacy().url}
                         className="transition-colors hover:text-foreground"
                     >
                         Privacy Policy

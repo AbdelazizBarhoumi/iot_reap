@@ -5,10 +5,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { sessionHardwareApi } from '@/api/hardware.api';
+import { getHttpErrorMessage } from '@/lib/http-errors';
 import type {
     UsbDevice,
     UsbDeviceQueueEntry,
     AvailableDeviceEntry,
+    SessionHardwareSummary,
 } from '@/types/hardware.types';
 interface UseSessionHardwareResult {
     attachedDevices: UsbDevice[];
@@ -43,6 +45,13 @@ export function useSessionHardware(
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+
+    const applySummary = useCallback((summary: SessionHardwareSummary) => {
+        setAttachedDevices(summary.attached_devices ?? []);
+        setQueueEntries(summary.queue_entries ?? []);
+        setAvailableDevices(summary.available_devices ?? []);
+    }, []);
+
     const fetchData = useCallback(async () => {
         if (!sessionId || !enabled) {
             setLoading(false);
@@ -50,18 +59,19 @@ export function useSessionHardware(
         }
         try {
             const summary = await sessionHardwareApi.getSummary(sessionId);
-            setAttachedDevices(summary.attached_devices ?? []);
-            setQueueEntries(summary.queue_entries ?? []);
-            setAvailableDevices(summary.available_devices ?? []);
+            applySummary(summary);
             setError(null);
         } catch (e) {
-            const message =
-                e instanceof Error ? e.message : 'Failed to load hardware data';
+            const message = getHttpErrorMessage(
+                e,
+                'Failed to load hardware data',
+            );
             setError(message);
         } finally {
             setLoading(false);
         }
-    }, [sessionId, enabled]);
+    }, [sessionId, enabled, applySummary]);
+
     // Initial fetch
     useEffect(() => {
         fetchData();
@@ -83,33 +93,21 @@ export function useSessionHardware(
                     deviceId,
                 );
                 if (result.success) {
-                    // Check if this was an async operation
-                    if ('async' in result && result.async) {
-                        // Async mode: device attachment is in progress
-                        // Frontend should listen for WebSocket events for progress
-                        toast.info('USB device attachment started...', {
-                            description:
-                                'This may take up to 2 minutes for Windows VMs. Progress updates will appear automatically.',
-                            duration: 8000,
-                        });
-                        // Don't wait - the polling will pick up state changes
-                        await fetchData();
-                        return true;
-                    }
-                    // Sync mode: immediate success
                     toast.success('USB device attached successfully');
                     await fetchData();
+
                     return true;
                 }
                 const errorMsg = result.message || 'Attach failed';
                 toast.error(errorMsg);
                 setError(errorMsg);
+                await fetchData();
                 return false;
             } catch (e) {
-                const message =
-                    e instanceof Error ? e.message : 'Attach failed';
+                const message = getHttpErrorMessage(e, 'Attach failed');
                 toast.error(message);
                 setError(message);
+                await fetchData();
                 return false;
             } finally {
                 setActionLoading(false);
@@ -135,12 +133,13 @@ export function useSessionHardware(
                 const errorMsg = result.message || 'Detach failed';
                 toast.error(errorMsg);
                 setError(errorMsg);
+                await fetchData();
                 return false;
             } catch (e) {
-                const message =
-                    e instanceof Error ? e.message : 'Detach failed';
+                const message = getHttpErrorMessage(e, 'Detach failed');
                 toast.error(message);
                 setError(message);
+                await fetchData();
                 return false;
             } finally {
                 setActionLoading(false);
@@ -166,12 +165,13 @@ export function useSessionHardware(
                 const errorMsg = result.message || 'Queue operation failed';
                 toast.error(errorMsg);
                 setError(errorMsg);
+                await fetchData();
                 return false;
             } catch (e) {
-                const message =
-                    e instanceof Error ? e.message : 'Queue operation failed';
+                const message = getHttpErrorMessage(e, 'Queue operation failed');
                 toast.error(message);
                 setError(message);
+                await fetchData();
                 return false;
             } finally {
                 setActionLoading(false);
@@ -197,12 +197,13 @@ export function useSessionHardware(
                 const errorMsg = result.message || 'Leave queue failed';
                 toast.error(errorMsg);
                 setError(errorMsg);
+                await fetchData();
                 return false;
             } catch (e) {
-                const message =
-                    e instanceof Error ? e.message : 'Leave queue failed';
+                const message = getHttpErrorMessage(e, 'Leave queue failed');
                 toast.error(message);
                 setError(message);
+                await fetchData();
                 return false;
             } finally {
                 setActionLoading(false);

@@ -39,6 +39,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property int|null $dedicated_vmid Permanent VM assignment (survives reboots)
  * @property string|null $dedicated_node Node name for dedicated VM
  * @property int|null $dedicated_server_id Server ID for dedicated VM
+ * @property bool|null $is_verified_attached Whether device attachment was verified
+ * @property string|null $attachment_verification_state State of verification (verified, failed, unverifiable)
+ * @property string|null $attachment_verification_reason Reason for verification state
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  */
@@ -62,6 +65,9 @@ class UsbDevice extends Model
         'attached_session_id',
         'attached_vm_ip',
         'usbip_port',
+        'is_verified_attached',
+        'attachment_verification_state',
+        'attachment_verification_reason',
         'pending_vmid',
         'pending_node',
         'pending_server_id',
@@ -76,6 +82,7 @@ class UsbDevice extends Model
     protected $casts = [
         'gateway_node_id' => 'integer',
         'is_camera' => 'boolean',
+        'is_verified_attached' => 'boolean',
         'maintenance_mode' => 'boolean',
         'maintenance_until' => 'datetime',
         'status' => UsbDeviceStatus::class,

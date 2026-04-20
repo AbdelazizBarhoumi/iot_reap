@@ -2,6 +2,7 @@
 
 namespace App\Channels;
 
+use App\Enums\NotificationType;
 use App\Models\Notification as NotificationModel;
 use Illuminate\Notifications\Notification;
 
@@ -22,12 +23,28 @@ class CustomDatabaseChannel
 
         NotificationModel::create([
             'user_id' => $notifiable->getKey(),
-            'type' => $data['type'] ?? 'system',
+            'type' => $this->normalizeType($data['type'] ?? null),
             'title' => $data['title'] ?? 'Notification',
             'message' => $data['message'] ?? '',
             'data' => $data,
             'action_url' => $data['action_url'] ?? null,
         ]);
+    }
+
+    /**
+     * Normalize the notification type for storage.
+     */
+    protected function normalizeType(NotificationType|string|null $type): string
+    {
+        if ($type instanceof NotificationType) {
+            return $type->value;
+        }
+
+        if (is_string($type) && NotificationType::tryFrom($type) !== null) {
+            return $type;
+        }
+
+        return NotificationType::SYSTEM->value;
     }
 
     /**

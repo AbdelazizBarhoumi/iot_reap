@@ -41,19 +41,18 @@ class HardwareController extends Controller
 
     /**
      * Display the hardware dashboard or return JSON data.
+     * 
+     * @deprecated Hardware management is now unified in /admin/infrastructure page
+     * This method now only serves JSON for API clients.
      */
     public function index(Request $request)
     {
-        if ($request->wantsJson()) {
-            $nodes = $this->nodeRepository->all();
+        // Always return JSON - use the unified infrastructure page instead
+        $nodes = $this->nodeRepository->all();
 
-            return response()->json([
-                'data' => GatewayNodeResource::collection($nodes),
-            ]);
-        }
-
-        // Render Inertia page
-        return Inertia::render('hardware/HardwarePage');
+        return response()->json([
+            'data' => GatewayNodeResource::collection($nodes),
+        ]);
     }
 
     /**

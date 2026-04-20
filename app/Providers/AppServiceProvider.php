@@ -124,7 +124,6 @@ class AppServiceProvider extends ServiceProvider
         // gates based on UserRole enum (names per phase-1 spec)
         Gate::define('admin-only', fn (User $user) => $user->hasRole(UserRole::ADMIN));
         Gate::define('admin', fn (User $user) => $user->hasRole(UserRole::ADMIN));
-        Gate::define('security-officer-only', fn (User $user) => $user->hasRole(UserRole::SECURITY_OFFICER));
         Gate::define('provision-vm', fn (User $user) => $user->hasAnyRole([
             UserRole::ENGINEER->value,
             UserRole::ADMIN->value,

@@ -21,6 +21,8 @@ import TrainingPathCard from '@/components/TrainingPaths/TrainingPathCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { dashboard, login, register, logout } from '@/routes';
+import teaching from '@/routes/teaching';
+import trainingPaths from '@/routes/trainingPaths';
 import type { TrainingPath } from '@/types/TrainingPath.types';
 const features = [
     {
@@ -82,7 +84,7 @@ export default function Welcome({
                         </Link>
                         <nav className="hidden items-center gap-6 md:flex">
                             <Link
-                                href="/trainingPaths"
+                                href={trainingPaths.index.url()}
                                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                             >
                                 Training Paths
@@ -155,7 +157,7 @@ export default function Welcome({
                             >
                                 <div className="container flex flex-col gap-3 py-4">
                                     <Link
-                                        href="/trainingPaths"
+                                        href={trainingPaths.index.url()}
                                         className="text-sm font-medium text-muted-foreground hover:text-primary"
                                         onClick={() => setMobileOpen(false)}
                                     >
@@ -268,7 +270,7 @@ export default function Welcome({
                                     className="bg-primary text-white hover:bg-primary/90"
                                     asChild
                                 >
-                                    <Link href="/trainingPaths">
+                                    <Link href={trainingPaths.index.url()}>
                                         <BookOpen className="mr-2 h-4 w-4" />
                                         Explore Training Paths
                                     </Link>
@@ -376,7 +378,7 @@ export default function Welcome({
                                 className="text-primary"
                                 asChild
                             >
-                                <Link href="/trainingPaths">
+                                <Link href={trainingPaths.index.url()}>
                                     View all{' '}
                                     <ArrowRight className="ml-1 h-4 w-4" />
                                 </Link>
@@ -415,7 +417,7 @@ export default function Welcome({
                                     className="bg-primary text-white hover:bg-primary/90"
                                     asChild
                                 >
-                                    <Link href="/trainingPaths">
+                                    <Link href={trainingPaths.index.url()}>
                                         <GraduationCap className="mr-2 h-4 w-4" />
                                         Explore Paths
                                     </Link>
@@ -426,7 +428,7 @@ export default function Welcome({
                                     className="border-white/20 hover:bg-white/10"
                                     asChild
                                 >
-                                    <Link href="/teaching">
+                                    <Link href={teaching.index.url()}>
                                         <Users className="mr-2 h-4 w-4" />
                                         Create a Path
                                     </Link>
@@ -444,13 +446,13 @@ export default function Welcome({
                         </div>
                         <nav className="flex items-center gap-6 text-sm text-muted-foreground">
                             <Link
-                                href="/trainingPaths"
+                                href={trainingPaths.index.url()}
                                 className="transition-colors hover:text-foreground"
                             >
                                 Training Paths
                             </Link>
                             <Link
-                                href="/teaching"
+                                href={teaching.index.url()}
                                 className="transition-colors hover:text-foreground"
                             >
                                 Content Studio

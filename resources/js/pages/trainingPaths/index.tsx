@@ -163,7 +163,7 @@ export default function TrainingPathsPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={clearFilters}
-                                    className="text-xs text-muted-foreground hover:text-foreground"
+                                    className="text-xs"
                                 >
                                     <X className="mr-1.5 h-4 w-4" />
                                     Clear all
@@ -179,7 +179,7 @@ export default function TrainingPathsPage() {
                             <div className="grid grid-flow-col auto-cols-max gap-2.5 overflow-x-auto pb-2 sm:grid-rows-2 scroll-smooth">
                                 <button
                                     onClick={() => setSelectedCategory(null)}
-                                    className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                                    className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
                                         selectedCategory === null
                                             ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                                             : 'border border-border/60 bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'
@@ -192,7 +192,7 @@ export default function TrainingPathsPage() {
                                     <button
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
-                                        className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                                        className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
                                             selectedCategory === cat
                                                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                                                 : 'border border-border/60 bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'

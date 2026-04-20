@@ -6,7 +6,6 @@ export {
     IsAdmin,
     IsTeacher,
     IsEngineer,
-    IsSecurityOfficer,
     useRole,
 } from './HasRole';
 

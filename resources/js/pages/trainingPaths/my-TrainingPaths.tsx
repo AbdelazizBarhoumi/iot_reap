@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
+import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { TrainingPath, TrainingPathProgress } from '@/types/TrainingPath.types';
 interface EnrollmentData {
@@ -212,7 +213,7 @@ function EmptyState() {
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 asChild
             >
-                <Link href="/trainingPaths">
+                <Link href={trainingPaths.index.url()}>
                     Browse Paths <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>

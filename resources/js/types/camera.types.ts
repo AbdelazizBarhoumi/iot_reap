@@ -155,11 +155,19 @@ export interface ApproveCameraReservationRequest {
 }
 /**
  * Request payload for admin creating a camera block.
+ * Supports three modes:
+ * - 'block': Camera blocked for all users
+ * - 'reserve_to_user': Camera reserved for specific user only
+ * - 'reserve_to_vm': Camera reserved for specific VM only
  */
 export interface CreateAdminCameraBlockRequest {
     camera_id: number;
+    mode?: 'block' | 'reserve_to_user' | 'reserve_to_vm';
+    target_user_id?: number;
+    target_vm_id?: number;
     start_at: string;
     end_at: string;
+    purpose?: string;
     notes?: string;
 }
 

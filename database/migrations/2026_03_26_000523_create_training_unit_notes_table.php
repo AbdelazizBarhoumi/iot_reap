@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the training_unit_notes table with all columns.
      */
     public function up(): void
     {
         Schema::create('training_unit_notes', function (Blueprint $table) {
             $table->id();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('training_unit_id')->constrained('training_units')->cascadeOnDelete();
             $table->text('content');
             $table->unsignedInteger('timestamp_seconds')->nullable()->comment('Video timestamp in seconds');

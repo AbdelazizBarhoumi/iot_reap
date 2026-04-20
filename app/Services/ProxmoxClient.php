@@ -717,6 +717,14 @@ class ProxmoxClient implements ProxmoxClientInterface
     {
         $message = strtolower($e->getMessage());
 
+        // Guest-agent execution/argument parsing issues are deterministic
+        // and retrying them only adds delay/noise.
+        if (str_contains($message, 'failed to execute child process') ||
+            str_contains($message, 'invalid argument')
+        ) {
+            return false;
+        }
+
         // Connection refused / unreachable — server is down, don't retry
         if (str_contains($message, 'connection refused')
             || str_contains($message, 'could not resolve')

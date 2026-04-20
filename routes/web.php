@@ -51,10 +51,6 @@ Route::get('dashboard', function () {
         return redirect()->route('teaching.index');
     }
 
-    // Security officers go to trainingPaths (they review/monitor, not operate VMs)
-    if ($user->hasRole(\App\Enums\UserRole::SECURITY_OFFICER)) {
-        return redirect()->route('trainingPaths.index');
-    }
 
     // Only admins see the VM browser dashboard
     return Inertia::render('dashboard');

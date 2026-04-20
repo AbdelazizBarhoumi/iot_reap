@@ -36,11 +36,25 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $cameras = $this->cameraService->getAllCamerasWithReservations();
+        try {
+            $cameras = $this->cameraService->getAllCamerasWithReservations();
 
-        return response()->json([
-            'data' => CameraResource::collection($cameras),
-        ]);
+            return response()->json([
+                'data' => CameraResource::collection($cameras),
+            ]);
+        } catch (\Exception $e) {
+            // Log the error for debugging, but return empty list to prevent page blocking
+            \Illuminate\Support\Facades\Log::error('Failed to fetch cameras', [
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
+
+            // Return empty list instead of 500 error so page doesn't block
+            return response()->json([
+                'data' => [],
+                'message' => 'Unable to load cameras at this time',
+            ]);
+        }
     }
 
     /**
@@ -158,6 +172,60 @@ class AdminCameraController extends Controller
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // Camera Status Management
+    // ────────────────────────────────────────────────────────────────────
+
+    /**
+     * Activate a camera.
+     *
+     * PUT /admin/cameras/{camera}/activate
+     */
+    public function activate(Camera $camera): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $activated = $this->cameraService->activate($camera);
+
+        \Illuminate\Support\Facades\Log::info('Camera activated by admin', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+            'admin_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Camera '{$camera->name}' activated successfully",
+            'data' => new CameraResource($activated),
+        ]);
+    }
+
+    /**
+     * Deactivate a camera.
+     *
+     * PUT /admin/cameras/{camera}/deactivate
+     */
+    public function deactivate(Camera $camera, Request $request): JsonResponse
+    {
+        Gate::authorize('admin-only');
+
+        $reason = $request->input('reason');
+        $deactivated = $this->cameraService->deactivate($camera, $reason);
+
+        \Illuminate\Support\Facades\Log::info('Camera deactivated by admin', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+            'reason' => $reason,
+            'admin_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Camera '{$camera->name}' deactivated successfully",
+            'data' => new CameraResource($deactivated),
+        ]);
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // Reservation Management
     // ────────────────────────────────────────────────────────────────────
 
@@ -168,11 +236,25 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $reservations = $this->reservationRepository->findPending();
+        try {
+            $reservations = $this->reservationRepository->findPending();
 
-        return response()->json([
-            'data' => CameraReservationResource::collection($reservations),
-        ]);
+            return response()->json([
+                'data' => CameraReservationResource::collection($reservations),
+            ]);
+        } catch (\Exception $e) {
+            // Log the error for debugging, but return empty list to prevent page blocking
+            \Illuminate\Support\Facades\Log::error('Failed to fetch pending camera reservations', [
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
+
+            // Return empty list instead of 500 error so page doesn't block
+            return response()->json([
+                'data' => [],
+                'message' => 'Unable to load reservations at this time',
+            ]);
+        }
     }
 
     /**
@@ -322,11 +404,15 @@ class AdminCameraController extends Controller
                 startAt: $startAt,
                 endAt: $endAt,
                 notes: $request->validated('notes'),
+                mode: $request->validated('mode') ?? 'block',
+                targetUserId: $request->validated('target_user_id'),
+                targetVmId: $request->validated('target_vm_id'),
+                purpose: $request->validated('purpose'),
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Camera blocked successfully',
+                'message' => 'Camera reservation created successfully',
                 'data' => new CameraReservationResource($block->load(['reservable', 'user'])),
             ], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {

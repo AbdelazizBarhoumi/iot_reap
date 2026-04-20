@@ -12,27 +12,13 @@ import {
     YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDate, formatCurrency } from '@/lib/analytics.utils';
 import type { RevenueChartPoint } from '@/types/analytics.types';
 interface RevenueChartProps {
     data: RevenueChartPoint[];
     title?: string;
 }
 export function RevenueChart({ data, title = 'Revenue' }: RevenueChartProps) {
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(value);
-    };
     return (
         <Card>
             <CardHeader>

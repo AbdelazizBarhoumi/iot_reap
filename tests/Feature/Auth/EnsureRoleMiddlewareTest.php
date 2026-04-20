@@ -16,7 +16,7 @@ class EnsureRoleMiddlewareTest extends TestCase
     {
         parent::setUp();
 
-        Route::middleware('role:'.UserRole::ADMIN->value.','.UserRole::SECURITY_OFFICER->value)
+        Route::middleware('role:'.UserRole::ADMIN->value)
             ->get('/test-admin-route', fn () => response()->json(['message' => 'ok']));
     }
 
@@ -35,15 +35,6 @@ class EnsureRoleMiddlewareTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $response = $this->actingAs($admin)->getJson('/test-admin-route');
-
-        $response->assertOk();
-    }
-
-    public function test_security_officer_allowed_on_admin_route(): void
-    {
-        $officer = User::factory()->securityOfficer()->create();
-
-        $response = $this->actingAs($officer)->getJson('/test-admin-route');
 
         $response->assertOk();
     }

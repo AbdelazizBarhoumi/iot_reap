@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Channels\CustomDatabaseChannel;
+use App\Enums\NotificationType;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -60,7 +61,7 @@ class TeacherAccountPendingApprovalNotification extends Notification implements 
         return [
             'title' => 'Account Pending Approval',
             'message' => 'Your teacher account is pending admin approval. You can access learning resources while awaiting review.',
-            'type' => 'info',
+            'type' => NotificationType::SYSTEM->value,
         ];
     }
 }

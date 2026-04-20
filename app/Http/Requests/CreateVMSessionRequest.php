@@ -62,6 +62,14 @@ class CreateVMSessionRequest extends FormRequest
                 Rule::in(['rdp', 'vnc', 'ssh']),
             ],
 
+            // Specific named connection profile to apply (optional).
+            // If omitted, the user's default profile for the protocol is used.
+            'connection_preference_profile' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
             // Return to snapshot name after termination
             'return_snapshot' => ['nullable', 'string', 'max:255'],
             // flag indicating we should connect to the existing VM instead of cloning it

@@ -43,6 +43,29 @@ class GuacamoleConnectionPreference extends Model
     }
 
     /**
+     * Ensure parameters are always properly decoded.
+     * Handles cases where JSON was double-encoded in the database.
+     */
+    protected function getParametersAttribute($value)
+    {
+        if ($value === null) {
+            return [];
+        }
+        
+        // If value is a string, decode it
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            // If the decoded value is a string (double-encoded), decode again
+            if (is_string($decoded)) {
+                return json_decode($decoded, true) ?? [];
+            }
+            return $decoded ?? [];
+        }
+        
+        return $value ?? [];
+    }
+
+    /**
      * The user these preferences belong to.
      */
     public function user(): BelongsTo

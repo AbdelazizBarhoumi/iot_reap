@@ -1,17 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Clock, ArrowRight, Home } from 'lucide-react';
+import { Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { home } from '@/routes';
 
 export default function TeacherPendingApprovalPage() {
   const handleExplore = () => {
     router.visit('/trainingPaths');
-  };
-
-  const handleHome = () => {
-    router.visit('/');
   };
 
   return (

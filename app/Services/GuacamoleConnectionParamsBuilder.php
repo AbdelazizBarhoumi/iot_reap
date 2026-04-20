@@ -6,6 +6,7 @@ use App\Enums\VMSessionProtocol;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Repositories\UserConnectionPreferenceRepository;
+use App\Repositories\UserVMConnectionDefaultProfileRepository;
 use RuntimeException;
 
 /**
@@ -22,6 +23,7 @@ class GuacamoleConnectionParamsBuilder
 {
     public function __construct(
         private readonly UserConnectionPreferenceRepository $preferenceRepository,
+        private readonly UserVMConnectionDefaultProfileRepository $vmDefaultRepository,
     ) {}
 
     /**
@@ -45,8 +47,40 @@ class GuacamoleConnectionParamsBuilder
         // Use session's effective protocol (now stored directly on session)
         $protocol = $session->getProtocol();
 
-        // Load user's saved preferences for this protocol (null if none saved)
-        $preference = $this->preferenceRepository->findByUser($user, $protocol->value);
+        // Load user's saved preferences for this protocol.
+        // Precedence order:
+        // 1. Session-level selected profile (user chose during launch)
+        // 2. Per-VM default profile (user's preferred profile for THIS VM)
+        // 3. Protocol-level default profile (user's fallback for RDP/VNC/SSH)
+        // 4. Hardcoded sensible defaults (if no profiles exist)
+        $preference = null;
+        
+        // 1. Check session-level selection
+        if (! empty($session->connection_profile_name)) {
+            $preference = $this->preferenceRepository->findByProfile(
+                $user,
+                $protocol->value,
+                $session->connection_profile_name,
+            );
+        }
+
+        // 2. Check per-VM default (if session selection didn't match)
+        if (! $preference && ! empty($session->vm_id)) {
+            $vmDefault = $this->vmDefaultRepository->findPerVMDefault($user, $session->vm_id, $protocol->value);
+            if ($vmDefault) {
+                $preference = $this->preferenceRepository->findByProfile(
+                    $user,
+                    $protocol->value,
+                    $vmDefault->preferred_profile_name,
+                );
+            }
+        }
+
+        // 3. Fall back to protocol-level default
+        if (! $preference) {
+            $preference = $this->preferenceRepository->findByUser($user, $protocol->value);
+        }
+
         $userSettings = $preference?->parameters ?? [];
 
         return match ($protocol) {
@@ -78,34 +112,122 @@ class GuacamoleConnectionParamsBuilder
         $rdpConfig = config('guacamole.protocols.rdp', []);
 
         $defaults = [
+            // Concurrency / attributes
+            'max-connections' => '',
+            'max-connections-per-user' => '2',
+            'weight' => '',
+            'failover-only' => 'false',
+            'guacd-hostname' => '',
+            'guacd-port' => '',
+            'guacd-encryption' => 'none',
+
+            // Network
             'hostname' => $hostname,
             'port' => (string) ($rdpConfig['port'] ?? 3389),
+            'timeout' => '10',
+
+            // Authentication
             'username' => '',
             'password' => '',
             'domain' => '',
             'security' => $rdpConfig['security'] ?? 'nla',
             'ignore-cert' => filter_var($rdpConfig['ignore_cert'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
-            'resize-method' => $rdpConfig['resize_method'] ?? 'display-update',
+            'cert-tofu' => 'false',
+            'cert-fingerprints' => '',
+            'disable-auth' => 'false',
+
+            // Session
+            'client-name' => 'guacamole',
+            'console' => 'false',
+            'initial-program' => '',
+            'server-layout' => 'en-us-qwerty',
+            'timezone' => 'Africa/Tunis',
+
             // Display
-            'width' => '1280',
-            'height' => '720',
+            'color-depth' => '24',
+            'width' => '1920',
+            'height' => '1080',
             'dpi' => '96',
-            'color-depth' => '32',
-            // Performance — disable heavy visuals for better remote performance
-            'disable-wallpaper' => 'true',
-            'disable-theming' => 'false',
-            'enable-font-smoothing' => 'false',
+            'resize-method' => $rdpConfig['resize_method'] ?? 'display-update',
+            'force-lossless' => 'false',
+
+            // Clipboard
+            'normalize-clipboard' => 'preserve',
+            'disable-copy' => 'false',
+            'disable-paste' => 'false',
+
+            // Device Redirection
+            'disable-audio' => 'false',
+            'enable-audio-input' => 'false',
+            'enable-touch' => 'false',
+            'console-audio' => 'false',
+            'enable-printing' => 'false',
+            'printer-name' => '',
+            'enable-drive' => 'false',
+            'drive-name' => 'Guacamole Drive',
+            'drive-path' => '/tmp/guacamole-drive',
+            'create-drive-path' => 'false',
+            'disable-download' => 'false',
+            'disable-upload' => 'false',
+            'static-channels' => '',
+
+            // Preconnection / gateway / load balancing
+            'preconnection-id' => '',
+            'preconnection-blob' => '',
+            'gateway-hostname' => '',
+            'gateway-port' => '443',
+            'gateway-username' => '',
+            'gateway-password' => '',
+            'gateway-domain' => '',
+            'load-balance-info' => '',
+
+            // Performance
+            'enable-wallpaper' => 'false',
+            'enable-theming' => 'false',
+            'enable-font-smoothing' => 'true',
             'enable-full-window-drag' => 'false',
             'enable-desktop-composition' => 'false',
             'enable-menu-animations' => 'false',
-            // Device redirection
-            'enable-audio' => 'true',
-            'enable-printing' => 'false',
-            'enable-drive' => 'false',
-            'drive-path' => '/tmp/guacamole',
-            'enable-microphone' => 'false',
-            // Network
-            'connection-timeout' => '10',
+            'disable-bitmap-caching' => 'false',
+            'disable-offscreen-caching' => 'false',
+            'disable-glyph-caching' => 'false',
+            'disable-gfx' => 'false',
+
+            // RemoteApp
+            'remote-app' => '',
+            'remote-app-dir' => '',
+            'remote-app-args' => '',
+
+            // SFTP
+            'enable-sftp' => 'false',
+            'sftp-hostname' => '',
+            'sftp-port' => '22',
+            'sftp-timeout' => '10',
+            'sftp-host-key' => '',
+            'sftp-username' => '',
+            'sftp-password' => '',
+            'sftp-private-key' => '',
+            'sftp-passphrase' => '',
+            'sftp-directory' => '',
+            'sftp-root-directory' => '/',
+            'sftp-server-alive-interval' => '0',
+            'sftp-disable-download' => 'false',
+            'sftp-disable-upload' => 'false',
+
+            // Recording
+            'recording-path' => '',
+            'create-recording-path' => 'false',
+            'recording-name' => 'recording',
+            'recording-exclude-output' => 'false',
+            'recording-exclude-mouse' => 'false',
+            'recording-include-keys' => 'false',
+
+            // Wake-on-LAN
+            'wol-send-packet' => 'false',
+            'wol-mac-addr' => '',
+            'wol-broadcast-addr' => '255.255.255.255',
+            'wol-udp-port' => '9',
+            'wol-wait-time' => '0',
         ];
 
         $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
@@ -140,14 +262,30 @@ class GuacamoleConnectionParamsBuilder
         $defaults = [
             'hostname' => $hostname,
             'port' => (string) ($vncConfig['port'] ?? 5900),
+            'autoretry' => '',
+            'username' => '',
             'password' => '',
             'read-only' => 'false',
+            'disable-server-input' => 'false',
+            'disable-display-resize' => 'false',
+            'swap-red-blue' => 'false',
+            'cursor' => '',
+            'encodings' => '',
             'width' => '1280',
             'height' => '720',
             'dpi' => '96',
             'color-depth' => '32',
+            'force-lossless' => 'false',
+            'compress-level' => '',
+            'quality-level' => '',
+            'dest-host' => '',
+            'dest-port' => '',
+            'reverse-connect' => 'false',
+            'listen-timeout' => '',
             'enable-audio' => 'false',
-            'connection-timeout' => '10',
+            'audio-servername' => '',
+            'clipboard-encoding' => '',
+            'timeout' => '10',
         ];
 
         $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));
@@ -179,15 +317,23 @@ class GuacamoleConnectionParamsBuilder
         $defaults = [
             'hostname' => $hostname,
             'port' => (string) ($sshConfig['port'] ?? 22),
+            'timeout' => '10',
+            'host-key' => '',
+            'server-alive-interval' => '',
             'username' => '',
             'password' => '',
             'private-key' => '',
+            'public-key' => '',
             'passphrase' => '',
+            'command' => '',
+            'locale' => '',
+            'timezone' => '',
             'font-size' => '12',
             'color-scheme' => 'gray-black',
             'enable-sftp' => 'true',
             'sftp-root-directory' => '/home',
-            'connection-timeout' => '10',
+            'sftp-disable-download' => 'false',
+            'sftp-disable-upload' => 'false',
         ];
 
         $merged = array_merge($defaults, $this->sanitizeUserSettings($userSettings));

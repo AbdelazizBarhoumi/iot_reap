@@ -3,7 +3,7 @@
  *
  * Provides API calls for the notification system.
  */
-import axios from 'axios';
+import client from '@/api/client';
 import type { Notification } from '@/types/notification.types';
 interface NotificationResponse {
     notifications: Notification[];
@@ -22,7 +22,7 @@ export const notificationApi = {
      * Get recent notifications for the bell dropdown.
      */
     async getRecent(limit: number = 10): Promise<NotificationResponse> {
-        const response = await axios.get<NotificationResponse>(
+        const response = await client.get<NotificationResponse>(
             '/notifications/recent',
             {
                 params: { limit },
@@ -38,7 +38,7 @@ export const notificationApi = {
         per_page?: number;
         unread_only?: boolean;
     }): Promise<PaginatedNotificationResponse> {
-        const response = await axios.get<PaginatedNotificationResponse>(
+        const response = await client.get<PaginatedNotificationResponse>(
             '/notifications',
             {
                 params,
@@ -51,7 +51,7 @@ export const notificationApi = {
      * Get unread notification count.
      */
     async getUnreadCount(): Promise<number> {
-        const response = await axios.get<{ count: number }>(
+        const response = await client.get<{ count: number }>(
             '/notifications/unread-count',
         );
         return response.data.count;
@@ -60,7 +60,7 @@ export const notificationApi = {
      * Mark a single notification as read.
      */
     async markAsRead(id: string): Promise<Notification> {
-        const response = await axios.post<{ notification: Notification }>(
+        const response = await client.post<{ notification: Notification }>(
             `/notifications/${id}/read`,
         );
         return response.data.notification;
@@ -71,7 +71,7 @@ export const notificationApi = {
     async markManyAsRead(
         ids: string[],
     ): Promise<{ marked_count: number; unread_count: number }> {
-        const response = await axios.post<{
+        const response = await client.post<{
             marked_count: number;
             unread_count: number;
         }>('/notifications/mark-many-read', { ids });
@@ -84,7 +84,7 @@ export const notificationApi = {
         marked_count: number;
         unread_count: number;
     }> {
-        const response = await axios.post<{
+        const response = await client.post<{
             marked_count: number;
             unread_count: number;
         }>('/notifications/mark-all-read');
@@ -94,7 +94,7 @@ export const notificationApi = {
      * Delete a notification.
      */
     async delete(id: string): Promise<void> {
-        await axios.delete(`/notifications/${id}`);
+        await client.delete(`/notifications/${id}`);
     },
 };
 

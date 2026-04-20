@@ -10,7 +10,7 @@ class EnsureRole
 {
     /**
      * Handle an incoming request.
-     * Accepts comma-separated roles via variadic params: role:admin,security_officer
+     * Accepts comma-separated roles via variadic params: role:admin,teacher
      * Returns 403 JSON response if role not allowed — never redirects.
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response

@@ -7,7 +7,6 @@ enum UserRole: string
     case ENGINEER = 'engineer';
     case TEACHER = 'teacher';
     case ADMIN = 'admin';
-    case SECURITY_OFFICER = 'security_officer';
 
     public static function values(): array
     {
@@ -23,7 +22,6 @@ enum UserRole: string
             self::ENGINEER => 'Engineer',
             self::TEACHER => 'Teacher',
             self::ADMIN => 'Administrator',
-            self::SECURITY_OFFICER => 'Security Officer',
         };
     }
 }

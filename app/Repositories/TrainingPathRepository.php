@@ -6,7 +6,7 @@ use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-
+use Illuminate\Support\Facades\DB;
 /**
  * Repository for trainingPath database access.
  */
@@ -116,6 +116,8 @@ class TrainingPathRepository
      */
     public function searchApproved(string $query): Collection
     {
+        $query = $this->escapeLike($query);
+
         return TrainingPath::approved()
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
@@ -160,7 +162,7 @@ class TrainingPathRepository
     }
 
     /**
-     * Full-text search trainingPaths with filters and sorting.
+     * Search approved trainingPaths using partial matching on title and description.
      *
      * @param  array<string, mixed>  $filters
      */
@@ -169,31 +171,19 @@ class TrainingPathRepository
         array $filters = [],
         string $sort = 'relevance'
     ): Collection {
+        $query = $this->escapeLike($query);
+
         $searchQuery = TrainingPath::query()
             ->approved()
-            ->with(['instructor']);
-
-        // Use FULLTEXT search on MySQL, LIKE fallback on other databases
-        if (\DB::getDriverName() === 'mysql') {
-            $searchQuery->selectRaw(
-                '*, MATCH(title, description) AGAINST(? IN NATURAL LANGUAGE MODE) AS relevance_score',
-                [$query]
-            )
-                ->whereRaw(
-                    'MATCH(title, description) AGAINST(? IN NATURAL LANGUAGE MODE)',
-                    [$query]
-                );
-        } else {
-            // SQLite/other fallback: use LIKE search
-            $searchQuery->addSelect([
+            ->with(['instructor'])
+            ->addSelect([
                 '*',
-                \DB::raw('1 AS relevance_score'),
+                DB::raw('1 AS relevance_score'),
             ])
-                ->where(function ($q) use ($query) {
-                    $q->where('title', 'LIKE', "%{$query}%")
-                        ->orWhere('description', 'LIKE', "%{$query}%");
-                });
-        }
+            ->where(function ($q) use ($query) {
+                $q->where('title', 'LIKE', "%{$query}%")
+                    ->orWhere('description', 'LIKE', "%{$query}%");
+            });
 
         // Apply filters
         if (! empty($filters['category'])) {
@@ -235,12 +225,22 @@ class TrainingPathRepository
     }
 
     /**
+     * Escape LIKE wildcard characters in a query value.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    /**
      * Get title suggestions for autocomplete.
      *
      * @return array<string>
      */
     public function getTitleSuggestions(string $query, int $limit = 5): array
     {
+        $query = $this->escapeLike($query);
+
         return TrainingPath::approved()
             ->where('title', 'LIKE', "%{$query}%")
             ->select('title')
@@ -279,7 +279,7 @@ class TrainingPathRepository
         $categoryName = str_replace('-', ' ', $slug);
 
         return TrainingPath::approved()
-            ->where(\DB::raw('LOWER(category)'), 'LIKE', strtolower($categoryName))
+            ->where(DB::raw('LOWER(category)'), 'LIKE', strtolower($categoryName))
             ->with('instructor')
             ->withCount('enrollments as student_count')
             ->orderByDesc('rating')

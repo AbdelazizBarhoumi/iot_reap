@@ -22,6 +22,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $admin_feedback
  * @property string|null $assigned_by ULID of teacher who assigned
  * @property string|null $approved_by ULID of admin who approved/rejected
+ * @property int|null $vm_id Proxmox VMID
+ * @property int|null $node_id FK to proxmox_nodes
+ * @property string|null $vm_name Cached VM name for display
+ * @property int|null $template_id
+ * @property bool $is_direct_vm
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  *
@@ -39,6 +44,8 @@ class TrainingUnitVMAssignment extends Model
     protected $fillable = [
         'training_unit_id',
         'status',
+        'template_id',
+        'is_direct_vm',
         'vm_id',
         'node_id',
         'vm_name',
@@ -50,6 +57,8 @@ class TrainingUnitVMAssignment extends Model
 
     protected $casts = [
         'status' => TrainingUnitVMAssignmentStatus::class,
+        'template_id' => 'integer',
+        'is_direct_vm' => 'boolean',
         'vm_id' => 'integer',
         'node_id' => 'integer',
     ];

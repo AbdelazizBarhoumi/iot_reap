@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $vm_id
  * @property VMSessionStatus $status
  * @property \App\Enums\VMSessionProtocol|null $protocol
+ * @property string|null $connection_profile_name
  * @property string|null $ip_address
  * @property int|null $guacamole_connection_id
  * @property \DateTime $expires_at
@@ -36,6 +37,7 @@ class VMSession extends Model
         'vm_id',
         'status',
         'protocol',
+        'connection_profile_name',
         'ip_address',
         'credentials',
         'return_snapshot',
@@ -57,6 +59,7 @@ class VMSession extends Model
         'proxmox_server_id' => 'integer',
         'node_id' => 'integer',
         'vm_id' => 'integer',
+        'connection_profile_name' => 'string',
         'guacamole_connection_id' => 'integer',
         'credentials' => 'encrypted:array',
         'protocol' => VMSessionProtocol::class,

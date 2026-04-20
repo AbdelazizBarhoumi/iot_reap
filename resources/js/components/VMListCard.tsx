@@ -25,6 +25,7 @@ interface VMListCardProps {
     onReboot: (vmid: number) => void;
     onShutdown: (vmid: number) => void;
     onRefresh: () => void;
+    onSelectVm?: (vm: ProxmoxVM) => void;
 }
 const STATUS_COLORS = {
     running: 'bg-green-500',
@@ -62,6 +63,7 @@ export function VMListCard({
     onReboot,
     onShutdown,
     onRefresh,
+    onSelectVm,
 }: VMListCardProps) {
     if (error) {
         return (
@@ -126,7 +128,21 @@ export function VMListCard({
                 {vms.map((vm) => (
                     <div
                         key={vm.vmid}
-                        className="space-y-2 rounded-lg border p-3"
+                        className={`space-y-2 rounded-lg border p-3 transition-colors ${
+                            onSelectVm
+                                ? 'cursor-pointer hover:border-info/40 hover:bg-info/5'
+                                : ''
+                        }`}
+                        onClick={() => onSelectVm?.(vm)}
+                        role={onSelectVm ? 'button' : undefined}
+                        tabIndex={onSelectVm ? 0 : undefined}
+                        onKeyDown={(event) => {
+                            if (!onSelectVm) return;
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                onSelectVm(vm);
+                            }
+                        }}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -172,7 +188,10 @@ export function VMListCard({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => onStart(vm.vmid)}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            onStart(vm.vmid);
+                                        }}
                                         disabled={actionLoading === vm.vmid}
                                         title="Start VM"
                                     >
@@ -187,7 +206,10 @@ export function VMListCard({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => onReboot(vm.vmid)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                onReboot(vm.vmid);
+                                            }}
                                             disabled={actionLoading === vm.vmid}
                                             title="Reboot VM"
                                         >
@@ -200,7 +222,10 @@ export function VMListCard({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => onShutdown(vm.vmid)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                onShutdown(vm.vmid);
+                                            }}
                                             disabled={actionLoading === vm.vmid}
                                             title="Shutdown (graceful)"
                                         >
@@ -209,7 +234,10 @@ export function VMListCard({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => onStop(vm.vmid)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                onStop(vm.vmid);
+                                            }}
                                             disabled={actionLoading === vm.vmid}
                                             title="Stop (force)"
                                         >

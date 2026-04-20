@@ -9,6 +9,7 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
+use App\Services\CameraService;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientFake;
 use App\Services\UsbDeviceQueueService;
@@ -29,6 +30,14 @@ class TerminateVMJobTest extends TestCase
     {
         $mock = Mockery::mock(UsbDeviceQueueService::class);
         $mock->shouldReceive('processQueueOnDetach')->andReturnNull();
+
+        return $mock;
+    }
+
+    private function mockCameraService(): CameraService
+    {
+        $mock = Mockery::mock(CameraService::class);
+        $mock->shouldReceive('releaseAllForSession')->andReturn(0);
 
         return $mock;
     }
@@ -91,7 +100,13 @@ class TerminateVMJobTest extends TestCase
         $guac->shouldReceive('deleteConnection')->never();
 
         $job = new TerminateVMJob($session, false);
-        $job->handle($guac, $client, $this->mockGatewayService(), $this->mockQueueService());
+        $job->handle(
+            $guac,
+            $client,
+            $this->mockGatewayService(),
+            $this->mockQueueService(),
+            $this->mockCameraService(),
+        );
 
         $status = $client->getVMStatus($node->name, 123);
         $this->assertSame('running', $status['status']);
@@ -124,10 +139,55 @@ class TerminateVMJobTest extends TestCase
         $guac->shouldReceive('deleteConnection')->never();
 
         $job = new TerminateVMJob($session, true);
-        $job->handle($guac, $client, $this->mockGatewayService(), $this->mockQueueService());
+        $job->handle(
+            $guac,
+            $client,
+            $this->mockGatewayService(),
+            $this->mockQueueService(),
+            $this->mockCameraService(),
+        );
 
         $status = $client->getVMStatus($node->name, 456);
         $this->assertSame('stopped', $status['status']);
+
+        $session->refresh();
+        $this->assertSame(VMSessionStatus::EXPIRED, $session->status);
+    }
+
+    public function test_handle_releases_camera_controls_when_session_terminates(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['status' => ProxmoxNodeStatus::ONLINE]);
+
+        $session = VMSession::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'node_id' => $node->id,
+            'status' => VMSessionStatus::ACTIVE,
+            'vm_id' => 111,
+            'guacamole_connection_id' => null,
+        ]);
+
+        $client = new ProxmoxClientFake($server);
+        $client->cloneTemplate(100, $node->name, 111);
+        $client->startVM($node->name, 111);
+
+        $cameraService = Mockery::mock(CameraService::class);
+        $cameraService->shouldReceive('releaseAllForSession')
+            ->once()
+            ->with($session->id)
+            ->andReturn(1);
+
+        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac->shouldReceive('deleteConnection')->never();
+
+        $job = new TerminateVMJob($session, false);
+        $job->handle(
+            $guac,
+            $client,
+            $this->mockGatewayService(),
+            $this->mockQueueService(),
+            $cameraService,
+        );
 
         $session->refresh();
         $this->assertSame(VMSessionStatus::EXPIRED, $session->status);
@@ -164,7 +224,13 @@ class TerminateVMJobTest extends TestCase
 
         // Job was dispatched with the ORIGINAL expiry time
         $job = new TerminateVMJob($session, false, null, $originalExpiry->toIso8601String());
-        $job->handle($guac, $client, $this->mockGatewayService(), $this->mockQueueService());
+        $job->handle(
+            $guac,
+            $client,
+            $this->mockGatewayService(),
+            $this->mockQueueService(),
+            $this->mockCameraService(),
+        );
 
         // Session should still be ACTIVE (job skipped)
         $session->refresh();
@@ -198,7 +264,13 @@ class TerminateVMJobTest extends TestCase
 
         // Job was dispatched with the same expiry time (not extended)
         $job = new TerminateVMJob($session, false, null, $expiry->toIso8601String());
-        $job->handle($guac, $client, $this->mockGatewayService(), $this->mockQueueService());
+        $job->handle(
+            $guac,
+            $client,
+            $this->mockGatewayService(),
+            $this->mockQueueService(),
+            $this->mockCameraService(),
+        );
 
         // Session should be EXPIRED
         $session->refresh();

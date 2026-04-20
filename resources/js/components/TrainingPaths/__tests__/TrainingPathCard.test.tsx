@@ -5,7 +5,7 @@ import TrainingPathCard from '../TrainingPathCard';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
+        div: ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) => (
             <div {...props}>{children}</div>
         ),
     },

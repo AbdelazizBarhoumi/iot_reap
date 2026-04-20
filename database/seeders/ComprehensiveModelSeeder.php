@@ -116,11 +116,12 @@ class ComprehensiveModelSeeder extends Seeder
             
             // Create two with released_at set (historical)
             for ($i = 0; $i < 2; $i++) {
+                $releasedAt = now()->subDays(rand(0, 6))->subHours(rand(0, 23))->subMinutes($i * 5);
                 CameraSessionControl::create([
                     'camera_id' => $camera->id,
                     'session_id' => $vmSessions->random()->id,
-                    'acquired_at' => now()->subDays(rand(1, 7))->subHours(rand(0, 23)),
-                    'released_at' => now()->subDays(rand(0, 6))->subHours(rand(0, 23)),
+                    'acquired_at' => $releasedAt->copy()->subMinutes(rand(5, 120)),
+                    'released_at' => $releasedAt,
                 ]);
             }
         }

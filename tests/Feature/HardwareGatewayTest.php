@@ -322,15 +322,27 @@ class HardwareGatewayTest extends TestCase
             ->shouldIgnoreMissing();
         $proxmoxClientMock->shouldReceive('getVMStatus')->andReturn(['status' => 'running']);
         $proxmoxClientMock->shouldReceive('getGuestOsType')->andReturn('linux');
-        // execInVmAndWait is used by executeUsbipCommand
-        $proxmoxClientMock->shouldReceive('execInVmAndWait')->andReturn([
-            'exitcode' => 0,
-            'success' => true,
-            'out-data' => '',
-            'err-data' => '',
-        ]);
-        // not strictly necessary but we can keep for completeness
-        $proxmoxClientMock->shouldReceive('getAttachedPort')->andReturn('001');
+        
+        // execInVmAndWait is used by executeUsbipCommand for both attach and port commands
+        // When called with 'port' command, return output with port info so port verification works
+        $proxmoxClientMock->shouldReceive('execInVmAndWait')->andReturnUsing(function ($nodeName, $vmid, $command) {
+            if (str_contains($command, 'port')) {
+                // Return port listing output for Linux 'usbip port' command
+                return [
+                    'exitcode' => 0,
+                    'success' => true,
+                    'out-data' => "Port 00:  <Unassigned>\n    busid: 1-1\n",
+                    'err-data' => '',
+                ];
+            }
+            // For attach command, just return success
+            return [
+                'exitcode' => 0,
+                'success' => true,
+                'out-data' => '',
+                'err-data' => '',
+            ];
+        });
 
         $factoryMock = Mockery::mock(\App\Services\ProxmoxClientFactory::class);
         $factoryMock->shouldReceive('make')->andReturn($proxmoxClientMock);

@@ -17,6 +17,8 @@ class UsbDeviceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $attributes = $this->resource->getAttributes();
+
         return [
             'id' => $this->id,
             'gateway_node_id' => $this->gateway_node_id,
@@ -44,6 +46,11 @@ class UsbDeviceResource extends JsonResource
             'vid_pid' => $this->vid_pid,
             'queue_count' => $this->whenLoaded('queueEntries', fn () => $this->queueEntries->count()),
             'has_active_reservation' => $this->hasActiveReservation(),
+            // Runtime verification hints (injected by SessionHardwareController when available)
+            // Used by the session UI to avoid showing "Detach" for unverified states.
+            'is_verified_attached' => $attributes['is_verified_attached'] ?? null,
+            'attachment_verification_state' => $attributes['attachment_verification_state'] ?? null,
+            'attachment_verification_reason' => $attributes['attachment_verification_reason'] ?? null,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

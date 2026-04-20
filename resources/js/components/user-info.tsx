@@ -15,10 +15,6 @@ const roleLabels: Record<string, { label: string; className: string }> = {
         label: 'Teacher',
         className: 'bg-success/10 text-success border-success/30',
     },
-    security_officer: {
-        label: 'Security',
-        className: 'bg-warning/10 text-warning border-warning/30',
-    },
 };
 export function UserInfo({
     user,

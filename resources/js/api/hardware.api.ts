@@ -28,9 +28,6 @@ interface ActionResponse {
     device?: UsbDevice;
     node?: GatewayNode;
     summary?: DiscoverySummary;
-    async?: boolean; // True if the operation was started asynchronously
-    channel?: string; // WebSocket channel for progress updates
-    event?: string; // Event name for progress updates
 }
 /**
  * Hardware Gateway API
@@ -212,7 +209,7 @@ export const hardwareApi = {
     ): Promise<ActionResponse> {
         const response = await client.post<ActionResponse>(
             `/admin/hardware/nodes/${nodeId}/verify`,
-            { is_verified: verified },
+            { verified },
         );
         return response.data;
     },
@@ -251,19 +248,13 @@ export const sessionHardwareApi = {
     },
     /**
      * Attach a device to a session.
-     * Uses async mode by default for Windows VMs where driver loading takes ~90 seconds.
-     * Frontend should listen for WebSocket events on channel session.{sessionId}.
      */
     async attachDevice(
         sessionId: string,
         deviceId: number,
-        useAsync: boolean = true,
     ): Promise<ActionResponse> {
         const response = await client.post<ActionResponse>(
             `/sessions/${sessionId}/hardware/devices/${deviceId}/attach`,
-            {
-                async: useAsync,
-            },
         );
         return response.data;
     },

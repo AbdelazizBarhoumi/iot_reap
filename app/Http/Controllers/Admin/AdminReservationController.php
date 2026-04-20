@@ -189,14 +189,18 @@ class AdminReservationController extends Controller
                 startAt: $startAt,
                 endAt: $endAt,
                 notes: $request->validated('notes'),
+                mode: $request->validated('mode') ?? 'block',
+                targetUserId: $request->validated('target_user_id'),
+                targetVmId: $request->validated('target_vm_id'),
+                purpose: $request->validated('purpose'),
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Device blocked successfully',
+                'message' => 'Device reservation created successfully',
                 'data' => new UsbDeviceReservationResource($block->load(['reservable', 'user'])),
             ], 201);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

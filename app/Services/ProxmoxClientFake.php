@@ -679,7 +679,8 @@ class ProxmoxClientFake extends ProxmoxClient
         }
 
         // Default: simulate success for usbip commands
-        if (str_contains($command, 'usbip attach')) {
+        // Support both direct (Linux) and Windows (.exe) variants
+        if (str_contains($command, 'usbip attach') || str_contains($command, 'usbip.exe attach')) {
             return [
                 'exitcode' => 0,
                 'out-data' => '',
@@ -687,7 +688,7 @@ class ProxmoxClientFake extends ProxmoxClient
             ];
         }
 
-        if (str_contains($command, 'usbip detach')) {
+        if (str_contains($command, 'usbip detach') || str_contains($command, 'usbip.exe detach')) {
             return [
                 'exitcode' => 0,
                 'out-data' => '',

@@ -11,17 +11,11 @@ import {
     BookOpen,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { KPICard, RevenueChart } from '@/components/analytics';
+import { KPICard, RevenueChart, PeriodSelector } from '@/components/analytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
 import type {
     EarningsSummary,
@@ -43,15 +37,15 @@ export default function EarningsPage({
 }: EarningsPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
-            { title: 'Teaching', href: '/teaching' },
-            { title: 'Analytics', href: '/teaching/analytics' },
-            { title: 'Earnings', href: '/teaching/analytics/earnings' },
+            { title: 'Teaching', href: teaching.index.url() },
+            { title: 'Analytics', href: teaching.analytics.index.url() },
+            { title: 'Earnings', href: teaching.analytics.earnings.url() },
         ],
         [],
     );
     const handlePeriodChange = (newPeriod: string) => {
         router.get(
-            '/teaching/analytics/earnings',
+            teaching.analytics.earnings.url(),
             { period: newPeriod },
             { preserveState: true },
         );
@@ -61,7 +55,7 @@ export default function EarningsPage({
             start_date: summary.start_date,
             end_date: summary.end_date,
         });
-        window.location.href = `/teaching/analytics/earnings/export?${params}`;
+        window.location.href = `${teaching.analytics.earnings.export.url()}?${params}`;
     };
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -94,26 +88,10 @@ export default function EarningsPage({
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Select
+                        <PeriodSelector
                             value={period}
-                            onValueChange={handlePeriodChange}
-                        >
-                            <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder="Select period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="7d">Last 7 days</SelectItem>
-                                <SelectItem value="30d">
-                                    Last 30 days
-                                </SelectItem>
-                                <SelectItem value="90d">
-                                    Last 90 days
-                                </SelectItem>
-                                <SelectItem value="12m">
-                                    Last 12 months
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                            onPeriodChange={handlePeriodChange}
+                        />
                         <Button onClick={handleExport}>
                             <Download className="mr-2 h-4 w-4" />
                             Export CSV

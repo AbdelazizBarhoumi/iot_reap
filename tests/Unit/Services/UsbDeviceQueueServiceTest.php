@@ -469,6 +469,8 @@ class UsbDeviceQueueServiceTest extends TestCase
             ->with([
                 'usb_device_id' => $device->id,
                 'user_id' => $admin->id,
+                'target_vm_id' => null,
+                'target_user_id' => null,
                 'approved_by' => $admin->id,
                 'status' => UsbReservationStatus::APPROVED->value,
                 'requested_start_at' => $startAt,
@@ -488,7 +490,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $this->assertSame($reservation, $result);
         Log::shouldHaveReceived('info')
             ->once()
-            ->with('Admin block created', Mockery::any());
+            ->with('Admin reservation created', Mockery::any());
     }
 
     public function test_can_user_attach_now_with_user_reservation(): void
@@ -496,6 +498,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         // Arrange
         $device = UsbDevice::factory()->create();
         $user = User::factory()->create();
+        $session = VMSession::factory()->for($user)->active()->create();
 
         $activeReservation = Reservation::factory()->forUsbDevice($device)->create([
             'user_id' => $user->id,
@@ -506,7 +509,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $activeReservation->user = $user;
 
         // Act
-        $result = $this->service->canUserAttachNow($device, $user);
+        $result = $this->service->canUserAttachNow($device, $session);
 
         // Assert
         $this->assertTrue($result['can_attach']);
@@ -518,6 +521,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         // Arrange
         $device = UsbDevice::factory()->create();
         $user = User::factory()->create();
+        $session = VMSession::factory()->for($user)->active()->create();
         $otherUser = User::factory()->create(['name' => 'Other User']);
 
         $activeReservation = Reservation::factory()->forUsbDevice($device)->create([
@@ -529,7 +533,7 @@ class UsbDeviceQueueServiceTest extends TestCase
         $activeReservation->user = $otherUser;
 
         // Act
-        $result = $this->service->canUserAttachNow($device, $user);
+        $result = $this->service->canUserAttachNow($device, $session);
 
         // Assert
         $this->assertFalse($result['can_attach']);
@@ -543,11 +547,12 @@ class UsbDeviceQueueServiceTest extends TestCase
         // Arrange
         $device = UsbDevice::factory()->create();
         $user = User::factory()->create();
+        $session = VMSession::factory()->for($user)->active()->create();
 
         // No active reservations exist
 
         // Act
-        $result = $this->service->canUserAttachNow($device, $user);
+        $result = $this->service->canUserAttachNow($device, $session);
 
         // Assert
         $this->assertTrue($result['can_attach']);

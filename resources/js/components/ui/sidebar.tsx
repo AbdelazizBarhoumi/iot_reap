@@ -242,6 +242,7 @@ function SidebarTrigger({
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
+      aria-label="Toggle sidebar"
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
@@ -249,7 +250,22 @@ function SidebarTrigger({
       {...props}
     >
       {isMobile || state === "collapsed" ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
-      <span className="sr-only">Toggle Sidebar</span>
+      <span
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0,
+        }}
+      >
+        Toggle Sidebar
+      </span>
     </Button>
   )
 }

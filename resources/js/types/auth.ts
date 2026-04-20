@@ -2,7 +2,7 @@ export type User = {
     id: string;
     name: string;
     email: string;
-    role: 'engineer' | 'teacher' | 'admin' | 'security_officer';
+    role: 'engineer' | 'teacher' | 'admin';
     avatar?: string;
     email_verified_at: string | null;
     teacher_approved_at: string | null;
@@ -23,7 +23,7 @@ export type RegisterData = {
     email: string;
     password: string;
     password_confirmation: string;
-    role?: 'engineer' | 'teacher' | 'admin' | 'security_officer';
+    role?: 'engineer' | 'teacher' | 'admin';
 };
 export type AuthResponse = {
     data: User;

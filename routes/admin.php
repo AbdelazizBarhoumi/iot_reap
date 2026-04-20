@@ -105,6 +105,8 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::put('/{camera}/assign', 'assignToVm')->name('assign');
         Route::delete('/{camera}/assign', 'unassignFromVm')->name('unassign');
         Route::post('/bulk-assign', 'bulkAssign')->name('bulk-assign');
+        Route::put('/{camera}/activate', 'activate')->name('activate');
+        Route::put('/{camera}/deactivate', 'deactivate')->name('deactivate');
         Route::get('/reservations', 'index')->name('reservations.index');
         Route::get('/reservations/pending', 'pending')->name('reservations.pending');
         Route::get('/reservations/upcoming', 'upcoming')->name('reservations.upcoming');

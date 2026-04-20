@@ -19,7 +19,7 @@ class CameraReservationRepository
     public function all(): Collection
     {
         return Reservation::where('reservable_type', 'App\Models\Camera')
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -31,7 +31,7 @@ class CameraReservationRepository
     {
         return Reservation::where('reservable_type', 'App\Models\Camera')
             ->where('status', 'pending')
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->orderBy('requested_start_at')
             ->get();
     }
@@ -55,7 +55,7 @@ class CameraReservationRepository
     {
         return Reservation::where('reservable_type', 'App\Models\Camera')
             ->where('user_id', $user->id)
-            ->with(['reservable'])
+            ->with(['reservable.robot', 'reservable.gatewayNode'])
             ->orderBy('requested_start_at', 'desc')
             ->get();
     }
@@ -66,7 +66,7 @@ class CameraReservationRepository
     public function findById(int $id): ?Reservation
     {
         return Reservation::where('reservable_type', 'App\Models\Camera')
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->find($id);
     }
 
@@ -142,7 +142,7 @@ class CameraReservationRepository
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '<=', $now)
             ->where('approved_end_at', '>=', $now)
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->get();
     }
 
@@ -159,7 +159,7 @@ class CameraReservationRepository
             ->whereNotNull('approved_start_at')
             ->where('approved_start_at', '>', $now)
             ->where('approved_start_at', '<=', $cutoff)
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->orderBy('approved_start_at')
             ->get();
     }
@@ -177,7 +177,7 @@ class CameraReservationRepository
             ->whereNotNull('approved_end_at')
             ->where('approved_end_at', '>', $now)
             ->where('approved_end_at', '<=', $cutoff)
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->orderBy('approved_end_at')
             ->get();
     }
@@ -191,7 +191,7 @@ class CameraReservationRepository
             ->where('status', 'active')
             ->whereNotNull('approved_end_at')
             ->where('approved_end_at', '<', now())
-            ->with(['reservable', 'user'])
+            ->with(['reservable.robot', 'reservable.gatewayNode', 'user'])
             ->orderBy('approved_end_at', 'desc')
             ->get();
     }

@@ -6,19 +6,16 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Activity,
-    ArrowDownRight,
-    ArrowUpRight,
     Award,
     BarChart3,
     BookOpen,
     DollarSign,
     Monitor,
-    RefreshCw,
     TrendingUp,
     UserPlus,
     Users,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -32,22 +29,28 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { PeriodSelector } from '@/components/analytics';
+import { ChangeIndicator } from '@/components/analytics/ChangeIndicator';
 import { ActivityLog } from '@/components/monitoring/ActivityLog';
 import { AlertsPanel } from '@/components/monitoring/AlertsPanel';
 import { MetricsChart } from '@/components/monitoring/MetricsChart';
 import { SystemHealthOverview } from '@/components/monitoring/SystemHealthOverview';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import {
+    formatCurrency,
+    formatDate,
+    formatDateTime,
+} from '@/lib/analytics.utils';
 import type { BreadcrumbItem, PageProps } from '@/types';
+import type {
+    ActivityLogItem,
+    ServiceHealth,
+    SystemHealth as MonitoringSystemHealth,
+    SystemMetric,
+    SystemStatus,
+} from '@/types/monitoring.types';
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/dashboard' },
     { title: 'Dashboard', href: '/admin/dashboard' },
@@ -91,11 +94,32 @@ interface ActivityItem {
     amount?: number;
     timestamp: string;
 }
-interface SystemHealth {
+interface BackendServiceHealth {
+    status?: string;
+    latency_ms?: number | null;
+    message?: string;
+}
+interface BackendSystemMetrics {
+    php_memory?: {
+        used_mb?: number;
+        peak_mb?: number;
+    };
+    active_vm_sessions?: number | null;
+    active_users?: number | null;
+    queue?: {
+        pending?: number;
+        failed?: number;
+    } | null;
+}
+interface BackendSystemHealth {
+    status: string;
     active_vm_sessions: number;
     queued_sessions: number;
     pending_trainingPaths: number;
     suspended_users: number;
+    services?: Record<string, BackendServiceHealth>;
+    metrics?: BackendSystemMetrics;
+    timestamp?: string;
 }
 interface DashboardPageProps extends PageProps {
     kpis: KPIs;
@@ -104,7 +128,7 @@ interface DashboardPageProps extends PageProps {
     revenueByCategory: RevenueCategory[];
     userGrowthByRole: Record<string, number>;
     recentActivity: ActivityItem[];
-    systemHealth: SystemHealth;
+    systemHealth: BackendSystemHealth;
     period: string;
 }
 const COLORS = [
@@ -115,44 +139,152 @@ const COLORS = [
     '#8884d8',
     '#82ca9d',
 ];
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value);
-const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+const toSystemStatus = (status: string | undefined): SystemStatus => {
+    switch (status) {
+        case 'healthy':
+        case 'warning':
+        case 'critical':
+        case 'unknown':
+            return status;
+        default:
+            return 'unknown';
+    }
 };
-const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
+
+const toDisplayName = (key: string): string =>
+    key
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+
+const toServiceHealth = (
+    services: Record<string, BackendServiceHealth> | undefined,
+    timestamp: string | undefined,
+): ServiceHealth[] => {
+    if (!services) {
+        return [];
+    }
+
+    return Object.entries(services).map(([id, service]) => {
+        const status = toSystemStatus(service.status);
+
+        return {
+            id,
+            name: toDisplayName(id),
+            status,
+            latency:
+                typeof service.latency_ms === 'number'
+                    ? Math.round(service.latency_ms)
+                    : undefined,
+            lastError: status === 'critical' ? service.message : undefined,
+            lastErrorAt: status === 'critical' ? timestamp : undefined,
+        };
     });
 };
-function ChangeIndicator({ value }: { value: number }) {
-    if (value === 0) return null;
-    const isPositive = value > 0;
-    return (
-        <span
-            className={`inline-flex items-center text-xs font-medium ${
-                isPositive ? 'text-success' : 'text-destructive'
-            }`}
-        >
-            {isPositive ? (
-                <ArrowUpRight className="mr-0.5 h-3 w-3" />
-            ) : (
-                <ArrowDownRight className="mr-0.5 h-3 w-3" />
-            )}
-            {Math.abs(value)}%
-        </span>
-    );
-}
+
+const toMetricStatus = (
+    value: number,
+    warningAt: number,
+    criticalAt: number,
+): SystemStatus => {
+    if (value >= criticalAt) {
+        return 'critical';
+    }
+
+    if (value >= warningAt) {
+        return 'warning';
+    }
+
+    return 'healthy';
+};
+
+const toSystemMetrics = (health: BackendSystemHealth): SystemMetric[] => {
+    const metrics: SystemMetric[] = [
+        {
+            id: 'active_vm_sessions',
+            name: 'Active VM Sessions',
+            value: health.active_vm_sessions,
+            unit: '',
+            max: 100,
+            status: toMetricStatus(health.active_vm_sessions, 50, 80),
+        },
+        {
+            id: 'queued_sessions',
+            name: 'Queued Sessions',
+            value: health.queued_sessions,
+            unit: '',
+            max: 50,
+            status: toMetricStatus(health.queued_sessions, 10, 25),
+        },
+        {
+            id: 'pending_trainingPaths',
+            name: 'Pending Reviews',
+            value: health.pending_trainingPaths,
+            unit: '',
+            max: 20,
+            status: toMetricStatus(health.pending_trainingPaths, 1, 10),
+        },
+        {
+            id: 'suspended_users',
+            name: 'Suspended Users',
+            value: health.suspended_users,
+            unit: '',
+            max: 20,
+            status: toMetricStatus(health.suspended_users, 1, 10),
+        },
+    ];
+
+    const phpMemoryUsed = health.metrics?.php_memory?.used_mb;
+    if (typeof phpMemoryUsed === 'number') {
+        metrics.push({
+            id: 'php_memory',
+            name: 'PHP Memory',
+            value: Math.round(phpMemoryUsed),
+            unit: 'MB',
+            max: 1024,
+            status: toMetricStatus(phpMemoryUsed, 512, 768),
+        });
+    }
+
+    const queueFailed = health.metrics?.queue?.failed;
+    if (typeof queueFailed === 'number') {
+        metrics.push({
+            id: 'failed_jobs',
+            name: 'Failed Jobs',
+            value: queueFailed,
+            unit: '',
+            max: 50,
+            status: toMetricStatus(queueFailed, 1, 5),
+        });
+    }
+
+    return metrics;
+};
+
+const toActivityType = (type: ActivityItem['type']): ActivityLogItem['type'] => {
+    switch (type) {
+        case 'enrollment':
+            return 'trainingPath';
+        case 'vm_session':
+            return 'vm';
+        case 'payment':
+        default:
+            return 'system';
+    }
+};
+
+const toActivityAction = (type: ActivityItem['type']): string => {
+    switch (type) {
+        case 'enrollment':
+            return 'Enrollment';
+        case 'vm_session':
+            return 'VM Session';
+        case 'payment':
+        default:
+            return 'Payment';
+    }
+};
 export default function DashboardPage() {
     const {
         kpis,
@@ -176,6 +308,36 @@ export default function DashboardPage() {
         name: role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' '),
         value: count,
     }));
+
+    const monitoringHealth = useMemo<MonitoringSystemHealth>(
+        () => ({
+            overall: toSystemStatus(systemHealth.status),
+            lastChecked: systemHealth.timestamp ?? new Date().toISOString(),
+            services: toServiceHealth(
+                systemHealth.services,
+                systemHealth.timestamp,
+            ),
+            metrics: toSystemMetrics(systemHealth),
+        }),
+        [systemHealth],
+    );
+
+    const monitoringActivities = useMemo<ActivityLogItem[]>(
+        () =>
+            recentActivity.map((activity, index) => ({
+                id: `${activity.type}-${activity.timestamp}-${index}`,
+                type: toActivityType(activity.type),
+                action: toActivityAction(activity.type),
+                details: activity.message,
+                timestamp: activity.timestamp,
+                metadata:
+                    typeof activity.amount === 'number'
+                        ? { amount: activity.amount }
+                        : undefined,
+            })),
+        [recentActivity],
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Admin Dashboard" />
@@ -197,39 +359,10 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Select
+                            <PeriodSelector
                                 value={selectedPeriod}
-                                onValueChange={handlePeriodChange}
-                            >
-                                <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="7d">
-                                        Last 7 days
-                                    </SelectItem>
-                                    <SelectItem value="30d">
-                                        Last 30 days
-                                    </SelectItem>
-                                    <SelectItem value="90d">
-                                        Last 90 days
-                                    </SelectItem>
-                                    <SelectItem value="12m">
-                                        Last 12 months
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() =>
-                                    handlePeriodChange(selectedPeriod)
-                                }
-                            >
-                                <RefreshCw
-                                    className="h-4 w-4"
-                                />
-                            </Button>
+                                onPeriodChange={handlePeriodChange}
+                            />
                         </div>
                     </div>
                     {/* KPI Cards */}
@@ -399,10 +532,11 @@ export default function DashboardPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-72">
+                                <div className="min-w-0">
                                     <ResponsiveContainer
                                         width="100%"
-                                        height="100%"
+                                        height={288}
+                                        minWidth={0}
                                     >
                                         <AreaChart data={chartData}>
                                             <defs>
@@ -498,10 +632,11 @@ export default function DashboardPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-72">
+                                <div className="min-w-0">
                                     <ResponsiveContainer
                                         width="100%"
-                                        height="100%"
+                                        height={288}
+                                        minWidth={0}
                                     >
                                         <PieChart>
                                             <Pie
@@ -740,8 +875,7 @@ export default function DashboardPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                <SystemHealthOverview health={systemHealth as any} />
+                                <SystemHealthOverview health={monitoringHealth} />
                             </motion.div>
                             {/* System Alerts */}
                             <motion.div
@@ -758,8 +892,7 @@ export default function DashboardPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
                         >
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            <MetricsChart metrics={chartData as any} />
+                            <MetricsChart metrics={monitoringHealth.metrics} />
                         </motion.div>
                         {/* Activity Log */}
                         <motion.div
@@ -767,8 +900,7 @@ export default function DashboardPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7 }}
                         >
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            <ActivityLog activities={recentActivity as any} />
+                            <ActivityLog activities={monitoringActivities} />
                         </motion.div>
                     </div>
                 </div>

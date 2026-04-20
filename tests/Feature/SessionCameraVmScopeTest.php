@@ -12,10 +12,10 @@ use Tests\TestCase;
 
 /**
  * Feature tests for camera VM scoping:
- * - Users only see cameras assigned to their session's VM
- * - Users with different VMs see different cameras
- * - Multiple users with same VM see same cameras
- * - Unassigned cameras not visible to regular users
+ * - Users see cameras assigned to their session's VM
+ * - Users also see cameras that are not attached to any VM
+ * - Users with different VMs see different VM-specific cameras
+ * - Multiple users with same VM see the same cameras
  */
 class SessionCameraVmScopeTest extends TestCase
 {
@@ -33,7 +33,7 @@ class SessionCameraVmScopeTest extends TestCase
 
     // ─── VM Scoping Tests ───────────────────────────────────
 
-    public function test_user_only_sees_cameras_assigned_to_their_session_vm(): void
+    public function test_user_sees_assigned_and_unassigned_cameras_for_their_session_vm(): void
     {
         // Create a session with vm_id = 100
         $session = VMSession::factory()->active()->create([
@@ -74,7 +74,39 @@ class SessionCameraVmScopeTest extends TestCase
 
         $this->assertContains('Assigned Camera', $cameraNames);
         $this->assertNotContains('Other VM Camera', $cameraNames);
-        $this->assertNotContains('Unassigned Camera', $cameraNames);
+        $this->assertContains('Unassigned Camera', $cameraNames);
+    }
+
+    public function test_unassigned_cameras_are_visible_to_sessions_without_vm_id(): void
+    {
+        $session = VMSession::factory()->create([
+            'user_id' => $this->user->id,
+            'vm_id' => null,
+            'status' => 'pending',
+        ]);
+
+        $robot = Robot::factory()->create();
+
+        $unassignedCamera = Camera::factory()->active()->create([
+            'robot_id' => $robot->id,
+            'assigned_vm_id' => null,
+            'name' => 'Unassigned Camera',
+        ]);
+
+        Camera::factory()->active()->create([
+            'robot_id' => $robot->id,
+            'assigned_vm_id' => 100,
+            'name' => 'Assigned Camera',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$session->id}/cameras");
+
+        $response->assertOk();
+
+        $cameraNames = collect($response->json('data'))->pluck('name')->toArray();
+        $this->assertContains('Unassigned Camera', $cameraNames);
+        $this->assertNotContains('Assigned Camera', $cameraNames);
     }
 
     public function test_users_with_different_vms_see_different_cameras(): void
@@ -163,9 +195,9 @@ class SessionCameraVmScopeTest extends TestCase
         $this->assertContains('Shared Camera', $cameraNames2);
     }
 
-    public function test_session_without_vm_id_returns_no_cameras(): void
+    public function test_session_without_vm_id_sees_unassigned_cameras(): void
     {
-        // Session with no VM assigned
+        // Session with no VM assigned should still see unassigned cameras.
         $session = VMSession::factory()->create([
             'user_id' => $this->user->id,
             'vm_id' => null,
@@ -174,19 +206,28 @@ class SessionCameraVmScopeTest extends TestCase
 
         $robot = Robot::factory()->create();
 
+        $unassignedCamera = Camera::factory()->active()->create([
+            'robot_id' => $robot->id,
+            'assigned_vm_id' => null,
+            'name' => 'Unassigned Camera',
+        ]);
+
         Camera::factory()->active()->create([
             'robot_id' => $robot->id,
             'assigned_vm_id' => 100,
+            'name' => 'Assigned Camera',
         ]);
 
         $response = $this->actingAs($this->user)
             ->getJson("/sessions/{$session->id}/cameras");
 
         $response->assertOk();
-        $this->assertEmpty($response->json('data'));
+        $cameraNames = collect($response->json('data'))->pluck('name')->toArray();
+        $this->assertContains('Unassigned Camera', $cameraNames);
+        $this->assertNotContains('Assigned Camera', $cameraNames);
     }
 
-    public function test_unassigned_cameras_not_visible_to_regular_users(): void
+    public function test_unassigned_cameras_are_visible_to_regular_users(): void
     {
         $session = VMSession::factory()->active()->create([
             'user_id' => $this->user->id,
@@ -207,12 +248,12 @@ class SessionCameraVmScopeTest extends TestCase
 
         $response->assertOk();
         $cameraNames = collect($response->json('data'))->pluck('name')->toArray();
-        $this->assertNotContains('Unassigned Camera', $cameraNames);
+        $this->assertContains('Unassigned Camera', $cameraNames);
     }
 
     // ─── Service Level Tests ───────────────────────────────────
 
-    public function test_camera_service_returns_only_vm_assigned_cameras(): void
+    public function test_camera_service_returns_assigned_and_unassigned_cameras_for_session(): void
     {
         $session = VMSession::factory()->active()->create([
             'user_id' => $this->user->id,
@@ -231,7 +272,7 @@ class SessionCameraVmScopeTest extends TestCase
             'assigned_vm_id' => 200,
         ]);
 
-        Camera::factory()->active()->create([
+        $unassignedCamera = Camera::factory()->active()->create([
             'robot_id' => $robot->id,
             'assigned_vm_id' => null,
         ]);
@@ -239,8 +280,9 @@ class SessionCameraVmScopeTest extends TestCase
         $service = app(CameraService::class);
         $cameras = $service->getCamerasForSession($session->id);
 
-        $this->assertCount(1, $cameras);
-        $this->assertEquals($assignedCamera->id, $cameras->first()->id);
+        $this->assertCount(2, $cameras);
+        $this->assertTrue($cameras->pluck('id')->contains($assignedCamera->id));
+        $this->assertTrue($cameras->pluck('id')->contains($unassignedCamera->id));
     }
 
     // ─── Camera Model Scopes ───────────────────────────────────

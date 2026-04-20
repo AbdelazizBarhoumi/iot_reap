@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exceptions\GatewayApiException;
 use App\Http\Resources\UsbDeviceQueueResource;
 use App\Http\Resources\UsbDeviceResource;
-use App\Jobs\AttachUsbDeviceJob;
 use App\Models\UsbDevice;
 use App\Models\VMSession;
 use App\Repositories\UsbDeviceQueueRepository;
@@ -13,7 +12,7 @@ use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayService;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Controller for managing USB devices within a session context.
@@ -43,12 +42,47 @@ class SessionHardwareController extends Controller
             abort(403, 'Unauthorized access to session');
         }
 
-        $availableDevices = $this->queueService->getAvailableDevicesForSession($session);
-
-        // Also get devices attached to this session
+        // Get devices attached to this session and reconcile their real runtime state
+        // so the UI only shows "Detach" for genuinely attached devices.
         $attachedDevices = $session->attachedDevices()
             ->with('gatewayNode')
             ->get();
+
+        $reconciledAttachedDevices = collect();
+
+        foreach ($attachedDevices as $attachedDevice) {
+            $verification = $this->gatewayService->verifySessionAttachmentState($attachedDevice, $session);
+
+            $attachedDevice->setAttribute('is_verified_attached', $verification['verified']);
+            $attachedDevice->setAttribute(
+                'attachment_verification_state',
+                $verification['verified']
+                    ? 'verified'
+                    : ($verification['can_verify'] ? 'failed' : 'unverifiable')
+            );
+            $attachedDevice->setAttribute('attachment_verification_reason', $verification['reason']);
+
+            // If we can verify and it is definitely not attached, heal stale DB state.
+            if ($verification['can_verify'] && ! $verification['verified']) {
+                Log::warning('Session attached device failed verification during hardware index; marking detached', [
+                    'device_id' => $attachedDevice->id,
+                    'session_id' => $session->id,
+                    'reason' => $verification['reason'],
+                    'detected_port' => $verification['port'] ?? null,
+                ]);
+
+                $this->deviceRepository->markDetached($attachedDevice);
+
+                continue;
+            }
+
+            $reconciledAttachedDevices->push($attachedDevice);
+        }
+
+        $attachedDevices = $reconciledAttachedDevices->values();
+
+        // Build available device list after reconciliation to avoid stale states.
+        $availableDevices = $this->queueService->getAvailableDevicesForSession($session);
 
         // Get queue entries for this session
         $queueEntries = $this->queueRepository->findBySession($session);
@@ -73,15 +107,13 @@ class SessionHardwareController extends Controller
     /**
      * Attach a USB device to the session.
      *
-     * Supports two modes:
-     * - Synchronous (default): Blocks until attachment completes (may take 90+ seconds on Windows)
-     * - Async (?async=true): Returns immediately and dispatches a background job.
-     *   Progress updates are broadcasted via WebSocket on channel "session.{id}".
+        * This endpoint is synchronous and blocks until the attachment operation
+        * completes (Windows VMs may take up to ~120 seconds while drivers load).
      *
      * Uses database-level locking to prevent race conditions when
      * multiple users attempt to attach the same device simultaneously.
      */
-    public function attach(Request $request, VMSession $session, UsbDevice $device): JsonResponse
+    public function attach(VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
         if ($session->user_id !== auth()->id()) {
@@ -104,8 +136,6 @@ class SessionHardwareController extends Controller
             ], 422);
         }
 
-        $async = $request->boolean('async', false);
-
         try {
             // Use row-level locking to prevent race conditions
             // Lock the device row for update to prevent concurrent attach attempts
@@ -120,16 +150,67 @@ class SessionHardwareController extends Controller
                 ], 404);
             }
 
-            // Re-validate device is still bound (may have changed while waiting for lock)
+            // Re-validate device state (may have changed while waiting for lock).
+            // If we detect a stale "attached" record that points to a non-active
+            // session, auto-heal it to detached/bound and continue.
             if (! $lockedDevice->isBound() && ! $lockedDevice->isAvailable()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Device is no longer available for attachment',
-                ], 422);
+                if ($lockedDevice->isAttached()) {
+                    $attachedSession = $lockedDevice->attachedSession;
+                    $attachedStatus = $attachedSession?->status?->value;
+                    $attachedSessionIsActive = in_array($attachedStatus, ['active', 'expiring'], true);
+
+                    // Only auto-heal non-active states when the attached session exists.
+                    // If session cannot be resolved, keep conservative behavior and do not
+                    // silently convert an in-use device into attachable state.
+                    $staleAttachedState = $attachedSession !== null && ! $attachedSessionIsActive;
+
+                    // Even if session looks active in DB, verify runtime truth in VM.
+                    // If verification says it's not really attached, treat as stale.
+                    if (! $staleAttachedState && $attachedSession) {
+                        // For safety, only auto-heal active-session runtime mismatches
+                        // when both sessions belong to the same user.
+                        $sameUserSession = (string) $attachedSession->user_id === (string) $session->user_id;
+
+                        if ($sameUserSession) {
+                            $verification = $this->gatewayService->verifySessionAttachmentState($lockedDevice, $attachedSession);
+
+                            if ($verification['can_verify'] && ! $verification['verified']) {
+                                $staleAttachedState = true;
+
+                                Log::warning('Detected stale USB attached state during session attach (active same-user session runtime mismatch)', [
+                                    'device_id' => $lockedDevice->id,
+                                    'stale_attached_session_id' => $lockedDevice->attached_session_id,
+                                    'stale_attached_session_status' => $attachedStatus,
+                                    'verification_reason' => $verification['reason'],
+                                    'target_session_id' => $session->id,
+                                ]);
+                            }
+                        }
+                    }
+
+                    if ($staleAttachedState) {
+                        Log::warning('Detected stale USB attached state during session attach; auto-healing record', [
+                            'device_id' => $lockedDevice->id,
+                            'stale_attached_session_id' => $lockedDevice->attached_session_id,
+                            'stale_attached_session_status' => $attachedStatus,
+                            'target_session_id' => $session->id,
+                        ]);
+
+                        $this->deviceRepository->markDetached($lockedDevice);
+                        $lockedDevice = $lockedDevice->fresh();
+                    }
+                }
+
+                if (! $lockedDevice->isBound() && ! $lockedDevice->isAvailable()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Device is no longer available for attachment',
+                    ], 422);
+                }
             }
 
             // Check if user can attach (reservation check)
-            $canAttach = $this->queueService->canUserAttachNow($lockedDevice, auth()->user());
+            $canAttach = $this->queueService->canUserAttachNow($lockedDevice, $session);
             if (! $canAttach['can_attach']) {
                 return response()->json([
                     'success' => false,
@@ -138,31 +219,22 @@ class SessionHardwareController extends Controller
                 ], 422);
             }
 
-            // Async mode: execute job synchronously (queue disabled)
-            if ($async) {
-                AttachUsbDeviceJob::dispatchSync($lockedDevice, $session);
-
-                return response()->json([
-                    'success' => true,
-                    'async' => false,
-                    'message' => 'Attachment completed synchronously.',
-                    'channel' => "session.{$session->id}",
-                    'event' => 'usb.attachment.progress',
-                    'device' => new UsbDeviceResource($lockedDevice->load('gatewayNode')),
-                ], 200);
-            }
-
-            // Sync mode: attach immediately (may take up to 120 seconds)
+            // Attach immediately (synchronous path)
             $this->gatewayService->attachToSession($lockedDevice, $session);
 
             // Remove from queue if they were waiting
             $this->queueService->leaveQueue($lockedDevice, $session);
 
+            $responseDevice = $lockedDevice->fresh()->load('gatewayNode');
+            $responseDevice->setAttribute('is_verified_attached', true);
+            $responseDevice->setAttribute('attachment_verification_state', 'verified');
+            $responseDevice->setAttribute('attachment_verification_reason', 'verified-on-attach');
+
             return response()->json([
                 'success' => true,
                 'async' => false,
                 'message' => 'Device attached successfully',
-                'device' => new UsbDeviceResource($lockedDevice->fresh()->load('gatewayNode')),
+                'device' => new UsbDeviceResource($responseDevice),
             ]);
         } catch (GatewayApiException $e) {
             return response()->json([
@@ -191,7 +263,7 @@ class SessionHardwareController extends Controller
         }
 
         try {
-            $this->gatewayService->detachFromVm($device);
+            $this->gatewayService->detachFromSession($device, $session);
 
             // Process queue - notify next user
             $this->queueService->processQueueOnDetach($device);

@@ -16,8 +16,8 @@ class AuthEndpointsTest extends TestCase
         $response = $this->postJson('/auth/register', [
             'name' => 'Api User',
             'email' => 'api@example.com',
-            'password' => 'secretpassword',
-            'password_confirmation' => 'secretpassword',
+            'password' => 'MyUniqueTestP@ssword1',
+            'password_confirmation' => 'MyUniqueTestP@ssword1',
         ]);
 
         $response->assertStatus(201)
@@ -34,8 +34,8 @@ class AuthEndpointsTest extends TestCase
         $response = $this->postJson('/auth/register', [
             'name' => 'Teacher User',
             'email' => 'teacher.pending@example.com',
-            'password' => 'secretpassword',
-            'password_confirmation' => 'secretpassword',
+            'password' => 'MyUniqueTestP@ssword2',
+            'password_confirmation' => 'MyUniqueTestP@ssword2',
             'role' => UserRole::TEACHER->value,
         ]);
 
@@ -59,8 +59,8 @@ class AuthEndpointsTest extends TestCase
         $response = $this->postJson('/auth/register', [
             'name' => 'Another User',
             'email' => 'taken@example.com',
-            'password' => 'secretpassword',
-            'password_confirmation' => 'secretpassword',
+            'password' => 'MyUniqueTestP@ssword3',
+            'password_confirmation' => 'MyUniqueTestP@ssword3',
         ]);
 
         $response->assertStatus(422)
@@ -72,8 +72,8 @@ class AuthEndpointsTest extends TestCase
         $response = $this->postJson('/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'secretpassword',
-            'password_confirmation' => 'differentpassword',
+            'password' => 'MyUniqueTestP@ssword1',
+            'password_confirmation' => 'MyUniqueTestP@ssword2',
         ]);
 
         $response->assertStatus(422)

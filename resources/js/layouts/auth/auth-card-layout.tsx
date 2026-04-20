@@ -22,7 +22,7 @@ export default function AuthCardLayout({
         <div className="bg-hero-gradient flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
                 <Link
-                    href={home()}
+                    href={home().url}
                     className="flex items-center gap-2 self-center font-medium text-white"
                 >
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">

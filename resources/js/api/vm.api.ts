@@ -157,6 +157,50 @@ export const connectionPreferencesApi = {
         >(`/connection-preferences/${protocol}`, { parameters });
         return response.data.data;
     },
+
+    /**
+     * Get the per-VM preferred profile for a specific VM and protocol.
+     */
+    async getPerVMDefault(
+        vmId: number,
+        protocol: string,
+    ): Promise<{ vm_id: number; protocol: string; preferred_profile_name: string | null }> {
+        const response = await client.get<
+            ApiResponse<{
+                vm_id: number;
+                protocol: string;
+                preferred_profile_name: string | null;
+            }>
+        >(`/connection-preferences/vm/${vmId}/${protocol}`);
+        return response.data.data;
+    },
+
+    /**
+     * Set the preferred profile for a specific VM and protocol.
+     */
+    async setPerVMDefault(
+        vmId: number,
+        protocol: string,
+        profileName: string,
+    ): Promise<{ vm_id: number; protocol: string; preferred_profile_name: string }> {
+        const response = await client.post<
+            ApiResponse<{
+                vm_id: number;
+                protocol: string;
+                preferred_profile_name: string;
+            }>
+        >(`/connection-preferences/vm/${vmId}/${protocol}/default`, {
+            profile_name: profileName,
+        });
+        return response.data.data;
+    },
+
+    /**
+     * Clear the per-VM preferred profile (revert to protocol default).
+     */
+    async deletePerVMDefault(vmId: number, protocol: string): Promise<void> {
+        await client.delete(`/connection-preferences/vm/${vmId}/${protocol}/default`);
+    },
 };
 /**
  * VM Template API (public endpoints)

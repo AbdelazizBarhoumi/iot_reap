@@ -50,10 +50,14 @@ return new class extends Migration
             // Priority (for conflicts)
             $table->integer('priority')->default(0);
 
+            // Target VM reference for future direct VM booking
+            $table->unsignedInteger('target_vm_id')->nullable();
+
             $table->timestamps();
 
-            // Index for finding reservations by time range
+            // Indexes for finding reservations by time range and VM
             $table->index(['reservable_type', 'reservable_id', 'status', 'approved_start_at', 'approved_end_at'], 'idx_reservations_schedule');
+            $table->index(['target_vm_id', 'status'], 'idx_reservations_target_vm_status');
         });
     }
 

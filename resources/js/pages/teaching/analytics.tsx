@@ -12,18 +12,13 @@ import {
     Target,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { KPICard, EnrollmentChart, RevenueChart } from '@/components/analytics';
+import { KPICard, EnrollmentChart, RevenueChart, PeriodSelector } from '@/components/analytics';
 import { CompletionFunnel } from '@/components/analytics/CompletionFunnel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { getPeriodLabel } from '@/lib/analytics.utils';
+import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
 import type {
     KPIs,
@@ -48,8 +43,8 @@ export default function AnalyticsPage({
 }: AnalyticsPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
-            { title: 'Teaching', href: '/teaching' },
-            { title: 'Analytics', href: '/teaching/analytics' },
+            { title: 'Teaching', href: teaching.index.url() },
+            { title: 'Analytics', href: teaching.analytics.index.url() },
         ],
         [],
     );
@@ -85,16 +80,10 @@ export default function AnalyticsPage({
     }, [kpis]);
     const handlePeriodChange = (newPeriod: string) => {
         router.get(
-            '/teaching/analytics',
+            teaching.analytics.index.url(),
             { period: newPeriod },
             { preserveState: true },
         );
-    };
-    const periodLabels: Record<string, string> = {
-        '7d': 'Last 7 days',
-        '30d': 'Last 30 days',
-        '90d': 'Last 90 days',
-        '12m': 'Last 12 months',
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -111,28 +100,12 @@ export default function AnalyticsPage({
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Select
+                        <PeriodSelector
                             value={period}
-                            onValueChange={handlePeriodChange}
-                        >
-                            <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder="Select period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="7d">Last 7 days</SelectItem>
-                                <SelectItem value="30d">
-                                    Last 30 days
-                                </SelectItem>
-                                <SelectItem value="90d">
-                                    Last 90 days
-                                </SelectItem>
-                                <SelectItem value="12m">
-                                    Last 12 months
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                            onPeriodChange={handlePeriodChange}
+                        />
                         <Button variant="outline" asChild>
-                            <Link href="/teaching/analytics/earnings">
+                            <Link href={teaching.analytics.earnings.url()}>
                                 <DollarSign className="mr-2 h-4 w-4" />
                                 View Earnings
                             </Link>
@@ -151,7 +124,7 @@ export default function AnalyticsPage({
                         value={kpis.total_enrollments}
                         change={kpis.enrollments_change}
                         icon={<TrendingUp className="h-4 w-4" />}
-                        subtitle={periodLabels[period]}
+                        subtitle={getPeriodLabel(period)}
                     />
                     <KPICard
                         title="Completions"

@@ -37,6 +37,7 @@ export interface VMSession {
     vm_id: number; // proxmox VMID
     // protocol stored directly on session
     protocol: VMProtocol;
+    connection_profile_name?: string | null;
     node_name: string;
     expires_at: string;
     time_remaining_seconds: number;
@@ -139,6 +140,7 @@ export interface CreateVMSessionRequest {
     username?: string;
     password?: string;
     connection_preference_protocol?: string;
+    connection_preference_profile?: string;
     return_snapshot?: string;
     use_existing?: boolean;
 }

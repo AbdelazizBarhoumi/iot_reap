@@ -1,7 +1,7 @@
 /**
  * User Management Types
  */
-export type UserRole = 'engineer' | 'teacher' | 'admin' | 'security_officer';
+export type UserRole = 'engineer' | 'teacher' | 'admin';
 export interface AdminUser {
     id: string;
     name: string;
