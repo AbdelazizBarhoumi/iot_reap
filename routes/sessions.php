@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         // Per-VM default profiles
         Route::get('/vm/{vmId}/{protocol}', 'getPerVMDefault')->name('per-vm.get');
         Route::post('/vm/{vmId}/{protocol}/default', 'setPerVMDefault')->name('per-vm.set');
-        Route::patch('/vm/{vmId}/{protocol}/default', 'setPerVMDefault')->name('per-vm.update');
+        Route::patch('/vm/{vmId}/{protocol}/default', 'updatePerVMDefault')->name('per-vm.update');
         Route::delete('/vm/{vmId}/{protocol}/default', 'deletePerVMDefault')->name('per-vm.delete');
     });
 

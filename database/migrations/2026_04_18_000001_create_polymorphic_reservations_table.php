@@ -52,6 +52,11 @@ return new class extends Migration
 
             // Target VM reference for future direct VM booking
             $table->unsignedInteger('target_vm_id')->nullable();
+            $table->foreignUlid('target_user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->after('target_vm_id');
 
             $table->timestamps();
 

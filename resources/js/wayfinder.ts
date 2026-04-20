@@ -40,11 +40,12 @@ export function queryParams(options?: RouteQueryOptions): string {
 
 /**
  * Apply default values to URL parameters
+ * Accepts undefined so generated optional-param routes don't error
  */
-export function applyUrlDefaults(
-    args: unknown,
-): Record<string, QueryParamValue> {
-    return (args as Record<string, QueryParamValue>) || {};
+export function applyUrlDefaults<T extends Record<string, unknown>>(
+    args: T | undefined,
+): T {
+    return (args ?? {}) as T;
 }
 
 /**
@@ -61,4 +62,17 @@ export function validateParameters(
             console.warn(`Missing required parameter: ${param}`);
         }
     }
+}
+
+/**
+ * Create a form definition from a route definition
+ */
+export function createFormDefinition<T extends string>(
+    url: string,
+    method: T,
+): RouteFormDefinition<T> {
+    return {
+        action: url,
+        method,
+    } as unknown as RouteFormDefinition<T>;
 }

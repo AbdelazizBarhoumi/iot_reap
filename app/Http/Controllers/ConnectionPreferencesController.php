@@ -277,6 +277,17 @@ class ConnectionPreferencesController extends Controller
     }
 
     /**
+     * PATCH /connection-preferences/vm/{vmId}/{protocol}/default
+     *
+     * Alias for setPerVMDefault to keep POST/PATCH routes explicit for
+     * frontend action type generation.
+     */
+    public function updatePerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
+    {
+        return $this->setPerVMDefault($request, $vmId, $protocol);
+    }
+
+    /**
      * DELETE /connection-preferences/vm/{vmId}/{protocol}/default
      *
      * Clear the per-VM preferred profile (revert to protocol default).

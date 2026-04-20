@@ -1,3 +1,13 @@
+import type { RouteFormDefinition } from '@/wayfinder';
+
+type FormRouteMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
+
+declare global {
+    interface Function {
+        form(...args: unknown[]): RouteFormDefinition<FormRouteMethod>;
+    }
+}
+
 declare module '@/actions/*' {
     // Actions are generated JS wrappers for server controllers — treat them as `unknown`
     // so imports like `import ProfileController from '@/actions/...';` are usable
