@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import trainingPathsRoutes from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { TrainingPath } from '@/types/TrainingPath.types';
 interface Props {
@@ -66,7 +67,7 @@ export default function CategoryPage({
             <div className="container space-y-6 py-8">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild>
-                        <Link href="/trainingPaths">
+                        <Link href={trainingPathsRoutes.index.url()}>
                             <ArrowLeft className="h-5 w-5" />
                         </Link>
                     </Button>
@@ -142,7 +143,7 @@ export default function CategoryPage({
                             Try adjusting your filters or browse all paths
                         </p>
                         <Button asChild>
-                            <Link href="/trainingPaths">Browse All Paths</Link>
+                                <Link href={trainingPathsRoutes.index.url()}>Browse All Paths</Link>
                         </Button>
                     </div>
                 ) : (

@@ -13,8 +13,10 @@ export function useMyTrainingPaths() {
         const response = await teachingApi.getMyTrainingPaths();
         const payload = response.data;
         const trainingPathsData = Array.isArray(payload)
-          ? payload
-          : ('data' in payload && Array.isArray((payload as any).data) ? (payload as any).data : []);
+          ? (payload as teachingApi.TrainingPathEditing[])
+          : ('data' in payload && Array.isArray((payload as { data: unknown[] }).data)
+              ? ((payload as { data: unknown[] }).data as teachingApi.TrainingPathEditing[])
+              : []);
         setTrainingPaths(trainingPathsData);
         setError(null);
       } catch (err) {

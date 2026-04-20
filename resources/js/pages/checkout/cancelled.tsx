@@ -13,6 +13,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import trainingPaths from '@/routes/trainingPaths';
 interface CancelledPageProps {
     trainingPath: {
         id: number;
@@ -61,7 +62,7 @@ export default function CancelledPage({ trainingPath }: CancelledPageProps) {
                                 asChild
                                 className="w-full"
                             >
-                                <Link href="/trainingPaths">Browse Training Paths</Link>
+                                <Link href={trainingPaths.index.url()}>Browse Training Paths</Link>
                             </Button>
                             <Button variant="ghost" asChild className="w-full">
                                 <a href="mailto:support@iot-reap.com">

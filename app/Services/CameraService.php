@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CameraPTZDirection;
 use App\Enums\CameraReservationStatus;
+use App\Enums\CameraStatus;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
@@ -36,8 +37,9 @@ class CameraService
     /**
      * Get cameras available for a session.
      *
-     * Returns only cameras assigned to the session's VM ID. If the session
-     * has no VM ID yet (pending/provisioning), returns an empty collection.
+     * Scoping rules:
+     * - Sessions WITH a vm_id see: cameras assigned to that vm_id + unassigned cameras
+     * - Sessions WITHOUT a vm_id see: only unassigned cameras
      *
      * Multiple sessions on the same VM will see the same cameras (shared viewing).
      * PTZ control remains exclusive via CameraSessionControl.
@@ -46,7 +48,7 @@ class CameraService
     {
         $session = $this->vmSessionRepository->findById($sessionId);
 
-        if (! $session || $session->vm_id === null) {
+        if (! $session) {
             return new Collection();
         }
 
@@ -327,31 +329,57 @@ class CameraService
         User $admin,
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
-        ?string $notes = null
+        ?string $notes = null,
+        string $mode = 'block',
+        ?string $targetUserId = null,
+        ?int $targetVmId = null,
+        ?string $purpose = null,
     ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($camera, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
+        if ($mode === 'reserve_to_user' && ! $targetUserId) {
+            throw new \InvalidArgumentException('Target user is required for user reservation mode');
+        }
+
+        if ($mode === 'reserve_to_vm' && ! $targetVmId) {
+            throw new \InvalidArgumentException('Target VM ID is required for VM reservation mode');
+        }
+
+        $isBlock = $mode === 'block';
+        $reservationUserId = $mode === 'reserve_to_user'
+            ? (string) $targetUserId
+            : (string) $admin->id;
+        $reservationPurpose = $isBlock
+            ? 'Admin block'
+            : ($purpose ?: ($mode === 'reserve_to_vm' ? 'Admin VM reservation' : 'Admin user reservation'));
+        $reservationPriority = $isBlock ? 100 : 80;
+
         $reservation = $this->reservationRepository->create([
             'camera_id' => $camera->id,
-            'user_id' => $admin->id,
+            'user_id' => $reservationUserId,
+            'target_vm_id' => $mode === 'reserve_to_vm' ? $targetVmId : null,
+            'target_user_id' => $mode === 'reserve_to_user' ? $targetUserId : null,
             'approved_by' => $admin->id,
             'status' => CameraReservationStatus::APPROVED->value,
             'requested_start_at' => $startAt,
             'requested_end_at' => $endAt,
             'approved_start_at' => $startAt,
             'approved_end_at' => $endAt,
-            'purpose' => 'Admin block',
+            'purpose' => $reservationPurpose,
             'admin_notes' => $notes,
-            'priority' => 100,
+            'priority' => $reservationPriority,
         ]);
 
-        Log::info('Camera admin block created', [
+        Log::info('Camera admin reservation created', [
             'reservation_id' => $reservation->id,
             'camera_id' => $camera->id,
             'admin_id' => $admin->id,
+            'mode' => $mode,
+            'target_user_id' => $targetUserId,
+            'target_vm_id' => $targetVmId,
         ]);
 
         return $reservation;
@@ -562,5 +590,40 @@ class CameraService
 
             return ['success' => false];
         }
+    }
+
+    /**
+     * Activate a camera.
+     * Changes status from inactive to active.
+     */
+    public function activate(Camera $camera): Camera
+    {
+        $camera->update(['status' => CameraStatus::ACTIVE]);
+
+        Log::info('Camera activated', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+        ]);
+
+        return $camera->fresh()->load(['robot', 'gatewayNode', 'activeControl']);
+    }
+
+    /**
+     * Deactivate a camera.
+     * Changes status from active to inactive.
+     *
+     * @param  ?string  $reason  Optional reason for deactivation
+     */
+    public function deactivate(Camera $camera, ?string $reason = null): Camera
+    {
+        $camera->update(['status' => CameraStatus::INACTIVE]);
+
+        Log::info('Camera deactivated', [
+            'camera_id' => $camera->id,
+            'camera_name' => $camera->name,
+            'reason' => $reason,
+        ]);
+
+        return $camera->fresh()->load(['robot', 'gatewayNode', 'activeControl']);
     }
 }

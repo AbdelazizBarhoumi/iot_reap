@@ -87,6 +87,39 @@ class GuacamoleClient implements GuacamoleClientInterface
         $authToken = $this->getAuthToken();
         $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
 
+        // Separate Guacamole attributes from protocol parameters
+        $attributes = [];
+        $parameters = $params['parameters'] ?? [];
+        
+        // Extract Guacamole-specific attributes from parameters
+        $attributeKeys = [
+            'max-connections',
+            'max-connections-per-user',
+            'weight',
+            'failover-only',
+            'guacd-hostname',
+            'guacd-port',
+            'guacd-encryption',
+        ];
+        
+        foreach ($attributeKeys as $key) {
+            if (array_key_exists($key, $parameters)) {
+                $attributes[$key] = $parameters[$key];
+                unset($parameters[$key]);
+            }
+        }
+        
+        // Set defaults for attributes if not provided
+        $attributes = array_merge([
+            'max-connections' => '',
+            'max-connections-per-user' => '2',
+            'weight' => '',
+            'failover-only' => 'false',
+            'guacd-hostname' => '',
+            'guacd-port' => '',
+            'guacd-encryption' => 'none',
+        ], $attributes);
+
         // Token passed as Guacamole-Token header; body is raw JSON (no authToken in body)
         $response = Http::timeout(self::TIMEOUT)
             ->withHeaders(['Guacamole-Token' => $authToken])
@@ -95,17 +128,74 @@ class GuacamoleClient implements GuacamoleClientInterface
                 'name' => $params['name'] ?? 'Unnamed Connection',
                 'protocol' => $params['protocol'] ?? 'rdp',
                 'parentIdentifier' => 'ROOT',
-                'parameters' => $params['parameters'] ?? [],
-                'attributes' => [
-                    'max-connections' => '',
-                    'max-connections-per-user' => '2',
-                    'failover-only' => 'false',
-                    'guacd-encryption' => 'none',
-                ],
+                'parameters' => $parameters,
+                'attributes' => $attributes,
             ])
             ->throw();
 
         return $response->json('identifier');
+    }
+
+    /**
+     * Update an existing Guacamole connection with new parameters.
+     *
+     * @throws GuacamoleApiException
+     */
+    public function updateConnection(string $connectionId, array $params): void
+    {
+        try {
+            $this->withAuthRetry(fn () => $this->doUpdateConnection($connectionId, $params));
+        } catch (\Throwable $e) {
+            Log::error('Failed to update Guacamole connection', [
+                'connection_id' => $connectionId,
+                'error' => $e->getMessage(),
+            ]);
+            throw new GuacamoleApiException("Failed to update connection: {$e->getMessage()}", $e);
+        }
+    }
+
+    /**
+     * Actual implementation of updateConnection without retry logic.
+     */
+    private function doUpdateConnection(string $connectionId, array $params): void
+    {
+        $authToken = $this->getAuthToken();
+        $dataSource = $this->resolvedDataSource ?? config('guacamole.data_source');
+
+        // Separate Guacamole attributes from protocol parameters
+        $attributes = [];
+        $parameters = $params['parameters'] ?? [];
+        
+        // Extract Guacamole-specific attributes from parameters
+        $attributeKeys = [
+            'max-connections',
+            'max-connections-per-user',
+            'weight',
+            'failover-only',
+            'guacd-hostname',
+            'guacd-port',
+            'guacd-encryption',
+        ];
+        
+        foreach ($attributeKeys as $key) {
+            if (array_key_exists($key, $parameters)) {
+                $attributes[$key] = $parameters[$key];
+                unset($parameters[$key]);
+            }
+        }
+
+        Http::timeout(self::TIMEOUT)
+            ->withHeaders(['Guacamole-Token' => $authToken])
+            ->asJson()
+            ->put(config('guacamole.url')."/api/session/data/{$dataSource}/connections/{$connectionId}", [
+                'identifier' => $connectionId,
+                'name' => $params['name'] ?? 'Unnamed Connection',
+                'protocol' => $params['protocol'] ?? 'rdp',
+                'parentIdentifier' => 'ROOT',
+                'parameters' => $parameters,
+                'attributes' => $attributes,
+            ])
+            ->throw();
     }
 
     /**

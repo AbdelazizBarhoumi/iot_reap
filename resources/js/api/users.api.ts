@@ -1,20 +1,15 @@
 /**
  * User Management API
  */
-import axios from 'axios';
+import client from '@/api/client';
 import type {
     AdminUser,
     PaginatedUsers,
     UserFilters,
 } from '@/types/user.types';
-const client = axios.create({
-    baseURL: '/admin/users',
-    headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-    },
-    withCredentials: true,
-});
+
+const USERS_BASE_PATH = '/admin/users';
+
 export interface GetUsersParams extends Partial<UserFilters> {
     page?: number;
     per_page?: number;
@@ -26,14 +21,18 @@ export const usersApi = {
      * Get paginated users list.
      */
     async getUsers(params: GetUsersParams = {}): Promise<PaginatedUsers> {
-        const { data } = await client.get('/', { params });
+        const { data } = await client.get<PaginatedUsers>(USERS_BASE_PATH, {
+            params,
+        });
         return data;
     },
     /**
      * Get user details.
      */
     async getUser(userId: string): Promise<{ data: AdminUser }> {
-        const { data } = await client.get(`/${userId}`);
+        const { data } = await client.get<{ data: AdminUser }>(
+            `${USERS_BASE_PATH}/${userId}`,
+        );
         return data;
     },
     /**
@@ -42,7 +41,9 @@ export const usersApi = {
     async approveTeacher(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post(`/${userId}/approve-teacher`);
+        const { data } = await client.post<{ data: AdminUser; message: string }>(
+            `${USERS_BASE_PATH}/${userId}/approve-teacher`,
+        );
         return data;
     },
     /**
@@ -51,8 +52,8 @@ export const usersApi = {
     async revokeTeacherApproval(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post(
-            `/${userId}/revoke-teacher-approval`,
+        const { data } = await client.post<{ data: AdminUser; message: string }>(
+            `${USERS_BASE_PATH}/${userId}/revoke-teacher-approval`,
         );
         return data;
     },
@@ -63,7 +64,10 @@ export const usersApi = {
         userId: string,
         reason: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post(`/${userId}/suspend`, { reason });
+        const { data } = await client.post<{ data: AdminUser; message: string }>(
+            `${USERS_BASE_PATH}/${userId}/suspend`,
+            { reason },
+        );
         return data;
     },
     /**
@@ -72,7 +76,9 @@ export const usersApi = {
     async unsuspendUser(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post(`/${userId}/unsuspend`);
+        const { data } = await client.post<{ data: AdminUser; message: string }>(
+            `${USERS_BASE_PATH}/${userId}/unsuspend`,
+        );
         return data;
     },
     /**
@@ -82,7 +88,10 @@ export const usersApi = {
         userId: string,
         role: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.patch(`/${userId}/role`, { role });
+        const { data } = await client.patch<{ data: AdminUser; message: string }>(
+            `${USERS_BASE_PATH}/${userId}/role`,
+            { role },
+        );
         return data;
     },
     /**

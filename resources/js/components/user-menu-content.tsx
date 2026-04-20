@@ -32,7 +32,7 @@ export function UserMenuContent({ user }: Props) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
-                        href={edit()}
+                        href={edit().url}
                         prefetch
                         onClick={cleanup}
                     >
@@ -45,7 +45,7 @@ export function UserMenuContent({ user }: Props) {
             <DropdownMenuItem asChild>
                 <Link
                     className="block w-full cursor-pointer"
-                    href={logout()}
+                    href={logout().url}
                     as="button"
                     onClick={handleLogout}
                     data-test="logout-button"

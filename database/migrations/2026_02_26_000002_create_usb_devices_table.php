@@ -37,6 +37,9 @@ return new class extends Migration
             $table->boolean('maintenance_mode')->default(false);
             $table->text('maintenance_notes')->nullable();
             $table->timestamp('maintenance_until')->nullable();
+            $table->boolean('is_verified_attached')->nullable();
+            $table->string('attachment_verification_state')->nullable()->comment('verified, failed, unverifiable');
+            $table->string('attachment_verification_reason')->nullable()->comment('reason for verification state');
             $table->timestamps();
 
             $table->unique(['gateway_node_id', 'busid']);

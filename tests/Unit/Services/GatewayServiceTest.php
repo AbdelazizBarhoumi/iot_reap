@@ -364,6 +364,98 @@ class GatewayServiceTest extends TestCase
     }
 
     #[Test]
+    public function it_keeps_windows_attach_success_when_pnp_enumeration_is_unconfirmed(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['name' => 'pve-1']);
+        $session = VMSession::factory()
+            ->for(User::factory()->create())
+            ->active()
+            ->create([
+                'proxmox_server_id' => $server->id,
+                'node_id' => $node->id,
+                'vm_id' => 200,
+                'ip_address' => '192.168.50.100',
+            ]);
+
+        $gateway = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()
+            ->for($gateway)
+            ->bound()
+            ->create([
+                'busid' => '1-1',
+                // Match default ProxmoxClientFake usbip port output
+                'vendor_id' => '0000',
+                'product_id' => '0000',
+            ]);
+
+        Http::fake(function ($request) use ($gateway) {
+            $url = $request->url();
+            $base = "http://{$gateway->ip}:8000";
+            if (str_starts_with($url, "$base/health")) {
+                return Http::response([], 200);
+            }
+            if (str_ends_with($url, '/devices/exported')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+            if (str_ends_with($url, '/devices')) {
+                return Http::response(['devices' => [['busid' => '1-1']]], 200);
+            }
+
+            return Http::response([], 200);
+        });
+
+        // Force Windows path. PnP probes in tests won't find VID:PID, which should
+        // no longer fail/rollback an otherwise successful USB/IP attach.
+        $this->fakeProxmoxClient->clearExecHistory();
+        $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'windows');
+
+        $this->service->attachToSession($device, $session);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::ATTACHED, $device->status);
+        $this->assertEquals($session->id, $device->attached_session_id);
+
+        Http::fake([]);
+    }
+
+    #[Test]
+    public function it_verifies_windows_attachment_using_usbip_port_when_pnp_is_unconfirmed(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['name' => 'pve-1']);
+        $session = VMSession::factory()
+            ->for(User::factory()->create())
+            ->active()
+            ->create([
+                'proxmox_server_id' => $server->id,
+                'node_id' => $node->id,
+                'vm_id' => 200,
+            ]);
+
+        $gateway = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()
+            ->for($gateway)
+            ->attached()
+            ->create([
+                'attached_session_id' => $session->id,
+                'busid' => '1-1',
+                // Match default ProxmoxClientFake usbip port output
+                'vendor_id' => '0000',
+                'product_id' => '0000',
+            ]);
+
+        $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'windows');
+
+        $result = $this->service->verifySessionAttachmentState($device, $session);
+
+        $this->assertTrue($result['verified']);
+        $this->assertTrue($result['can_verify']);
+        $this->assertEquals('verified-usbip-only', $result['reason']);
+        $this->assertEquals('00', $result['port']);
+    }
+
+    #[Test]
     public function it_throws_exception_when_session_missing_vm_id(): void
     {
         $server = ProxmoxServer::factory()->create();
@@ -488,6 +580,56 @@ class GatewayServiceTest extends TestCase
             ]);
 
         $this->fakeProxmoxClient->clearExecHistory();
+
+        $this->service->detachFromSession($device, $session);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
+        $this->assertNull($device->attached_session_id);
+        $this->assertNull($device->usbip_port);
+    }
+
+    #[Test]
+    public function it_marks_device_detached_when_detach_fails_but_device_is_no_longer_present(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['name' => 'pve-1']);
+        $session = VMSession::factory()
+            ->for(User::factory()->create())
+            ->active()
+            ->create([
+                'proxmox_server_id' => $server->id,
+                'node_id' => $node->id,
+                'vm_id' => 200,
+                'ip_address' => '192.168.50.100',
+            ]);
+
+        $gateway = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()
+            ->for($gateway)
+            ->attached()
+            ->create([
+                'busid' => '1-1',
+                'vendor_id' => '0781',
+                'product_id' => '5567',
+                'usbip_port' => '00',
+                'attached_session_id' => $session->id,
+            ]);
+
+        $this->fakeProxmoxClient->clearExecHistory();
+        $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'windows');
+
+        // Simulate detach command failure both direct and batch-fallback paths.
+        $this->fakeProxmoxClient->setExecResult('usbip.exe detach -p 00', 1, '', 'usbip: error: failed to detach');
+        $this->fakeProxmoxClient->setExecResult('usbip-query.bat', 1, '', 'usbip: error: failed to detach');
+
+        // Simulate that no devices are actually attached anymore in VM.
+        $this->fakeProxmoxClient->setExecResult(
+            'usbip.exe port',
+            0,
+            "Imported USB devices\n====================\n",
+            ''
+        );
 
         $this->service->detachFromSession($device, $session);
 

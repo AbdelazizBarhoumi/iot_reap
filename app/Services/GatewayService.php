@@ -35,14 +35,6 @@ class GatewayService
      */
     private const WINDOWS_USBIP_PATH = 'C:\PROGRA~1\USBIP-~1\usbip.exe';
 
-    /**
-     * Separate batch file paths for attach vs query commands to avoid race conditions.
-     * The attach command may still be running when we need to poll port status.
-     */
-    private const WINDOWS_BATCH_ATTACH = 'C:\usbip-attach.bat';
-
-    private const WINDOWS_BATCH_QUERY = 'C:\usbip-query.bat';
-
     public function __construct(
         private readonly GatewayNodeRepository $nodeRepository,
         private readonly UsbDeviceRepository $deviceRepository,
@@ -683,6 +675,33 @@ class GatewayService
             $osType = $proxmoxClient->getGuestOsType($proxmoxNode->name, $session->vm_id);
             $isWindows = ($osType === 'windows');
 
+            // Real-state pre-check: device may already be attached in VM while DB says bound.
+            // If found, sync DB and return immediately (no attach/poll needed).
+            $vidPid = "{$device->vendor_id}:{$device->product_id}";
+            if (! app()->environment('testing')) {
+                $alreadyAttachedPort = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                    busid: $busid,
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
+                );
+
+                if ($alreadyAttachedPort !== null) {
+                    $vmName = "session-{$session->id}";
+                    $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $alreadyAttachedPort);
+
+                    Log::info('USB device already attached in VM before attach command; synced DB state', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'port' => $alreadyAttachedPort,
+                    ]);
+
+                    return;
+                }
+            }
+
             // Execute the attach command inside the VM via guest agent
             Log::info('Executing usbip attach inside VM via guest agent', [
                 'device_id' => $device->id,
@@ -705,7 +724,8 @@ class GatewayService
                 vmid: $session->vm_id,
                 command: "attach -r {$gatewayIp} -b {$busid}",
                 isWindows: $isWindows,
-                timeoutSeconds: $attachTimeout
+                timeoutSeconds: $attachTimeout,
+                vidPid: $vidPid
             );
 
             if (! $result['success']) {
@@ -739,7 +759,6 @@ class GatewayService
                     'error' => $errorMsg,
                 ]);
 
-                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $port = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $proxmoxNode->name,
@@ -774,9 +793,9 @@ class GatewayService
                 );
             }
 
-            // Get the port number from usbip port command
-            $vidPid = "{$device->vendor_id}:{$device->product_id}";
-            $port = $this->getAttachedPort(
+            // Always verify the final port against current VM state.
+            // For Windows this prevents false positives when polling snapshots are stale.
+            $verifiedPort = $this->getAttachedPort(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $proxmoxNode->name,
                 vmid: $session->vm_id,
@@ -784,6 +803,60 @@ class GatewayService
                 isWindows: $isWindows,
                 vidPid: $vidPid
             );
+
+            $port = $verifiedPort
+                ?? (! $isWindows && isset($result['detected_port'])
+                    ? (string) $result['detected_port']
+                    : null);
+
+            if ($port === null) {
+                Log::warning('usbip attach reported success but port verification failed', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                    'busid' => $busid,
+                    'vid_pid' => $vidPid,
+                ]);
+
+                $device->status = UsbDeviceStatus::BOUND;
+                $device->attached_session_id = null;
+                $device->save();
+
+                throw new GatewayApiException(
+                    'usbip attach could not be verified: device endpoint is unresolved in VM',
+                    gatewayHost: $gatewayIp,
+                    operation: 'attach'
+                );
+            }
+
+            // Windows-specific post-check: keep USB/IP attachment as success when
+            // port-level verification succeeds, and treat guest VID:PID enumeration
+            // as best-effort telemetry (not a hard failure/rollback).
+            //
+            // Why: usbip may attach correctly while Windows device enumeration lags
+            // or fails transiently due to driver state. Rolling back here caused app
+            // attach to fail while terminal/manual attach stayed connected.
+            if ($isWindows) {
+                $enumeration = $this->verifyWindowsGuestEnumeration(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                    vidPid: $vidPid,
+                    triggerRescanOnMiss: false,
+                    maxAttempts: 1,
+                    retryDelaySeconds: 0,
+                );
+
+                if (! $enumeration['enumerated']) {
+                    Log::warning('Windows VID:PID enumeration not confirmed after USB/IP attach; keeping attachment active', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'busid' => $busid,
+                        'vid_pid' => $vidPid,
+                        'port' => $port,
+                        'enumeration_reason' => $enumeration['reason'],
+                    ]);
+                }
+            }
 
             $vmName = "session-{$session->id}";
             $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
@@ -805,7 +878,6 @@ class GatewayService
             // despite the exception (e.g., timeout during response, but command succeeded)
             if (isset($proxmoxClient, $proxmoxNode, $busid, $isWindows)) {
                 try {
-                    $vidPid = "{$device->vendor_id}:{$device->product_id}";
                     $port = $this->getAttachedPort(
                         proxmoxClient: $proxmoxClient,
                         nodeName: $proxmoxNode->name,
@@ -842,6 +914,14 @@ class GatewayService
                 operation: 'attach',
                 previous: $e
             );
+        } finally {
+            if (isset($proxmoxClient, $isWindows) && $isWindows) {
+                $this->cleanupWindowsUsbipBatchFiles(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                );
+            }
         }
     }
 
@@ -863,6 +943,7 @@ class GatewayService
      * @param  string  $command  The usbip subcommand and arguments (e.g., "attach -r 192.168.1.1 -b 1-2")
      * @param  bool  $isWindows  Whether this is a Windows VM
      * @param  int  $timeoutSeconds  Command timeout
+     * @param  string|null  $vidPid  Optional VID:PID used to verify Windows attach polling
      * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
      */
     private function executeUsbipCommand(
@@ -871,7 +952,8 @@ class GatewayService
         int $vmid,
         string $command,
         bool $isWindows,
-        int $timeoutSeconds = 30
+        int $timeoutSeconds = 30,
+        ?string $vidPid = null
     ): array {
         // For Windows "attach" commands, use fire-and-forget + port verification.
         // usbip-win's attach command blocks indefinitely after a successful attach,
@@ -885,7 +967,8 @@ class GatewayService
                 nodeName: $nodeName,
                 vmid: $vmid,
                 command: $command,
-                timeoutSeconds: $timeoutSeconds
+                timeoutSeconds: $timeoutSeconds,
+                vidPid: $vidPid
             );
         }
 
@@ -960,7 +1043,8 @@ class GatewayService
         string $nodeName,
         int $vmid,
         string $command,
-        int $timeoutSeconds = 30
+        int $timeoutSeconds = 30,
+        ?string $vidPid = null
     ): array {
         // Extract the busid from the command for port verification later.
         // Command format: "attach -r <ip> -b <busid>"
@@ -975,13 +1059,15 @@ class GatewayService
         // Step 1: Try direct invocation with full path via cmd.exe (fire-and-forget)
         // Using cmd.exe /c is more reliable for QEMU guest agent on Windows
         $started = false;
+        $attachPid = null;
         $fullCommand = 'cmd.exe /c "'.self::WINDOWS_USBIP_PATH.' '.$command.'"';
         try {
-            $proxmoxClient->execInVm(
+            $startResult = $proxmoxClient->execInVm(
                 nodeName: $nodeName,
                 vmid: $vmid,
                 command: $fullCommand
             );
+            $attachPid = isset($startResult['pid']) ? (int) $startResult['pid'] : null;
             $started = true;
         } catch (ProxmoxApiException $e) {
             Log::debug('Windows usbip direct invocation via cmd.exe failed, trying batch file', [
@@ -994,7 +1080,7 @@ class GatewayService
 
         // Step 2: If direct failed, use batch file (also fire-and-forget)
         if (! $started) {
-            $this->writeAndExecWindowsBatch(
+            $startResult = $this->writeAndExecWindowsBatch(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $nodeName,
                 vmid: $vmid,
@@ -1003,11 +1089,20 @@ class GatewayService
                 wait: false,
                 isAttach: true // Use attach-specific batch file path
             );
+
+            $attachPid = isset($startResult['pid']) ? (int) $startResult['pid'] : null;
         }
 
+        // Prepare a reusable `usbip port` batch once. Reusing one file avoids
+        // generating a new .bat for every polling iteration.
+        $pollBatchPath = $this->prepareWindowsUsbipPortBatch($proxmoxClient, $nodeName, $vmid);
+
         // Step 3: Poll `usbip port` until the device appears or timeout
-        $pollInterval = 3; // seconds
+        $pollInterval = 1; // seconds
         $endTime = now()->addSeconds($timeoutSeconds);
+        $attachExitCode = null;
+        $attachStdout = '';
+        $attachStderr = '';
 
         Log::info('Windows usbip attach started (fire-and-forget), polling for device', [
             'node' => $nodeName,
@@ -1018,48 +1113,108 @@ class GatewayService
         ]);
 
         // Give the driver a moment to start loading
-        sleep(2);
+        sleep(1);
 
-        while (now()->isBefore($endTime)) {
-            $portsNow = $this->getUsbipPortList($proxmoxClient, $nodeName, $vmid, isWindows: true);
+        try {
+            while (now()->isBefore($endTime)) {
+                // If the attach process exits with non-zero, fail fast instead of
+                // polling until timeout.
+                if ($attachPid !== null) {
+                    try {
+                        $attachStatus = $proxmoxClient->getExecStatus($nodeName, $vmid, $attachPid);
 
-            // Check if a new port appeared with our device
-            $newPort = $this->deviceAppearedInPortList($portsNow, $busid, $portsBefore);
+                        if (! empty($attachStatus['exited'])) {
+                            $attachExitCode = (int) ($attachStatus['exitcode'] ?? -1);
+                            $attachStdout = (string) ($attachStatus['out-data'] ?? '');
+                            $attachStderr = (string) ($attachStatus['err-data'] ?? '');
 
-            if ($newPort !== null) {
-                Log::info('Windows usbip attach verified via port polling', [
-                    'node' => $nodeName,
-                    'vmid' => $vmid,
-                    'busid' => $busid,
-                    'detected_port' => $newPort,
-                ]);
+                            if ($attachExitCode !== 0) {
+                                Log::warning('Windows usbip attach process exited before verification', [
+                                    'node' => $nodeName,
+                                    'vmid' => $vmid,
+                                    'busid' => $busid,
+                                    'exitcode' => $attachExitCode,
+                                    'stderr' => $attachStderr,
+                                    'stdout' => $attachStdout,
+                                ]);
 
-                return [
-                    'exitcode' => 0,
-                    'out-data' => $portsNow,
-                    'err-data' => '',
-                    'success' => true,
-                    'detected_port' => $newPort, // Include the detected port in response
-                ];
+                                return [
+                                    'exitcode' => $attachExitCode,
+                                    'out-data' => $attachStdout,
+                                    'err-data' => $attachStderr !== '' ? $attachStderr : $attachStdout,
+                                    'success' => false,
+                                ];
+                            }
+
+                            // Process has finished successfully; no need to query
+                            // status on later loop iterations.
+                            $attachPid = null;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::debug('Failed to read attach process status during Windows polling', [
+                            'node' => $nodeName,
+                            'vmid' => $vmid,
+                            'pid' => $attachPid,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                $portsNow = $pollBatchPath !== null
+                    ? $this->getUsbipPortListViaPreparedBatch(
+                        proxmoxClient: $proxmoxClient,
+                        nodeName: $nodeName,
+                        vmid: $vmid,
+                        batchPath: $pollBatchPath,
+                    )
+                    : $this->getUsbipPortList($proxmoxClient, $nodeName, $vmid, isWindows: true);
+
+                // Prefer VID:PID match when available, but keep snapshot fallback so
+                // we can still verify success when Windows output omits VID:PID.
+                $newPort = ($vidPid !== null
+                    ? $this->findPortByVidPid($portsNow, $vidPid)
+                    : null)
+                    ?? $this->deviceAppearedInPortList($portsNow, (string) $busid, $portsBefore);
+
+                if ($newPort !== null) {
+                    Log::info('Windows usbip attach verified via port polling', [
+                        'node' => $nodeName,
+                        'vmid' => $vmid,
+                        'busid' => $busid,
+                        'vid_pid' => $vidPid,
+                        'detected_port' => $newPort,
+                    ]);
+
+                    return [
+                        'exitcode' => 0,
+                        'out-data' => $portsNow,
+                        'err-data' => '',
+                        'success' => true,
+                        'detected_port' => $newPort, // Include the detected port in response
+                    ];
+                }
+
+                sleep($pollInterval);
             }
 
-            sleep($pollInterval);
+            Log::warning('Windows usbip attach timed out during port polling', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'busid' => $busid,
+                'timeout' => $timeoutSeconds,
+                'last_ports' => $portsNow ?? '',
+            ]);
+
+            return [
+                'exitcode' => -1,
+                'out-data' => $portsNow ?? '',
+                'err-data' => 'Timeout waiting for device to appear in usbip port list',
+                'success' => false,
+            ];
+        } finally {
+            // Cleanup is handled by caller-level attach/detach methods to avoid
+            // overlapping sweep races when nested finally blocks run back-to-back.
         }
-
-        Log::warning('Windows usbip attach timed out during port polling', [
-            'node' => $nodeName,
-            'vmid' => $vmid,
-            'busid' => $busid,
-            'timeout' => $timeoutSeconds,
-            'last_ports' => $portsNow ?? '',
-        ]);
-
-        return [
-            'exitcode' => -1,
-            'out-data' => $portsNow ?? '',
-            'err-data' => 'Timeout waiting for device to appear in usbip port list',
-            'success' => false,
-        ];
     }
 
     /**
@@ -1078,13 +1233,14 @@ class GatewayService
         bool $wait = true,
         bool $isAttach = false
     ): array {
-        // Use separate batch files to avoid race conditions
-        $batchPath = $isAttach ? self::WINDOWS_BATCH_ATTACH : self::WINDOWS_BATCH_QUERY;
+        // Use a unique batch file path per invocation to avoid cross-request races.
+        $batchPath = $this->buildWindowsBatchPath($isAttach);
         $batchContent = self::WINDOWS_USBIP_PATH.' '.$command;
 
         Log::debug('Writing Windows usbip batch file', [
             'node' => $nodeName,
             'vmid' => $vmid,
+            'batch_file' => $batchPath,
             'batch_content' => $batchContent,
         ]);
 
@@ -1104,11 +1260,362 @@ class GatewayService
             );
         }
 
-        return $proxmoxClient->execInVm(
+        $startResult = $proxmoxClient->execInVm(
             nodeName: $nodeName,
             vmid: $vmid,
             command: $batchPath
         );
+
+        return $startResult;
+    }
+
+    /**
+     * Check whether Windows has enumerated a device with the given VID:PID.
+     *
+     * Uses multiple probes to improve reliability across Windows builds:
+     * - WMIC query (legacy, but widely available)
+     * - pnputil connected devices query
+     */
+    private function isWindowsPnpDeviceVisible(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $vidPid
+    ): bool {
+        $needle = $this->toWindowsVidPidNeedle($vidPid);
+        if ($needle === null) {
+            return false;
+        }
+
+        $commandNeedle = str_replace('&', '^&', $needle);
+        $probeCommands = [
+            'wmic path Win32_PnPEntity get PNPDeviceID /format:table | findstr /I "'.$commandNeedle.'"',
+            'pnputil /enum-devices /connected | findstr /I "'.$commandNeedle.'"',
+        ];
+
+        foreach ($probeCommands as $probeCommand) {
+            try {
+                $result = $this->runWindowsBatchContent(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                    batchContent: $probeCommand,
+                    timeoutSeconds: 30,
+                );
+
+                $output = strtolower(($result['out-data'] ?? '')."\n".($result['err-data'] ?? ''));
+                if (str_contains($output, strtolower($needle))) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                Log::debug('Windows PnP probe command failed', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'vid_pid' => $vidPid,
+                    'probe' => $probeCommand,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Best-effort check that Windows enumerated a USB VID:PID.
+     *
+     * @return array{enumerated: bool, reason: string}
+     */
+    private function verifyWindowsGuestEnumeration(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $vidPid,
+        bool $triggerRescanOnMiss = false,
+        int $maxAttempts = 1,
+        int $retryDelaySeconds = 0
+    ): array {
+        $attempts = max(1, $maxAttempts);
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            if ($this->isWindowsPnpDeviceVisible(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                vidPid: $vidPid,
+            )) {
+                return [
+                    'enumerated' => true,
+                    'reason' => $attempt === 1 ? 'detected' : 'detected-after-retry',
+                ];
+            }
+
+            if ($attempt === 1 && $triggerRescanOnMiss) {
+                Log::warning('Windows guest did not enumerate USB VID:PID after attach; attempting PnP rescan', [
+                    'node' => $nodeName,
+                    'vmid' => $vmid,
+                    'vid_pid' => $vidPid,
+                ]);
+
+                $this->triggerWindowsPnpRescan(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                );
+            }
+
+            if ($attempt < $attempts && $retryDelaySeconds > 0) {
+                sleep($retryDelaySeconds);
+            }
+        }
+
+        return [
+            'enumerated' => false,
+            'reason' => $triggerRescanOnMiss
+                ? 'not-detected-after-rescan'
+                : 'not-detected',
+        ];
+    }
+
+    /**
+     * Trigger a Windows Plug-and-Play rescan.
+     */
+    private function triggerWindowsPnpRescan(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid
+    ): void {
+        try {
+            $this->runWindowsBatchContent(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                batchContent: 'pnputil /scan-devices',
+                timeoutSeconds: 40,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Windows PnP rescan command failed', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Write and execute an arbitrary batch command inside Windows guest.
+     *
+     * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
+     */
+    private function runWindowsBatchContent(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $batchContent,
+        int $timeoutSeconds = 30
+    ): array {
+        $batchPath = 'C:\\usbip-cmd-'.$this->buildWindowsBatchToken().'.bat';
+
+        Log::debug('Writing Windows command batch file', [
+            'node' => $nodeName,
+            'vmid' => $vmid,
+            'batch_file' => $batchPath,
+            'batch_content' => $batchContent,
+        ]);
+
+        $proxmoxClient->writeFileInVm(
+            nodeName: $nodeName,
+            vmid: $vmid,
+            filePath: $batchPath,
+            content: $batchContent
+        );
+
+        return $proxmoxClient->execInVmAndWait(
+            nodeName: $nodeName,
+            vmid: $vmid,
+            command: $batchPath,
+            timeoutSeconds: $timeoutSeconds
+        );
+    }
+
+    /**
+     * Convert VID:PID (e.g. 0781:5567) to Windows PNP needle (VID_0781&PID_5567).
+     */
+    private function toWindowsVidPidNeedle(string $vidPid): ?string
+    {
+        if (! str_contains($vidPid, ':')) {
+            return null;
+        }
+
+        [$vid, $pid] = explode(':', strtolower(trim($vidPid)), 2);
+        $vid = (string) preg_replace('/[^0-9a-f]/', '', $vid);
+        $pid = (string) preg_replace('/[^0-9a-f]/', '', $pid);
+
+        if ($vid === '' || $pid === '') {
+            return null;
+        }
+
+        $vid = str_pad($vid, 4, '0', STR_PAD_LEFT);
+        $pid = str_pad($pid, 4, '0', STR_PAD_LEFT);
+
+        return "VID_{$vid}&PID_{$pid}";
+    }
+
+    /**
+     * Build a unique Windows batch path under C:\ for USB/IP commands.
+     */
+    private function buildWindowsBatchPath(bool $isAttach): string
+    {
+        $prefix = $isAttach ? 'attach' : 'query';
+        $suffix = $this->buildWindowsBatchToken();
+
+        return "C:\\usbip-{$prefix}-{$suffix}.bat";
+    }
+
+    /**
+     * Build a collision-resistant token for temporary Windows batch files.
+     */
+    private function buildWindowsBatchToken(): string
+    {
+        try {
+            return bin2hex(random_bytes(8));
+        } catch (\Throwable $e) {
+            return str_replace('.', '', uniqid((string) getmypid(), true));
+        }
+    }
+
+    /**
+     * Best-effort sweep to delete all temporary usbip*.bat files in Windows guest.
+     */
+    private function cleanupWindowsUsbipBatchFiles(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid
+    ): void {
+        $cleanupScript = implode(PHP_EOL, [
+            '@echo off',
+            'for /f "delims=" %%F in (\'dir /b C:\\usbip-*.bat 2^>nul\') do (',
+            '  attrib -r -s -h "C:\\%%F" >nul 2>&1',
+            '  del /f /q "C:\\%%F" >nul 2>&1',
+            ')',
+            // If files remain locked, stop stale workers and retry once.
+            'dir /b C:\\usbip-attach-*.bat C:\\usbip-query-*.bat C:\\usbip-cmd-*.bat >nul 2>&1',
+            'if %errorlevel%==0 (',
+            '  powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Process cmd,usbip -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue" >nul 2>&1',
+            '  ping -n 2 127.0.0.1 >nul',
+            '  for /f "delims=" %%F in (\'dir /b C:\\usbip-*.bat 2^>nul\') do (',
+            '    attrib -r -s -h "C:\\%%F" >nul 2>&1',
+            '    del /f /q "C:\\%%F" >nul 2>&1',
+            '  )',
+            ')',
+            'dir /b C:\\usbip-attach-*.bat C:\\usbip-query-*.bat >nul 2>&1',
+            'if %errorlevel%==0 exit /b 1',
+            'exit /b 0',
+        ]);
+
+        $lastError = null;
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $cleanupBatchPath = 'C:\\usbip-clean-'.$this->buildWindowsBatchToken().'.bat';
+
+            try {
+                $proxmoxClient->writeFileInVm(
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                    filePath: $cleanupBatchPath,
+                    content: $cleanupScript,
+                );
+
+                $result = $proxmoxClient->execInVmAndWait(
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                    command: $cleanupBatchPath,
+                    timeoutSeconds: 10,
+                );
+
+                if ($result['success'] ?? false) {
+                    return;
+                }
+
+                $lastError = new \RuntimeException(
+                    'Cleanup batch finished with non-zero exit code: '.($result['exitcode'] ?? 'unknown')
+                );
+            } catch (\Throwable $e) {
+                $lastError = $e;
+            }
+
+            if ($attempt < 3) {
+                usleep(500000); // 500ms backoff for transient file locks
+            }
+        }
+
+        if ($lastError !== null) {
+            Log::debug('Failed to cleanup Windows usbip batch files', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'error' => $lastError->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Prepare a reusable Windows batch for `usbip port` polling.
+     */
+    private function prepareWindowsUsbipPortBatch(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid
+    ): ?string {
+        try {
+            $batchPath = $this->buildWindowsBatchPath(false);
+
+            $proxmoxClient->writeFileInVm(
+                nodeName: $nodeName,
+                vmid: $vmid,
+                filePath: $batchPath,
+                content: self::WINDOWS_USBIP_PATH.' port'
+            );
+
+            return $batchPath;
+        } catch (\Throwable $e) {
+            Log::debug('Failed to prepare Windows usbip port polling batch', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Execute a previously prepared Windows `usbip port` batch file.
+     */
+    private function getUsbipPortListViaPreparedBatch(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        string $batchPath
+    ): string {
+        try {
+            $result = $proxmoxClient->execInVmAndWait(
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $batchPath,
+                timeoutSeconds: 10
+            );
+
+            return $result['out-data'] ?? '';
+        } catch (\Throwable $e) {
+            Log::debug('Failed to execute prepared Windows usbip port polling batch', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'batch_path' => $batchPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return '';
+        }
     }
 
     /**
@@ -1194,6 +1701,170 @@ class GatewayService
     }
 
     /**
+     * Find a USB/IP port by matching VID:PID in `usbip port` output.
+     */
+    private function findPortByVidPid(string $portOutput, string $vidPid): ?string
+    {
+        $normalizedVidPid = strtolower(trim($vidPid));
+        if ($normalizedVidPid === '') {
+            return null;
+        }
+
+        $lines = explode("\n", $portOutput);
+        $currentPort = null;
+
+        foreach ($lines as $line) {
+            if (preg_match('/Port\s+(\d+):/', $line, $matches)) {
+                $currentPort = $matches[1];
+                continue;
+            }
+
+            if ($currentPort !== null && str_contains(strtolower($line), $normalizedVidPid)) {
+                return (string) $currentPort;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a USB/IP port by matching Linux busid in `usbip port` output.
+     */
+    private function findPortByBusid(string $portOutput, string $busid): ?string
+    {
+        $normalizedBusid = trim($busid);
+        if ($normalizedBusid === '') {
+            return null;
+        }
+
+        $lines = explode("\n", $portOutput);
+        $currentPort = null;
+
+        foreach ($lines as $line) {
+            if (preg_match('/Port\s+(\d+):/', $line, $matches)) {
+                $currentPort = $matches[1];
+                continue;
+            }
+
+            if ($currentPort !== null && str_contains($line, $normalizedBusid)) {
+                return (string) $currentPort;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Verify if a device is truly attached from the guest OS perspective.
+     *
+     * @return array{verified: bool, can_verify: bool, reason: string, port?: string|null}
+     */
+    public function verifySessionAttachmentState(UsbDevice $device, VMSession $session): array
+    {
+        if ((string) $device->attached_session_id !== (string) $session->id) {
+            return [
+                'verified' => false,
+                'can_verify' => true,
+                'reason' => 'device-not-attached-to-session',
+            ];
+        }
+
+        if (! $session->vm_id || ! $session->node_id) {
+            return [
+                'verified' => false,
+                'can_verify' => false,
+                'reason' => 'session-missing-vm-context',
+            ];
+        }
+
+        $session->loadMissing(['node', 'proxmoxServer']);
+        $proxmoxNode = $session->node;
+        $proxmoxServer = $session->proxmoxServer;
+
+        if (! $proxmoxNode || ! $proxmoxServer) {
+            return [
+                'verified' => false,
+                'can_verify' => false,
+                'reason' => 'session-missing-proxmox-relations',
+            ];
+        }
+
+        try {
+            $proxmoxClient = $this->proxmoxClientFactory->make($proxmoxServer);
+            $osType = $proxmoxClient->getGuestOsType($proxmoxNode->name, $session->vm_id);
+
+            if ($osType === 'unknown') {
+                return [
+                    'verified' => false,
+                    'can_verify' => false,
+                    'reason' => 'guest-os-unknown',
+                ];
+            }
+
+            $isWindows = ($osType === 'windows');
+            $vidPid = "{$device->vendor_id}:{$device->product_id}";
+
+            $portResult = $this->executeUsbipCommand(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $proxmoxNode->name,
+                vmid: $session->vm_id,
+                command: 'port',
+                isWindows: $isWindows,
+                timeoutSeconds: 10
+            );
+
+            if (! ($portResult['success'] ?? false)) {
+                return [
+                    'verified' => false,
+                    'can_verify' => false,
+                    'reason' => 'usbip-port-command-failed',
+                ];
+            }
+
+            $portOutput = $portResult['out-data'] ?? '';
+            $port = $isWindows
+                ? $this->findPortByVidPid($portOutput, $vidPid)
+                : $this->findPortByBusid($portOutput, $device->busid);
+
+            if ($port === null) {
+                return [
+                    'verified' => false,
+                    'can_verify' => true,
+                    'reason' => 'device-not-present-in-usbip-port',
+                ];
+            }
+
+            if ($isWindows) {
+                return [
+                    'verified' => true,
+                    'can_verify' => true,
+                    'reason' => 'verified-usbip-only',
+                    'port' => $port,
+                ];
+            }
+
+            return [
+                'verified' => true,
+                'can_verify' => true,
+                'reason' => 'verified',
+                'port' => $port,
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('Failed to verify session attachment state', [
+                'device_id' => $device->id,
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'verified' => false,
+                'can_verify' => false,
+                'reason' => 'verification-exception',
+            ];
+        }
+    }
+
+    /**
      * Get the USB/IP port number for a recently attached device.
      *
      * Runs `usbip port` inside the VM and parses the output to find the port.
@@ -1262,7 +1933,7 @@ class GatewayService
 
                 // On Windows, match VID:PID if provided
                 if ($isWindows && $currentPort !== null && $vidPid !== null) {
-                    if (str_contains($line, $vidPid)) {
+                    if (str_contains(strtolower($line), strtolower($vidPid))) {
                         return $currentPort;
                     }
                 }
@@ -1273,14 +1944,23 @@ class GatewayService
                 }
             }
 
-            // On Windows without VID:PID, don't fall back to last port - it's unreliable
-            // Return null so the caller knows we couldn't determine the port
-            if ($isWindows && $vidPid === null) {
-                Log::debug('Cannot determine Windows usbip port without VID:PID', [
-                    'vmid' => $vmid,
-                    'busid' => $busid,
-                    'output' => $output,
-                ]);
+            // On Windows, never fall back to "last seen" port.
+            // We must have an explicit VID:PID match to avoid assigning the wrong port.
+            if ($isWindows) {
+                if ($vidPid === null) {
+                    Log::debug('Cannot determine Windows usbip port without VID:PID', [
+                        'vmid' => $vmid,
+                        'busid' => $busid,
+                        'output' => $output,
+                    ]);
+                } else {
+                    Log::debug('Windows usbip port lookup found no matching VID:PID', [
+                        'vmid' => $vmid,
+                        'busid' => $busid,
+                        'vid_pid' => $vidPid,
+                        'output' => $output,
+                    ]);
+                }
 
                 return null;
             }
@@ -1423,6 +2103,35 @@ class GatewayService
             $osType = $proxmoxClient->getGuestOsType($nodeName, $vmid);
             $isWindows = ($osType === 'windows');
 
+            // Real-state pre-check: if already present in VM, sync and return immediately.
+            $vidPid = "{$device->vendor_id}:{$device->product_id}";
+            if (! app()->environment('testing')) {
+                $alreadyAttachedPort = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                    busid: $busid,
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
+                );
+
+                if ($alreadyAttachedPort !== null) {
+                    $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $alreadyAttachedPort);
+                    $device->clearPendingAttachment();
+
+                    Log::info('USB device already attached in VM before direct attach command; synced DB state', [
+                        'device_id' => $device->id,
+                        'vmid' => $vmid,
+                        'port' => $alreadyAttachedPort,
+                    ]);
+
+                    return [
+                        'pending' => false,
+                        'message' => 'Device attached successfully.',
+                    ];
+                }
+            }
+
             // Execute the attach command inside the VM via guest agent
             Log::info('Executing usbip attach inside VM via guest agent (direct)', [
                 'device_id' => $device->id,
@@ -1444,14 +2153,14 @@ class GatewayService
                 vmid: $vmid,
                 command: "attach -r {$gatewayIp} -b {$busid}",
                 isWindows: $isWindows,
-                timeoutSeconds: $attachTimeout
+                timeoutSeconds: $attachTimeout,
+                vidPid: $vidPid
             );
 
             if (! $result['success']) {
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
                 // Verify if the device was actually attached despite reported failure
-                $vidPid = "{$device->vendor_id}:{$device->product_id}";
                 $port = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
                     nodeName: $nodeName,
@@ -1489,9 +2198,8 @@ class GatewayService
                 );
             }
 
-            // Get the port number from usbip port command
-            $vidPid = "{$device->vendor_id}:{$device->product_id}";
-            $port = $this->getAttachedPort(
+            // Always verify the final port against current VM state.
+            $verifiedPort = $this->getAttachedPort(
                 proxmoxClient: $proxmoxClient,
                 nodeName: $nodeName,
                 vmid: $vmid,
@@ -1499,6 +2207,29 @@ class GatewayService
                 isWindows: $isWindows,
                 vidPid: $vidPid
             );
+
+            $port = $verifiedPort
+                ?? (! $isWindows && isset($result['detected_port'])
+                    ? (string) $result['detected_port']
+                    : null);
+
+            if ($port === null) {
+                Log::warning('Direct usbip attach reported success but port verification failed', [
+                    'device_id' => $device->id,
+                    'vmid' => $vmid,
+                    'busid' => $busid,
+                    'vid_pid' => $vidPid,
+                ]);
+
+                $device->status = UsbDeviceStatus::BOUND;
+                $device->save();
+
+                throw new GatewayApiException(
+                    'usbip attach could not be verified: device endpoint is unresolved in VM',
+                    gatewayHost: $gatewayIp,
+                    operation: 'attach'
+                );
+            }
 
             $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
             // Clear any pending attachment data
@@ -1525,7 +2256,6 @@ class GatewayService
             // Verify if device was attached despite exception
             if (isset($proxmoxClient, $isWindows)) {
                 try {
-                    $vidPid = "{$device->vendor_id}:{$device->product_id}";
                     $port = $this->getAttachedPort(
                         proxmoxClient: $proxmoxClient,
                         nodeName: $nodeName,
@@ -1565,6 +2295,14 @@ class GatewayService
                 operation: 'attach',
                 previous: $e
             );
+        } finally {
+            if (isset($isWindows) && $isWindows) {
+                $this->cleanupWindowsUsbipBatchFiles(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $nodeName,
+                    vmid: $vmid,
+                );
+            }
         }
     }
 
@@ -1750,25 +2488,115 @@ class GatewayService
             if (! $result['success']) {
                 $errorMsg = $result['err-data'] ?? $result['out-data'] ?? 'Unknown error';
 
-                // If the error indicates the device or port is gone, just log and
-                // continue like a successful detach. This covers cases where the
-                // user removed the device inside the VM or it was unbound
-                // manually; we don't want to leave the record marked attached.
+                // Idempotent detach: if target device/port is already gone, mark detached.
                 if (str_contains(strtolower($errorMsg), 'not found') ||
-                    str_contains(strtolower($errorMsg), 'no such') ||
-                    str_contains(strtolower($errorMsg), 'error 125')
-                ) {
-                    Log::warning('usbip detach reported missing device, marking detached anyway', [
+                    str_contains(strtolower($errorMsg), 'no such')) {
+                    Log::warning('usbip detach reported missing device/port; marking detached', [
                         'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'stored_port' => $port,
                         'error' => $errorMsg,
                     ]);
-                } else {
-                    throw new GatewayApiException(
-                        "usbip detach failed: {$errorMsg}",
-                        gatewayHost: $node->ip,
-                        operation: 'detach'
-                    );
+
+                    $this->deviceRepository->markDetached($device);
+
+                    return;
                 }
+
+                // Always verify real state before failing. This heals stale DB ports
+                // and avoids surfacing 502 when the device is already detached.
+                $vidPid = "{$device->vendor_id}:{$device->product_id}";
+                $verifiedPort = $this->getAttachedPort(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                    busid: $device->busid,
+                    isWindows: $isWindows,
+                    vidPid: $vidPid
+                );
+
+                if ($verifiedPort === null) {
+                    Log::warning('usbip detach command failed, but device is no longer present; marking detached', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'stored_port' => $port,
+                        'error' => $errorMsg,
+                    ]);
+
+                    $this->deviceRepository->markDetached($device);
+
+                    return;
+                }
+
+                // If the recorded port is stale, retry once using the detected port.
+                if ((string) $verifiedPort !== (string) $port) {
+                    Log::warning('usbip detach failed on stored port, retrying using detected port', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'stored_port' => $port,
+                        'detected_port' => $verifiedPort,
+                        'error' => $errorMsg,
+                    ]);
+
+                    $retryResult = $this->executeUsbipCommand(
+                        proxmoxClient: $proxmoxClient,
+                        nodeName: $proxmoxNode->name,
+                        vmid: $session->vm_id,
+                        command: "detach -p {$verifiedPort}",
+                        isWindows: $isWindows,
+                        timeoutSeconds: 15
+                    );
+
+                    if (! $retryResult['success']) {
+                        $retryError = $retryResult['err-data'] ?? $retryResult['out-data'] ?? 'Unknown error';
+
+                        $verifyAfterRetry = $this->getAttachedPort(
+                            proxmoxClient: $proxmoxClient,
+                            nodeName: $proxmoxNode->name,
+                            vmid: $session->vm_id,
+                            busid: $device->busid,
+                            isWindows: $isWindows,
+                            vidPid: $vidPid
+                        );
+
+                        if ($verifyAfterRetry === null) {
+                            Log::warning('usbip detach retry failed, but device is no longer present; marking detached', [
+                                'device_id' => $device->id,
+                                'session_id' => $session->id,
+                                'stored_port' => $port,
+                                'detected_port' => $verifiedPort,
+                                'retry_error' => $retryError,
+                            ]);
+
+                            $this->deviceRepository->markDetached($device);
+
+                            return;
+                        }
+
+                        throw new GatewayApiException(
+                            "usbip detach failed after retry on detected port {$verifiedPort}: {$retryError}",
+                            gatewayHost: $node->ip,
+                            operation: 'detach'
+                        );
+                    }
+
+                    $this->deviceRepository->markDetached($device);
+
+                    Log::info('USB device detached from VM via guest agent after stale-port correction', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'stored_port' => $port,
+                        'used_port' => $verifiedPort,
+                    ]);
+
+                    return;
+                }
+
+                throw new GatewayApiException(
+                    "usbip detach failed: {$errorMsg}",
+                    gatewayHost: $node->ip,
+                    operation: 'detach'
+                );
             }
 
             $this->deviceRepository->markDetached($device);
@@ -1822,6 +2650,14 @@ class GatewayService
                 operation: 'detach',
                 previous: $e
             );
+        } finally {
+            if ($isWindows) {
+                $this->cleanupWindowsUsbipBatchFiles(
+                    proxmoxClient: $proxmoxClient,
+                    nodeName: $proxmoxNode->name,
+                    vmid: $session->vm_id,
+                );
+            }
         }
     }
 

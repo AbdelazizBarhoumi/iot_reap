@@ -221,14 +221,10 @@ describe('NotificationBell Component', () => {
     it('displays timestamps relative to current time', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        
-        // Wait a bit for initial fetch, then open the popover
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+
+        const bellButton = await screen.findByRole('button', { name: /notification/i });
         await user.click(bellButton);
-        
-        // Wait for notification to appear (which includes timestamp)
+
         await waitFor(() => {
             expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
         }, { timeout: 3000 });
@@ -307,6 +303,10 @@ describe('NotificationBell Component', () => {
         });
     });
     it('handles API errors gracefully', async () => {
+        const consoleErrorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => undefined);
+
         // Mock API error
         server.use(
             http.get('/notifications/recent', () => {
@@ -314,10 +314,43 @@ describe('NotificationBell Component', () => {
             })
         );
         render(<NotificationBell />);
+
         await waitFor(() => {
-            // Should handle error without crashing
             expect(screen.getByRole('button', { name: /notification/i })).toBeInTheDocument();
         });
+
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalled();
+        });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('silently handles unauthorized notification responses', async () => {
+        const consoleErrorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => undefined);
+
+        server.use(
+            http.get('/notifications/recent', () => {
+                return new HttpResponse(null, { status: 401 });
+            })
+        );
+
+        render(<NotificationBell />);
+
+        await waitFor(() => {
+            expect(
+                screen.getByRole('button', { name: /notification/i }),
+            ).toBeInTheDocument();
+        });
+
+        expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+            'Failed to fetch notifications:',
+            expect.anything(),
+        );
+
+        consoleErrorSpy.mockRestore();
     });
 });
 

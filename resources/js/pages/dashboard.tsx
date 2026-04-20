@@ -22,11 +22,12 @@ import {
     Power,
     RefreshCw,
     Server,
+    Settings2,
     Activity,
     History,
     Terminal,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     vmSessionApi,
     connectionPreferencesApi,
@@ -64,6 +65,7 @@ import { useProxmoxVMs } from '@/hooks/useProxmoxVMs';
 import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
+import sessionsRoute from '@/routes/sessions';
 import type { BreadcrumbItem } from '@/types';
 import type {
     ConnectionProfile,
@@ -80,6 +82,7 @@ const DURATION_OPTIONS = [
     { value: 120, label: '2 hours' },
     { value: 240, label: '4 hours' },
 ];
+const NO_PROFILE_SELECTED_VALUE = '__default_profile__';
 function formatBytes(bytes: number): string {
     if (bytes === 0) return '0 B';
     const gb = bytes / (1024 * 1024 * 1024);
@@ -129,6 +132,8 @@ export default function Dashboard() {
         useState<string>('');
     const [vmSnapshots, setVmSnapshots] = useState<VMSnapshot[]>([]);
     const [snapshotsLoading, setSnapshotsLoading] = useState(false);
+    const [selectedConnectionProfile, setSelectedConnectionProfile] =
+        useState<string>(NO_PROFILE_SELECTED_VALUE);
     const [savedProfiles, setSavedProfiles] = useState<{
         rdp: ConnectionProfile[];
         vnc: ConnectionProfile[];
@@ -148,6 +153,15 @@ export default function Dashboard() {
     );
     const hasActiveSessions =
         activeSessions.length > 0 || provisioningSessions.length > 0;
+    const launchProfiles = useMemo(
+        () => savedProfiles[launchProtocol as keyof typeof savedProfiles] ?? [],
+        [launchProtocol, savedProfiles],
+    );
+    const defaultLaunchProfile = useMemo(
+        () => launchProfiles.find((profile) => profile.is_default) ?? null,
+        [launchProfiles],
+    );
+
     // Load saved connection profiles on mount
     useEffect(() => {
         connectionPreferencesApi
@@ -165,6 +179,7 @@ export default function Dashboard() {
         setLaunchUsername('');
         setLaunchPassword('');
         setShowPassword(false);
+        setSelectedConnectionProfile(NO_PROFILE_SELECTED_VALUE);
         // disable selector when template owns protocol, allow choice for existing VMs
         setProtocolDisabled(vm.is_template);
         setLaunchReturnSnapshot('');
@@ -194,6 +209,10 @@ export default function Dashboard() {
                 username: launchUsername || undefined,
                 password: launchPassword || undefined,
                 connection_preference_protocol: launchProtocol || undefined,
+                connection_preference_profile:
+                    selectedConnectionProfile !== NO_PROFILE_SELECTED_VALUE
+                        ? selectedConnectionProfile
+                        : undefined,
                 return_snapshot: launchReturnSnapshot || undefined,
                 use_existing: useExisting || undefined,
             };
@@ -222,6 +241,7 @@ export default function Dashboard() {
         launchUsername,
         launchPassword,
         launchProtocol,
+        selectedConnectionProfile,
         launchReturnSnapshot,
         useExisting,
     ]);
@@ -233,6 +253,20 @@ export default function Dashboard() {
         },
         [savedProfiles],
     );
+
+    useEffect(() => {
+        if (selectedConnectionProfile === NO_PROFILE_SELECTED_VALUE) {
+            return;
+        }
+
+        const profileStillExists = launchProfiles.some(
+            (profile) => profile.profile_name === selectedConnectionProfile,
+        );
+
+        if (!profileStillExists) {
+            setSelectedConnectionProfile(NO_PROFILE_SELECTED_VALUE);
+        }
+    }, [launchProfiles, selectedConnectionProfile]);
     const handleTerminate = useCallback(
         async (sessionId: string) => {
             setTerminatingId(sessionId);
@@ -355,7 +389,7 @@ export default function Dashboard() {
                         <Card className="shadow-card transition-shadow hover:shadow-card-hover">
                             <CardContent className="p-5">
                                 <Link
-                                    href="/sessions"
+                                    href={sessionsRoute.index.url()}
                                     className="flex items-center gap-4 transition-opacity hover:opacity-80"
                                 >
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -768,29 +802,21 @@ export default function Dashboard() {
                                 <SelectContent>
                                     <SelectItem value="rdp">
                                         RDP (Remote Desktop)
-                                        {hasPreferencesForProtocol('rdp')
-                                            ? ' ★'
-                                            : ''}
                                     </SelectItem>
                                     <SelectItem value="vnc">
                                         VNC
-                                        {hasPreferencesForProtocol('vnc')
-                                            ? ' ★'
-                                            : ''}
                                     </SelectItem>
                                     <SelectItem value="ssh">
                                         SSH
-                                        {hasPreferencesForProtocol('ssh')
-                                            ? ' ★'
-                                            : ''}
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
+
                             {hasPreferencesForProtocol(launchProtocol) && (
                                 <p className="text-xs text-muted-foreground">
-                                    ★ Your saved {launchProtocol.toUpperCase()}{' '}
-                                    preferences will be applied to this
-                                    connection.
+                                    {launchProfiles.length} saved{' '}
+                                    {launchProtocol.toUpperCase()} connection
+                                    profile(s) available.
                                 </p>
                             )}
                             {protocolDisabled && (
@@ -799,6 +825,54 @@ export default function Dashboard() {
                                     connection
                                 </p>
                             )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="connection-profile">
+                                    Connection Profile{' '}
+                                    <span className="text-xs text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <Button variant="ghost" size="sm" asChild>
+                                    <Link href="/connection-preferences">
+                                        <Settings2 className="mr-1 h-4 w-4" />
+                                        Edit Profiles
+                                    </Link>
+                                </Button>
+                            </div>
+
+                            <Select
+                                value={selectedConnectionProfile}
+                                onValueChange={setSelectedConnectionProfile}
+                                disabled={launchLoading}
+                            >
+                                <SelectTrigger id="connection-profile">
+                                    <SelectValue placeholder="Use protocol default" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
+                                        {defaultLaunchProfile
+                                            ? `Use default (${defaultLaunchProfile.profile_name}) ★`
+                                            : 'Use protocol default'}
+                                    </SelectItem>
+                                    {launchProfiles.map((profile) => (
+                                        <SelectItem
+                                            key={profile.profile_name}
+                                            value={profile.profile_name}
+                                        >
+                                            {profile.profile_name}
+                                            {profile.is_default ? ' ★' : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <p className="text-xs text-muted-foreground">
+                                If you don&apos;t choose one, the starred default
+                                profile is used automatically.
+                            </p>
                         </div>
                         {/* Credentials */}
                         <div className="grid gap-2">

@@ -61,17 +61,31 @@ export function useVMSessions(): UseVMSessionsResult {
 /**
  * Hook for fetching a single VM session.
  */
-export function useVMSession(sessionId: string) {
+export function useVMSession(sessionId?: string) {
     const [session, setSession] = useState<VMSession | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState<boolean>(!!sessionId);
     const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         let mounted = true;
+
+        if (!sessionId) {
+            setSession(null);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
         async function fetchSession() {
+            const id = sessionId;
+            if (!id) {
+                return;
+            }
+
             setLoading(true);
             setError(null);
             try {
-                const data = await vmSessionApi.get(sessionId);
+                const data = await vmSessionApi.get(id);
                 if (mounted) {
                     setSession(data);
                 }
@@ -89,11 +103,13 @@ export function useVMSession(sessionId: string) {
                 }
             }
         }
+
         fetchSession();
         return () => {
             mounted = false;
         };
     }, [sessionId]);
+
     return { session, loading, error };
 }
 

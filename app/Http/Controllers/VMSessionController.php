@@ -98,6 +98,7 @@ class VMSessionController extends Controller
                 'vm_id' => $request->validated('vmid'),
                 'status' => VMSessionStatus::PENDING,
                 'protocol' => $protocol,
+                'connection_profile_name' => $request->validated('connection_preference_profile'),
                 'expires_at' => now()->addMinutes($durationMinutes),
                 'credentials' => array_filter([
                     'username' => $request->validated('username'),
@@ -243,6 +244,7 @@ class VMSessionController extends Controller
 
         return Inertia::render('sessions/show', [
             'session' => new VMSessionResource($session),
+            'sessionId' => $session->id,
         ]);
     }
 

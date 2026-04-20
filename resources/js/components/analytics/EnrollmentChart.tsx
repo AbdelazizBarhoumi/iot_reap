@@ -12,6 +12,7 @@ import {
     YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDate } from '@/lib/analytics.utils';
 import type { EnrollmentChartPoint } from '@/types/analytics.types';
 interface EnrollmentChartProps {
     data: EnrollmentChartPoint[];
@@ -21,13 +22,6 @@ export function EnrollmentChart({
     data,
     title = 'Enrollments & Completions',
 }: EnrollmentChartProps) {
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-        });
-    };
     return (
         <Card>
             <CardHeader>

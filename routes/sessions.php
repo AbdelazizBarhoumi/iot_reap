@@ -37,6 +37,12 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         Route::put('/{protocol}/{profile?}', 'update')->name('update');
         Route::delete('/{protocol}/{profile}', 'destroy')->name('destroy');
         Route::patch('/{protocol}/{profile}/default', 'setDefault')->name('set-default');
+
+        // Per-VM default profiles
+        Route::get('/vm/{vmId}/{protocol}', 'getPerVMDefault')->name('per-vm.get');
+        Route::post('/vm/{vmId}/{protocol}/default', 'setPerVMDefault')->name('per-vm.set');
+        Route::patch('/vm/{vmId}/{protocol}/default', 'setPerVMDefault')->name('per-vm.update');
+        Route::delete('/vm/{vmId}/{protocol}/default', 'deletePerVMDefault')->name('per-vm.delete');
     });
 
     // Proxmox VM browser

@@ -11,15 +11,11 @@ export type RouteQueryOptions = {
 
 export type RouteDefinition<T extends string | readonly string[] = string> = {
     url: string;
-    method?: T extends readonly string[] ? T[number] : T;
-    methods?: T extends readonly string[] ? T : readonly T[];
-};
+} & (T extends readonly string[] ? { methods: T } : { method: T });
 
 export type RouteFormDefinition<T extends string | readonly string[] = string> = {
     action: string;
-    method?: T extends readonly string[] ? T[number] : T;
-    methods?: T extends readonly string[] ? T : readonly T[];
-};
+} & (T extends readonly string[] ? { methods: T } : { method: T });
 
 /**
  * Convert query options to URL query string
@@ -46,9 +42,9 @@ export function queryParams(options?: RouteQueryOptions): string {
  * Apply default values to URL parameters
  */
 export function applyUrlDefaults(
-    args: Record<string, QueryParamValue> | undefined,
+    args: unknown,
 ): Record<string, QueryParamValue> {
-    return args || {};
+    return (args as Record<string, QueryParamValue>) || {};
 }
 
 /**

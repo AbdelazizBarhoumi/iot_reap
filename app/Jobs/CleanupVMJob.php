@@ -6,6 +6,7 @@ use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
 use App\Services\AdminAlertService;
+use App\Services\CameraService;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientInterface;
 use App\Services\UsbDeviceQueueService;
@@ -42,6 +43,7 @@ class CleanupVMJob implements ShouldQueue
         ProxmoxClientInterface $client,
         GatewayService $gatewayService,
         UsbDeviceQueueService $queueService,
+        CameraService $cameraService,
     ): void {
         Log::info('Starting CleanupVMJob', [
             'session_id' => $this->session->id,
@@ -74,7 +76,10 @@ class CleanupVMJob implements ShouldQueue
                 return;
             }
 
-            // Step 0: Cleanup any attached USB devices first
+            // Step 0: Release any camera controls owned by this session
+            $this->releaseCameraControls($session, $cameraService);
+
+            // Step 1: Cleanup any attached USB devices first
             $this->cleanupUsbDevices($session, $gatewayService, $queueService);
 
             // Delete the VM
@@ -115,8 +120,18 @@ class CleanupVMJob implements ShouldQueue
             'error' => $e->getMessage(),
         ]);
 
-        // Still mark as expired even if cleanup failed
         $session = $this->session->fresh();
+
+        try {
+            app(CameraService::class)->releaseAllForSession($session->id);
+        } catch (Throwable $releaseException) {
+            Log::warning('Failed to release camera controls after cleanup job failure', [
+                'session_id' => $session->id,
+                'error' => $releaseException->getMessage(),
+            ]);
+        }
+
+        // Still mark as expired even if cleanup failed
         $session->update(['status' => VMSessionStatus::EXPIRED]);
 
         // Alert admin about orphaned VM
@@ -126,6 +141,18 @@ class CleanupVMJob implements ShouldQueue
     /**
      * Detach and cleanup USB devices attached to this session.
      */
+    private function releaseCameraControls(VMSession $session, CameraService $cameraService): void
+    {
+        $released = $cameraService->releaseAllForSession($session->id);
+
+        if ($released > 0) {
+            Log::info('Released camera controls for cleanup session', [
+                'session_id' => $session->id,
+                'released_count' => $released,
+            ]);
+        }
+    }
+
     private function cleanupUsbDevices(
         VMSession $session,
         GatewayService $gatewayService,

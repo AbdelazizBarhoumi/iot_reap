@@ -8,10 +8,10 @@
  *  - Extend / Terminate buttons
  *  - Session info sidebar with cameras and hardware
  */
-import { Head } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { SessionCameraPanel } from '@/components/SessionCameraPanel';
 import { SessionCountdown } from '@/components/SessionCountdown';
@@ -19,21 +19,204 @@ import { SessionExtendButton } from '@/components/SessionExtendButton';
 import { SessionHardwarePanel } from '@/components/SessionHardwarePanel';
 import { TerminateSessionButton } from '@/components/TerminateSessionButton';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVMSessions } from '@/hooks/useVMSessions';
+import { useVMSession } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import admin from '@/routes/admin';
+import type { Camera } from '@/types/camera.types';
+import type { VMSession } from '@/types/vm.types';
 
 interface SessionPageProps {
-  sessionId: string;
+  sessionId?: string;
+  session?: VMSession;
 }
 
-export default function SessionShowPage({ sessionId }: SessionPageProps) {
-  const { sessions, loading } = useVMSessions();
-  const session = sessions.find(s => s.id === sessionId);
+const SPLIT_MIN_LEFT_PX = 520;
+const SPLIT_MIN_RIGHT_PX = 500;
+const SPLIT_STEP_PERCENT = 5;
+const SPLIT_FALLBACK_MIN_PERCENT = 25;
+const SPLIT_FALLBACK_MAX_PERCENT = 75;
+
+function getSplitBoundsPercent(containerWidth: number): {
+  minPercent: number;
+  maxPercent: number;
+} {
+  if (containerWidth <= 0) {
+    return {
+      minPercent: SPLIT_FALLBACK_MIN_PERCENT,
+      maxPercent: SPLIT_FALLBACK_MAX_PERCENT,
+    };
+  }
+
+  const minPercent = Math.max(
+    SPLIT_FALLBACK_MIN_PERCENT,
+    (SPLIT_MIN_LEFT_PX / containerWidth) * 100,
+  );
+
+  const maxPercent = Math.min(
+    SPLIT_FALLBACK_MAX_PERCENT,
+    100 - (SPLIT_MIN_RIGHT_PX / containerWidth) * 100,
+  );
+
+  if (minPercent >= maxPercent) {
+    return {
+      minPercent: SPLIT_FALLBACK_MIN_PERCENT,
+      maxPercent: SPLIT_FALLBACK_MAX_PERCENT,
+    };
+  }
+
+  return { minPercent, maxPercent };
+}
+
+function clampSplitLeftPercent(value: number, containerWidth: number): number {
+  const { minPercent, maxPercent } = getSplitBoundsPercent(containerWidth);
+  return Math.min(maxPercent, Math.max(minPercent, value));
+}
+
+export default function SessionShowPage({ sessionId, session: initialSession }: SessionPageProps) {
+  const resolvedSessionId = sessionId ?? initialSession?.id;
+  const { session: fetchedSession, loading: fetchingSession } = useVMSession(
+    initialSession ? undefined : resolvedSessionId,
+  );
+  const session = initialSession ?? fetchedSession;
+  const loading = fetchingSession;
+  const [isCameraSplitActive, setIsCameraSplitActive] = useState(false);
+  const [isCameraFeedFocused, setIsCameraFeedFocused] = useState(false);
+  const [splitLeftWidth, setSplitLeftWidth] = useState<number>(58);
+  const [isResizingSplit, setIsResizingSplit] = useState(false);
+  const [splitBounds, setSplitBounds] = useState<{
+    minPercent: number;
+    maxPercent: number;
+  }>({
+    minPercent: SPLIT_FALLBACK_MIN_PERCENT,
+    maxPercent: SPLIT_FALLBACK_MAX_PERCENT,
+  });
+  const splitContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleCameraSelectionChange = useCallback((camera: Camera | null) => {
+    const isActive = camera !== null;
+
+    setIsCameraSplitActive(isActive);
+
+    if (!isActive) {
+      setIsCameraFeedFocused(false);
+      setIsResizingSplit(false);
+      setSplitBounds({
+        minPercent: SPLIT_FALLBACK_MIN_PERCENT,
+        maxPercent: SPLIT_FALLBACK_MAX_PERCENT,
+      });
+    }
+  }, []);
+
+  const handleCameraFeedFocusChange = useCallback((focused: boolean) => {
+    setIsCameraFeedFocused(focused);
+
+    if (!focused) {
+      return;
+    }
+
+    const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+    const bounds = getSplitBoundsPercent(width);
+
+    setSplitBounds(bounds);
+    setSplitLeftWidth(bounds.minPercent);
+  }, []);
+
+  useEffect(() => {
+    if (!isCameraSplitActive || !isResizingSplit) {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const container = splitContainerRef.current;
+      if (!container) {
+        return;
+      }
+
+      const rect = container.getBoundingClientRect();
+      const relativeX = event.clientX - rect.left;
+      const ratio = (relativeX / rect.width) * 100;
+      const clampedRatio = clampSplitLeftPercent(ratio, rect.width);
+
+      setSplitLeftWidth(clampedRatio);
+    };
+
+    const stopResize = () => {
+      setIsResizingSplit(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopResize);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopResize);
+    };
+  }, [isCameraSplitActive, isResizingSplit]);
+
+  useEffect(() => {
+    if (!isCameraSplitActive) {
+      return;
+    }
+
+    const syncSplitBounds = () => {
+      const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+      const bounds = getSplitBoundsPercent(width);
+
+      setSplitBounds(bounds);
+
+      setSplitLeftWidth((current) =>
+        clampSplitLeftPercent(current, width),
+      );
+    };
+
+    syncSplitBounds();
+    window.addEventListener('resize', syncSplitBounds);
+
+    return () => {
+      window.removeEventListener('resize', syncSplitBounds);
+    };
+  }, [isCameraSplitActive]);
+
+  const handleMakeCameraWider = useCallback(() => {
+    const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+    setSplitLeftWidth((current) =>
+      clampSplitLeftPercent(current - SPLIT_STEP_PERCENT, width),
+    );
+  }, []);
+
+  const handleMakeVmWider = useCallback(() => {
+    const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+    setSplitLeftWidth((current) =>
+      clampSplitLeftPercent(current + SPLIT_STEP_PERCENT, width),
+    );
+  }, []);
 
   const handleSessionExtended = (_newExpiresAt: string) => {
     // Session list will refresh automatically via useVMSessions
   };
+
+  const { auth } = usePage().props as { auth: { user?: { role?: string } } };
+  const isAdmin = auth?.user?.role === 'admin';
+
+  const handleBack = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+
+      if (isAdmin) {
+        router.visit(admin.dashboard.url());
+        return;
+      }
+
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      router.visit(dashboard().url);
+    },
+    [isAdmin],
+  );
 
   const handleSessionTerminated = () => {
     // Session will be removed from list automatically
@@ -60,9 +243,9 @@ export default function SessionShowPage({ sessionId }: SessionPageProps) {
           <div className="text-center">
             <h1 className="mb-2 text-2xl font-bold">Session not found</h1>
             <p className="mb-4 text-muted-foreground">This session may have expired or been terminated.</p>
-            <Link href="/dashboard">
-              <Button>Back to Dashboard</Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              Back to Dashboard
+            </Button>
           </div>
         </div>
       </AppLayout>
@@ -81,15 +264,15 @@ export default function SessionShowPage({ sessionId }: SessionPageProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
-                </Button>
-              </Link>
+              <Button variant="ghost" size="sm" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
               <div>
                 <h1 className="text-lg font-semibold">VM Session</h1>
-                <p className="text-sm text-muted-foreground">{session.template?.name ?? 'Unknown'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {session.vm_id ? `VM #${session.vm_id}` : session.node_name ?? 'Unknown VM'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -101,12 +284,28 @@ export default function SessionShowPage({ sessionId }: SessionPageProps) {
         </motion.div>
 
         {/* Main Content Area */}
-        <div className="flex flex-1 gap-4 overflow-hidden p-4">
+        <div
+          ref={splitContainerRef}
+          className={
+            isCameraSplitActive
+              ? 'relative flex flex-1 items-stretch overflow-hidden p-4'
+              : 'flex flex-1 gap-4 overflow-hidden p-4'
+          }
+        >
           {/* Guacamole Viewer */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 rounded-lg border border-border/40 bg-background overflow-hidden"
+            className={`min-w-0 overflow-hidden rounded-lg border border-border/40 bg-background ${
+              isCameraSplitActive
+                ? 'shrink-0 pr-2 transition-[width] duration-150'
+                : 'flex-1'
+            }`}
+            style={
+              isCameraSplitActive
+                ? { width: `${splitLeftWidth}%` }
+                : undefined
+            }
           >
             {session.guacamole_url ? (
               <GuacamoleViewer sessionId={session.id} isActive={session.status === 'active'} />
@@ -119,42 +318,80 @@ export default function SessionShowPage({ sessionId }: SessionPageProps) {
             )}
           </motion.div>
 
+          {isCameraSplitActive && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize session split"
+              className="relative w-3 shrink-0 self-stretch cursor-col-resize"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                setIsResizingSplit(true);
+              }}
+            >
+              <div
+                className={`absolute inset-y-0 left-1/2 w-px -translate-x-1/2 ${
+                  isResizingSplit ? 'bg-info' : 'bg-border'
+                }`}
+              />
+              <div
+                className={`absolute left-1/2 top-1/2 h-10 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border ${
+                  isResizingSplit
+                    ? 'border-info/40 bg-info/10'
+                    : 'border-border bg-background'
+                }`}
+              />
+            </div>
+          )}
+
           {/* Sidebar with Cameras and Hardware */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="w-96 flex flex-col gap-4 overflow-y-auto"
+            className={
+              isCameraSplitActive
+                ? 'min-w-0 flex flex-1 flex-col gap-4 overflow-y-auto pl-2'
+                : 'w-96 flex flex-col gap-4 overflow-y-auto'
+            }
           >
+            {isCameraSplitActive && !isCameraFeedFocused && (
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMakeCameraWider}
+                  disabled={splitLeftWidth <= splitBounds.minPercent}
+                >
+                  Camera Wider
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMakeVmWider}
+                  disabled={splitLeftWidth >= splitBounds.maxPercent}
+                >
+                  VM Wider
+                </Button>
+              </div>
+            )}
+
             {/* Cameras */}
-            <SessionCameraPanel sessionId={session.id} isActive={session.status === 'active'} />
+            <SessionCameraPanel
+              sessionId={session.id}
+              isActive={session.status === 'active'}
+              onCameraSelectionChange={handleCameraSelectionChange}
+              onFeedFocusChange={handleCameraFeedFocusChange}
+            />
 
-            {/* Hardware */}
-            <SessionHardwarePanel sessionId={session.id} isActive={session.status === 'active'} />
-
-            {/* Session Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Session Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Session ID</p>
-                  <p className="font-mono text-xs">{session.id}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Status</p>
-                  <p className="capitalize">{session.status}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Template</p>
-                  <p>{session.template?.name ?? 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Node</p>
-                  <p>{session.node?.node_name ?? session.node_name}</p>
-                </div>
-              </CardContent>
-            </Card>
+            {!isCameraSplitActive && (
+              <>
+                {/* Hardware */}
+                <SessionHardwarePanel
+                  sessionId={session.id}
+                  isActive={session.status === 'active'}
+                />
+              </>
+            )}
           </motion.div>
         </div>
       </div>

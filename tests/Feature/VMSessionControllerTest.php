@@ -178,6 +178,31 @@ class VMSessionControllerTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_user_can_create_session_with_selected_connection_profile(): void
+    {
+        $this->proxmoxFake->registerVM($this->node->name, 202, 'running', '10.0.0.102');
+
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            'vmid' => 202,
+            'node_id' => $this->node->id,
+            'duration_minutes' => 60,
+            'connection_preference_protocol' => 'rdp',
+            'connection_preference_profile' => 'Lab High Res',
+        ]);
+
+        if ($response->status() !== 201) {
+            $this->fail('Create session with selected connection profile failed: '.json_encode($response->json()));
+        }
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('vm_sessions', [
+            'user_id' => $this->user->id,
+            'vm_id' => 202,
+            'connection_profile_name' => 'Lab High Res',
+        ]);
+    }
+
     public function test_create_session_requires_vmid_and_node(): void
     {
         $response = $this->actingAs($this->user)->postJson('/sessions', [

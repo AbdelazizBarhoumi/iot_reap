@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreConnectionProfileRequest;
 use App\Http\Requests\UpdateConnectionPreferencesRequest;
 use App\Repositories\UserConnectionPreferenceRepository;
+use App\Repositories\UserVMConnectionDefaultProfileRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +23,7 @@ class ConnectionPreferencesController extends Controller
 
     public function __construct(
         private readonly UserConnectionPreferenceRepository $preferenceRepository,
+        private readonly UserVMConnectionDefaultProfileRepository $vmDefaultRepository,
     ) {}
 
     /**
@@ -194,6 +196,107 @@ class ConnectionPreferencesController extends Controller
         }
 
         return response()->json(['message' => "'{$profile}' set as default for {$protocol}."]);
+    }
+
+    /**
+     * GET /connection-preferences/vm/{vmId}/{protocol}
+     *
+     * Get the per-VM preferred profile for a specific VM and protocol.
+     */
+    public function getPerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
+    {
+        $protocol = strtolower($protocol);
+        $this->validateProtocol($protocol);
+
+        $vmDefault = $this->vmDefaultRepository->findPerVMDefault(
+            user: $request->user(),
+            vmId: $vmId,
+            protocol: $protocol,
+        );
+
+        if (! $vmDefault) {
+            return response()->json([
+                'data' => [
+                    'vm_id' => $vmId,
+                    'protocol' => $protocol,
+                    'preferred_profile_name' => null,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'data' => [
+                'vm_id' => $vmId,
+                'protocol' => $protocol,
+                'preferred_profile_name' => $vmDefault->preferred_profile_name,
+            ],
+        ]);
+    }
+
+    /**
+     * POST/PATCH /connection-preferences/vm/{vmId}/{protocol}/default
+     *
+     * Set the preferred profile for a specific VM and protocol.
+     */
+    public function setPerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
+    {
+        $protocol = strtolower($protocol);
+        $this->validateProtocol($protocol);
+
+        $request->validate([
+            'profile_name' => ['required', 'string', 'max:100'],
+        ]);
+
+        $profileName = $request->validated('profile_name');
+
+        // Verify that the profile exists for the user + protocol
+        $profile = $this->preferenceRepository->findByProfile(
+            $request->user(),
+            $protocol,
+            $profileName,
+        );
+
+        if (! $profile) {
+            abort(404, "Profile '{$profileName}' not found for {$protocol}.");
+        }
+
+        $vmDefault = $this->vmDefaultRepository->setPerVMDefault(
+            user: $request->user(),
+            vmId: $vmId,
+            protocol: $protocol,
+            profileName: $profileName,
+        );
+
+        return response()->json([
+            'data' => [
+                'vm_id' => $vmId,
+                'protocol' => $protocol,
+                'preferred_profile_name' => $vmDefault->preferred_profile_name,
+            ],
+        ]);
+    }
+
+    /**
+     * DELETE /connection-preferences/vm/{vmId}/{protocol}/default
+     *
+     * Clear the per-VM preferred profile (revert to protocol default).
+     */
+    public function deletePerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
+    {
+        $protocol = strtolower($protocol);
+        $this->validateProtocol($protocol);
+
+        $deleted = $this->vmDefaultRepository->deletePerVMDefault(
+            user: $request->user(),
+            vmId: $vmId,
+            protocol: $protocol,
+        );
+
+        if (! $deleted) {
+            // It's okay if it doesn't exist; return success anyway
+        }
+
+        return response()->json(['message' => 'Per-VM default cleared for VM ' . $vmId]);
     }
 
     /**

@@ -56,13 +56,20 @@ export function useSessionCameras(
             const data = await cameraApi.list(sessionId);
             setCameras(data);
             setError(null);
-            // Update the selected camera with fresh data
-            if (selectedCamera) {
-                const updated = data.find((c) => c.id === selectedCamera.id);
-                if (updated) {
-                    setSelectedCamera(updated);
+
+            // Keep selection stable across refreshes using current state,
+            // avoiding stale closure races that can revert user selection.
+            setSelectedCamera((currentSelected) => {
+                if (!currentSelected) {
+                    return null;
                 }
-            }
+
+                const updated = data.find(
+                    (camera) => camera.id === currentSelected.id,
+                );
+
+                return updated ?? null;
+            });
         } catch (e: unknown) {
             const msg =
                 e instanceof Error ? e.message : 'Failed to load cameras';
@@ -70,7 +77,7 @@ export function useSessionCameras(
         } finally {
             setLoading(false);
         }
-    }, [sessionId, selectedCamera]);
+    }, [sessionId]);
     // Fetch resolution presets once
     const fetchResolutions = useCallback(async () => {
         if (!sessionId) return;

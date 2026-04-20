@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Create the daily_training_path_stats table with all columns.
+     */
     public function up(): void
     {
         Schema::create('daily_training_path_stats', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('training_path_id')->constrained('training_paths')->onDelete('cascade');
+            $table->foreignId('training_path_id')->constrained('training_paths')->cascadeOnDelete();
             $table->date('date');
             $table->unsignedInteger('enrollments')->default(0);
             $table->unsignedInteger('completions')->default(0);
@@ -27,6 +30,9 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('daily_training_path_stats');

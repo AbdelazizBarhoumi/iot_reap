@@ -86,7 +86,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </div>
                 <div className="text-center">
                     <TextLink
-                        href={login()}
+                        href={login().url}
                         className="inline-flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
                     >
                         <ArrowLeft className="h-3 w-3" />

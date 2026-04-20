@@ -67,11 +67,16 @@ export interface TrainingPathApproval {
   adminFeedback?: string | null;
 }
 
+export interface PendingTrainingPathsResponse {
+  data: TrainingPathApproval[];
+  featured: TrainingPathApproval[];
+}
+
 /**
  * Get trainingPaths pending approval
  */
 export const getPendingTrainingPaths = () =>
-  client.get<TrainingPathApproval[]>(`/admin/trainingPaths`);
+  client.get<PendingTrainingPathsResponse>(`/admin/trainingPaths`);
 
 /**
  * Approve a trainingPath

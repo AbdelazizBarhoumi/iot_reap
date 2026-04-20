@@ -63,6 +63,14 @@ export interface UsbDevice {
     pending_since: string | null;
     queue_count: number;
     has_active_reservation: boolean;
+    // Runtime attach verification hints (session-scoped responses)
+    is_verified_attached?: boolean | null;
+    attachment_verification_state?:
+        | 'verified'
+        | 'failed'
+        | 'unverifiable'
+        | null;
+    attachment_verification_reason?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -177,11 +185,19 @@ export interface ApproveReservationRequest {
 }
 /**
  * Request payload for admin creating a device block.
+ * Supports three modes:
+ * - 'block': Device blocked for all users
+ * - 'reserve_to_user': Device reserved for specific user only
+ * - 'reserve_to_vm': Device reserved for specific VM only
  */
 export interface CreateAdminBlockRequest {
     usb_device_id: number;
+    mode?: 'block' | 'reserve_to_user' | 'reserve_to_vm';
+    target_user_id?: number;
+    target_vm_id?: number;
     start_at: string;
     end_at: string;
+    purpose?: string;
     notes?: string;
 }
 /**

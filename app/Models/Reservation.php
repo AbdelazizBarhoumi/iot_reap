@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $reservable_type (App\Models\Camera or App\Models\UsbDevice)
  * @property int $reservable_id
  * @property string $user_id
+ * @property int|null $target_vm_id
+ * @property string|null $target_user_id
  * @property string|null $approved_by
  * @property string $status (pending, approved, rejected, cancelled, active, completed)
  * @property \DateTime $requested_start_at
@@ -39,6 +41,8 @@ class Reservation extends Model
         'camera_id',
         'usb_device_id',
         'user_id',
+        'target_vm_id',
+        'target_user_id',
         'approved_by',
         'status',
         'requested_start_at',
@@ -54,6 +58,7 @@ class Reservation extends Model
 
     protected $casts = [
         'status' => UsbReservationStatus::class,
+        'target_vm_id' => 'integer',
         'requested_start_at' => 'datetime',
         'requested_end_at' => 'datetime',
         'approved_start_at' => 'datetime',

@@ -10,6 +10,7 @@ import TrainingPathCard from '@/components/TrainingPaths/TrainingPathCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import trainingPathsRoutes from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { TrainingPath } from '@/types/TrainingPath.types';
 interface Props {
@@ -18,7 +19,7 @@ interface Props {
     total: number;
 }
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Training Paths', href: '/trainingPaths' },
+    { title: 'Training Paths', href: trainingPathsRoutes.index.url() },
     { title: 'Search', href: '/search' },
 ];
 export default function SearchPage({
@@ -74,7 +75,7 @@ export default function SearchPage({
                             training paths
                         </p>
                         <Button asChild>
-                            <Link href="/trainingPaths">Browse All Paths</Link>
+                            <Link href={trainingPathsRoutes.index.url()}>Browse All Paths</Link>
                         </Button>
                     </div>
                 ) : (

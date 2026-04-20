@@ -27,6 +27,7 @@ class VMSessionFactory extends Factory
             'vm_id' => null,
             'status' => VMSessionStatus::PENDING->value,
             'protocol' => \App\Enums\VMSessionProtocol::RDP->value, // default for tests
+            'connection_profile_name' => null,
             'ip_address' => null,
             'guacamole_connection_id' => null,
             'expires_at' => now()->addHours(4),

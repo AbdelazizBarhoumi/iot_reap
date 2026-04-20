@@ -112,6 +112,7 @@ class UsbDeviceQueueService
         })->get();
 
         foreach ($entries as $entry) {
+            /** @var UsbDeviceQueue $entry */
             if ($this->queueRepository->remove($entry)) {
                 $removedCount++;
             }
@@ -245,31 +246,57 @@ class UsbDeviceQueueService
         User $admin,
         \DateTimeInterface $startAt,
         \DateTimeInterface $endAt,
-        ?string $notes = null
+        ?string $notes = null,
+        string $mode = 'block',
+        ?string $targetUserId = null,
+        ?int $targetVmId = null,
+        ?string $purpose = null,
     ): Reservation {
         // Check for conflicts
         if ($this->reservationRepository->hasConflict($device, $startAt, $endAt)) {
             throw new \DomainException('Time slot conflicts with existing reservation');
         }
 
+        if ($mode === 'reserve_to_user' && ! $targetUserId) {
+            throw new \InvalidArgumentException('Target user is required for user reservation mode');
+        }
+
+        if ($mode === 'reserve_to_vm' && ! $targetVmId) {
+            throw new \InvalidArgumentException('Target VM ID is required for VM reservation mode');
+        }
+
+        $isBlock = $mode === 'block';
+        $reservationUserId = $mode === 'reserve_to_user'
+            ? (string) $targetUserId
+            : (string) $admin->id;
+        $reservationPurpose = $isBlock
+            ? 'Admin block'
+            : ($purpose ?: ($mode === 'reserve_to_vm' ? 'Admin VM reservation' : 'Admin user reservation'));
+        $reservationPriority = $isBlock ? 100 : 80;
+
         $reservation = $this->reservationRepository->create([
             'usb_device_id' => $device->id,
-            'user_id' => $admin->id,
+            'user_id' => $reservationUserId,
+            'target_vm_id' => $mode === 'reserve_to_vm' ? $targetVmId : null,
+            'target_user_id' => $mode === 'reserve_to_user' ? $targetUserId : null,
             'approved_by' => $admin->id,
             'status' => UsbReservationStatus::APPROVED->value,
             'requested_start_at' => $startAt,
             'requested_end_at' => $endAt,
             'approved_start_at' => $startAt,
             'approved_end_at' => $endAt,
-            'purpose' => 'Admin block',
+            'purpose' => $reservationPurpose,
             'admin_notes' => $notes,
-            'priority' => 100, // High priority for admin blocks
+            'priority' => $reservationPriority,
         ]);
 
-        Log::info('Admin block created', [
+        Log::info('Admin reservation created', [
             'reservation_id' => $reservation->id,
             'device_id' => $device->id,
             'admin_id' => $admin->id,
+            'mode' => $mode,
+            'target_user_id' => $targetUserId,
+            'target_vm_id' => $targetVmId,
         ]);
 
         return $reservation;
@@ -278,7 +305,7 @@ class UsbDeviceQueueService
     /**
      * Check if a user can attach a device now (considering reservations).
      */
-    public function canUserAttachNow(UsbDevice $device, User $user): array
+    public function canUserAttachNow(UsbDevice $device, VMSession $session): array
     {
         $now = now();
 
@@ -292,13 +319,27 @@ class UsbDeviceQueueService
             ->first();
 
         if ($activeReservation) {
-            if ($activeReservation->user_id === $user->id) {
+            if (
+                $activeReservation->target_vm_id !== null
+                && $session->vm_id !== null
+                && (int) $activeReservation->target_vm_id === (int) $session->vm_id
+            ) {
+                return ['can_attach' => true, 'reason' => 'Session VM has an active reservation'];
+            }
+
+            if ($activeReservation->user_id === $session->user_id) {
                 return ['can_attach' => true, 'reason' => 'User has active reservation'];
             }
 
+            $reservedForVm = $activeReservation->target_vm_id !== null
+                ? "VM {$activeReservation->target_vm_id}"
+                : null;
+
             return [
                 'can_attach' => false,
-                'reason' => 'Device is reserved by another user',
+                'reason' => $reservedForVm
+                    ? "Device is reserved for {$reservedForVm}"
+                    : 'Device is reserved by another user',
                 'reserved_by' => $activeReservation->user->name,
                 'until' => $activeReservation->approved_end_at->format('Y-m-d H:i:s'),
             ];
@@ -329,8 +370,8 @@ class UsbDeviceQueueService
                     });
             })
             ->get()
-            ->map(function ($device) use ($session) {
-                $canAttach = $this->canUserAttachNow($device, $session->user);
+            ->map(function (UsbDevice $device) use ($session): array {
+                $canAttach = $this->canUserAttachNow($device, $session);
                 $queuePosition = $this->getQueuePosition($device, $session);
 
                 return [

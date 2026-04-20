@@ -6,10 +6,12 @@ use App\Enums\UsbDeviceStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\VMSession;
 use App\Services\AdminAlertService;
+use App\Services\CameraService;
 use App\Services\GatewayService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientInterface;
 use App\Services\UsbDeviceQueueService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -36,6 +38,12 @@ class TerminateVMJob implements ShouldQueue
 
     public $backoff = [10, 30, 60]; // seconds
 
+    private bool $stopVm = false;
+
+    private ?string $returnSnapshot = null; // not readonly so we can default to null
+
+    private ?string $scheduledForExpiry = null; // for auto-expire jobs
+
     /**
      * Create a new job instance.
      *
@@ -45,29 +53,20 @@ class TerminateVMJob implements ShouldQueue
      * removed.  Internally we always serialize this value so the property is
      * initialized after the job is unserialized by the queue worker.
      *
-     * @param  bool  $stopVm  whether to stop/delete the VM (default: false)
-     * @param  string|null  $returnSnapshot  snapshot name to revert to before
-     *                                       stopping (optional)
+     * @param bool $stopVm Whether to stop/delete the VM (default: false)
+     * @param string|null $returnSnapshot Snapshot name to revert to before stopping
+     * @param string|null $scheduledForExpiry Original expiry timestamp for auto-expire jobs
      */
-    // default values ensure a job pulled from an older queue payload
-    // remains valid even if the constructor wasn’t executed during
-    // deserialization.  This guards against the typed property exception we
-    // saw in the logs when stopVm was accessed before initialization.
-    private bool $stopVm = false;
-
-    private ?string $returnSnapshot = null; // not readonly so we can default to null
-
-    private ?string $scheduledForExpiry = null; // for auto-expire jobs
-
     public function __construct(
         private readonly VMSession $session,
         bool $stopVm = false,
         ?string $returnSnapshot = null,
         ?string $scheduledForExpiry = null,
     ) {
-        // explicitly assign values so that defaults are stored during
-        // serialization and the properties are never left uninitialized after
-        // the job is pulled from the queue.
+        // default values ensure a job pulled from an older queue payload
+        // remains valid even if the constructor wasn’t executed during
+        // deserialization.  This guards against the typed property exception we
+        // saw in the logs when stopVm was accessed before initialization.
         $this->stopVm = $stopVm;
         $this->returnSnapshot = $returnSnapshot;
         $this->scheduledForExpiry = $scheduledForExpiry;
@@ -81,6 +80,7 @@ class TerminateVMJob implements ShouldQueue
         ProxmoxClientInterface $proxmoxClient,
         GatewayService $gatewayService,
         UsbDeviceQueueService $queueService,
+        CameraService $cameraService,
     ): void {
         Log::info('Starting TerminateVMJob', [
             'session_id' => $this->session->id,
@@ -109,12 +109,15 @@ class TerminateVMJob implements ShouldQueue
             // the session was extended. If expires_at changed, skip — a new
             // auto-expire job will handle it.
             if ($this->scheduledForExpiry !== null) {
-                $scheduledTime = \Carbon\Carbon::parse($this->scheduledForExpiry);
-                if ($session->expires_at->greaterThan($scheduledTime)) {
+                $scheduledTime = Carbon::parse($this->scheduledForExpiry);
+                /** @var Carbon $expiresAt */
+                $expiresAt = $session->expires_at;
+
+                if ($expiresAt->gt($scheduledTime)) {
                     Log::info('Session was extended, skipping auto-expire job', [
                         'session_id' => $session->id,
                         'scheduled_for' => $this->scheduledForExpiry,
-                        'current_expires_at' => $session->expires_at->toIso8601String(),
+                        'current_expires_at' => $expiresAt->toIso8601String(),
                     ]);
 
                     return;
@@ -123,6 +126,9 @@ class TerminateVMJob implements ShouldQueue
 
             // Step 1: Delete Guacamole connection (ALWAYS do this first)
             $this->deleteGuacamoleConnection($session, $guacamoleClient);
+
+            // Step 1.1: Release any camera controls owned by this session
+            $this->releaseCameraControls($session, $cameraService);
 
             // Step 1.5: Detach and cleanup USB devices
             $this->cleanupUsbDevices($session, $gatewayService, $queueService);
@@ -322,6 +328,18 @@ class TerminateVMJob implements ShouldQueue
      * to issue a stop call and log the action. Any snapshot revert logic has
      * already been handled separately if requested.
      */
+    private function releaseCameraControls(VMSession $session, CameraService $cameraService): void
+    {
+        $released = $cameraService->releaseAllForSession($session->id);
+
+        if ($released > 0) {
+            Log::info('Released camera controls for terminated session', [
+                'session_id' => $session->id,
+                'released_count' => $released,
+            ]);
+        }
+    }
+
     private function stopVM(
         VMSession $session,
         ProxmoxClientInterface $client,
@@ -421,8 +439,18 @@ class TerminateVMJob implements ShouldQueue
             'error' => $e->getMessage(),
         ]);
 
-        // Still mark as expired even if termination failed
         $session = $this->session->fresh();
+
+        try {
+            app(CameraService::class)->releaseAllForSession($session->id);
+        } catch (Throwable $releaseException) {
+            Log::warning('Failed to release camera controls after job failure', [
+                'session_id' => $session->id,
+                'error' => $releaseException->getMessage(),
+            ]);
+        }
+
+        // Still mark as expired even if termination failed
         $session->update(['status' => VMSessionStatus::EXPIRED]);
 
         // Alert admin about failed termination

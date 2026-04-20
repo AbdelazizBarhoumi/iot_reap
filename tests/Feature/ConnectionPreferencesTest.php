@@ -120,7 +120,7 @@ class ConnectionPreferencesTest extends TestCase
                     'port' => 3389,
                     'width' => 1920,
                     'height' => 1080,
-                    'disable-wallpaper' => true,
+                    'enable-wallpaper' => false,
                 ],
             ]);
 
@@ -176,6 +176,98 @@ class ConnectionPreferencesTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('data.parameters.port', 13389);
         $response->assertJsonPath('data.parameters.width', 2560);
+    }
+
+    public function test_user_can_save_and_retrieve_extended_rdp_fields(): void
+    {
+        GuacamoleConnectionPreference::create([
+            'user_id' => $this->user->id,
+            'vm_session_type' => 'rdp',
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => ['port' => 3389],
+        ]);
+
+        $updatePayload = [
+            'parameters' => [
+                'port' => 3389,
+                'guacd-hostname' => 'guacd.internal',
+                'guacd-port' => 4822,
+                'guacd-encryption' => 'none',
+                'failover-only' => true,
+                'disable-auth' => true,
+                'cert-fingerprints' => 'sha256:abcdef123456',
+                'console-audio' => true,
+                'static-channels' => 'rdpdr,rdpsnd',
+                'sftp-host-key' => 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEKEY',
+                'max-connections-per-user' => 2,
+            ],
+        ];
+
+        $updateResponse = $this->actingAs($this->user)
+            ->putJson('/connection-preferences/rdp/Default', $updatePayload);
+
+        $updateResponse->assertOk();
+        $updateResponse->assertJsonPath('data.parameters.guacd-hostname', 'guacd.internal');
+        $updateResponse->assertJsonPath('data.parameters.guacd-port', 4822);
+        $updateResponse->assertJsonPath('data.parameters.failover-only', true);
+        $updateResponse->assertJsonPath('data.parameters.disable-auth', true);
+        $updateResponse->assertJsonPath('data.parameters.cert-fingerprints', 'sha256:abcdef123456');
+        $updateResponse->assertJsonPath('data.parameters.console-audio', true);
+        $updateResponse->assertJsonPath('data.parameters.static-channels', 'rdpdr,rdpsnd');
+        $updateResponse->assertJsonPath('data.parameters.sftp-host-key', 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEKEY');
+
+        $stored = GuacamoleConnectionPreference::query()
+            ->where('user_id', $this->user->id)
+            ->where('vm_session_type', 'rdp')
+            ->where('profile_name', 'Default')
+            ->firstOrFail();
+
+        $this->assertSame('guacd.internal', $stored->parameters['guacd-hostname']);
+        $this->assertSame(4822, $stored->parameters['guacd-port']);
+        $this->assertTrue($stored->parameters['failover-only']);
+        $this->assertTrue($stored->parameters['disable-auth']);
+        $this->assertSame('sha256:abcdef123456', $stored->parameters['cert-fingerprints']);
+        $this->assertTrue($stored->parameters['console-audio']);
+        $this->assertSame('rdpdr,rdpsnd', $stored->parameters['static-channels']);
+        $this->assertSame('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEKEY', $stored->parameters['sftp-host-key']);
+
+        $getResponse = $this->actingAs($this->user)
+            ->getJson('/connection-preferences/rdp');
+
+        $getResponse->assertOk();
+        $getResponse->assertJsonPath('data.profiles.0.parameters.guacd-hostname', 'guacd.internal');
+        $getResponse->assertJsonPath('data.profiles.0.parameters.guacd-port', 4822);
+        $getResponse->assertJsonPath('data.profiles.0.parameters.failover-only', true);
+        $getResponse->assertJsonPath('data.profiles.0.parameters.disable-auth', true);
+        $getResponse->assertJsonPath('data.profiles.0.parameters.cert-fingerprints', 'sha256:abcdef123456');
+        $getResponse->assertJsonPath('data.profiles.0.parameters.console-audio', true);
+        $getResponse->assertJsonPath('data.profiles.0.parameters.static-channels', 'rdpdr,rdpsnd');
+        $getResponse->assertJsonPath('data.profiles.0.parameters.sftp-host-key', 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEKEY');
+    }
+
+    public function test_update_rejects_legacy_alias_keys_when_strict_mode_enabled(): void
+    {
+        GuacamoleConnectionPreference::create([
+            'user_id' => $this->user->id,
+            'vm_session_type' => 'rdp',
+            'profile_name' => 'Default',
+            'is_default' => true,
+            'parameters' => ['port' => 3389],
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->putJson('/connection-preferences/rdp/Default', [
+                'parameters' => [
+                    'support-audio-in-console' => true,
+                ],
+            ]);
+
+        $response->assertUnprocessable();
+        $this->assertStringContainsString(
+            'Unsupported parameter keys for rdp',
+            $response->getContent(),
+        );
     }
 
     public function test_update_nonexistent_profile_returns_404(): void

@@ -44,6 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForum } from '@/hooks/useForum';
 import AppLayout from '@/layouts/app-layout';
 import { trainingPathToasts } from '@/lib/toast-utils';
+import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { TrainingPath, TrainingPathProgress } from '@/types/TrainingPath.types';
 const trainingUnitIcons: Record<string, React.ElementType> = {
@@ -178,7 +179,7 @@ export default function TrainingPathDetailPage() {
                         Training path not found.
                     </p>
                     <Button variant="outline" asChild>
-                        <Link href="/trainingPaths">
+                        <Link href={trainingPaths.index.url()}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to Paths
                         </Link>
@@ -232,7 +233,7 @@ export default function TrainingPathDetailPage() {
                     />
                     <div className="relative container py-12 md:py-16">
                         <Link
-                            href="/trainingPaths"
+                            href={trainingPaths.index.url()}
                             className="mb-6 inline-flex items-center gap-1 text-sm text-white/60 transition-colors hover:text-white"
                         >
                             <ArrowLeft className="h-4 w-4" /> Back to paths
@@ -586,13 +587,13 @@ export default function TrainingPathDetailPage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: mi * 0.05 }}
                                         >
-                                            <Card className="overflow-hidden border-border/50">
+                                            <Card className="overflow-hidden border-border/50 cursor-pointer">
                                                 {/* Module header */}
                                                 <button
                                                     onClick={() =>
                                                         toggleModule(module.id)
                                                     }
-                                                    className="flex w-full items-center justify-between px-5 py-4 transition-colors hover:bg-muted/30"
+                                                    className="flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors hover:bg-muted/30"
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div

@@ -75,6 +75,9 @@ class SecurityHeaders
         $imgSrc = "'self' data: https: blob:";
         $fontSrc = "'self' data:";
 
+        // Build worker-src separately to avoid using development values in production.
+        $workerSrc = "'self' blob:";
+
         // In development, allow Vite dev server on any local interface
         if (! app()->isProduction()) {
             $vitePort = config('app.vite_port', 5173);
@@ -91,6 +94,7 @@ class SecurityHeaders
                 $connectSrc .= " {$viteUrl} ws://" . str_replace('http://', '', $viteUrl);
                 $imgSrc .= " {$viteUrl}";
                 $fontSrc .= " {$viteUrl}";
+                $workerSrc .= " {$viteUrl}";
             }
         }
 
@@ -110,7 +114,8 @@ class SecurityHeaders
             "connect-src $connectSrc",
             "media-src 'self' blob:",
             "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com",
-            "child-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+            "child-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com",
+            "worker-src $workerSrc",
             "object-src 'none'",
             "frame-ancestors 'self'",
             "base-uri 'self'",

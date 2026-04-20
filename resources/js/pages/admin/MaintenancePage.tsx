@@ -10,8 +10,12 @@ import {
     FileText,
     Loader2,
     RefreshCw,
+    Search,
+    X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import client from '@/api/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,16 +27,28 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { getHttpErrorMessage } from '@/lib/http-errors';
 import * as maintenanceRoutes from '@/routes/admin/maintenance';
 import * as camerasRoutes from '@/routes/admin/maintenance/cameras';
 import * as usbDevicesRoutes from '@/routes/admin/maintenance/usb-devices';
 import type { BreadcrumbItem } from '@/types';
 
+type ResourceType = 'usb_device' | 'camera';
+type ResourceTypeFilter = 'all' | ResourceType;
+type MaintenanceStatusFilter = 'all' | 'in_maintenance' | 'available';
+
 interface Resource {
     id: number;
-    type: 'usb_device' | 'camera';
+    type: ResourceType;
     name: string;
     description: string | null;
     maintenance_mode: boolean;
@@ -54,7 +70,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface MaintenanceFormState {
     resourceId: number | null;
-    resourceType: 'usb_device' | 'camera' | null;
+    resourceType: ResourceType | null;
     notes: string;
     until: string;
     isSubmitting: boolean;
@@ -62,12 +78,33 @@ interface MaintenanceFormState {
 
 interface DescriptionEditState {
     resourceId: number | null;
-    resourceType: 'usb_device' | 'camera' | null;
+    resourceType: ResourceType | null;
     description: string;
     isSubmitting: boolean;
 }
 
+const toDateInputValue = (isoDate: string | null): string => {
+    if (!isoDate) {
+        return '';
+    }
+
+    return isoDate.split('T')[0] ?? '';
+};
+
+const resourceKey = (resource: Pick<Resource, 'id' | 'type'>): string =>
+    `${resource.type}-${resource.id}`;
+
 export default function MaintenancePage({ resources = [] }: Props) {
+    const [resourceItems, setResourceItems] = useState<Resource[]>(resources);
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] =
+        useState<ResourceTypeFilter>('all');
+    const [maintenanceStatusFilter, setMaintenanceStatusFilter] =
+        useState<MaintenanceStatusFilter>('all');
+    const [busyResourceKey, setBusyResourceKey] = useState<string | null>(
+        null,
+    );
+
     const [maintenanceForm, setMaintenanceForm] =
         useState<MaintenanceFormState>({
             resourceId: null,
@@ -85,18 +122,86 @@ export default function MaintenancePage({ resources = [] }: Props) {
             isSubmitting: false,
         });
 
-    const inMaintenanceCount = resources.filter(
+    useEffect(() => {
+        setResourceItems(resources);
+    }, [resources]);
+
+    const inMaintenanceCount = resourceItems.filter(
         (r) => r.is_in_maintenance,
     ).length;
+
+    const filteredResources = useMemo(() => {
+        const normalizedSearch = search.trim().toLowerCase();
+
+        return resourceItems.filter((resource) => {
+            const matchesSearch =
+                normalizedSearch.length === 0 ||
+                [
+                    resource.name,
+                    resource.description ?? '',
+                    resource.maintenance_notes ?? '',
+                    resource.gateway ?? '',
+                    resource.source ?? '',
+                    resource.status,
+                ].some((value) =>
+                    value.toLowerCase().includes(normalizedSearch),
+                );
+
+            const matchesType =
+                typeFilter === 'all' || resource.type === typeFilter;
+
+            const matchesMaintenanceStatus =
+                maintenanceStatusFilter === 'all' ||
+                (maintenanceStatusFilter === 'in_maintenance'
+                    ? resource.is_in_maintenance
+                    : !resource.is_in_maintenance);
+
+            return (
+                matchesSearch && matchesType && matchesMaintenanceStatus
+            );
+        });
+    }, [maintenanceStatusFilter, resourceItems, search, typeFilter]);
+
+    const selectedMaintenanceResource = useMemo(
+        () =>
+            resourceItems.find(
+                (resource) =>
+                    resource.id === maintenanceForm.resourceId &&
+                    resource.type === maintenanceForm.resourceType,
+            ),
+        [
+            maintenanceForm.resourceId,
+            maintenanceForm.resourceType,
+            resourceItems,
+        ],
+    );
+
+    const selectedDescriptionResource = useMemo(
+        () =>
+            resourceItems.find(
+                (resource) =>
+                    resource.id === descriptionEdit.resourceId &&
+                    resource.type === descriptionEdit.resourceType,
+            ),
+        [
+            descriptionEdit.resourceId,
+            descriptionEdit.resourceType,
+            resourceItems,
+        ],
+    );
+
+    const resetFilters = () => {
+        setSearch('');
+        setTypeFilter('all');
+        setMaintenanceStatusFilter('all');
+    };
 
     const openMaintenanceForm = (resource: Resource) => {
         setMaintenanceForm({
             resourceId: resource.id,
             resourceType: resource.type,
             notes: resource.maintenance_notes || '',
-            until: resource.maintenance_until
-                ? new Date(resource.maintenance_until).toISOString().split('T')[0]
-                : '',
+            until: toDateInputValue(resource.maintenance_until),
             isSubmitting: false,
         });
     };
@@ -111,46 +216,130 @@ export default function MaintenancePage({ resources = [] }: Props) {
         });
     };
 
-    const submitMaintenanceForm = (e: React.FormEvent) => {
+    const submitMaintenanceForm = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!maintenanceForm.resourceId || !maintenanceForm.resourceType) {
+
+        const targetResourceId = maintenanceForm.resourceId;
+        const targetResourceType = maintenanceForm.resourceType;
+        const trimmedNotes = maintenanceForm.notes.trim();
+
+        if (
+            targetResourceId === null ||
+            targetResourceType === null
+        ) {
             return;
         }
 
+        if (!trimmedNotes) {
+            toast.error('Please provide maintenance notes before submitting.');
+
+            return;
+        }
+
+        const targetKey = resourceKey({
+            id: targetResourceId,
+            type: targetResourceType,
+        });
+
         setMaintenanceForm((prev) => ({ ...prev, isSubmitting: true }));
+        setBusyResourceKey(targetKey);
 
         const url =
-            maintenanceForm.resourceType === 'usb_device'
-                ? usbDevicesRoutes.set({ device: maintenanceForm.resourceId }).url
-                : camerasRoutes.set({ camera: maintenanceForm.resourceId }).url;
+            targetResourceType === 'usb_device'
+                ? usbDevicesRoutes.set({ device: targetResourceId }).url
+                : camerasRoutes.set({ camera: targetResourceId }).url;
 
-        router.post(
-            url,
-            {
-                notes: maintenanceForm.notes,
+        try {
+            const response = await client.post<{
+                data: {
+                    maintenance_notes: string | null;
+                    maintenance_until: string | null;
+                };
+            }>(url, {
+                notes: trimmedNotes,
                 until: maintenanceForm.until || null,
-            },
-            {
-                onSuccess: () => {
-                    closeMaintenanceForm();
-                },
-                onFinish: () => {
-                    setMaintenanceForm((prev) => ({
-                        ...prev,
-                        isSubmitting: false,
-                    }));
-                },
-            },
-        );
+            });
+
+            setResourceItems((prev) =>
+                prev.map((resource) =>
+                    resource.id === targetResourceId &&
+                    resource.type === targetResourceType
+                        ? {
+                              ...resource,
+                              maintenance_mode: true,
+                              is_in_maintenance: true,
+                              maintenance_notes:
+                                  response.data.data.maintenance_notes ??
+                                  trimmedNotes,
+                              maintenance_until:
+                                  response.data.data.maintenance_until,
+                          }
+                        : resource,
+                ),
+            );
+
+            closeMaintenanceForm();
+            toast.success('Maintenance mode enabled successfully.');
+        } catch (error) {
+            toast.error(
+                getHttpErrorMessage(
+                    error,
+                    'Failed to enable maintenance mode. Please try again.',
+                ),
+            );
+        } finally {
+            setBusyResourceKey(null);
+            setMaintenanceForm((prev) => ({
+                ...prev,
+                isSubmitting: false,
+            }));
+        }
     };
 
-    const clearMaintenance = (resource: Resource) => {
+    const clearMaintenance = async (resource: Resource) => {
+        const shouldProceed = window.confirm(
+            `Clear maintenance mode for ${resource.name}?`,
+        );
+
+        if (!shouldProceed) {
+            return;
+        }
+
         const url =
             resource.type === 'usb_device'
                 ? usbDevicesRoutes.clear({ device: resource.id }).url
                 : camerasRoutes.clear({ camera: resource.id }).url;
 
-        router.delete(url);
+        setBusyResourceKey(resourceKey(resource));
+
+        try {
+            await client.delete(url);
+
+            setResourceItems((prev) =>
+                prev.map((item) =>
+                    item.id === resource.id && item.type === resource.type
+                        ? {
+                              ...item,
+                              maintenance_mode: false,
+                              maintenance_notes: null,
+                              maintenance_until: null,
+                              is_in_maintenance: false,
+                          }
+                        : item,
+                ),
+            );
+
+            toast.success('Maintenance mode cleared successfully.');
+        } catch (error) {
+            toast.error(
+                getHttpErrorMessage(
+                    error,
+                    'Failed to clear maintenance mode. Please try again.',
+                ),
+            );
+        } finally {
+            setBusyResourceKey(null);
+        }
     };
 
     const openDescriptionEdit = (resource: Resource) => {
@@ -171,33 +360,59 @@ export default function MaintenancePage({ resources = [] }: Props) {
         });
     };
 
-    const submitDescriptionEdit = (e: React.FormEvent) => {
+    const submitDescriptionEdit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!descriptionEdit.resourceId || !descriptionEdit.resourceType) {
+
+        const targetResourceId = descriptionEdit.resourceId;
+        const targetResourceType = descriptionEdit.resourceType;
+
+        if (
+            targetResourceId === null ||
+            targetResourceType === null
+        ) {
             return;
         }
 
         setDescriptionEdit((prev) => ({ ...prev, isSubmitting: true }));
-
-        router.post(
-            maintenanceRoutes.description().url,
-            {
-                type: descriptionEdit.resourceType,
-                id: descriptionEdit.resourceId,
-                description: descriptionEdit.description,
-            },
-            {
-                onSuccess: () => {
-                    closeDescriptionEdit();
-                },
-                onFinish: () => {
-                    setDescriptionEdit((prev) => ({
-                        ...prev,
-                        isSubmitting: false,
-                    }));
-                },
-            },
+        setBusyResourceKey(
+            resourceKey({ id: targetResourceId, type: targetResourceType }),
         );
+
+        try {
+            await client.post(maintenanceRoutes.description().url, {
+                type: targetResourceType,
+                id: targetResourceId,
+                description: descriptionEdit.description,
+            });
+
+            setResourceItems((prev) =>
+                prev.map((resource) =>
+                    resource.id === targetResourceId &&
+                    resource.type === targetResourceType
+                        ? {
+                              ...resource,
+                              description: descriptionEdit.description || null,
+                          }
+                        : resource,
+                ),
+            );
+
+            closeDescriptionEdit();
+            toast.success('Admin notes updated successfully.');
+        } catch (error) {
+            toast.error(
+                getHttpErrorMessage(
+                    error,
+                    'Failed to update admin notes. Please try again.',
+                ),
+            );
+        } finally {
+            setBusyResourceKey(null);
+            setDescriptionEdit((prev) => ({
+                ...prev,
+                isSubmitting: false,
+            }));
+        }
     };
 
     return (
@@ -215,7 +430,11 @@ export default function MaintenancePage({ resources = [] }: Props) {
                     </div>
                     <Button
                         variant="outline"
-                        onClick={() => router.reload()}
+                        onClick={() =>
+                            router.reload({
+                                only: ['resources'],
+                            })
+                        }
                     >
                         <RefreshCw className="mr-2 h-4 w-4" />
                         Refresh
@@ -227,10 +446,10 @@ export default function MaintenancePage({ resources = [] }: Props) {
                     <CardHeader>
                         <CardTitle>Maintenance Summary</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-4">
+                    <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                             <div className="text-2xl font-bold">
-                                {resources.length}
+                                {resourceItems.length}
                             </div>
                             <p className="text-sm text-muted-foreground">
                                 Total Resources
@@ -246,11 +465,95 @@ export default function MaintenancePage({ resources = [] }: Props) {
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-success">
-                                {resources.length - inMaintenanceCount}
+                                {resourceItems.length - inMaintenanceCount}
                             </div>
                             <p className="text-sm text-muted-foreground">
                                 Available
                             </p>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-primary">
+                                {filteredResources.length}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Matching Filters
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Filter Resources</CardTitle>
+                        <CardDescription>
+                            Search by name, notes, source, or status
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-3 md:grid-cols-[1fr,180px,220px,auto]">
+                            <div className="relative">
+                                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search resources..."
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            <Select
+                                value={typeFilter}
+                                onValueChange={(value: ResourceTypeFilter) =>
+                                    setTypeFilter(value)
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Resource type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        All Types
+                                    </SelectItem>
+                                    <SelectItem value="usb_device">
+                                        USB Devices
+                                    </SelectItem>
+                                    <SelectItem value="camera">
+                                        Cameras
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select
+                                value={maintenanceStatusFilter}
+                                onValueChange={(
+                                    value: MaintenanceStatusFilter,
+                                ) => setMaintenanceStatusFilter(value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Maintenance status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        All Statuses
+                                    </SelectItem>
+                                    <SelectItem value="in_maintenance">
+                                        In Maintenance
+                                    </SelectItem>
+                                    <SelectItem value="available">
+                                        Available
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={resetFilters}
+                                className="justify-self-start"
+                            >
+                                <X className="mr-2 h-4 w-4" />
+                                Reset
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -264,15 +567,23 @@ export default function MaintenancePage({ resources = [] }: Props) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {resources.length === 0 ? (
+                        {resourceItems.length === 0 ? (
                             <p className="py-4 text-center text-muted-foreground">
                                 No resources found
                             </p>
+                        ) : filteredResources.length === 0 ? (
+                            <p className="py-4 text-center text-muted-foreground">
+                                No resources match the current filters
+                            </p>
                         ) : (
                             <div className="space-y-4">
-                                {resources.map((resource) => (
+                                {filteredResources.map((resource) => {
+                                    const isBusy =
+                                        busyResourceKey === resourceKey(resource);
+
+                                    return (
                                     <div
-                                        key={`${resource.type}-${resource.id}`}
+                                        key={resourceKey(resource)}
                                         className="flex items-center justify-between rounded-lg border p-4"
                                     >
                                         <div className="flex-1">
@@ -301,6 +612,14 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                                                 ? 'USB Device'
                                                                 : 'Camera'}
                                                         </Badge>
+                                                        <Badge
+                                                            variant="secondary"
+                                                        >
+                                                            {resource.status}
+                                                        </Badge>
+                                                        {isBusy && (
+                                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                        )}
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
                                                         {resource.gateway ||
@@ -349,6 +668,7 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                                         resource,
                                                     )
                                                 }
+                                                disabled={isBusy}
                                             >
                                                 <FileText className="h-4 w-4" />
                                             </Button>
@@ -361,6 +681,7 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                                             resource,
                                                         )
                                                     }
+                                                    disabled={isBusy}
                                                 >
                                                     <Check className="h-4 w-4 text-success" />
                                                 </Button>
@@ -373,13 +694,14 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                                             resource,
                                                         )
                                                     }
+                                                    disabled={isBusy}
                                                 >
                                                     <AlertTriangle className="h-4 w-4 text-warning" />
                                                 </Button>
                                             )}
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         )}
                     </CardContent>
@@ -390,6 +712,11 @@ export default function MaintenancePage({ resources = [] }: Props) {
                     <Card className="border-primary bg-white shadow-lg">
                         <CardHeader>
                             <CardTitle>Edit Admin Notes</CardTitle>
+                            {selectedDescriptionResource && (
+                                <CardDescription>
+                                    Resource: {selectedDescriptionResource.name}
+                                </CardDescription>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <form
@@ -418,7 +745,8 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                     <Button
                                         type="submit"
                                         disabled={
-                                            descriptionEdit.isSubmitting
+                                            descriptionEdit.isSubmitting ||
+                                            busyResourceKey !== null
                                         }
                                     >
                                         {descriptionEdit.isSubmitting && (
@@ -431,7 +759,8 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                         variant="outline"
                                         onClick={closeDescriptionEdit}
                                         disabled={
-                                            descriptionEdit.isSubmitting
+                                            descriptionEdit.isSubmitting ||
+                                            busyResourceKey !== null
                                         }
                                     >
                                         Cancel
@@ -454,6 +783,11 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                 This will prevent the device from being used
                                 until maintenance is cleared.
                             </CardDescription>
+                            {selectedMaintenanceResource && (
+                                <CardDescription>
+                                    Resource: {selectedMaintenanceResource.name}
+                                </CardDescription>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <form
@@ -512,7 +846,8 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                         variant="destructive"
                                         disabled={
                                             maintenanceForm.isSubmitting ||
-                                            !maintenanceForm.notes
+                                            !maintenanceForm.notes.trim() ||
+                                            busyResourceKey !== null
                                         }
                                     >
                                         {maintenanceForm.isSubmitting && (
@@ -525,7 +860,8 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                         variant="outline"
                                         onClick={closeMaintenanceForm}
                                         disabled={
-                                            maintenanceForm.isSubmitting
+                                            maintenanceForm.isSubmitting ||
+                                            busyResourceKey !== null
                                         }
                                     >
                                         Cancel

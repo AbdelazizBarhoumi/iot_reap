@@ -9,6 +9,7 @@
  * - Different notification type icons
  */
 import { router } from '@inertiajs/react';
+import { isAxiosError } from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Bell,
@@ -26,7 +27,7 @@ import {
     Settings,
     Loader2,
 } from 'lucide-react';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { notificationApi } from '@/api/notification.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -120,6 +121,16 @@ function formatTime(dateStr: string): string {
     if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString();
 }
+
+function isAuthRequestError(error: unknown): boolean {
+    if (!isAxiosError(error)) {
+        return false;
+    }
+
+    const status = error.response?.status;
+    return status === 401 || status === 419;
+}
+
 interface NotificationBellProps {
     className?: string;
 }
@@ -129,30 +140,65 @@ export function NotificationBell({ className }: NotificationBellProps) {
     const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
     // Fetch notifications from API
     const fetchNotifications = useCallback(async () => {
+        if (!notificationsEnabled) {
+            return;
+        }
+
         try {
             const data = await notificationApi.getRecent(20);
+            if (!isMounted.current) {
+                return;
+            }
             setNotifications(data.notifications);
             setUnreadCount(data.unread_count);
         } catch (error) {
+            if (!isMounted.current) {
+                return;
+            }
+            if (isAuthRequestError(error)) {
+                // Session is missing/expired; disable background polling for this mount.
+                setNotificationsEnabled(false);
+                setNotifications([]);
+                setUnreadCount(0);
+                return;
+            }
+
             // Silently fail - notifications are non-critical
             console.error('Failed to fetch notifications:', error);
         }
-    }, []);
+    }, [notificationsEnabled]);
+
     // Initial fetch and polling
     useEffect(() => {
+        if (!notificationsEnabled) {
+            return;
+        }
+
         fetchNotifications();
+
         // Poll for new notifications every 60 seconds
         const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
-    }, [fetchNotifications]);
+    }, [fetchNotifications, notificationsEnabled]);
+
     // Refresh when popover opens
     useEffect(() => {
-        if (open) {
+        if (open && notificationsEnabled) {
             fetchNotifications();
         }
-    }, [open, fetchNotifications]);
+    }, [open, fetchNotifications, notificationsEnabled]);
     const filteredNotifications = useMemo(
         () =>
             activeTab === 'unread'
@@ -165,6 +211,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
         [filteredNotifications],
     );
     const markAsRead = useCallback(async (id: string) => {
+        if (!isMounted.current) {
+            return;
+        }
+
         // Optimistic update
         setNotifications((prev) =>
             prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
@@ -173,6 +223,16 @@ export function NotificationBell({ className }: NotificationBellProps) {
         try {
             await notificationApi.markAsRead(id);
         } catch (error) {
+            if (!isMounted.current) {
+                return;
+            }
+            if (isAuthRequestError(error)) {
+                setNotificationsEnabled(false);
+                setNotifications([]);
+                setUnreadCount(0);
+                return;
+            }
+
             // Revert on error
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id ? { ...n, read: false } : n)),
@@ -182,6 +242,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
         }
     }, []);
     const markAllAsRead = useCallback(async () => {
+        if (!isMounted.current) {
+            return;
+        }
+
         setLoading(true);
         const previousNotifications = notifications;
         const previousUnreadCount = unreadCount;
@@ -191,12 +255,24 @@ export function NotificationBell({ className }: NotificationBellProps) {
         try {
             await notificationApi.markAllAsRead();
         } catch (error) {
+            if (!isMounted.current) {
+                return;
+            }
+            if (isAuthRequestError(error)) {
+                setNotificationsEnabled(false);
+                setNotifications([]);
+                setUnreadCount(0);
+                return;
+            }
+
             // Revert on error
             setNotifications(previousNotifications);
             setUnreadCount(previousUnreadCount);
             console.error('Failed to mark all notifications as read:', error);
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
     }, [notifications, unreadCount]);
     const handleNotificationClick = useCallback(
@@ -217,10 +293,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className={cn('relative h-9 w-9', className)}
+                    className={cn('group relative h-9 w-9', className)}
                     aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                 >
-                    <Bell className="h-5 w-5 text-muted-foreground" />
+                    <Bell className="h-5 w-5 text-muted-foreground group-hover:text-white transition-colors" />
                     <AnimatePresence>
                         {unreadCount > 0 && (
                             <motion.span
@@ -264,7 +340,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                                 size="sm"
                                 onClick={markAllAsRead}
                                 disabled={loading}
-                                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                                className="h-8 text-xs"
                             >
                                 {loading ? (
                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -333,7 +409,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                                                                     )
                                                                 }
                                                                 className={cn(
-                                                                    'flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50',
+                                                                    'flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50 hover:text-white',
                                                                     !notification.read &&
                                                                         'bg-primary/5',
                                                                 )}
@@ -414,7 +490,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-full justify-between text-xs text-muted-foreground hover:text-foreground"
+                        className="h-8 w-full justify-between text-xs"
                         asChild
                     >
                         <a href="/notifications">

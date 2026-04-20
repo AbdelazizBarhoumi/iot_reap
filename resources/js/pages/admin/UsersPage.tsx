@@ -20,7 +20,7 @@ import {
     Users,
     UserX,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,6 +53,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, PageProps } from '@/types';
 import type {
     AdminUser,
+    PaginatedUsers,
     RoleOption,
     UserFilters,
     UserStats,
@@ -62,7 +63,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'User Management', href: '/admin/users' },
 ];
 interface UsersPageProps extends PageProps {
-    users: { data: AdminUser[] };
+    users: {
+        data: AdminUser[];
+        meta?: Partial<PaginatedUsers['meta']>;
+    };
     filters: UserFilters;
     roles: RoleOption[];
     stats: UserStats;
@@ -71,7 +75,6 @@ const roleColors: Record<string, string> = {
     admin: 'bg-purple-500/10 text-purple-500 border-purple-500/30',
     teacher: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
     engineer: 'bg-green-500/10 text-green-500 border-green-500/30',
-    security_officer: 'bg-orange-500/10 text-orange-500 border-orange-500/30',
 };
 export default function UsersPage() {
     const {
@@ -80,8 +83,23 @@ export default function UsersPage() {
         roles,
         stats,
     } = usePage<UsersPageProps>().props;
+
+    const initialPaginatedUsers = useMemo<PaginatedUsers>(
+        () => ({
+            data: initialUsers.data,
+            meta: {
+                current_page: initialUsers.meta?.current_page ?? 1,
+                last_page: initialUsers.meta?.last_page ?? 1,
+                per_page: initialUsers.meta?.per_page ?? 15,
+                total: initialUsers.meta?.total ?? initialUsers.data.length,
+            },
+        }),
+        [initialUsers],
+    );
+
     const {
         users,
+        meta,
         loading,
         suspendUser,
         unsuspendUser,
@@ -91,18 +109,19 @@ export default function UsersPage() {
         impersonateUser,
         error,
         setError,
-    } = useUsers({
-        data: initialUsers.data,
-        meta: {
-            current_page: 1,
-            last_page: 1,
-            per_page: 15,
-            total: initialUsers.data.length,
-        },
-    });
+    } = useUsers(initialPaginatedUsers);
+
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
+
+    const refreshUsersList = useCallback(() => {
+        router.reload({
+            only: ['users', 'filters', 'stats'],
+            preserveUrl: true,
+        });
+    }, []);
+
     // Modals
     const [detailUser, setDetailUser] = useState<AdminUser | null>(null);
     const [suspendingUser, setSuspendingUser] = useState<AdminUser | null>(
@@ -117,13 +136,15 @@ export default function UsersPage() {
         router.get(
             '/admin/users',
             {
-                search,
+                search: search.trim(),
                 role: roleFilter,
                 status: statusFilter,
+                page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     }, [search, roleFilter, statusFilter]);
+
     const handleRoleFilterChange = (value: string) => {
         setRoleFilter(value === 'all' ? '' : value);
         router.get(
@@ -132,10 +153,12 @@ export default function UsersPage() {
                 search,
                 role: value === 'all' ? '' : value,
                 status: statusFilter,
+                page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     };
+
     const handleStatusFilterChange = (value: string) => {
         setStatusFilter(value === 'all' ? '' : value);
         router.get(
@@ -144,33 +167,87 @@ export default function UsersPage() {
                 search,
                 role: roleFilter,
                 status: value === 'all' ? '' : value,
+                page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setRoleFilter('');
+        setStatusFilter('');
+
+        router.get(
+            '/admin/users',
+            {
+                search: '',
+                role: '',
+                status: '',
+                page: 1,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const handlePageChange = useCallback(
+        (page: number) => {
+            if (loading || page < 1 || page > meta.last_page) {
+                return;
+            }
+
+            router.get(
+                '/admin/users',
+                {
+                    search: search.trim(),
+                    role: roleFilter,
+                    status: statusFilter,
+                    page,
+                },
+                { preserveState: true, preserveScroll: true },
+            );
+        },
+        [loading, meta.last_page, roleFilter, search, statusFilter],
+    );
+
     const handleSuspend = async () => {
         if (!suspendingUser || !suspendReason) return;
         const success = await suspendUser(suspendingUser.id, suspendReason);
         if (success) {
             setSuspendingUser(null);
             setSuspendReason('');
+            refreshUsersList();
         }
     };
+
     const handleUnsuspend = async (user: AdminUser) => {
-        await unsuspendUser(user.id);
+        const success = await unsuspendUser(user.id);
+        if (success) {
+            refreshUsersList();
+        }
     };
+
     const handleApproveTeacher = async (user: AdminUser) => {
-        await approveTeacher(user.id);
+        const success = await approveTeacher(user.id);
+        if (success) {
+            refreshUsersList();
+        }
     };
+
     const handleRevokeTeacherApproval = async (user: AdminUser) => {
-        await revokeTeacherApproval(user.id);
+        const success = await revokeTeacherApproval(user.id);
+        if (success) {
+            refreshUsersList();
+        }
     };
+
     const handleRoleChange = async () => {
         if (!roleChangeUser || !newRole) return;
         const success = await updateUserRole(roleChangeUser.id, newRole);
         if (success) {
             setRoleChangeUser(null);
             setNewRole('');
+            refreshUsersList();
         }
     };
     const formatDate = (dateStr: string | null) => {
@@ -356,18 +433,31 @@ export default function UsersPage() {
             <div className="min-h-screen bg-background">
                 <div className="container py-8">
                     {/* Header */}
-                    <div className="mb-8 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
-                            <Users className="h-5 w-5" />
+                    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                                <Users className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h1 className="font-heading text-3xl font-bold text-foreground">
+                                    User Management
+                                </h1>
+                                <p className="text-muted-foreground">
+                                    Manage platform users, roles, and permissions
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-heading text-3xl font-bold text-foreground">
-                                User Management
-                            </h1>
-                            <p className="text-muted-foreground">
-                                Manage platform users, roles, and permissions
-                            </p>
-                        </div>
+
+                        <Button
+                            variant="outline"
+                            onClick={refreshUsersList}
+                            disabled={loading}
+                        >
+                            <RefreshCw
+                                className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+                            />
+                            Refresh
+                        </Button>
                     </div>
                     {/* Stats Cards */}
                     <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -499,6 +589,12 @@ export default function UsersPage() {
                                 >
                                     <Filter className="mr-2 h-4 w-4" /> Apply
                                 </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleResetFilters}
+                                >
+                                    Reset
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -518,6 +614,11 @@ export default function UsersPage() {
                         </div>
                     )}
                     {/* Users List */}
+                    <div className="mb-3 text-sm text-muted-foreground">
+                        Showing {users.length} users on this page • Total{' '}
+                        {meta.total} • Page {meta.current_page} of{' '}
+                        {meta.last_page}
+                    </div>
                     <div className="space-y-4">
                         {loading ? (
                             <div className="flex items-center justify-center py-12">
@@ -542,6 +643,40 @@ export default function UsersPage() {
                             ))
                         )}
                     </div>
+
+                    {meta.last_page > 1 && (
+                        <div className="mt-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                            <p className="text-sm text-muted-foreground">
+                                Page {meta.current_page} of {meta.last_page}
+                            </p>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={loading || meta.current_page <= 1}
+                                    onClick={() =>
+                                        handlePageChange(meta.current_page - 1)
+                                    }
+                                >
+                                    Previous
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={
+                                        loading ||
+                                        meta.current_page >= meta.last_page
+                                    }
+                                    onClick={() =>
+                                        handlePageChange(meta.current_page + 1)
+                                    }
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             {/* User Detail Modal */}
@@ -686,7 +821,12 @@ export default function UsersPage() {
             {/* Suspend Modal */}
             <Dialog
                 open={!!suspendingUser}
-                onOpenChange={() => setSuspendingUser(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setSuspendingUser(null);
+                        setSuspendReason('');
+                    }
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -739,7 +879,12 @@ export default function UsersPage() {
             {/* Role Change Modal */}
             <Dialog
                 open={!!roleChangeUser}
-                onOpenChange={() => setRoleChangeUser(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setRoleChangeUser(null);
+                        setNewRole('');
+                    }
+                }}
             >
                 <DialogContent>
                     <DialogHeader>

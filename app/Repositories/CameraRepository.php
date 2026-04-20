@@ -48,17 +48,25 @@ class CameraRepository
     }
 
     /**
-     * Find cameras assigned to a specific VM ID.
+     * Find cameras assigned to a specific VM ID, plus cameras not assigned to any VM.
+     * Only returns active cameras.
      *
-     * @param  int|null  $vmId  The VM ID to filter by (null returns empty collection)
+     * @param  int|null  $vmId  The VM ID to filter by. If null, returns only unassigned cameras.
      */
     public function findByVmId(?int $vmId): Collection
     {
         if ($vmId === null) {
-            return new Collection();
+            return Camera::whereNull('assigned_vm_id')
+                ->where('status', 'active')
+                ->with(['robot', 'gatewayNode', 'activeControl.session'])
+                ->get();
         }
 
-        return Camera::forVmId($vmId)
+        return Camera::where(function ($query) use ($vmId) {
+                $query->where('assigned_vm_id', $vmId)
+                    ->orWhereNull('assigned_vm_id');
+            })
+            ->where('status', 'active')
             ->with(['robot', 'gatewayNode', 'activeControl.session'])
             ->get();
     }

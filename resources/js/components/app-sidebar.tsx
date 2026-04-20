@@ -1,18 +1,13 @@
 import { Link } from '@inertiajs/react';
 import {
-    Activity,
     BanknoteIcon,
-    BookOpen,
     CalendarCheck,
     CheckCircle,
-    GraduationCap,
     LayoutGrid,
     Monitor,
     Network,
-    PenTool,
     RotateCcw,
     Users,
-    Usb,
     Wrench,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
@@ -26,7 +21,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 /**
@@ -37,79 +32,53 @@ import AppLogo from './app-logo';
 const overviewNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: admin.dashboard.url(),
         icon: LayoutGrid,
     },
-    {
-        title: 'Analytics',
-        href: '/admin/dashboard',
-        icon: Activity,
-    },
-    {
-        title: 'Infrastructure',
-        href: '/admin/infrastructure',
-        icon: Network,
-    },
+
     {
         title: 'Users',
-        href: '/admin/users',
+        href: admin.users.index.url(),
         icon: Users,
     },
 ];
-const managementNavItems: NavItem[] = [
-    {
-        title: 'Hardware Gateways',
-        href: '/hardware',
-        icon: Usb,
+const operationsNavItems: NavItem[] = [
+        {
+        title: 'Infrastructure',
+        href: admin.infrastructure.url(),
+        icon: Network,
     },
     {
         title: 'Maintenance',
-        href: '/admin/maintenance',
+        href: admin.maintenance.index.url(),
         icon: Wrench,
     },
 ];
 const contentNavItems: NavItem[] = [
     {
         title: 'Path Reviews',
-        href: '/admin/trainingPaths',
+        href: admin.trainingPaths.index.url(),
         icon: CheckCircle,
     },
     {
         title: 'VM Assignments',
-        href: '/admin/vm-assignments',
+        href: admin.vmAssignments.index.url(),
         icon: Monitor,
     },
     {
         title: 'Lab Reservations',
-        href: '/admin/reservations-page',
+        href: admin.reservations.page.url(),
         icon: CalendarCheck,
     },
     {
         title: 'Payouts',
-        href: '/admin/payouts',
+        href: admin.payouts.index.url(),
         icon: BanknoteIcon,
     },
     {
         title: 'Refunds',
-        href: '/admin/refunds',
+        href: admin.refunds.index.url(),
         icon: RotateCcw,
-    },
-];
-const learningNavItems: NavItem[] = [
-    {
-        title: 'Training Paths',
-        href: '/trainingPaths',
-        icon: GraduationCap,
-    },
-    {
-        title: 'My Training',
-        href: '/my-trainingPaths',
-        icon: BookOpen,
-    },
-    {
-        title: 'Content Studio',
-        href: '/teaching',
-        icon: PenTool,
     },
 ];
 export function AppSidebar() {
@@ -119,7 +88,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={admin.dashboard.url()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -127,10 +96,9 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={overviewNavItems} label="Operations" />
-                <NavMain items={managementNavItems} label="Infrastructure" />
-                <NavMain items={contentNavItems} label="Studio" />
-                <NavMain items={learningNavItems} label="Academy" />
+                <NavMain items={overviewNavItems} label="Core" />
+                <NavMain items={operationsNavItems} label="Operations" />
+                <NavMain items={contentNavItems} label="Content Management" />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />

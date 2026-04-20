@@ -13,6 +13,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import trainingPaths from '@/routes/trainingPaths';
 import type { Payment } from '@/types/payment.types';
 interface SuccessPageProps {
     payment: Payment | null;
@@ -83,7 +84,7 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                                 asChild
                                 className="w-full"
                             >
-                                <Link href="/my-trainingPaths">
+                                <Link href={trainingPaths.my.url()}>
                                     Go to My Training
                                 </Link>
                             </Button>

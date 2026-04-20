@@ -107,13 +107,4 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the user role to security officer.
-     */
-    public function securityOfficer(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => UserRole::SECURITY_OFFICER->value,
-        ]);
-    }
 }

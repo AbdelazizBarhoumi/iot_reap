@@ -26,6 +26,7 @@ class VMSessionResource extends JsonResource
             'id' => $this->id,
             'status' => $this->status->value,
             'protocol' => $protocolValue,
+            'connection_profile_name' => $this->connection_profile_name,
             'vm_id' => $this->vm_id,
             'node_name' => $this->node?->name ?? 'unknown',
             'expires_at' => $this->expires_at?->toIso8601String(),

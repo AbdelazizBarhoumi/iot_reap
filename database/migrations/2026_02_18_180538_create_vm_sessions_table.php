@@ -34,6 +34,7 @@ return new class extends Migration
             $table->unsignedInteger('vm_id')->nullable();
             $table->enum('status', ['pending', 'provisioning', 'active', 'expiring', 'expired', 'failed', 'terminated'])->default('pending');
             $table->enum('protocol', ['rdp', 'vnc', 'ssh'])->nullable();
+            $table->string('connection_profile_name', 100)->nullable();
             $table->ipAddress()->nullable();
             $table->text('credentials')->nullable(); // encrypted JSON
             $table->string('return_snapshot')->nullable();
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index('status');
             $table->index('expires_at');
             $table->index('node_id');
+            $table->index('connection_profile_name');
         });
     }
 

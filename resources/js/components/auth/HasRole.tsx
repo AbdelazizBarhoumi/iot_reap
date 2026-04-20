@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import type { User } from '@/types/auth';
-type UserRole = 'engineer' | 'teacher' | 'admin' | 'security_officer';
+type UserRole = 'engineer' | 'teacher' | 'admin';
 interface HasRoleProps {
     children: ReactNode;
     /** Required role(s). Can be a single role or array. */
@@ -76,19 +76,6 @@ export function IsEngineer({
     );
 }
 /**
- * Check if the current user is a security officer.
- */
-export function IsSecurityOfficer({
-    children,
-    fallback = null,
-}: Omit<HasRoleProps, 'roles'>) {
-    return (
-        <HasRole roles="security_officer" fallback={fallback}>
-            {children}
-        </HasRole>
-    );
-}
-/**
  * Custom hook to get current user role utilities.
  */
 export function useRole() {
@@ -99,7 +86,6 @@ export function useRole() {
         isAdmin: user?.role === 'admin',
         isTeacher: user?.role === 'teacher',
         isEngineer: user?.role === 'engineer',
-        isSecurityOfficer: user?.role === 'security_officer',
         hasRole: (roles: UserRole | UserRole[]) => {
             if (!user) return false;
             const allowedRoles = Array.isArray(roles) ? roles : [roles];

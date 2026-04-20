@@ -45,6 +45,7 @@ import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
 import { trainingPathToasts } from '@/lib/toast-utils';
 import { cn } from '@/lib/utils';
+import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { Article } from '@/types/article.types';
 import type { TrainingPath, TrainingUnit, TrainingUnitType } from '@/types/TrainingPath.types';
@@ -568,7 +569,7 @@ export default function TrainingUnitPage() {
                         TrainingUnit not found.
                     </p>
                     <Button variant="outline" asChild>
-                        <Link href="/trainingPaths">Back to Paths</Link>
+                        <Link href={trainingPaths.index.url()}>Back to Paths</Link>
                     </Button>
                 </div>
             </AppLayout>

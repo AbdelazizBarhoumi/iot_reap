@@ -108,7 +108,7 @@ export default function AuthSplitLayout({
                     transition={{ duration: 0.5 }}
                 >
                     <Link
-                        href={home()}
+                        href={home().url}
                         className="relative z-20 flex items-center gap-3 text-lg font-medium"
                     >
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-sm">
@@ -186,7 +186,7 @@ export default function AuthSplitLayout({
                 >
                     {/* Mobile logo */}
                     <Link
-                        href={home()}
+                        href={home().url}
                         className="relative z-20 flex items-center justify-center gap-2 lg:hidden"
                     >
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg">

@@ -38,6 +38,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useSessionHardware } from '@/hooks/useSessionHardware';
+import reservations from '@/routes/reservations';
 import type { UsbDevice } from '@/types/hardware.types';
 interface SessionHardwarePanelProps {
     sessionId: string;
@@ -57,6 +58,8 @@ interface DeviceRowProps {
     gatewayVerified?: boolean;
     reason?: string | null;
     reservedUntil?: string | null;
+    isVerifiedAttached?: boolean | null;
+    attachmentVerificationReason?: string | null;
 }
 function DeviceRow({
     device,
@@ -72,6 +75,8 @@ function DeviceRow({
     gatewayVerified = true,
     reason,
     reservedUntil,
+    isVerifiedAttached = null,
+    attachmentVerificationReason = null,
 }: DeviceRowProps) {
     // Check if device is blocked due to reservation
     const isReserved = reason?.toLowerCase().includes('reserved');
@@ -166,7 +171,33 @@ function DeviceRow({
                         {reason}
                     </p>
                 )}
-                {isAttached && onDetach && (
+                {isAttached && isVerifiedAttached === false && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Badge
+                                    variant="outline"
+                                    className="border-amber-400 text-xs text-amber-600"
+                                >
+                                    <AlertCircle className="mr-1 h-3 w-3" />
+                                    Unverified
+                                </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>
+                                    Device is marked attached in app state but
+                                    not verified inside VM.
+                                </p>
+                                {attachmentVerificationReason && (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {attachmentVerificationReason}
+                                    </p>
+                                )}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+                {isAttached && onDetach && isVerifiedAttached === true && (
                     <Button
                         size="sm"
                         variant="outline"
@@ -213,7 +244,7 @@ function DeviceRow({
                                     asChild
                                     className="h-7 px-2"
                                 >
-                                    <Link href="/reservations">
+                                    <Link href={reservations.index.url()}>
                                         <CalendarClock className="mr-1 h-3 w-3" />
                                         Reserve
                                     </Link>
@@ -433,6 +464,14 @@ export function SessionHardwarePanel({
                                             key={device.id}
                                             device={device}
                                             isAttached
+                                            isVerifiedAttached={
+                                                device.is_verified_attached ??
+                                                false
+                                            }
+                                            attachmentVerificationReason={
+                                                device.attachment_verification_reason ??
+                                                null
+                                            }
                                             onDetach={() =>
                                                 handleDetach(device.id)
                                             }

@@ -52,6 +52,10 @@ class UsbDeviceReservationResource extends JsonResource
             'admin_notes' => $this->when($request->user()?->isAdmin() ?? false, $this->admin_notes),
             'priority' => $this->priority,
 
+            // Reservation targeting (admin reservations)
+            'target_user_id' => $this->when($request->user()?->isAdmin() ?? false, $this->target_user_id),
+            'target_vm_id' => $this->when($request->user()?->isAdmin() ?? false, $this->target_vm_id),
+
             // State checks
             'is_pending' => $this->isPending(),
             'is_approved' => $this->isApproved(),

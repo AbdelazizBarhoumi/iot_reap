@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the training_path_reviews table with all columns.
      */
     public function up(): void
     {
         Schema::create('training_path_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('training_path_id')->constrained('training_paths')->cascadeOnDelete();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->unsignedTinyInteger('rating')->comment('1-5 star rating');
             $table->text('review')->nullable();
             $table->boolean('is_featured')->default(false);

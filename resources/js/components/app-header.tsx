@@ -8,7 +8,6 @@ import {
     PenTool,
     Server,
     Settings2,
-    Usb,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -33,6 +32,11 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { login, dashboard, home } from '@/routes';
+import connectionPreferences from '@/routes/connection-preferences';
+import reservations from '@/routes/reservations';
+import sessions from '@/routes/sessions';
+import teaching from '@/routes/teaching';
+import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem, NavItem } from '@/types';
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
@@ -41,7 +45,6 @@ type Props = {
  * Build nav items based on user role.
  * Engineers see: Dashboard, Sessions, Hardware, My Training, Training Paths
  * Teachers see: Dashboard, Content Studio, Training Paths
- * Security Officers see: Dashboard, Training Paths
  * Admin uses sidebar layout (not this header)
  */
 function useNavItems(): NavItem[] {
@@ -55,31 +58,26 @@ function useNavItems(): NavItem[] {
     if (auth.user) {
         items.push({
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
             icon: LayoutGrid,
         });
     }
-    // Engineers see VM sessions, hardware, and their enrolled trainingPaths
+    // Engineers see VM sessions, reservations, and their enrolled trainingPaths
     if (isEngineer) {
         items.push(
             {
                 title: 'Sessions',
-                href: '/sessions',
+                href: sessions.index.url(),
                 icon: History,
             },
             {
-                title: 'Hardware',
-                href: '/hardware',
-                icon: Usb,
-            },
-            {
                 title: 'Reservations',
-                href: '/reservations',
+                href: reservations.index.url(),
                 icon: CalendarCheck,
             },
             {
                 title: 'My Training',
-                href: '/my-trainingPaths',
+                href: trainingPaths.my.url(),
                 icon: GraduationCap,
             },
         );
@@ -88,14 +86,14 @@ function useNavItems(): NavItem[] {
     if (isTeacher) {
         items.push({
             title: 'Content Studio',
-            href: '/teaching',
+            href: teaching.index.url(),
             icon: PenTool,
         });
     }
     // Everyone can browse trainingPaths
     items.push({
         title: 'Training Paths',
-        href: '/trainingPaths',
+        href: trainingPaths.index.url(),
         icon: GraduationCap,
     });
     return items;
@@ -135,7 +133,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </button>
                     {/* Logo */}
                     <Link
-                        href={user ? dashboard() : home()}
+                        href={user ? dashboard().url : home().url}
                         prefetch
                         className="flex items-center gap-2"
                     >
@@ -159,7 +157,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             href={item.href}
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
-                                                'h-9 cursor-pointer gap-2 px-3 font-medium',
+                                                'h-9 cursor-pointer gap-2 px-3 font-medium transition-colors duration-250 ease-in-out',
                                                 isCurrentUrl(item.href)
                                                     ? activeItemStyles
                                                     : 'text-muted-foreground hover:text-white',
@@ -191,7 +189,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 asChild
                                 className="hidden gap-1.5 text-muted-foreground hover:text-white sm:flex"
                             >
-                                <Link href="/connection-preferences">
+                                <Link href={connectionPreferences.index.url()}>
                                     <Settings2 className="h-4 w-4" />
                                     <span className="hidden md:inline">
                                         Preferences
@@ -204,7 +202,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
-                                        className="size-10 rounded-full p-1"
+                                        className="group size-10 rounded-full p-1"
                                         aria-label="Open user menu"
                                     >
                                         <Avatar className="size-8 overflow-hidden rounded-full">
@@ -212,7 +210,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                 src={user.avatar || undefined}
                                                 alt={user.name || 'User'}
                                             />
-                                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary dark:bg-primary/90 dark:text-primary/70">
+                                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary transition-colors group-hover:text-white dark:bg-primary/90 dark:text-white dark:group-hover:text-white">
                                                 {getInitials(
                                                     user.name || 'User',
                                                 )}
@@ -234,7 +232,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 asChild
                             >
                                 <Link
-                                    href={login()}
+                                    href={login().url}
                                     onClick={() =>
                                         setMobileOpen(false)
                                     }
@@ -255,7 +253,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     href={item.href}
                                     onClick={() => setMobileOpen(false)}
                                     className={cn(
-                                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-in-out',
                                         isCurrentUrl(item.href)
                                             ? 'bg-primary/10 text-primary'
                                             : 'text-muted-foreground hover:bg-accent hover:text-white',
@@ -269,9 +267,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                             ))}
                             {showConnectionPrefs && (
                                 <Link
-                                    href="/connection-preferences"
+                                    href={connectionPreferences.index.url()}
                                     onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-white sm:hidden"
+                                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 ease-in-out hover:bg-accent hover:text-white sm:hidden"
                                 >
                                     <Settings2 className="h-4 w-4" />
                                     Preferences

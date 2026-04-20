@@ -20,7 +20,6 @@ class AuthService
      */
     public function register(array $data): User
     {
-        // Only allow self-registration as engineer or teacher (admin/security_officer must be assigned)
         $allowedSelfRegister = [UserRole::ENGINEER->value, UserRole::TEACHER->value];
         $role = $data['role'] ?? UserRole::ENGINEER->value;
 

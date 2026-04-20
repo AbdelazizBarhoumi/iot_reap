@@ -85,8 +85,8 @@ export function usePendingTrainingPaths() {
     const fetchTrainingPaths = async () => {
       try {
         setLoading(true);
-        const { data } = await adminApi.getPendingTrainingPaths();
-        setTrainingPaths(data);
+        const response = await adminApi.getPendingTrainingPaths();
+        setTrainingPaths(Array.isArray(response.data.data) ? response.data.data : []);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load pending trainingPaths');

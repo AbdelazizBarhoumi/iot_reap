@@ -1,6 +1,6 @@
 /**
- * Admin USB Device Reservations Page.
- * Manage reservation requests and device blocking.
+ * Admin Reservations Page.
+ * Manage USB reservation requests/device blocks and camera reservation approvals.
  */
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -13,10 +13,13 @@ import {
     Lock,
     RefreshCw,
     Usb,
+    Video,
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { adminCameraApi } from '@/api/camera.api';
 import { adminReservationApi, hardwareApi } from '@/api/hardware.api';
+import { usersApi } from '@/api/users.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,7 +51,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import type { Camera, CameraReservation } from '@/types/camera.types';
 import type {
+    RunningVm,
+    ReservationUser,
     UsbDevice,
     UsbDeviceReservation,
     UsbReservationStatus,
@@ -185,6 +191,89 @@ function ReservationCard({
         </Card>
     );
 }
+
+interface CameraReservationCardProps {
+    reservation: CameraReservation;
+    onApprove: (id: number) => void;
+    onReject: (id: number) => void;
+    actionLoading: boolean;
+}
+
+function CameraReservationCard({
+    reservation,
+    onApprove,
+    onReject,
+    actionLoading,
+}: CameraReservationCardProps) {
+    return (
+        <Card className="mb-4 border-yellow-200/50">
+            <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-yellow-500/10 p-2 text-yellow-600">
+                            <Video className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base">
+                                {reservation.camera?.name ?? `Camera #${reservation.camera_id}`}
+                            </CardTitle>
+                            <CardDescription>
+                                Requested by {reservation.user?.name ?? 'Unknown User'}
+                            </CardDescription>
+                        </div>
+                    </div>
+
+                    <Badge className="bg-yellow-500 text-white">Pending</Badge>
+                </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+                <div className="grid gap-2 text-sm">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Requested Period:</span>
+                        <span>
+                            {formatDateTime(reservation.requested_start_at)} —{' '}
+                            {formatDateTime(reservation.requested_end_at)}
+                        </span>
+                    </div>
+
+                    {reservation.purpose && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Purpose:</span>
+                            <span className="max-w-[220px] truncate">{reservation.purpose}</span>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Submitted:</span>
+                        <span>{formatDateTime(reservation.created_at)}</span>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2 border-t pt-2">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onReject(reservation.id)}
+                        disabled={actionLoading}
+                    >
+                        <X className="mr-1 h-4 w-4" />
+                        Reject
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={() => onApprove(reservation.id)}
+                        disabled={actionLoading}
+                    >
+                        <Check className="mr-1 h-4 w-4" />
+                        Approve
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 interface ApproveDialogProps {
     reservation: UsbDeviceReservation | null;
     open: boolean;
@@ -199,20 +288,24 @@ function ApproveDialog({
     onConfirm,
     loading,
 }: ApproveDialogProps) {
-    const [start, setStart] = useState(() => 
-        reservation?.requested_start_at?.slice(0, 16) || ''
-    );
-    const [end, setEnd] = useState(() => 
-        reservation?.requested_end_at?.slice(0, 16) || ''
-    );
+    const [start, setStart] = useState('');
+    const [end, setEnd] = useState('');
     const [notes, setNotes] = useState('');
+
+    const defaultStart = reservation?.requested_start_at?.slice(0, 16) ?? '';
+    const defaultEnd = reservation?.requested_end_at?.slice(0, 16) ?? '';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (start && end) {
-            await onConfirm(start, end, notes);
+        const approvedStart = start || defaultStart;
+        const approvedEnd = end || defaultEnd;
+
+        if (approvedStart && approvedEnd) {
+            await onConfirm(approvedStart, approvedEnd, notes);
             onClose();
         }
     };
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
@@ -230,7 +323,7 @@ function ApproveDialog({
                             <Input
                                 id="approve-start"
                                 type="datetime-local"
-                                value={start}
+                                value={start || defaultStart}
                                 onChange={(e) => setStart(e.target.value)}
                                 required
                             />
@@ -240,7 +333,7 @@ function ApproveDialog({
                             <Input
                                 id="approve-end"
                                 type="datetime-local"
-                                value={end}
+                                value={end || defaultEnd}
                                 onChange={(e) => setEnd(e.target.value)}
                                 required
                             />
@@ -279,46 +372,72 @@ function ApproveDialog({
 }
 interface BlockDialogProps {
     devices: UsbDevice[];
+    users: ReservationUser[];
+    vms: RunningVm[];
     open: boolean;
     onClose: () => void;
     onConfirm: (
         deviceId: number,
+        mode: 'block' | 'reserve_to_user' | 'reserve_to_vm',
+        targetUserId: number | undefined,
+        targetVmId: number | undefined,
         start: string,
         end: string,
+        purpose: string | undefined,
         notes: string,
     ) => Promise<void>;
     loading: boolean;
 }
 function BlockDialog({
     devices,
+    users,
+    vms,
     open,
     onClose,
     onConfirm,
     loading,
 }: BlockDialogProps) {
     const [deviceId, setDeviceId] = useState<string>('');
+    const [mode, setMode] = useState<'block' | 'reserve_to_user' | 'reserve_to_vm'>('block');
+    const [targetUserId, setTargetUserId] = useState<string>('');
+    const [targetVmId, setTargetVmId] = useState<string>('');
     const [start, setStart] = useState('');
     const [end, setEnd] = useState('');
+    const [purpose, setPurpose] = useState('');
     const [notes, setNotes] = useState('');
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (deviceId && start && end) {
-            await onConfirm(parseInt(deviceId, 10), start, end, notes);
+            await onConfirm(
+                parseInt(deviceId, 10),
+                mode,
+                targetUserId ? parseInt(targetUserId, 10) : undefined,
+                targetVmId ? parseInt(targetVmId, 10) : undefined,
+                start,
+                end,
+                purpose || undefined,
+                notes,
+            );
             setDeviceId('');
+            setMode('block');
+            setTargetUserId('');
+            setTargetVmId('');
             setStart('');
             setEnd('');
+            setPurpose('');
             setNotes('');
             onClose();
         }
     };
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Block Device</DialogTitle>
                     <DialogDescription>
-                        Block a device from being reserved or attached during a
-                        time period.
+                        Create an admin block or reservation for a device during a time period.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
@@ -345,6 +464,98 @@ function BlockDialog({
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="block-mode">Reservation Mode</Label>
+                            <Select
+                                value={mode}
+                                onValueChange={(value) =>
+                                    setMode(
+                                        value as 'block' | 'reserve_to_user' | 'reserve_to_vm',
+                                    )
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="block">
+                                        Block Device (unavailable for all)
+                                    </SelectItem>
+                                    <SelectItem value="reserve_to_user">
+                                        Reserve for User (only specified user can use)
+                                    </SelectItem>
+                                    <SelectItem value="reserve_to_vm">
+                                        Reserve for VM (only specified VM can use)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {mode === 'reserve_to_user' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="block-target-user">
+                                    Target User <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={targetUserId}
+                                    onValueChange={setTargetUserId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a user..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {users.map((user) => (
+                                            <SelectItem
+                                                key={user.id}
+                                                value={user.id.toString()}
+                                            >
+                                                {user.name} ({user.email})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {mode === 'reserve_to_vm' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="block-target-vm">
+                                    Target VM <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={targetVmId}
+                                    onValueChange={setTargetVmId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a VM..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {vms.map((vm) => (
+                                            <SelectItem
+                                                key={vm.vmid}
+                                                value={vm.vmid.toString()}
+                                            >
+                                                {vm.name} ({vm.node})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {mode !== 'block' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="block-purpose">Purpose</Label>
+                                <Input
+                                    id="block-purpose"
+                                    placeholder="Why is this reserved? (e.g., Class, Maintenance)..."
+                                    value={purpose}
+                                    onChange={(e) => setPurpose(e.target.value)}
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label htmlFor="block-start">Start Time</Label>
                             <Input
@@ -371,7 +582,7 @@ function BlockDialog({
                             </Label>
                             <Input
                                 id="block-notes"
-                                placeholder="Reason for blocking..."
+                                placeholder="Admin notes..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -385,12 +596,20 @@ function BlockDialog({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading || !deviceId}>
+                        <Button
+                            type="submit"
+                            disabled={
+                                loading ||
+                                !deviceId ||
+                                (mode === 'reserve_to_user' && !targetUserId) ||
+                                (mode === 'reserve_to_vm' && !targetVmId)
+                            }
+                        >
                             {loading && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             <Lock className="mr-1 h-4 w-4" />
-                            Block Device
+                            {mode === 'block' ? 'Block Device' : 'Create Reservation'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -398,6 +617,255 @@ function BlockDialog({
         </Dialog>
     );
 }
+
+interface CameraBlockDialogProps {
+    cameras: Camera[];
+    users: ReservationUser[];
+    vms: RunningVm[];
+    open: boolean;
+    onClose: () => void;
+    onConfirm: (
+        cameraId: number,
+        mode: 'block' | 'reserve_to_user' | 'reserve_to_vm',
+        targetUserId: number | undefined,
+        targetVmId: number | undefined,
+        start: string,
+        end: string,
+        purpose: string | undefined,
+        notes: string,
+    ) => Promise<void>;
+    loading: boolean;
+}
+
+function CameraBlockDialog({
+    cameras,
+    users,
+    vms,
+    open,
+    onClose,
+    onConfirm,
+    loading,
+}: CameraBlockDialogProps) {
+    const [cameraId, setCameraId] = useState<string>('');
+    const [mode, setMode] = useState<'block' | 'reserve_to_user' | 'reserve_to_vm'>('block');
+    const [targetUserId, setTargetUserId] = useState<string>('');
+    const [targetVmId, setTargetVmId] = useState<string>('');
+    const [start, setStart] = useState('');
+    const [end, setEnd] = useState('');
+    const [purpose, setPurpose] = useState('');
+    const [notes, setNotes] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (cameraId && start && end) {
+            await onConfirm(
+                parseInt(cameraId, 10),
+                mode,
+                targetUserId ? parseInt(targetUserId, 10) : undefined,
+                targetVmId ? parseInt(targetVmId, 10) : undefined,
+                start,
+                end,
+                purpose || undefined,
+                notes,
+            );
+            setCameraId('');
+            setMode('block');
+            setTargetUserId('');
+            setTargetVmId('');
+            setStart('');
+            setEnd('');
+            setPurpose('');
+            setNotes('');
+            onClose();
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Block Camera</DialogTitle>
+                    <DialogDescription>
+                        Create an admin block or reservation for a camera during a time period.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="camera-block-device">Camera</Label>
+                            <Select
+                                value={cameraId}
+                                onValueChange={setCameraId}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a camera..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {cameras.map((camera) => (
+                                        <SelectItem
+                                            key={camera.id}
+                                            value={camera.id.toString()}
+                                        >
+                                            {camera.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="camera-block-mode">Reservation Mode</Label>
+                            <Select
+                                value={mode}
+                                onValueChange={(value) =>
+                                    setMode(
+                                        value as 'block' | 'reserve_to_user' | 'reserve_to_vm',
+                                    )
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="block">
+                                        Block Camera (unavailable for all)
+                                    </SelectItem>
+                                    <SelectItem value="reserve_to_user">
+                                        Reserve for User (only specified user can use)
+                                    </SelectItem>
+                                    <SelectItem value="reserve_to_vm">
+                                        Reserve for VM (only specified VM can use)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {mode === 'reserve_to_user' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="camera-block-target-user">
+                                    Target User <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={targetUserId}
+                                    onValueChange={setTargetUserId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a user..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {users.map((user) => (
+                                            <SelectItem
+                                                key={user.id}
+                                                value={user.id.toString()}
+                                            >
+                                                {user.name} ({user.email})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {mode === 'reserve_to_vm' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="camera-block-target-vm">
+                                    Target VM <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={targetVmId}
+                                    onValueChange={setTargetVmId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a VM..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {vms.map((vm) => (
+                                            <SelectItem
+                                                key={vm.vmid}
+                                                value={vm.vmid.toString()}
+                                            >
+                                                {vm.name} ({vm.node})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {mode !== 'block' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="camera-block-purpose">Purpose</Label>
+                                <Input
+                                    id="camera-block-purpose"
+                                    placeholder="Why is this reserved? (e.g., Class, Maintenance)..."
+                                    value={purpose}
+                                    onChange={(e) => setPurpose(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="camera-block-start">Start Time</Label>
+                            <Input
+                                id="camera-block-start"
+                                type="datetime-local"
+                                value={start}
+                                onChange={(e) => setStart(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="camera-block-end">End Time</Label>
+                            <Input
+                                id="camera-block-end"
+                                type="datetime-local"
+                                value={end}
+                                onChange={(e) => setEnd(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="camera-block-notes">
+                                Notes (optional)
+                            </Label>
+                            <Input
+                                id="camera-block-notes"
+                                placeholder="Admin notes..."
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={
+                                loading ||
+                                !cameraId ||
+                                (mode === 'reserve_to_user' && !targetUserId) ||
+                                (mode === 'reserve_to_vm' && !targetVmId)
+                            }
+                        >
+                            {loading && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            <Lock className="mr-1 h-4 w-4" />
+                            {mode === 'block' ? 'Block Camera' : 'Create Reservation'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function LoadingSkeleton() {
     return (
         <div className="space-y-4">
@@ -427,7 +895,11 @@ export default function AdminReservationsPage() {
     const [reservations, setReservations] = useState<UsbDeviceReservation[]>(
         [],
     );
+    const [cameraReservations, setCameraReservations] = useState<CameraReservation[]>([]);
     const [devices, setDevices] = useState<UsbDevice[]>([]);
+    const [cameras, setCameras] = useState<Camera[]>([]);
+    const [users, setUsers] = useState<ReservationUser[]>([]);
+    const [vms, setVms] = useState<RunningVm[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
@@ -435,17 +907,26 @@ export default function AdminReservationsPage() {
     // Dialog states
     const [approveDialogOpen, setApproveDialogOpen] = useState(false);
     const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+    const [cameraBlockDialogOpen, setCameraBlockDialogOpen] = useState(false);
     const [selectedReservation, setSelectedReservation] =
         useState<UsbDeviceReservation | null>(null);
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [reservationsData, devicesData] = await Promise.all([
+            const [reservationsData, devicesData, cameraPendingData, camerasData, vmsData, usersData] = await Promise.all([
                 adminReservationApi.getAll(),
                 hardwareApi.getDevices(),
+                adminCameraApi.getPending(),
+                adminCameraApi.getCameras(),
+                hardwareApi.getRunningVms(),
+                usersApi.getUsers({ per_page: 1000 }),
             ]);
             setReservations(reservationsData);
             setDevices(devicesData);
+            setCameraReservations(cameraPendingData);
+            setCameras(camerasData);
+            setVms(vmsData);
+            setUsers(usersData.data);
             setError(null);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to load data');
@@ -494,18 +975,51 @@ export default function AdminReservationsPage() {
             setActionLoading(false);
         }
     };
+
+    const handleApproveCameraReservation = async (id: number) => {
+        setActionLoading(true);
+        try {
+            await adminCameraApi.approve(id, {});
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Camera approval failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRejectCameraReservation = async (id: number) => {
+        setActionLoading(true);
+        try {
+            await adminCameraApi.reject(id);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Camera rejection failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleBlockConfirm = async (
         deviceId: number,
+        mode: 'block' | 'reserve_to_user' | 'reserve_to_vm',
+        targetUserId: number | undefined,
+        targetVmId: number | undefined,
         start: string,
         end: string,
+        purpose: string | undefined,
         notes: string,
     ) => {
         setActionLoading(true);
         try {
             await adminReservationApi.createBlock({
                 usb_device_id: deviceId,
+                mode,
+                target_user_id: targetUserId,
+                target_vm_id: targetVmId,
                 start_at: new Date(start).toISOString(),
                 end_at: new Date(end).toISOString(),
+                purpose,
                 notes: notes || undefined,
             });
             await fetchData();
@@ -515,8 +1029,39 @@ export default function AdminReservationsPage() {
             setActionLoading(false);
         }
     };
+
+    const handleCameraBlockConfirm = async (
+        cameraId: number,
+        mode: 'block' | 'reserve_to_user' | 'reserve_to_vm',
+        targetUserId: number | undefined,
+        targetVmId: number | undefined,
+        start: string,
+        end: string,
+        purpose: string | undefined,
+        notes: string,
+    ) => {
+        setActionLoading(true);
+        try {
+            await adminCameraApi.createBlock({
+                camera_id: cameraId,
+                mode,
+                target_user_id: targetUserId,
+                target_vm_id: targetVmId,
+                start_at: new Date(start).toISOString(),
+                end_at: new Date(end).toISOString(),
+                purpose,
+                notes: notes || undefined,
+            });
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Camera block failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
     // Filter reservations by tab
     const filteredReservations = reservations.filter((r) => {
+        if (activeTab === 'camera') return false;
         if (activeTab === 'pending') return r.status === 'pending';
         if (activeTab === 'approved')
             return r.status === 'approved' || r.status === 'active';
@@ -532,9 +1077,11 @@ export default function AdminReservationsPage() {
         (r) => r.status === 'approved' || r.status === 'active',
     ).length;
     const blocksCount = reservations.filter((r) => r.is_admin_block).length;
+    const cameraPendingCount = cameraReservations.length;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Device Reservations" />
+            <Head title="Reservations" />
             <div className="min-h-screen bg-background">
                 <div className="container py-8">
                     {/* Header */}
@@ -549,11 +1096,10 @@ export default function AdminReservationsPage() {
                             </div>
                             <div>
                                 <h1 className="font-heading text-3xl font-bold text-foreground">
-                                    Device Reservations
+                                    Reservations
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Manage USB device reservation requests and
-                                    blocking
+                                    Manage USB reservations, camera reservations, and device blocking
                                 </p>
                             </div>
                         </div>
@@ -576,6 +1122,14 @@ export default function AdminReservationsPage() {
                             >
                                 <Lock className="mr-2 h-4 w-4" />
                                 Block Device
+                            </Button>
+                            <Button
+                                className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                size="sm"
+                                onClick={() => setCameraBlockDialogOpen(true)}
+                            >
+                                <Video className="mr-2 h-4 w-4" />
+                                Block Camera
                             </Button>
                         </div>
                     </motion.div>
@@ -615,13 +1169,46 @@ export default function AdminReservationsPage() {
                                     </Badge>
                                 )}
                             </TabsTrigger>
+                            <TabsTrigger value="camera" className="gap-2">
+                                <Video className="h-4 w-4" />
+                                Camera Pending
+                                {cameraPendingCount > 0 && (
+                                    <Badge variant="primary" className="ml-1">
+                                        {cameraPendingCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
                             <TabsTrigger value="history" className="gap-2">
                                 <Calendar className="h-4 w-4" />
                                 History
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value={activeTab} className="mt-4">
-                            {loading ? (
+                            {activeTab === 'camera' ? (
+                                loading ? (
+                                    <LoadingSkeleton />
+                                ) : cameraReservations.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="p-12 text-center">
+                                            <p className="text-muted-foreground">
+                                                No pending camera reservations
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {cameraReservations.map((reservation) => (
+                                            <CameraReservationCard
+                                                key={reservation.id}
+                                                reservation={reservation}
+                                                onApprove={handleApproveCameraReservation}
+                                                onReject={handleRejectCameraReservation}
+                                                actionLoading={actionLoading}
+                                            />
+                                        ))}
+                                    </div>
+                                )
+                            ) : loading ? (
                                 <LoadingSkeleton />
                             ) : filteredReservations.length === 0 ? (
                                 <Card>
@@ -656,17 +1243,32 @@ export default function AdminReservationsPage() {
                 </div>
             </div>
             <ApproveDialog
+                key={selectedReservation?.id ?? 'none'}
                 reservation={selectedReservation}
                 open={approveDialogOpen}
-                onClose={() => setApproveDialogOpen(false)}
+                onClose={() => {
+                    setApproveDialogOpen(false);
+                    setSelectedReservation(null);
+                }}
                 onConfirm={handleApproveConfirm}
                 loading={actionLoading}
             />
             <BlockDialog
                 devices={devices}
+                users={users}
+                vms={vms}
                 open={blockDialogOpen}
                 onClose={() => setBlockDialogOpen(false)}
                 onConfirm={handleBlockConfirm}
+                loading={actionLoading}
+            />
+            <CameraBlockDialog
+                cameras={cameras}
+                users={users}
+                vms={vms}
+                open={cameraBlockDialogOpen}
+                onClose={() => setCameraBlockDialogOpen(false)}
+                onConfirm={handleCameraBlockConfirm}
                 loading={actionLoading}
             />
         </AppLayout>

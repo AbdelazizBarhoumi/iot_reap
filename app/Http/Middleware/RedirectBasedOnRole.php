@@ -44,7 +44,6 @@ class RedirectBasedOnRole
 
             return match ($user->role) {
                 UserRole::ENGINEER => redirect()->route('trainingPaths.index'),
-                UserRole::SECURITY_OFFICER => redirect()->route('trainingPaths.index'),
                 UserRole::ADMIN => $next($request),
                 default => $next($request),
             };

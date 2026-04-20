@@ -43,8 +43,12 @@ interface RefundRequest {
     requestedAt: string;
     processedAt: string | null;
 }
+type RefundCollection = {
+    data: RefundRequest[];
+};
+
 interface Props {
-    refunds: RefundRequest[];
+    refunds: RefundRequest[] | RefundCollection;
     stats: {
         pending: number;
         approved: number;
@@ -73,10 +77,12 @@ const statusConfig = {
         icon: XCircle,
     },
 };
+
 export default function RefundsPage({ refunds = [], stats }: Props) {
     const [search, setSearch] = useState('');
     const [processing, setProcessing] = useState<string | null>(null);
-    const filtered = refunds.filter(
+    const refundList = Array.isArray(refunds) ? refunds : refunds?.data ?? [];
+    const filtered = refundList.filter(
         (r) =>
             r.user.name.toLowerCase().includes(search.toLowerCase()) ||
             r.user.email.toLowerCase().includes(search.toLowerCase()) ||
