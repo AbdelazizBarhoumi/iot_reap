@@ -35,6 +35,9 @@ class UpdateTrainingPathRequest extends FormRequest
             'description' => ['sometimes', 'string', 'max:5000'],
             'category' => ['sometimes', 'string', 'max:100'],
             'level' => ['sometimes', Rule::enum(TrainingPathLevel::class)],
+            'price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'currency' => ['sometimes', 'nullable', 'string', 'size:3'],
+            'is_free' => ['sometimes', 'boolean'],
             'thumbnail' => ['nullable', 'string', 'url', 'max:500'],
             'duration' => ['nullable', 'string', 'max:50'],
         ];

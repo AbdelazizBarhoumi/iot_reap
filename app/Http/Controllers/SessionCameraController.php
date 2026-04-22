@@ -193,7 +193,7 @@ class SessionCameraController extends Controller
         $camera = app(\App\Repositories\CameraRepository::class)->findOrFail($cameraId);
         $camera->loadMissing('gatewayNode');
 
-        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.7');
+        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
 
         // Build the upstream URL
@@ -308,7 +308,7 @@ class SessionCameraController extends Controller
         $camera->loadMissing('gatewayNode');
 
         // Use the camera's gateway node IP — each camera streams from its own gateway
-        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.7');
+        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
         $whepUrl = "http://{$baseHost}:{$webrtcPort}/{$camera->stream_key}/whep";
 

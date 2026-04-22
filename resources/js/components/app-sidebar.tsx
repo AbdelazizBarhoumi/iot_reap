@@ -1,9 +1,13 @@
 import { Link } from '@inertiajs/react';
 import {
     BanknoteIcon,
+    Bell,
     CalendarCheck,
     CheckCircle,
+    Clapperboard,
+    ClipboardList,
     LayoutGrid,
+    MessageSquareWarning,
     Monitor,
     Network,
     RotateCcw,
@@ -54,6 +58,28 @@ const operationsNavItems: NavItem[] = [
         icon: Wrench,
     },
 ];
+const monitoringNavItems: NavItem[] = [
+    {
+        title: 'System Alerts',
+        href: admin.alerts.index.url(),
+        icon: Bell,
+    },
+    {
+        title: 'Activity Logs',
+        href: admin.activityLogs.index.url(),
+        icon: ClipboardList,
+    },
+    {
+        title: 'Forum Moderation',
+        href: admin.forum.flagged.url(),
+        icon: MessageSquareWarning,
+    },
+    {
+        title: 'Video Processing',
+        href: '/admin/videos',
+        icon: Clapperboard,
+    },
+];
 const contentNavItems: NavItem[] = [
     {
         title: 'Path Reviews',
@@ -98,6 +124,7 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={overviewNavItems} label="Core" />
                 <NavMain items={operationsNavItems} label="Operations" />
+                <NavMain items={monitoringNavItems} label="Monitoring" />
                 <NavMain items={contentNavItems} label="Content Management" />
             </SidebarContent>
             <SidebarFooter>

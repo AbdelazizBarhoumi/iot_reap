@@ -28,7 +28,7 @@ class MqttService
 
     public function __construct()
     {
-        $this->host = config('mqtt.host', '192.168.50.7');
+        $this->host = config('mqtt.host', '192.168.50.6');
         $this->port = config('mqtt.port', 1883);
         $this->username = config('mqtt.username');
         $this->password = config('mqtt.password');

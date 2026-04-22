@@ -122,13 +122,9 @@ class CameraStreamingFlowTest extends TestCase
 
     public function test_user_can_change_camera_resolution_manually(): void
     {
-        // Mock HTTP for API availability check
-        Http::fake([
-            '*/camera/start' => Http::response('', 405), // Method not allowed = endpoint exists
-        ]);
-
         // Mock the GatewayService to avoid actual HTTP calls
         $this->mock(GatewayService::class, function ($mock) {
+            $mock->shouldReceive('hasCameraManagementApi')->once()->andReturn(true);
             $mock->shouldReceive('stopCameraStream')->once();
             $mock->shouldReceive('startCameraStream')
                 ->once()
@@ -167,12 +163,8 @@ class CameraStreamingFlowTest extends TestCase
 
     public function test_user_can_change_camera_resolution_to_auto(): void
     {
-        // Mock HTTP for API availability check
-        Http::fake([
-            '*/camera/start' => Http::response('', 405),
-        ]);
-
         $this->mock(GatewayService::class, function ($mock) {
+            $mock->shouldReceive('hasCameraManagementApi')->once()->andReturn(true);
             $mock->shouldReceive('stopCameraStream')->once();
             $mock->shouldReceive('startCameraStream')
                 ->once()
@@ -202,12 +194,8 @@ class CameraStreamingFlowTest extends TestCase
 
     public function test_auto_resolution_for_ip_camera_selects_720p(): void
     {
-        // Mock HTTP for API availability check
-        Http::fake([
-            '*/camera/start' => Http::response('', 405),
-        ]);
-
         $this->mock(GatewayService::class, function ($mock) {
+            $mock->shouldReceive('hasCameraManagementApi')->once()->andReturn(true);
             $mock->shouldReceive('stopCameraStream')->once();
             $mock->shouldReceive('startCameraStream')
                 ->once()
@@ -287,12 +275,8 @@ class CameraStreamingFlowTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        // Mock HTTP for API availability check
-        Http::fake([
-            '*/camera/start' => Http::response('', 405),
-        ]);
-
         $this->mock(GatewayService::class, function ($mock) {
+            $mock->shouldReceive('hasCameraManagementApi')->once()->andReturn(true);
             $mock->shouldReceive('stopCameraStream')->once();
             $mock->shouldReceive('startCameraStream')
                 ->once()

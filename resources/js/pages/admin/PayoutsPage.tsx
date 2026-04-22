@@ -91,9 +91,25 @@ export default function PayoutsPage({ payouts = [], stats }: Props) {
         );
     };
     const handleReject = (id: string) => {
+        const reason = window.prompt('Please provide a reason for rejection:');
+        if (!reason || reason.trim().length === 0) {
+            return;
+        }
+
         setProcessing(id);
         router.post(
             `/admin/payouts/${id}/reject`,
+            { reason: reason.trim() },
+            {
+                onFinish: () => setProcessing(null),
+            },
+        );
+    };
+
+    const handleProcess = (id: string) => {
+        setProcessing(id);
+        router.post(
+            `/admin/payouts/${id}/process`,
             {},
             {
                 onFinish: () => setProcessing(null),
@@ -255,6 +271,26 @@ export default function PayoutsPage({ payouts = [], stats }: Props) {
                                                             }
                                                         >
                                                             Reject
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                {payout.status ===
+                                                    'approved' && (
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleProcess(
+                                                                    payout.id,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                processing ===
+                                                                payout.id
+                                                            }
+                                                        >
+                                                            Process
                                                         </Button>
                                                     </div>
                                                 )}

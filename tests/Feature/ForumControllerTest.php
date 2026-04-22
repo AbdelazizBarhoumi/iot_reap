@@ -413,6 +413,53 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
+    public function test_admin_can_view_flagged_replies(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+        ]);
+
+        ThreadReply::factory()->count(2)->create([
+            'thread_id' => $thread->id,
+            'is_flagged' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson('/admin/forum/flagged-replies');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => ['id', 'threadId', 'content'],
+                ],
+                'pagination',
+            ])
+            ->assertJsonCount(2, 'data');
+    }
+
+    public function test_admin_can_unflag_reply(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+        ]);
+
+        $reply = ThreadReply::factory()->create([
+            'thread_id' => $thread->id,
+            'is_flagged' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/admin/forum/replies/{$reply->id}/unflag");
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'data' => ['id'],
+                'message',
+            ]);
+    }
+
     public function test_student_cannot_access_admin_endpoints(): void
     {
         $response = $this->actingAs($this->student)

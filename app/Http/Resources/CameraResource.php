@@ -22,7 +22,7 @@ class CameraResource extends JsonResource
         // Use relationLoaded to avoid lazy loading violation in tests
         $gatewayIp = $this->relationLoaded('gatewayNode') && $this->gatewayNode
             ? $this->gatewayNode->ip
-            : config('gateway.mediamtx_url', '192.168.50.7');
+            : config('gateway.mediamtx_url', '192.168.50.6');
         $baseHost = $gatewayIp;
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);

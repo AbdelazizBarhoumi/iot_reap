@@ -28,6 +28,9 @@ class CreateTrainingPathRequest extends FormRequest
             'description' => ['required', 'string', 'max:5000'],
             'category' => ['required', 'string', 'max:100'],
             'level' => ['required', Rule::enum(TrainingPathLevel::class)],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'is_free' => ['nullable', 'boolean'],
             'thumbnail' => ['nullable', 'string'], // Can be URL or base64 data URL
             'video_type' => ['nullable', 'string', Rule::in(['upload', 'youtube'])],
             'video_url' => ['nullable', 'url', 'max:2048'],

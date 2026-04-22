@@ -8,6 +8,7 @@ import {
     PenTool,
     Server,
     Settings2,
+    Usb,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -33,6 +34,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { login, dashboard, home } from '@/routes';
 import connectionPreferences from '@/routes/connection-preferences';
+import hardware from '@/routes/hardware';
 import reservations from '@/routes/reservations';
 import sessions from '@/routes/sessions';
 import teaching from '@/routes/teaching';
@@ -69,6 +71,11 @@ function useNavItems(): NavItem[] {
                 title: 'Sessions',
                 href: sessions.index.url(),
                 icon: History,
+            },
+            {
+                title: 'Hardware',
+                href: hardware.index.url(),
+                icon: Usb,
             },
             {
                 title: 'Reservations',

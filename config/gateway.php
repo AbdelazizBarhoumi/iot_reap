@@ -64,7 +64,7 @@ return [
     | services: MediaMTX, Frigate, CUPS, ser2net, avahi-daemon, Docker.
     |
     */
-    'infrastructure_ip' => env('GATEWAY_INFRASTRUCTURE_IP', '192.168.50.7'),
+    'infrastructure_ip' => env('GATEWAY_INFRASTRUCTURE_IP', '192.168.50.6'),
 
     /*
     |--------------------------------------------------------------------------
@@ -75,10 +75,11 @@ return [
     | running on the gateway. Cameras proxy their streams through MediaMTX.
     |
     */
-    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.7'),
+    'mediamtx_url' => env('MEDIAMTX_URL', '192.168.50.6'),
     'mediamtx_rtsp_port' => (int) env('MEDIAMTX_RTSP_PORT', 8554),
     'mediamtx_hls_port' => (int) env('MEDIAMTX_HLS_PORT', 8888),
     'mediamtx_webrtc_port' => (int) env('MEDIAMTX_WEBRTC_PORT', 8889),
+    'camera_api_port' => (int) env('GATEWAY_CAMERA_API_PORT', 8001),
 
     /*
     |--------------------------------------------------------------------------
@@ -89,7 +90,7 @@ return [
     | detection on camera feeds. Runs as a Docker container on the gateway.
     |
     */
-    'frigate_url' => env('FRIGATE_URL', 'http://192.168.50.7'),
+    'frigate_url' => env('FRIGATE_URL', 'http://192.168.50.6'),
     'frigate_port' => (int) env('FRIGATE_PORT', 5000),
 
     /*
@@ -100,7 +101,7 @@ return [
     | Common UNIX Printing System for shared printer access from VMs.
     |
     */
-    'cups_url' => env('CUPS_URL', 'https://192.168.50.7'),
+    'cups_url' => env('CUPS_URL', 'https://192.168.50.6'),
     'cups_port' => (int) env('CUPS_PORT', 631),
 
     /*

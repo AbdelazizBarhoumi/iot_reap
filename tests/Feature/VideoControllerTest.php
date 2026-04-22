@@ -16,6 +16,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VideoControllerTest extends TestCase
@@ -507,6 +508,24 @@ class VideoControllerTest extends TestCase
     {
         $response = $this->actingAs($this->teacher)
             ->getJson('/admin/videos/processing-stats');
+
+        $response->assertForbidden();
+    }
+
+    public function test_admin_can_view_video_processing_page(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get('/admin/videos');
+
+        $response->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/VideoProcessingPage'));
+    }
+
+    public function test_non_admin_cannot_view_video_processing_page(): void
+    {
+        $response = $this->actingAs($this->teacher)
+            ->get('/admin/videos');
 
         $response->assertForbidden();
     }

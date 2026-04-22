@@ -14,14 +14,16 @@ class ActivityLogResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = $this->whenLoaded('user');
+
         return [
             'id' => $this->id,
             'type' => $this->type,
             'action' => $this->action,
             'description' => $this->description,
             'user_id' => $this->user_id,
-            'user_name' => $this->user?->name,
-            'user_avatar' => $this->user?->avatar_url,
+            'user_name' => $user?->name,
+            'user_avatar' => null,
             'ip_address' => $this->ip_address,
             'metadata' => $this->metadata,
             'status' => $this->status,

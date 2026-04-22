@@ -379,6 +379,15 @@ export default function TeachingPage() {
                                         toast.error('Failed to lock thread');
                                     }
                                 }}
+                                onUnlockThread={async (threadId) => {
+                                    try {
+                                        await forumApi.unlockThread(threadId);
+                                        fetchForumInbox();
+                                        toast.success('Thread unlocked');
+                                    } catch {
+                                        toast.error('Failed to unlock thread');
+                                    }
+                                }}
                                 onRefresh={fetchForumInbox}
                                 isLoading={forumLoading}
                             />

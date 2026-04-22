@@ -7,6 +7,8 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Activity Log Controller
@@ -22,9 +24,13 @@ class ActivityLogController extends Controller
     /**
      * Get all activity logs (paginated)
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
         Gate::authorize('admin-only');
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('admin/ActivityLogsPage');
+        }
 
         $activities = $this->activityLogService->getPaginated(
             perPage: $request->input('per_page', 20),

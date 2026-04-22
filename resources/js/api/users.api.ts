@@ -98,8 +98,18 @@ export const usersApi = {
      * Impersonate a user.
      */
     async impersonateUser(userId: string): Promise<void> {
-        // This is a redirect action, not a JSON response
-        window.location.href = `/admin/users/${userId}/impersonate`;
+        await client.post(`${USERS_BASE_PATH}/${userId}/impersonate`);
+        window.location.assign('/dashboard');
+    },
+    /**
+     * GDPR anonymize a user.
+     */
+    async gdprDeleteUser(userId: string): Promise<{ message: string }> {
+        const { data } = await client.delete<{ message: string }>(
+            `${USERS_BASE_PATH}/${userId}/gdpr`,
+        );
+
+        return data;
     },
 };
 export default usersApi;

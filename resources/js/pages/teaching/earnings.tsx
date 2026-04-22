@@ -10,11 +10,13 @@ import {
     TrendingUp,
     BookOpen,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KPICard, RevenueChart, PeriodSelector } from '@/components/analytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
 import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
 import type {
@@ -50,6 +52,59 @@ export default function EarningsPage({
             { preserveState: true },
         );
     };
+
+    const [payoutAmount, setPayoutAmount] = useState('');
+    const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
+    const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+    const [payoutRequests, setPayoutRequests] = useState<PayoutRequestItem[]>([]);
+
+    useEffect(() => {
+        let mounted = true;
+
+        payoutApi
+            .getMyPayouts()
+            .then((payload) => {
+                if (!mounted) return;
+
+                setAvailableBalance(payload.available_balance);
+                setPayoutRequests(payload.data);
+            })
+            .catch(() => {
+                if (!mounted) return;
+                setAvailableBalance(null);
+                setPayoutRequests([]);
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const handleRequestPayout = async () => {
+        const amount = Number(payoutAmount);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return;
+        }
+
+        setIsSubmittingPayout(true);
+        try {
+            const created = await payoutApi.requestPayout({
+                amount,
+                payout_method: 'stripe',
+            });
+
+            setPayoutRequests((prev) => [created, ...prev]);
+            setPayoutAmount('');
+            // Refresh available balance after request
+            const refreshed = await payoutApi.getMyPayouts();
+            setAvailableBalance(refreshed.available_balance);
+            setPayoutRequests(refreshed.data);
+        } finally {
+            setIsSubmittingPayout(false);
+        }
+    };
+
     const handleExport = () => {
         const params = new URLSearchParams({
             start_date: summary.start_date,
@@ -68,6 +123,7 @@ export default function EarningsPage({
         (sum, c) => sum + c.sales_count,
         0,
     );
+    const balanceToShow = availableBalance ?? summary.total_revenue;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Earnings" />
@@ -119,6 +175,43 @@ export default function EarningsPage({
                         icon={<BookOpen className="h-4 w-4" />}
                     />
                 </div>
+
+                {/* Payout request */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Request Payout</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+                            <div>
+                                <p className="text-sm text-muted-foreground">
+                                    Available balance
+                                </p>
+                                <p className="text-2xl font-semibold">
+                                    {formatCurrency(balanceToShow)}
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Input
+                                    type="number"
+                                    min={50}
+                                    step="0.01"
+                                    value={payoutAmount}
+                                    onChange={(e) => setPayoutAmount(e.target.value)}
+                                    placeholder="Amount in USD"
+                                    className="sm:w-48"
+                                />
+                                <Button
+                                    onClick={handleRequestPayout}
+                                    disabled={isSubmittingPayout || !payoutAmount}
+                                >
+                                    {isSubmittingPayout ? 'Submitting...' : 'Request Payout'}
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Revenue Chart */}
                 <RevenueChart data={revenueChart} title="Daily Revenue" />
                 {/* Revenue by TrainingPath */}
@@ -176,6 +269,41 @@ export default function EarningsPage({
                                         {formatCurrency(summary.total_revenue)}
                                     </span>
                                 </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Recent payout requests */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Recent Payout Requests</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {payoutRequests.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No payout requests yet.
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {payoutRequests.map((request) => (
+                                    <div
+                                        key={request.id}
+                                        className="flex items-center justify-between rounded-lg border p-3"
+                                    >
+                                        <div>
+                                            <p className="font-medium">
+                                                {formatCurrency(request.amount)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Requested {new Date(request.requestedAt).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                            {request.status_label}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </CardContent>

@@ -32,7 +32,7 @@ set -e
 
 # ─── Configuration ─────────────────────────────────────────────────────────────
 
-MEDIAMTX_HOST="${MEDIAMTX_HOST:-192.168.50.6}"
+MEDIAMTX_HOST="${MEDIAMTX_HOST:-$(hostname -I | awk '{print $1}')}"
 MEDIAMTX_RTSP_PORT="${MEDIAMTX_RTSP_PORT:-8554}"
 DEFAULT_WIDTH="${DEFAULT_WIDTH:-640}"
 DEFAULT_HEIGHT="${DEFAULT_HEIGHT:-480}"
@@ -54,34 +54,67 @@ error() {
     exit 1
 }
 
+device_has_video_capture() {
+    local device_info="$1"
+    local device_caps
+
+    device_caps=$(printf '%s\n' "$device_info" | awk '
+        /Device Caps/ { flag=1; next }
+        flag && $0 !~ /^\t\t/ { flag=0 }
+        flag { print }
+    ')
+
+    if [ -n "$device_caps" ]; then
+        printf '%s\n' "$device_caps" | grep -q "Video Capture"
+        return $?
+    fi
+
+    printf '%s\n' "$device_info" | grep -q "Video Capture"
+}
+
+if [ -d /etc/pve ] && [ -z "${ALLOW_PROXMOX_HOST_CAMERA_STREAMING:-}" ]; then
+    error "Run this script inside the gateway container, not on the Proxmox host. Use bash/complete-camera-setup.sh from the host."
+fi
+
 # ─── Install Dependencies ──────────────────────────────────────────────────────
 
 install_dependencies() {
     log "Checking dependencies..."
-    
-    # Check if ffmpeg is installed
+
+    local missing_packages=()
+
     if ! command -v ffmpeg &> /dev/null; then
-        log "Installing ffmpeg..."
-        
-        # Fix DNS if needed (common on fresh Proxmox containers)
-        if ! ping -c 1 google.com &> /dev/null 2>&1; then
-            log "Fixing DNS configuration..."
-            # Backup and fix resolv.conf
-            cp /etc/resolv.conf /etc/resolv.conf.backup 2>/dev/null || true
-            echo "nameserver 8.8.8.8" > /etc/resolv.conf
-            echo "nameserver 8.8.4.4" >> /etc/resolv.conf
-        fi
-        
-        apt-get update -qq
-        apt-get install -y ffmpeg jq curl v4l-utils
+        missing_packages+=("ffmpeg")
     else
         log "ffmpeg already installed: $(ffmpeg -version | head -1)"
     fi
-    
-    # Install jq for JSON processing
+
     if ! command -v jq &> /dev/null; then
-        apt-get install -y jq
+        missing_packages+=("jq")
     fi
+
+    if ! command -v curl &> /dev/null; then
+        missing_packages+=("curl")
+    fi
+
+    if ! command -v v4l2-ctl &> /dev/null; then
+        missing_packages+=("v4l-utils")
+    fi
+
+    if [ "${#missing_packages[@]}" -eq 0 ]; then
+        return 0
+    fi
+
+    # Fix DNS if needed (common on fresh Proxmox containers)
+    if ! getent hosts deb.debian.org > /dev/null 2>&1; then
+        log "Fixing DNS configuration..."
+        cp /etc/resolv.conf /etc/resolv.conf.backup 2>/dev/null || true
+        echo "nameserver 8.8.8.8" > /etc/resolv.conf
+        echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+    fi
+
+    apt-get update -qq
+    apt-get install -y "${missing_packages[@]}"
 }
 
 # ─── Setup Directory Structure ─────────────────────────────────────────────────
@@ -110,7 +143,7 @@ list_cameras() {
             local device_info=$(v4l2-ctl --device="$video_dev" --info 2>/dev/null || echo "")
             
             # Check if it's a capture device (not metadata-only)
-            if echo "$device_info" | grep -q "Video Capture"; then
+            if device_has_video_capture "$device_info"; then
                 local card_name=$(echo "$device_info" | grep "Card type" | cut -d':' -f2 | xargs)
                 local bus_info=$(echo "$device_info" | grep "Bus info" | cut -d':' -f2- | xargs)
                 
@@ -142,7 +175,7 @@ find_device_by_vidpid() {
                     
                     if [ "$device_vid" = "$vid" ] && [ "$device_pid" = "$pid" ]; then
                         # Only return capture devices, not metadata
-                        if v4l2-ctl --device="$video_dev" --info 2>/dev/null | grep -q "Video Capture"; then
+                        if device_has_video_capture "$(v4l2-ctl --device="$video_dev" --info 2>/dev/null || true)"; then
                             echo "$video_dev"
                             return 0
                         fi
@@ -228,6 +261,12 @@ start_stream() {
     local framerate="${5:-$DEFAULT_FRAMERATE}"
     
     local service_name="${SERVICE_PREFIX}-${stream_key}"
+
+    if [ "${stream_key}" = "api" ]; then
+        error "stream key 'api' is reserved"
+    fi
+
+    setup_directories
     
     # Check if device exists
     if [ ! -e "$device_path" ]; then
@@ -238,6 +277,7 @@ start_stream() {
     generate_service "$stream_key" "$device_path" "$width" "$height" "$framerate"
     
     systemctl daemon-reload
+    systemctl reset-failed "${service_name}.service" 2>/dev/null || true
     systemctl enable "${service_name}.service"
     systemctl restart "${service_name}.service"
     
@@ -257,6 +297,10 @@ start_stream() {
 stop_stream() {
     local stream_key="$1"
     local service_name="${SERVICE_PREFIX}-${stream_key}"
+
+    if [ "${stream_key}" = "api" ]; then
+        error "stream key 'api' is reserved"
+    fi
     
     if systemctl is-active --quiet "${service_name}.service"; then
         systemctl stop "${service_name}.service"
@@ -277,6 +321,9 @@ list_streams() {
     for service in /etc/systemd/system/${SERVICE_PREFIX}-*.service; do
         if [ -f "$service" ]; then
             local name=$(basename "$service" .service)
+            if [ "$name" = "${SERVICE_PREFIX}-api" ]; then
+                continue
+            fi
             local status="stopped"
             if systemctl is-active --quiet "$name"; then
                 status="running"
@@ -300,13 +347,175 @@ Simple HTTP API for managing camera streams.
 Called by Laravel to start/stop streams on this Proxmox node.
 """
 import http.server
+import glob
 import json
-import subprocess
 import os
+import re
 import socketserver
+import subprocess
+from pathlib import Path
 
 PORT = 8001  # Default port for camera API
 CONFIG_DIR = "/etc/iot-reap"
+MEDIAMTX_RTSP_PORT = int(os.environ.get('MEDIAMTX_RTSP_PORT', '8554'))
+MEDIAMTX_HLS_PORT = int(os.environ.get('MEDIAMTX_HLS_PORT', '8888'))
+
+def gateway_host() -> str:
+    result = subprocess.run(['hostname', '-I'], capture_output=True, text=True)
+    host = result.stdout.strip().split(' ')[0] if result.stdout.strip() else ''
+
+    return host or '127.0.0.1'
+
+def parse_field(source: str, field_name: str) -> str | None:
+    for line in source.splitlines():
+        if ':' not in line:
+            continue
+
+        label, value = line.split(':', 1)
+        if label.strip() == field_name:
+            return value.strip()
+
+    return None
+
+def has_device_video_capture(info_output: str) -> bool:
+    in_device_caps = False
+    device_caps = []
+
+    for line in info_output.splitlines():
+        stripped = line.strip()
+
+        if stripped.startswith('Device Caps'):
+            in_device_caps = True
+            continue
+
+        if in_device_caps:
+            if not line.startswith('\t\t'):
+                break
+
+            device_caps.append(stripped)
+
+    if device_caps:
+        return 'Video Capture' in device_caps
+
+    return 'Video Capture' in info_output
+
+def collect_camera_devices() -> list[dict]:
+    devices = []
+
+    for device_path in sorted(glob.glob('/dev/video*')):
+        info = subprocess.run(
+            ['v4l2-ctl', f'--device={device_path}', '--info'],
+            capture_output=True,
+            text=True,
+        )
+
+        if info.returncode != 0 or not has_device_video_capture(info.stdout):
+            continue
+
+        sysfs_interface = os.path.realpath(f"/sys/class/video4linux/{Path(device_path).name}/device")
+        usb_device_root = os.path.dirname(sysfs_interface)
+        interface_name = os.path.basename(sysfs_interface)
+
+        usb_busid = None
+        if interface_name:
+            usb_busid = interface_name.split(':', 1)[0]
+
+        def read_attr(name: str) -> str | None:
+            try:
+                with open(os.path.join(usb_device_root, name), 'r', encoding='utf-8') as handle:
+                    return handle.read().strip() or None
+            except OSError:
+                return None
+
+        formats = subprocess.run(
+            ['v4l2-ctl', f'--device={device_path}', '--list-formats-ext'],
+            capture_output=True,
+            text=True,
+        )
+
+        devices.append({
+            'device': device_path,
+            'device_path': device_path,
+            'name': parse_field(info.stdout, 'Card type'),
+            'bus': parse_field(info.stdout, 'Bus info'),
+            'formats': formats.stdout.strip() or None,
+            'usb_busid': usb_busid,
+            'vendor_id': read_attr('idVendor'),
+            'product_id': read_attr('idProduct'),
+            'manufacturer': read_attr('manufacturer'),
+            'product': read_attr('product'),
+            'serial': read_attr('serial'),
+        })
+
+    return devices
+
+def resolve_camera_device(body: dict) -> tuple[dict | None, str | None]:
+    requested_device_path = body.get('device_path')
+    usb_busid = body.get('usb_busid')
+    vendor_id = str(body.get('vendor_id', '')).lower() or None
+    product_id = str(body.get('product_id', '')).lower() or None
+    devices = collect_camera_devices()
+
+    if requested_device_path:
+        requested_match = next((device for device in devices if device['device_path'] == requested_device_path), None)
+        if requested_match is not None:
+            matches_bus = usb_busid is None or requested_match.get('usb_busid') == usb_busid
+            matches_vid_pid = (
+                vendor_id is None
+                or product_id is None
+                or (
+                    requested_match.get('vendor_id') == vendor_id
+                    and requested_match.get('product_id') == product_id
+                )
+            )
+
+            if matches_bus and matches_vid_pid:
+                return requested_match, None
+
+    if usb_busid:
+        bus_matches = [device for device in devices if device.get('usb_busid') == usb_busid]
+        if len(bus_matches) == 1:
+            return bus_matches[0], None
+        if len(bus_matches) > 1:
+            return None, f"multiple capture devices matched usb busid '{usb_busid}'"
+
+    if vendor_id and product_id:
+        vid_pid_matches = [
+            device
+            for device in devices
+            if device.get('vendor_id') == vendor_id and device.get('product_id') == product_id
+        ]
+
+        if len(vid_pid_matches) == 1:
+            return vid_pid_matches[0], None
+
+        if len(vid_pid_matches) > 1:
+            return None, f"multiple capture devices matched vendor/product '{vendor_id}:{product_id}'"
+
+    if requested_device_path and os.path.exists(requested_device_path):
+        return {
+            'device': requested_device_path,
+            'device_path': requested_device_path,
+        }, None
+
+    if len(devices) == 1:
+        return devices[0], None
+
+    identifiers = []
+    if requested_device_path:
+        identifiers.append(f"device_path={requested_device_path}")
+    if usb_busid:
+        identifiers.append(f"usb_busid={usb_busid}")
+    if vendor_id and product_id:
+        identifiers.append(f"vendor_id={vendor_id}")
+        identifiers.append(f"product_id={product_id}")
+
+    details = ', '.join(identifiers) if identifiers else 'no identifiers were provided'
+
+    return None, f'no matching capture device found ({details})'
+
+class ReusableTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
 
 class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
     def _send_json(self, data, status=200):
@@ -329,7 +538,7 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
         elif self.path == '/streams':
             # List active streams
             result = subprocess.run(
-                ['bash', '-c', f'for s in /etc/systemd/system/iot-reap-camera-*.service; do [ -f "$s" ] && basename "$s" .service; done'],
+                ['bash', '-c', f'for s in /etc/systemd/system/iot-reap-camera-*.service; do [ -f "$s" ] && basename "$s" .service; done | grep -v "^iot-reap-camera-api$" || true'],
                 capture_output=True, text=True
             )
             streams = []
@@ -366,16 +575,10 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
                 'running': running,
                 'pid': pid,
                 'stream_key': stream_key,
-                'rtsp_url': f'rtsp://192.168.50.6:8554/{stream_key}' if running else None
+                'rtsp_url': f'rtsp://{gateway_host()}:{MEDIAMTX_RTSP_PORT}/{stream_key}' if running else None
             })
         elif self.path == '/cameras':
-            # List available video devices
-            result = subprocess.run(
-                ['bash', '-c', 'for d in /dev/video*; do [ -e "$d" ] && v4l2-ctl --device="$d" --info 2>/dev/null | grep -q "Video Capture" && echo "$d"; done'],
-                capture_output=True, text=True
-            )
-            devices = result.stdout.strip().split('\n')
-            self._send_json({'devices': [d for d in devices if d]})
+            self._send_json({'devices': collect_camera_devices()})
         else:
             self._send_json({'error': 'Not found'}, 404)
     
@@ -385,7 +588,6 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(content_length).decode())
             
             stream_key = body.get('stream_key')
-            device_path = body.get('device_path', '/dev/video0')
             width = body.get('width', 640)
             height = body.get('height', 480)
             framerate = body.get('framerate', 15)
@@ -393,6 +595,16 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
             if not stream_key:
                 self._send_json({'error': 'stream_key required'}, 400)
                 return
+            if stream_key == 'api':
+                self._send_json({'error': 'stream_key \"api\" is reserved'}, 400)
+                return
+
+            resolved_device, resolution_error = resolve_camera_device(body)
+            if resolved_device is None:
+                self._send_json({'error': resolution_error}, 422)
+                return
+
+            device_path = resolved_device['device_path']
             
             # Start stream using the bash script
             result = subprocess.run(
@@ -405,8 +617,9 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
                 self._send_json({
                     'status': 'started',
                     'stream_key': stream_key,
-                    'rtsp_url': f'rtsp://192.168.50.6:8554/{stream_key}',
-                    'hls_url': f'http://192.168.50.6:8888/{stream_key}/index.m3u8'
+                    'device_path': device_path,
+                    'rtsp_url': f'rtsp://{gateway_host()}:{MEDIAMTX_RTSP_PORT}/{stream_key}',
+                    'hls_url': f'http://{gateway_host()}:{MEDIAMTX_HLS_PORT}/{stream_key}/index.m3u8'
                 })
             else:
                 self._send_json({'error': result.stderr or result.stdout}, 500)
@@ -418,6 +631,9 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
             
             if not stream_key:
                 self._send_json({'error': 'stream_key required'}, 400)
+                return
+            if stream_key == 'api':
+                self._send_json({'error': 'stream_key \"api\" is reserved'}, 400)
                 return
             
             result = subprocess.run(
@@ -434,7 +650,7 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     port = int(os.environ.get('CAMERA_API_PORT', PORT))
-    with socketserver.TCPServer(('0.0.0.0', port), CameraAPIHandler) as httpd:
+    with ReusableTCPServer(('0.0.0.0', port), CameraAPIHandler) as httpd:
         print(f'Camera API listening on port {port}')
         httpd.serve_forever()
 PYTHON_EOF

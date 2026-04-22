@@ -15,6 +15,16 @@ interface ThreadsResponse {
         total: number;
     };
 }
+
+interface FlaggedRepliesResponse {
+    data: ThreadReply[];
+    pagination: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+}
 interface ThreadResponse {
     data: DiscussionThread;
     message?: string;
@@ -242,6 +252,59 @@ export async function markAsAnswer(replyId: string): Promise<ThreadReply> {
     );
     return response.data.data;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin Moderation Operations
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Get flagged threads for admin moderation.
+ */
+export async function getFlaggedThreadsForAdmin(
+    page = 1,
+): Promise<ThreadsResponse> {
+    const response = await client.get<ThreadsResponse>(
+        `/admin/forum/flagged?page=${page}`,
+    );
+
+    return response.data;
+}
+
+/**
+ * Get flagged replies for admin moderation.
+ */
+export async function getFlaggedRepliesForAdmin(
+    page = 1,
+): Promise<FlaggedRepliesResponse> {
+    const response = await client.get<FlaggedRepliesResponse>(
+        `/admin/forum/flagged-replies?page=${page}`,
+    );
+
+    return response.data;
+}
+
+/**
+ * Unflag a thread as admin.
+ */
+export async function unflagThreadAsAdmin(
+    threadId: string,
+): Promise<DiscussionThread> {
+    const response = await client.post<ThreadResponse>(
+        `/admin/forum/threads/${threadId}/unflag`,
+    );
+
+    return response.data.data;
+}
+
+/**
+ * Unflag a reply as admin.
+ */
+export async function unflagReplyAsAdmin(replyId: string): Promise<ThreadReply> {
+    const response = await client.post<ReplyResponse>(
+        `/admin/forum/replies/${replyId}/unflag`,
+    );
+
+    return response.data.data;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Exported API Object
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,5 +331,10 @@ export const forumApi = {
     lockThread,
     unlockThread,
     markAsAnswer,
+    // Admin moderation
+    getFlaggedThreadsForAdmin,
+    getFlaggedRepliesForAdmin,
+    unflagThreadAsAdmin,
+    unflagReplyAsAdmin,
 };
 

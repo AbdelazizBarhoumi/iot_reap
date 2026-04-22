@@ -6,6 +6,7 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TeacherAnalyticsController;
 use App\Http\Controllers\TeachingController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\TeacherPayoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('teaching.')->group(function () {
@@ -98,6 +99,12 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
         Route::get('/trainingPaths/{trainingPath}/funnel', 'funnel')->name('funnel');
         Route::get('/earnings', 'earnings')->name('earnings');
         Route::get('/earnings/export', 'exportEarnings')->name('earnings.export');
+    });
+
+    // Teacher payout self-service
+    Route::prefix('payouts')->name('payouts.')->controller(TeacherPayoutController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/request', 'store')->name('request');
     });
 
     // TrainingUnit VM Assignments (teacher submission)

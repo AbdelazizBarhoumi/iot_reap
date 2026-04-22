@@ -95,6 +95,7 @@ class TrainingPathService
     {
         // Process thumbnail
         $thumbnailPath = $this->processThumbnail($data['thumbnail'] ?? null);
+        $pricingData = $this->buildPricingData($data);
 
         // Create the trainingPath
         $trainingPath = $this->trainingPathRepository->create([
@@ -108,6 +109,7 @@ class TrainingPathService
             'category' => $data['category'] ?? 'General',
             'level' => $data['level'] ?? 'Beginner',
             'duration' => $data['duration'] ?? null,
+            ...$pricingData,
             'has_virtual_machine' => false,
             'status' => TrainingPathStatus::DRAFT,
         ]);
@@ -163,10 +165,17 @@ class TrainingPathService
     public function updateTrainingPath(TrainingPath $trainingPath, array $data): TrainingPath
     {
         $oldCategory = $trainingPath->category;
+        $pricingData = $this->buildPricingData($data, $trainingPath);
 
         if (isset($data['thumbnail'])) {
             $data['thumbnail'] = $this->processThumbnail($data['thumbnail']);
         }
+
+        if (! empty($pricingData)) {
+            $data = array_merge($data, $pricingData);
+        }
+
+        unset($data['price']);
 
         $this->trainingPathRepository->update($trainingPath, $data);
 
@@ -374,5 +383,53 @@ class TrainingPathService
 
         // If it's just a file path/URL or something else, return it as is
         return $thumbnail;
+    }
+
+    /**
+     * Build pricing fields for create/update requests.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function buildPricingData(array $data, ?TrainingPath $trainingPath = null): array
+    {
+        $hasPrice = array_key_exists('price', $data);
+        $hasCurrency = array_key_exists('currency', $data);
+        $hasIsFree = array_key_exists('is_free', $data);
+
+        if ($trainingPath === null) {
+            $price = (float) ($data['price'] ?? 0);
+            $isFree = (bool) ($data['is_free'] ?? $price <= 0);
+
+            return [
+                'price_cents' => $isFree ? 0 : (int) round(max(0, $price) * 100),
+                'currency' => strtoupper((string) ($data['currency'] ?? 'USD')),
+                'is_free' => $isFree,
+            ];
+        }
+
+        $pricingData = [];
+
+        if ($hasPrice) {
+            $price = (float) $data['price'];
+            $isFree = (bool) ($data['is_free'] ?? $price <= 0);
+
+            $pricingData['price_cents'] = $isFree ? 0 : (int) round(max(0, $price) * 100);
+            $pricingData['is_free'] = $isFree;
+        }
+
+        if ($hasCurrency) {
+            $pricingData['currency'] = strtoupper((string) $data['currency']);
+        }
+
+        if ($hasIsFree) {
+            $pricingData['is_free'] = (bool) $data['is_free'];
+
+            if ($pricingData['is_free'] === true) {
+                $pricingData['price_cents'] = 0;
+            }
+        }
+
+        return $pricingData;
     }
 }

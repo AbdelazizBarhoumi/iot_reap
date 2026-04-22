@@ -15,6 +15,8 @@ import {
     Clock,
     CheckCircle2,
     Pin,
+    Lock,
+    Unlock,
     MessageSquare,
     ArrowRight,
     RefreshCw,
@@ -35,6 +37,7 @@ interface TeacherInboxProps {
     onResolveFlag?: (threadId: string) => void;
     onPinThread?: (threadId: string) => void;
     onLockThread?: (threadId: string) => void;
+    onUnlockThread?: (threadId: string) => void;
     onRefresh?: () => void;
     isLoading?: boolean;
 }
@@ -66,6 +69,9 @@ interface ThreadItemProps {
     onAction?: () => void;
     actionLabel?: string;
     actionIcon?: typeof Flag;
+    onSecondaryAction?: () => void;
+    secondaryActionLabel?: string;
+    secondaryActionIcon?: typeof Lock;
     showFlag?: boolean;
 }
 function ThreadItem({
@@ -74,6 +80,9 @@ function ThreadItem({
     onAction,
     actionLabel,
     actionIcon: ActionIcon,
+    onSecondaryAction,
+    secondaryActionLabel,
+    secondaryActionIcon: SecondaryActionIcon,
     showFlag = false,
 }: ThreadItemProps) {
     return (
@@ -135,6 +144,17 @@ function ThreadItem({
                         {actionLabel}
                     </Button>
                 )}
+                {onSecondaryAction && SecondaryActionIcon && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onSecondaryAction}
+                        className="h-7 px-2 text-xs"
+                    >
+                        <SecondaryActionIcon className="mr-1 h-3.5 w-3.5" />
+                        {secondaryActionLabel}
+                    </Button>
+                )}
                 <Button
                     variant="ghost"
                     size="sm"
@@ -155,11 +175,10 @@ export function TeacherInbox({
     onResolveFlag,
     onPinThread,
     onLockThread,
+    onUnlockThread,
     onRefresh,
     isLoading = false,
 }: TeacherInboxProps) {
-    // onLockThread is intentionally unused in this component; keep to satisfy props contract
-    void onLockThread;
     const [activeTab, setActiveTab] = useState('flagged');
     const totalItems = flaggedThreads.length + unansweredThreads.length;
     return (
@@ -253,6 +272,13 @@ export function TeacherInbox({
                                         }
                                         actionLabel="Resolve"
                                         actionIcon={CheckCircle2}
+                                        onSecondaryAction={() =>
+                                            thread.isLocked
+                                                ? onUnlockThread?.(thread.id)
+                                                : onLockThread?.(thread.id)
+                                        }
+                                        secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
+                                        secondaryActionIcon={thread.isLocked ? Unlock : Lock}
                                         showFlag
                                     />
                                 ))}
@@ -284,6 +310,13 @@ export function TeacherInbox({
                                         }
                                         actionLabel="Pin"
                                         actionIcon={Pin}
+                                        onSecondaryAction={() =>
+                                            thread.isLocked
+                                                ? onUnlockThread?.(thread.id)
+                                                : onLockThread?.(thread.id)
+                                        }
+                                        secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
+                                        secondaryActionIcon={thread.isLocked ? Unlock : Lock}
                                     />
                                 ))}
                             </div>
@@ -309,6 +342,13 @@ export function TeacherInbox({
                                                 String(thread.trainingPathId),
                                             )
                                         }
+                                            onSecondaryAction={() =>
+                                                thread.isLocked
+                                                    ? onUnlockThread?.(thread.id)
+                                                    : onLockThread?.(thread.id)
+                                            }
+                                            secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
+                                            secondaryActionIcon={thread.isLocked ? Unlock : Lock}
                                     />
                                 ))}
                             </div>

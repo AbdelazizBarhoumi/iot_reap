@@ -273,6 +273,9 @@ export default function EditTrainingPathPage({
     const [description, setDescription] = useState(trainingPath.description);
     const [category, setCategory] = useState(trainingPath.category);
     const [level, setLevel] = useState(trainingPath.level);
+    const [price, setPrice] = useState(trainingPath.price?.toString() ?? '0');
+    const [currency, setCurrency] = useState(trainingPath.currency ?? 'USD');
+    const [isFree, setIsFree] = useState(trainingPath.isFree ?? false);
     const [thumbnail, setThumbnail] = useState<string | null>(trainingPath.thumbnail);
     const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(trainingPath.video_type || null);
     const [videoUrl, setVideoUrl] = useState<string | null>(trainingPath.video_url || null);
@@ -365,6 +368,9 @@ export default function EditTrainingPathPage({
                 updateData.video_type = null;
                 updateData.video_url = null;
             }
+            updateData.price = isFree ? 0 : Number(price) || 0;
+            updateData.currency = currency || 'USD';
+            updateData.is_free = isFree;
             await teachingApi.updateTrainingPath(String(trainingPath.id), updateData);
             setTrainingPath((prev) => ({
                 ...prev,
@@ -372,6 +378,9 @@ export default function EditTrainingPathPage({
                 description,
                 category,
                 level,
+                price: isFree ? 0 : Number(price) || 0,
+                currency: currency || 'USD',
+                isFree,
                 thumbnail: thumbnail ?? prev.thumbnail,
                 video_type: videoType ?? prev.video_type,
                 video_url: videoUrl ?? prev.video_url,
@@ -1332,6 +1341,47 @@ export default function EditTrainingPathPage({
                                                             </SelectItem>
                                                         </SelectContent>
                                                     </Select>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium">
+                                                        Path Price
+                                                    </Label>
+                                                    <div className="mt-2 flex gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={price}
+                                                            onChange={(e) => {
+                                                                setPrice(e.target.value);
+                                                                if (Number(e.target.value) > 0) {
+                                                                    setIsFree(false);
+                                                                }
+                                                            }}
+                                                            disabled={isFree}
+                                                            className="h-12 flex-1"
+                                                        />
+                                                        <Input
+                                                            value={currency}
+                                                            onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                                                            className="h-12 w-24"
+                                                            maxLength={3}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Mark as free
+                                                        </span>
+                                                        <Switch
+                                                            checked={isFree}
+                                                            onCheckedChange={(checked) => {
+                                                                setIsFree(checked);
+                                                                if (checked) {
+                                                                    setPrice('0');
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </CardContent>

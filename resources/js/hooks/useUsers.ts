@@ -172,6 +172,27 @@ export function useUsers(initialData?: PaginatedUsers) {
         usersApi.impersonateUser(userId);
     }, []);
 
+    const gdprDeleteUser = useCallback(
+        async (userId: string): Promise<boolean> => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                await usersApi.gdprDeleteUser(userId);
+                setUsers((prev) => prev.filter((user) => user.id !== userId));
+
+                return true;
+            } catch (e) {
+                setError(getHttpErrorMessage(e, 'Failed to delete user data'));
+
+                return false;
+            } finally {
+                setLoading(false);
+            }
+        },
+        [],
+    );
+
     return {
         users,
         meta,
@@ -184,6 +205,7 @@ export function useUsers(initialData?: PaginatedUsers) {
         revokeTeacherApproval,
         updateUserRole,
         impersonateUser,
+        gdprDeleteUser,
         setError,
     };
 }

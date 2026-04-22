@@ -11,6 +11,7 @@ use App\Models\Camera;
 use App\Models\Reservation;
 use App\Repositories\CameraReservationRepository;
 use App\Services\CameraService;
+use App\Services\GatewayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +24,7 @@ class AdminCameraController extends Controller
     public function __construct(
         private readonly CameraReservationRepository $reservationRepository,
         private readonly CameraService $cameraService,
+        private readonly GatewayService $gatewayService,
     ) {}
 
     // ────────────────────────────────────────────────────────────────────
@@ -184,7 +186,21 @@ class AdminCameraController extends Controller
     {
         Gate::authorize('admin-only');
 
-        $activated = $this->cameraService->activate($camera);
+        try {
+            $activated = $this->cameraService->activate($camera, $this->gatewayService);
+        } catch (\RuntimeException $e) {
+            \Illuminate\Support\Facades\Log::warning('Camera activation failed', [
+                'camera_id' => $camera->id,
+                'camera_name' => $camera->name,
+                'admin_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         \Illuminate\Support\Facades\Log::info('Camera activated by admin', [
             'camera_id' => $camera->id,
@@ -209,7 +225,7 @@ class AdminCameraController extends Controller
         Gate::authorize('admin-only');
 
         $reason = $request->input('reason');
-        $deactivated = $this->cameraService->deactivate($camera, $reason);
+        $deactivated = $this->cameraService->deactivate($camera, $this->gatewayService, $reason);
 
         \Illuminate\Support\Facades\Log::info('Camera deactivated by admin', [
             'camera_id' => $camera->id,

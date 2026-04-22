@@ -23,7 +23,9 @@ Artisan::command('inspire', function () {
 Schedule::command('sessions:expire')->everyMinute();
 
 // Camera System Health
-Schedule::command('camera:health-check')->everyFiveMinutes();
+Schedule::command('camera:health-check --fix --heal --cleanup-orphans')
+    ->everyMinute()
+    ->withoutOverlapping();
 
 // USB Device Management
 Schedule::command('usb:monitor-vm-starts')->everyTenSeconds();

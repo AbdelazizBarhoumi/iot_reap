@@ -60,6 +60,31 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
+    public function test_instructor_can_create_paid_trainingPath(): void
+    {
+        $user = User::factory()->teacher()->create();
+
+        $response = $this->actingAs($user)->post('/teaching', [
+            'title' => 'Premium Path',
+            'description' => 'A paid training path for industrial teams.',
+            'category' => 'Smart Manufacturing',
+            'level' => 'Beginner',
+            'price' => 149.99,
+            'currency' => 'USD',
+            'is_free' => false,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('training_paths', [
+            'title' => 'Premium Path',
+            'instructor_id' => $user->id,
+            'price_cents' => 14999,
+            'currency' => 'USD',
+            'is_free' => false,
+        ]);
+    }
+
     public function test_instructor_can_update_own_trainingPath(): void
     {
         $user = User::factory()->teacher()->create();
@@ -77,6 +102,32 @@ class TeachingControllerTest extends TestCase
         $this->assertDatabaseHas('training_paths', [
             'id' => $trainingPath->id,
             'title' => 'Updated Path Title',
+        ]);
+    }
+
+    public function test_instructor_can_update_trainingPath_price(): void
+    {
+        $user = User::factory()->teacher()->create();
+        $trainingPath = TrainingPath::factory()->create([
+            'instructor_id' => $user->id,
+            'price_cents' => 0,
+            'currency' => 'USD',
+            'is_free' => true,
+        ]);
+
+        $response = $this->actingAs($user)->patch("/teaching/{$trainingPath->id}", [
+            'price' => 25.5,
+            'currency' => 'EUR',
+            'is_free' => false,
+        ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('training_paths', [
+            'id' => $trainingPath->id,
+            'price_cents' => 2550,
+            'currency' => 'EUR',
+            'is_free' => false,
         ]);
     }
 

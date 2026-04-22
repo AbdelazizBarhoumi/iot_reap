@@ -3036,8 +3036,8 @@ class GatewayService
      * @param  GatewayNode  $node  The gateway node where the camera is connected
      * @param  string  $streamKey  Unique stream key (used as MediaMTX path)
      * @param  string  $devicePath  Device path (default: /dev/video0)
-     * @param  array  $options  Optional: width, height, framerate, input_format
-     * @return array{success: bool, pid?: int, rtsp_url?: string, hls_url?: string, error?: string}
+     * @param  array  $options  Optional: width, height, framerate, input_format, usb_busid, vendor_id, product_id
+     * @return array{success: bool, pid?: int, rtsp_url?: string, hls_url?: string, device_path?: string, error?: string}
      */
     public function startCameraStream(
         GatewayNode $node,
@@ -3054,12 +3054,38 @@ class GatewayService
             'input_format' => $options['input_format'] ?? 'mjpeg',
         ];
 
-        // Use Proxmox camera API if configured (cameras are on Proxmox node, not gateway)
-        // Otherwise fall back to gateway agent for backwards compatibility
-        $apiUrl = $node->proxmox_camera_api_url ?? "{$node->api_url}/camera";
-        $startEndpoint = $node->proxmox_camera_api_url
-            ? "{$node->proxmox_camera_api_url}/streams/start"
-            : "{$node->api_url}/camera/start";
+        if (! empty($options['usb_busid'])) {
+            $payload['usb_busid'] = $options['usb_busid'];
+        }
+
+        if (! empty($options['vendor_id'])) {
+            $payload['vendor_id'] = strtolower((string) $options['vendor_id']);
+        }
+
+        if (! empty($options['product_id'])) {
+            $payload['product_id'] = strtolower((string) $options['product_id']);
+        }
+
+        $cameraApi = $this->discoverCameraApi($node);
+
+        if ($cameraApi === null) {
+            $error = $this->buildCameraApiUnavailableMessage($node);
+
+            Log::warning('Camera management API unavailable', [
+                'node_id' => $node->id,
+                'node_ip' => $node->ip,
+                'stream_key' => $streamKey,
+                'device_path' => $devicePath,
+                'checked_endpoints' => array_column($this->cameraApiCandidates($node), 'probe_url'),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $error,
+            ];
+        }
+
+        $startEndpoint = $cameraApi['start_url'];
 
         try {
             $response = Http::timeout($this->timeout() * 2)
@@ -3073,6 +3099,7 @@ class GatewayService
                     'stream_key' => $streamKey,
                     'device_path' => $devicePath,
                     'api_url' => $startEndpoint,
+                    'api_type' => $cameraApi['type'],
                     'http_status' => $response->status(),
                     'response_body' => $response->body(),
                     'error' => $error,
@@ -3093,6 +3120,7 @@ class GatewayService
                 'stream_key' => $streamKey,
                 'device_path' => $devicePath,
                 'api_url' => $startEndpoint,
+                'api_type' => $cameraApi['type'],
                 'pid' => $data['pid'] ?? null,
             ]);
 
@@ -3101,6 +3129,7 @@ class GatewayService
                 'pid' => $data['pid'] ?? null,
                 'rtsp_url' => $data['rtsp_url'] ?? null,
                 'hls_url' => $data['hls_url'] ?? null,
+                'device_path' => $data['device_path'] ?? null,
             ];
         } catch (\Exception $e) {
             Log::error('Camera stream start failed', [
@@ -3109,6 +3138,7 @@ class GatewayService
                 'stream_key' => $streamKey,
                 'device_path' => $devicePath,
                 'api_url' => $startEndpoint,
+                'api_type' => $cameraApi['type'],
                 'error' => $e->getMessage(),
                 'exception_class' => get_class($e),
             ]);
@@ -3129,10 +3159,16 @@ class GatewayService
      */
     public function stopCameraStream(GatewayNode $node, string $streamKey): array
     {
-        // Use Proxmox camera API if configured
-        $stopEndpoint = $node->proxmox_camera_api_url
-            ? "{$node->proxmox_camera_api_url}/streams/stop"
-            : "{$node->api_url}/camera/stop";
+        $cameraApi = $this->discoverCameraApi($node);
+
+        if ($cameraApi === null) {
+            return [
+                'success' => false,
+                'error' => $this->buildCameraApiUnavailableMessage($node),
+            ];
+        }
+
+        $stopEndpoint = $cameraApi['stop_url'];
 
         try {
             $response = Http::timeout($this->timeout())
@@ -3148,6 +3184,7 @@ class GatewayService
                     'node_ip' => $node->ip,
                     'stream_key' => $streamKey,
                     'api_url' => $stopEndpoint,
+                    'api_type' => $cameraApi['type'],
                     'http_status' => $response->status(),
                     'error' => $error,
                 ]);
@@ -3163,6 +3200,7 @@ class GatewayService
                 'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
                 'api_url' => $stopEndpoint,
+                'api_type' => $cameraApi['type'],
             ]);
 
             return ['success' => true];
@@ -3171,6 +3209,8 @@ class GatewayService
                 'node_id' => $node->id,
                 'node_ip' => $node->ip,
                 'stream_key' => $streamKey,
+                'api_url' => $stopEndpoint,
+                'api_type' => $cameraApi['type'],
                 'error' => $e->getMessage(),
                 'exception_class' => get_class($e),
             ]);
@@ -3192,80 +3232,318 @@ class GatewayService
      */
     public function getCameraStreamStatus(GatewayNode $node, string $streamKey): array
     {
-        // First check the gateway agent's status
-        $statusEndpoint = $node->proxmox_camera_api_url
-            ? "{$node->proxmox_camera_api_url}/streams/status/{$streamKey}"
-            : "{$node->api_url}/camera/status/{$streamKey}";
+        $cameraApi = $this->discoverCameraApi($node);
 
-        $gatewayStatus = ['running' => false];
+        $gatewayStatus = [
+            'running' => false,
+            'api_available' => $cameraApi !== null,
+            'api_url' => $cameraApi['base_url'] ?? null,
+            'api_type' => $cameraApi['type'] ?? null,
+        ];
 
-        try {
-            $response = Http::timeout($this->timeout())
-                ->get($statusEndpoint);
+        if ($cameraApi !== null) {
+            $statusEndpoint = "{$cameraApi['status_url_base']}/{$streamKey}";
 
-            if ($response->ok()) {
-                $data = $response->json();
-                $gatewayStatus = [
-                    'running' => $data['running'] ?? false,
-                    'pid' => $data['pid'] ?? null,
-                    'rtsp_url' => $data['rtsp_url'] ?? null,
-                ];
+            try {
+                $response = Http::timeout($this->timeout())
+                    ->get($statusEndpoint);
+
+                if ($response->ok()) {
+                    $data = $response->json();
+                    $gatewayStatus = array_merge($gatewayStatus, [
+                        'running' => $data['running'] ?? false,
+                        'pid' => $data['pid'] ?? null,
+                        'rtsp_url' => $data['rtsp_url'] ?? null,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::debug('Gateway stream status check failed', [
+                    'node_id' => $node->id,
+                    'stream_key' => $streamKey,
+                    'api_url' => $statusEndpoint,
+                    'error' => $e->getMessage(),
+                ]);
             }
-        } catch (\Exception $e) {
-            Log::debug('Gateway stream status check failed', [
-                'node_id' => $node->id,
-                'stream_key' => $streamKey,
-                'error' => $e->getMessage(),
-            ]);
         }
 
-        // Also check MediaMTX directly for incoming path status
         $mediamtxStatus = $this->checkMediaMTXPath($node, $streamKey);
+        $streamIsReachable = ($gatewayStatus['running'] ?? false) || ($mediamtxStatus['exists'] ?? false);
 
         return [
-            'running' => $gatewayStatus['running'] ?? false,
+            'running' => $streamIsReachable,
             'pid' => $gatewayStatus['pid'] ?? null,
             'rtsp_url' => $gatewayStatus['rtsp_url'] ?? null,
+            'gateway_api_available' => $gatewayStatus['api_available'],
+            'gateway_api_url' => $gatewayStatus['api_url'],
+            'gateway_api_type' => $gatewayStatus['api_type'],
             'mediamtx_status' => $mediamtxStatus,
         ];
     }
 
     /**
-     * Check if a path is being published to MediaMTX.
-     * This verifies that FFmpeg is actually connected and streaming.
+     * Check if camera-management routes are reachable for a gateway node.
+     */
+    public function hasCameraManagementApi(GatewayNode $node): bool
+    {
+        return $this->discoverCameraApi($node) !== null;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listCameraStreams(GatewayNode $node): array
+    {
+        $cameraApi = $this->discoverCameraApi($node);
+
+        if ($cameraApi === null) {
+            return [];
+        }
+
+        try {
+            $response = Http::timeout($this->timeout())
+                ->get($cameraApi['probe_url']);
+
+            if (! $response->ok()) {
+                return [];
+            }
+
+            $streams = $response->json('streams', []);
+
+            if (! is_array($streams)) {
+                return [];
+            }
+
+            return array_values(array_filter($streams, function ($stream): bool {
+                if (! is_array($stream)) {
+                    return false;
+                }
+
+                return ($stream['stream_key'] ?? null) !== 'api';
+            }));
+        } catch (\Exception $e) {
+            Log::debug('Camera stream list failed', [
+                'node_id' => $node->id,
+                'node_ip' => $node->ip,
+                'probe_url' => $cameraApi['probe_url'],
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listCameraCaptureDevices(GatewayNode $node): array
+    {
+        $cameraApi = $this->discoverCameraApi($node);
+
+        if ($cameraApi === null || ($cameraApi['type'] ?? null) !== 'streams') {
+            return [];
+        }
+
+        $devicesEndpoint = "{$cameraApi['base_url']}/cameras";
+
+        try {
+            $response = Http::timeout($this->timeout())
+                ->get($devicesEndpoint);
+
+            if (! $response->ok()) {
+                return [];
+            }
+
+            $devices = $response->json('devices', []);
+
+            if (! is_array($devices)) {
+                return [];
+            }
+
+            return array_values(array_filter($devices, 'is_array'));
+        } catch (\Exception $e) {
+            Log::debug('Camera capture device list failed', [
+                'node_id' => $node->id,
+                'node_ip' => $node->ip,
+                'devices_url' => $devicesEndpoint,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    public function findCaptureDeviceForUsbCamera(GatewayNode $node, UsbDevice $device): ?string
+    {
+        try {
+            $devices = collect($this->listCameraCaptureDevices($node));
+
+            $match = $devices->first(
+                fn (array $cameraDevice): bool => ($cameraDevice['usb_busid'] ?? null) === $device->busid
+            );
+
+            if ($match === null) {
+                $vidPidMatches = $devices->filter(function (array $cameraDevice) use ($device): bool {
+                    return strtolower((string) ($cameraDevice['vendor_id'] ?? '')) === strtolower($device->vendor_id)
+                        && strtolower((string) ($cameraDevice['product_id'] ?? '')) === strtolower($device->product_id);
+                })->values();
+
+                if ($vidPidMatches->count() === 1) {
+                    $match = $vidPidMatches->first();
+                }
+            }
+
+            return $match['device_path'] ?? $match['device'] ?? null;
+        } catch (\Exception $e) {
+            Log::debug('Camera capture device discovery failed', [
+                'node_id' => $node->id,
+                'node_ip' => $node->ip,
+                'device_id' => $device->id,
+                'busid' => $device->busid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Check if a path is being served by MediaMTX.
+     * Hitting the HLS manifest is more reliable than the optional API port.
      */
     private function checkMediaMTXPath(GatewayNode $node, string $streamKey): array
     {
-        // MediaMTX /list endpoint returns all active paths
+        $mediamtxHost = $node->ip ?: config('gateway.mediamtx_url', '192.168.50.6');
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
-        $listEndpoint = "http://{$node->ip}:{$hlsPort}/list";
+        $manifestUrl = "http://{$mediamtxHost}:{$hlsPort}/{$streamKey}/index.m3u8";
 
         try {
-            $response = Http::timeout(3)->get($listEndpoint);
+            $response = Http::timeout(3)->get($manifestUrl);
 
-            if ($response->ok()) {
-                $list = $response->json();
+            return [
+                'exists' => $response->successful(),
+                'publishing' => $response->successful(),
+                'status' => $response->status(),
+                'url' => $manifestUrl,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'exists' => false,
+                'publishing' => false,
+                'url' => $manifestUrl,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
 
-                // Check if our stream key is in the list of active paths
-                $paths = $list['paths'] ?? [];
-                $hasPath = isset($paths[$streamKey]);
+    /**
+     * @return list<array{
+     *     base_url: string,
+     *     type: string,
+     *     probe_url: string,
+     *     start_url: string,
+     *     stop_url: string,
+     *     status_url_base: string
+     * }>
+     */
+    private function cameraApiCandidates(GatewayNode $node): array
+    {
+        $candidates = [];
+        $seen = [];
 
-                if ($hasPath) {
-                    $pathInfo = $paths[$streamKey];
+        $addCandidate = function (string $baseUrl, string $type) use (&$candidates, &$seen): void {
+            $baseUrl = rtrim($baseUrl, '/');
 
-                    return [
-                        'exists' => true,
-                        'publishing' => $pathInfo['publish'] ?? false,
-                        'sources' => array_keys($pathInfo['sources'] ?? []),
-                    ];
-                }
-
-                return ['exists' => false];
+            if ($baseUrl === '') {
+                return;
             }
 
-            return ['exists' => false, 'error' => "HTTP {$response->status()}"];
-        } catch (\Exception $e) {
-            return ['exists' => false, 'error' => $e->getMessage()];
+            if ($type === 'legacy') {
+                $probeUrl = "{$baseUrl}/status";
+                $startUrl = "{$baseUrl}/start";
+                $stopUrl = "{$baseUrl}/stop";
+                $statusUrlBase = "{$baseUrl}/status";
+            } else {
+                $probeUrl = "{$baseUrl}/streams";
+                $startUrl = "{$baseUrl}/streams/start";
+                $stopUrl = "{$baseUrl}/streams/stop";
+                $statusUrlBase = "{$baseUrl}/streams/status";
+            }
+
+            if (isset($seen[$probeUrl])) {
+                return;
+            }
+
+            $seen[$probeUrl] = true;
+            $candidates[] = [
+                'base_url' => $baseUrl,
+                'type' => $type,
+                'probe_url' => $probeUrl,
+                'start_url' => $startUrl,
+                'stop_url' => $stopUrl,
+                'status_url_base' => $statusUrlBase,
+            ];
+        };
+
+        if ($node->proxmox_camera_api_url) {
+            $configuredUrl = rtrim($node->proxmox_camera_api_url, '/');
+            $configuredPath = parse_url($configuredUrl, PHP_URL_PATH) ?? '';
+
+            if (str_ends_with($configuredPath, '/camera')) {
+                $addCandidate($configuredUrl, 'legacy');
+            } elseif (str_ends_with($configuredPath, '/streams')) {
+                $addCandidate(substr($configuredUrl, 0, -8), 'streams');
+            } else {
+                $addCandidate($configuredUrl, 'streams');
+            }
         }
+
+        $cameraApiPort = (int) config('gateway.camera_api_port', 8001);
+        if ($cameraApiPort > 0) {
+            $addCandidate("http://{$node->ip}:{$cameraApiPort}", 'streams');
+        }
+
+        $addCandidate("{$node->api_url}/camera", 'legacy');
+
+        return $candidates;
+    }
+
+    /**
+     * @return array{
+     *     base_url: string,
+     *     type: string,
+     *     probe_url: string,
+     *     start_url: string,
+     *     stop_url: string,
+     *     status_url_base: string
+     * }|null
+     */
+    private function discoverCameraApi(GatewayNode $node): ?array
+    {
+        foreach ($this->cameraApiCandidates($node) as $candidate) {
+            try {
+                $response = Http::timeout(min(2, $this->timeout()))
+                    ->get($candidate['probe_url']);
+
+                if ($response->ok()) {
+                    return $candidate;
+                }
+            } catch (\Exception $e) {
+                Log::debug('Camera API probe failed', [
+                    'node_id' => $node->id,
+                    'node_ip' => $node->ip,
+                    'probe_url' => $candidate['probe_url'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return null;
+    }
+
+    private function buildCameraApiUnavailableMessage(GatewayNode $node): string
+    {
+        $checkedEndpoints = implode(', ', array_column($this->cameraApiCandidates($node), 'probe_url'));
+
+        return "Camera management API unavailable for gateway {$node->name} ({$node->ip}). Checked: {$checkedEndpoints}";
     }
 }

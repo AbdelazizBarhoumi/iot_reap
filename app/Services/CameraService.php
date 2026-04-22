@@ -65,7 +65,7 @@ class CameraService
     {
         // Use the camera's gateway node IP — each camera streams from its own gateway
         $camera->loadMissing('gatewayNode');
-        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.7');
+        $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
         $rtspPort = config('gateway.mediamtx_rtsp_port', 8554);
         $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
@@ -488,7 +488,7 @@ class CameraService
         $framerate = (int) ($validated['framerate'] ?? $camera->stream_framerate ?? 15);
 
         // Check if gateway has camera management API available
-        $apiAvailable = $this->checkGatewayApiAvailable($camera);
+        $apiAvailable = $this->checkGatewayApiAvailable($camera, $gatewayService);
 
         // Update camera record (always do this)
         $camera->update([
@@ -533,30 +533,14 @@ class CameraService
     /**
      * Check if the gateway API is available for camera management.
      */
-    private function checkGatewayApiAvailable(Camera $camera): bool
+    private function checkGatewayApiAvailable(Camera $camera, GatewayService $gatewayService): bool
     {
         // Check if gateway has camera management API available
-        $hasGatewayApi = $camera->gatewayNode && $camera->gatewayNode->api_url;
-        if (! $hasGatewayApi) {
+        if (! $camera->gatewayNode) {
             return false;
         }
 
-        // Test if camera start endpoint exists before attempting stream restart
-        // Only consider available if we get 200/405 (endpoint exists)
-        // 404 means no camera management API is running
-        try {
-            $startUrl = $camera->gatewayNode->proxmox_camera_api_url
-                ? "{$camera->gatewayNode->proxmox_camera_api_url}/streams/start"
-                : "{$camera->gatewayNode->api_url}/camera/start";
-
-            // Use OPTIONS or HEAD to check if endpoint exists
-            $testResponse = \Illuminate\Support\Facades\Http::timeout(2)->head($startUrl);
-
-            // 200, 204, or 405 (method not allowed) means endpoint exists
-            return in_array($testResponse->status(), [200, 204, 405]);
-        } catch (\Exception $e) {
-            return false;
-        }
+        return $gatewayService->hasCameraManagementApi($camera->gatewayNode);
     }
 
     /**
@@ -568,6 +552,8 @@ class CameraService
     private function restartCameraStream(Camera $camera, GatewayService $gatewayService, array $streamParams): array
     {
         try {
+            $camera->loadMissing('usbDevice');
+
             // Stop current stream
             if ($camera->status === \App\Enums\CameraStatus::ACTIVE) {
                 $gatewayService->stopCameraStream($camera->gatewayNode, $camera->stream_key);
@@ -578,8 +564,10 @@ class CameraService
                 $camera->gatewayNode,
                 $camera->stream_key,
                 $camera->source_url,
-                $streamParams
+                $this->buildGatewayStreamOptions($camera, $streamParams)
             );
+
+            $this->syncResolvedDevicePath($camera, $result);
 
             return ['success' => $result['success'] ?? false];
         } catch (\Exception $e) {
@@ -596,8 +584,48 @@ class CameraService
      * Activate a camera.
      * Changes status from inactive to active.
      */
-    public function activate(Camera $camera): Camera
+    public function activate(Camera $camera, GatewayService $gatewayService): Camera
     {
+        $camera->loadMissing(['gatewayNode', 'usbDevice']);
+
+        if ($camera->gatewayNode) {
+            $streamStatus = $gatewayService->getCameraStreamStatus(
+                $camera->gatewayNode,
+                $camera->stream_key
+            );
+
+            if (! ($streamStatus['running'] ?? false)) {
+                $streamResult = $gatewayService->startCameraStream(
+                    $camera->gatewayNode,
+                    $camera->stream_key,
+                    $camera->source_url,
+                    $this->buildGatewayStreamOptions($camera, [
+                        'width' => $camera->stream_width ?? 640,
+                        'height' => $camera->stream_height ?? 480,
+                        'framerate' => $camera->stream_framerate ?? 15,
+                        'input_format' => $camera->stream_input_format ?? 'mjpeg',
+                    ])
+                );
+
+                if (! ($streamResult['success'] ?? false)) {
+                    throw new \RuntimeException($streamResult['error'] ?? 'Failed to start camera stream.');
+                }
+
+                $this->syncResolvedDevicePath($camera, $streamResult);
+
+                $streamStatus = $gatewayService->getCameraStreamStatus(
+                    $camera->gatewayNode,
+                    $camera->stream_key
+                );
+
+                if (! ($streamStatus['running'] ?? false)) {
+                    throw new \RuntimeException(
+                        'Camera stream start was accepted, but the stream is still unavailable in MediaMTX.'
+                    );
+                }
+            }
+        }
+
         $camera->update(['status' => CameraStatus::ACTIVE]);
 
         Log::info('Camera activated', [
@@ -614,8 +642,14 @@ class CameraService
      *
      * @param  ?string  $reason  Optional reason for deactivation
      */
-    public function deactivate(Camera $camera, ?string $reason = null): Camera
+    public function deactivate(Camera $camera, GatewayService $gatewayService, ?string $reason = null): Camera
     {
+        $camera->loadMissing('gatewayNode');
+
+        if ($camera->gatewayNode && $gatewayService->hasCameraManagementApi($camera->gatewayNode)) {
+            $gatewayService->stopCameraStream($camera->gatewayNode, $camera->stream_key);
+        }
+
         $camera->update(['status' => CameraStatus::INACTIVE]);
 
         Log::info('Camera deactivated', [
@@ -625,5 +659,45 @@ class CameraService
         ]);
 
         return $camera->fresh()->load(['robot', 'gatewayNode', 'activeControl']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function buildGatewayStreamOptions(Camera $camera, array $overrides = []): array
+    {
+        $camera->loadMissing('usbDevice');
+
+        $options = array_merge([
+            'width' => $camera->stream_width ?? 640,
+            'height' => $camera->stream_height ?? 480,
+            'framerate' => $camera->stream_framerate ?? 15,
+            'input_format' => $camera->stream_input_format ?? 'mjpeg',
+        ], $overrides);
+
+        if ($camera->usbDevice) {
+            $options['usb_busid'] = $camera->usbDevice->busid;
+            $options['vendor_id'] = $camera->usbDevice->vendor_id;
+            $options['product_id'] = $camera->usbDevice->product_id;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Persist the device path returned by the gateway when it resolves a specific capture device.
+     *
+     * @param  array<string, mixed>  $streamResult
+     */
+    private function syncResolvedDevicePath(Camera $camera, array $streamResult): void
+    {
+        $resolvedDevicePath = $streamResult['device_path'] ?? null;
+
+        if (! is_string($resolvedDevicePath) || $resolvedDevicePath === '' || $resolvedDevicePath === $camera->source_url) {
+            return;
+        }
+
+        $camera->update(['source_url' => $resolvedDevicePath]);
     }
 }

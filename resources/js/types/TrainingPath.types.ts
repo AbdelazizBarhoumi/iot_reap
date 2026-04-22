@@ -41,9 +41,12 @@ export interface TrainingPath {
     category: string;
     level: TrainingPathLevel;
     duration: string | null;
+    price: number;
+    currency: string;
     rating: number;
     students: number;
     hasVirtualMachine: boolean;
+    isFree: boolean;
     status: TrainingPathStatus;
     adminFeedback: string | null;
     modules?: TrainingPathModule[];

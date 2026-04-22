@@ -468,6 +468,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [level, setLevel] = useState('');
+    const [price, setPrice] = useState('0');
+    const [currency, setCurrency] = useState('USD');
+    const [isFree, setIsFree] = useState(true);
     const [thumbnail, setThumbnail] = useState<string | null>(null);
     const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(null);
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -670,6 +673,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
             description: description || 'No description',
             category: category || 'Smart Manufacturing',
             level: level || 'Beginner', // Must match TrainingPathLevel enum: Beginner, Intermediate, Advanced
+            price: isFree ? 0 : Number(price) || 0,
+            currency: currency || 'USD',
+            is_free: isFree,
             duration: duration || '0 hours',
             has_virtual_machine: modules.some((m) =>
                 m.trainingUnits.some((l) => l.vmEnabled || l.type === 'vm-lab'),
@@ -1126,6 +1132,47 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                                 )
                                                             }
                                                             className="h-12 pl-10"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium">
+                                                        Path Price
+                                                    </Label>
+                                                    <div className="mt-2 flex gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={price}
+                                                            onChange={(e) => {
+                                                                setPrice(e.target.value);
+                                                                if (Number(e.target.value) > 0) {
+                                                                    setIsFree(false);
+                                                                }
+                                                            }}
+                                                            disabled={isFree}
+                                                            className="h-12 flex-1"
+                                                        />
+                                                        <Input
+                                                            value={currency}
+                                                            onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                                                            className="h-12 w-24"
+                                                            maxLength={3}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Mark as free
+                                                        </span>
+                                                        <Switch
+                                                            checked={isFree}
+                                                            onCheckedChange={(checked) => {
+                                                                setIsFree(checked);
+                                                                if (checked) {
+                                                                    setPrice('0');
+                                                                }
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>

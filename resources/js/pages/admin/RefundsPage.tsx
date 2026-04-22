@@ -99,10 +99,15 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
         );
     };
     const handleReject = (id: string) => {
+        const reason = window.prompt('Please provide a reason for rejection:');
+        if (!reason || reason.trim().length === 0) {
+            return;
+        }
+
         setProcessing(id);
         router.post(
             `/admin/refunds/${id}/reject`,
-            {},
+            { reason: reason.trim() },
             {
                 onFinish: () => setProcessing(null),
             },

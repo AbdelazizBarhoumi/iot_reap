@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Controller for USB/IP hardware gateway management.
@@ -40,18 +41,22 @@ class HardwareController extends Controller
     ) {}
 
     /**
-     * Display the hardware dashboard or return JSON data.
-     * 
-     * @deprecated Hardware management is now unified in /admin/infrastructure page
-     * This method now only serves JSON for API clients.
+     * Display hardware data.
+     *
+     * Returns an Inertia page for browser requests and JSON for API requests.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
-        // Always return JSON - use the unified infrastructure page instead
         $nodes = $this->nodeRepository->all();
 
-        return response()->json([
-            'data' => GatewayNodeResource::collection($nodes),
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => GatewayNodeResource::collection($nodes),
+            ]);
+        }
+
+        return Inertia::render('hardware/index', [
+            'nodes' => GatewayNodeResource::collection($nodes),
         ]);
     }
 
@@ -182,7 +187,7 @@ class HardwareController extends Controller
             // If attaching to a session
             if ($sessionId = $request->validated('session_id')) {
                 $session = VMSession::where('id', $sessionId)
-                    ->where('user_id', auth()->id())
+                    ->where('user_id', $request->user()->id)
                     ->firstOrFail();
 
                 $this->gatewayService->attachToSession($device, $session);
@@ -316,10 +321,9 @@ class HardwareController extends Controller
         // Generate a unique stream key
         $streamKey = 'usb-'.$device->gatewayNode->name.'-'.str_replace(['.', '-'], '', $device->busid);
 
-        // Determine video device path - count existing cameras on this gateway
-        $existingCameras = \App\Models\Camera::where('gateway_node_id', $device->gateway_node_id)->count();
-        $videoDeviceIndex = $existingCameras * 2; // Each camera takes 2 /dev/video entries (video + metadata)
-        $devicePath = "/dev/video{$videoDeviceIndex}";
+        // Resolve the real capture device when the gateway camera API is available.
+        // This avoids guessing /dev/videoN and supports multiple cameras on one gateway.
+        $devicePath = $this->resolveCameraDevicePath($device);
 
         // Create the camera record
         $camera = \App\Models\Camera::create([
@@ -345,16 +349,19 @@ class HardwareController extends Controller
             $device->gatewayNode,
             $streamKey,
             $devicePath,
-            [
+            $this->buildGatewayStreamOptionsForUsbDevice($device, [
                 'width' => $width,
                 'height' => $height,
                 'framerate' => $framerate,
                 'input_format' => 'mjpeg',
-            ]
+            ])
         );
 
         if ($streamResult['success']) {
-            $camera->update(['status' => \App\Enums\CameraStatus::ACTIVE]);
+            $camera->update([
+                'status' => \App\Enums\CameraStatus::ACTIVE,
+                'source_url' => $streamResult['device_path'] ?? $devicePath,
+            ]);
         }
 
         Log::info('USB device converted to camera', [
@@ -470,15 +477,17 @@ class HardwareController extends Controller
             $camera->gatewayNode,
             $camera->stream_key,
             $camera->source_url,
-            [
+            $this->buildGatewayStreamOptionsForUsbDevice($device, [
                 'width' => $camera->stream_width,
                 'height' => $camera->stream_height,
                 'framerate' => $camera->stream_framerate,
                 'input_format' => $camera->stream_input_format ?? 'mjpeg',
-            ]
+            ])
         );
 
         if ($streamResult['success']) {
+            $this->syncResolvedCameraDevicePath($camera, $streamResult);
+
             // Validate that the stream is actually running after 2 seconds
             // (give FFmpeg time to start and connect to MediaMTX)
             sleep(2);
@@ -595,13 +604,15 @@ class HardwareController extends Controller
                 $camera->gatewayNode,
                 $camera->stream_key,
                 $camera->source_url,
-                [
+                $this->buildGatewayStreamOptionsForUsbDevice($device, [
                     'width' => $validated['width'],
                     'height' => $validated['height'],
                     'framerate' => $validated['framerate'],
                     'input_format' => $camera->stream_input_format ?? 'mjpeg',
-                ]
+                ])
             );
+
+            $this->syncResolvedCameraDevicePath($camera, $streamResult);
 
             $camera->update([
                 'status' => $streamResult['success']
@@ -623,6 +634,45 @@ class HardwareController extends Controller
             'stream_restarted' => $streamResult['success'],
             'stream_error' => $streamResult['error'] ?? null,
         ]);
+    }
+
+    private function resolveCameraDevicePath(UsbDevice $device): string
+    {
+        $device->loadMissing('gatewayNode');
+
+        if (! $device->gatewayNode) {
+            return '/dev/video0';
+        }
+
+        return $this->gatewayService->findCaptureDeviceForUsbCamera($device->gatewayNode, $device)
+            ?? '/dev/video0';
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function buildGatewayStreamOptionsForUsbDevice(UsbDevice $device, array $overrides = []): array
+    {
+        return array_merge($overrides, [
+            'usb_busid' => $device->busid,
+            'vendor_id' => $device->vendor_id,
+            'product_id' => $device->product_id,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $streamResult
+     */
+    private function syncResolvedCameraDevicePath(\App\Models\Camera $camera, array $streamResult): void
+    {
+        $resolvedDevicePath = $streamResult['device_path'] ?? null;
+
+        if (! is_string($resolvedDevicePath) || $resolvedDevicePath === '' || $resolvedDevicePath === $camera->source_url) {
+            return;
+        }
+
+        $camera->update(['source_url' => $resolvedDevicePath]);
     }
 
     // ─── Admin-only endpoints ─────────────────────────────────────────────
@@ -828,6 +878,7 @@ class HardwareController extends Controller
     {
         Gate::authorize('admin-only');
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, ProxmoxServer> $servers */
         $servers = ProxmoxServer::where('is_active', true)->get();
         $runningVms = [];
 

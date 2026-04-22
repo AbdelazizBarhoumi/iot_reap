@@ -15,6 +15,7 @@ import {
     RefreshCw,
     Search,
     Shield,
+    Trash2,
     UserCheck,
     UserCog,
     Users,
@@ -107,6 +108,7 @@ export default function UsersPage() {
         revokeTeacherApproval,
         updateUserRole,
         impersonateUser,
+        gdprDeleteUser,
         error,
         setError,
     } = useUsers(initialPaginatedUsers);
@@ -132,6 +134,10 @@ export default function UsersPage() {
         null,
     );
     const [newRole, setNewRole] = useState('');
+    const [gdprTargetUser, setGdprTargetUser] = useState<AdminUser | null>(
+        null,
+    );
+    const [gdprConfirmation, setGdprConfirmation] = useState('');
     const handleSearch = useCallback(() => {
         router.get(
             '/admin/users',
@@ -247,6 +253,25 @@ export default function UsersPage() {
         if (success) {
             setRoleChangeUser(null);
             setNewRole('');
+            refreshUsersList();
+        }
+    };
+
+    const handleGdprDelete = async () => {
+        if (!gdprTargetUser) return;
+
+        const confirmationMatches =
+            gdprConfirmation.trim().toLowerCase() ===
+            gdprTargetUser.email.toLowerCase();
+
+        if (!confirmationMatches) {
+            return;
+        }
+
+        const success = await gdprDeleteUser(gdprTargetUser.id);
+        if (success) {
+            setGdprTargetUser(null);
+            setGdprConfirmation('');
             refreshUsersList();
         }
     };
@@ -405,10 +430,11 @@ export default function UsersPage() {
                                             Unsuspend User
                                         </DropdownMenuItem>
                                     )}
-                                    {user.role !== 'admin' &&
-                                        !user.is_suspended && (
-                                            <>
-                                                <DropdownMenuSeparator />
+                                    {user.role !== 'admin' && (
+                                        <>
+                                            <DropdownMenuSeparator />
+
+                                            {!user.is_suspended && (
                                                 <DropdownMenuItem
                                                     onClick={() =>
                                                         impersonateUser(user.id)
@@ -417,8 +443,20 @@ export default function UsersPage() {
                                                     <Users className="mr-2 h-4 w-4" />
                                                     Impersonate
                                                 </DropdownMenuItem>
-                                            </>
-                                        )}
+                                            )}
+
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setGdprTargetUser(user);
+                                                    setGdprConfirmation('');
+                                                }}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                GDPR Delete
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -935,6 +973,77 @@ export default function UsersPage() {
                         >
                             <UserCog className="mr-2 h-4 w-4" />
                             Update Role
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* GDPR Delete Modal */}
+            <Dialog
+                open={!!gdprTargetUser}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setGdprTargetUser(null);
+                        setGdprConfirmation('');
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-destructive">
+                            GDPR Data Deletion
+                        </DialogTitle>
+                        <DialogDescription>
+                            This action anonymizes personal data for{' '}
+                            <strong>{gdprTargetUser?.name}</strong>. Type the
+                            user email below to confirm.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-muted-foreground">
+                            <p>
+                                This action is intended for GDPR compliance and
+                                cannot be undone.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground">
+                                Confirm by typing: {gdprTargetUser?.email}
+                            </label>
+                            <Input
+                                value={gdprConfirmation}
+                                onChange={(event) =>
+                                    setGdprConfirmation(event.target.value)
+                                }
+                                placeholder="Type user email to confirm"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setGdprTargetUser(null);
+                                setGdprConfirmation('');
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleGdprDelete}
+                            disabled={
+                                !gdprTargetUser ||
+                                gdprConfirmation.trim().toLowerCase() !==
+                                    gdprTargetUser.email.toLowerCase() ||
+                                loading
+                            }
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Confirm GDPR Delete
                         </Button>
                     </DialogFooter>
                 </DialogContent>

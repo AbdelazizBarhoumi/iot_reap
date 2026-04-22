@@ -145,7 +145,10 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::post('/{payoutRequest}/process', 'process')->name('process');
     });
 
-    // Video Processing Stats
+    // Video Processing Monitor
+    Route::get('/videos', [VideoController::class, 'processingStats'])->name('videos.index');
+
+    // Video Processing Stats API
     Route::get('/videos/processing-stats', [VideoController::class, 'processingStats'])->name('videos.processing-stats');
 
     // Maintenance Management (USB devices, cameras)
@@ -162,6 +165,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
     // Forum Moderation (admin review of flagged content)
     Route::prefix('forum')->name('forum.')->controller(ForumController::class)->group(function () {
         Route::get('/flagged', 'flaggedThreads')->name('flagged');
+        Route::get('/flagged-replies', 'flaggedReplies')->name('flagged-replies');
         Route::post('/threads/{threadId}/unflag', 'unflagThread')->name('threads.unflag');
         Route::post('/replies/{replyId}/unflag', 'unflagReply')->name('replies.unflag');
     });

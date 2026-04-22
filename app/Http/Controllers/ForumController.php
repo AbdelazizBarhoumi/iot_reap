@@ -13,6 +13,8 @@ use App\Services\ForumService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Controller for discussion forum functionality.
@@ -342,9 +344,13 @@ class ForumController extends Controller
     /**
      * Get flagged threads.
      */
-    public function flaggedThreads(Request $request): JsonResponse
+    public function flaggedThreads(Request $request): JsonResponse|InertiaResponse
     {
         Gate::authorize('admin');
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('admin/ForumModerationPage');
+        }
 
         $threads = $this->forumService->getFlaggedThreads();
 
@@ -355,6 +361,26 @@ class ForumController extends Controller
                 'last_page' => $threads->lastPage(),
                 'per_page' => $threads->perPage(),
                 'total' => $threads->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get flagged replies.
+     */
+    public function flaggedReplies(Request $request): JsonResponse
+    {
+        Gate::authorize('admin');
+
+        $replies = $this->forumService->getFlaggedReplies();
+
+        return response()->json([
+            'data' => ThreadReplyResource::collection($replies),
+            'pagination' => [
+                'current_page' => $replies->currentPage(),
+                'last_page' => $replies->lastPage(),
+                'per_page' => $replies->perPage(),
+                'total' => $replies->total(),
             ],
         ]);
     }

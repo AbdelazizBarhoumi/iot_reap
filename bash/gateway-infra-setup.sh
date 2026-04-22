@@ -160,6 +160,24 @@ systemctl enable --now mediamtx
 ok "MediaMTX service running on ports 8554/8888/8889."
 
 # ────────────────────────────────────────────────────────────────
+# 3b. Camera Management API and Capture Services
+# ────────────────────────────────────────────────────────────────
+CAMERA_SETUP_SCRIPT=""
+if [[ -f /app/bash/setup-proxmox-camera-streaming.sh ]]; then
+    CAMERA_SETUP_SCRIPT="/app/bash/setup-proxmox-camera-streaming.sh"
+elif [[ -f /etc/iot-reap/setup-proxmox-camera-streaming.sh ]]; then
+    CAMERA_SETUP_SCRIPT="/etc/iot-reap/setup-proxmox-camera-streaming.sh"
+fi
+
+if [[ -n "${CAMERA_SETUP_SCRIPT}" ]]; then
+    info "Installing camera management API and capture tooling ..."
+    bash "${CAMERA_SETUP_SCRIPT}" install
+    ok "Camera management API installed."
+else
+    warn "Camera streaming installer not found at /app/bash/setup-proxmox-camera-streaming.sh or /etc/iot-reap/setup-proxmox-camera-streaming.sh"
+fi
+
+# ────────────────────────────────────────────────────────────────
 # 4. Frigate NVR (Docker)
 # ────────────────────────────────────────────────────────────────
 FRIGATE_DIR="/opt/frigate"

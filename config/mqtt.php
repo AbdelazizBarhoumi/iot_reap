@@ -10,7 +10,7 @@ return [
     | robot communication and camera PTZ control.
     |
     */
-    'host' => env('MQTT_HOST', '192.168.50.7'),
+    'host' => env('MQTT_HOST', '192.168.50.6'),
     'port' => (int) env('MQTT_PORT', 1883),
     'username' => env('MQTT_USERNAME'),
     'password' => env('MQTT_PASSWORD'),

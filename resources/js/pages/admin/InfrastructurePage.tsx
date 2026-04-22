@@ -1143,13 +1143,24 @@ function GatewayNodeCard({
 interface CameraCardProps {
     cam: CameraType;
     loading: boolean;
+    selected?: boolean;
+    onToggleSelect?: (checked: boolean) => void;
     onAttach: () => void;
     onDetach: () => void;
     onActivate: () => void;
     onDeactivate: () => void;
 }
 
-function CameraCard({ cam, loading, onAttach, onDetach, onActivate, onDeactivate }: CameraCardProps) {
+function CameraCard({
+    cam,
+    loading,
+    selected = false,
+    onToggleSelect,
+    onAttach,
+    onDetach,
+    onActivate,
+    onDeactivate,
+}: CameraCardProps) {
     const statusColor =
         cam.status === 'active'
             ? 'bg-green-500'
@@ -1169,6 +1180,14 @@ function CameraCard({ cam, loading, onAttach, onDetach, onActivate, onDeactivate
         <div className="rounded-lg border p-4 transition-all hover:border-secondary/50">
             <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                    <Checkbox
+                        checked={selected}
+                        onCheckedChange={(checked: boolean) =>
+                            onToggleSelect?.(checked)
+                        }
+                        disabled={loading}
+                        aria-label={`Select ${cam.name} for bulk assignment`}
+                    />
                     <Camera className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">{cam.name}</span>
                 </div>
@@ -1466,6 +1485,13 @@ export default function InfrastructurePage() {
     const [camerasLoading, setCamerasLoading] = useState(false);
     const [cameraActionLoading, setCameraActionLoading] = useState(false);
     const [cameraAttachTarget, setCameraAttachTarget] = useState<CameraType | null>(null);
+    const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
+    const [selectedCameraIds, setSelectedCameraIds] = useState<number[]>([]);
+    const [bulkAssignVmKey, setBulkAssignVmKey] = useState('');
+    const [bulkAssignVms, setBulkAssignVms] = useState<RunningVm[]>([]);
+    const [bulkAssignLoadingVms, setBulkAssignLoadingVms] = useState(false);
+    const [bulkAssignSaving, setBulkAssignSaving] = useState(false);
+    const [bulkAssignError, setBulkAssignError] = useState<string | null>(null);
 
     // ── Session launch + viewer state ──
     const {
@@ -1617,6 +1643,57 @@ export default function InfrastructurePage() {
             setSelectedConnectionProfile(NO_PROFILE_SELECTED_VALUE);
         }
     }, [launchProfiles, selectedConnectionProfile]);
+
+    useEffect(() => {
+        if (!bulkAssignDialogOpen) {
+            setBulkAssignVmKey('');
+            setBulkAssignError(null);
+            return;
+        }
+
+        let isMounted = true;
+
+        const fetchRunningVmsForBulkAssign = async () => {
+            setBulkAssignLoadingVms(true);
+            setBulkAssignError(null);
+
+            try {
+                const runningVms = await hardwareApi.getRunningVms();
+                if (!isMounted) {
+                    return;
+                }
+
+                setBulkAssignVms(runningVms);
+
+                if (runningVms.length === 0) {
+                    setBulkAssignError(
+                        'No running VMs found. Start target VMs first before bulk assignment.',
+                    );
+                }
+            } catch (error) {
+                if (!isMounted) {
+                    return;
+                }
+
+                setBulkAssignVms([]);
+                setBulkAssignError(
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to load running VMs',
+                );
+            } finally {
+                if (isMounted) {
+                    setBulkAssignLoadingVms(false);
+                }
+            }
+        };
+
+        void fetchRunningVmsForBulkAssign();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [bulkAssignDialogOpen]);
 
     useEffect(() => {
         if (!isResizingSplit || !activeSessionId || isWorkspaceFullscreen) {
@@ -1975,6 +2052,70 @@ export default function InfrastructurePage() {
         }
     };
 
+    const handleToggleBulkCameraSelection = (
+        cameraId: number,
+        checked: boolean,
+    ) => {
+        setSelectedCameraIds((previous) => {
+            if (checked) {
+                if (previous.includes(cameraId)) {
+                    return previous;
+                }
+
+                return [...previous, cameraId];
+            }
+
+            return previous.filter((id) => id !== cameraId);
+        });
+    };
+
+    const handleBulkAssignCameras = async () => {
+        const selectedVm = bulkAssignVms.find(
+            (vm) => `${vm.vmid}-${vm.server_id}` === bulkAssignVmKey,
+        );
+
+        if (!selectedVm || selectedCameraIds.length === 0) {
+            return;
+        }
+
+        setBulkAssignSaving(true);
+        setBulkAssignError(null);
+
+        try {
+            const result = await adminCameraApi.bulkAssign(
+                selectedCameraIds.map((cameraId) => ({
+                    camera_id: cameraId,
+                    vm_id: selectedVm.vmid,
+                })),
+            );
+
+            const failedAssignments = result.results.filter(
+                (entry) => !entry.success,
+            );
+
+            if (failedAssignments.length > 0) {
+                toast.warning(
+                    `${failedAssignments.length} camera assignments failed. Check logs for details.`,
+                );
+            } else {
+                toast.success('Bulk camera assignment completed successfully');
+            }
+
+            setSelectedCameraIds([]);
+            setBulkAssignVmKey('');
+            setBulkAssignDialogOpen(false);
+            await fetchCameras();
+        } catch (error) {
+            setBulkAssignError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to assign cameras in bulk',
+            );
+        } finally {
+            setBulkAssignSaving(false);
+        }
+    };
+
     const handleTerminateSession = useCallback(
         async (sessionId: string) => {
             setTerminatingSessionId(sessionId);
@@ -2038,6 +2179,14 @@ export default function InfrastructurePage() {
         splitContainerRef.current?.getBoundingClientRect().width ?? 0;
     const { minPercent: minSplitLeftPercent, maxPercent: maxSplitLeftPercent } =
         getSplitBoundsPercent(splitContainerWidth);
+    const selectedBulkAssignVm = bulkAssignVms.find(
+        (vm) => `${vm.vmid}-${vm.server_id}` === bulkAssignVmKey,
+    );
+    const canSubmitBulkAssign =
+        selectedCameraIds.length > 0 &&
+        Boolean(selectedBulkAssignVm) &&
+        !bulkAssignSaving &&
+        !bulkAssignLoadingVms;
 
     // ── Render ──
     return (
@@ -2405,21 +2554,46 @@ export default function InfrastructurePage() {
                                             )}
                                         </h3>
 
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={fetchCameras}
-                                            disabled={camerasLoading || cameraActionLoading}
-                                        >
-                                            <RefreshCw
-                                                className={`mr-2 h-4 w-4 ${
-                                                    camerasLoading || cameraActionLoading
-                                                        ? 'animate-spin'
-                                                        : ''
-                                                }`}
-                                            />
-                                            Refresh
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setSelectedCameraIds([])}
+                                                disabled={
+                                                    selectedCameraIds.length === 0 ||
+                                                    cameraActionLoading
+                                                }
+                                            >
+                                                Clear Selection
+                                            </Button>
+
+                                            <Button
+                                                size="sm"
+                                                onClick={() => setBulkAssignDialogOpen(true)}
+                                                disabled={
+                                                    selectedCameraIds.length === 0 ||
+                                                    cameraActionLoading
+                                                }
+                                            >
+                                                Bulk Assign ({selectedCameraIds.length})
+                                            </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={fetchCameras}
+                                                disabled={camerasLoading || cameraActionLoading}
+                                            >
+                                                <RefreshCw
+                                                    className={`mr-2 h-4 w-4 ${
+                                                        camerasLoading || cameraActionLoading
+                                                            ? 'animate-spin'
+                                                            : ''
+                                                    }`}
+                                                />
+                                                Refresh
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     {camerasLoading && cameras.length === 0 ? (
@@ -2437,6 +2611,13 @@ export default function InfrastructurePage() {
                                                     key={cam.id}
                                                     cam={cam}
                                                     loading={cameraActionLoading}
+                                                    selected={selectedCameraIds.includes(cam.id)}
+                                                    onToggleSelect={(checked) =>
+                                                        handleToggleBulkCameraSelection(
+                                                            cam.id,
+                                                            checked,
+                                                        )
+                                                    }
                                                     onAttach={() => setCameraAttachTarget(cam)}
                                                     onDetach={() => handleDetachCamera(cam.id)}
                                                     onActivate={() => handleActivateCamera(cam.id)}
@@ -3212,6 +3393,101 @@ export default function InfrastructurePage() {
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Bulk Camera Assign Dialog ── */}
+            <Dialog
+                open={bulkAssignDialogOpen}
+                onOpenChange={(open) => {
+                    if (!bulkAssignSaving) {
+                        setBulkAssignDialogOpen(open);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Bulk Assign Cameras</DialogTitle>
+                        <DialogDescription>
+                            Assign {selectedCameraIds.length} selected camera(s) to a
+                            running VM.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="bulk-assign-vm">Target VM</Label>
+
+                            {bulkAssignLoadingVms ? (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading running VMs...
+                                </div>
+                            ) : (
+                                <Select
+                                    value={bulkAssignVmKey}
+                                    onValueChange={setBulkAssignVmKey}
+                                >
+                                    <SelectTrigger id="bulk-assign-vm">
+                                        <SelectValue placeholder="Select a running VM..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {bulkAssignVms.map((vm) => (
+                                            <SelectItem
+                                                key={`${vm.vmid}-${vm.server_id}`}
+                                                value={`${vm.vmid}-${vm.server_id}`}
+                                            >
+                                                {vm.display_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </div>
+
+                        {selectedBulkAssignVm && (
+                            <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                                <p>
+                                    <strong>VM:</strong> {selectedBulkAssignVm.name}
+                                </p>
+                                <p>
+                                    <strong>Node:</strong> {selectedBulkAssignVm.node} (
+                                    {selectedBulkAssignVm.server_name})
+                                </p>
+                                <p>
+                                    <strong>IP:</strong>{' '}
+                                    {selectedBulkAssignVm.ip_address ?? 'Not available'}
+                                </p>
+                            </div>
+                        )}
+
+                        {bulkAssignError && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{bulkAssignError}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setBulkAssignDialogOpen(false)}
+                            disabled={bulkAssignSaving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                void handleBulkAssignCameras();
+                            }}
+                            disabled={!canSubmitBulkAssign}
+                        >
+                            {bulkAssignSaving && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            Assign Cameras
                         </Button>
                     </DialogFooter>
                 </DialogContent>

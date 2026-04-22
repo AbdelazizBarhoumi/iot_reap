@@ -8,6 +8,8 @@ use App\Services\AlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Alert Controller
@@ -23,9 +25,13 @@ class AlertController extends Controller
     /**
      * Get all alerts (paginated)
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
         Gate::authorize('admin-only');
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('admin/AlertsPage');
+        }
 
         $alerts = $this->alertService->getPaginated(
             perPage: $request->input('per_page', 15),
