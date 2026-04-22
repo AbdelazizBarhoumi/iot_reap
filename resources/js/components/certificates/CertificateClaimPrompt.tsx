@@ -2,17 +2,13 @@
  * CertificateClaimPrompt - Prompt to claim certificate after trainingPath completion.
  */
 import { motion } from 'framer-motion';
-import {
-    Award,
-    PartyPopper,
-    Download,
-    Loader2,
-    CheckCircle,
-} from 'lucide-react';
-import { useState } from 'react';
+import { Award, PartyPopper, Download, Loader2, CheckCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
 import type { Certificate } from '@/api/certificates.api';
 import { certificatesApi } from '@/api/certificates.api';
+
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -21,6 +17,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+
+type Status =
+    | 'idle'
+    | 'checking'
+    | 'can_claim'
+    | 'issuing'
+    | 'issued'
+    | 'ready';
+
 interface CertificateClaimPromptProps {
     trainingPathId: number;
     trainingPathTitle: string;
@@ -28,6 +33,7 @@ interface CertificateClaimPromptProps {
     onOpenChange: (open: boolean) => void;
     onClaimed?: (certificate: Certificate) => void;
 }
+
 export function CertificateClaimPrompt({
     trainingPathId,
     trainingPathTitle,
@@ -35,87 +41,144 @@ export function CertificateClaimPrompt({
     onOpenChange,
     onClaimed,
 }: CertificateClaimPromptProps) {
-    const [isIssuing, setIsIssuing] = useState(false);
+    const [status, setStatus] = useState<Status>('idle');
     const [certificate, setCertificate] = useState<Certificate | null>(null);
+
+    useEffect(() => {
+        if (!open) {
+            setStatus('idle');
+            setCertificate(null);
+            return;
+        }
+
+        let cancelled = false;
+
+        const check = async () => {
+            setStatus('checking');
+
+            try {
+                const res =
+                    await certificatesApi.checkCertificate(trainingPathId);
+
+                if (cancelled) return;
+
+                if (res.has_certificate && res.data) {
+                    setCertificate(res.data);
+                    setStatus(res.data.has_pdf ? 'ready' : 'issued');
+                } else {
+                    setStatus('can_claim');
+                }
+            } catch (e) {
+                console.error(e);
+                if (!cancelled) setStatus('can_claim');
+            }
+        };
+
+        check();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [open, trainingPathId]);
+
     const handleClaim = async () => {
-        setIsIssuing(true);
+        setStatus('issuing');
+
         try {
             const cert = await certificatesApi.issueCertificate(trainingPathId);
             setCertificate(cert);
-            toast.success('Certificate issued! 🎉');
+
+            const newStatus = cert.has_pdf ? 'ready' : 'issued';
+            setStatus(newStatus);
+
+            toast.success('Certificate issued');
             onClaimed?.(cert);
         } catch (err) {
             const message =
-                err instanceof Error
-                    ? err.message
-                    : 'Failed to issue certificate';
+                err instanceof Error ? err.message : 'Failed to issue certificate';
             toast.error(message);
-        } finally {
-            setIsIssuing(false);
+            setStatus('can_claim');
         }
     };
+
     const handleDownload = () => {
-        if (certificate) {
-            window.open(
-                certificatesApi.getCertificateDownloadUrl(certificate.hash),
-                '_blank',
-            );
-        }
+        if (!certificate) return;
+
+        window.open(
+            certificatesApi.getCertificateDownloadUrl(certificate.hash),
+            '_blank',
+        );
     };
+
+    const isBusy = status === 'checking' || status === 'issuing';
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        {certificate ? (
+                        {status === 'ready' ? (
                             <>
                                 <CheckCircle className="h-5 w-5 text-green-500" />
-                                Certification Ready!
+                                Certificate Ready
+                            </>
+                        ) : status === 'issued' ? (
+                            <>
+                                <Award className="h-5 w-5 text-green-500" />
+                                Certificate Issued
                             </>
                         ) : (
                             <>
                                 <PartyPopper className="h-5 w-5 text-yellow-500" />
-                                Congratulations!
+                                Congratulations
                             </>
                         )}
                     </DialogTitle>
+
                     <DialogDescription>
-                        {certificate
-                            ? 'Your certificate has been issued.'
-                            : `You've completed "${trainingPathTitle}"`}
+                        {status === 'can_claim'
+                            ? `You've completed "${trainingPathTitle}"`
+                            : status === 'checking'
+                              ? 'Checking certificate...'
+                              : 'Your certificate status'}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-6">
-                    {certificate ? (
+
+                <div className="py-6 text-center space-y-6">
+                    {(status === 'issued' || status === 'ready') && certificate ? (
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="space-y-4 text-center"
+                            className="space-y-4"
                         >
                             <div className="inline-flex items-center justify-center rounded-full bg-green-100 p-4 dark:bg-green-900/30">
                                 <Award className="h-12 w-12 text-green-600 dark:text-green-400" />
                             </div>
+
                             <p className="text-sm text-muted-foreground">
-                                Your certificate is being generated. You can
-                                download it once it's ready.
+                                {status === 'ready'
+                                    ? 'Your certificate is ready to download.'
+                                    : 'Your certificate is being generated.'}
                             </p>
+
                             <div className="flex justify-center gap-2">
                                 <Button
                                     onClick={handleDownload}
-                                    disabled={!certificate.has_pdf}
+                                    disabled={!certificate?.has_pdf}
                                 >
-                                    {certificate.has_pdf ? (
+                                    {certificate?.has_pdf ? (
                                         <>
                                             <Download className="mr-2 h-4 w-4" />
-                                            Download PDF
+                                            Download
                                         </>
                                     ) : (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Generating...
+                                            Generating
                                         </>
                                     )}
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
@@ -125,7 +188,7 @@ export function CertificateClaimPrompt({
                             </div>
                         </motion.div>
                     ) : (
-                        <div className="space-y-6 text-center">
+                        <div className="space-y-6">
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
@@ -138,27 +201,36 @@ export function CertificateClaimPrompt({
                             >
                                 <Award className="h-12 w-12 text-white" />
                             </motion.div>
+
                             <div>
-                                <p className="text-lg font-medium text-foreground">
-                                    You've earned a certification!
+                                <p className="text-lg font-medium">
+                                    {status === 'can_claim'
+                                        ? 'You earned a certificate'
+                                        : 'Processing'}
                                 </p>
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    Claim your certificate of completion to
-                                    showcase your achievement.
+                                    {status === 'can_claim'
+                                        ? 'Claim it now'
+                                        : 'Please wait'}
                                 </p>
                             </div>
+
                             <Button
                                 size="lg"
                                 onClick={handleClaim}
-                                disabled={isIssuing}
+                                disabled={isBusy || status !== 'can_claim'}
                                 className="w-full"
                             >
-                                {isIssuing ? (
+                                {isBusy ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : (
                                     <Award className="mr-2 h-4 w-4" />
                                 )}
-                                Claim Certification
+                                {status === 'checking'
+                                    ? 'Checking...'
+                                    : status === 'issuing'
+                                      ? 'Issuing...'
+                                      : 'Claim Certificate'}
                             </Button>
                         </div>
                     )}
@@ -166,6 +238,4 @@ export function CertificateClaimPrompt({
             </DialogContent>
         </Dialog>
     );
-}
-
-
+} 

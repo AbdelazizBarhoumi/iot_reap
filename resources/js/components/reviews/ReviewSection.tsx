@@ -77,7 +77,7 @@ export function ReviewSection({ trainingPathId, className }: ReviewSectionProps)
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Star className="h-5 w-5 text-yellow-400" />
-                            Student Reviews
+                            Engineer Reviews
                         </CardTitle>
                     </CardHeader>
                     <CardContent>

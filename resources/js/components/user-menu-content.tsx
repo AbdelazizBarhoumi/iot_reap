@@ -85,6 +85,7 @@ export function UserMenuContent({ user }: Props) {
                 <Link
                     className="block w-full cursor-pointer"
                     href={logout().url}
+                    method="post"
                     as="button"
                     onClick={handleLogout}
                     data-test="logout-button"
@@ -92,8 +93,7 @@ export function UserMenuContent({ user }: Props) {
                     <LogOut className="mr-2" />
                     Log out
                 </Link>
-            </DropdownMenuItem>
-        </>
+            </DropdownMenuItem>        </>
     );
 }
 

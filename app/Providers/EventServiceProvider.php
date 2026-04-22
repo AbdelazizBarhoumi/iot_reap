@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\CertificateIssued;
 use App\Events\VMSessionActivated;
 use App\Listeners\AutoReattachDedicatedDevicesListener;
 use App\Listeners\CreateGuacamoleConnectionListener;
+use App\Listeners\SendCertificateIssuedNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 /**
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         VMSessionActivated::class => [
             CreateGuacamoleConnectionListener::class,
             AutoReattachDedicatedDevicesListener::class,
+        ],
+        CertificateIssued::class => [
+            SendCertificateIssuedNotification::class,
         ],
     ];
 }

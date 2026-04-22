@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Events\CertificateIssued;
 use App\Jobs\GenerateCertificatePdfJob;
 use App\Models\Certificate;
 use App\Models\TrainingPath;
@@ -14,6 +15,7 @@ use App\Repositories\TrainingUnitProgressRepository;
 use App\Services\CertificateService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -249,6 +251,7 @@ class CertificateServiceTest extends TestCase
 
     public function test_issue_certificate_creates_certificate_for_completed_training_path(): void
     {
+        Event::fake([CertificateIssued::class]);
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();
         $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
@@ -274,6 +277,10 @@ class CertificateServiceTest extends TestCase
             'user_id' => $user->id,
             'training_path_id' => $trainingPath->id,
         ]);
+
+        Event::assertDispatched(CertificateIssued::class, function ($event) use ($certificate) {
+            return $event->certificate->id === $certificate->id;
+        });
     }
 
     public function test_issue_certificate_dispatches_pdf_generation_job(): void

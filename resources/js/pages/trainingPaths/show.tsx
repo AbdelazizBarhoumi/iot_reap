@@ -928,12 +928,12 @@ export default function TrainingPathDetailPage() {
                                 <TabsContent value="reviews">
                                     <div className="mb-6">
                                         <h2 className="font-heading text-2xl font-bold text-foreground">
-                                            Student Reviews
+                                            Engineer Reviews
                                         </h2>
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             {isEnrolled
-                                                ? 'Share your experience with other operators'
-                                                : 'See what other operators think about this path'}
+                                                ? 'Share your experience with other engineers'
+                                                : 'See what other engineers think about this path'}
                                         </p>
                                     </div>
                                     <ReviewSection

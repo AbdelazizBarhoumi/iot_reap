@@ -111,6 +111,7 @@ export default function Welcome({
                                 >
                                     <Link
                                         href={logout()}
+                                        method="post"
                                         as="button"
                                         onClick={() => router.flushAll()}
                                     >
@@ -187,6 +188,7 @@ export default function Welcome({
                                             >
                                                 <Link
                                                     href={logout()}
+                                                    method="post"
                                                     as="button"
                                                     onClick={() => {
                                                         setMobileOpen(false);

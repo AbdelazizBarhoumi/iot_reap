@@ -56,4 +56,12 @@ class CertificateRepository
     {
         return Certificate::create($data);
     }
+
+    /**
+     * Update certificate PDF path.
+     */
+    public function updatePdfPath(Certificate $certificate, string $pdfPath): bool
+    {
+        return $certificate->update(['pdf_path' => $pdfPath]);
+    }
 }

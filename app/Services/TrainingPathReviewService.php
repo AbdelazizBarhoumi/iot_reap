@@ -76,8 +76,8 @@ class TrainingPathReviewService
         int $rating,
         ?string $review = null,
     ): TrainingPathReview {
-        // Check if user is enrolled
-        if (! $this->enrollmentRepository->isEnrolled($user, $trainingPathId)) {
+        // Check if user is enrolled (Admins can review without enrollment)
+        if (! $user->isAdmin() && ! $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId)) {
             throw new AuthorizationException('You must be enrolled to review this trainingPath.');
         }
 
@@ -120,7 +120,7 @@ class TrainingPathReviewService
     ): TrainingPathReview {
         $existingReview = $this->reviewRepository->find($reviewId);
 
-        if (! $existingReview || $existingReview->user_id !== $user->id) {
+        if (! $existingReview || ($existingReview->user_id !== $user->id && ! $user->isAdmin())) {
             throw new AuthorizationException('Review not found or access denied.');
         }
 
@@ -152,7 +152,7 @@ class TrainingPathReviewService
     {
         $review = $this->reviewRepository->find($reviewId);
 
-        if (! $review || $review->user_id !== $user->id) {
+        if (! $review || ($review->user_id !== $user->id && ! $user->isAdmin())) {
             throw new AuthorizationException('Review not found or access denied.');
         }
 
@@ -181,8 +181,8 @@ class TrainingPathReviewService
      */
     public function canUserReview(int $trainingPathId, User $user): bool
     {
-        // Must be enrolled and not already reviewed
-        return $this->enrollmentRepository->isEnrolled($user, $trainingPathId)
+        // Must be enrolled (or admin) and not already reviewed
+        return ($user->isAdmin() || $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId))
             && ! $this->reviewRepository->hasUserReviewed($trainingPathId, $user);
     }
 

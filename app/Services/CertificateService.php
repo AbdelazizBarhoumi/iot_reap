@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\CertificateIssued;
 use App\Jobs\GenerateCertificatePdfJob;
 use App\Models\Certificate;
 use App\Models\TrainingPath;
@@ -88,6 +89,9 @@ class CertificateService
 
         // Execute PDF generation synchronously
         GenerateCertificatePdfJob::dispatchSync($certificate);
+
+        // Dispatch event
+        CertificateIssued::dispatch($certificate);
 
         return $certificate->load(['user:id,name', 'trainingPath:id,title']);
     }
