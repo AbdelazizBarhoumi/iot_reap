@@ -5,12 +5,11 @@ namespace App\Services;
 use App\Enums\QuizQuestionType;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
-use App\Models\QuizQuestion;
 use App\Models\User;
-use App\Repositories\TrainingUnitProgressRepository;
 use App\Repositories\QuizAttemptRepository;
 use App\Repositories\QuizQuestionRepository;
 use App\Repositories\QuizRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 

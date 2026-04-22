@@ -8,7 +8,7 @@ use App\Models\TrainingUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TrainingUnit>
+ * @extends Factory<TrainingUnit>
  */
 class TrainingUnitFactory extends Factory
 {

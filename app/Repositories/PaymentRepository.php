@@ -72,5 +72,4 @@ class PaymentRepository
             ->orderBy('date')
             ->get();
     }
-
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ThreadStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $view_count
  * @property int $reply_count
  * @property int $upvote_count
- * @property \Carbon\Carbon|null $last_reply_at
+ * @property Carbon|null $last_reply_at
  * @property string|null $last_reply_by
  */
 class DiscussionThread extends Model

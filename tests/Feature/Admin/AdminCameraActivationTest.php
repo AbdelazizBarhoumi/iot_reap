@@ -4,8 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Camera;
 use App\Models\GatewayNode;
-use App\Models\User;
 use App\Models\UsbDevice;
+use App\Models\User;
 use App\Services\GatewayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\TrainingUnit;
 use App\Models\TrainingUnitProgress;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -142,7 +143,7 @@ class TrainingUnitProgressRepository
      */
     public function getTrainingPathProgressPercentage(User $user, int $trainingPathId): float
     {
-        $stats = \App\Models\TrainingUnit::whereHas('module', fn ($q) => $q->where('training_path_id', $trainingPathId))
+        $stats = TrainingUnit::whereHas('module', fn ($q) => $q->where('training_path_id', $trainingPathId))
             ->leftJoin('training_unit_progress', function ($join) use ($user) {
                 $join->on('training_units.id', '=', 'training_unit_progress.training_unit_id')
                     ->where('training_unit_progress.user_id', '=', $user->id);

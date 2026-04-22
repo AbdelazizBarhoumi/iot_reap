@@ -3,7 +3,15 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Models\Certificate;
+use App\Models\Payment;
+use App\Models\QuizAttempt;
+use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingPathReview;
+use App\Models\TrainingUnitNote;
+use App\Models\TrainingUnitProgress;
 use App\Models\User;
+use App\Models\VMSession;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -297,33 +305,33 @@ class UserManagementService
         ]);
 
         // Delete trainingUnit progress (non-essential)
-        \App\Models\TrainingUnitProgress::where('user_id', $user->id)->delete();
+        TrainingUnitProgress::where('user_id', $user->id)->delete();
 
         // Delete trainingUnit notes (personal data)
-        \App\Models\TrainingUnitNote::where('user_id', $user->id)->delete();
+        TrainingUnitNote::where('user_id', $user->id)->delete();
 
         // Delete quiz attempts (can be anonymized in payments)
-        \App\Models\QuizAttempt::where('user_id', $user->id)->delete();
+        QuizAttempt::where('user_id', $user->id)->delete();
 
         // Delete certificates (personal achievement records)
-        \App\Models\Certificate::where('user_id', $user->id)->delete();
+        Certificate::where('user_id', $user->id)->delete();
 
         // Delete trainingPath reviews (personal opinions)
-        \App\Models\TrainingPathReview::where('user_id', $user->id)->delete();
+        TrainingPathReview::where('user_id', $user->id)->delete();
 
         // Delete VM sessions (usage logs)
-        \App\Models\VMSession::where('user_id', $user->id)->delete();
+        VMSession::where('user_id', $user->id)->delete();
 
         // Delete notifications (personal communications)
         $user->notifications()->delete();
 
         // Keep payment records but anonymize (required for accounting/tax)
-        \App\Models\Payment::where('user_id', $user->id)->update([
+        Payment::where('user_id', $user->id)->update([
             'user_id' => $user->id, // Keep reference but user is anonymized
         ]);
 
         // Delete enrollments (but keep payment records)
-        \App\Models\TrainingPathEnrollment::where('user_id', $user->id)->delete();
+        TrainingPathEnrollment::where('user_id', $user->id)->delete();
 
         // Revoke all tokens
         $user->tokens()->delete();

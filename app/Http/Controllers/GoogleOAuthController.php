@@ -32,8 +32,9 @@ class GoogleOAuthController extends Controller
             $result = $this->googleOAuthService->handleCallback();
 
             // If existing user (new or linked), log them in
-            if (!$result['isNewUser']) {
+            if (! $result['isNewUser']) {
                 Auth::login($result['user'], remember: true);
+
                 return redirect('/dashboard')->with('status', 'Successfully logged in with Google!');
             }
 
@@ -80,8 +81,9 @@ class GoogleOAuthController extends Controller
             $result = $this->googleOAuthService->handleGoogleJWT($credential);
 
             // If existing user, log them in directly
-            if (!$result['isNewUser']) {
+            if (! $result['isNewUser']) {
                 Auth::login($result['user'], remember: true);
+
                 return redirect('/dashboard')->with('status', 'Successfully logged in with Google!');
             }
 
@@ -117,7 +119,7 @@ class GoogleOAuthController extends Controller
     public function showRoleSelection(): Response|RedirectResponse
     {
         $oauthPending = session('oauth_pending');
-        if (!$oauthPending) {
+        if (! $oauthPending) {
             return redirect('/login');
         }
 
@@ -142,7 +144,7 @@ class GoogleOAuthController extends Controller
         ]);
 
         $oauthData = session('oauth_pending');
-        if (!$oauthData) {
+        if (! $oauthData) {
             return redirect('/login')->with('error', 'OAuth session expired. Please try again.');
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ProxmoxServer;
 use App\Services\ProxmoxNodeSyncService;
 use Illuminate\Console\Command;
 
@@ -31,7 +32,7 @@ class SyncProxmoxNodes extends Command
 
         if ($serverId) {
             // Sync specific server
-            $server = \App\Models\ProxmoxServer::find($serverId);
+            $server = ProxmoxServer::find($serverId);
 
             if (! $server) {
                 $this->error("Server with ID {$serverId} not found.");

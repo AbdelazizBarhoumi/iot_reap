@@ -4,8 +4,6 @@ namespace App\Repositories;
 
 use App\Models\DailyTrainingPathStats;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class TrainingPathStatsRepository
 {
@@ -43,7 +41,7 @@ class TrainingPathStatsRepository
     public function getAggregatedForTeacher(string|int $teacherId, string $startDate, string $endDate): array
     {
         // Do NOT cast to int - teacherId is a ULID string, not an integer
-        
+
         // Use a new query builder for each aggregation to avoid state pollution
         $base = function () use ($teacherId, $startDate, $endDate) {
             return DailyTrainingPathStats::query()

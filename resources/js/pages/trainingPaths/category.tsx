@@ -19,26 +19,52 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import trainingPathsRoutes from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
-import type { TrainingPath } from '@/types/TrainingPath.types';
-interface Props {
-    trainingPaths: TrainingPath[];
+
+interface SearchTrainingPathResult {
+    id: string | number;
+    title: string;
+    description: string;
+    instructor: string;
     category: string;
-    total: number;
-    allCategories: string[];
+    level: 'Beginner' | 'Intermediate' | 'Advanced';
+    duration: string | null;
+    rating: number;
+    students: number;
+    hasVirtualMachine?: boolean;
+    thumbnail?: string | null;
+    price?: number;
+    isFree?: boolean;
+    created_at?: string;
+}
+
+interface SearchCategory {
+    name: string;
+    slug: string;
+    count?: number;
+}
+
+interface Props {
+    trainingPaths: SearchTrainingPathResult[];
+    category: string;
+    slug: string;
+    total?: number;
+    categories?: SearchCategory[];
 }
 export default function CategoryPage({
     trainingPaths = [],
     category = '',
+    slug,
     total = 0,
-    allCategories = [],
+    categories = [],
 }: Props) {
     const [sortBy, setSortBy] = useState('popular');
     const [level, setLevel] = useState('all');
+    const totalResults = total || trainingPaths.length;
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Training Paths', href: '/trainingPaths' },
         {
             title: category,
-            href: `/trainingPaths/category/${encodeURIComponent(category)}`,
+            href: `/search/category/${slug}`,
         },
     ];
     // Filter and sort
@@ -50,13 +76,13 @@ export default function CategoryPage({
                     return b.rating - a.rating;
                 case 'newest':
                     return (
-                        new Date(b.created_at || 0).getTime() -
-                        new Date(a.created_at || 0).getTime()
+                        new Date(b.created_at ?? 0).getTime() -
+                        new Date(a.created_at ?? 0).getTime()
                     );
                 case 'price-low':
                     return 0; // Price sorting not available
                 case 'price-high':
-                    return 0; // Price sorting not available  
+                    return 0; // Price sorting not available
                 default:
                     return (b.students || 0) - (a.students || 0);
             }
@@ -74,7 +100,8 @@ export default function CategoryPage({
                     <div>
                         <h1 className="text-3xl font-bold">{category}</h1>
                         <p className="text-muted-foreground">
-                            {total} training path{total !== 1 ? 's' : ''} available
+                            {totalResults} training path
+                            {totalResults !== 1 ? 's' : ''} available
                         </p>
                     </div>
                 </div>
@@ -113,20 +140,20 @@ export default function CategoryPage({
                     </Select>
                 </div>
                 {/* Other Domains */}
-                {allCategories.length > 1 && (
+                {categories.length > 1 && (
                     <div className="flex flex-wrap gap-2">
-                        {allCategories
-                            .filter((c) => c !== category)
+                        {categories
+                            .filter((cat) => cat.slug !== slug)
                             .map((cat) => (
                                 <Link
-                                    key={cat}
-                                    href={`/trainingPaths/category/${encodeURIComponent(cat)}`}
+                                    key={cat.slug}
+                                    href={`/search/category/${cat.slug}`}
                                 >
                                     <Badge
                                         variant="outline"
                                         className="cursor-pointer hover:bg-accent"
                                     >
-                                        {cat}
+                                        {cat.name}
                                     </Badge>
                                 </Link>
                             ))}
@@ -143,7 +170,9 @@ export default function CategoryPage({
                             Try adjusting your filters or browse all paths
                         </p>
                         <Button asChild>
-                                <Link href={trainingPathsRoutes.index.url()}>Browse All Paths</Link>
+                            <Link href={trainingPathsRoutes.index.url()}>
+                                Browse All Paths
+                            </Link>
                         </Button>
                     </div>
                 ) : (
@@ -164,4 +193,3 @@ export default function CategoryPage({
         </AppLayout>
     );
 }
-

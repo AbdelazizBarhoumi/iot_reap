@@ -1,66 +1,57 @@
-/**
- * Checkout API Module
- * Handles trainingPath purchases, payments, and refunds
- */
-
+import type {
+    CheckoutResponse,
+    Payment,
+    RefundRequest,
+} from '@/types/payment.types';
 import client from './client';
 
-export interface CheckoutSession {
-  id: string;
-  training_path_id: string;
-  user_id: string;
-  stripe_session_id: string;
-  status: 'pending' | 'completed' | 'cancelled' | 'failed';
-  amount: number;
-  currency: string;
-  created_at: string;
-  completed_at: string | null;
+export async function initiateCheckout(
+    trainingPathId: number | string,
+): Promise<CheckoutResponse> {
+    const response = await client.post<CheckoutResponse>('/checkout/initiate', {
+        training_path_id: trainingPathId,
+    });
+
+    return response.data;
 }
 
-export interface Payment {
-  id: string;
-  training_path_id: string;
-  amount: number;
-  currency: string;
-  status: 'pending' | 'completed' | 'failed';
-  stripe_payment_id: string;
-  created_at: string;
-  completed_at: string | null;
+export async function getPayments(): Promise<Payment[]> {
+    const response = await client.get<{ data?: Payment[] } | Payment[]>(
+        '/checkout/payments',
+        {
+            headers: { Accept: 'application/json' },
+        },
+    );
+
+    return Array.isArray(response.data)
+        ? response.data
+        : response.data.data ?? [];
 }
 
-export interface RefundRequest {
-  id: string;
-  payment_id: string;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processed';
-  amount: number;
-  requested_at: string;
-  processed_at: string | null;
+export async function requestRefund(
+    paymentId: number | string,
+    reason: string,
+): Promise<RefundRequest> {
+    const response = await client.post<{ refund_request: RefundRequest }>(
+        '/checkout/refund',
+        {
+            payment_id: paymentId,
+            reason,
+        },
+    );
+
+    return response.data.refund_request;
 }
 
-/**
- * Initiate trainingPath checkout (create Stripe session)
- */
-export const initiateCheckout = (trainingPathId: string) =>
-  client.post<{ checkout_url: string }>(`/checkout/initiate`, { training_path_id: trainingPathId });
+export async function getRefunds(): Promise<RefundRequest[]> {
+    const response = await client.get<{ data?: RefundRequest[] } | RefundRequest[]>(
+        '/checkout/refunds',
+        {
+            headers: { Accept: 'application/json' },
+        },
+    );
 
-/**
- * Get user's payment history
- */
-export const getPayments = () =>
-  client.get<Payment[]>(`/checkout/payments`);
-
-/**
- * Request a refund for a trainingPath
- */
-export const requestRefund = (trainingPathId: string, reason: string) =>
-  client.post<RefundRequest>(`/checkout/refund`, {
-    training_path_id: trainingPathId,
-    reason,
-  });
-
-/**
- * Get user's refund requests
- */
-export const getRefunds = () =>
-  client.get<RefundRequest[]>(`/checkout/refunds`);
+    return Array.isArray(response.data)
+        ? response.data
+        : response.data.data ?? [];
+}

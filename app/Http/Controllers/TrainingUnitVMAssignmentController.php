@@ -158,9 +158,15 @@ class TrainingUnitVMAssignmentController extends Controller
     /**
      * Get teacher's assignments.
      */
-    public function myAssignments(Request $request): JsonResponse
+    public function myAssignments(Request $request): JsonResponse|Response
     {
         $assignments = $this->assignmentService->getAssignmentsForTeacher($request->user());
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('teaching/vm-assignments', [
+                'assignments' => TrainingUnitVMAssignmentResource::collection($assignments)->resolve($request),
+            ]);
+        }
 
         return response()->json([
             'data' => TrainingUnitVMAssignmentResource::collection($assignments),

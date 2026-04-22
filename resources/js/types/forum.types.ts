@@ -42,6 +42,14 @@ export interface DiscussionThread {
     isLocked: boolean;
     isFlagged: boolean;
     replies?: ThreadReply[];
+    trainingUnit?: {
+        id: number;
+        title: string;
+    };
+    trainingPath?: {
+        id: number;
+        title: string;
+    };
     createdAt: string;
     updatedAt: string;
 }
@@ -50,4 +58,3 @@ export interface ForumFilters {
     sortBy?: 'recent' | 'popular' | 'unanswered';
     search?: string;
 }
-

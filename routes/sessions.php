@@ -54,8 +54,8 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
     // Proxmox servers (active, for engineers to see available clusters)
     Route::get('/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('proxmox-servers.active');
 
-    // USB/IP Hardware Gateway
-    Route::prefix('hardware')->name('hardware.')->controller(HardwareController::class)->group(function () {
+    // USB/IP Hardware Gateway (admin-only)
+    Route::middleware('can:admin-only')->prefix('hardware')->name('hardware.')->controller(HardwareController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/devices', 'devices')->name('devices');
         Route::post('/refresh', 'refresh')->name('refresh');
@@ -106,6 +106,7 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
     // Camera reservations (user-facing) - rate limited
     Route::prefix('camera-reservations')->middleware('throttle:20,1')->name('camera-reservations.')->controller(CameraReservationController::class)->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/cameras', 'cameras')->name('cameras');
         Route::post('/', 'store')->name('store');
         Route::get('/{reservation}', 'show')->name('show');
         Route::post('/{reservation}/cancel', 'cancel')->name('cancel');

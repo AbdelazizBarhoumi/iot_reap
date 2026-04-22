@@ -56,5 +56,4 @@ class CertificateRepository
     {
         return Certificate::create($data);
     }
-
 }

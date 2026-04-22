@@ -29,6 +29,7 @@ interface ThreadCardProps {
     thread: DiscussionThread;
     trainingPathSlug?: string;
     trainingUnitSlug?: string;
+    returnTo?: string;
     onUpvote?: (threadId: string) => void;
     index?: number;
 }
@@ -50,14 +51,15 @@ function formatRelativeTime(dateStr: string): string {
 }
 export function ThreadCard({
     thread,
-    trainingPathSlug,
-    trainingUnitSlug,
+    trainingPathSlug: _trainingPathSlug,
+    trainingUnitSlug: _trainingUnitSlug,
+    returnTo,
     onUpvote,
     index = 0,
 }: ThreadCardProps) {
-    const threadUrl = trainingUnitSlug
-        ? `/trainingPaths/${trainingPathSlug}/trainingUnits/${trainingUnitSlug}/discussion/${thread.id}`
-        : `/trainingPaths/${trainingPathSlug}/discussion/${thread.id}`;
+    const threadUrl = returnTo
+        ? `/forum/threads/${thread.id}?from=${encodeURIComponent(returnTo)}`
+        : `/forum/threads/${thread.id}`;
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -91,6 +93,7 @@ export function ThreadCard({
                         variant="ghost"
                         size="sm"
                         onClick={() => onUpvote?.(thread.id)}
+                        disabled={!onUpvote}
                         className={cn(
                             'h-8 w-8 rounded-lg p-0 transition-colors',
                             thread.hasUpvoted
@@ -248,5 +251,3 @@ export function ThreadCard({
         </motion.div>
     );
 }
-
-

@@ -564,13 +564,13 @@ class UsbDeviceQueueServiceTest extends TestCase
         // This test verifies that the service method can be called without errors
         // The actual filtering logic is tested through integration tests
         // since it uses direct Eloquent queries (not the repository)
-        
+
         $session = VMSession::factory()->make();
-        
+
         // Mock the complex Eloquent chain by patching the result temporarily
         // Since service doesn't use the repository for this method, we skip complex testing
         // and just verify it returns a collection
-        
+
         try {
             $result = $this->service->getAvailableDevicesForSession($session);
             $this->assertIsIterable($result);
@@ -581,4 +581,3 @@ class UsbDeviceQueueServiceTest extends TestCase
         }
     }
 }
-

@@ -223,6 +223,18 @@ export async function unpinThread(threadId: string): Promise<DiscussionThread> {
     );
     return response.data.data;
 }
+
+/**
+ * Resolve a flagged thread (teacher/admin only).
+ */
+export async function resolveThreadFlag(
+    threadId: string,
+): Promise<DiscussionThread> {
+    const response = await client.post<ThreadResponse>(
+        `/teaching/forum/threads/${threadId}/resolve-flag`,
+    );
+    return response.data.data;
+}
 /**
  * Lock a thread (teacher/admin only).
  */
@@ -298,7 +310,9 @@ export async function unflagThreadAsAdmin(
 /**
  * Unflag a reply as admin.
  */
-export async function unflagReplyAsAdmin(replyId: string): Promise<ThreadReply> {
+export async function unflagReplyAsAdmin(
+    replyId: string,
+): Promise<ThreadReply> {
     const response = await client.post<ReplyResponse>(
         `/admin/forum/replies/${replyId}/unflag`,
     );
@@ -328,6 +342,7 @@ export const forumApi = {
     getTeacherInbox,
     pinThread,
     unpinThread,
+    resolveThreadFlag,
     lockThread,
     unlockThread,
     markAsAnswer,
@@ -337,4 +352,3 @@ export const forumApi = {
     unflagThreadAsAdmin,
     unflagReplyAsAdmin,
 };
-

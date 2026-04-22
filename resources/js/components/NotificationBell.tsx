@@ -16,16 +16,24 @@ import {
     CheckCheck,
     BookCheck,
     XCircle,
+    CalendarCheck,
+    CalendarX,
     Users,
     MessageSquare,
     AtSign,
     Award,
     Megaphone,
     AlertCircle,
+    AlertTriangle,
     Clock,
+    PlayCircle,
+    Usb,
+    DollarSign,
+    RefreshCw,
     ChevronRight,
     Settings,
     Loader2,
+    type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { notificationApi } from '@/api/notification.api';
@@ -45,7 +53,7 @@ import type {
     NotificationGroup,
 } from '@/types/notification.types';
 // Icon mapping for notification types
-const typeIcons: Record<NotificationType, typeof Bell> = {
+const typeIcons: Record<NotificationType, LucideIcon> = {
     training_path_approved: BookCheck,
     training_path_rejected: XCircle,
     new_enrollment: Users,
@@ -55,6 +63,16 @@ const typeIcons: Record<NotificationType, typeof Bell> = {
     certificate_ready: Award,
     system: AlertCircle,
     announcement: Megaphone,
+    reservation_approved: CalendarCheck,
+    reservation_rejected: CalendarX,
+    session_started: PlayCircle,
+    session_ending: Clock,
+    session_activation_failed: AlertTriangle,
+    usb_device_available: Usb,
+    payout_approved: DollarSign,
+    payout_rejected: XCircle,
+    refund_approved: RefreshCw,
+    refund_rejected: XCircle,
 };
 const typeColors: Record<NotificationType, string> = {
     training_path_approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -66,7 +84,28 @@ const typeColors: Record<NotificationType, string> = {
     certificate_ready: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
     system: 'bg-muted text-muted-foreground',
     announcement: 'bg-primary/10 text-primary',
+    reservation_approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    reservation_rejected: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    session_started: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    session_ending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    session_activation_failed: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    usb_device_available: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+    payout_approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    payout_rejected: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    refund_approved: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+    refund_rejected: 'bg-red-500/10 text-red-600 dark:text-red-400',
 };
+
+const defaultTypeIcon: LucideIcon = Bell;
+const defaultTypeColor = 'bg-muted text-muted-foreground';
+
+function getNotificationTypeIcon(type: string): LucideIcon {
+    return typeIcons[type as NotificationType] ?? defaultTypeIcon;
+}
+
+function getNotificationTypeColor(type: string): string {
+    return typeColors[type as NotificationType] ?? defaultTypeColor;
+}
 // Group notifications by date
 function groupNotifications(
     notifications: Notification[],
@@ -386,10 +425,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
                                                 {group.notifications.map(
                                                     (notification) => {
                                                         const Icon =
-                                                            typeIcons[
-                                                                notification
-                                                                    .type
-                                                            ];
+                                                            getNotificationTypeIcon(
+                                                                notification.type,
+                                                            );
                                                         return (
                                                             <motion.button
                                                                 key={
@@ -417,10 +455,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
                                                                 <div
                                                                     className={cn(
                                                                         'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                                                                        typeColors[
-                                                                            notification
-                                                                                .type
-                                                                        ],
+                                                                        getNotificationTypeColor(
+                                                                            notification.type,
+                                                                        ),
                                                                     )}
                                                                 >
                                                                     <Icon className="h-4 w-4" />

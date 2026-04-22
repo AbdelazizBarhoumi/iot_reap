@@ -3,8 +3,8 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Services\RevenueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -122,7 +122,7 @@ class RevenueServiceTest extends TestCase
         $this->assertEquals(50.00, $total);
     }
 
-    public function test_only_includes_revenue_from_teachers_own_trainingPaths(): void
+    public function test_only_includes_revenue_from_teachers_own_training_paths(): void
     {
         $teacher = User::factory()->teacher()->create();
         $otherTeacher = User::factory()->teacher()->create();
@@ -225,7 +225,7 @@ class RevenueServiceTest extends TestCase
     // getRevenueByTrainingPath Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_calculates_revenue_breakdown_by_trainingPath(): void
+    public function test_calculates_revenue_breakdown_by_training_path(): void
     {
         $teacher = User::factory()->teacher()->create();
 

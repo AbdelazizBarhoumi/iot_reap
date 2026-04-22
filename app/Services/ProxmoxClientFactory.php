@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Repositories\ProxmoxServerRepository;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Factory for creating ProxmoxClient instances.
@@ -50,7 +52,7 @@ class ProxmoxClientFactory
     /**
      * Build a ProxmoxClient for a server by ID.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function makeForServerId(int $serverId): ProxmoxClientInterface
     {
@@ -62,11 +64,11 @@ class ProxmoxClientFactory
     /**
      * Build a ProxmoxClient for the server containing the given node.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function makeForNode(string $nodeName): ProxmoxClientInterface
     {
-        $node = \App\Models\ProxmoxNode::where('name', $nodeName)->firstOrFail();
+        $node = ProxmoxNode::where('name', $nodeName)->firstOrFail();
         $server = $this->repository->findByNode($node);
 
         return $this->make($server);

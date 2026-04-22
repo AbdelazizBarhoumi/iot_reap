@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $amount_cents
  * @property string $currency
  * @property array|null $metadata
- * @property \Carbon\Carbon|null $paid_at
+ * @property Carbon|null $paid_at
  */
 class Payment extends Model
 {

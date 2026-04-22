@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TrainingPath\UpdateVideoProgressRequest;
 use App\Http\Resources\TrainingPathResource;
 use App\Http\Resources\TrainingUnitResource;
 use App\Models\TrainingPath;
-use App\Services\TrainingPathService;
 use App\Services\EnrollmentService;
+use App\Services\TrainingPathService;
 use App\Services\TrainingUnitVMAssignmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -141,7 +142,7 @@ class TrainingPathController extends Controller
             ]);
         }
 
-        return Inertia::render('trainingPaths/trainingUnit', [
+        return Inertia::render('trainingPaths/TrainingUnit', [
             'trainingPathId' => (string) $trainingPathId,
             'trainingUnitId' => (string) $trainingUnitId,
             'trainingPath' => new TrainingPathResource($trainingPath),
@@ -157,7 +158,14 @@ class TrainingPathController extends Controller
     public function enroll(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
-        $this->enrollmentService->enroll($user, $id);
+
+        try {
+            $this->enrollmentService->enroll($user, $id);
+        } catch (\DomainException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json(['message' => 'Enrolled successfully'], 201);
     }
@@ -210,7 +218,7 @@ class TrainingPathController extends Controller
     /**
      * Update video watch progress for a trainingUnit.
      */
-    public function updateVideoProgress(\App\Http\Requests\TrainingPath\UpdateVideoProgressRequest $request, int $trainingPathId, int $trainingUnitId): JsonResponse
+    public function updateVideoProgress(UpdateVideoProgressRequest $request, int $trainingPathId, int $trainingUnitId): JsonResponse
     {
         $validated = $request->validated();
 
@@ -290,7 +298,7 @@ class TrainingPathController extends Controller
             return response()->json(['data' => $trainingPathsWithProgress->values()]);
         }
 
-        return Inertia::render('trainingPaths/my-trainingPaths', [
+        return Inertia::render('trainingPaths/my-TrainingPaths', [
             'enrollments' => $trainingPathsWithProgress->values(),
         ]);
     }

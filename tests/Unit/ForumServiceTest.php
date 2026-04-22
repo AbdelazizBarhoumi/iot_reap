@@ -3,12 +3,12 @@
 namespace Tests\Unit;
 
 use App\Enums\ThreadStatus;
-use App\Models\TrainingPath;
-use App\Models\TrainingPathModule;
 use App\Models\DiscussionThread;
-use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\ThreadVote;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use App\Repositories\ForumRepository;
 use App\Services\ForumService;
@@ -43,7 +43,7 @@ class ForumServiceTest extends TestCase
     // Thread Creation
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_creates_thread_for_trainingUnit(): void
+    public function test_creates_thread_for_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();
@@ -444,7 +444,7 @@ class ForumServiceTest extends TestCase
     // Thread Retrieval
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_threads_for_trainingUnit(): void
+    public function test_gets_threads_for_training_unit(): void
     {
         $author = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();
@@ -509,7 +509,7 @@ class ForumServiceTest extends TestCase
         $this->assertEquals($unansweredThread->id, $threads->first()->id);
     }
 
-    public function test_gets_teacher_threads_across_trainingPaths(): void
+    public function test_gets_teacher_threads_across_training_paths(): void
     {
         $teacher = User::factory()->teacher()->create();
         $student = User::factory()->create();
@@ -667,7 +667,7 @@ class ForumServiceTest extends TestCase
     // TrainingPath Threads
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_threads_for_trainingPath(): void
+    public function test_gets_threads_for_training_path(): void
     {
         $author = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();

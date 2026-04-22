@@ -2,11 +2,9 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\TrainingPath;
 use App\Models\DailyTrainingPathStats;
+use App\Models\TrainingPath;
 use App\Models\User;
-use App\Repositories\TrainingPathStatsRepository;
-use App\Services\TrainingPathAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -55,7 +53,7 @@ class DebugServiceCallTest extends TestCase
             ->where('training_paths.instructor_id', $teacher->id)
             ->whereBetween('daily_training_path_stats.date', [$startDate, $endDate])
             ->get();
-        echo "Result count: " . $results->count() . "\n";
+        echo 'Result count: '.$results->count()."\n";
 
         // Try a different approach - store query first
         echo "\nTesting stored query builder->sum():\n";

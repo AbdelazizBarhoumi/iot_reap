@@ -29,7 +29,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
     // canAccessTrainingPath Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_allows_access_to_free_trainingPath(): void
+    public function test_allows_access_to_free_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -40,7 +40,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertTrue($this->service->canAccessTrainingPath($user, $trainingPath->id));
     }
 
-    public function test_allows_access_to_zero_price_trainingPath(): void
+    public function test_allows_access_to_zero_price_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -67,7 +67,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertTrue($this->service->canAccessTrainingPath($user, $trainingPath->id));
     }
 
-    public function test_allows_instructor_to_access_own_trainingPath(): void
+    public function test_allows_instructor_to_access_own_training_path(): void
     {
         $instructor = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -90,7 +90,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($this->service->canAccessTrainingPath($user, $trainingPath->id));
     }
 
-    public function test_denies_access_to_unpublished_trainingPath(): void
+    public function test_denies_access_to_unpublished_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create([
@@ -101,14 +101,14 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($this->service->canAccessTrainingPath($user, $trainingPath->id));
     }
 
-    public function test_denies_access_to_nonexistent_trainingPath(): void
+    public function test_denies_access_to_nonexistent_training_path(): void
     {
         $user = User::factory()->create();
 
         $this->assertFalse($this->service->canAccessTrainingPath($user, 99999));
     }
 
-    public function test_denies_access_to_pending_review_trainingPath(): void
+    public function test_denies_access_to_pending_review_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->pendingReview()->create([
@@ -123,7 +123,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
     // canAccessTrainingUnit Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_allows_access_to_preview_trainingUnit(): void
+    public function test_allows_access_to_preview_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -173,7 +173,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($this->service->canAccessTrainingUnit($user, $secondTrainingUnit->id));
     }
 
-    public function test_allows_enrolled_user_to_access_any_trainingUnit(): void
+    public function test_allows_enrolled_user_to_access_any_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -199,7 +199,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertTrue($this->service->canAccessTrainingUnit($user, $trainingUnit->id));
     }
 
-    public function test_allows_instructor_to_access_any_training_unit_in_own_trainingPath(): void
+    public function test_allows_instructor_to_access_any_training_unit_in_own_training_path(): void
     {
         $instructor = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -221,7 +221,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertTrue($this->service->canAccessTrainingUnit($instructor, $trainingUnit->id));
     }
 
-    public function test_denies_access_to_nonexistent_trainingUnit(): void
+    public function test_denies_access_to_nonexistent_training_unit(): void
     {
         $user = User::factory()->create();
 
@@ -324,7 +324,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertTrue($this->service->isFree($trainingPath->id));
     }
 
-    public function test_is_free_returns_false_for_paid_trainingPath(): void
+    public function test_is_free_returns_false_for_paid_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create([
             'is_free' => false,
@@ -334,7 +334,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($this->service->isFree($trainingPath->id));
     }
 
-    public function test_is_free_returns_false_for_nonexistent_trainingPath(): void
+    public function test_is_free_returns_false_for_nonexistent_training_path(): void
     {
         $this->assertFalse($this->service->isFree(99999));
     }
@@ -530,7 +530,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($summary['is_enrolled']);
     }
 
-    public function test_get_access_summary_for_free_trainingPath(): void
+    public function test_get_access_summary_for_free_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -586,7 +586,7 @@ class CheckTrainingPathAccessServiceTest extends TestCase
         $this->assertFalse($summary['is_enrolled']);
     }
 
-    public function test_get_access_summary_for_nonexistent_trainingPath(): void
+    public function test_get_access_summary_for_nonexistent_training_path(): void
     {
         $user = User::factory()->create();
 

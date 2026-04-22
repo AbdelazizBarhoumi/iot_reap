@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\RefundRequest;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Services\CheckoutService;
 use App\Services\RefundService;
@@ -82,7 +82,7 @@ class CheckoutControllerTest extends TestCase
     // Checkout Initiation Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_user_can_initiate_checkout_for_paid_trainingPath(): void
+    public function test_user_can_initiate_checkout_for_paid_training_path(): void
     {
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
@@ -191,6 +191,7 @@ class CheckoutControllerTest extends TestCase
             $mock = \Mockery::mock(RefundService::class);
             $mock->shouldReceive('requestRefund')
                 ->andReturn($refundRequest);
+
             return $mock;
         });
 
@@ -319,7 +320,7 @@ class CheckoutControllerTest extends TestCase
     // Cancelled Page Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_checkout_cancelled_page_renders_with_trainingPath(): void
+    public function test_checkout_cancelled_page_renders_with_training_path(): void
     {
         $response = $this->get("/checkout/cancelled?trainingPath={$this->paidTrainingPath->id}");
 
@@ -332,7 +333,7 @@ class CheckoutControllerTest extends TestCase
             );
     }
 
-    public function test_checkout_cancelled_page_renders_without_trainingPath(): void
+    public function test_checkout_cancelled_page_renders_without_training_path(): void
     {
         $response = $this->get('/checkout/cancelled');
 

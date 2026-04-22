@@ -6,7 +6,7 @@ use App\Models\GatewayNode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GatewayNode>
+ * @extends Factory<GatewayNode>
  */
 class GatewayNodeFactory extends Factory
 {

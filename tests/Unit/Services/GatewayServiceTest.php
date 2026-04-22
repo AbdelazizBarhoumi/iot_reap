@@ -14,6 +14,7 @@ use App\Services\GatewayService;
 use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -94,7 +95,7 @@ class GatewayServiceTest extends TestCase
 
         Http::fake([
             'http://192.168.50.6:8000/*' => function () {
-                throw new \Illuminate\Http\Client\ConnectionException('Connection timed out');
+                throw new ConnectionException('Connection timed out');
             },
         ]);
 
@@ -240,7 +241,7 @@ class GatewayServiceTest extends TestCase
         $device->refresh();
         $this->assertEquals(UsbDeviceStatus::ATTACHED, $device->status);
         $this->assertEquals($session->id, $device->attached_session_id);
-        
+
         // Reset HTTP mock for next test
         Http::fake([]);
     }
@@ -299,7 +300,7 @@ class GatewayServiceTest extends TestCase
 
         $device->refresh();
         $this->assertEquals(UsbDeviceStatus::ATTACHED, $device->status);
-        
+
         // Reset HTTP mock for next test
         Http::fake([]);
     }
@@ -358,7 +359,7 @@ class GatewayServiceTest extends TestCase
 
         $device->refresh();
         $this->assertNotNull($device->attached_session_id);
-        
+
         // Reset HTTP mock for next test
         Http::fake([]);
     }
@@ -824,7 +825,7 @@ class GatewayServiceTest extends TestCase
 
         // Set OS to linux to avoid Windows polling timeout
         $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'linux');
-        
+
         // Configure fake to fail both direct and batch attempts
         $this->fakeProxmoxClient->setExecResult('usbip attach', 1, '', 'connection refused');
         $this->fakeProxmoxClient->setExecResult('usbip-cmd.bat', 1, '', 'connection refused');
@@ -840,7 +841,7 @@ class GatewayServiceTest extends TestCase
             // connection refused scenario should leave device still bound
             $device->refresh();
             $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
-            
+
             // Reset HTTP mock for next test
             Http::fake([]);
         }

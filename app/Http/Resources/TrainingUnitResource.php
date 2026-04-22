@@ -23,6 +23,50 @@ class TrainingUnitResource extends JsonResource
     }
 
     /**
+     * Normalize mixed stored values into a clean list of non-empty strings.
+     *
+     * @param mixed $value
+     * @return array<int, string>
+     */
+    private function normalizeStringList(mixed $value): array
+    {
+        if (is_array($value)) {
+            return collect($value)
+                ->filter(fn ($item) => is_string($item))
+                ->map(fn (string $item) => trim($item))
+                ->filter(fn (string $item) => $item !== '')
+                ->values()
+                ->all();
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            if ($trimmed === '') {
+                return [];
+            }
+
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                return collect($decoded)
+                    ->filter(fn ($item) => is_string($item))
+                    ->map(fn (string $item) => trim($item))
+                    ->filter(fn (string $item) => $item !== '')
+                    ->values()
+                    ->all();
+            }
+
+            return collect(preg_split('/\r?\n|,/', $trimmed) ?: [])
+                ->map(fn (string $item) => trim($item))
+                ->filter(fn (string $item) => $item !== '')
+                ->values()
+                ->all();
+        }
+
+        return [];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -41,12 +85,12 @@ class TrainingUnitResource extends JsonResource
             'type' => $this->type->value,
             'duration' => $this->duration,
             'content' => $this->content,
-            'objectives' => $this->objectives,
+            'objectives' => $this->normalizeStringList($this->objectives),
             'vmEnabled' => $this->vm_enabled,
             'hasApprovedVM' => $this->when($this->vm_enabled, fn () => $this->resource->hasApprovedVM()),
             'hasPendingVMAssignment' => $this->when($this->vm_enabled, fn () => $this->resource->hasPendingVMAssignment()),
             'videoUrl' => $this->video_url,
-            'resources' => $this->resources,
+            'resources' => $this->normalizeStringList($this->resources),
             'sort_order' => $this->sort_order,
             'completed' => $completed,
         ];

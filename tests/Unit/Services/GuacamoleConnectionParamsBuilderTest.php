@@ -462,8 +462,7 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
         ?string $ip,
         ?string $connectionProfileName = null,
         ?int $vmId = null,
-    ): VMSession
-    {
+    ): VMSession {
         $node = ProxmoxNode::factory()->create();
 
         return VMSession::factory()

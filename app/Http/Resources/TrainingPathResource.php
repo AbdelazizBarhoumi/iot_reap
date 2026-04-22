@@ -30,6 +30,7 @@ class TrainingPathResource extends JsonResource
             'students' => $this->student_count ?? $this->enrollments()->count(),
             'hasVirtualMachine' => $this->has_virtual_machine,
             'price' => $this->is_free ? 0 : ($this->price_cents ?? 0) / 100,
+            'formattedPrice' => $this->formatted_price,
             'currency' => $this->currency ?? 'USD',
             'isFree' => $this->is_free ?? false,
             'status' => $this->status->value,

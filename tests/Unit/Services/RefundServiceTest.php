@@ -4,9 +4,9 @@ namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\RefundRequest;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Notifications\RefundApprovedNotification;
 use App\Notifications\RefundRejectedNotification;
@@ -14,12 +14,12 @@ use App\Services\RefundService;
 use DomainException;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
+use Stripe\Exception\ApiErrorException;
 use Stripe\Refund as StripeRefund;
 use Tests\TestCase;
 
 class RefundServiceTest extends TestCase
 {
-
     private RefundService $service;
 
     protected function setUp(): void
@@ -246,7 +246,7 @@ class RefundServiceTest extends TestCase
             ->create();
 
         // Create an exception that extends ApiErrorException
-        $exception = new class('Card declined') extends \Stripe\Exception\ApiErrorException {};
+        $exception = new class('Card declined') extends ApiErrorException {};
 
         $stripeRefundMock = Mockery::mock('alias:'.StripeRefund::class);
         $stripeRefundMock

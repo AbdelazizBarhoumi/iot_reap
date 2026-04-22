@@ -36,6 +36,7 @@ interface ThreadListProps {
     threads: DiscussionThread[];
     trainingPathSlug?: string;
     trainingUnitSlug?: string;
+    returnTo?: string;
     onNewThread?: () => void;
     onUpvote?: (threadId: string) => void;
     showNewButton?: boolean;
@@ -57,6 +58,7 @@ export function ThreadList({
     threads,
     trainingPathSlug,
     trainingUnitSlug,
+    returnTo,
     onNewThread,
     onUpvote,
     showNewButton = true,
@@ -250,6 +252,7 @@ export function ThreadList({
                                 thread={thread}
                                 trainingPathSlug={trainingPathSlug}
                                 trainingUnitSlug={trainingUnitSlug}
+                                returnTo={returnTo}
                                 onUpvote={onUpvote}
                                 index={index}
                             />

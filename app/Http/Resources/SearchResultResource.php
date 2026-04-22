@@ -32,12 +32,14 @@ class SearchResultResource extends JsonResource
             'thumbnail' => $this->thumbnail,
             'category' => $this->category,
             'level' => $this->level->value,
+            'duration' => $this->duration,
             'rating' => (float) $this->rating,
             'students' => $this->student_count ?? $this->enrollments_count ?? 0,
             'hasVirtualMachine' => $this->has_virtual_machine,
             'price' => $this->is_free ? 0 : ($this->price_cents ?? 0) / 100,
             'isFree' => $this->is_free ?? false,
             'relevanceScore' => $this->relevance_score ?? null,
+            'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
 }

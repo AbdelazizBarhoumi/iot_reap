@@ -7,6 +7,7 @@ use App\Models\ProxmoxServer;
 use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFactory;
 use App\Services\ProxmoxClientInterface;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Tests\TestCase;
 
 class ProxmoxClientFactoryTest extends TestCase
@@ -72,7 +73,7 @@ class ProxmoxClientFactoryTest extends TestCase
 
     public function test_make_for_server_id_throws_on_not_found(): void
     {
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->factory->makeForServerId(999);
     }
@@ -89,7 +90,7 @@ class ProxmoxClientFactoryTest extends TestCase
 
     public function test_make_for_node_throws_on_node_not_found(): void
     {
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->factory->makeForNode('nonexistent-node');
     }

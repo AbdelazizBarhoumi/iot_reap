@@ -22,7 +22,6 @@ import {
     Power,
     RefreshCw,
     Server,
-    Settings2,
     Activity,
     History,
     Terminal,
@@ -835,12 +834,6 @@ export default function Dashboard() {
                                         (optional)
                                     </span>
                                 </Label>
-                                <Button variant="ghost" size="sm" asChild>
-                                    <Link href="/connection-preferences">
-                                        <Settings2 className="mr-1 h-4 w-4" />
-                                        Edit Profiles
-                                    </Link>
-                                </Button>
                             </div>
 
                             <Select

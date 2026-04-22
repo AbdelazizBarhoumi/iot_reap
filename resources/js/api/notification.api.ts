@@ -74,7 +74,7 @@ export const notificationApi = {
         const response = await client.post<{
             marked_count: number;
             unread_count: number;
-        }>('/notifications/mark-many-read', { ids });
+        }>('/notifications/mark-many-read', { notification_ids: ids });
         return response.data;
     },
     /**

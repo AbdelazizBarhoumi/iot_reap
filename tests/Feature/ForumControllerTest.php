@@ -2,14 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\DiscussionThread;
+use App\Models\ThreadReply;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
-use App\Models\DiscussionThread;
 use App\Models\TrainingUnit;
-use App\Models\ThreadReply;
 use App\Models\User;
 use App\Services\ForumService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ForumControllerTest extends TestCase
@@ -221,7 +222,7 @@ class ForumControllerTest extends TestCase
     // Thread Listing Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_user_can_list_threads_for_trainingUnit(): void
+    public function test_user_can_list_threads_for_training_unit(): void
     {
         DiscussionThread::factory()->count(3)->create([
             'training_unit_id' => $this->trainingUnit->id,
@@ -241,7 +242,7 @@ class ForumControllerTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_user_can_list_threads_for_trainingPath(): void
+    public function test_user_can_list_threads_for_training_path(): void
     {
         DiscussionThread::factory()->count(2)->create([
             'training_path_id' => $this->trainingPath->id,
@@ -279,11 +280,33 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
+    public function test_guest_can_view_public_thread_detail_page(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+            'title' => 'Guest-readable thread',
+        ]);
+
+        ThreadReply::factory()->count(2)->create([
+            'thread_id' => $thread->id,
+        ]);
+
+        $this->get("/forum/threads/{$thread->id}")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('forum/show')
+                ->where('thread.id', (string) $thread->id)
+                ->where('thread.title', 'Guest-readable thread')
+                ->has('thread.replies', 2)
+            );
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     // Teacher Actions Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_teacher_can_pin_thread_in_their_trainingPath(): void
+    public function test_teacher_can_pin_thread_in_their_training_path(): void
     {
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,
@@ -301,7 +324,7 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_can_lock_thread_in_their_trainingPath(): void
+    public function test_teacher_can_lock_thread_in_their_training_path(): void
     {
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,
@@ -317,6 +340,52 @@ class ForumControllerTest extends TestCase
                 'data' => ['id'],
                 'message',
             ]);
+    }
+
+    public function test_teacher_can_unlock_thread_in_their_training_path(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+            'is_locked' => true,
+        ]);
+
+        $response = $this->actingAs($this->teacher)
+            ->postJson("/teaching/forum/threads/{$thread->id}/unlock");
+
+        $response->assertOk()
+            ->assertJsonPath('data.isLocked', false);
+    }
+
+    public function test_teacher_can_unpin_thread_in_their_training_path(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+            'is_pinned' => true,
+        ]);
+
+        $response = $this->actingAs($this->teacher)
+            ->postJson("/teaching/forum/threads/{$thread->id}/unpin");
+
+        $response->assertOk()
+            ->assertJsonPath('data.isPinned', false);
+    }
+
+    public function test_teacher_can_resolve_flagged_thread_in_their_training_path(): void
+    {
+        $thread = DiscussionThread::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'training_path_id' => $this->trainingPath->id,
+            'is_flagged' => true,
+        ]);
+
+        $response = $this->actingAs($this->teacher)
+            ->postJson("/teaching/forum/threads/{$thread->id}/resolve-flag");
+
+        $response->assertOk()
+            ->assertJsonPath('data.isFlagged', false)
+            ->assertJsonPath('message', 'Thread flag resolved');
     }
 
     public function test_teacher_can_mark_reply_as_answer(): void
@@ -552,7 +621,7 @@ class ForumControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_teacher_can_delete_any_content_in_their_trainingPath(): void
+    public function test_teacher_can_delete_any_content_in_their_training_path(): void
     {
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,

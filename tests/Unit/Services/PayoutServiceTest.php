@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
 use Mockery\MockInterface;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\Transfer;
 use Tests\TestCase;
 
@@ -304,7 +305,7 @@ class PayoutServiceTest extends TestCase
         $transferMock = Mockery::mock('alias:'.Transfer::class);
         $transferMock->shouldReceive('create')
             ->once()
-            ->andThrow(new \Stripe\Exception\InvalidRequestException('Insufficient funds'));
+            ->andThrow(new InvalidRequestException('Insufficient funds'));
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Payout failed: Insufficient funds');

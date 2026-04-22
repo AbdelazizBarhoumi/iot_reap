@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $message
  * @property array|null $data
  * @property string|null $action_url
- * @property \Carbon\Carbon|null $read_at
+ * @property Carbon|null $read_at
  */
 class Notification extends Model
 {

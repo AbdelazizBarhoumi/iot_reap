@@ -12,6 +12,7 @@ import {
     Network,
     RotateCcw,
     Users,
+    Video,
     Wrench,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
@@ -47,10 +48,15 @@ const overviewNavItems: NavItem[] = [
     },
 ];
 const operationsNavItems: NavItem[] = [
-        {
+    {
         title: 'Infrastructure',
         href: admin.infrastructure.url(),
         icon: Network,
+    },
+    {
+        title: 'Cameras',
+        href: '/admin/cameras',
+        icon: Video,
     },
     {
         title: 'Maintenance',
@@ -133,5 +139,3 @@ export function AppSidebar() {
         </Sidebar>
     );
 }
-
-

@@ -2,20 +2,16 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\QuizQuestionType;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
-use App\Models\QuizQuestion;
-use App\Models\QuizQuestionOption;
 use App\Models\User;
-use App\Repositories\TrainingUnitProgressRepository;
 use App\Repositories\QuizAttemptRepository;
 use App\Repositories\QuizQuestionRepository;
 use App\Repositories\QuizRepository;
+use App\Repositories\TrainingUnitProgressRepository;
 use App\Services\QuizService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 

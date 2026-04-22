@@ -11,12 +11,13 @@ import {
     BookOpen,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
 import { KPICard, RevenueChart, PeriodSelector } from '@/components/analytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
 import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
 import type {
@@ -55,8 +56,12 @@ export default function EarningsPage({
 
     const [payoutAmount, setPayoutAmount] = useState('');
     const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
-    const [availableBalance, setAvailableBalance] = useState<number | null>(null);
-    const [payoutRequests, setPayoutRequests] = useState<PayoutRequestItem[]>([]);
+    const [availableBalance, setAvailableBalance] = useState<number | null>(
+        null,
+    );
+    const [payoutRequests, setPayoutRequests] = useState<PayoutRequestItem[]>(
+        [],
+    );
 
     useEffect(() => {
         let mounted = true;
@@ -84,6 +89,17 @@ export default function EarningsPage({
         const amount = Number(payoutAmount);
 
         if (!Number.isFinite(amount) || amount <= 0) {
+            toast.error('Enter a valid payout amount.');
+            return;
+        }
+
+        if (amount < 50) {
+            toast.error('Minimum payout amount is $50.');
+            return;
+        }
+
+        if (availableBalance !== null && amount > availableBalance) {
+            toast.error('Requested amount exceeds your available balance.');
             return;
         }
 
@@ -100,6 +116,9 @@ export default function EarningsPage({
             const refreshed = await payoutApi.getMyPayouts();
             setAvailableBalance(refreshed.available_balance);
             setPayoutRequests(refreshed.data);
+            toast.success('Payout request submitted.');
+        } catch {
+            toast.error('Unable to submit payout request right now.');
         } finally {
             setIsSubmittingPayout(false);
         }
@@ -179,7 +198,9 @@ export default function EarningsPage({
                 {/* Payout request */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Request Payout</CardTitle>
+                        <CardTitle className="text-lg">
+                            Request Payout
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
@@ -197,15 +218,21 @@ export default function EarningsPage({
                                     min={50}
                                     step="0.01"
                                     value={payoutAmount}
-                                    onChange={(e) => setPayoutAmount(e.target.value)}
+                                    onChange={(e) =>
+                                        setPayoutAmount(e.target.value)
+                                    }
                                     placeholder="Amount in USD"
                                     className="sm:w-48"
                                 />
                                 <Button
                                     onClick={handleRequestPayout}
-                                    disabled={isSubmittingPayout || !payoutAmount}
+                                    disabled={
+                                        isSubmittingPayout || !payoutAmount
+                                    }
                                 >
-                                    {isSubmittingPayout ? 'Submitting...' : 'Request Payout'}
+                                    {isSubmittingPayout
+                                        ? 'Submitting...'
+                                        : 'Request Payout'}
                                 </Button>
                             </div>
                         </div>
@@ -257,7 +284,9 @@ export default function EarningsPage({
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold">
-                                                {formatCurrency(trainingPath.revenue)}
+                                                {formatCurrency(
+                                                    trainingPath.revenue,
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -277,7 +306,9 @@ export default function EarningsPage({
                 {/* Recent payout requests */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Recent Payout Requests</CardTitle>
+                        <CardTitle className="text-lg">
+                            Recent Payout Requests
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {payoutRequests.length === 0 ? (
@@ -296,10 +327,13 @@ export default function EarningsPage({
                                                 {formatCurrency(request.amount)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Requested {new Date(request.requestedAt).toLocaleString()}
+                                                Requested{' '}
+                                                {new Date(
+                                                    request.requestedAt,
+                                                ).toLocaleString()}
                                             </p>
                                         </div>
-                                        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                             {request.status_label}
                                         </span>
                                     </div>
@@ -312,4 +346,3 @@ export default function EarningsPage({
         </AppLayout>
     );
 }
-

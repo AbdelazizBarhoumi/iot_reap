@@ -9,6 +9,7 @@ import type {
     AttachDeviceRequest,
     GatewayNode,
     UsbDevice,
+    UpdateCameraSettingsRequest,
 } from '../types/hardware.types';
 // Axios error responses don't have a stable interface; define what we care about
 interface ApiError {
@@ -24,6 +25,7 @@ interface UseHardwareGatewayResult {
     refetch: () => Promise<void>;
     refreshAll: () => Promise<boolean>;
     refreshNode: (nodeId: number) => Promise<boolean>;
+    checkHealth: (nodeId: number) => Promise<boolean>;
     bindDevice: (deviceId: number) => Promise<boolean>;
     unbindDevice: (deviceId: number) => Promise<boolean>;
     attachDevice: (
@@ -33,6 +35,11 @@ interface UseHardwareGatewayResult {
     detachDevice: (deviceId: number) => Promise<boolean>;
     cancelPendingAttachment: (deviceId: number) => Promise<boolean>;
     markAsCamera: (deviceId: number) => Promise<boolean>;
+    activateCamera: (deviceId: number) => Promise<boolean>;
+    updateCameraSettings: (
+        deviceId: number,
+        data: UpdateCameraSettingsRequest,
+    ) => Promise<boolean>;
     removeCamera: (deviceId: number) => Promise<boolean>;
     discoverGateways: () => Promise<boolean>;
     verifyNode: (nodeId: number, verified: boolean) => Promise<boolean>;
@@ -117,6 +124,39 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
                 toast.error(message);
                 setError(message);
                 await fetchData();
+                return false;
+            } finally {
+                setActionLoading(false);
+            }
+        },
+        [fetchData],
+    );
+    const checkHealth = useCallback(
+        async (nodeId: number): Promise<boolean> => {
+            setActionLoading(true);
+            setError(null);
+            try {
+                const result = await hardwareApi.checkHealth(nodeId);
+                if (result.success) {
+                    toast.success(
+                        result.message ||
+                            (result.online
+                                ? 'Gateway is online'
+                                : 'Gateway is offline'),
+                    );
+                    await fetchData();
+                    return true;
+                }
+
+                const errorMsg = result.message || 'Health check failed';
+                toast.error(errorMsg);
+                setError(errorMsg);
+                return false;
+            } catch (e) {
+                const message =
+                    e instanceof Error ? e.message : 'Health check failed';
+                toast.error(message);
+                setError(message);
                 return false;
             } finally {
                 setActionLoading(false);
@@ -349,6 +389,68 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
         },
         [fetchData],
     );
+    const activateCamera = useCallback(
+        async (deviceId: number): Promise<boolean> => {
+            setActionLoading(true);
+            setError(null);
+            try {
+                const result = await hardwareApi.activateCamera(deviceId);
+                if (result.success) {
+                    toast.success('Camera stream activated');
+                    await fetchData();
+                    return true;
+                }
+                const errorMsg = result.message || 'Failed to activate camera';
+                toast.error(errorMsg);
+                setError(errorMsg);
+                return false;
+            } catch (e) {
+                const message =
+                    e instanceof Error ? e.message : 'Failed to activate camera';
+                toast.error(message);
+                setError(message);
+                return false;
+            } finally {
+                setActionLoading(false);
+            }
+        },
+        [fetchData],
+    );
+    const updateCameraSettings = useCallback(
+        async (
+            deviceId: number,
+            data: UpdateCameraSettingsRequest,
+        ): Promise<boolean> => {
+            setActionLoading(true);
+            setError(null);
+            try {
+                const result = await hardwareApi.updateCameraSettings(
+                    deviceId,
+                    data,
+                );
+                if (result.success) {
+                    toast.success('Camera settings updated');
+                    await fetchData();
+                    return true;
+                }
+                const errorMsg = result.message || 'Failed to update camera';
+                toast.error(errorMsg);
+                setError(errorMsg);
+                return false;
+            } catch (e) {
+                const message =
+                    e instanceof Error
+                        ? e.message
+                        : 'Failed to update camera';
+                toast.error(message);
+                setError(message);
+                return false;
+            } finally {
+                setActionLoading(false);
+            }
+        },
+        [fetchData],
+    );
     const removeCamera = useCallback(
         async (deviceId: number): Promise<boolean> => {
             setActionLoading(true);
@@ -391,12 +493,15 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
         refetch: fetchData,
         refreshAll,
         refreshNode,
+        checkHealth,
         bindDevice,
         unbindDevice,
         attachDevice,
         detachDevice,
         cancelPendingAttachment,
         markAsCamera,
+        activateCamera,
+        updateCameraSettings,
         removeCamera,
         discoverGateways,
         verifyNode,

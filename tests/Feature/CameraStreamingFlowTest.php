@@ -8,6 +8,7 @@ use App\Models\GatewayNode;
 use App\Models\Robot;
 use App\Models\User;
 use App\Models\VMSession;
+use App\Services\CameraService;
 use App\Services\GatewayService;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -351,7 +352,7 @@ class CameraStreamingFlowTest extends TestCase
 
     public function test_auto_resolution_returns_correct_preset_for_each_type(): void
     {
-        $service = app(\App\Services\CameraService::class);
+        $service = app(CameraService::class);
 
         $usbCamera = Camera::factory()->usb()->make();
         $auto = $service->getAutoResolution($usbCamera);

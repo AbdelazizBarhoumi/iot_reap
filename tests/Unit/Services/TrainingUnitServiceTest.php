@@ -63,7 +63,7 @@ class TrainingUnitServiceTest extends TestCase
         $this->assertDatabaseMissing('training_path_modules', ['id' => $moduleId]);
     }
 
-    public function test_create_trainingUnit(): void
+    public function test_create_training_unit(): void
     {
         $module = TrainingPathModule::factory()->create();
 
@@ -86,7 +86,7 @@ class TrainingUnitServiceTest extends TestCase
         ]);
     }
 
-    public function test_update_trainingUnit(): void
+    public function test_update_training_unit(): void
     {
         $trainingUnit = TrainingUnit::factory()->create(['title' => 'Original TrainingUnit']);
 
@@ -103,7 +103,7 @@ class TrainingUnitServiceTest extends TestCase
         ]);
     }
 
-    public function test_delete_trainingUnit(): void
+    public function test_delete_training_unit(): void
     {
         $trainingUnit = TrainingUnit::factory()->create();
         $trainingUnitId = $trainingUnit->id;
@@ -134,7 +134,7 @@ class TrainingUnitServiceTest extends TestCase
         $this->assertEquals(2, $module2->fresh()->sort_order);
     }
 
-    public function test_reorder_trainingUnits(): void
+    public function test_reorder_training_units(): void
     {
         $module = TrainingPathModule::factory()->create();
         $trainingUnit1 = TrainingUnit::factory()->create(['module_id' => $module->id, 'sort_order' => 0]);

@@ -14,6 +14,7 @@ import {
     Edit,
     Eye,
     FileEdit,
+    MessageSquare,
     MoreHorizontal,
     Plus,
     Rocket,
@@ -44,6 +45,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useMyTrainingPaths } from '@/hooks/useTeaching';
 import AppLayout from '@/layouts/app-layout';
+import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
 import type { DiscussionThread } from '@/types/forum.types';
 import type { TrainingPath } from '@/types/TrainingPath.types';
@@ -52,10 +54,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 type TeachingPathStatus = TrainingPathEditing['status'];
 
-const statusConfig: Partial<Record<
-    TeachingPathStatus,
-    { label: string; icon: React.ElementType; className: string; bg: string }
->> = {
+const statusConfig: Partial<
+    Record<
+        TeachingPathStatus,
+        {
+            label: string;
+            icon: React.ElementType;
+            className: string;
+            bg: string;
+        }
+    >
+> = {
     draft: {
         label: 'Draft',
         icon: FileEdit,
@@ -94,7 +103,15 @@ interface PageProps {
 export default function TeachingPage() {
     const { stats } = usePage<{ props: PageProps }>()
         .props as unknown as PageProps;
-    const { trainingPaths, loading: _loading, error: _error, deleteTrainingPath, archiveTrainingPath, restoreTrainingPath, submitForReview } = useMyTrainingPaths();
+    const {
+        trainingPaths,
+        loading: _loading,
+        error: _error,
+        deleteTrainingPath,
+        archiveTrainingPath,
+        restoreTrainingPath,
+        submitForReview,
+    } = useMyTrainingPaths();
     const [deletingId, setDeletingId] = useState<string | number | null>(null);
     const [archivingId, setArchivingId] = useState<string | number | null>(
         null,
@@ -150,7 +167,9 @@ export default function TeachingPage() {
         variant: 'default',
         onConfirm: () => {},
     });
-    const activeTrainingPaths = trainingPaths.filter((c) => c.status !== 'archived');
+    const activeTrainingPaths = trainingPaths.filter(
+        (c) => c.status !== 'archived',
+    );
     const publishedTrainingPaths = activeTrainingPaths.filter(
         (c) => c.status === 'approved',
     );
@@ -262,6 +281,28 @@ export default function TeachingPage() {
             iconColor: 'text-emerald-500',
         },
     ];
+    const studioLinks = [
+        {
+            title: 'Moderate Forum Inbox',
+            description:
+                'Open the teacher inbox with thread-level moderation tools.',
+            href: teaching.forum.inbox.url(),
+            icon: MessageSquare,
+        },
+        {
+            title: 'Manage VM Assignments',
+            description:
+                'Review pending, approved, and rejected unit VM requests.',
+            href: teaching.trainingUnitAssignments.my.url(),
+            icon: Terminal,
+        },
+        {
+            title: 'Analytics & Payouts',
+            description: 'Track earnings, export reports, and request payouts.',
+            href: teaching.analytics.earnings.url(),
+            icon: BarChart3,
+        },
+    ];
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Teaching Dashboard" />
@@ -278,8 +319,8 @@ export default function TeachingPage() {
                                 Teaching Dashboard
                             </h1>
                             <p className="mt-1 text-muted-foreground">
-                                Create training paths, track operators, and grow your
-                                impact
+                                Create training paths, track operators, and grow
+                                your impact
                             </p>
                         </div>
                         <Button
@@ -335,6 +376,39 @@ export default function TeachingPage() {
                             </motion.div>
                         ))}
                     </div>
+                    <div className="mb-8 grid gap-4 md:grid-cols-3">
+                        {studioLinks.map((link, index) => (
+                            <motion.div
+                                key={link.title}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15 + index * 0.08 }}
+                            >
+                                <Card className="h-full border-border/60 shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5">
+                                    <CardContent className="flex h-full flex-col gap-4 p-5">
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                                            <link.icon className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h2 className="font-semibold text-foreground">
+                                                {link.title}
+                                            </h2>
+                                            <p className="text-sm text-muted-foreground">
+                                                {link.description}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="mt-auto justify-start"
+                                            asChild
+                                        >
+                                            <Link href={link.href}>Open</Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </div>
                     {/* Two-column layout: Forum Inbox + Quick Actions */}
                     <div className="mb-8 grid gap-6 lg:grid-cols-2">
                         {/* Forum Inbox */}
@@ -347,14 +421,25 @@ export default function TeachingPage() {
                                 flaggedThreads={forumInbox.flagged}
                                 unansweredThreads={forumInbox.unanswered}
                                 recentThreads={forumInbox.recent}
-                                onViewThread={(threadId, trainingPathSlug) => {
+                                onViewThread={(
+                                    threadId,
+                                    _trainingPathId,
+                                    filter,
+                                ) => {
                                     router.visit(
-                                        `/trainingPaths/${trainingPathSlug}?thread=${threadId}`,
+                                        teaching.forum.inbox.url({
+                                            query: {
+                                                thread: threadId,
+                                                filter,
+                                            },
+                                        }),
                                     );
                                 }}
                                 onResolveFlag={async (threadId) => {
                                     try {
-                                        await forumApi.unpinThread(threadId);
+                                        await forumApi.resolveThreadFlag(
+                                            threadId,
+                                        );
                                         fetchForumInbox();
                                         toast.success('Thread flag resolved');
                                     } catch {
@@ -368,6 +453,15 @@ export default function TeachingPage() {
                                         toast.success('Thread pinned');
                                     } catch {
                                         toast.error('Failed to pin thread');
+                                    }
+                                }}
+                                onUnpinThread={async (threadId) => {
+                                    try {
+                                        await forumApi.unpinThread(threadId);
+                                        fetchForumInbox();
+                                        toast.success('Thread unpinned');
+                                    } catch {
+                                        toast.error('Failed to unpin thread');
                                     }
                                 }}
                                 onLockThread={async (threadId) => {
@@ -405,40 +499,45 @@ export default function TeachingPage() {
                                         <div className="mb-4 flex items-center gap-3">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                                                 <Zap className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-foreground">
+                                                    Quick Actions
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    You have paths that need
+                                                    attention
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-semibold text-foreground">
-                                                Quick Actions
-                                            </h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                You have paths that need
-                                                attention
-                                            </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {pendingTrainingPaths.length >
+                                                0 && (
+                                                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                    <Clock className="mr-1 h-3 w-3" />
+                                                    {
+                                                        pendingTrainingPaths.length
+                                                    }{' '}
+                                                    awaiting review
+                                                </Badge>
+                                            )}
+                                            {draftTrainingPaths.length > 0 && (
+                                                <Badge variant="secondary">
+                                                    <FileEdit className="mr-1 h-3 w-3" />
+                                                    {draftTrainingPaths.length}{' '}
+                                                    draft
+                                                    {draftTrainingPaths.length >
+                                                    1
+                                                        ? 's'
+                                                        : ''}{' '}
+                                                    to complete
+                                                </Badge>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {pendingTrainingPaths.length > 0 && (
-                                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                <Clock className="mr-1 h-3 w-3" />
-                                                {pendingTrainingPaths.length} awaiting
-                                                review
-                                            </Badge>
-                                        )}
-                                        {draftTrainingPaths.length > 0 && (
-                                            <Badge variant="secondary">
-                                                <FileEdit className="mr-1 h-3 w-3" />
-                                                {draftTrainingPaths.length} draft
-                                                {draftTrainingPaths.length > 1
-                                                    ? 's'
-                                                    : ''}{' '}
-                                                to complete
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
                     </div>
                     {/* TrainingPaths List */}
                     <div className="space-y-6">
@@ -463,9 +562,10 @@ export default function TeachingPage() {
                                     Create your first training path
                                 </h3>
                                 <p className="mx-auto mb-6 max-w-md text-muted-foreground">
-                                    Share your industrial expertise with engineers around
-                                    the world. Create interactive training paths with
-                                    VM labs and hands-on projects.
+                                    Share your industrial expertise with
+                                    engineers around the world. Create
+                                    interactive training paths with VM labs and
+                                    hands-on projects.
                                 </p>
                                 <Button asChild>
                                     <Link href="/teaching/create">
@@ -477,15 +577,19 @@ export default function TeachingPage() {
                         ) : (
                             <div className="space-y-3">
                                 <AnimatePresence>
-                                                                    {trainingPaths.map((trainingPath, i) => {
+                                    {trainingPaths.map((trainingPath, i) => {
                                         const status =
                                             statusConfig[trainingPath.status!];
-                                        const StatusIcon = status?.icon || FileEdit;
+                                        const StatusIcon =
+                                            status?.icon || FileEdit;
                                         const moduleCount =
                                             trainingPath.modules?.length ?? 0;
                                         const trainingUnitCount =
                                             trainingPath.modules?.reduce(
-                                                (a, m) => a + (m.trainingUnits?.length ?? 0),
+                                                (a, m) =>
+                                                    a +
+                                                    (m.trainingUnits?.length ??
+                                                        0),
                                                 0,
                                             ) ?? 0;
                                         const completeness = Math.min(
@@ -591,6 +695,7 @@ export default function TeachingPage() {
                                                                                     {Math.round(
                                                                                         completeness,
                                                                                     )}
+
                                                                                     %
                                                                                     complete
                                                                                 </span>
@@ -620,11 +725,17 @@ export default function TeachingPage() {
                                                                                         trainingPath.id,
                                                                                     )
                                                                                 }
-                                                                                disabled={submittingId === trainingPath.id}
+                                                                                disabled={
+                                                                                    submittingId ===
+                                                                                    trainingPath.id
+                                                                                }
                                                                                 className="hidden sm:flex"
                                                                             >
                                                                                 <Send className="mr-1 h-4 w-4" />
-                                                                                {submittingId === trainingPath.id ? 'Submitting...' : 'Submit'}
+                                                                                {submittingId ===
+                                                                                trainingPath.id
+                                                                                    ? 'Submitting...'
+                                                                                    : 'Submit'}
                                                                             </Button>
                                                                         )}
                                                                         <Button
@@ -679,15 +790,24 @@ export default function TeachingPage() {
                                                                                         TrainingPath
                                                                                     </Link>
                                                                                 </DropdownMenuItem>
-                                                                                {trainingPath.status === 'draft' && (
+                                                                                {trainingPath.status ===
+                                                                                    'draft' && (
                                                                                     <DropdownMenuItem
                                                                                         onClick={() =>
-                                                                                            handleSubmitForReview(trainingPath.id)
+                                                                                            handleSubmitForReview(
+                                                                                                trainingPath.id,
+                                                                                            )
                                                                                         }
-                                                                                        disabled={submittingId === trainingPath.id}
+                                                                                        disabled={
+                                                                                            submittingId ===
+                                                                                            trainingPath.id
+                                                                                        }
                                                                                     >
                                                                                         <Send className="mr-2 h-4 w-4" />
-                                                                                        {submittingId === trainingPath.id ? 'Submitting...' : 'Submit for Review'}
+                                                                                        {submittingId ===
+                                                                                        trainingPath.id
+                                                                                            ? 'Submitting...'
+                                                                                            : 'Submit for Review'}
                                                                                     </DropdownMenuItem>
                                                                                 )}
                                                                                 <DropdownMenuItem
@@ -799,4 +919,3 @@ export default function TeachingPage() {
         </AppLayout>
     );
 }
-

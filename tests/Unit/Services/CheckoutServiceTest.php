@@ -3,8 +3,8 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\CheckoutService;
@@ -36,7 +36,7 @@ class CheckoutServiceTest extends TestCase
     // Stripe Checkout Session Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_creates_stripe_checkout_session_for_paid_trainingPath(): void
+    public function test_creates_stripe_checkout_session_for_paid_training_path(): void
     {
         $user = User::factory()->create(['email' => 'test@example.com']);
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -109,7 +109,7 @@ class CheckoutServiceTest extends TestCase
     // Free TrainingPath Enrollment Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_enrolls_user_in_free_trainingPath(): void
+    public function test_enrolls_user_in_free_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -129,7 +129,7 @@ class CheckoutServiceTest extends TestCase
         $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
-    public function test_creates_zero_amount_payment_for_free_trainingPath(): void
+    public function test_creates_zero_amount_payment_for_free_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -174,7 +174,7 @@ class CheckoutServiceTest extends TestCase
     // Duplicate Enrollment Prevention Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_prevents_duplicate_enrollment_for_paid_trainingPath(): void
+    public function test_prevents_duplicate_enrollment_for_paid_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([
@@ -192,7 +192,7 @@ class CheckoutServiceTest extends TestCase
         $this->service->createCheckoutSession($user, $trainingPath);
     }
 
-    public function test_prevents_duplicate_enrollment_for_free_trainingPath(): void
+    public function test_prevents_duplicate_enrollment_for_free_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create([

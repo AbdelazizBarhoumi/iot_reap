@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\StripeWebhookController;
@@ -30,20 +31,15 @@ Route::get('/privacy', function () {
     return Inertia::render('legal/PrivacyPolicy');
 })->name('privacy');
 
-Route::get('dashboard', function () {
+Route::get('vmdashboard', function () {
     $user = Auth::user();
 
     if (! $user instanceof User) {
         return redirect()->route('login');
     }
 
-    // Engineers go to trainingPaths (they must not access dashboard or infra)
-    if ($user->hasRole(\App\Enums\UserRole::ENGINEER)) {
-        return redirect()->route('trainingPaths.index');
-    }
-
     // Teachers go to their teaching dashboard
-    if ($user->hasRole(\App\Enums\UserRole::TEACHER)) {
+    if ($user->hasRole(UserRole::TEACHER)) {
         if (! $user->isTeacherApproved()) {
             return redirect()->route('teacher.pending-approval');
         }
@@ -51,13 +47,27 @@ Route::get('dashboard', function () {
         return redirect()->route('teaching.index');
     }
 
+    // Admins go to the admin operations dashboard.
+    if ($user->hasRole(UserRole::ADMIN)) {
+        return redirect()->route('admin.dashboard');
+    }
 
-    // Only admins see the VM browser dashboard
+    // Engineers use the VM browser dashboard entry point.
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Teacher pending approval page
 Route::get('teacher/pending-approval', function () {
+    $user = Auth::user();
+
+    if ($user->isTeacher() && $user->isTeacherApproved()) {
+        return redirect()->route('teaching.index');
+    }
+
+    if (! $user->isTeacher()) {
+        return redirect()->route('dashboard');
+    }
+
     return Inertia::render('auth/TeacherPendingApprovalPage');
 })->middleware(['auth', 'verified'])->name('teacher.pending-approval');
 
@@ -72,11 +82,11 @@ Route::middleware(['auth'])->post('/stop-impersonation', [AdminUserController::c
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 
 // Core domains
-require __DIR__.'/sessions.php';
-require __DIR__.'/admin.php';
-require __DIR__.'/trainingPaths.php';
-require __DIR__.'/teaching.php';
+require __DIR__ . '/sessions.php';
+require __DIR__ . '/admin.php';
+require __DIR__ . '/trainingPaths.php';
+require __DIR__ . '/teaching.php';
 
 // Auth and Settings
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

@@ -5,9 +5,12 @@ namespace App\Services;
 use App\Enums\PayoutStatus;
 use App\Models\PayoutRequest;
 use App\Models\User;
+use App\Notifications\PayoutApprovedNotification;
+use App\Notifications\PayoutRejectedNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
 use Stripe\Transfer;
 
@@ -96,7 +99,7 @@ class PayoutService
         ]);
 
         // Notify the teacher
-        $request->user->notify(new \App\Notifications\PayoutApprovedNotification($request));
+        $request->user->notify(new PayoutApprovedNotification($request));
 
         return $request->fresh();
     }
@@ -124,7 +127,7 @@ class PayoutService
         ]);
 
         // Notify the teacher
-        $request->user->notify(new \App\Notifications\PayoutRejectedNotification($request, $reason));
+        $request->user->notify(new PayoutRejectedNotification($request, $reason));
 
         return $request->fresh();
     }
@@ -175,7 +178,7 @@ class PayoutService
                 'payout_request_id' => $request->id,
                 'stripe_transfer_id' => $transfer->id,
             ]);
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (ApiErrorException $e) {
             $request->update([
                 'status' => PayoutStatus::FAILED,
                 'admin_notes' => "Stripe error: {$e->getMessage()}",

@@ -6,22 +6,24 @@ use App\Enums\VideoStatus;
 use App\Jobs\TranscodeVideoJob;
 use App\Models\Caption;
 use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
 use App\Models\User;
 use App\Models\Video;
 use App\Services\CaptionService;
 use App\Services\VideoService;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VideoControllerTest extends TestCase
 {
     use RefreshDatabase;
+
     private User $teacher;
 
     private User $student;
@@ -53,7 +55,7 @@ class VideoControllerTest extends TestCase
     // Show Video Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_teacher_can_view_video_for_trainingUnit(): void
+    public function test_teacher_can_view_video_for_training_unit(): void
     {
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
@@ -75,7 +77,7 @@ class VideoControllerTest extends TestCase
             ->assertJson(['data' => null]);
     }
 
-    public function test_show_video_fails_for_nonexistent_trainingUnit(): void
+    public function test_show_video_fails_for_nonexistent_training_unit(): void
     {
         $response = $this->actingAs($this->teacher)->getJson('/trainingUnits/999/video');
 
@@ -163,7 +165,7 @@ class VideoControllerTest extends TestCase
             ->assertJsonValidationErrors(['video']);
     }
 
-    public function test_upload_video_fails_for_nonexistent_trainingUnit(): void
+    public function test_upload_video_fails_for_nonexistent_training_unit(): void
     {
         $videoFile = UploadedFile::fake()->create('test_video.mp4', 10000, 'video/mp4');
 
@@ -545,7 +547,7 @@ class VideoControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_can_upload_video_for_any_trainingPath(): void
+    public function test_admin_can_upload_video_for_any_training_path(): void
     {
         $videoFile = UploadedFile::fake()->create('admin_video.mp4', 10000, 'video/mp4');
 
@@ -592,11 +594,11 @@ class VideoControllerTest extends TestCase
     public function test_student_can_view_video_status(): void
     {
         // Create enrollment for student
-        \App\Models\TrainingPathEnrollment::factory()->create([
+        TrainingPathEnrollment::factory()->create([
             'user_id' => $this->student->id,
             'training_path_id' => $this->trainingPath->id,
         ]);
-        
+
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         $response = $this->actingAs($this->student)
@@ -707,4 +709,3 @@ class VideoControllerTest extends TestCase
         }
     }
 }
-

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\ProxmoxServer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProxmoxServer>
+ * @extends Factory<ProxmoxServer>
  */
 class ProxmoxServerFactory extends Factory
 {

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\NodeCredentialsLog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\NodeCredentialsLog>
+ * @extends Factory<NodeCredentialsLog>
  */
 class NodeCredentialsLogFactory extends Factory
 {

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ProxmoxApiException;
 use App\Models\ProxmoxServer;
+use PHPUnit\Framework\ExpectationFailedException;
 
 /**
  * Fake ProxmoxClient for testing.
@@ -794,7 +795,7 @@ class ProxmoxClientFake extends ProxmoxClient
             }
         }
 
-        throw new \PHPUnit\Framework\ExpectationFailedException(
+        throw new ExpectationFailedException(
             "Expected command containing '{$expectedCommandSubstring}' was not executed. ".
             'Executed commands: '.json_encode(array_column($this->execHistory, 'command')).
             ' Written files: '.json_encode(array_column($this->writtenFilesHistory, 'content'))

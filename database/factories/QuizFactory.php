@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\TrainingUnit;
 use App\Models\Quiz;
+use App\Models\TrainingUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

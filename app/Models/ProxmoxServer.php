@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\ProxmoxServerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Proxmox server/cluster model.
@@ -25,12 +27,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $cpu_overcommit_ratio
  * @property float $memory_overcommit_ratio
  * @property string|null $created_by
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class ProxmoxServer extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProxmoxServerFactory> */
+    /** @use HasFactory<ProxmoxServerFactory> */
     use HasFactory;
 
     /**

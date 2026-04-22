@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CameraReservationStatus;
 use App\Enums\CameraStatus;
 use App\Enums\CameraType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -313,9 +314,9 @@ class Camera extends Model
     /**
      * Scope: Get cameras assigned to a specific VM ID.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  int|null  $vmId  The VM ID to filter by
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForVmId($query, ?int $vmId)
     {
@@ -330,8 +331,8 @@ class Camera extends Model
     /**
      * Scope: Get cameras that are unassigned (no VM assignment).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeUnassigned($query)
     {
@@ -342,7 +343,6 @@ class Camera extends Model
      * Check if this camera is assigned to a specific VM ID.
      *
      * @param  int  $vmId  The VM ID to check
-     * @return bool
      */
     public function isAssignedTo(int $vmId): bool
     {
@@ -351,8 +351,6 @@ class Camera extends Model
 
     /**
      * Check if this camera is assigned to any VM.
-     *
-     * @return bool
      */
     public function isAssigned(): bool
     {
@@ -363,7 +361,6 @@ class Camera extends Model
      * Assign this camera to a specific VM ID.
      *
      * @param  int  $vmId  The VM ID to assign to
-     * @return bool
      */
     public function assignToVm(int $vmId): bool
     {
@@ -374,8 +371,6 @@ class Camera extends Model
 
     /**
      * Unassign this camera from its current VM.
-     *
-     * @return bool
      */
     public function unassignFromVm(): bool
     {

@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\TrainingPath;
 use App\Models\DailyTrainingPathStats;
+use App\Models\TrainingPath;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

@@ -35,7 +35,7 @@ class ProxmoxLoadBalancer
      *
      * @throws NoAvailableNodeException
      */
-    public function selectNode(?\App\Models\ProxmoxServer $server = null): ProxmoxNode
+    public function selectNode(?ProxmoxServer $server = null): ProxmoxNode
     {
         $server ??= ProxmoxServer::where('is_active', true)->first();
 
@@ -90,7 +90,7 @@ class ProxmoxLoadBalancer
      * Compute a composite load score for a node.
      * Lower score = less loaded. Returns 0-100 (percent).
      */
-    private function computeNodeScore(string $nodeName, ?\App\Models\ProxmoxServer $server = null): float
+    private function computeNodeScore(string $nodeName, ?ProxmoxServer $server = null): float
     {
         $serverPart = $server?->id ?? 'default';
         $cacheKey = "proxmox_node_load:{$serverPart}:{$nodeName}";
@@ -158,7 +158,7 @@ class ProxmoxLoadBalancer
     /**
      * Clear the cache for this server's nodes [testing/admin purposes].
      */
-    public function clearCache(?\App\Models\ProxmoxServer $server = null): void
+    public function clearCache(?ProxmoxServer $server = null): void
     {
         $serverPart = $server?->id ?? 'default';
         $pattern = "proxmox_node_load:{$serverPart}:*";

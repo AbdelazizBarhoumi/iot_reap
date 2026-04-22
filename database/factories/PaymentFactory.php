@@ -3,14 +3,14 @@
 namespace Database\Factories;
 
 use App\Enums\PaymentStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\TrainingPath;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
+ * @extends Factory<Payment>
  */
 class PaymentFactory extends Factory
 {

@@ -175,6 +175,15 @@ export interface CreateReservationRequest {
     end_at: string;
     purpose?: string;
 }
+
+/**
+ * Request payload for camera lifecycle adjustments.
+ */
+export interface UpdateCameraSettingsRequest {
+    width: number;
+    height: number;
+    framerate: number;
+}
 /**
  * Request payload for admin approving a reservation.
  */

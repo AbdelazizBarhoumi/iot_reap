@@ -19,6 +19,7 @@ class NotificationSeeder extends Seeder
 
         if ($users->isEmpty()) {
             $this->command->warn('No users found. Skipping notifications.');
+
             return;
         }
 
@@ -59,7 +60,7 @@ class NotificationSeeder extends Seeder
             SystemAlert::create([
                 'title' => $alertTitles[array_rand($alertTitles)],
                 'severity' => $severities[array_rand($severities)],
-                'description' => 'System alert ' . ($i + 1) . ' - This is a test alert.',
+                'description' => 'System alert '.($i + 1).' - This is a test alert.',
                 'source' => ['proxmox', 'system', 'vm', 'network'][array_rand([0, 1, 2, 3])],
                 'metadata' => json_encode(['trace' => 'Alert details for debugging']),
                 'acknowledged' => rand(0, 1) === 1,
@@ -75,6 +76,7 @@ class NotificationSeeder extends Seeder
     private function randomNotificationType(): NotificationType
     {
         $types = NotificationType::cases();
+
         return $types[array_rand($types)];
     }
 

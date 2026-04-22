@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\TrainingPathStatus;
 use App\Models\TrainingPath;
 use App\Models\User;
+use App\Notifications\TrainingPathApprovedNotification;
+use App\Notifications\TrainingPathRejectedNotification;
 use App\Repositories\TrainingPathModuleRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitRepository;
@@ -140,14 +142,14 @@ class TrainingPathService
                     'type' => $trainingUnitData['type'] ?? 'video',
                     'duration' => $trainingUnitData['duration'] ?? null,
                     'content' => $trainingUnitData['content'] ?? null,
-                        'objectives' => $trainingUnitData['objectives'] ?? null,
-                        'vm_enabled' => $vmEnabled,
-                        'video_url' => $trainingUnitData['video_url'] ?? null,
-                        'resources' => $trainingUnitData['resources'] ?? null,
-                        'sort_order' => $trainingUnitOrder,
-                    ]);
-                }
+                    'objectives' => $trainingUnitData['objectives'] ?? null,
+                    'vm_enabled' => $vmEnabled,
+                    'video_url' => $trainingUnitData['video_url'] ?? null,
+                    'resources' => $trainingUnitData['resources'] ?? null,
+                    'sort_order' => $trainingUnitOrder,
+                ]);
             }
+        }
 
         // Update has_virtual_machine flag
         if ($hasVm) {
@@ -246,7 +248,7 @@ class TrainingPathService
         $this->cacheService->invalidateTrainingPath($trainingPath);
 
         // Notify the teacher that their trainingPath was approved
-        $trainingPath->instructor->notify(new \App\Notifications\TrainingPathApprovedNotification($trainingPath));
+        $trainingPath->instructor->notify(new TrainingPathApprovedNotification($trainingPath));
 
         return $trainingPath;
     }
@@ -275,7 +277,7 @@ class TrainingPathService
         $this->cacheService->invalidateTrainingPath($updated);
 
         // Notify the teacher that their trainingPath was rejected
-        $updated->instructor->notify(new \App\Notifications\TrainingPathRejectedNotification($updated, $feedback));
+        $updated->instructor->notify(new TrainingPathRejectedNotification($updated, $feedback));
 
         return $updated;
     }

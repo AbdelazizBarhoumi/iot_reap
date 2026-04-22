@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
+use App\Models\UsbDevice;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -63,9 +64,9 @@ class CameraRepository
         }
 
         return Camera::where(function ($query) use ($vmId) {
-                $query->where('assigned_vm_id', $vmId)
-                    ->orWhereNull('assigned_vm_id');
-            })
+            $query->where('assigned_vm_id', $vmId)
+                ->orWhereNull('assigned_vm_id');
+        })
             ->where('status', 'active')
             ->with(['robot', 'gatewayNode', 'activeControl.session'])
             ->get();
@@ -78,6 +79,32 @@ class CameraRepository
     {
         return Camera::with(['robot', 'gatewayNode', 'activeControl.session'])
             ->findOrFail($id);
+    }
+
+    /**
+     * Find the camera created from a specific USB device.
+     */
+    public function findByUsbDevice(UsbDevice $device): ?Camera
+    {
+        return Camera::where('usb_device_id', $device->id)
+            ->with(['gatewayNode'])
+            ->first();
+    }
+
+    /**
+     * Delete the camera created from a specific USB device.
+     */
+    public function deleteByUsbDevice(UsbDevice $device): bool
+    {
+        $camera = $this->findByUsbDevice($device);
+
+        if ($camera === null) {
+            return false;
+        }
+
+        $camera->reservations()->delete();
+
+        return (bool) $camera->delete();
     }
 
     /**

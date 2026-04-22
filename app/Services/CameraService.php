@@ -5,16 +5,16 @@ namespace App\Services;
 use App\Enums\CameraPTZDirection;
 use App\Enums\CameraReservationStatus;
 use App\Enums\CameraStatus;
+use App\Enums\CameraType;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
-use App\Models\Reservation;
 use App\Models\CameraSessionControl;
+use App\Models\Reservation;
 use App\Models\User;
 use App\Repositories\CameraRepository;
 use App\Repositories\CameraReservationRepository;
 use App\Repositories\VMSessionRepository;
-use App\Services\MqttService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -49,7 +49,7 @@ class CameraService
         $session = $this->vmSessionRepository->findById($sessionId);
 
         if (! $session) {
-            return new Collection();
+            return new Collection;
         }
 
         return $this->cameraRepository->findByVmId($session->vm_id);
@@ -443,17 +443,17 @@ class CameraService
     public function getAutoResolution(Camera $camera): array
     {
         return match ($camera->type) {
-            \App\Enums\CameraType::USB => [
+            CameraType::USB => [
                 'width' => 640,
                 'height' => 480,
                 'framerate' => 15,
             ],
-            \App\Enums\CameraType::ESP32_CAM => [
+            CameraType::ESP32_CAM => [
                 'width' => 640,
                 'height' => 480,
                 'framerate' => 10,
             ],
-            \App\Enums\CameraType::IP => [
+            CameraType::IP => [
                 'width' => 1280,
                 'height' => 720,
                 'framerate' => 25,
@@ -510,7 +510,7 @@ class CameraService
 
             // Only mark inactive if restart was attempted and failed
             if (! $streamResult['success']) {
-                $camera->update(['status' => \App\Enums\CameraStatus::INACTIVE]);
+                $camera->update(['status' => CameraStatus::INACTIVE]);
             }
         }
         // If no API available, keep camera status unchanged (stream managed externally)
@@ -555,7 +555,7 @@ class CameraService
             $camera->loadMissing('usbDevice');
 
             // Stop current stream
-            if ($camera->status === \App\Enums\CameraStatus::ACTIVE) {
+            if ($camera->status === CameraStatus::ACTIVE) {
                 $gatewayService->stopCameraStream($camera->gatewayNode, $camera->stream_key);
             }
 

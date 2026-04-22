@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\TrainingPathStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TrainingPath\RejectTrainingPathRequest;
 use App\Http\Resources\TrainingPathResource;
 use App\Models\TrainingPath;
-use App\Services\TrainingPathService;
 use App\Services\FeaturedTrainingPathsService;
+use App\Services\TrainingPathService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,17 +29,30 @@ class AdminTrainingPathController extends Controller
      */
     public function index(Request $request): JsonResponse|InertiaResponse
     {
-        $pending = $this->trainingPathService->getPendingTrainingPaths();
+        $status = $request->string('status')->toString();
+        $trainingPathsQuery = TrainingPath::query()
+            ->with(['instructor', 'modules.trainingUnits'])
+            ->withCount('enrollments as student_count')
+            ->orderByDesc('created_at');
+
+        if ($status !== '') {
+            $trainingPathsQuery->where('status', $status);
+        }
+
+        $trainingPaths = $trainingPathsQuery->get();
+        $pending = $trainingPaths->where('status', TrainingPathStatus::PENDING_REVIEW->value)->values();
         $featured = $this->featuredTrainingPathsService->getFeaturedTrainingPaths(10);
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => TrainingPathResource::collection($pending),
+                'data' => TrainingPathResource::collection($trainingPaths),
+                'pending' => TrainingPathResource::collection($pending),
                 'featured' => TrainingPathResource::collection($featured),
             ]);
         }
 
         return Inertia::render('admin/TrainingPathsPage', [
+            'trainingPaths' => TrainingPathResource::collection($trainingPaths),
             'pendingTrainingPaths' => TrainingPathResource::collection($pending),
             'featuredTrainingPaths' => TrainingPathResource::collection($featured),
         ]);

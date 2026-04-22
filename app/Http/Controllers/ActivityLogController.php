@@ -12,7 +12,7 @@ use Inertia\Response as InertiaResponse;
 
 /**
  * Activity Log Controller
- * 
+ *
  * Admin API for viewing activity logs
  */
 class ActivityLogController extends Controller
@@ -84,7 +84,7 @@ class ActivityLogController extends Controller
         Gate::authorize('admin-only');
 
         $userId = $request->input('user_id');
-        if (!$userId) {
+        if (! $userId) {
             return response()->json(['error' => 'user_id is required'], 400);
         }
 

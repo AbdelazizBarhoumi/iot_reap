@@ -80,6 +80,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
@@ -149,8 +150,9 @@ function SortableTrainingUnit({
         transition,
     };
     const typeConfig =
-        trainingUnitTypeConfig[trainingUnit.type as keyof typeof trainingUnitTypeConfig] ||
-        trainingUnitTypeConfig.video;
+        trainingUnitTypeConfig[
+            trainingUnit.type as keyof typeof trainingUnitTypeConfig
+        ] || trainingUnitTypeConfig.video;
     const TypeIcon = typeConfig.icon;
     return (
         <div
@@ -234,13 +236,50 @@ interface EditTrainingPathPageProps {
     trainingPath: TrainingPath;
     categories: string[];
 }
+interface SortableModuleContainerProps {
+    moduleId: string;
+    isDeleting: boolean;
+    children: (dragHandleProps: {
+        attributes: ReturnType<typeof useSortable>['attributes'];
+        listeners: ReturnType<typeof useSortable>['listeners'];
+        isDragging: boolean;
+    }) => React.ReactNode;
+}
+function SortableModuleContainer({
+    moduleId,
+    isDeleting,
+    children,
+}: SortableModuleContainerProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: moduleId });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`${isDragging ? 'z-10 opacity-70' : ''} ${isDeleting ? 'pointer-events-none' : ''}`}
+        >
+            {children({ attributes, listeners, isDragging })}
+        </div>
+    );
+}
 export default function EditTrainingPathPage({
     id,
     trainingPath: initialTrainingPath,
     categories,
 }: EditTrainingPathPageProps) {
     // Local state for optimistic updates
-    const [trainingPath, setTrainingPath] = useState<TrainingPath>(initialTrainingPath);
+    const [trainingPath, setTrainingPath] =
+        useState<TrainingPath>(initialTrainingPath);
     const [activeTab, setActiveTab] = useState('curriculum');
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -249,24 +288,27 @@ export default function EditTrainingPathPage({
     );
 
     const [_activeId, setActiveId] = useState<string | null>(null);
-    const [deletingTrainingUnitId, setDeletingTrainingUnitId] = useState<string | null>(
-        null,
-    );
+    const [deletingTrainingUnitId, setDeletingTrainingUnitId] = useState<
+        string | null
+    >(null);
     const [deletingModuleId, setDeletingModuleId] = useState<string | null>(
         null,
     );
     // Module dialog state
     const [showModuleDialog, setShowModuleDialog] = useState(false);
-    const [editingModule, setEditingModule] = useState<TrainingPathModule | null>(
-        null,
-    );
+    const [editingModule, setEditingModule] =
+        useState<TrainingPathModule | null>(null);
     const [moduleTitle, setModuleTitle] = useState('');
     const [isModuleSaving, setIsModuleSaving] = useState(false);
     // TrainingUnit dialog state
     const [showTrainingUnitDialog, setShowTrainingUnitDialog] = useState(false);
-    const [trainingUnitModuleId, setTrainingUnitModuleId] = useState<string | null>(null);
+    const [trainingUnitModuleId, setTrainingUnitModuleId] = useState<
+        string | null
+    >(null);
     const [trainingUnitTitle, setTrainingUnitTitle] = useState('');
-    const [trainingUnitType, setTrainingUnitType] = useState<'video' | 'article' | 'quiz' | 'interactive'>('video');
+    const [trainingUnitType, setTrainingUnitType] = useState<
+        'video' | 'article' | 'quiz' | 'interactive'
+    >('video');
     const [isTrainingUnitSaving, setIsTrainingUnitSaving] = useState(false);
     // Form state for details tab
     const [title, setTitle] = useState(trainingPath.title);
@@ -276,9 +318,15 @@ export default function EditTrainingPathPage({
     const [price, setPrice] = useState(trainingPath.price?.toString() ?? '0');
     const [currency, setCurrency] = useState(trainingPath.currency ?? 'USD');
     const [isFree, setIsFree] = useState(trainingPath.isFree ?? false);
-    const [thumbnail, setThumbnail] = useState<string | null>(trainingPath.thumbnail);
-    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(trainingPath.video_type || null);
-    const [videoUrl, setVideoUrl] = useState<string | null>(trainingPath.video_url || null);
+    const [thumbnail, setThumbnail] = useState<string | null>(
+        trainingPath.thumbnail,
+    );
+    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(
+        trainingPath.video_type || null,
+    );
+    const [videoUrl, setVideoUrl] = useState<string | null>(
+        trainingPath.video_url || null,
+    );
     // Confirmation dialog state
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -296,7 +344,9 @@ export default function EditTrainingPathPage({
         onConfirm: () => {},
     });
     // Get flash messages from the page props
-    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+    const { flash } = usePage<{
+        flash?: { success?: string; error?: string };
+    }>().props;
     // Show flash message on page load (e.g., after trainingPath creation redirect)
     useEffect(() => {
         if (flash?.success) {
@@ -323,8 +373,14 @@ export default function EditTrainingPathPage({
         ],
         [trainingPath.title, id],
     );
-    const modules = trainingPath.modules ?? [];
-    const totalTrainingUnits = modules.reduce((acc, m) => acc + m.trainingUnits.length, 0);
+    const modules = useMemo(
+        () => trainingPath.modules ?? [],
+        [trainingPath.modules],
+    );
+    const totalTrainingUnits = modules.reduce(
+        (acc, m) => acc + m.trainingUnits.length,
+        0,
+    );
     const completedTrainingUnits = modules.reduce(
         (acc, m) => acc + m.trainingUnits.filter((l) => l.content).length,
         0,
@@ -371,7 +427,10 @@ export default function EditTrainingPathPage({
             updateData.price = isFree ? 0 : Number(price) || 0;
             updateData.currency = currency || 'USD';
             updateData.is_free = isFree;
-            await teachingApi.updateTrainingPath(String(trainingPath.id), updateData);
+            await teachingApi.updateTrainingPath(
+                String(trainingPath.id),
+                updateData,
+            );
             setTrainingPath((prev) => ({
                 ...prev,
                 title,
@@ -425,14 +484,15 @@ export default function EditTrainingPathPage({
     // === SUBMIT FOR REVIEW ===
     const handleSubmitForReview = async () => {
         try {
-            await teachingApi.submitTrainingPathForReview(String(trainingPath.id));
+            await teachingApi.submitTrainingPathForReview(
+                String(trainingPath.id),
+            );
             setTrainingPath((prev) => ({
                 ...prev,
                 status: 'pending_review',
             }));
             toast.success('Submitted for review!', {
-                description:
-                    'An admin will review your trainingPath shortly.',
+                description: 'An admin will review your trainingPath shortly.',
             });
         } catch {
             toast.error('Failed to submit', {
@@ -473,9 +533,12 @@ export default function EditTrainingPathPage({
                 toast.success('Module updated');
             } else {
                 // Create new module
-                const response = await teachingApi.createModule(String(trainingPath.id), {
-                    title: moduleTitle,
-                });
+                const response = await teachingApi.createModule(
+                    String(trainingPath.id),
+                    {
+                        title: moduleTitle,
+                    },
+                );
                 const newModule: TrainingPathModule = {
                     id: String(response.data.id),
                     title: moduleTitle,
@@ -562,14 +625,22 @@ export default function EditTrainingPathPage({
                 ...prev,
                 modules: prev.modules?.map((m) =>
                     m.id === trainingUnitModuleId
-                        ? { ...m, trainingUnits: [...m.trainingUnits, newTrainingUnit] }
+                        ? {
+                              ...m,
+                              trainingUnits: [
+                                  ...m.trainingUnits,
+                                  newTrainingUnit,
+                              ],
+                          }
                         : m,
                 ),
             }));
             toast.success('TrainingUnit created');
             setShowTrainingUnitDialog(false);
             // Expand the module to show the new trainingUnit
-            setExpandedModules((prev) => new Set(prev).add(trainingUnitModuleId));
+            setExpandedModules((prev) =>
+                new Set(prev).add(trainingUnitModuleId),
+            );
         } catch {
             toast.error('Failed to create trainingUnit');
         } finally {
@@ -624,18 +695,28 @@ export default function EditTrainingPathPage({
         setActiveId(event.active.id as string);
     }, []);
     const handleTrainingUnitDragEnd = useCallback(
-        async (event: DragEndEvent, moduleId: string, trainingUnits: TrainingUnit[]) => {
+        async (
+            event: DragEndEvent,
+            moduleId: string,
+            trainingUnits: TrainingUnit[],
+        ) => {
             const { active, over } = event;
             setActiveId(null);
             if (over && active.id !== over.id) {
-                const oldIndex = trainingUnits.findIndex((l) => l.id === active.id);
-                const newIndex = trainingUnits.findIndex((l) => l.id === over.id);
+                const oldIndex = trainingUnits.findIndex(
+                    (l) => l.id === active.id,
+                );
+                const newIndex = trainingUnits.findIndex(
+                    (l) => l.id === over.id,
+                );
                 const newOrder = arrayMove(trainingUnits, oldIndex, newIndex);
                 // Optimistic update
                 setTrainingPath((prev) => ({
                     ...prev,
                     modules: prev.modules?.map((m) =>
-                        m.id === moduleId ? { ...m, trainingUnits: newOrder } : m,
+                        m.id === moduleId
+                            ? { ...m, trainingUnits: newOrder }
+                            : m,
                     ),
                 }));
                 // Persist to backend
@@ -659,6 +740,49 @@ export default function EditTrainingPathPage({
             }
         },
         [trainingPath.id],
+    );
+    const handleModuleDragEnd = useCallback(
+        async (event: DragEndEvent) => {
+            const { active, over } = event;
+            setActiveId(null);
+
+            if (!over || active.id === over.id) {
+                return;
+            }
+
+            const oldIndex = modules.findIndex(
+                (module) => module.id === active.id,
+            );
+            const newIndex = modules.findIndex(
+                (module) => module.id === over.id,
+            );
+
+            if (oldIndex < 0 || newIndex < 0) {
+                return;
+            }
+
+            const newOrder = arrayMove(modules, oldIndex, newIndex);
+
+            setTrainingPath((prev) => ({
+                ...prev,
+                modules: newOrder,
+            }));
+
+            try {
+                await teachingApi.reorderModules(
+                    String(trainingPath.id),
+                    newOrder.map((module) => String(module.id)),
+                );
+                toast.success('Module order updated');
+            } catch {
+                setTrainingPath((prev) => ({
+                    ...prev,
+                    modules,
+                }));
+                toast.error('Failed to reorder modules');
+            }
+        },
+        [modules, trainingPath.id],
     );
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -713,7 +837,9 @@ export default function EditTrainingPathPage({
                                 </span>
                             )}
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/trainingPaths/${trainingPath.id}`}>
+                                <Link
+                                    href={`/trainingPaths/${trainingPath.id}`}
+                                >
                                     <Eye className="mr-2 h-4 w-4" />
                                     Preview
                                 </Link>
@@ -745,7 +871,7 @@ export default function EditTrainingPathPage({
                             <Card className="shadow-card">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="flex items-center justify-between text-sm font-medium">
-                                            <span>Path Completion</span>
+                                        <span>Path Completion</span>
                                         <span className="text-lg font-bold text-primary">
                                             {completionPercent}%
                                         </span>
@@ -850,8 +976,10 @@ export default function EditTrainingPathPage({
                                             <div className="flex items-center justify-between">
                                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                                                     <GripVertical className="h-4 w-4" />
-                                                    Drag trainingUnits to reorder them
-                                                    within modules
+                                                    Drag modules and
+                                                    trainingUnits to keep the
+                                                    curriculum in the right
+                                                    order
                                                 </p>
                                                 <Button
                                                     variant="outline"
@@ -897,263 +1025,307 @@ export default function EditTrainingPathPage({
                                             </CardContent>
                                         </Card>
                                     ) : (
-                                        modules.map((module, mi) => {
-                                            const isExpanded =
-                                                expandedModules.has(module.id);
-                                            const moduleTrainingUnitsWithContent =
-                                                module.trainingUnits.filter(
-                                                    (l) => l.content,
-                                                ).length;
-                                            const moduleCompletion =
-                                                module.trainingUnits.length > 0
-                                                    ? Math.round(
-                                                          (moduleTrainingUnitsWithContent /
-                                                              module.trainingUnits
-                                                                  .length) *
-                                                              100,
-                                                      )
-                                                    : 0;
-                                            const isDeleting =
-                                                deletingModuleId === module.id;
-                                            return (
-                                                <motion.div
-                                                    key={module.id}
-                                                    initial={{
-                                                        opacity: 0,
-                                                        y: 10,
-                                                    }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        y: 0,
-                                                    }}
-                                                    transition={{
-                                                        delay: mi * 0.05,
-                                                    }}
-                                                >
-                                                    <Card
-                                                        className={`overflow-hidden shadow-card ${isDeleting ? 'opacity-50' : ''}`}
-                                                    >
-                                                        <div
-                                                            onClick={() =>
-                                                                toggleModule(
+                                        <DndContext
+                                            sensors={sensors}
+                                            collisionDetection={closestCenter}
+                                            onDragStart={handleDragStart}
+                                            onDragEnd={handleModuleDragEnd}
+                                        >
+                                            <SortableContext
+                                                items={modules.map(
+                                                    (module) => module.id,
+                                                )}
+                                                strategy={
+                                                    verticalListSortingStrategy
+                                                }
+                                            >
+                                                <div className="space-y-4">
+                                                    {modules.map(
+                                                        (module, mi) => {
+                                                            const isExpanded =
+                                                                expandedModules.has(
                                                                     module.id,
-                                                                )
-                                                            }
-                                                            className="cursor-pointer"
-                                                        >
-                                                            <CardHeader className="border-b bg-muted/30 py-4 transition-colors hover:bg-muted/50">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                                                                        <span className="font-bold text-primary">
-                                                                            {mi +
-                                                                                1}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <CardTitle className="truncate font-heading text-base">
-                                                                            {
-                                                                                module.title
-                                                                            }
-                                                                        </CardTitle>
-                                                                        <CardDescription className="mt-0.5 flex items-center gap-3">
-                                                                            <span>
-                                                                                {
-                                                                                    module
-                                                                                        .trainingUnits
-                                                                                        .length
-                                                                                }{' '}
-                                                                                trainingUnits
-                                                                            </span>
-                                                                            <span className="text-xs">
-                                                                                •
-                                                                            </span>
-                                                                            <span
-                                                                                className={
-                                                                                    moduleCompletion ===
-                                                                                    100
-                                                                                        ? 'text-green-500'
-                                                                                        : ''
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    moduleCompletion
-                                                                                }
-                                                                                %
-                                                                                complete
-                                                                            </span>
-                                                                        </CardDescription>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={(
-                                                                                e,
-                                                                            ) => {
-                                                                                e.stopPropagation();
-                                                                                openEditModuleDialog(
-                                                                                    module,
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="text-destructive hover:text-destructive"
-                                                                            onClick={(
-                                                                                e,
-                                                                            ) => {
-                                                                                e.stopPropagation();
-                                                                                handleDeleteModule(
-                                                                                    module.id,
-                                                                                );
-                                                                            }}
-                                                                            disabled={
-                                                                                isDeleting
-                                                                            }
-                                                                        >
-                                                                            {isDeleting ? (
-                                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                                            ) : (
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            )}
-                                                                        </Button>
-                                                                        <Progress
-                                                                            value={
-                                                                                moduleCompletion
-                                                                            }
-                                                                            className="h-2 w-20"
-                                                                        />
-                                                                        {isExpanded ? (
-                                                                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                                                                        ) : (
-                                                                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </CardHeader>
-                                                        </div>
-                                                        <AnimatePresence>
-                                                            {isExpanded && (
-                                                                <motion.div
-                                                                    initial={{
-                                                                        height: 0,
-                                                                        opacity: 0,
-                                                                    }}
-                                                                    animate={{
-                                                                        height: 'auto',
-                                                                        opacity: 1,
-                                                                    }}
-                                                                    exit={{
-                                                                        height: 0,
-                                                                        opacity: 0,
-                                                                    }}
-                                                                    transition={{
-                                                                        duration: 0.2,
-                                                                    }}
+                                                                );
+                                                            const moduleTrainingUnitsWithContent =
+                                                                module.trainingUnits.filter(
+                                                                    (l) =>
+                                                                        l.content,
+                                                                ).length;
+                                                            const moduleCompletion =
+                                                                module
+                                                                    .trainingUnits
+                                                                    .length > 0
+                                                                    ? Math.round(
+                                                                          (moduleTrainingUnitsWithContent /
+                                                                              module
+                                                                                  .trainingUnits
+                                                                                  .length) *
+                                                                              100,
+                                                                      )
+                                                                    : 0;
+                                                            const isDeleting =
+                                                                deletingModuleId ===
+                                                                module.id;
+                                                            return (
+                                                                <SortableModuleContainer
+                                                                    key={
+                                                                        module.id
+                                                                    }
+                                                                    moduleId={
+                                                                        module.id
+                                                                    }
+                                                                    isDeleting={
+                                                                        isDeleting
+                                                                    }
                                                                 >
-                                                                    <CardContent className="space-y-2 pt-4">
-                                                                        <DndContext
-                                                                            sensors={
-                                                                                sensors
-                                                                            }
-                                                                            collisionDetection={
-                                                                                closestCenter
-                                                                            }
-                                                                            onDragStart={
-                                                                                handleDragStart
-                                                                            }
-                                                                            onDragEnd={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleTrainingUnitDragEnd(
-                                                                                    e,
-                                                                                    module.id,
-                                                                                    module.trainingUnits,
-                                                                                )
-                                                                            }
+                                                                    {({
+                                                                        attributes,
+                                                                        listeners,
+                                                                        isDragging,
+                                                                    }) => (
+                                                                        <Card
+                                                                            className={`overflow-hidden shadow-card ${isDeleting ? 'opacity-50' : ''} ${isDragging ? 'ring-2 ring-primary/40' : ''}`}
                                                                         >
-                                                                            <SortableContext
-                                                                                items={module.trainingUnits.map(
-                                                                                    (
-                                                                                        l,
-                                                                                    ) =>
-                                                                                        l.id,
-                                                                                )}
-                                                                                strategy={
-                                                                                    verticalListSortingStrategy
+                                                                            <div
+                                                                                onClick={() =>
+                                                                                    toggleModule(
+                                                                                        module.id,
+                                                                                    )
                                                                                 }
+                                                                                className="cursor-pointer"
                                                                             >
-                                                                                {module.trainingUnits.map(
-                                                                                    (
-                                                                                        trainingUnit,
-                                                                                    ) => (
-                                                                                        <SortableTrainingUnit
-                                                                                            key={
-                                                                                                trainingUnit.id
-                                                                                            }
-                                                                                            trainingUnit={
-                                                                                                trainingUnit
-                                                                                            }
-                                                                                            trainingPathId={
-                                                                                                trainingPath.id
-                                                                                            }
-                                                                                            moduleId={
-                                                                                                module.id
-                                                                                            }
-                                                                                            onDelete={() =>
-                                                                                                handleDeleteTrainingUnit(
-                                                                                                    module.id,
-                                                                                                    trainingUnit.id,
-                                                                                                    trainingUnit.title,
-                                                                                                )
-                                                                                            }
-                                                                                            isDeleting={
-                                                                                                deletingTrainingUnitId ===
-                                                                                                trainingUnit.id
-                                                                                            }
-                                                                                        />
-                                                                                    ),
+                                                                                <CardHeader className="border-b bg-muted/30 py-4 transition-colors hover:bg-muted/50">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <button
+                                                                                            {...attributes}
+                                                                                            {...listeners}
+                                                                                            onClick={(
+                                                                                                e,
+                                                                                            ) => {
+                                                                                                e.stopPropagation();
+                                                                                            }}
+                                                                                            className="cursor-grab touch-none rounded-lg border border-dashed border-muted-foreground/30 p-2 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary active:cursor-grabbing"
+                                                                                            aria-label={`Reorder module ${module.title}`}
+                                                                                        >
+                                                                                            <GripVertical className="h-4 w-4" />
+                                                                                        </button>
+                                                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                                                                            <span className="font-bold text-primary">
+                                                                                                {mi +
+                                                                                                    1}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <div className="min-w-0 flex-1">
+                                                                                            <CardTitle className="truncate font-heading text-base">
+                                                                                                {
+                                                                                                    module.title
+                                                                                                }
+                                                                                            </CardTitle>
+                                                                                            <CardDescription className="mt-0.5 flex items-center gap-3">
+                                                                                                <span>
+                                                                                                    {
+                                                                                                        module
+                                                                                                            .trainingUnits
+                                                                                                            .length
+                                                                                                    }{' '}
+                                                                                                    trainingUnits
+                                                                                                </span>
+                                                                                                <span className="text-xs">
+                                                                                                    •
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    className={
+                                                                                                        moduleCompletion ===
+                                                                                                        100
+                                                                                                            ? 'text-green-500'
+                                                                                                            : ''
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        moduleCompletion
+                                                                                                    }
+
+                                                                                                    %
+                                                                                                    complete
+                                                                                                </span>
+                                                                                            </CardDescription>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                onClick={(
+                                                                                                    e,
+                                                                                                ) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    openEditModuleDialog(
+                                                                                                        module,
+                                                                                                    );
+                                                                                                }}
+                                                                                            >
+                                                                                                <Edit className="h-4 w-4" />
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="text-destructive hover:text-destructive"
+                                                                                                onClick={(
+                                                                                                    e,
+                                                                                                ) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handleDeleteModule(
+                                                                                                        module.id,
+                                                                                                    );
+                                                                                                }}
+                                                                                                disabled={
+                                                                                                    isDeleting
+                                                                                                }
+                                                                                            >
+                                                                                                {isDeleting ? (
+                                                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                                )}
+                                                                                            </Button>
+                                                                                            <Progress
+                                                                                                value={
+                                                                                                    moduleCompletion
+                                                                                                }
+                                                                                                className="h-2 w-20"
+                                                                                            />
+                                                                                            {isExpanded ? (
+                                                                                                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                                                                                            ) : (
+                                                                                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </CardHeader>
+                                                                            </div>
+                                                                            <AnimatePresence>
+                                                                                {isExpanded && (
+                                                                                    <motion.div
+                                                                                        initial={{
+                                                                                            height: 0,
+                                                                                            opacity: 0,
+                                                                                        }}
+                                                                                        animate={{
+                                                                                            height: 'auto',
+                                                                                            opacity: 1,
+                                                                                        }}
+                                                                                        exit={{
+                                                                                            height: 0,
+                                                                                            opacity: 0,
+                                                                                        }}
+                                                                                        transition={{
+                                                                                            duration: 0.2,
+                                                                                        }}
+                                                                                    >
+                                                                                        <CardContent className="space-y-2 pt-4">
+                                                                                            <DndContext
+                                                                                                sensors={
+                                                                                                    sensors
+                                                                                                }
+                                                                                                collisionDetection={
+                                                                                                    closestCenter
+                                                                                                }
+                                                                                                onDragStart={
+                                                                                                    handleDragStart
+                                                                                                }
+                                                                                                onDragEnd={(
+                                                                                                    e,
+                                                                                                ) =>
+                                                                                                    handleTrainingUnitDragEnd(
+                                                                                                        e,
+                                                                                                        module.id,
+                                                                                                        module.trainingUnits,
+                                                                                                    )
+                                                                                                }
+                                                                                            >
+                                                                                                <SortableContext
+                                                                                                    items={module.trainingUnits.map(
+                                                                                                        (
+                                                                                                            l,
+                                                                                                        ) =>
+                                                                                                            l.id,
+                                                                                                    )}
+                                                                                                    strategy={
+                                                                                                        verticalListSortingStrategy
+                                                                                                    }
+                                                                                                >
+                                                                                                    {module.trainingUnits.map(
+                                                                                                        (
+                                                                                                            trainingUnit,
+                                                                                                        ) => (
+                                                                                                            <SortableTrainingUnit
+                                                                                                                key={
+                                                                                                                    trainingUnit.id
+                                                                                                                }
+                                                                                                                trainingUnit={
+                                                                                                                    trainingUnit
+                                                                                                                }
+                                                                                                                trainingPathId={
+                                                                                                                    trainingPath.id
+                                                                                                                }
+                                                                                                                moduleId={
+                                                                                                                    module.id
+                                                                                                                }
+                                                                                                                onDelete={() =>
+                                                                                                                    handleDeleteTrainingUnit(
+                                                                                                                        module.id,
+                                                                                                                        trainingUnit.id,
+                                                                                                                        trainingUnit.title,
+                                                                                                                    )
+                                                                                                                }
+                                                                                                                isDeleting={
+                                                                                                                    deletingTrainingUnitId ===
+                                                                                                                    trainingUnit.id
+                                                                                                                }
+                                                                                                            />
+                                                                                                        ),
+                                                                                                    )}
+                                                                                                </SortableContext>
+                                                                                            </DndContext>
+                                                                                            {module
+                                                                                                .trainingUnits
+                                                                                                .length ===
+                                                                                                0 && (
+                                                                                                <p className="py-4 text-center text-sm text-muted-foreground">
+                                                                                                    No
+                                                                                                    trainingUnits
+                                                                                                    in
+                                                                                                    this
+                                                                                                    module
+                                                                                                    yet.
+                                                                                                </p>
+                                                                                            )}
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
+                                                                                                onClick={() =>
+                                                                                                    openAddTrainingUnitDialog(
+                                                                                                        module.id,
+                                                                                                    )
+                                                                                                }
+                                                                                            >
+                                                                                                <Plus className="mr-1 h-4 w-4" />{' '}
+                                                                                                Add
+                                                                                                TrainingUnit
+                                                                                            </Button>
+                                                                                        </CardContent>
+                                                                                    </motion.div>
                                                                                 )}
-                                                                            </SortableContext>
-                                                                        </DndContext>
-                                                                        {module
-                                                                            .trainingUnits
-                                                                            .length ===
-                                                                            0 && (
-                                                                            <p className="py-4 text-center text-sm text-muted-foreground">
-                                                                                No
-                                                                                trainingUnits
-                                                                                in
-                                                                                this
-                                                                                module
-                                                                                yet.
-                                                                            </p>
-                                                                        )}
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
-                                                                            onClick={() =>
-                                                                                openAddTrainingUnitDialog(
-                                                                                    module.id,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <Plus className="mr-1 h-4 w-4" />{' '}
-                                                                            Add
-                                                                            TrainingUnit
-                                                                        </Button>
-                                                                    </CardContent>
-                                                                </motion.div>
-                                                            )}
-                                                        </AnimatePresence>
-                                                    </Card>
-                                                </motion.div>
-                                            );
-                                        })
+                                                                            </AnimatePresence>
+                                                                        </Card>
+                                                                    )}
+                                                                </SortableModuleContainer>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </SortableContext>
+                                        </DndContext>
                                     )}
                                     {/* Add module button */}
                                     {modules.length > 0 && (
@@ -1176,8 +1348,8 @@ export default function EditTrainingPathPage({
                                                 TrainingPath Details
                                             </CardTitle>
                                             <CardDescription>
-                                                Update your training path information
-                                                and settings
+                                                Update your training path
+                                                information and settings
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-6">
@@ -1204,14 +1376,22 @@ export default function EditTrainingPathPage({
                                                         <input
                                                             type="file"
                                                             accept="image/*"
-                                                            onChange={handleThumbnailChange}
+                                                            onChange={
+                                                                handleThumbnailChange
+                                                            }
                                                             className="hidden"
                                                             id="thumbnail-upload"
                                                         />
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                                                            onClick={() =>
+                                                                document
+                                                                    .getElementById(
+                                                                        'thumbnail-upload',
+                                                                    )
+                                                                    ?.click()
+                                                            }
                                                             type="button"
                                                         >
                                                             <Image className="mr-2 h-4 w-4" />
@@ -1230,20 +1410,31 @@ export default function EditTrainingPathPage({
                                                 <TrainingPathVideoInput
                                                     videoType={videoType}
                                                     videoUrl={videoUrl}
-                                                    onVideoChange={(type, url) => {
+                                                    onVideoChange={(
+                                                        type,
+                                                        url,
+                                                    ) => {
                                                         setVideoType(type);
                                                         setVideoUrl(url);
                                                     }}
                                                     onUpload={async (file) => {
                                                         // In a real app, upload the video file to your backend
                                                         // For now, we'll use data URL
-                                                        return new Promise((resolve) => {
-                                                            const reader = new FileReader();
-                                                            reader.onloadend = () => {
-                                                                resolve(reader.result as string);
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        });
+                                                        return new Promise(
+                                                            (resolve) => {
+                                                                const reader =
+                                                                    new FileReader();
+                                                                reader.onloadend =
+                                                                    () => {
+                                                                        resolve(
+                                                                            reader.result as string,
+                                                                        );
+                                                                    };
+                                                                reader.readAsDataURL(
+                                                                    file,
+                                                                );
+                                                            },
+                                                        );
                                                     }}
                                                 />
                                             </div>
@@ -1324,7 +1515,13 @@ export default function EditTrainingPathPage({
                                                     </Label>
                                                     <Select
                                                         value={level}
-                                                        onValueChange={(value) => setLevel(value as unknown as typeof level)}
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
+                                                            setLevel(
+                                                                value as unknown as typeof level,
+                                                            )
+                                                        }
                                                     >
                                                         <SelectTrigger className="mt-2">
                                                             <SelectValue placeholder="Select level" />
@@ -1353,9 +1550,19 @@ export default function EditTrainingPathPage({
                                                             step="0.01"
                                                             value={price}
                                                             onChange={(e) => {
-                                                                setPrice(e.target.value);
-                                                                if (Number(e.target.value) > 0) {
-                                                                    setIsFree(false);
+                                                                setPrice(
+                                                                    e.target
+                                                                        .value,
+                                                                );
+                                                                if (
+                                                                    Number(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) > 0
+                                                                ) {
+                                                                    setIsFree(
+                                                                        false,
+                                                                    );
                                                                 }
                                                             }}
                                                             disabled={isFree}
@@ -1363,7 +1570,16 @@ export default function EditTrainingPathPage({
                                                         />
                                                         <Input
                                                             value={currency}
-                                                            onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                                                            onChange={(e) =>
+                                                                setCurrency(
+                                                                    e.target.value
+                                                                        .toUpperCase()
+                                                                        .slice(
+                                                                            0,
+                                                                            3,
+                                                                        ),
+                                                                )
+                                                            }
                                                             className="h-12 w-24"
                                                             maxLength={3}
                                                         />
@@ -1374,10 +1590,16 @@ export default function EditTrainingPathPage({
                                                         </span>
                                                         <Switch
                                                             checked={isFree}
-                                                            onCheckedChange={(checked) => {
-                                                                setIsFree(checked);
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) => {
+                                                                setIsFree(
+                                                                    checked,
+                                                                );
                                                                 if (checked) {
-                                                                    setPrice('0');
+                                                                    setPrice(
+                                                                        '0',
+                                                                    );
                                                                 }
                                                             }}
                                                         />
@@ -1435,7 +1657,10 @@ export default function EditTrainingPathPage({
                 </DialogContent>
             </Dialog>
             {/* TrainingUnit Dialog */}
-            <Dialog open={showTrainingUnitDialog} onOpenChange={setShowTrainingUnitDialog}>
+            <Dialog
+                open={showTrainingUnitDialog}
+                onOpenChange={setShowTrainingUnitDialog}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add New TrainingUnit</DialogTitle>
@@ -1446,11 +1671,15 @@ export default function EditTrainingPathPage({
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div>
-                            <Label htmlFor="trainingUnit-title">TrainingUnit Title</Label>
+                            <Label htmlFor="trainingUnit-title">
+                                TrainingUnit Title
+                            </Label>
                             <Input
                                 id="trainingUnit-title"
                                 value={trainingUnitTitle}
-                                onChange={(e) => setTrainingUnitTitle(e.target.value)}
+                                onChange={(e) =>
+                                    setTrainingUnitTitle(e.target.value)
+                                }
                                 placeholder="e.g., Setting up your development environment"
                                 className="mt-2"
                             />
@@ -1459,7 +1688,15 @@ export default function EditTrainingPathPage({
                             <Label>TrainingUnit Type</Label>
                             <Select
                                 value={trainingUnitType}
-                                onValueChange={(value) => setTrainingUnitType(value as 'video' | 'article' | 'quiz' | 'interactive')}
+                                onValueChange={(value) =>
+                                    setTrainingUnitType(
+                                        value as
+                                            | 'video'
+                                            | 'article'
+                                            | 'quiz'
+                                            | 'interactive',
+                                    )
+                                }
                             >
                                 <SelectTrigger className="mt-2">
                                     <SelectValue />
@@ -1502,7 +1739,10 @@ export default function EditTrainingPathPage({
                         </Button>
                         <Button
                             onClick={handleSaveTrainingUnit}
-                            disabled={isTrainingUnitSaving || !trainingUnitTitle.trim()}
+                            disabled={
+                                isTrainingUnitSaving ||
+                                !trainingUnitTitle.trim()
+                            }
                         >
                             {isTrainingUnitSaving && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1522,9 +1762,10 @@ export default function EditTrainingPathPage({
                 description={confirmDialog.description}
                 confirmText={confirmDialog.confirmText}
                 variant={confirmDialog.variant}
-                loading={deletingModuleId !== null || deletingTrainingUnitId !== null}
+                loading={
+                    deletingModuleId !== null || deletingTrainingUnitId !== null
+                }
             />
         </AppLayout>
     );
 }
-

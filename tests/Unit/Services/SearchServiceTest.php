@@ -4,9 +4,10 @@ namespace Tests\Unit\Services;
 
 use App\Models\TrainingPath;
 use App\Models\User;
-use App\Repositories\TrainingPathRepository;
 use App\Repositories\SearchRepository;
+use App\Repositories\TrainingPathRepository;
 use App\Services\SearchService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -58,7 +59,7 @@ class SearchServiceTest extends BaseTestCase
             'title' => 'Laravel TrainingPath',
         ]);
         $trainingPath->id = 1;
-        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath]);
+        $trainingPaths = new Collection([$trainingPath]);
 
         $this->mockTrainingPathRepository
             ->shouldReceive('searchWithFilters')
@@ -103,9 +104,9 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_search_with_filters(): void
     {
-        $trainingPath = new TrainingPath();
+        $trainingPath = new TrainingPath;
         $trainingPath->id = 1;
-        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath]);
+        $trainingPaths = new Collection([$trainingPath]);
         $filters = ['category' => 'programming', 'level' => 'beginner'];
 
         $this->mockTrainingPathRepository
@@ -176,12 +177,12 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_recent_searches(): void
     {
-        $user = new User();
+        $user = new User;
         $user->id = '123';
-        
+
         $search1 = (object) ['query' => 'Laravel'];
         $search2 = (object) ['query' => 'React'];
-        $searches = new \Illuminate\Database\Eloquent\Collection([$search1, $search2]);
+        $searches = new Collection([$search1, $search2]);
 
         $this->mockSearchRepository
             ->shouldReceive('getRecentByUser')
@@ -196,11 +197,11 @@ class SearchServiceTest extends BaseTestCase
 
     public function test_get_recent_searches_with_custom_limit(): void
     {
-        $user = new User();
+        $user = new User;
         $user->id = '123';
-        
+
         $search = (object) ['query' => 'Vue'];
-        $searches = new \Illuminate\Database\Eloquent\Collection([$search]);
+        $searches = new Collection([$search]);
 
         $this->mockSearchRepository
             ->shouldReceive('getRecentByUser')
@@ -217,7 +218,7 @@ class SearchServiceTest extends BaseTestCase
     {
         $trending1 = (object) ['query' => 'Laravel'];
         $trending2 = (object) ['query' => 'React'];
-        $trending = new \Illuminate\Database\Eloquent\Collection([$trending1, $trending2]);
+        $trending = new Collection([$trending1, $trending2]);
 
         $this->mockSearchRepository
             ->shouldReceive('getTrending')
@@ -233,7 +234,7 @@ class SearchServiceTest extends BaseTestCase
     public function test_get_trending_searches_with_custom_params(): void
     {
         $trending1 = (object) ['query' => 'Vue'];
-        $trending = new \Illuminate\Database\Eloquent\Collection([$trending1]);
+        $trending = new Collection([$trending1]);
 
         $this->mockSearchRepository
             ->shouldReceive('getTrending')
@@ -271,7 +272,7 @@ class SearchServiceTest extends BaseTestCase
     {
         $trainingPath1 = new TrainingPath(['title' => 'Laravel TrainingPath']);
         $trainingPath2 = new TrainingPath(['title' => 'PHP TrainingPath']);
-        $trainingPaths = new \Illuminate\Database\Eloquent\Collection([$trainingPath1, $trainingPath2]);
+        $trainingPaths = new Collection([$trainingPath1, $trainingPath2]);
 
         $this->mockTrainingPathRepository
             ->shouldReceive('findByCategorySlug')

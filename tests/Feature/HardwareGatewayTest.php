@@ -4,9 +4,16 @@ namespace Tests\Feature;
 
 use App\Enums\UsbDeviceStatus;
 use App\Models\GatewayNode;
+use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Models\User;
+use App\Services\GatewayDiscoveryService;
+use App\Services\GatewayService;
+use App\Services\ProxmoxClientFactory;
+use App\Services\ProxmoxClientInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
 
@@ -53,6 +60,22 @@ class HardwareGatewayTest extends TestCase
         $response->assertJsonPath('data.0.name', 'gateway-1');
         $response->assertJsonPath('data.0.online', true);
         $response->assertJsonCount(3, 'data.0.devices');
+    }
+
+    public function test_user_can_view_hardware_page_in_browser(): void
+    {
+        $node = GatewayNode::factory()->online()->create(['name' => 'gateway-1']);
+        UsbDevice::factory()->count(2)->for($node)->create();
+
+        $this->actingAs($this->user)
+            ->get('/hardware')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hardware/index')
+                ->has('nodes', 1)
+                ->where('nodes.0.name', 'gateway-1')
+                ->has('nodes.0.devices', 2)
+            );
     }
 
     public function test_user_gets_empty_list_when_no_nodes(): void
@@ -133,6 +156,26 @@ class HardwareGatewayTest extends TestCase
 
         $node->refresh();
         $this->assertFalse($node->online);
+    }
+
+    public function test_user_can_check_gateway_node_health(): void
+    {
+        $node = GatewayNode::factory()->create();
+
+        $mock = Mockery::mock(GatewayService::class);
+        $mock->shouldReceive('checkHealth')
+            ->once()
+            ->with(Mockery::on(fn ($gatewayNode) => $gatewayNode->is($node)))
+            ->andReturn(true);
+        $this->app->instance(GatewayService::class, $mock);
+
+        $this->actingAs($this->user)
+            ->postJson("/hardware/nodes/{$node->id}/health")
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'online' => true,
+            ]);
     }
 
     // ─── POST /hardware/devices/{device}/bind ─────────────────────────────────
@@ -262,9 +305,9 @@ class HardwareGatewayTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $mock = Mockery::mock(\App\Services\GatewayDiscoveryService::class);
+        $mock = Mockery::mock(GatewayDiscoveryService::class);
         $mock->shouldReceive('discoverAll')->once()->andThrow(new \Exception('boom'));
-        $this->app->instance(\App\Services\GatewayDiscoveryService::class, $mock);
+        $this->app->instance(GatewayDiscoveryService::class, $mock);
 
         $response = $this->postJson('/admin/hardware/discover');
         $response->assertStatus(500);
@@ -279,11 +322,11 @@ class HardwareGatewayTest extends TestCase
         $node = GatewayNode::factory()->online()->create(['name' => 'gateway-1']);
         UsbDevice::factory()->for($node)->create(['busid' => '1-1']);
 
-        $mock = Mockery::mock(\App\Services\GatewayDiscoveryService::class);
+        $mock = Mockery::mock(GatewayDiscoveryService::class);
         $mock->shouldReceive('discoverAll')
             ->once()
             ->andReturn(collect([$node]));
-        $this->app->instance(\App\Services\GatewayDiscoveryService::class, $mock);
+        $this->app->instance(GatewayDiscoveryService::class, $mock);
 
         $response = $this->postJson('/admin/hardware/discover');
 
@@ -315,14 +358,14 @@ class HardwareGatewayTest extends TestCase
         ]);
 
         // include vmid/node/server_id because validation requires them when no session_id is present
-        $server = \App\Models\ProxmoxServer::factory()->create();
+        $server = ProxmoxServer::factory()->create();
 
         // mock ProxmoxClientFactory so that the VM is considered running and guest-agent commands succeed
-        $proxmoxClientMock = Mockery::mock(\App\Services\ProxmoxClientInterface::class)
+        $proxmoxClientMock = Mockery::mock(ProxmoxClientInterface::class)
             ->shouldIgnoreMissing();
         $proxmoxClientMock->shouldReceive('getVMStatus')->andReturn(['status' => 'running']);
         $proxmoxClientMock->shouldReceive('getGuestOsType')->andReturn('linux');
-        
+
         // execInVmAndWait is used by executeUsbipCommand for both attach and port commands
         // When called with 'port' command, return output with port info so port verification works
         $proxmoxClientMock->shouldReceive('execInVmAndWait')->andReturnUsing(function ($nodeName, $vmid, $command) {
@@ -335,6 +378,7 @@ class HardwareGatewayTest extends TestCase
                     'err-data' => '',
                 ];
             }
+
             // For attach command, just return success
             return [
                 'exitcode' => 0,
@@ -344,9 +388,9 @@ class HardwareGatewayTest extends TestCase
             ];
         });
 
-        $factoryMock = Mockery::mock(\App\Services\ProxmoxClientFactory::class);
+        $factoryMock = Mockery::mock(ProxmoxClientFactory::class);
         $factoryMock->shouldReceive('make')->andReturn($proxmoxClientMock);
-        $this->app->instance(\App\Services\ProxmoxClientFactory::class, $factoryMock);
+        $this->app->instance(ProxmoxClientFactory::class, $factoryMock);
 
         $response = $this->actingAs($this->user)
             ->postJson("/hardware/devices/{$device->id}/attach", [
@@ -371,7 +415,7 @@ class HardwareGatewayTest extends TestCase
         $node = GatewayNode::factory()->create();
         $device = UsbDevice::factory()->for($node)->available()->create();
 
-        $server = \App\Models\ProxmoxServer::factory()->create();
+        $server = ProxmoxServer::factory()->create();
         $response = $this->actingAs($this->user)
             ->postJson("/hardware/devices/{$device->id}/attach", [
                 'vm_ip' => '192.168.50.100',
@@ -540,7 +584,7 @@ class HardwareGatewayTest extends TestCase
 
         Http::fake([
             'http://192.168.50.6:8000/*' => function () {
-                throw new \Illuminate\Http\Client\ConnectionException('Connection timed out');
+                throw new ConnectionException('Connection timed out');
             },
         ]);
 

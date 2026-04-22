@@ -53,9 +53,9 @@ class TerminateVMJob implements ShouldQueue
      * removed.  Internally we always serialize this value so the property is
      * initialized after the job is unserialized by the queue worker.
      *
-     * @param bool $stopVm Whether to stop/delete the VM (default: false)
-     * @param string|null $returnSnapshot Snapshot name to revert to before stopping
-     * @param string|null $scheduledForExpiry Original expiry timestamp for auto-expire jobs
+     * @param  bool  $stopVm  Whether to stop/delete the VM (default: false)
+     * @param  string|null  $returnSnapshot  Snapshot name to revert to before stopping
+     * @param  string|null  $scheduledForExpiry  Original expiry timestamp for auto-expire jobs
      */
     public function __construct(
         private readonly VMSession $session,

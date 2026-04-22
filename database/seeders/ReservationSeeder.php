@@ -21,11 +21,12 @@ class ReservationSeeder extends Seeder
 
         if ($engineers->isEmpty()) {
             $this->command->warn('No engineers found. Skipping reservations.');
+
             return;
         }
 
         // Seed camera reservations
-        if (!$cameras->isEmpty()) {
+        if (! $cameras->isEmpty()) {
             foreach ($engineers->random(min(3, count($engineers))) as $engineer) {
                 foreach ($cameras->random(min(3, count($cameras))) as $camera) {
                     $statuses = ['pending', 'approved', 'active', 'completed', 'cancelled'];
@@ -52,8 +53,8 @@ class ReservationSeeder extends Seeder
             }
         }
 
-        // Seed USB device reservations  
-        if (!$usbDevices->isEmpty()) {
+        // Seed USB device reservations
+        if (! $usbDevices->isEmpty()) {
             foreach ($engineers->random(min(3, count($engineers))) as $engineer) {
                 foreach ($usbDevices->random(min(2, count($usbDevices))) as $device) {
                     $statuses = ['pending', 'approved', 'active', 'completed', 'cancelled'];
@@ -101,4 +102,3 @@ class ReservationSeeder extends Seeder
         return $purposes[array_rand($purposes)];
     }
 }
-

@@ -2,16 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\TrainingPath;
-use App\Models\TrainingPathModule;
-use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\QuizQuestionOption;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\User;
-use App\Services\QuestionService;
-use App\Services\QuizService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -372,7 +370,7 @@ class QuizControllerTest extends TestCase
 
         // Load questions with options explicitly for total_points calculation
         $quiz = $quiz->load('questions.options');
-        
+
         // Must set total_points from quiz questions sum
         $attempt = QuizAttempt::factory()->create([
             'user_id' => $this->student->id,

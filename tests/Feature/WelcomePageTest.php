@@ -11,7 +11,7 @@ class WelcomePageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_sees_only_featured_approved_trainingPaths(): void
+    public function test_guest_sees_only_featured_approved_training_paths(): void
     {
         // create some approved and other trainingPaths
         TrainingPath::factory()->approved()->count(5)->create();

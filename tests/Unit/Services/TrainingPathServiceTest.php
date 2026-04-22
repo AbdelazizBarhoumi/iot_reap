@@ -36,7 +36,7 @@ class TrainingPathServiceTest extends TestCase
         );
     }
 
-    public function test_create_trainingPath(): void
+    public function test_create_training_path(): void
     {
         $instructor = User::factory()->create();
 
@@ -61,7 +61,7 @@ class TrainingPathServiceTest extends TestCase
         ]);
     }
 
-    public function test_update_trainingPath(): void
+    public function test_update_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->create(['title' => 'Original Title']);
 
@@ -78,7 +78,7 @@ class TrainingPathServiceTest extends TestCase
         ]);
     }
 
-    public function test_delete_trainingPath(): void
+    public function test_delete_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->create();
         $trainingPathId = $trainingPath->id;
@@ -101,7 +101,7 @@ class TrainingPathServiceTest extends TestCase
         ]);
     }
 
-    public function test_approve_trainingPath(): void
+    public function test_approve_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->pendingReview()->create();
 
@@ -131,7 +131,7 @@ class TrainingPathServiceTest extends TestCase
         ]);
     }
 
-    public function test_list_approved_trainingPaths(): void
+    public function test_list_approved_training_paths(): void
     {
         TrainingPath::factory()->approved()->count(3)->create();
         TrainingPath::factory()->create(['status' => TrainingPathStatus::DRAFT]);
@@ -161,7 +161,7 @@ class TrainingPathServiceTest extends TestCase
         }
     }
 
-    public function test_list_pending_trainingPaths(): void
+    public function test_list_pending_training_paths(): void
     {
         TrainingPath::factory()->pendingReview()->count(2)->create();
         TrainingPath::factory()->approved()->create();

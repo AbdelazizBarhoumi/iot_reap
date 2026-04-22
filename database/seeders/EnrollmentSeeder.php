@@ -27,6 +27,7 @@ class EnrollmentSeeder extends Seeder
 
         if ($engineers->isEmpty() || $trainingPaths->isEmpty()) {
             $this->command->warn('No engineers or approved trainingPaths found. Skipping enrollments.');
+
             return;
         }
 
@@ -43,7 +44,7 @@ class EnrollmentSeeder extends Seeder
         ];
 
         foreach ($engineers as $userIndex => $engineer) {
-            if (!isset($enrollmentPatterns[$userIndex])) {
+            if (! isset($enrollmentPatterns[$userIndex])) {
                 continue;
             }
 
@@ -51,7 +52,7 @@ class EnrollmentSeeder extends Seeder
             $trainingPathList = $trainingPaths->all();
 
             foreach ($pattern['training_path_indices'] as $trainingPathIdx => $trainingPathIndex) {
-                if (!isset($trainingPathList[$trainingPathIndex])) {
+                if (! isset($trainingPathList[$trainingPathIndex])) {
                     continue;
                 }
 

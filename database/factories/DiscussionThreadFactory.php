@@ -3,14 +3,14 @@
 namespace Database\Factories;
 
 use App\Enums\ThreadStatus;
-use App\Models\TrainingPath;
 use App\Models\DiscussionThread;
+use App\Models\TrainingPath;
 use App\Models\TrainingUnit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DiscussionThread>
+ * @extends Factory<DiscussionThread>
  */
 class DiscussionThreadFactory extends Factory
 {

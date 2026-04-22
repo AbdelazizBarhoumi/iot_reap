@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Notification\MarkManyNotificationsAsReadRequest;
 use App\Http\Resources\NotificationResource;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -96,7 +97,7 @@ class NotificationController extends Controller
     /**
      * Mark multiple notifications as read.
      */
-    public function markManyAsRead(\App\Http\Requests\Notification\MarkManyNotificationsAsReadRequest $request): JsonResponse
+    public function markManyAsRead(MarkManyNotificationsAsReadRequest $request): JsonResponse
     {
         $user = $request->user();
         $count = $this->notificationService->markManyAsRead($user, $request->validated('notification_ids'));

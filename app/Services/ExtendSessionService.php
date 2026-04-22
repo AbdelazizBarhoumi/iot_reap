@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\VMSessionStatus;
+use App\Exceptions\QuotaExceededException;
 use App\Models\VMSession;
 use Illuminate\Support\Facades\Log;
 
@@ -25,7 +26,7 @@ class ExtendSessionService
      * Validates user quota before extending. Updates expires_at and reschedules
      * the CleanupVMJob with the new expiration time.
      *
-     * @throws \App\Exceptions\QuotaExceededException if extension would exceed quota
+     * @throws QuotaExceededException if extension would exceed quota
      */
     public function extend(VMSession $session, int $minutes): VMSession
     {

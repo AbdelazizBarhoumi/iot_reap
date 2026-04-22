@@ -8,8 +8,8 @@ use App\Enums\CameraType;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
 use App\Models\Camera;
-use App\Models\Reservation;
 use App\Models\CameraSessionControl;
+use App\Models\Reservation;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Repositories\CameraRepository;
@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
+use Mockery\MockInterface;
 
 class CameraServiceTest extends BaseTestCase
 {
@@ -58,7 +59,7 @@ class CameraServiceTest extends BaseTestCase
     {
         // Arrange
         $cameras = new Collection;
-        $session = new VMSession();
+        $session = new VMSession;
         $session->id = 'session-123';
         $session->vm_id = 1;
 
@@ -308,14 +309,14 @@ class CameraServiceTest extends BaseTestCase
     public function test_move_publishes_mqtt_command_and_logs(): void
     {
         // Arrange - use partial mock with explicit intersection typing
-        /** @var Camera&\Mockery\MockInterface $camera */
+        /** @var Camera&MockInterface $camera */
         $camera = Mockery::mock(Camera::class)->makePartial();
         // Allow the Model's __set and setAttribute to work normally
         $camera->shouldAllowMockingProtectedMethods();
         $camera->ptz_capable = true;
         $camera->name = 'PTZ Camera';
         $camera->robot_id = 42;
-        
+
         $camera->shouldReceive('isControlledBySession')
             ->with('session-123')
             ->andReturn(true);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,8 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $total_points
  * @property float $percentage
  * @property bool $passed
- * @property \Carbon\Carbon|null $started_at
- * @property \Carbon\Carbon|null $completed_at
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
  */
 class QuizAttempt extends Model
 {

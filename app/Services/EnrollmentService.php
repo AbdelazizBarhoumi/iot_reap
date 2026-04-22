@@ -6,6 +6,7 @@ use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
 use App\Models\TrainingUnitProgress;
 use App\Models\User;
+use App\Repositories\PaymentRepository;
 use App\Repositories\TrainingPathEnrollmentRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitProgressRepository;
@@ -22,6 +23,7 @@ class EnrollmentService
         private readonly TrainingPathEnrollmentRepository $enrollmentRepository,
         private readonly TrainingPathRepository $trainingPathRepository,
         private readonly TrainingUnitProgressRepository $progressRepository,
+        private readonly PaymentRepository $paymentRepository,
     ) {}
 
     /**
@@ -37,6 +39,17 @@ class EnrollmentService
 
         if (! $trainingPath->isPublished()) {
             throw new \DomainException('Cannot enroll in unpublished trainingPath');
+        }
+
+        if (! $trainingPath->is_free) {
+            $completedPayment = $this->paymentRepository->findCompletedByUserAndTrainingPath(
+                $user->id,
+                $trainingPathId
+            );
+
+            if (! $completedPayment) {
+                throw new \DomainException('Complete checkout before enrolling in this training path');
+            }
         }
 
         Log::info('User enrolled in trainingPath', [

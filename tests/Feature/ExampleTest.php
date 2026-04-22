@@ -19,12 +19,12 @@ class ExampleTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_engineers_are_redirected_from_home_to_trainingPaths()
+    public function test_engineers_are_redirected_from_home_to_dashboard()
     {
         $user = User::factory()->engineer()->create();
 
         $response = $this->actingAs($user)->get(route('home'));
 
-        $response->assertRedirect(route('trainingPaths.index'));
+        $response->assertRedirect(route('dashboard'));
     }
 }

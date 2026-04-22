@@ -2,10 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -105,6 +106,15 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_authenticated_admin_home_redirects_to_admin_dashboard(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+
+        $response = $this->actingAs($admin)->get(route('home'));
+
+        $response->assertRedirect(route('admin.dashboard'));
     }
 
     public function test_unapproved_teacher_cannot_pass_teach_gate(): void

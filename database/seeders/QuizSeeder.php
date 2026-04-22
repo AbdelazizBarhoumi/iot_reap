@@ -3,13 +3,11 @@
 namespace Database\Seeders;
 
 use App\Enums\QuizQuestionType;
-use App\Models\TrainingPath;
-use App\Models\TrainingPathEnrollment;
-use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\QuizQuestionOption;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -24,6 +22,7 @@ class QuizSeeder extends Seeder
 
         if ($trainingUnits->isEmpty()) {
             $this->command->warn('No trainingUnits found. Skipping quizzes.');
+
             return;
         }
 
@@ -49,8 +48,8 @@ class QuizSeeder extends Seeder
     {
         $quiz = Quiz::create([
             'training_unit_id' => $trainingUnit->id,
-            'title' => 'Quiz: ' . $trainingUnit->title,
-            'description' => 'Assessment for ' . $trainingUnit->title,
+            'title' => 'Quiz: '.$trainingUnit->title,
+            'description' => 'Assessment for '.$trainingUnit->title,
             'passing_score' => 70,
             'time_limit_minutes' => 30,
             'shuffle_questions' => false,
@@ -82,8 +81,8 @@ class QuizSeeder extends Seeder
         $question = QuizQuestion::create([
             'quiz_id' => $quiz->id,
             'type' => $type,
-            'question' => 'Question ' . ($index + 1) . ': What is the correct answer?',
-            'explanation' => 'This is the explanation for question ' . ($index + 1),
+            'question' => 'Question '.($index + 1).': What is the correct answer?',
+            'explanation' => 'This is the explanation for question '.($index + 1),
             'points' => rand(1, 5),
             'sort_order' => $index,
         ]);

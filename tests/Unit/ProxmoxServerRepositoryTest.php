@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Repositories\ProxmoxServerRepository;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Tests\TestCase;
 
 class ProxmoxServerRepositoryTest extends TestCase
@@ -54,7 +55,7 @@ class ProxmoxServerRepositoryTest extends TestCase
 
     public function test_find_by_id_throws_on_not_found(): void
     {
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
         $this->repository->findById(999);
     }
 

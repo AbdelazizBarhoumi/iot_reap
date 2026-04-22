@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\GuacamoleApiException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -90,7 +91,7 @@ class GuacamoleClient implements GuacamoleClientInterface
         // Separate Guacamole attributes from protocol parameters
         $attributes = [];
         $parameters = $params['parameters'] ?? [];
-        
+
         // Extract Guacamole-specific attributes from parameters
         $attributeKeys = [
             'max-connections',
@@ -101,14 +102,14 @@ class GuacamoleClient implements GuacamoleClientInterface
             'guacd-port',
             'guacd-encryption',
         ];
-        
+
         foreach ($attributeKeys as $key) {
             if (array_key_exists($key, $parameters)) {
                 $attributes[$key] = $parameters[$key];
                 unset($parameters[$key]);
             }
         }
-        
+
         // Set defaults for attributes if not provided
         $attributes = array_merge([
             'max-connections' => '',
@@ -165,7 +166,7 @@ class GuacamoleClient implements GuacamoleClientInterface
         // Separate Guacamole attributes from protocol parameters
         $attributes = [];
         $parameters = $params['parameters'] ?? [];
-        
+
         // Extract Guacamole-specific attributes from parameters
         $attributeKeys = [
             'max-connections',
@@ -176,7 +177,7 @@ class GuacamoleClient implements GuacamoleClientInterface
             'guacd-port',
             'guacd-encryption',
         ];
-        
+
         foreach ($attributeKeys as $key) {
             if (array_key_exists($key, $parameters)) {
                 $attributes[$key] = $parameters[$key];
@@ -348,7 +349,7 @@ class GuacamoleClient implements GuacamoleClientInterface
         } catch (\Throwable $e) {
             $shouldRetry = false;
 
-            if ($e instanceof \Illuminate\Http\Client\RequestException &&
+            if ($e instanceof RequestException &&
                 $e->response && $e->response->status() === 403) {
                 $shouldRetry = true;
             } elseif (str_contains($e->getMessage(), 'status code 403')) {

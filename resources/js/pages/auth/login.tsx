@@ -2,6 +2,7 @@ import { Form, Head, router } from '@inertiajs/react';
 import { GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -25,6 +26,27 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const handleGoogleSuccess = useCallback(
+        (credentialResponse: { credential?: string }) => {
+            router.post(
+                authCode().url,
+                {
+                    credential: credentialResponse.credential,
+                },
+                {
+                    onError: () => {
+                        toast.error('Authentication failed. Please try again.');
+                    },
+                },
+            );
+        },
+        [],
+    );
+
+    const handleGoogleError = useCallback(() => {
+        toast.error('Failed to authenticate with Google. Please try again.');
+    }, []);
+
     return (
         <AuthLayout
             title="Welcome back"
@@ -138,23 +160,8 @@ export default function Login({
                             </Button>
                             {/* Google OAuth button */}
                             <GoogleLogin
-                                onSuccess={(credentialResponse) => {
-                                    // Exchange the authorization code for tokens on backend
-                                    router.post(
-                                        authCode().url,
-                                        {
-                                            credential: credentialResponse.credential,
-                                        },
-                                        {
-                                            onError: () => {
-                                                toast.error('Authentication failed. Please try again.');
-                                            },
-                                        }
-                                    );
-                                }}
-                                onError={() => {
-                                    toast.error('Failed to authenticate with Google. Please try again.');
-                                }}
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
                                 text="signin_with"
                                 size="large"
                                 theme="outline"

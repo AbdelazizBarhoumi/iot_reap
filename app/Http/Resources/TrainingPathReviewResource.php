@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\TrainingPathReview;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\TrainingPathReview
+ * @mixin TrainingPathReview
  */
 class TrainingPathReviewResource extends JsonResource
 {

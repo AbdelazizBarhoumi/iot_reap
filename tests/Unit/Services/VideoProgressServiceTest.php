@@ -12,7 +12,6 @@ use Tests\TestCase;
 
 class VideoProgressServiceTest extends TestCase
 {
-
     private VideoProgressService $service;
 
     private VideoProgressRepository $repository;

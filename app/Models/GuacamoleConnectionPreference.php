@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Stores a user's saved Guacamole connection parameters for a given protocol.
@@ -17,8 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $profile_name User-defined profile name
  * @property bool $is_default Whether this is the default profile for the protocol
  * @property array<string, mixed> $parameters JSON-encoded connection settings
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class GuacamoleConnectionPreference extends Model
 {
@@ -51,7 +52,7 @@ class GuacamoleConnectionPreference extends Model
         if ($value === null) {
             return [];
         }
-        
+
         // If value is a string, decode it
         if (is_string($value)) {
             $decoded = json_decode($value, true);
@@ -59,9 +60,10 @@ class GuacamoleConnectionPreference extends Model
             if (is_string($decoded)) {
                 return json_decode($decoded, true) ?? [];
             }
+
             return $decoded ?? [];
         }
-        
+
         return $value ?? [];
     }
 

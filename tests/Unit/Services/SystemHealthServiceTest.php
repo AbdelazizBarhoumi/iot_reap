@@ -58,7 +58,7 @@ class SystemHealthServiceTest extends TestCase
         // System health status should be either 'healthy', 'warning', or 'critical'
         // It depends on actual disk usage, so we just verify it's one of the valid statuses
         $this->assertContains($result['status'], ['healthy', 'warning', 'critical']);
-        
+
         $this->assertArrayHasKey('database', $result['services']);
         $this->assertArrayHasKey('cache', $result['services']);
         $this->assertArrayHasKey('queue', $result['services']);

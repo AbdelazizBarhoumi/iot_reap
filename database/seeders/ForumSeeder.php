@@ -3,13 +3,12 @@
 namespace Database\Seeders;
 
 use App\Enums\ThreadStatus;
-use App\Models\TrainingPath;
-use App\Models\TrainingPathEnrollment;
 use App\Models\DiscussionThread;
-use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
 use App\Models\ThreadVote;
-use App\Models\User;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingUnit;
 use Illuminate\Database\Seeder;
 
 /**
@@ -24,6 +23,7 @@ class ForumSeeder extends Seeder
 
         if ($enrollments->isEmpty() || $trainingUnits->isEmpty()) {
             $this->command->warn('No enrollments or trainingUnits found. Skipping forum.');
+
             return;
         }
 

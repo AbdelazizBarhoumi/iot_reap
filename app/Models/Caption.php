@@ -51,9 +51,10 @@ class Caption extends Model
      */
     public function getUrlAttribute(): ?string
     {
-        if (! $this->relationLoaded('video') || !$this->video) {
+        if (! $this->relationLoaded('video') || ! $this->video) {
             return null;
         }
+
         return Storage::disk($this->video->storage_disk)->url($this->file_path);
     }
 
@@ -74,9 +75,10 @@ class Caption extends Model
      */
     public function getContent(): string
     {
-        if (!$this->relationLoaded('video') || !$this->video) {
+        if (! $this->relationLoaded('video') || ! $this->video) {
             throw new \RuntimeException('Video relationship not loaded');
         }
+
         return Storage::disk($this->video->storage_disk)->get($this->file_path);
     }
 
@@ -85,9 +87,10 @@ class Caption extends Model
      */
     public function updateContent(string $content): bool
     {
-        if (!$this->relationLoaded('video') || !$this->video) {
+        if (! $this->relationLoaded('video') || ! $this->video) {
             throw new \RuntimeException('Video relationship not loaded');
         }
+
         return Storage::disk($this->video->storage_disk)->put($this->file_path, $content);
     }
 

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\VMSession;
 use App\Services\CameraService;
 use App\Services\GatewayService;
+use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\UsbDeviceQueueService;
 use Mockery;
@@ -96,7 +97,7 @@ class TerminateVMJobTest extends TestCase
         $client->cloneTemplate(100, $node->name, 123);
         $client->startVM($node->name, 123);
 
-        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac = Mockery::mock(GuacamoleClientInterface::class);
         $guac->shouldReceive('deleteConnection')->never();
 
         $job = new TerminateVMJob($session, false);
@@ -135,7 +136,7 @@ class TerminateVMJobTest extends TestCase
         $client->cloneTemplate(100, $node->name, 456);
         $client->startVM($node->name, 456);
 
-        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac = Mockery::mock(GuacamoleClientInterface::class);
         $guac->shouldReceive('deleteConnection')->never();
 
         $job = new TerminateVMJob($session, true);
@@ -177,7 +178,7 @@ class TerminateVMJobTest extends TestCase
             ->with($session->id)
             ->andReturn(1);
 
-        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac = Mockery::mock(GuacamoleClientInterface::class);
         $guac->shouldReceive('deleteConnection')->never();
 
         $job = new TerminateVMJob($session, false);
@@ -215,7 +216,7 @@ class TerminateVMJobTest extends TestCase
         $client->cloneTemplate(100, $node->name, 789);
         $client->startVM($node->name, 789);
 
-        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac = Mockery::mock(GuacamoleClientInterface::class);
         $guac->shouldReceive('deleteConnection')->never();
 
         // Simulate: user extended the session (expires_at moved forward)
@@ -259,7 +260,7 @@ class TerminateVMJobTest extends TestCase
         $client->cloneTemplate(100, $node->name, 999);
         $client->startVM($node->name, 999);
 
-        $guac = Mockery::mock(\App\Services\GuacamoleClientInterface::class);
+        $guac = Mockery::mock(GuacamoleClientInterface::class);
         $guac->shouldReceive('deleteConnection')->never();
 
         // Job was dispatched with the same expiry time (not extended)

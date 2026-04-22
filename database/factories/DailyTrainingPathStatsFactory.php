@@ -2,12 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\TrainingPath;
 use App\Models\DailyTrainingPathStats;
+use App\Models\TrainingPath;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DailyTrainingPathStats>
+ * @extends Factory<DailyTrainingPathStats>
  */
 class DailyTrainingPathStatsFactory extends Factory
 {

@@ -243,14 +243,13 @@ export default function PrivacyPolicy() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
             <Head title="Privacy Policy" />
-
             {/* Header */}
             <div className="border-b border-slate-200 bg-white">
-                <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     <Link href="/">
-                        <Button variant="ghost" size="sm" className="mb-4">
+                        <Button className="mb-4">
                             <ChevronLeft className="mr-2 h-4 w-4" />
-                            Back
+                            Home
                         </Button>
                     </Link>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -263,7 +262,7 @@ export default function PrivacyPolicy() {
             </div>
 
             {/* Content */}
-            <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
                 <Card className="bg-white/80 backdrop-blur-sm">
                     <div className="prose prose-sm max-w-none space-y-8 p-8">
                         {sections.map((section) => (
@@ -317,14 +316,11 @@ export default function PrivacyPolicy() {
                 </Card>
 
                 {/* Footer CTA */}
-                <div className="mt-12 text-center">
-                    <p className="text-slate-600">
-                        Your privacy is important to us. Read our full Privacy Policy to
-                        understand how we protect your data.
-                    </p>
-                    <Link href="/register">
+                <div className="mt-2 text-center">
+                    <Link href="/">
                         <Button className="mt-4" size="lg">
-                            Create Account
+                            <ChevronLeft className="mr-2 h-4 w-4" />
+                            Home
                         </Button>
                     </Link>
                 </div>

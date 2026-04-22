@@ -90,6 +90,7 @@ class VideoServiceTest extends TestCase
                 $video->method('__get')->willReturnMap([
                     ['storage_path', $storagePath],
                 ]);
+
                 return $video;
             });
 
@@ -170,7 +171,7 @@ class VideoServiceTest extends TestCase
         ]);
 
         $video = $this->createMock(Video::class);
-        
+
         // Configure mock to return values for properties accessed with __get
         $video->method('__get')->willReturnMap([
             ['storage_path', $rawPath],

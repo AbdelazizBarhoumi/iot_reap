@@ -8,7 +8,6 @@ import {
     PenTool,
     Server,
     Settings2,
-    Usb,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -34,7 +33,6 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { login, dashboard, home } from '@/routes';
 import connectionPreferences from '@/routes/connection-preferences';
-import hardware from '@/routes/hardware';
 import reservations from '@/routes/reservations';
 import sessions from '@/routes/sessions';
 import teaching from '@/routes/teaching';
@@ -45,7 +43,7 @@ type Props = {
 };
 /**
  * Build nav items based on user role.
- * Engineers see: Dashboard, Sessions, Hardware, My Training, Training Paths
+ * Engineers see: Dashboard, Sessions, Reservations, My Training, Training Paths
  * Teachers see: Dashboard, Content Studio, Training Paths
  * Admin uses sidebar layout (not this header)
  */
@@ -57,38 +55,41 @@ function useNavItems(): NavItem[] {
     const isEngineer = role === 'engineer';
     const items: NavItem[] = [];
 
-    if (auth.user) {
-        items.push({
-            title: 'Dashboard',
-            href: dashboard().url,
-            icon: LayoutGrid,
-        });
-    }
+    // Everyone can browse trainingPaths
+    items.push({
+        title: 'Training Paths',
+        href: trainingPaths.index.url(),
+        icon: GraduationCap,
+    });
     // Engineers see VM sessions, reservations, and their enrolled trainingPaths
     if (isEngineer) {
         items.push(
+            {
+                title: 'My Training',
+                href: trainingPaths.my.url(),
+                icon: GraduationCap,
+            },
             {
                 title: 'Sessions',
                 href: sessions.index.url(),
                 icon: History,
             },
             {
-                title: 'Hardware',
-                href: hardware.index.url(),
-                icon: Usb,
-            },
-            {
                 title: 'Reservations',
                 href: reservations.index.url(),
                 icon: CalendarCheck,
             },
-            {
-                title: 'My Training',
-                href: trainingPaths.my.url(),
-                icon: GraduationCap,
-            },
+
         );
     }
+    if (auth.user) {
+        items.push({
+            title: 'VM Dashboard',
+            href: dashboard().url,
+            icon: LayoutGrid,
+        });
+    }
+
     // Teachers see Content Studio (their paths) prominently
     if (isTeacher) {
         items.push({
@@ -97,12 +98,7 @@ function useNavItems(): NavItem[] {
             icon: PenTool,
         });
     }
-    // Everyone can browse trainingPaths
-    items.push({
-        title: 'Training Paths',
-        href: trainingPaths.index.url(),
-        icon: GraduationCap,
-    });
+
     return items;
 }
 const activeItemStyles = 'text-primary dark:text-primary';
@@ -114,9 +110,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { isCurrentUrl } = useCurrentUrl();
     const navItems = useNavItems();
     const [mobileOpen, setMobileOpen] = useState(false);
-    // Only engineers/admins use VM sessions, so only they need connection preferences
-    const showConnectionPrefs =
-        user?.role === 'engineer' || user?.role === 'admin';
+    // Only admins can edit connection preference profiles
+    const showConnectionPrefs = user?.role === 'admin';
     return (
         <>
             <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60 dark:bg-gray-900/80 dark:supports-[backdrop-filter]:bg-gray-900/60">

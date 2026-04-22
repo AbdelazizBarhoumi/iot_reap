@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\NotificationType;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -112,5 +111,4 @@ class NotificationRepository
     {
         return $notification->delete();
     }
-
 }

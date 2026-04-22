@@ -184,7 +184,7 @@ class ArticleServiceTest extends TestCase
     // Get Article For TrainingUnit
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_article_for_trainingUnit(): void
+    public function test_gets_article_for_training_unit(): void
     {
         $trainingUnit = TrainingUnit::factory()->reading()->create();
         $article = Article::factory()->create(['training_unit_id' => $trainingUnit->id]);

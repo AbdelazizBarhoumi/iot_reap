@@ -9,6 +9,7 @@ import type {
     ApproveReservationRequest,
     CreateAdminBlockRequest,
     UpdateGatewayNodeRequest,
+    UpdateCameraSettingsRequest,
     DiscoverySummary,
     GatewayNode,
     RunningVm,
@@ -28,6 +29,7 @@ interface ActionResponse {
     device?: UsbDevice;
     node?: GatewayNode;
     summary?: DiscoverySummary;
+    online?: boolean;
 }
 /**
  * Hardware Gateway API
@@ -135,6 +137,32 @@ export const hardwareApi = {
         >(`/hardware/devices/${deviceId}/convert-to-camera`);
         return response.data;
     },
+
+    /**
+     * Manually activate or restart a camera stream.
+     */
+    async activateCamera(
+        deviceId: number,
+    ): Promise<ActionResponse & { camera?: Camera }> {
+        const response = await client.post<
+            ActionResponse & { camera?: Camera }
+        >(`/hardware/devices/${deviceId}/activate-camera`);
+        return response.data;
+    },
+
+    /**
+     * Update camera stream settings.
+     */
+    async updateCameraSettings(
+        deviceId: number,
+        data: UpdateCameraSettingsRequest,
+    ): Promise<ActionResponse & { camera?: Camera }> {
+        const response = await client.put<
+            ActionResponse & { camera?: Camera }
+        >(`/hardware/devices/${deviceId}/camera-settings`, data);
+        return response.data;
+    },
+
     /**
      * Remove camera registration from a USB device.
      * Deletes the Camera record and unmarks the device.
@@ -328,6 +356,33 @@ export const reservationApi = {
             `/reservations/${reservationId}/cancel`,
         );
         return response.data;
+    },
+    /**
+     * Get details for one reservation.
+     */
+    async get(reservationId: number): Promise<UsbDeviceReservation> {
+        const response = await client.get<ApiResponse<UsbDeviceReservation>>(
+            `/reservations/${reservationId}`,
+        );
+        return response.data.data;
+    },
+    /**
+     * Get calendar reservations for one USB device.
+     */
+    async getDeviceCalendar(
+        deviceId: number,
+        start?: string,
+        end?: string,
+    ): Promise<UsbDeviceReservation[]> {
+        const params: Record<string, string> = {};
+        if (start) params.start = start;
+        if (end) params.end = end;
+
+        const response = await client.get<ApiResponse<UsbDeviceReservation[]>>(
+            `/reservations/devices/${deviceId}/calendar`,
+            { params },
+        );
+        return response.data.data;
     },
 };
 /**

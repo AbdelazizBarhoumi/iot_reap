@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TrainingPath>
+ * @extends Factory<TrainingPath>
  */
 class TrainingPathFactory extends Factory
 {
@@ -50,6 +50,7 @@ class TrainingPathFactory extends Factory
     public function forInstructor(User|int $instructor): static
     {
         $instructorId = $instructor instanceof User ? $instructor->id : $instructor;
+
         return $this->state(fn (array $attributes) => [
             'instructor_id' => $instructorId,
         ]);

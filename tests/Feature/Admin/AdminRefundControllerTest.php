@@ -7,6 +7,7 @@ use App\Models\RefundRequest;
 use App\Models\User;
 use App\Services\RefundService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Mockery;
 use Tests\TestCase;
 
@@ -40,7 +41,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_admin_can_list_pending_refunds(): void
     {
-        $refunds = new \Illuminate\Pagination\LengthAwarePaginator(
+        $refunds = new LengthAwarePaginator(
             [$this->refundRequest], // items
             1, // total
             20, // perPage
@@ -75,7 +76,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_admin_can_list_refunds_with_pagination(): void
     {
-        $refunds = new \Illuminate\Pagination\LengthAwarePaginator(
+        $refunds = new LengthAwarePaginator(
             [], // items
             0, // total
             10, // perPage

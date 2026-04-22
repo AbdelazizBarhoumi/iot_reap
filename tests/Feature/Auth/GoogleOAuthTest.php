@@ -2,11 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
-use Mockery\MockInterface;
 use Tests\TestCase;
 
 class GoogleOAuthTest extends TestCase

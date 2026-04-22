@@ -90,7 +90,7 @@ class ArticleControllerTest extends TestCase
             ->assertJson(['article' => null]);
     }
 
-    public function test_show_article_fails_for_nonexistent_trainingUnit(): void
+    public function test_show_article_fails_for_nonexistent_training_unit(): void
     {
         $response = $this->actingAs($this->teacher)->get('/teaching/trainingUnits/999/article');
 
@@ -187,7 +187,7 @@ class ArticleControllerTest extends TestCase
             ->assertJsonValidationErrors(['content']);
     }
 
-    public function test_upsert_article_fails_for_nonexistent_trainingUnit(): void
+    public function test_upsert_article_fails_for_nonexistent_training_unit(): void
     {
         $content = ['type' => 'doc', 'content' => []];
 
@@ -227,7 +227,7 @@ class ArticleControllerTest extends TestCase
             ]);
     }
 
-    public function test_delete_article_fails_for_nonexistent_trainingUnit(): void
+    public function test_delete_article_fails_for_nonexistent_training_unit(): void
     {
         $response = $this->actingAs($this->teacher)
             ->deleteJson('/trainingUnits/999/article');
@@ -297,7 +297,7 @@ class ArticleControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_can_create_article_for_any_trainingPath(): void
+    public function test_admin_can_create_article_for_any_training_path(): void
     {
         $content = [
             'type' => 'doc',
@@ -331,7 +331,7 @@ class ArticleControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_can_delete_article_for_any_trainingPath(): void
+    public function test_admin_can_delete_article_for_any_training_path(): void
     {
         $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 

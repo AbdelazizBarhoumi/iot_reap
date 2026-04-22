@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\QuizQuestion;
-use App\Support\Database\TransactionManager;
 
 /**
  * Repository for QuizQuestion model operations.

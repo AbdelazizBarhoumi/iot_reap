@@ -7,6 +7,7 @@ use App\Models\TrainingPathEnrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+
 /**
  * Repository for trainingPath database access.
  */

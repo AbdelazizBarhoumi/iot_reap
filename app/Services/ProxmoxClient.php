@@ -157,7 +157,7 @@ class ProxmoxClient implements ProxmoxClientInterface
                 $vm['maxmem'] = $status['maxmem'] ?? 0;
                 $vm['uptime'] = $status['uptime'] ?? 0;
                 $vm['pid'] = $status['pid'] ?? null;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // VM might be stopped, keep basic info
                 $vm['cpu_usage'] = 0;
                 $vm['mem_usage'] = 0;
@@ -344,7 +344,7 @@ class ProxmoxClient implements ProxmoxClientInterface
             }
 
             return null;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::warning('Failed to get container network IP', [
                 'node' => $nodeName,
                 'vmid' => $vmid,

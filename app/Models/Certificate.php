@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $training_path_id
  * @property string $hash
  * @property string|null $pdf_path
- * @property \Carbon\Carbon $issued_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon $issued_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class Certificate extends Model
 {

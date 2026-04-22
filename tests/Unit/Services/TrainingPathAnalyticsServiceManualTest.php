@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\TrainingPath;
 use App\Models\DailyTrainingPathStats;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\TrainingPathStatsRepository;
 use App\Services\TrainingPathAnalyticsService;
@@ -28,7 +28,7 @@ class TrainingPathAnalyticsServiceManualTest extends TestCase
             ->create(['training_path_id' => $trainingPath->id, 'enrollments' => 15]);
 
         // Manually instantiate the repository and service
-        $repo = new TrainingPathStatsRepository(new DailyTrainingPathStats());
+        $repo = new TrainingPathStatsRepository(new DailyTrainingPathStats);
         $service = new TrainingPathAnalyticsService($repo);
 
         $kpis = $service->getTeacherKPIs($teacher, '30d');

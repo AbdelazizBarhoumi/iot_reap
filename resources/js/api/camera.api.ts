@@ -142,6 +142,24 @@ export const cameraReservationApi = {
         return response.data;
     },
     /**
+     * Get one camera reservation detail.
+     */
+    async get(reservationId: number): Promise<CameraReservation> {
+        const response = await client.get<ApiResponse<CameraReservation>>(
+            `/camera-reservations/${reservationId}`,
+        );
+        return response.data.data;
+    },
+    /**
+     * List active cameras that can be reserved by engineers.
+     */
+    async getCameras(): Promise<Camera[]> {
+        const response = await client.get<ApiResponse<Camera[]>>(
+            '/camera-reservations/cameras',
+        );
+        return response.data.data;
+    },
+    /**
      * Get reservations for a specific camera (calendar view).
      */
     async getCameraCalendar(

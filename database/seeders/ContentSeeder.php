@@ -26,6 +26,7 @@ class ContentSeeder extends Seeder
 
         if ($enrollments->isEmpty() || $trainingUnits->isEmpty()) {
             $this->command->warn('No enrollments or trainingUnits found. Skipping content.');
+
             return;
         }
 
@@ -33,15 +34,15 @@ class ContentSeeder extends Seeder
         foreach ($trainingUnits->where('type', 'video') as $trainingUnit) {
             Video::create([
                 'training_unit_id' => $trainingUnit->id,
-                'original_filename' => 'video_' . $trainingUnit->id . '.mp4',
-                'storage_path' => 'videos/trainingUnits/' . $trainingUnit->id . '/video.mp4',
+                'original_filename' => 'video_'.$trainingUnit->id.'.mp4',
+                'storage_path' => 'videos/trainingUnits/'.$trainingUnit->id.'/video.mp4',
                 'storage_disk' => 'local',
                 'duration_seconds' => rand(300, 3600),
                 'file_size_bytes' => rand(100000000, 1000000000),
                 'mime_type' => 'video/mp4',
                 'status' => VideoStatus::READY,
-                'thumbnail_path' => 'videos/trainingUnits/' . $trainingUnit->id . '/thumb.jpg',
-                'hls_path' => 'videos/trainingUnits/' . $trainingUnit->id . '/master.m3u8',
+                'thumbnail_path' => 'videos/trainingUnits/'.$trainingUnit->id.'/thumb.jpg',
+                'hls_path' => 'videos/trainingUnits/'.$trainingUnit->id.'/master.m3u8',
                 'available_qualities' => json_encode(['360p', '720p', '1080p']),
                 'resolution_width' => 1920,
                 'resolution_height' => 1080,
@@ -56,7 +57,7 @@ class ContentSeeder extends Seeder
                 'training_unit_id' => $trainingUnit->id,
                 'content' => json_encode(['body' => $content, 'sections' => []]),
                 'word_count' => $wordCount,
-                'estimated_read_time_minutes' => max(1, (int)($wordCount / 200)),
+                'estimated_read_time_minutes' => max(1, (int) ($wordCount / 200)),
             ]);
         }
 
@@ -66,7 +67,7 @@ class ContentSeeder extends Seeder
             // Create one progress entry per unique video to avoid unique constraint violations
             $videosToTrack = $videos->shuffle()->slice(0, min(2, $videos->count()));
             foreach ($videosToTrack as $video) {
-                $watchedSeconds = rand(0, (int)($video->duration_seconds ?? 600));
+                $watchedSeconds = rand(0, (int) ($video->duration_seconds ?? 600));
                 VideoProgress::firstOrCreate(
                     [
                         'user_id' => $enrollment->user_id,
@@ -75,7 +76,7 @@ class ContentSeeder extends Seeder
                     [
                         'watched_seconds' => $watchedSeconds,
                         'total_watch_time' => $watchedSeconds + rand(0, 300),
-                        'completed' => $watchedSeconds >= (int)(($video->duration_seconds ?? 600) * 0.9),
+                        'completed' => $watchedSeconds >= (int) (($video->duration_seconds ?? 600) * 0.9),
                         'last_watched_at' => now()->subDays(rand(0, 20)),
                     ]
                 );
@@ -101,18 +102,20 @@ class ContentSeeder extends Seeder
                 'user_id' => $enrollment->user_id,
                 'training_path_id' => $enrollment->training_path_id,
                 'rating' => rand(3, 5),
-                'review' => $this->generateReviewTitle() . "\n\n" . $this->generateReviewContent(),
+                'review' => $this->generateReviewTitle()."\n\n".$this->generateReviewContent(),
             ]);
         }
 
         // ── Seed certificates for completed trainingPaths ──
-        $completedEnrollments = $enrollments->filter(function($e) { return $e->completed_at !== null; });
+        $completedEnrollments = $enrollments->filter(function ($e) {
+            return $e->completed_at !== null;
+        });
         if ($completedEnrollments->isNotEmpty()) {
-            foreach ($completedEnrollments->random(min(max(1, (int)($completedEnrollments->count() / 2)), $completedEnrollments->count())) as $enrollment) {
+            foreach ($completedEnrollments->random(min(max(1, (int) ($completedEnrollments->count() / 2)), $completedEnrollments->count())) as $enrollment) {
                 Certificate::create([
                     'user_id' => $enrollment->user_id,
                     'training_path_id' => $enrollment->training_path_id,
-                    'hash' => hash('sha256', $enrollment->user_id . $enrollment->training_path_id . now()),
+                    'hash' => hash('sha256', $enrollment->user_id.$enrollment->training_path_id.now()),
                     'pdf_path' => null,
                     'issued_at' => now()->subDays(rand(1, 30)),
                 ]);

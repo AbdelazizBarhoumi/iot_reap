@@ -3,19 +3,18 @@
 namespace Tests\Unit;
 
 use App\Enums\TrainingPathLevel;
+use App\Models\Search;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
-use App\Models\Search;
 use App\Models\User;
 use App\Services\SearchService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class SearchServiceTest extends TestCase
 {
-
     private SearchService $service;
 
     protected function setUp(): void
@@ -76,7 +75,7 @@ class SearchServiceTest extends TestCase
         $this->assertCount(1, $result['results']);
     }
 
-    public function test_excludes_draft_trainingPaths(): void
+    public function test_excludes_draft_training_paths(): void
     {
         TrainingPath::factory()->create(['title' => 'Draft Laravel TrainingPath']); // Default status is DRAFT
         TrainingPath::factory()->approved()->create(['title' => 'Published Laravel TrainingPath']);
@@ -87,7 +86,7 @@ class SearchServiceTest extends TestCase
         $this->assertEquals('Published Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_excludes_pending_review_trainingPaths(): void
+    public function test_excludes_pending_review_training_paths(): void
     {
         TrainingPath::factory()->pendingReview()->create(['title' => 'Pending Laravel TrainingPath']);
         TrainingPath::factory()->approved()->create(['title' => 'Approved Laravel TrainingPath']);
@@ -98,7 +97,7 @@ class SearchServiceTest extends TestCase
         $this->assertEquals('Approved Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_excludes_rejected_trainingPaths(): void
+    public function test_excludes_rejected_training_paths(): void
     {
         TrainingPath::factory()->rejected()->create(['title' => 'Rejected Laravel TrainingPath']);
         TrainingPath::factory()->approved()->create(['title' => 'Good Laravel TrainingPath']);
@@ -169,7 +168,7 @@ class SearchServiceTest extends TestCase
         $this->assertEquals('Budget Laravel TrainingPath', $result['results']->first()->title);
     }
 
-    public function test_filters_by_free_trainingPaths(): void
+    public function test_filters_by_free_training_paths(): void
     {
         TrainingPath::factory()->approved()->create([
             'title' => 'Free Laravel Tutorial',
@@ -468,7 +467,7 @@ class SearchServiceTest extends TestCase
         $this->assertCount(3, $suggestions);
     }
 
-    public function test_suggest_only_includes_approved_trainingPaths(): void
+    public function test_suggest_only_includes_approved_training_paths(): void
     {
         TrainingPath::factory()->create(['title' => 'Draft Laravel']); // DRAFT
         TrainingPath::factory()->pendingReview()->create(['title' => 'Pending Laravel']);
@@ -667,7 +666,7 @@ class SearchServiceTest extends TestCase
 
         $this->assertArrayHasKey('results', $result);
         $this->assertArrayHasKey('total', $result);
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $result['results']);
+        $this->assertInstanceOf(Collection::class, $result['results']);
         $this->assertIsInt($result['total']);
     }
 

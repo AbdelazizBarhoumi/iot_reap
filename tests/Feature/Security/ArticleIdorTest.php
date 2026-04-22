@@ -56,7 +56,7 @@ class ArticleIdorTest extends TestCase
         ]);
     }
 
-    public function test_teacher_cannot_create_article_for_another_teachers_trainingUnit(): void
+    public function test_teacher_cannot_create_article_for_another_teachers_training_unit(): void
     {
         $response = $this->actingAs($this->teacher)
             ->postJson("/teaching/trainingUnits/{$this->otherTeachersTrainingUnit->id}/article", [
@@ -81,7 +81,7 @@ class ArticleIdorTest extends TestCase
         ]);
     }
 
-    public function test_teacher_can_create_article_for_own_trainingUnit(): void
+    public function test_teacher_can_create_article_for_own_training_unit(): void
     {
         $response = $this->actingAs($this->teacher)
             ->postJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article", [
@@ -105,7 +105,7 @@ class ArticleIdorTest extends TestCase
         ]);
     }
 
-    public function test_teacher_cannot_update_article_for_another_teachers_trainingUnit(): void
+    public function test_teacher_cannot_update_article_for_another_teachers_training_unit(): void
     {
         // Create an article for the other teacher's trainingUnit
         Article::create([
@@ -150,7 +150,7 @@ class ArticleIdorTest extends TestCase
         $this->assertEquals('Original content', $article->content['content'][0]['content'][0]['text']);
     }
 
-    public function test_teacher_cannot_delete_article_for_another_teachers_trainingUnit(): void
+    public function test_teacher_cannot_delete_article_for_another_teachers_training_unit(): void
     {
         // Create an article for the other teacher's trainingUnit
         Article::create([
@@ -179,7 +179,7 @@ class ArticleIdorTest extends TestCase
         ]);
     }
 
-    public function test_teacher_can_delete_article_for_own_trainingUnit(): void
+    public function test_teacher_can_delete_article_for_own_training_unit(): void
     {
         Article::create([
             'training_unit_id' => $this->ownTrainingUnit->id,

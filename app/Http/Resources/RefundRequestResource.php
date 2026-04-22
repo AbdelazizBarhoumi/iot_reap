@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\RefundRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\RefundRequest
+ * @mixin RefundRequest
  */
 class RefundRequestResource extends JsonResource
 {
@@ -17,7 +18,7 @@ class RefundRequestResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'user' => $this->whenLoaded('user', fn() => [
+            'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,

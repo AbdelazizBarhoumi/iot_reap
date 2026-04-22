@@ -13,6 +13,8 @@ use App\Models\VMSession;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
+use App\Services\VMSessionCleanupService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -199,7 +201,7 @@ class SessionExtensionTerminationTest extends TestCase
             'expires_at' => now()->subMinute(),
         ]);
 
-        $count = app(\App\Services\VMSessionCleanupService::class)
+        $count = app(VMSessionCleanupService::class)
             ->expireOverdueSessions();
 
         $this->assertSame(1, $count);
@@ -359,7 +361,7 @@ class SessionExtensionTerminationTest extends TestCase
 
         // Verify default duration was used by checking expires_at
         $expectedExpiry = now()->addMinutes(config('sessions.default_duration_minutes', 120));
-        $responseExpiry = \Carbon\Carbon::parse($data['expires_at']);
+        $responseExpiry = Carbon::parse($data['expires_at']);
 
         // Allow 1-2 second variance for execution time
         $this->assertTrue(

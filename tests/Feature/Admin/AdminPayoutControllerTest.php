@@ -6,6 +6,7 @@ use App\Models\PayoutRequest;
 use App\Models\User;
 use App\Services\PayoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Mockery;
 use Tests\TestCase;
 
@@ -36,7 +37,7 @@ class AdminPayoutControllerTest extends TestCase
 
     public function test_admin_can_list_pending_payouts(): void
     {
-        $payouts = new \Illuminate\Pagination\LengthAwarePaginator(
+        $payouts = new LengthAwarePaginator(
             [$this->payoutRequest], // items
             1, // total
             20, // perPage
@@ -88,7 +89,7 @@ class AdminPayoutControllerTest extends TestCase
 
     public function test_admin_can_list_payouts_with_pagination(): void
     {
-        $payouts = new \Illuminate\Pagination\LengthAwarePaginator(
+        $payouts = new LengthAwarePaginator(
             [], // items
             0, // total
             10, // perPage

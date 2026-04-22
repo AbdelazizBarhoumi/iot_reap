@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\TrainingUnitNote;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TrainingUnitNoteRepository
 {
@@ -61,7 +62,7 @@ class TrainingUnitNoteRepository
     /**
      * Find a note by ID (scoped to user for security).
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function find(int $id, User $user): TrainingUnitNote
     {

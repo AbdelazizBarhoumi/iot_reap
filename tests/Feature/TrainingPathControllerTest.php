@@ -15,7 +15,7 @@ class TrainingPathControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_can_browse_approved_trainingPaths(): void
+    public function test_guest_can_browse_approved_training_paths(): void
     {
         TrainingPath::factory()->approved()->count(3)->create();
         TrainingPath::factory()->create(['status' => TrainingPathStatus::DRAFT]);
@@ -48,7 +48,7 @@ class TrainingPathControllerTest extends TestCase
         );
     }
 
-    public function test_guest_cannot_view_draft_trainingPath(): void
+    public function test_guest_cannot_view_draft_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->create(['status' => TrainingPathStatus::DRAFT]);
 
@@ -57,7 +57,7 @@ class TrainingPathControllerTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_authenticated_user_can_enroll_in_trainingPath(): void
+    public function test_authenticated_user_can_enroll_in_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();
@@ -71,7 +71,7 @@ class TrainingPathControllerTest extends TestCase
         ]);
     }
 
-    public function test_guest_cannot_enroll_in_trainingPath(): void
+    public function test_guest_cannot_enroll_in_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
@@ -80,7 +80,7 @@ class TrainingPathControllerTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_user_cannot_enroll_twice_in_same_trainingPath(): void
+    public function test_user_cannot_enroll_twice_in_same_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();
@@ -96,7 +96,7 @@ class TrainingPathControllerTest extends TestCase
         $this->assertDatabaseCount('training_path_enrollments', 1);
     }
 
-    public function test_enrolled_user_can_view_trainingUnit(): void
+    public function test_enrolled_user_can_view_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();
@@ -119,7 +119,7 @@ class TrainingPathControllerTest extends TestCase
         );
     }
 
-    public function test_non_enrolled_user_cannot_view_trainingUnit(): void
+    public function test_non_enrolled_user_cannot_view_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();

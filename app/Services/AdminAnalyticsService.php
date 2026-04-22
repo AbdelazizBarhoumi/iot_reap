@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\Certificate;
+use App\Models\Payment;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
-use App\Models\Payment;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Repositories\TrainingPathStatsRepository;

@@ -16,13 +16,13 @@ class DashboardTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_engineers_are_redirected_to_training_paths_from_dashboard()
+    public function test_engineers_can_visit_the_dashboard()
     {
         $user = User::factory()->engineer()->create();
         $this->actingAs($user);
 
         $response = $this->get(route('dashboard'));
-        $response->assertRedirect(route('trainingPaths.index'));
+        $response->assertOk();
     }
 
     public function test_admins_can_visit_the_dashboard()
@@ -31,6 +31,6 @@ class DashboardTest extends TestCase
         $this->actingAs($user);
 
         $response = $this->get(route('dashboard'));
-        $response->assertOk();
+        $response->assertRedirect(route('admin.dashboard'));
     }
 }

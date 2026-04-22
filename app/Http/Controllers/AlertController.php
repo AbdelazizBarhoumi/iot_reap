@@ -13,7 +13,7 @@ use Inertia\Response as InertiaResponse;
 
 /**
  * Alert Controller
- * 
+ *
  * Admin API for managing system alerts
  */
 class AlertController extends Controller

@@ -16,6 +16,7 @@ import {
     Circle,
     ExternalLink,
     FileText,
+    FileQuestion,
     Loader2,
     Menu,
     Play,
@@ -40,6 +41,8 @@ import {
 } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useForum } from '@/hooks/useForum';
 import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
@@ -84,6 +87,7 @@ const trainingUnitIcons: Record<TrainingUnitType, React.ElementType> = {
     reading: FileText,
     practice: BookOpen,
     'vm-lab': Terminal,
+    quiz: FileQuestion,
 };
 // Helper to compare IDs regardless of string/number type
 function isSameId(
@@ -99,6 +103,54 @@ function isTrainingUnitCompleted(
 ): boolean {
     return completedIds.some((id) => isSameId(id, trainingUnitId));
 }
+
+function normalizeStringList(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+
+        if (!trimmed) {
+            return [];
+        }
+
+        // Handle values accidentally stored as JSON strings.
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    return parsed
+                        .filter((item): item is string => typeof item === 'string')
+                        .map((item) => item.trim())
+                        .filter((item) => item.length > 0);
+                }
+            } catch {
+                // Fall back to delimiter-based parsing below.
+            }
+        }
+
+        return trimmed
+            .split(/\r?\n|,/) 
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+    }
+
+    if (value && typeof value === 'object') {
+        const obj = value as Record<string, unknown>;
+        const nested = obj.items ?? obj.objectives ?? obj.resources;
+        if (nested !== undefined) {
+            return normalizeStringList(nested);
+        }
+    }
+
+    return [];
+}
+
 interface TrainingUnitSidebarProps {
     modules: TrainingPath['modules'];
     currentTrainingUnitId: string | number;
@@ -470,14 +522,67 @@ export default function TrainingUnitPage() {
         (string | number)[]
     >(initialCompleted || []);
     const [markingComplete, setMarkingComplete] = useState(false);
+    const [isDiscussionComposerOpen, setIsDiscussionComposerOpen] =
+        useState(false);
+    const [newDiscussionTitle, setNewDiscussionTitle] = useState('');
+    const [newDiscussionContent, setNewDiscussionContent] = useState('');
+    const [isCreatingDiscussion, setIsCreatingDiscussion] = useState(false);
+    const normalizedObjectives = useMemo(
+        () => normalizeStringList(trainingUnit?.objectives),
+        [trainingUnit?.objectives],
+    );
+    const normalizedResources = useMemo(
+        () => normalizeStringList(trainingUnit?.resources),
+        [trainingUnit?.resources],
+    );
     // Forum hook for trainingUnit discussions (must be before any conditional returns)
     const {
         threads,
+        createThread,
         upvoteThread,
     } = useForum({
         trainingUnitId: trainingUnit?.id ? Number(trainingUnit.id) : undefined,
         autoFetch: !!trainingUnit?.id,
     });
+
+    const handleCreateDiscussion = useCallback(async () => {
+        const title = newDiscussionTitle.trim();
+        const content = newDiscussionContent.trim();
+
+        if (title.length < 5 || content.length < 10) {
+            trainingPathToasts.error(
+                'Please add a valid title (5+ chars) and content (10+ chars).',
+            );
+
+            return;
+        }
+
+        setIsCreatingDiscussion(true);
+
+        try {
+            const createdThread = await createThread({ title, content });
+
+            if (!createdThread) {
+                return;
+            }
+
+            setNewDiscussionTitle('');
+            setNewDiscussionContent('');
+            setIsDiscussionComposerOpen(false);
+
+            router.visit(
+                `/forum/threads/${createdThread.id}?from=${encodeURIComponent(`/trainingPaths/${trainingPath.id}/trainingUnit/${trainingUnit.id}`)}`,
+            );
+        } finally {
+            setIsCreatingDiscussion(false);
+        }
+    }, [
+        createThread,
+        newDiscussionTitle,
+        newDiscussionContent,
+        trainingPath.id,
+        trainingUnit.id,
+    ]);
     // Sync completedTrainingUnitIds with server data when props change (e.g., navigation)
     useEffect(() => {
         setCompletedTrainingUnitIds(initialCompleted || []);
@@ -756,14 +861,13 @@ export default function TrainingUnitPage() {
                                             </p>
                                         )}
                                         {/* Training Objectives */}
-                                        {trainingUnit.objectives &&
-                                            trainingUnit.objectives.length > 0 && (
+                                        {normalizedObjectives.length > 0 && (
                                                 <div className="mt-6 border-t border-border pt-6">
                                                     <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
                                                         Training Objectives
                                                     </h3>
                                                     <ul className="space-y-2">
-                                                        {trainingUnit.objectives.map(
+                                                        {normalizedObjectives.map(
                                                             (obj, i) => (
                                                                 <li
                                                                     key={i}
@@ -778,14 +882,13 @@ export default function TrainingUnitPage() {
                                                 </div>
                                             )}
                                         {/* Resources */}
-                                        {trainingUnit.resources &&
-                                            trainingUnit.resources.length > 0 && (
+                                        {normalizedResources.length > 0 && (
                                                 <div className="mt-6 border-t border-border pt-6">
                                                     <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
                                                         Resources
                                                     </h3>
                                                     <ul className="space-y-2">
-                                                        {trainingUnit.resources.map(
+                                                        {normalizedResources.map(
                                                             (res, i) => (
                                                                 <li key={i}>
                                                                     <a
@@ -826,12 +929,88 @@ export default function TrainingUnitPage() {
                                 <div className="mb-8">
                                     <Card>
                                         <CardContent className="pt-6">
+                                            {isDiscussionComposerOpen && (
+                                                <div className="mb-6 space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+                                                    <h4 className="font-medium text-foreground">
+                                                        Start a New Discussion
+                                                    </h4>
+                                                    <Input
+                                                        value={
+                                                            newDiscussionTitle
+                                                        }
+                                                        onChange={(event) =>
+                                                            setNewDiscussionTitle(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="Discussion title"
+                                                        maxLength={255}
+                                                    />
+                                                    <Textarea
+                                                        value={
+                                                            newDiscussionContent
+                                                        }
+                                                        onChange={(event) =>
+                                                            setNewDiscussionContent(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="Describe your question or discussion topic..."
+                                                        rows={5}
+                                                        maxLength={10000}
+                                                    />
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                setIsDiscussionComposerOpen(
+                                                                    false,
+                                                                );
+                                                                setNewDiscussionTitle(
+                                                                    '',
+                                                                );
+                                                                setNewDiscussionContent(
+                                                                    '',
+                                                                );
+                                                            }}
+                                                            disabled={
+                                                                isCreatingDiscussion
+                                                            }
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                void handleCreateDiscussion()
+                                                            }
+                                                            disabled={
+                                                                isCreatingDiscussion
+                                                            }
+                                                        >
+                                                            {isCreatingDiscussion
+                                                                ? 'Posting...'
+                                                                : 'Post Discussion'}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <ThreadList
                                                 threads={threads}
+                                                onNewThread={() =>
+                                                    setIsDiscussionComposerOpen(
+                                                        true,
+                                                    )
+                                                }
                                                 onUpvote={(threadId) =>
                                                     upvoteThread(threadId)
                                                 }
-                                                showNewButton={false}
+                                                showNewButton={true}
+                                                returnTo={`/trainingPaths/${trainingPath.id}/trainingUnit/${trainingUnit.id}`}
                                                 emptyTitle="No discussions yet"
                                                 emptyDescription="Be the first to ask a question or start a discussion about this trainingUnit!"
                                             />

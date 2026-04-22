@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * App VM session model.
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $node_id
  * @property int|null $vm_id
  * @property VMSessionStatus $status
- * @property \App\Enums\VMSessionProtocol|null $protocol
+ * @property VMSessionProtocol|null $protocol
  * @property string|null $connection_profile_name
  * @property string|null $ip_address
  * @property int|null $guacamole_connection_id
@@ -104,7 +105,7 @@ class VMSession extends Model
     /**
      * Get the USB devices currently attached to this session.
      */
-    public function attachedDevices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function attachedDevices(): HasMany
     {
         return $this->hasMany(UsbDevice::class, 'attached_session_id');
     }
@@ -112,7 +113,7 @@ class VMSession extends Model
     /**
      * Get the queue entries for this session (devices waiting for).
      */
-    public function deviceQueueEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function deviceQueueEntries(): HasMany
     {
         return $this->hasMany(UsbDeviceQueue::class, 'session_id');
     }

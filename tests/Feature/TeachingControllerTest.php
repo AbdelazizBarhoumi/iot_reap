@@ -37,7 +37,7 @@ class TeachingControllerTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_instructor_can_create_trainingPath(): void
+    public function test_instructor_can_create_training_path(): void
     {
         $user = User::factory()->teacher()->create();
 
@@ -60,7 +60,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_create_paid_trainingPath(): void
+    public function test_instructor_can_create_paid_training_path(): void
     {
         $user = User::factory()->teacher()->create();
 
@@ -85,7 +85,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_update_own_trainingPath(): void
+    public function test_instructor_can_update_own_training_path(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create([
@@ -105,7 +105,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_update_trainingPath_price(): void
+    public function test_instructor_can_update_training_path_price(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create([
@@ -131,7 +131,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_cannot_update_other_instructor_trainingPath(): void
+    public function test_instructor_cannot_update_other_instructor_training_path(): void
     {
         $instructor1 = User::factory()->teacher()->create();
         $instructor2 = User::factory()->teacher()->create();
@@ -148,7 +148,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_delete_own_trainingPath(): void
+    public function test_instructor_can_delete_own_training_path(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create(['instructor_id' => $user->id]);
@@ -160,7 +160,7 @@ class TeachingControllerTest extends TestCase
         $this->assertDatabaseMissing('training_paths', ['id' => $trainingPathId]);
     }
 
-    public function test_instructor_cannot_delete_other_instructor_trainingPath(): void
+    public function test_instructor_cannot_delete_other_instructor_training_path(): void
     {
         $instructor1 = User::factory()->teacher()->create();
         $instructor2 = User::factory()->teacher()->create();
@@ -189,7 +189,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_add_module_to_trainingPath(): void
+    public function test_instructor_can_add_module_to_training_path(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create(['instructor_id' => $user->id]);
@@ -257,7 +257,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_update_trainingUnit(): void
+    public function test_instructor_can_update_training_unit(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create(['instructor_id' => $user->id]);
@@ -276,7 +276,7 @@ class TeachingControllerTest extends TestCase
         ]);
     }
 
-    public function test_instructor_can_delete_trainingUnit(): void
+    public function test_instructor_can_delete_training_unit(): void
     {
         $user = User::factory()->teacher()->create();
         $trainingPath = TrainingPath::factory()->create(['instructor_id' => $user->id]);

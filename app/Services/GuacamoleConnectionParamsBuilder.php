@@ -54,7 +54,7 @@ class GuacamoleConnectionParamsBuilder
         // 3. Protocol-level default profile (user's fallback for RDP/VNC/SSH)
         // 4. Hardcoded sensible defaults (if no profiles exist)
         $preference = null;
-        
+
         // 1. Check session-level selection
         if (! empty($session->connection_profile_name)) {
             $preference = $this->preferenceRepository->findByProfile(

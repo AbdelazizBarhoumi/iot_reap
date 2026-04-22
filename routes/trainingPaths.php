@@ -3,13 +3,13 @@
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\TrainingPathController;
-use App\Http\Controllers\TrainingPathReviewController;
 use App\Http\Controllers\ForumController;
-use App\Http\Controllers\TrainingUnitNoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TrainingPathController;
+use App\Http\Controllers\TrainingPathReviewController;
+use App\Http\Controllers\TrainingUnitNoteController;
 use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,7 +95,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Video and Article progress tracking
         Route::post('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/video-progress', 'updateVideoProgress')->name('trainingPaths.trainingUnits.video-progress');
         Route::post('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/article-read', 'markArticleRead')->name('trainingPaths.trainingUnits.article-read');
-        
+
         // Video status for students
         Route::get('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/video/status', [VideoController::class, 'status'])->name('trainingPaths.trainingUnits.video.status');
     });

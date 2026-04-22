@@ -1,20 +1,21 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminCameraController;
-use App\Http\Controllers\Admin\AdminTrainingPathController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\Admin\AdminReservationController;
+use App\Http\Controllers\Admin\AdminTrainingPathController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVMAssignmentController;
 use App\Http\Controllers\Admin\MaintenanceController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
 use App\Http\Controllers\AlertController;
-use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\HardwareController;
+use App\Http\Controllers\TrainingUnitVMAssignmentController;
 use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -171,14 +172,14 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
     });
 
     // TrainingUnit VM Assignment Approvals
-    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(\App\Http\Controllers\TrainingUnitVMAssignmentController::class)->group(function () {
+    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(TrainingUnitVMAssignmentController::class)->group(function () {
         Route::get('/pending', 'pending')->name('pending');
         Route::post('/{assignment}/approve', 'approve')->name('approve');
         Route::post('/{assignment}/reject', 'reject')->name('reject');
     });
 
     // System Alerts Management
-    Route::prefix('alerts')->name('alerts.')->controller(\App\Http\Controllers\AlertController::class)->group(function () {
+    Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/unacknowledged', 'unacknowledged')->name('unacknowledged');
         Route::get('/stats', 'stats')->name('stats');
@@ -189,7 +190,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
     });
 
     // Activity Logs
-    Route::prefix('activity-logs')->name('activity-logs.')->controller(\App\Http\Controllers\ActivityLogController::class)->group(function () {
+    Route::prefix('activity-logs')->name('activity-logs.')->controller(ActivityLogController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/recent', 'recent')->name('recent');
         Route::get('/stats', 'stats')->name('stats');

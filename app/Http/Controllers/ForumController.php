@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Requests\Forum\CreateReplyRequest;
 use App\Http\Requests\Forum\CreateThreadRequest;
 use App\Http\Resources\DiscussionThreadResource;
 use App\Http\Resources\ThreadReplyResource;
 use App\Models\DiscussionThread;
-use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
+use App\Models\TrainingUnit;
 use App\Services\ForumService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class ForumController extends Controller
     public function index(Request $request, int $trainingUnitId): JsonResponse
     {
         $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
-        
+
         $sort = $request->query('sort', 'recent');
         $filter = $request->query('filter');
 
@@ -82,12 +83,22 @@ class ForumController extends Controller
     /**
      * Show a single thread with replies.
      */
-    public function show(Request $request, int $threadId): JsonResponse
+    public function show(Request $request, int $threadId): JsonResponse|InertiaResponse
     {
         $thread = $this->forumService->getThread($threadId, $request->user());
 
         if (! $thread) {
-            return response()->json(['error' => 'Thread not found'], 404);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Thread not found'], 404);
+            }
+
+            abort(404);
+        }
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('forum/show', [
+                'thread' => new DiscussionThreadResource($thread),
+            ]);
         }
 
         return response()->json([
@@ -202,10 +213,28 @@ class ForumController extends Controller
     /**
      * Get teacher inbox threads.
      */
-    public function teacherInbox(Request $request): JsonResponse
+    public function teacherInbox(Request $request): JsonResponse|InertiaResponse
     {
         $user = $request->user();
         Gate::authorize('teach');
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('teaching/forum-inbox', [
+                'initialFilter' => $request->query('filter', 'flagged'),
+                'selectedThreadId' => $request->query('thread'),
+                'threads' => [
+                    'flagged' => DiscussionThreadResource::collection(
+                        $this->forumService->getTeacherThreads($user, 'flagged')->getCollection()
+                    )->resolve($request),
+                    'unanswered' => DiscussionThreadResource::collection(
+                        $this->forumService->getTeacherThreads($user, 'unanswered')->getCollection()
+                    )->resolve($request),
+                    'recent' => DiscussionThreadResource::collection(
+                        $this->forumService->getTeacherThreads($user, 'recent')->getCollection()
+                    )->resolve($request),
+                ],
+            ]);
+        }
 
         $filter = $request->query('filter');
         $threads = $this->forumService->getTeacherThreads($user, $filter);
@@ -250,6 +279,22 @@ class ForumController extends Controller
         return response()->json([
             'data' => new DiscussionThreadResource($thread),
             'message' => 'Thread unpinned',
+        ]);
+    }
+
+    /**
+     * Resolve a flagged thread.
+     */
+    public function resolveFlag(Request $request, int $threadId): JsonResponse
+    {
+        $thread = DiscussionThread::findOrFail($threadId);
+        $this->authorizeTeacherAction($request->user(), $thread);
+
+        $thread = $this->forumService->unflagThread($thread);
+
+        return response()->json([
+            'data' => new DiscussionThreadResource($thread),
+            'message' => 'Thread flag resolved',
         ]);
     }
 
@@ -426,12 +471,12 @@ class ForumController extends Controller
         $trainingPath = $thread->trainingPath;
 
         // Admin can manage any thread
-        if ($user->hasRole(\App\Enums\UserRole::ADMIN)) {
+        if ($user->hasRole(UserRole::ADMIN)) {
             return;
         }
 
         // Teacher can only manage threads in their own trainingPaths
-        if ($user->hasRole(\App\Enums\UserRole::TEACHER) && $trainingPath->instructor_id === $user->id) {
+        if ($user->hasRole(UserRole::TEACHER) && $trainingPath->instructor_id === $user->id) {
             return;
         }
 

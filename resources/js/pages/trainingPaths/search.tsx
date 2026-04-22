@@ -12,9 +12,26 @@ import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import trainingPathsRoutes from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
-import type { TrainingPath } from '@/types/TrainingPath.types';
+
+interface SearchTrainingPathResult {
+    id: string | number;
+    title: string;
+    description: string;
+    instructor: string;
+    category: string;
+    level: 'Beginner' | 'Intermediate' | 'Advanced';
+    duration: string | null;
+    rating: number;
+    students: number;
+    hasVirtualMachine?: boolean;
+    thumbnail?: string | null;
+    price?: number;
+    isFree?: boolean;
+}
+
 interface Props {
-    trainingPaths: TrainingPath[];
+    results?: SearchTrainingPathResult[];
+    trainingPaths?: SearchTrainingPathResult[];
     query: string;
     total: number;
 }
@@ -23,10 +40,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Search', href: '/search' },
 ];
 export default function SearchPage({
+    results = [],
     trainingPaths = [],
     query = '',
     total = 0,
 }: Props) {
+    const displayedResults = results.length > 0 ? results : trainingPaths;
     const [search, setSearch] = useState(query);
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,7 +64,8 @@ export default function SearchPage({
                     <div>
                         <h1 className="text-3xl font-bold">Search Results</h1>
                         <p className="text-muted-foreground">
-                            {total} training path result{total !== 1 ? 's' : ''} for "{query}"
+                            {total} training path result{total !== 1 ? 's' : ''}{' '}
+                            for "{query}"
                         </p>
                     </div>
                 </div>
@@ -64,7 +84,7 @@ export default function SearchPage({
                     <Button type="submit">Search</Button>
                 </form>
                 {/* Results */}
-                {trainingPaths.length === 0 ? (
+                {displayedResults.length === 0 ? (
                     <div className="py-12 text-center">
                         <Search className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h2 className="mb-2 text-xl font-semibold">
@@ -75,12 +95,14 @@ export default function SearchPage({
                             training paths
                         </p>
                         <Button asChild>
-                            <Link href={trainingPathsRoutes.index.url()}>Browse All Paths</Link>
+                            <Link href={trainingPathsRoutes.index.url()}>
+                                Browse All Paths
+                            </Link>
                         </Button>
                     </div>
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {trainingPaths.map((trainingPath, index) => (
+                        {displayedResults.map((trainingPath, index) => (
                             <motion.div
                                 key={trainingPath.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -96,4 +118,3 @@ export default function SearchPage({
         </AppLayout>
     );
 }
-

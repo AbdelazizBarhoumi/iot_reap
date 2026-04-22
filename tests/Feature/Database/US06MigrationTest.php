@@ -5,8 +5,11 @@ namespace Tests\Feature\Database;
 use App\Enums\ProxmoxNodeStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
+use App\Models\User;
 use App\Models\VMSession;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class US06MigrationTest extends TestCase
@@ -19,7 +22,7 @@ class US06MigrationTest extends TestCase
     public function test_proxmox_nodes_table_exists(): void
     {
         $this->assertTrue(
-            \Illuminate\Support\Facades\Schema::hasTable('proxmox_nodes'),
+            Schema::hasTable('proxmox_nodes'),
             'proxmox_nodes table does not exist'
         );
     }
@@ -27,7 +30,7 @@ class US06MigrationTest extends TestCase
     public function test_vm_templates_table_does_not_exist(): void
     {
         $this->assertFalse(
-            \Illuminate\Support\Facades\Schema::hasTable('vm_templates'),
+            Schema::hasTable('vm_templates'),
             'vm_templates table should have been dropped'
         );
     }
@@ -35,7 +38,7 @@ class US06MigrationTest extends TestCase
     public function test_vm_sessions_table_exists(): void
     {
         $this->assertTrue(
-            \Illuminate\Support\Facades\Schema::hasTable('vm_sessions'),
+            Schema::hasTable('vm_sessions'),
             'vm_sessions table does not exist'
         );
     }
@@ -46,7 +49,7 @@ class US06MigrationTest extends TestCase
     public function test_proxmox_nodes_has_required_columns(): void
     {
         $this->assertTrue(
-            \Illuminate\Support\Facades\Schema::hasColumns('proxmox_nodes', [
+            Schema::hasColumns('proxmox_nodes', [
                 'id', 'name', 'hostname', 'api_url', 'status', 'max_vms', 'created_at', 'updated_at',
             ]),
             'proxmox_nodes table missing required columns'
@@ -56,7 +59,7 @@ class US06MigrationTest extends TestCase
     public function test_vm_sessions_has_required_columns(): void
     {
         $this->assertTrue(
-            \Illuminate\Support\Facades\Schema::hasColumns('vm_sessions', [
+            Schema::hasColumns('vm_sessions', [
                 'id', 'user_id', 'node_id', 'vm_id', 'status', 'protocol', 'ip_address', 'expires_at', 'guacamole_connection_id', 'created_at', 'updated_at',
             ]),
             'vm_sessions table missing required columns'
@@ -95,7 +98,7 @@ class US06MigrationTest extends TestCase
         $session = VMSession::factory()->create();
 
         $this->assertNotNull($session->user);
-        $this->assertInstanceOf(\App\Models\User::class, $session->user);
+        $this->assertInstanceOf(User::class, $session->user);
     }
 
     public function test_vm_session_belongs_to_node(): void
@@ -146,7 +149,7 @@ class US06MigrationTest extends TestCase
     public function test_seeder_creates_proxmox_nodes(): void
     {
         // Run the database seeder
-        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
         // The seeder should create 7 nodes
         $this->assertGreaterThanOrEqual(7, ProxmoxNode::count());
@@ -158,7 +161,7 @@ class US06MigrationTest extends TestCase
     public function test_seeder_creates_vm_sessions(): void
     {
         // Run the database seeder
-        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
         // The seeder should create 2 demo sessions
         $this->assertGreaterThanOrEqual(2, VMSession::count());

@@ -22,8 +22,11 @@ class AdminAlertService
      * Alert severity levels.
      */
     public const SEVERITY_CRITICAL = 'critical';
+
     public const SEVERITY_HIGH = 'high';
+
     public const SEVERITY_MEDIUM = 'medium';
+
     public const SEVERITY_LOW = 'low';
 
     /**
@@ -149,6 +152,7 @@ class AdminAlertService
 
             if ($admins->isEmpty()) {
                 Log::warning('No admin users found for alert email', ['alert_id' => $alert->id]);
+
                 return;
             }
 

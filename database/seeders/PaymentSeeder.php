@@ -5,10 +5,10 @@ namespace Database\Seeders;
 use App\Enums\PaymentStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\RefundStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\RefundRequest;
+use App\Models\TrainingPath;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -25,6 +25,7 @@ class PaymentSeeder extends Seeder
 
         if ($engineers->isEmpty() || $trainingPaths->isEmpty()) {
             $this->command->warn('No engineers or trainingPaths found. Skipping payments.');
+
             return;
         }
 
@@ -47,8 +48,8 @@ class PaymentSeeder extends Seeder
                         'amount_cents' => rand(9900, 49900),
                         'currency' => 'USD',
                         'status' => $status,
-                        'stripe_session_id' => 'sess_' . uniqid(),
-                        'stripe_payment_intent_id' => $status === PaymentStatus::FAILED ? null : ('pi_' . uniqid()),
+                        'stripe_session_id' => 'sess_'.uniqid(),
+                        'stripe_payment_intent_id' => $status === PaymentStatus::FAILED ? null : ('pi_'.uniqid()),
                         'paid_at' => $status === PaymentStatus::COMPLETED ? now()->subDays(rand(1, 60)) : null,
                         'metadata' => json_encode([
                             'source' => ['website', 'mobile_app', 'admin_panel'][array_rand([0, 1, 2])],
@@ -92,8 +93,8 @@ class PaymentSeeder extends Seeder
                     'payment_id' => $payment->id,
                     'reason' => $reasons[array_rand($reasons)],
                     'status' => $status,
-                    'processed_at' => in_array($status, [RefundStatus::APPROVED, RefundStatus::REJECTED, RefundStatus::COMPLETED, RefundStatus::FAILED]) 
-                        ? now()->subDays(rand(0, 10)) 
+                    'processed_at' => in_array($status, [RefundStatus::APPROVED, RefundStatus::REJECTED, RefundStatus::COMPLETED, RefundStatus::FAILED])
+                        ? now()->subDays(rand(0, 10))
                         : null,
                     'refund_amount_cents' => in_array($status, [RefundStatus::APPROVED, RefundStatus::COMPLETED]) ? $payment->amount_cents : null,
                     'admin_notes' => $status === RefundStatus::REJECTED ? 'Outside refund window' : null,

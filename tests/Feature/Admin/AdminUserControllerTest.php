@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\UserManagementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Mockery;
 use Tests\TestCase;
 
@@ -34,7 +35,7 @@ class AdminUserControllerTest extends TestCase
     public function test_admin_can_list_users(): void
     {
         // Create a mock paginated collection
-        $users = new \Illuminate\Pagination\LengthAwarePaginator(
+        $users = new LengthAwarePaginator(
             [$this->engineer], // items
             2, // total
             15, // perPage
@@ -71,7 +72,7 @@ class AdminUserControllerTest extends TestCase
 
     public function test_admin_can_list_users_with_filters(): void
     {
-        $users = new \Illuminate\Pagination\LengthAwarePaginator(
+        $users = new LengthAwarePaginator(
             [], // items
             0, // total
             10, // perPage

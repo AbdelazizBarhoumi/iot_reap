@@ -19,6 +19,7 @@ class HardwareSeeder extends Seeder
 
         if ($servers->isEmpty()) {
             $this->command->warn('No Proxmox servers found. Skipping hardware setup.');
+
             return;
         }
 
@@ -53,10 +54,10 @@ class HardwareSeeder extends Seeder
 
                 UsbDevice::create([
                     'gateway_node_id' => $gateway->id,
-                    'busid' => "1-{$i}." . rand(1, 5),
+                    'busid' => "1-{$i}.".rand(1, 5),
                     'vendor_id' => strtolower(bin2hex(random_bytes(2))),
                     'product_id' => strtolower(bin2hex(random_bytes(2))),
-                    'name' => $deviceTypes[$i % count($deviceTypes)] . " #{$i}",
+                    'name' => $deviceTypes[$i % count($deviceTypes)]." #{$i}",
                     'status' => $status,
                     'is_camera' => false,
                 ]);

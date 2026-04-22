@@ -8,7 +8,12 @@ export type TrainingPathStatus =
     | 'rejected'
     | 'archived';
 export type TrainingPathLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-export type TrainingUnitType = 'video' | 'reading' | 'practice' | 'vm-lab';
+export type TrainingUnitType =
+    | 'video'
+    | 'reading'
+    | 'practice'
+    | 'vm-lab'
+    | 'quiz';
 export type VideoType = 'upload' | 'youtube';
 export interface TrainingUnit {
     id: string;
@@ -42,6 +47,7 @@ export interface TrainingPath {
     level: TrainingPathLevel;
     duration: string | null;
     price: number;
+    formattedPrice?: string;
     currency: string;
     rating: number;
     students: number;

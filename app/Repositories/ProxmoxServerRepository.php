@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Repository for Proxmox server queries.
@@ -28,7 +29,7 @@ class ProxmoxServerRepository
     /**
      * Find an active Proxmox server by ID.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findActiveById(int $id): ProxmoxServer
     {
@@ -40,7 +41,7 @@ class ProxmoxServerRepository
     /**
      * Find a Proxmox server by ID (regardless of active status).
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findById(int $id): ProxmoxServer
     {
@@ -51,7 +52,7 @@ class ProxmoxServerRepository
     /**
      * Find the Proxmox server that a node belongs to.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findByNode(ProxmoxNode $node): ProxmoxServer
     {

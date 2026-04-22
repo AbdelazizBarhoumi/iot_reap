@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 use App\Enums\CameraPTZDirection;
 use App\Exceptions\CameraControlConflictException;
 use App\Exceptions\CameraNotControllableException;
+use App\Http\Requests\Camera\ChangeResolutionRequest;
 use App\Http\Requests\CameraMoveRequest;
 use App\Http\Resources\CameraResource;
 use App\Models\Camera;
 use App\Models\VMSession;
+use App\Repositories\CameraRepository;
 use App\Services\CameraService;
 use App\Services\GatewayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Controller for session camera endpoints.
@@ -54,7 +58,7 @@ class SessionCameraController extends Controller
     {
         $this->authorizeSession($request, $sessionId);
 
-        $camera = app(\App\Repositories\CameraRepository::class)->findWithControl($cameraId);
+        $camera = app(CameraRepository::class)->findWithControl($cameraId);
 
         return response()->json([
             'data' => new CameraResource($camera),
@@ -72,7 +76,7 @@ class SessionCameraController extends Controller
         try {
             $control = $this->cameraService->acquireControl($cameraId, $session->id);
 
-            $camera = app(\App\Repositories\CameraRepository::class)->findWithControl($cameraId);
+            $camera = app(CameraRepository::class)->findWithControl($cameraId);
 
             return response()->json([
                 'data' => new CameraResource($camera),
@@ -101,7 +105,7 @@ class SessionCameraController extends Controller
             ], 422);
         }
 
-        $camera = app(\App\Repositories\CameraRepository::class)->findWithControl($cameraId);
+        $camera = app(CameraRepository::class)->findWithControl($cameraId);
 
         return response()->json([
             'data' => new CameraResource($camera),
@@ -151,13 +155,13 @@ class SessionCameraController extends Controller
      * Restarts the ffmpeg stream with the new settings.
      * "auto" mode picks the best resolution for the camera type.
      */
-    public function changeResolution(\App\Http\Requests\Camera\ChangeResolutionRequest $request, string $sessionId, int $cameraId): JsonResponse
+    public function changeResolution(ChangeResolutionRequest $request, string $sessionId, int $cameraId): JsonResponse
     {
         $session = $this->authorizeSession($request, $sessionId);
 
         $validated = $request->validated();
 
-        $camera = app(\App\Repositories\CameraRepository::class)->findOrFail($cameraId);
+        $camera = app(CameraRepository::class)->findOrFail($cameraId);
 
         // Delegate to service for business logic
         $result = $this->cameraService->changeResolution($camera, $validated, $this->gatewayService);
@@ -177,11 +181,11 @@ class SessionCameraController extends Controller
      * Proxy HLS requests to MediaMTX. This allows browsers to access HLS
      * streams through Laravel, avoiding direct LAN IP access issues.
      */
-    public function hlsProxy(Request $request, string $sessionId, int $cameraId, ?string $path = null): \Illuminate\Http\Response
+    public function hlsProxy(Request $request, string $sessionId, int $cameraId, ?string $path = null): Response
     {
         $startTime = microtime(true);
-        
-        \Illuminate\Support\Facades\Log::info('HLS proxy request received', [
+
+        Log::info('HLS proxy request received', [
             'session_id' => $sessionId,
             'camera_id' => $cameraId,
             'path' => $path,
@@ -190,7 +194,7 @@ class SessionCameraController extends Controller
 
         $this->authorizeSession($request, $sessionId);
 
-        $camera = app(\App\Repositories\CameraRepository::class)->findOrFail($cameraId);
+        $camera = app(CameraRepository::class)->findOrFail($cameraId);
         $camera->loadMissing('gatewayNode');
 
         $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
@@ -203,14 +207,15 @@ class SessionCameraController extends Controller
 
         try {
             $response = Http::timeout(10)->get($upstreamUrl);
-            
+
             $elapsed = microtime(true) - $startTime;
 
             if (! $response->successful()) {
-                \Illuminate\Support\Facades\Log::warning('HLS upstream returned error', [
+                Log::warning('HLS upstream returned error', [
                     'status' => $response->status(),
                     'elapsed_ms' => round($elapsed * 1000, 2),
                 ]);
+
                 return response($response->body(), $response->status())
                     ->header('Content-Type', 'text/plain');
             }
@@ -257,9 +262,9 @@ class SessionCameraController extends Controller
                     $body
                 );
             }
-            
+
             $elapsed = microtime(true) - $startTime;
-            \Illuminate\Support\Facades\Log::info('HLS proxy response sent', [
+            Log::info('HLS proxy response sent', [
                 'camera_id' => $cameraId,
                 'path' => $streamPath,
                 'size_bytes' => strlen($body),
@@ -278,7 +283,7 @@ class SessionCameraController extends Controller
                 ->header('X-Content-Type-Options', 'nosniff');
         } catch (\Exception $e) {
             $elapsed = microtime(true) - $startTime;
-            \Illuminate\Support\Facades\Log::error('HLS proxy failed', [
+            Log::error('HLS proxy failed', [
                 'camera_id' => $cameraId,
                 'stream_key' => $camera->stream_key,
                 'upstream_url' => $upstreamUrl,
@@ -300,11 +305,11 @@ class SessionCameraController extends Controller
      * and return the SDP answer. Only the signaling is proxied — the actual
      * WebRTC media stream flows directly between MediaMTX and the browser.
      */
-    public function whepProxy(Request $request, string $sessionId, int $cameraId): \Illuminate\Http\Response
+    public function whepProxy(Request $request, string $sessionId, int $cameraId): Response
     {
         $this->authorizeSession($request, $sessionId);
 
-        $camera = app(\App\Repositories\CameraRepository::class)->findOrFail($cameraId);
+        $camera = app(CameraRepository::class)->findOrFail($cameraId);
         $camera->loadMissing('gatewayNode');
 
         // Use the camera's gateway node IP — each camera streams from its own gateway
@@ -340,7 +345,7 @@ class SessionCameraController extends Controller
 
             return $result;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('WHEP proxy failed', [
+            Log::error('WHEP proxy failed', [
                 'camera_id' => $cameraId,
                 'stream_key' => $camera->stream_key,
                 'whep_url' => $whepUrl,

@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Enums\NotificationType;
 use App\Models\ActivityLog;
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\Caption;
-use App\Models\TrainingPath;
-use App\Models\TrainingPathEnrollment;
 use App\Models\DailyTrainingPathStats;
 use App\Models\GuacamoleConnectionPreference;
-use App\Models\TrainingUnit;
-use App\Models\TrainingUnitProgress;
-use App\Models\TrainingUnitVMAssignment;
 use App\Models\NodeCredentialsLog;
-use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\Search;
 use App\Models\StripeWebhook;
 use App\Models\SystemAlert;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingUnit;
+use App\Models\TrainingUnitProgress;
+use App\Models\TrainingUnitVMAssignment;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
 use App\Models\User;
@@ -88,7 +86,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ ActivityLog seeded (' . count($actions) . ' action types × ' . min(5, count($users)) . ' users)');
+        $this->command->info('✓ ActivityLog seeded ('.count($actions).' action types × '.min(5, count($users)).' users)');
     }
 
     /**
@@ -101,6 +99,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($cameras->isEmpty() || $vmSessions->isEmpty()) {
             $this->command->warn('⚠ Skipping camera session controls (missing cameras or VM sessions)');
+
             return;
         }
 
@@ -113,7 +112,7 @@ class ComprehensiveModelSeeder extends Seeder
                     'acquired_at' => now()->subHours(rand(1, 24)),
                 ]
             );
-            
+
             // Create two with released_at set (historical)
             for ($i = 0; $i < 2; $i++) {
                 $releasedAt = now()->subDays(rand(0, 6))->subHours(rand(0, 23))->subMinutes($i * 5);
@@ -126,7 +125,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ CameraSessionControl seeded (' . (min(3, count($cameras)) * 3) . ' records)');
+        $this->command->info('✓ CameraSessionControl seeded ('.(min(3, count($cameras)) * 3).' records)');
     }
 
     /**
@@ -138,6 +137,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($videos->isEmpty()) {
             $this->command->warn('⚠ Skipping captions (missing videos)');
+
             return;
         }
 
@@ -156,7 +156,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ Caption seeded (' . min(5, count($videos)) . ' videos with multiple languages)');
+        $this->command->info('✓ Caption seeded ('.min(5, count($videos)).' videos with multiple languages)');
     }
 
     /**
@@ -168,6 +168,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($trainingPaths->isEmpty()) {
             $this->command->warn('⚠ Skipping daily trainingPath stats (missing trainingPaths)');
+
             return;
         }
 
@@ -188,7 +189,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ DailyTrainingPathStats seeded (30 days × ' . min(5, count($trainingPaths)) . ' trainingPaths)');
+        $this->command->info('✓ DailyTrainingPathStats seeded (30 days × '.min(5, count($trainingPaths)).' trainingPaths)');
     }
 
     /**
@@ -200,6 +201,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($users->isEmpty()) {
             $this->command->warn('⚠ Skipping Guacamole preferences (missing engineers)');
+
             return;
         }
 
@@ -210,7 +212,7 @@ class ComprehensiveModelSeeder extends Seeder
                 GuacamoleConnectionPreference::firstOrCreate(
                     ['user_id' => $user->id, 'vm_session_type' => $sessionType],
                     [
-                        'profile_name' => ucfirst($sessionType) . ' Profile',
+                        'profile_name' => ucfirst($sessionType).' Profile',
                         'is_default' => $sessionType === 'rdp',
                         'parameters' => json_encode([
                             'color_depth' => '24-bit',
@@ -225,7 +227,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ GuacamoleConnectionPreference seeded (' . count($sessionTypes) . ' protocols × ' . min(5, count($users)) . ' users)');
+        $this->command->info('✓ GuacamoleConnectionPreference seeded ('.count($sessionTypes).' protocols × '.min(5, count($users)).' users)');
     }
 
     /**
@@ -239,6 +241,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($enrollments->isEmpty() || $trainingUnits->isEmpty()) {
             $this->command->warn('⚠ Skipping trainingUnit progress (missing enrollments or trainingUnits)');
+
             return;
         }
 
@@ -248,13 +251,13 @@ class ComprehensiveModelSeeder extends Seeder
         foreach ($enrollments->random(min(5, count($enrollments))) as $enrollment) {
             foreach ($trainingUnits->random(min(5, count($trainingUnits))) as $trainingUnit) {
                 $status = $statuses[array_rand($statuses)];
-                
-                $existing = \App\Models\TrainingUnitProgress::where('user_id', $enrollment->user_id)
+
+                $existing = TrainingUnitProgress::where('user_id', $enrollment->user_id)
                     ->where('training_unit_id', $trainingUnit->id)
                     ->first();
-                
-                if (!$existing) {
-                    \App\Models\TrainingUnitProgress::create([
+
+                if (! $existing) {
+                    TrainingUnitProgress::create([
                         'user_id' => $enrollment->user_id,
                         'training_unit_id' => $trainingUnit->id,
                         'status' => $status,
@@ -268,7 +271,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ TrainingUnitProgress seeded (' . $count . ' additional records with status variations)');
+        $this->command->info('✓ TrainingUnitProgress seeded ('.$count.' additional records with status variations)');
     }
 
     /**
@@ -280,6 +283,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($trainingUnits->isEmpty()) {
             $this->command->warn('⚠ Skipping trainingUnit VM assignments (missing trainingUnits)');
+
             return;
         }
 
@@ -299,7 +303,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ TrainingUnitVMAssignment seeded (' . count($statuses) . ' status variations)');
+        $this->command->info('✓ TrainingUnitVMAssignment seeded ('.count($statuses).' status variations)');
     }
 
     /**
@@ -312,6 +316,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($proxmoxServers->isEmpty() || $users->isEmpty()) {
             $this->command->warn('⚠ Skipping node credentials logs (missing servers or users)');
+
             return;
         }
 
@@ -333,7 +338,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ NodeCredentialsLog seeded (' . count($actions) . ' action types)');
+        $this->command->info('✓ NodeCredentialsLog seeded ('.count($actions).' action types)');
     }
 
     /**
@@ -345,6 +350,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($users->isEmpty()) {
             $this->command->warn('⚠ Skipping search records (missing users)');
+
             return;
         }
 
@@ -373,7 +379,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ Search seeded (' . count($searchTerms) . ' search terms)');
+        $this->command->info('✓ Search seeded ('.count($searchTerms).' search terms)');
     }
 
     /**
@@ -398,15 +404,15 @@ class ComprehensiveModelSeeder extends Seeder
 
         foreach ($eventTypes as $eventType) {
             StripeWebhook::create([
-                'stripe_event_id' => 'evt_' . Str::random(32),
+                'stripe_event_id' => 'evt_'.Str::random(32),
                 'event_type' => $eventType,
                 'payload' => [
-                    'id' => 'evt_' . Str::random(32),
+                    'id' => 'evt_'.Str::random(32),
                     'type' => $eventType,
                     'created' => now()->timestamp,
                     'data' => [
                         'object' => [
-                            'id' => 'pi_' . Str::random(32),
+                            'id' => 'pi_'.Str::random(32),
                             'amount' => rand(1000, 50000),
                             'currency' => 'usd',
                         ],
@@ -417,7 +423,7 @@ class ComprehensiveModelSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('✓ StripeWebhook seeded (' . count($eventTypes) . ' Stripe event types)');
+        $this->command->info('✓ StripeWebhook seeded ('.count($eventTypes).' Stripe event types)');
     }
 
     /**
@@ -448,7 +454,7 @@ class ComprehensiveModelSeeder extends Seeder
                     'severity' => $severity,
                     'source' => $sources[array_rand($sources)],
                     'metadata' => [
-                        'error_code' => 'ERR_' . rand(1000, 9999),
+                        'error_code' => 'ERR_'.rand(1000, 9999),
                         'retry_count' => rand(0, 5),
                     ],
                     'acknowledged' => rand(0, 1) === 1,
@@ -459,7 +465,7 @@ class ComprehensiveModelSeeder extends Seeder
             }
         }
 
-        $this->command->info('✓ SystemAlert seeded (' . count($alertTitles) . ' titles × ' . count($severities) . ' severities)');
+        $this->command->info('✓ SystemAlert seeded ('.count($alertTitles).' titles × '.count($severities).' severities)');
     }
 
     /**
@@ -473,6 +479,7 @@ class ComprehensiveModelSeeder extends Seeder
 
         if ($usbDevices->isEmpty() || $vmSessions->isEmpty() || $users->isEmpty()) {
             $this->command->warn('⚠ Skipping USB device queue (missing devices, sessions, or users)');
+
             return;
         }
 
@@ -480,7 +487,7 @@ class ComprehensiveModelSeeder extends Seeder
         foreach ($usbDevices->random(min(3, count($usbDevices))) as $device) {
             // Create queues with different sessions to avoid unique constraint violations
             $sessionsToUse = $vmSessions->random(min(3, count($vmSessions)));
-            
+
             foreach ($sessionsToUse as $session) {
                 UsbDeviceQueue::firstOrCreate(
                     ['usb_device_id' => $device->id, 'session_id' => $session->id],

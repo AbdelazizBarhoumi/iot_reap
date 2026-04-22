@@ -2,13 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * API resource for Article model.
  *
- * @property \App\Models\Article $resource
+ * @property Article $resource
  */
 class ArticleResource extends JsonResource
 {

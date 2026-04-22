@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\UsbDeviceStatus;
 use App\Models\UsbDevice;
+use App\Models\UsbDeviceQueue;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientFactory;
 use App\Services\UsbDeviceQueueService;
@@ -438,7 +439,7 @@ class UsbReconcileCommand extends Command
     {
         if ($dryRun) {
             // In dry-run mode, just count
-            $count = \App\Models\UsbDeviceQueue::whereHas('session', function ($query) {
+            $count = UsbDeviceQueue::whereHas('session', function ($query) {
                 $query->whereIn('status', ['expired', 'terminated', 'failed']);
             })->count();
 

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Enums\UserRole;
+use App\Http\Middleware\EnsureRole;
+use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Repositories\ProxmoxServerRepository;
 use App\Services\GuacamoleClient;
@@ -10,6 +12,7 @@ use App\Services\GuacamoleClientFake;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
 use App\Services\ProxmoxClientFactory;
+use App\Services\ProxmoxClientFake;
 use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxLoadBalancer;
 use App\Services\ProxmoxServerSelector;
@@ -37,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
         // Priority: DB server credentials > env credentials > fake client
         $this->app->singleton(ProxmoxClientInterface::class, function ($app) {
             // First, try to get an active ProxmoxServer from the database
-            $server = \App\Models\ProxmoxServer::where('is_active', true)->first();
+            $server = ProxmoxServer::where('is_active', true)->first();
 
             if ($server) {
                 // Database server has encrypted credentials - use it
@@ -50,11 +53,11 @@ class AppServiceProvider extends ServiceProvider
 
             // If no credentials anywhere, use the fake client (tests / local dev)
             if (! $tokenId || ! $tokenSecret) {
-                return new \App\Services\ProxmoxClientFake;
+                return new ProxmoxClientFake;
             }
 
             // Build an in-memory server model from config
-            $server = new \App\Models\ProxmoxServer([
+            $server = new ProxmoxServer([
                 'name' => 'config-default',
                 'host' => config('proxmox.host'),
                 'port' => config('proxmox.port'),
@@ -119,7 +122,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         // register `role:` route middleware alias
-        $this->app->make(Router::class)->aliasMiddleware('role', \App\Http\Middleware\EnsureRole::class);
+        $this->app->make(Router::class)->aliasMiddleware('role', EnsureRole::class);
 
         // gates based on UserRole enum (names per phase-1 spec)
         Gate::define('admin-only', fn (User $user) => $user->hasRole(UserRole::ADMIN));
@@ -134,8 +137,7 @@ class AppServiceProvider extends ServiceProvider
         ]));
 
         // Teaching gate — admins always allowed; teachers must be approved.
-        Gate::define('teach', fn (User $user) =>
-            $user->hasRole(UserRole::ADMIN)
+        Gate::define('teach', fn (User $user) => $user->hasRole(UserRole::ADMIN)
             || ($user->hasRole(UserRole::TEACHER) && $user->isTeacherApproved())
         );
 

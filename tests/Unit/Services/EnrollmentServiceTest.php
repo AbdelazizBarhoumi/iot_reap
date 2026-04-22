@@ -7,6 +7,7 @@ use App\Models\TrainingPathEnrollment;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
 use App\Models\User;
+use App\Repositories\PaymentRepository;
 use App\Repositories\TrainingPathEnrollmentRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitProgressRepository;
@@ -26,14 +27,16 @@ class EnrollmentServiceTest extends TestCase
         $enrollmentRepo = app(TrainingPathEnrollmentRepository::class);
         $trainingPathRepo = app(TrainingPathRepository::class);
         $progressRepo = app(TrainingUnitProgressRepository::class);
+        $paymentRepo = app(PaymentRepository::class);
         $this->enrollmentService = new EnrollmentService(
             $enrollmentRepo,
             $trainingPathRepo,
-            $progressRepo
+            $progressRepo,
+            $paymentRepo,
         );
     }
 
-    public function test_enroll_user_in_trainingPath(): void
+    public function test_enroll_user_in_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();
@@ -49,7 +52,7 @@ class EnrollmentServiceTest extends TestCase
         ]);
     }
 
-    public function test_cannot_enroll_twice_in_same_trainingPath(): void
+    public function test_cannot_enroll_twice_in_same_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->approved()->create();

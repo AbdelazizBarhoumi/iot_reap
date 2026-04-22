@@ -180,7 +180,7 @@ class VMSessionCleanupServiceTest extends BaseTestCase
     public function test_cleanup_session_guacamole_succeeds_when_session_has_connection(): void
     {
         // Arrange
-        $session = Mockery::mock(\App\Models\VMSession::class)->shouldIgnoreMissing();
+        $session = Mockery::mock(VMSession::class)->shouldIgnoreMissing();
         $session->shouldReceive('offsetGet')
             ->with('id')
             ->andReturn('session-1');
@@ -244,7 +244,7 @@ class VMSessionCleanupServiceTest extends BaseTestCase
     public function test_cleanup_session_guacamole_returns_false_when_no_connection_id(): void
     {
         // Arrange
-        $session = Mockery::mock(\App\Models\VMSession::class)->shouldIgnoreMissing();
+        $session = Mockery::mock(VMSession::class)->shouldIgnoreMissing();
         $session->id = 'session-1';
         $session->guacamole_connection_id = null;
 
@@ -267,7 +267,7 @@ class VMSessionCleanupServiceTest extends BaseTestCase
     public function test_cleanup_session_guacamole_handles_api_failure(): void
     {
         // Arrange
-        $session = Mockery::mock(\App\Models\VMSession::class)->shouldIgnoreMissing();
+        $session = Mockery::mock(VMSession::class)->shouldIgnoreMissing();
         $session->shouldReceive('offsetGet')
             ->with('id')
             ->andReturn('session-1');

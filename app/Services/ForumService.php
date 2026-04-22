@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Enums\NotificationType;
 use App\Enums\ThreadStatus;
-use App\Models\TrainingPath;
 use App\Models\DiscussionThread;
-use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
+use App\Models\TrainingPath;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use App\Repositories\ForumRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**

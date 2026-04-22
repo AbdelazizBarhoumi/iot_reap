@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -14,11 +18,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * App user model.
  *
  * @property string $id
- * @property \App\Enums\UserRole $role
+ * @property UserRole $role
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasUlids, Notifiable, TwoFactorAuthenticatable;
 
     /**
@@ -137,7 +141,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Admin who approved the teacher account.
      */
-    public function approvedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_approved_by');
     }
@@ -149,7 +153,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * TrainingPaths the user is enrolled in.
      */
-    public function enrolledTrainingPaths(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function enrolledTrainingPaths(): BelongsToMany
     {
         return $this->belongsToMany(TrainingPath::class, 'training_path_enrollments')
             ->withPivot('enrolled_at')
@@ -159,7 +163,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * TrainingPaths the user teaches (as instructor).
      */
-    public function taughtTrainingPaths(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function taughtTrainingPaths(): HasMany
     {
         return $this->hasMany(TrainingPath::class, 'instructor_id');
     }
@@ -167,7 +171,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * User's quiz attempts.
      */
-    public function quizAttempts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quizAttempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
     }
@@ -175,7 +179,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * User's payments.
      */
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
@@ -183,7 +187,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * User's notifications.
      */
-    public function notifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
     }

@@ -9,7 +9,7 @@ use App\Models\VMSession;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UsbDeviceQueue>
+ * @extends Factory<UsbDeviceQueue>
  */
 class UsbDeviceQueueFactory extends Factory
 {

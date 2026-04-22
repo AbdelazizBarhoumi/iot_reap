@@ -6,12 +6,13 @@ use App\Http\Requests\Checkout\InitiateCheckoutRequest;
 use App\Http\Requests\Checkout\RequestRefundRequest;
 use App\Http\Resources\PaymentResource;
 use App\Http\Resources\RefundRequestResource;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\TrainingPath;
 use App\Repositories\PaymentRepository;
 use App\Services\CheckoutService;
 use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -85,9 +86,15 @@ class CheckoutController extends Controller
     /**
      * Get user's payment history.
      */
-    public function payments(): Response
+    public function payments(Request $request): JsonResponse|Response
     {
         $payments = $this->paymentRepository->getByUser(auth()->user());
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => PaymentResource::collection($payments),
+            ]);
+        }
 
         return Inertia::render('checkout/payments', [
             'payments' => PaymentResource::collection($payments),
@@ -123,9 +130,15 @@ class CheckoutController extends Controller
     /**
      * Get user's refund requests.
      */
-    public function refunds(): Response
+    public function refunds(Request $request): JsonResponse|Response
     {
         $refunds = $this->refundService->getUserRefundRequests(auth()->user());
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => RefundRequestResource::collection($refunds),
+            ]);
+        }
 
         return Inertia::render('checkout/refunds', [
             'refunds' => RefundRequestResource::collection($refunds),

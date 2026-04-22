@@ -5,7 +5,9 @@ namespace Tests\Unit\Listeners;
 use App\Enums\VMSessionProtocol;
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionActivated;
+use App\Exceptions\GuacamoleApiException;
 use App\Listeners\CreateGuacamoleConnectionListener;
+use App\Models\GuacamoleConnectionPreference;
 use App\Models\ProxmoxNode;
 use App\Models\User;
 use App\Models\VMSession;
@@ -158,7 +160,7 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
         $listener = app(CreateGuacamoleConnectionListener::class);
 
         // The listener now propagates exceptions after marking the session FAILED.
-        $this->expectException(\App\Exceptions\GuacamoleApiException::class);
+        $this->expectException(GuacamoleApiException::class);
 
         try {
             $listener->handle(new VMSessionActivated($session));
@@ -215,7 +217,7 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
 
         $this->proxmoxClient->registerVM('pve-1', $vmId, 'running', '10.0.0.55');
 
-        \App\Models\GuacamoleConnectionPreference::create([
+        GuacamoleConnectionPreference::create([
             'user_id' => $user->id,
             'vm_session_type' => 'rdp',
             'parameters' => [

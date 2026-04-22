@@ -2,17 +2,21 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserRole;
 use App\Enums\VMSessionStatus;
 use App\Events\VMSessionActivated;
 use App\Events\VMSessionReady;
 use App\Exceptions\GuacamoleApiException;
 use App\Exceptions\ProxmoxApiException;
+use App\Models\User;
+use App\Notifications\SessionActivationFailed;
 use App\Services\AdminAlertService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\GuacamoleConnectionParamsBuilder;
 use App\Services\ProxmoxClientInterface;
 use App\Services\ProxmoxIPResolver;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Creates a Guacamole connection when a VM session is activated.
@@ -173,11 +177,11 @@ class CreateGuacamoleConnectionListener
 
         // Notify admins so ops can investigate (non-blocking)
         try {
-            $admins = \App\Models\User::where('role', \App\Enums\UserRole::ADMIN->value)->get();
+            $admins = User::where('role', UserRole::ADMIN->value)->get();
             if ($admins->isNotEmpty()) {
-                \Illuminate\Support\Facades\Notification::send(
+                Notification::send(
                     $admins,
-                    new \App\Notifications\SessionActivationFailed($session, $context, $e->getMessage())
+                    new SessionActivationFailed($session, $context, $e->getMessage())
                 );
             }
         } catch (\Throwable $notifyEx) {

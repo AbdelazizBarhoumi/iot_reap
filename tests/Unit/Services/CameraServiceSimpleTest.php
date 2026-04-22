@@ -47,7 +47,7 @@ class CameraServiceSimpleTest extends TestCase
     {
         // Arrange
         $cameras = new Collection;
-        $session = new VMSession();
+        $session = new VMSession;
         $session->id = 'session-123';
         $session->vm_id = 1;
 

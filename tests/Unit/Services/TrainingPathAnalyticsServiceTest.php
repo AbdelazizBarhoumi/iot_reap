@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Services;
 
+use App\Models\DailyTrainingPathStats;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
 use App\Models\TrainingPathModule;
-use App\Models\DailyTrainingPathStats;
 use App\Models\TrainingUnit;
 use App\Models\TrainingUnitProgress;
 use App\Models\User;
@@ -360,7 +360,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         }
     }
 
-    public function test_funnel_returns_zeros_for_empty_trainingPath(): void
+    public function test_funnel_returns_zeros_for_empty_training_path(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
@@ -372,7 +372,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         }
     }
 
-    public function test_funnel_handles_training_path_with_no_trainingUnits(): void
+    public function test_funnel_handles_training_path_with_no_training_units(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
@@ -608,7 +608,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
     // Edge Cases & Integration Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_teacher_kpis_only_include_own_trainingPaths(): void
+    public function test_teacher_kpis_only_include_own_training_paths(): void
     {
         $teacher1 = User::factory()->create();
         $teacher2 = User::factory()->create();
@@ -629,7 +629,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         $this->assertEquals(10, $kpis['total_enrollments']);
     }
 
-    public function test_aggregates_stats_from_multiple_trainingPaths(): void
+    public function test_aggregates_stats_from_multiple_training_paths(): void
     {
         $teacher = User::factory()->create();
 

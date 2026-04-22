@@ -197,6 +197,7 @@ class UsbDeviceRepository
      */
     public function removeStaleDevices(GatewayNode $node, array $currentBusIds): int
     {
+        /** @var Collection<int, UsbDevice> $staleDevices */
         $staleDevices = UsbDevice::where('gateway_node_id', $node->id)
             ->whereNotIn('busid', $currentBusIds)
             ->get();
@@ -209,6 +210,7 @@ class UsbDeviceRepository
                 // Mark as disconnected instead of deleting (keeps audit trail and dedicated config)
                 $device->update([
                     'status' => UsbDeviceStatus::DISCONNECTED,
+                    'is_camera' => false,
                 ]);
                 $affectedCount++;
             } else {

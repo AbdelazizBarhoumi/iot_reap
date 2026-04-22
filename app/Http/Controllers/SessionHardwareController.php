@@ -96,6 +96,7 @@ class SessionHardwareController extends Controller
                     'queue_position' => $item['queue_position'],
                     'queue_length' => $item['queue_length'],
                     'reason' => $item['attachment_reason'],
+                    'reserved_until' => $item['reserved_until'] ?? null,
                     'gateway_verified' => $item['gateway_verified'] ?? true,
                 ]),
                 'attached_devices' => UsbDeviceResource::collection($attachedDevices),
@@ -107,8 +108,8 @@ class SessionHardwareController extends Controller
     /**
      * Attach a USB device to the session.
      *
-        * This endpoint is synchronous and blocks until the attachment operation
-        * completes (Windows VMs may take up to ~120 seconds while drivers load).
+     * This endpoint is synchronous and blocks until the attachment operation
+     * completes (Windows VMs may take up to ~120 seconds while drivers load).
      *
      * Uses database-level locking to prevent race conditions when
      * multiple users attempt to attach the same device simultaneously.

@@ -81,7 +81,7 @@ class SecurityHeaders
         // In development, allow Vite dev server on any local interface
         if (! app()->isProduction()) {
             $vitePort = config('app.vite_port', 5173);
-            
+
             // Allow Vite on localhost and 127.0.0.1 for any port (development flexibility)
             $viteUrls = [
                 "http://localhost:{$vitePort}",
@@ -91,7 +91,7 @@ class SecurityHeaders
             foreach ($viteUrls as $viteUrl) {
                 $scriptSrc .= " {$viteUrl}";
                 $styleSrc .= " {$viteUrl}";
-                $connectSrc .= " {$viteUrl} ws://" . str_replace('http://', '', $viteUrl);
+                $connectSrc .= " {$viteUrl} ws://".str_replace('http://', '', $viteUrl);
                 $imgSrc .= " {$viteUrl}";
                 $fontSrc .= " {$viteUrl}";
                 $workerSrc .= " {$viteUrl}";

@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CameraStatus;
 use App\Http\Requests\Camera\CreateCameraReservationRequest;
 use App\Http\Resources\CameraReservationResource;
+use App\Http\Resources\CameraResource;
 use App\Models\Camera;
 use App\Models\Reservation;
 use App\Repositories\CameraReservationRepository;
 use App\Services\CameraService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -26,12 +29,32 @@ class CameraReservationController extends Controller
     /**
      * List user's camera reservations.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|RedirectResponse
     {
         $reservations = $this->reservationRepository->findByUser(auth()->user());
 
+        if (! $request->wantsJson()) {
+            return redirect()->route('reservations.index', ['tab' => 'cameras']);
+        }
+
         return response()->json([
             'data' => CameraReservationResource::collection($reservations),
+        ]);
+    }
+
+    /**
+     * List active cameras that engineers can reserve.
+     */
+    public function cameras(): JsonResponse
+    {
+        $cameras = Camera::query()
+            ->with(['gatewayNode', 'usbDevice', 'robot'])
+            ->where('status', CameraStatus::ACTIVE)
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => CameraResource::collection($cameras),
         ]);
     }
 

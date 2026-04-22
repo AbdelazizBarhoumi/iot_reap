@@ -8,7 +8,6 @@ use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
 use App\Services\GuacamoleClientInterface;
 use App\Services\VMSessionCleanupService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Mockery\MockInterface;
@@ -16,7 +15,6 @@ use Tests\TestCase;
 
 class VMSessionCleanupServiceTest extends TestCase
 {
-
     private VMSessionCleanupService $service;
 
     private MockInterface $guacamoleMock;

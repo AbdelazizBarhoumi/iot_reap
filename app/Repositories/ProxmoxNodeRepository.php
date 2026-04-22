@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Repository for Proxmox node queries.
@@ -29,7 +30,7 @@ class ProxmoxNodeRepository
     /**
      * Find a node by ID.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findById(int $id): ProxmoxNode
     {

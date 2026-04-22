@@ -28,7 +28,7 @@ class TrainingUnitNoteServiceTest extends TestCase
     // createNote() tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_creates_note_for_trainingUnit(): void
+    public function test_creates_note_for_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingUnit = TrainingUnit::factory()->create();
@@ -62,7 +62,7 @@ class TrainingUnitNoteServiceTest extends TestCase
         ]);
     }
 
-    public function test_creates_multiple_notes_for_same_trainingUnit(): void
+    public function test_creates_multiple_notes_for_same_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingUnit = TrainingUnit::factory()->create();
@@ -78,7 +78,7 @@ class TrainingUnitNoteServiceTest extends TestCase
     // getNotesForTrainingUnit() tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_notes_for_user_and_trainingUnit(): void
+    public function test_gets_notes_for_user_and_training_unit(): void
     {
         $user = User::factory()->create();
         $trainingUnit = TrainingUnit::factory()->create();
@@ -158,7 +158,7 @@ class TrainingUnitNoteServiceTest extends TestCase
     // getNotesForTrainingPath() tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_gets_notes_for_user_across_trainingPath(): void
+    public function test_gets_notes_for_user_across_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();
@@ -180,7 +180,7 @@ class TrainingUnitNoteServiceTest extends TestCase
         $this->assertCount(2, $notes);
     }
 
-    public function test_does_not_return_notes_from_other_trainingPaths(): void
+    public function test_does_not_return_notes_from_other_training_paths(): void
     {
         $user = User::factory()->create();
         $trainingPath1 = TrainingPath::factory()->create();

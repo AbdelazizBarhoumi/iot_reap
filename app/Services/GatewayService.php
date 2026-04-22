@@ -3,14 +3,17 @@
 namespace App\Services;
 
 use App\Enums\UsbDeviceStatus;
+use App\Enums\CameraStatus;
 use App\Exceptions\GatewayApiException;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\GatewayNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
 use App\Models\VMSession;
+use App\Repositories\CameraRepository;
 use App\Repositories\GatewayNodeRepository;
 use App\Repositories\UsbDeviceRepository;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -38,6 +41,7 @@ class GatewayService
     public function __construct(
         private readonly GatewayNodeRepository $nodeRepository,
         private readonly UsbDeviceRepository $deviceRepository,
+        private readonly CameraRepository $cameraRepository,
         private readonly ProxmoxClientFactory $proxmoxClientFactory,
     ) {}
 
@@ -50,7 +54,7 @@ class GatewayService
      * Safely extract an error message from a JSON response.
      * Handles cases where the 'detail' field could be an array or object.
      */
-    private function extractErrorMessage(\Illuminate\Http\Client\Response $response, string $key = 'detail', string $default = 'Operation failed'): string
+    private function extractErrorMessage(Response $response, string $key = 'detail', string $default = 'Operation failed'): string
     {
         $value = $response->json($key, $default);
 
@@ -185,6 +189,14 @@ class GatewayService
                 }
             }
 
+            $staleDevices = UsbDevice::where('gateway_node_id', $node->id)
+                ->whereNotIn('busid', $currentBusIds)
+                ->get();
+
+            foreach ($staleDevices as $staleDevice) {
+                $this->removeStaleCameraRegistration($staleDevice);
+            }
+
             // Remove devices that are no longer present
             $removedCount = $this->deviceRepository->removeStaleDevices($node, $currentBusIds);
 
@@ -209,6 +221,51 @@ class GatewayService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Remove a stale camera registration for a USB device that disappeared from a gateway.
+     */
+    /**
+     * @param  mixed  $device
+     */
+    private function removeStaleCameraRegistration($device): void
+    {
+        if (! $device->is_camera) {
+            return;
+        }
+
+        $camera = $this->cameraRepository->findByUsbDevice($device);
+
+        if ($camera === null) {
+            $device->update(['is_camera' => false]);
+
+            return;
+        }
+
+        try {
+            if ($camera->status === CameraStatus::ACTIVE && $camera->gatewayNode) {
+                $this->stopCameraStream($camera->gatewayNode, $camera->stream_key);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to stop stale camera stream during refresh cleanup', [
+                'camera_id' => $camera->id,
+                'device_id' => $device->id,
+                'gateway_node_id' => $camera->gateway_node_id,
+                'stream_key' => $camera->stream_key,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $this->cameraRepository->deleteByUsbDevice($device);
+
+        $device->update(['is_camera' => false]);
+
+        Log::info('Removed stale camera registration from disconnected USB device', [
+            'device_id' => $device->id,
+            'camera_id' => $camera->id,
+            'gateway_node_id' => $device->gateway_node_id,
+        ]);
     }
 
     /**
@@ -1716,6 +1773,7 @@ class GatewayService
         foreach ($lines as $line) {
             if (preg_match('/Port\s+(\d+):/', $line, $matches)) {
                 $currentPort = $matches[1];
+
                 continue;
             }
 
@@ -1743,6 +1801,7 @@ class GatewayService
         foreach ($lines as $line) {
             if (preg_match('/Port\s+(\d+):/', $line, $matches)) {
                 $currentPort = $matches[1];
+
                 continue;
             }
 

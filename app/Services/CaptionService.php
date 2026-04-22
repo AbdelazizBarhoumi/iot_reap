@@ -149,7 +149,7 @@ class CaptionService
         Log::info('Deleting caption', ['caption_id' => $caption->id]);
 
         // Eager load video if not already loaded
-        if (!$caption->relationLoaded('video')) {
+        if (! $caption->relationLoaded('video')) {
             $caption->load('video');
         }
 

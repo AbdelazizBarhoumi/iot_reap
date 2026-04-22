@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $processed
  * @property string|null $error_message
  * @property int $attempts
- * @property \Carbon\Carbon|null $processed_at
+ * @property Carbon|null $processed_at
  */
 class StripeWebhook extends Model
 {

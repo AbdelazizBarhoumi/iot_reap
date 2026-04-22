@@ -14,27 +14,22 @@ import {
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-interface RefundRequest {
-    id: string;
-    payment_id: string;
-    trainingPath: {
-        id: number;
-        title: string;
-    };
-    amount: number;
-    reason: string;
-    status: 'pending' | 'approved' | 'rejected';
-    created_at: string;
-    processed_at: string | null;
-}
+import type { RefundRequest, RefundStatus } from '@/types/payment.types';
 interface RefundsPageProps {
-    refunds: { data: RefundRequest[] };
+    refunds: RefundRequest[] | { data?: RefundRequest[] };
 }
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Payments', href: '/checkout/payments' },
     { title: 'Refunds', href: '/checkout/refunds' },
 ];
-const statusConfig = {
+const statusConfig: Record<
+    RefundStatus,
+    {
+        label: string;
+        className: string;
+        icon: typeof Clock;
+    }
+> = {
     pending: {
         label: 'Pending',
         className:
@@ -53,6 +48,24 @@ const statusConfig = {
             'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
         icon: XCircle,
     },
+    processing: {
+        label: 'Processing',
+        className:
+            'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+        icon: Clock,
+    },
+    completed: {
+        label: 'Completed',
+        className:
+            'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+        icon: CheckCircle2,
+    },
+    failed: {
+        label: 'Failed',
+        className:
+            'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+        icon: XCircle,
+    },
 };
 function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -61,14 +74,8 @@ function formatDate(dateStr: string): string {
         day: 'numeric',
     });
 }
-function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount / 100);
-}
 export default function RefundsPage({ refunds }: RefundsPageProps) {
-    const refundList = refunds?.data ?? [];
+    const refundList = Array.isArray(refunds) ? refunds : refunds?.data ?? [];
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Training Refund Requests" />
@@ -107,12 +114,13 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <CardTitle className="text-base">
-                                                    {refund.trainingPath.title}
+                                                    {refund.trainingPath?.title ??
+                                                        'Training Path'}
                                                 </CardTitle>
                                                 <CardDescription>
                                                     Requested on{' '}
                                                     {formatDate(
-                                                        refund.created_at,
+                                                        refund.requestedAt,
                                                     )}
                                                 </CardDescription>
                                             </div>
@@ -129,16 +137,14 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                                     Amount:{' '}
                                                 </span>
                                                 <span className="font-medium">
-                                                    {formatCurrency(
-                                                        refund.amount,
-                                                    )}
+                                                    {refund.amount ?? '—'}
                                                 </span>
                                             </div>
-                                            {refund.processed_at && (
+                                            {refund.processedAt && (
                                                 <div className="text-muted-foreground">
                                                     Processed:{' '}
                                                     {formatDate(
-                                                        refund.processed_at,
+                                                        refund.processedAt,
                                                     )}
                                                 </div>
                                             )}

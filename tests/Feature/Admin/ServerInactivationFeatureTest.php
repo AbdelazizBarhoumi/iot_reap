@@ -7,6 +7,7 @@ use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
+use App\Services\ProxmoxConnection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,7 +23,7 @@ class ServerInactivationFeatureTest extends TestCase
         parent::setUp();
 
         // Prevent real Proxmox connection tests during feature tests
-        $this->mock(\App\Services\ProxmoxConnection::class, function ($mock) {
+        $this->mock(ProxmoxConnection::class, function ($mock) {
             $mock->shouldReceive('testConnection')->andReturn(['success' => true, 'nodes' => []]);
         });
     }

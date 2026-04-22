@@ -7,7 +7,7 @@ use App\Models\User;
 
 /**
  * Activity Log Service
- * 
+ *
  * Manages audit trail for all system activities
  */
 class ActivityLogService
@@ -20,7 +20,7 @@ class ActivityLogService
         string $action,
         string $description,
         array $metadata = [],
-        User|null $user = null,
+        ?User $user = null,
         string $status = 'completed'
     ): ActivityLog {
         return ActivityLog::record($type, $action, $description, $metadata, $user, $status);
@@ -136,7 +136,7 @@ class ActivityLogService
     {
         return self::record(
             type: 'vm',
-            action: 'vm_' . $status,
+            action: 'vm_'.$status,
             description: "{$user->name} {$status} VM {$vmName} (ID: {$vmId})",
             metadata: ['vm_id' => $vmId, 'vm_name' => $vmName],
             user: $user
@@ -160,7 +160,7 @@ class ActivityLogService
     /**
      * Record security event
      */
-    public static function recordSecurityEvent(string $action, string $description, array $metadata = [], User|null $user = null): ActivityLog
+    public static function recordSecurityEvent(string $action, string $description, array $metadata = [], ?User $user = null): ActivityLog
     {
         return self::record(
             type: 'security',

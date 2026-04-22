@@ -3,8 +3,8 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\PaymentStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\StripeWebhookService;
@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Stripe\Checkout\Session;
 use Stripe\Event;
+use Stripe\Stripe;
 use Stripe\StripeObject;
 use Tests\TestCase;
 
@@ -26,11 +27,11 @@ class StripeWebhookServiceTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        
+
         // Force load Stripe library components before any tests run
         // This prevents "Undefined constant" errors in full test suite
-        \Stripe\Stripe::setApiKey('sk_test_dummy_key');
-        
+        Stripe::setApiKey('sk_test_dummy_key');
+
         // Explicitly trigger the ObjectTypes registry initialization
         $reflectionClass = new \ReflectionClass(Session::class);
         $reflectionClass->getName(); // Just accessing it should force autoload
@@ -39,7 +40,7 @@ class StripeWebhookServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->paymentRepository = app(PaymentRepository::class);
         $this->service = new StripeWebhookService($this->paymentRepository);
     }
@@ -452,7 +453,7 @@ class StripeWebhookServiceTest extends TestCase
         $this->assertFalse($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists());
     }
 
-    public function test_handles_concurrent_user_enrollment_in_multiple_trainingPaths(): void
+    public function test_handles_concurrent_user_enrollment_in_multiple_training_paths(): void
     {
         $user = User::factory()->create();
         $trainingPath1 = TrainingPath::factory()->approved()->create();
@@ -507,11 +508,14 @@ class StripeWebhookServiceTest extends TestCase
     private function makeEventTestDouble(string $type, array $data): Event
     {
         // Create a subclass of Stripe\Event that works around initialization issues
-        $eventClass = new class extends Event {
+        $eventClass = new class extends Event
+        {
             public $__type;
+
             public $__data;
 
-            public function __construct($type = null, $data = null) {
+            public function __construct($type = null, $data = null)
+            {
                 // Skip parent constructor to avoid initialization issues
                 if ($type !== null) {
                     $this->__type = $type;
@@ -521,87 +525,99 @@ class StripeWebhookServiceTest extends TestCase
                 }
             }
 
-            public function &__get($name) {
+            public function &__get($name)
+            {
                 if ($name === 'type' && isset($this->__type)) {
                     return $this->__type;
                 }
                 if ($name === 'data' && isset($this->__data)) {
                     return $this->__data;
                 }
+
                 return parent::__get($name);
             }
 
-            public function __set($name, $value) {
+            public function __set($name, $value)
+            {
                 if ($name === 'type') {
                     $this->__type = $value;
+
                     return;
                 }
                 if ($name === 'data') {
                     $this->__data = $value;
+
                     return;
                 }
                 parent::__set($name, $value);
             }
         };
 
-        $event = new $eventClass();
+        $event = new $eventClass;
         $event->type = $type;
-        
+
         // Create a StripeObject subclass
-        $dataClass = new class extends StripeObject {
+        $dataClass = new class extends StripeObject
+        {
             public $__object;
 
-            public function __construct() {
+            public function __construct()
+            {
                 // Skip parent constructor to avoid initialization issues
             }
 
-            public function &__get($name) {
+            public function &__get($name)
+            {
                 if ($name === 'object' && isset($this->__object)) {
                     return $this->__object;
                 }
+
                 return parent::__get($name);
             }
 
-            public function __set($name, $value) {
+            public function __set($name, $value)
+            {
                 if ($name === 'object') {
                     $this->__object = $value;
+
                     return;
                 }
                 parent::__set($name, $value);
             }
         };
 
-        $event->data = new $dataClass();
-        
+        $event->data = new $dataClass;
+
         // Create object as a simple stdClass that acts like a StripeObject
-        $objectStdClass = new class($data) {
+        $objectStdClass = new class($data)
+        {
             private array $data;
-            
+
             public function __construct(array $data)
             {
                 $this->data = $data;
             }
-            
+
             public function __get($name)
             {
-                if (!isset($this->data[$name])) {
+                if (! isset($this->data[$name])) {
                     return null;
                 }
-                
+
                 $value = $this->data[$name];
                 if (is_array($value)) {
                     return new self($value);
                 }
-                
+
                 return $value;
             }
-            
+
             public function __isset($name)
             {
                 return isset($this->data[$name]);
             }
         };
-        
+
         $event->data->object = $objectStdClass;
 
         return $event;

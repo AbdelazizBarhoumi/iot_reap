@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RefundStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $admin_notes
  * @property string|null $stripe_refund_id
  * @property int|null $refund_amount_cents
- * @property \Carbon\Carbon|null $processed_at
+ * @property Carbon|null $processed_at
  */
 class RefundRequest extends Model
 {

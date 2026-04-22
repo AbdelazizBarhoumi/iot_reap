@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\ProxmoxServer;
+use App\Models\UsbDevice;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientFactory;
 use Illuminate\Console\Command;
@@ -111,7 +112,7 @@ class AttachDedicatedDevicesCommand extends Command
         if ($dryRun) {
             $this->warn('DRY RUN - no changes will be made.');
 
-            $devices = \App\Models\UsbDevice::dedicatedTo($vmid, $serverId)->get();
+            $devices = UsbDevice::dedicatedTo($vmid, $serverId)->get();
             if ($devices->isEmpty()) {
                 $this->info('No dedicated devices found for this VM.');
 

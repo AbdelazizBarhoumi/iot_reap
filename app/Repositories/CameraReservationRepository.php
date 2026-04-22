@@ -80,9 +80,9 @@ class CameraReservationRepository
             'reservable_type' => 'App\Models\Camera',
             'reservable_id' => $data['camera_id'] ?? null,
         ]);
-        
+
         unset($reservationData['camera_id']);
-        
+
         return Reservation::create($reservationData);
     }
 

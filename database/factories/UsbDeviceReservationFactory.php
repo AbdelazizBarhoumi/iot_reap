@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Reservation;
 use App\Models\UsbDevice;
-use App\Models\UsbDeviceReservation;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  * DEPRECATED: This factory now delegates to ReservationFactory.
  * Use Reservation::factory()->forUsbDevice() instead.
  *
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Reservation>
+ * @extends Factory<Reservation>
  */
 class UsbDeviceReservationFactory extends Factory
 {
@@ -157,5 +156,4 @@ class UsbDeviceReservationFactory extends Factory
             'user_id' => $user->id,
         ]);
     }
-
 }

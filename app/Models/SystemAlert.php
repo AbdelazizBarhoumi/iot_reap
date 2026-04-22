@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * System Alert Model
- * 
+ *
  * Represents infrastructure and system alerts
  * Examples: Node offline, Disk full, CPU high, Memory critical
  */
@@ -77,7 +77,7 @@ class SystemAlert extends Model
     /**
      * Mark as acknowledged
      */
-    public function acknowledge(User $user = null): void
+    public function acknowledge(?User $user = null): void
     {
         $this->update([
             'acknowledged' => true,

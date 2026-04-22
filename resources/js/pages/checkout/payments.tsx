@@ -2,10 +2,11 @@
  * Payment History Page
  * Shows all user payments with refund options.
  */
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { CreditCard, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { requestRefund } from '@/api/checkout.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +34,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import type { Payment } from '@/types/payment.types';
 interface PaymentsPageProps {
-    payments: { data: Payment[] };
+    payments: Payment[] | { data?: Payment[] };
 }
 function getStatusColor(status: Payment['status']): string {
     switch (status) {
@@ -51,6 +52,7 @@ function getStatusColor(status: Payment['status']): string {
     }
 }
 export default function PaymentsPage({ payments }: PaymentsPageProps) {
+    const paymentList = Array.isArray(payments) ? payments : payments?.data ?? [];
     const [refundDialog, setRefundDialog] = useState<Payment | null>(null);
     const [refundReason, setRefundReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,37 +60,20 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
         if (!refundDialog || refundReason.length < 20) return;
         setIsSubmitting(true);
         try {
-            const response = await fetch('/checkout/refund', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-XSRF-TOKEN': decodeURIComponent(
-                        document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || '',
-                    ),
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    payment_id: refundDialog.id,
-                    reason: refundReason,
-                }),
+            await requestRefund(refundDialog.id, refundReason);
+            setRefundDialog(null);
+            setRefundReason('');
+            toast.success('Refund request submitted', {
+                description:
+                    'Our team will review your request within 2-3 business days.',
             });
-            if (response.ok) {
-                setRefundDialog(null);
-                setRefundReason('');
-                toast.success('Refund request submitted', {
-                    description:
-                        'Our team will review your request within 2-3 business days.',
-                });
-                router.reload({ only: ['payments'] });
-            } else {
-                const data = await response.json();
-                toast.error('Failed to submit refund request', {
-                    description: data.error || 'Please try again later.',
-                });
-            }
-        } catch {
+            router.reload({ only: ['payments'] });
+        } catch (error) {
             toast.error('An error occurred', {
-                description: 'Please check your connection and try again.',
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : 'Please check your connection and try again.',
             });
         } finally {
             setIsSubmitting(false);
@@ -97,21 +82,25 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'My Account', href: '/account' },
                 { title: 'Payments', href: '/checkout/payments' },
             ]}
         >
             <Head title="Payment History" />
             <div className="p-6">
-                <div className="mb-6">
-                    <h1 className="font-heading text-2xl font-semibold">
-                        Payment History
-                    </h1>
-                    <p className="text-muted-foreground">
-                        View your past payments and request refunds.
-                    </p>
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="font-heading text-2xl font-semibold">
+                            Payment History
+                        </h1>
+                        <p className="text-muted-foreground">
+                            View your past payments and request refunds.
+                        </p>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/checkout/refunds">View Refunds</Link>
+                    </Button>
                 </div>
-                {payments.data.length === 0 ? (
+                {paymentList.length === 0 ? (
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12">
                             <CreditCard className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -125,7 +114,7 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
                     </Card>
                 ) : (
                     <div className="space-y-4">
-                        {payments.data.map((payment) => (
+                        {paymentList.map((payment) => (
                             <Card key={payment.id}>
                                 <CardHeader className="pb-2">
                                     <div className="flex items-start justify-between">

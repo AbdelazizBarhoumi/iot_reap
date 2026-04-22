@@ -33,13 +33,18 @@ export interface Payment {
 export interface RefundRequest {
     id: number;
     payment?: Payment;
+    trainingPath?: {
+        id: number;
+        title: string;
+    } | null;
     status: RefundStatus;
     status_label: string;
     reason: string;
     admin_notes?: string;
+    amount?: string | null;
     refund_amount: number | null;
-    processed_at: string | null;
-    created_at: string;
+    requestedAt: string;
+    processedAt: string | null;
 }
 export interface CheckoutResponse {
     session_id?: string;

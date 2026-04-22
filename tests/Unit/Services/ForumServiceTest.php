@@ -4,15 +4,14 @@ namespace Tests\Unit\Services;
 
 use App\Enums\ThreadStatus;
 use App\Models\DiscussionThread;
-use App\Models\TrainingUnit;
 use App\Models\ThreadReply;
+use App\Models\TrainingUnit;
 use App\Models\User;
 use App\Repositories\ForumRepository;
 use App\Services\ForumService;
 use App\Services\NotificationService;
 use DomainException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
@@ -48,7 +47,7 @@ class ForumServiceTest extends TestCase
     // Thread Operations Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_get_threads_returns_paginated_threads_for_trainingUnit(): void
+    public function test_get_threads_returns_paginated_threads_for_training_unit(): void
     {
         $trainingUnitId = 1;
         $mockPaginator = Mockery::mock(LengthAwarePaginator::class);
@@ -64,7 +63,7 @@ class ForumServiceTest extends TestCase
         $this->assertSame($mockPaginator, $result);
     }
 
-    public function test_get_training_path_threads_returns_paginated_threads_for_trainingPath(): void
+    public function test_get_training_path_threads_returns_paginated_threads_for_training_path(): void
     {
         $trainingPathId = 1;
         $mockPaginator = Mockery::mock(LengthAwarePaginator::class);

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CameraStatus;
+use App\Enums\CameraType;
 use App\Enums\UsbDeviceStatus;
 use App\Exceptions\GatewayApiException;
 use App\Http\Requests\Hardware\AttachDeviceRequest;
 use App\Http\Requests\Hardware\CreateGatewayNodeRequest;
+use App\Http\Resources\CameraResource;
 use App\Http\Resources\GatewayNodeResource;
 use App\Http\Resources\UsbDeviceResource;
+use App\Models\Camera;
 use App\Models\GatewayNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
@@ -17,6 +21,8 @@ use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayDiscoveryService;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientFactory;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -302,7 +308,7 @@ class HardwareController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'This device is already registered as a camera',
-                'camera' => new \App\Http\Resources\CameraResource($device->camera->load(['gatewayNode', 'usbDevice'])),
+                'camera' => new CameraResource($device->camera->load(['gatewayNode', 'usbDevice'])),
             ], 422);
         }
 
@@ -318,35 +324,61 @@ class HardwareController extends Controller
         $height = $validated['height'] ?? 480;
         $framerate = $validated['framerate'] ?? 15;
 
+        $gatewayNode = $this->resolveGatewayNodeForUsbDevice($device);
+
+        if (! $gatewayNode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'USB device is not associated with a gateway node',
+            ], 422);
+        }
+
         // Generate a unique stream key
-        $streamKey = 'usb-'.$device->gatewayNode->name.'-'.str_replace(['.', '-'], '', $device->busid);
+        $streamKey = 'usb-'.$gatewayNode->name.'-'.str_replace(['.', '-'], '', $device->busid);
 
         // Resolve the real capture device when the gateway camera API is available.
         // This avoids guessing /dev/videoN and supports multiple cameras on one gateway.
         $devicePath = $this->resolveCameraDevicePath($device);
 
-        // Create the camera record
-        $camera = \App\Models\Camera::create([
-            'gateway_node_id' => $device->gateway_node_id,
-            'usb_device_id' => $device->id,
-            'name' => $device->name,
-            'stream_key' => $streamKey,
-            'source_url' => $devicePath,
-            'stream_width' => $width,
-            'stream_height' => $height,
-            'stream_framerate' => $framerate,
-            'stream_input_format' => 'mjpeg',
-            'type' => \App\Enums\CameraType::USB,
-            'status' => \App\Enums\CameraStatus::INACTIVE,
-            'ptz_capable' => false,
-        ]);
+        try {
+            // Create the camera record
+            $camera = Camera::create([
+                'gateway_node_id' => $device->gateway_node_id,
+                'usb_device_id' => $device->id,
+                'name' => $device->name,
+                'stream_key' => $streamKey,
+                'source_url' => $devicePath,
+                'stream_width' => $width,
+                'stream_height' => $height,
+                'stream_framerate' => $framerate,
+                'stream_input_format' => 'mjpeg',
+                'type' => CameraType::USB,
+                'status' => CameraStatus::INACTIVE,
+                'ptz_capable' => false,
+            ]);
+        } catch (UniqueConstraintViolationException $e) {
+            $existingCamera = Camera::where('usb_device_id', $device->id)
+                ->orWhere('stream_key', $streamKey)
+                ->with(['gatewayNode', 'usbDevice'])
+                ->first();
+
+            if ($existingCamera !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This device is already registered as a camera',
+                    'camera' => new CameraResource($existingCamera),
+                ], 422);
+            }
+
+            throw $e;
+        }
 
         // Mark the USB device as a camera
         $device->update(['is_camera' => true]);
 
         // Try to start the camera stream via gateway agent
         $streamResult = $this->gatewayService->startCameraStream(
-            $device->gatewayNode,
+            $gatewayNode,
             $streamKey,
             $devicePath,
             $this->buildGatewayStreamOptionsForUsbDevice($device, [
@@ -359,7 +391,7 @@ class HardwareController extends Controller
 
         if ($streamResult['success']) {
             $camera->update([
-                'status' => \App\Enums\CameraStatus::ACTIVE,
+                'status' => CameraStatus::ACTIVE,
                 'source_url' => $streamResult['device_path'] ?? $devicePath,
             ]);
         }
@@ -377,14 +409,14 @@ class HardwareController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $streamResult['success'] 
+            'message' => $streamResult['success']
                 ? 'Device registered as camera successfully'
                 : 'Device registered as camera (stream failed to start - use the activate endpoint to retry)',
-            'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+            'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
             'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
             'stream_started' => $streamResult['success'],
             'stream_error' => $streamResult['error'] ?? null,
-            'available_resolutions' => \App\Models\Camera::getAvailableResolutions(),
+            'available_resolutions' => Camera::getAvailableResolutions(),
         ], 201);
     }
 
@@ -411,10 +443,12 @@ class HardwareController extends Controller
             ], 422);
         }
 
+        $gatewayNode = $this->resolveGatewayNodeForCamera($camera);
+
         // Stop the camera stream if running
-        if ($camera->gatewayNode) {
+        if ($gatewayNode) {
             $this->gatewayService->stopCameraStream(
-                $camera->gatewayNode,
+                $gatewayNode,
                 $camera->stream_key
             );
         }
@@ -451,8 +485,9 @@ class HardwareController extends Controller
         }
 
         $camera = $device->camera;
+        $gatewayNode = $this->resolveGatewayNodeForCamera($camera);
 
-        if (! $camera->gatewayNode) {
+        if (! $gatewayNode) {
             return response()->json([
                 'success' => false,
                 'message' => 'Camera is not associated with a gateway node',
@@ -462,7 +497,7 @@ class HardwareController extends Controller
         // First, try to stop any existing stream
         try {
             $this->gatewayService->stopCameraStream(
-                $camera->gatewayNode,
+                $gatewayNode,
                 $camera->stream_key
             );
         } catch (\Exception $e) {
@@ -474,7 +509,7 @@ class HardwareController extends Controller
 
         // Now try to start the stream
         $streamResult = $this->gatewayService->startCameraStream(
-            $camera->gatewayNode,
+            $gatewayNode,
             $camera->stream_key,
             $camera->source_url,
             $this->buildGatewayStreamOptionsForUsbDevice($device, [
@@ -492,12 +527,12 @@ class HardwareController extends Controller
             // (give FFmpeg time to start and connect to MediaMTX)
             sleep(2);
             $currentStatus = $this->gatewayService->getCameraStreamStatus(
-                $camera->gatewayNode,
+                $gatewayNode,
                 $camera->stream_key
             );
 
             if ($currentStatus['running'] ?? false) {
-                $camera->update(['status' => \App\Enums\CameraStatus::ACTIVE]);
+                $camera->update(['status' => CameraStatus::ACTIVE]);
 
                 Log::info('Camera stream activated and verified', [
                     'camera_id' => $camera->id,
@@ -509,7 +544,7 @@ class HardwareController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Camera stream activated successfully',
-                    'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+                    'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
                     'stream_status' => $currentStatus,
                 ]);
             } else {
@@ -525,11 +560,11 @@ class HardwareController extends Controller
                     'success' => false,
                     'message' => 'Stream startup command accepted but stream not detected running',
                     'error' => 'The gateway reported success but MediaMTX is not receiving the stream. Check FFmpeg logs on the gateway.',
-                    'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+                    'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
                     'status_check' => $currentStatus,
                     'debug_info' => [
                         'device_path' => $camera->source_url,
-                        'gateway_node_ip' => $camera->gatewayNode->ip,
+                        'gateway_node_ip' => $gatewayNode->ip,
                         'stream_key' => $camera->stream_key,
                     ],
                 ], 422);
@@ -551,10 +586,10 @@ class HardwareController extends Controller
             'success' => false,
             'message' => 'Failed to start camera stream',
             'error' => $errorMessage,
-            'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+            'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
             'debug_info' => [
                 'device_path' => $camera->source_url,
-                'gateway_node_ip' => $camera->gatewayNode->ip,
+                'gateway_node_ip' => $gatewayNode->ip,
                 'stream_key' => $camera->stream_key,
             ],
         ], 422);
@@ -583,9 +618,11 @@ class HardwareController extends Controller
         ]);
 
         // Stop existing stream
-        if ($camera->status === \App\Enums\CameraStatus::ACTIVE && $camera->gatewayNode) {
+        $gatewayNode = $this->resolveGatewayNodeForCamera($camera);
+
+        if ($camera->status === CameraStatus::ACTIVE && $gatewayNode) {
             $this->gatewayService->stopCameraStream(
-                $camera->gatewayNode,
+                $gatewayNode,
                 $camera->stream_key
             );
         }
@@ -599,9 +636,9 @@ class HardwareController extends Controller
 
         // Restart stream with new settings
         $streamResult = ['success' => false, 'error' => null];
-        if ($camera->gatewayNode) {
+        if ($gatewayNode) {
             $streamResult = $this->gatewayService->startCameraStream(
-                $camera->gatewayNode,
+            $gatewayNode,
                 $camera->stream_key,
                 $camera->source_url,
                 $this->buildGatewayStreamOptionsForUsbDevice($device, [
@@ -616,8 +653,8 @@ class HardwareController extends Controller
 
             $camera->update([
                 'status' => $streamResult['success']
-                    ? \App\Enums\CameraStatus::ACTIVE
-                    : \App\Enums\CameraStatus::INACTIVE,
+                    ? CameraStatus::ACTIVE
+                    : CameraStatus::INACTIVE,
             ]);
         }
 
@@ -630,21 +667,51 @@ class HardwareController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Camera settings updated'.($streamResult['success'] ? ' and stream restarted' : ''),
-            'camera' => new \App\Http\Resources\CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
+            'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
             'stream_restarted' => $streamResult['success'],
             'stream_error' => $streamResult['error'] ?? null,
         ]);
     }
 
-    private function resolveCameraDevicePath(UsbDevice $device): string
+    private function resolveGatewayNodeForUsbDevice(UsbDevice $device): ?GatewayNode
     {
         $device->loadMissing('gatewayNode');
 
-        if (! $device->gatewayNode) {
+        if ($device->gatewayNode) {
+            return $device->gatewayNode;
+        }
+
+        if ($device->gateway_node_id === null) {
+            return null;
+        }
+
+        return GatewayNode::find($device->gateway_node_id);
+    }
+
+    private function resolveGatewayNodeForCamera(Camera $camera): ?GatewayNode
+    {
+        $camera->loadMissing('gatewayNode');
+
+        if ($camera->gatewayNode) {
+            return $camera->gatewayNode;
+        }
+
+        if ($camera->gateway_node_id === null) {
+            return null;
+        }
+
+        return GatewayNode::find($camera->gateway_node_id);
+    }
+
+    private function resolveCameraDevicePath(UsbDevice $device): string
+    {
+        $gatewayNode = $this->resolveGatewayNodeForUsbDevice($device);
+
+        if (! $gatewayNode) {
             return '/dev/video0';
         }
 
-        return $this->gatewayService->findCaptureDeviceForUsbCamera($device->gatewayNode, $device)
+        return $this->gatewayService->findCaptureDeviceForUsbCamera($gatewayNode, $device)
             ?? '/dev/video0';
     }
 
@@ -664,7 +731,7 @@ class HardwareController extends Controller
     /**
      * @param  array<string, mixed>  $streamResult
      */
-    private function syncResolvedCameraDevicePath(\App\Models\Camera $camera, array $streamResult): void
+    private function syncResolvedCameraDevicePath(Camera $camera, array $streamResult): void
     {
         $resolvedDevicePath = $streamResult['device_path'] ?? null;
 
@@ -878,7 +945,7 @@ class HardwareController extends Controller
     {
         Gate::authorize('admin-only');
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, ProxmoxServer> $servers */
+        /** @var Collection<int, ProxmoxServer> $servers */
         $servers = ProxmoxServer::where('is_active', true)->get();
         $runningVms = [];
 

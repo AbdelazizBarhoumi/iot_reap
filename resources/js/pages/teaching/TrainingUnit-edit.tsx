@@ -7,6 +7,7 @@ import { Head, Link } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
+    BarChart3,
     BookOpen,
     Check,
     CheckCircle2,
@@ -32,9 +33,11 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import { getOrCreateQuiz } from '@/api/quiz.api';
 import * as teachingApi from '@/api/teaching.api';
 import * as videoApi from '@/api/video.api';
 import { trainingUnitVMAssignmentApi } from '@/api/vm.api';
+import { TeacherQuizStatsPanel } from '@/components/quiz/TeacherQuizStatsPanel';
 import VideoUpload from '@/components/TrainingPaths/VideoUpload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -145,15 +148,20 @@ export default function EditTrainingUnitPage({
 }: EditTrainingUnitPageProps) {
     // Form state initialized from backend props
     const [title, setTitle] = useState(trainingUnit?.title || '');
-    const [trainingUnitType, setTrainingUnitType] = useState<'video' | 'reading' | 'practice' | 'vm-lab'>(
-        (trainingUnit?.type as 'video' | 'reading' | 'practice' | 'vm-lab') || 'reading'
+    const [trainingUnitType, setTrainingUnitType] = useState<
+        'video' | 'reading' | 'practice' | 'vm-lab'
+    >(
+        (trainingUnit?.type as 'video' | 'reading' | 'practice' | 'vm-lab') ||
+            'reading',
     );
     const [duration, setDuration] = useState(trainingUnit?.duration || '');
     const [content, setContent] = useState(trainingUnit?.content || '');
     const [objectives, setObjectives] = useState(
         (trainingUnit?.objectives || []).join('\n'),
     );
-    const [vmEnabled, setVmEnabled] = useState(trainingUnit?.vmEnabled || false);
+    const [vmEnabled, setVmEnabled] = useState(
+        trainingUnit?.vmEnabled || false,
+    );
     const [freePreview, setFreePreview] = useState(false);
     const [downloadable, setDownloadable] = useState(false);
     const [videoUrl, setVideoUrl] = useState(trainingUnit?.videoUrl || '');
@@ -177,6 +185,12 @@ export default function EditTrainingUnitPage({
     const [videoStatus, setVideoStatus] = useState<videoApi.VideoStatus | null>(
         null,
     );
+    const [teacherQuiz, setTeacherQuiz] = useState<{
+        id: string;
+        title: string;
+    } | null>(null);
+    const [isQuizLookupLoading, setIsQuizLookupLoading] = useState(false);
+    const [isQuizStatsOpen, setIsQuizStatsOpen] = useState(false);
     // VM Assignment dialog state
     const [showVMDialog, setShowVMDialog] = useState(false);
     const [availableVMs, setAvailableVMs] = useState<
@@ -205,6 +219,46 @@ export default function EditTrainingUnitPage({
                 .catch(() => {});
         }
     }, [trainingUnitId, trainingUnit?.type]);
+    useEffect(() => {
+        if (trainingUnitType !== 'practice') {
+            setTeacherQuiz(null);
+            setIsQuizLookupLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setIsQuizLookupLoading(true);
+
+        getOrCreateQuiz(trainingUnitId)
+            .then((quiz) => {
+                if (cancelled) {
+                    return;
+                }
+
+                setTeacherQuiz(
+                    quiz
+                        ? {
+                              id: String(quiz.id),
+                              title: quiz.title,
+                          }
+                        : null,
+                );
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setTeacherQuiz(null);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setIsQuizLookupLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [trainingUnitId, trainingUnitType]);
     // Calculate completion
     const completionItems = [
         { done: content.length > 50, label: 'Content added' },
@@ -272,8 +326,11 @@ export default function EditTrainingUnitPage({
                 });
                 // Poll for status updates
                 videoApi
-                    .pollUntilReady(parseInt(trainingUnitId), 3000, 60, (status) =>
-                        setVideoStatus(status),
+                    .pollUntilReady(
+                        parseInt(trainingUnitId),
+                        3000,
+                        60,
+                        (status) => setVideoStatus(status),
                     )
                     .catch(() => {});
             } catch (error: unknown) {
@@ -293,10 +350,15 @@ export default function EditTrainingUnitPage({
         },
         [handleVideoUpload],
     );
-    
+
     // Map component type to API type
-    const mapTypeToApiType = (type: 'video' | 'reading' | 'practice' | 'vm-lab'): 'video' | 'article' | 'quiz' | 'interactive' => {
-        const typeMap: Record<'video' | 'reading' | 'practice' | 'vm-lab', 'video' | 'article' | 'quiz' | 'interactive'> = {
+    const mapTypeToApiType = (
+        type: 'video' | 'reading' | 'practice' | 'vm-lab',
+    ): 'video' | 'article' | 'quiz' | 'interactive' => {
+        const typeMap: Record<
+            'video' | 'reading' | 'practice' | 'vm-lab',
+            'video' | 'article' | 'quiz' | 'interactive'
+        > = {
             video: 'video',
             reading: 'article',
             practice: 'quiz',
@@ -304,7 +366,7 @@ export default function EditTrainingUnitPage({
         };
         return typeMap[type];
     };
-    
+
     // Handle trainingUnit save - ACTUAL API CALL
     const handleSave = useCallback(async () => {
         setIsSaving(true);
@@ -333,7 +395,9 @@ export default function EditTrainingUnitPage({
         } catch (error: unknown) {
             const message =
                 error instanceof Error ? error.message : 'Save failed';
-            toast.error('Failed to save trainingUnit', { description: message });
+            toast.error('Failed to save trainingUnit', {
+                description: message,
+            });
         } finally {
             setIsSaving(false);
         }
@@ -358,7 +422,9 @@ export default function EditTrainingUnitPage({
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                         <FileText className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <p className="text-muted-foreground">TrainingUnit not found.</p>
+                    <p className="text-muted-foreground">
+                        TrainingUnit not found.
+                    </p>
                     <Button variant="outline" asChild>
                         <Link href="/teaching">Back to Dashboard</Link>
                     </Button>
@@ -367,8 +433,9 @@ export default function EditTrainingUnitPage({
         );
     }
     const typeConfig =
-        trainingUnitTypeConfig[trainingUnit.type as keyof typeof trainingUnitTypeConfig] ||
-        trainingUnitTypeConfig.video;
+        trainingUnitTypeConfig[
+            trainingUnitType as keyof typeof trainingUnitTypeConfig
+        ] || trainingUnitTypeConfig.video;
     const TypeIcon = typeConfig.icon;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -406,7 +473,12 @@ export default function EditTrainingUnitPage({
                                             {trainingUnit.title}
                                         </h1>
                                         <p className="text-sm text-muted-foreground">
-                                            {trainingPath.title} / {trainingPath?.modules?.find((m) => m.id.toString() === moduleId.toString())?.title || 'Unknown Module'}
+                                            {trainingPath.title} /{' '}
+                                            {trainingPath?.modules?.find(
+                                                (m) =>
+                                                    m.id.toString() ===
+                                                    moduleId.toString(),
+                                            )?.title || 'Unknown Module'}
                                         </p>
                                     </div>
                                 </div>
@@ -483,7 +555,10 @@ export default function EditTrainingUnitPage({
                                     </TabsTrigger>
                                 </TabsList>
                                 {/* Content Tab */}
-                                <TabsContent value="content" className="mt-4 space-y-4">
+                                <TabsContent
+                                    value="content"
+                                    className="mt-4 space-y-4"
+                                >
                                     {/* TrainingUnit Metadata Card */}
                                     <Card className="shadow-card">
                                         <CardHeader className="pb-4">
@@ -492,49 +567,86 @@ export default function EditTrainingUnitPage({
                                                 TrainingUnit Details
                                             </CardTitle>
                                             <CardDescription>
-                                                Basic information about this trainingUnit
+                                                Basic information about this
+                                                trainingUnit
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
                                             <div className="grid gap-4 md:grid-cols-3">
                                                 {/* Title Input */}
                                                 <div className="md:col-span-2">
-                                                    <Label htmlFor="trainingUnit-title" className="text-sm font-medium">
-                                                        Title <span className="text-destructive">*</span>
+                                                    <Label
+                                                        htmlFor="trainingUnit-title"
+                                                        className="text-sm font-medium"
+                                                    >
+                                                        Title{' '}
+                                                        <span className="text-destructive">
+                                                            *
+                                                        </span>
                                                     </Label>
                                                     <Input
                                                         id="trainingUnit-title"
                                                         placeholder="Enter trainingUnit title"
                                                         value={title}
-                                                        onChange={(e) => setTitle(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setTitle(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         className="mt-1.5"
                                                         required
                                                     />
                                                 </div>
                                                 {/* Duration Input */}
                                                 <div>
-                                                    <Label htmlFor="trainingUnit-duration" className="text-sm font-medium">
+                                                    <Label
+                                                        htmlFor="trainingUnit-duration"
+                                                        className="text-sm font-medium"
+                                                    >
                                                         Duration
                                                     </Label>
                                                     <Input
                                                         id="trainingUnit-duration"
                                                         placeholder="e.g., 45 minutes"
                                                         value={duration}
-                                                        onChange={(e) => setDuration(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setDuration(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         className="mt-1.5"
                                                     />
                                                 </div>
                                             </div>
                                             {/* Type Select */}
                                             <div className="max-w-xs">
-                                                <Label htmlFor="trainingUnit-type" className="text-sm font-medium">
-                                                    TrainingUnit Type <span className="text-destructive">*</span>
+                                                <Label
+                                                    htmlFor="trainingUnit-type"
+                                                    className="text-sm font-medium"
+                                                >
+                                                    TrainingUnit Type{' '}
+                                                    <span className="text-destructive">
+                                                        *
+                                                    </span>
                                                 </Label>
                                                 <Select
                                                     value={trainingUnitType}
-                                                    onValueChange={(value: 'video' | 'reading' | 'practice' | 'vm-lab') => setTrainingUnitType(value)}
+                                                    onValueChange={(
+                                                        value:
+                                                            | 'video'
+                                                            | 'reading'
+                                                            | 'practice'
+                                                            | 'vm-lab',
+                                                    ) =>
+                                                        setTrainingUnitType(
+                                                            value,
+                                                        )
+                                                    }
                                                 >
-                                                    <SelectTrigger id="trainingUnit-type" className="mt-1.5">
+                                                    <SelectTrigger
+                                                        id="trainingUnit-type"
+                                                        className="mt-1.5"
+                                                    >
                                                         <SelectValue placeholder="Select module type" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -547,13 +659,15 @@ export default function EditTrainingUnitPage({
                                                         <SelectItem value="reading">
                                                             <span className="flex items-center gap-2">
                                                                 <FileText className="h-4 w-4 text-green-500" />
-                                                                Reference Material
+                                                                Reference
+                                                                Material
                                                             </span>
                                                         </SelectItem>
                                                         <SelectItem value="practice">
                                                             <span className="flex items-center gap-2">
                                                                 <Zap className="h-4 w-4 text-yellow-500" />
-                                                                Practical Exercise
+                                                                Practical
+                                                                Exercise
                                                             </span>
                                                         </SelectItem>
                                                         <SelectItem value="vm-lab">
@@ -648,7 +762,8 @@ Recap the important points."
                                     <Card className="shadow-card">
                                         <CardHeader className="pb-4">
                                             <CardTitle className="flex items-center gap-2 font-heading text-lg">
-                                                {trainingUnit.type === 'video' ? (
+                                                {trainingUnit.type ===
+                                                'video' ? (
                                                     <>
                                                         <Video className="h-5 w-5 text-blue-500" />
                                                         Video Content
@@ -833,12 +948,20 @@ Recap the important points."
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
                                                                                 VM:{' '}
-                                                                                {
-                                                                                    vmAssignment
-                                                                                        .vm_name ?? `VM ${vmAssignment.vm_id}`
-                                                                                }
-                                                                                {vmAssignment.node?.name && (
-                                                                                    <> · {vmAssignment.node.name}</>
+                                                                                {vmAssignment.vm_name ??
+                                                                                    `VM ${vmAssignment.vm_id}`}
+                                                                                {vmAssignment
+                                                                                    .node
+                                                                                    ?.name && (
+                                                                                    <>
+                                                                                        {' '}
+                                                                                        ·{' '}
+                                                                                        {
+                                                                                            vmAssignment
+                                                                                                .node
+                                                                                                .name
+                                                                                        }
+                                                                                    </>
                                                                                 )}
                                                                             </p>
                                                                         </div>
@@ -855,10 +978,8 @@ Recap the important points."
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
                                                                                 VM:{' '}
-                                                                                {
-                                                                                    vmAssignment
-                                                                                        .vm_name ?? `VM ${vmAssignment.vm_id}`
-                                                                                }
+                                                                                {vmAssignment.vm_name ??
+                                                                                    `VM ${vmAssignment.vm_id}`}
                                                                             </p>
                                                                         </div>
                                                                     </>
@@ -892,23 +1013,43 @@ Recap the important points."
                                                             VM Selection
                                                         </Label>
                                                         <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                                                            Select a Proxmox VM to assign to this trainingUnit
+                                                            Select a Proxmox VM
+                                                            to assign to this
+                                                            trainingUnit
                                                         </p>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             className="w-full"
                                                             onClick={() => {
-                                                                setShowVMDialog(true);
-                                                                setLoadingVMs(true);
+                                                                setShowVMDialog(
+                                                                    true,
+                                                                );
+                                                                setLoadingVMs(
+                                                                    true,
+                                                                );
                                                                 trainingUnitVMAssignmentApi
                                                                     .getAvailableVMs()
-                                                                    .then(setAvailableVMs)
-                                                                    .catch((e) => {
-                                                                        console.error('Failed to load VMs:', e);
-                                                                        toast.error('Failed to load available VMs');
-                                                                    })
-                                                                    .finally(() => setLoadingVMs(false));
+                                                                    .then(
+                                                                        setAvailableVMs,
+                                                                    )
+                                                                    .catch(
+                                                                        (e) => {
+                                                                            console.error(
+                                                                                'Failed to load VMs:',
+                                                                                e,
+                                                                            );
+                                                                            toast.error(
+                                                                                'Failed to load available VMs',
+                                                                            );
+                                                                        },
+                                                                    )
+                                                                    .finally(
+                                                                        () =>
+                                                                            setLoadingVMs(
+                                                                                false,
+                                                                            ),
+                                                                    );
                                                             }}
                                                         >
                                                             <Monitor className="mr-2 h-4 w-4" />
@@ -1225,7 +1366,8 @@ Recap the important points."
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
                                                             Allow students to
-                                                            download trainingUnit
+                                                            download
+                                                            trainingUnit
                                                             materials
                                                         </p>
                                                     </div>
@@ -1325,6 +1467,124 @@ Recap the important points."
                                     </div>
                                 </CardContent>
                             </Card>
+                            <Card className="shadow-card">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="font-heading text-lg">
+                                        Content Actions
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Open the dedicated tools for this
+                                        unit&apos;s content type.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {trainingUnitType === 'practice' && (
+                                        <>
+                                            <Button
+                                                className="w-full justify-start"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/teaching/trainingUnits/${trainingUnitId}/quiz`}
+                                                >
+                                                    <Sparkles className="mr-2 h-4 w-4" />
+                                                    {teacherQuiz
+                                                        ? 'Edit Quiz'
+                                                        : 'Create Quiz'}
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-start"
+                                                onClick={() =>
+                                                    setIsQuizStatsOpen(true)
+                                                }
+                                                disabled={
+                                                    !teacherQuiz ||
+                                                    isQuizLookupLoading
+                                                }
+                                            >
+                                                <BarChart3 className="mr-2 h-4 w-4" />
+                                                View Quiz Stats
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                {isQuizLookupLoading
+                                                    ? 'Checking for an existing quiz...'
+                                                    : teacherQuiz
+                                                      ? 'Review attempt performance without leaving the unit flow.'
+                                                      : 'Create the quiz first, then attempt stats will appear here.'}
+                                            </p>
+                                        </>
+                                    )}
+                                    {trainingUnitType === 'reading' && (
+                                        <>
+                                            <Button
+                                                className="w-full justify-start"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/teaching/trainingUnits/${trainingUnitId}/article`}
+                                                >
+                                                    <FileText className="mr-2 h-4 w-4" />
+                                                    Edit Article
+                                                </Link>
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                Open the focused article editor
+                                                for long-form reading content.
+                                            </p>
+                                        </>
+                                    )}
+                                    {trainingUnitType === 'video' && (
+                                        <>
+                                            <Button
+                                                className="w-full justify-start"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setActiveTab('media')
+                                                }
+                                            >
+                                                <Video className="mr-2 h-4 w-4" />
+                                                Manage Video
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                Upload, monitor, retry, and
+                                                review processing status from
+                                                the media tab.
+                                            </p>
+                                        </>
+                                    )}
+                                    {trainingUnitType === 'vm-lab' && (
+                                        <>
+                                            <Button
+                                                className="w-full justify-start"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setActiveTab('media')
+                                                }
+                                            >
+                                                <Terminal className="mr-2 h-4 w-4" />
+                                                Manage VM Request
+                                            </Button>
+                                            <Button
+                                                className="w-full justify-start"
+                                                variant="ghost"
+                                                asChild
+                                            >
+                                                <Link href="/teaching/trainingUnit-assignments/my-assignments">
+                                                    <Monitor className="mr-2 h-4 w-4" />
+                                                    Open My VM Assignments
+                                                </Link>
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                Track request status and jump
+                                                back into the assignment
+                                                workflow from here.
+                                            </p>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
                             {/* Quick tips */}
                             <Card className="border-primary/20 bg-primary/5 shadow-sm">
                                 <CardContent className="py-4">
@@ -1364,49 +1624,89 @@ Recap the important points."
                     </div>
                 </div>
             </div>
+            <Dialog open={isQuizStatsOpen} onOpenChange={setIsQuizStatsOpen}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Quiz Statistics</DialogTitle>
+                        <DialogDescription>
+                            {teacherQuiz
+                                ? `Attempt summary for ${teacherQuiz.title}.`
+                                : 'Create the quiz first to unlock teacher-facing stats.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {teacherQuiz ? (
+                        <TeacherQuizStatsPanel quizId={teacherQuiz.id} />
+                    ) : (
+                        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                            No quiz has been created for this training unit yet.
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
             {/* VM Assignment Dialog */}
             <Dialog open={showVMDialog} onOpenChange={setShowVMDialog}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Select VM for TrainingUnit</DialogTitle>
                         <DialogDescription>
-                            Choose a Proxmox VM to assign to this trainingUnit. An administrator will need to approve this request.
+                            Choose a Proxmox VM to assign to this trainingUnit.
+                            An administrator will need to approve this request.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         {loadingVMs ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                <span className="ml-2 text-muted-foreground">Loading VMs...</span>
+                                <span className="ml-2 text-muted-foreground">
+                                    Loading VMs...
+                                </span>
                             </div>
                         ) : availableVMs.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                No VMs available. Please contact an administrator.
+                            <div className="py-8 text-center text-muted-foreground">
+                                No VMs available. Please contact an
+                                administrator.
                             </div>
                         ) : (
                             <>
-                                <div className="max-h-[300px] overflow-y-auto space-y-2">
+                                <div className="max-h-[300px] space-y-2 overflow-y-auto">
                                     {availableVMs.map((vm) => (
                                         <div
                                             key={`${vm.node_id}-${vm.vmid}`}
-                                            className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                                                selectedVM?.vmid === vm.vmid && selectedVM?.node_id === vm.node_id
+                                            className={`cursor-pointer rounded-lg border p-3 transition-colors ${
+                                                selectedVM?.vmid === vm.vmid &&
+                                                selectedVM?.node_id ===
+                                                    vm.node_id
                                                     ? 'border-primary bg-primary/5'
                                                     : 'border-border hover:border-primary/50'
                                             }`}
-                                            onClick={() => setSelectedVM({ vmid: vm.vmid, name: vm.name, node_id: vm.node_id })}
+                                            onClick={() =>
+                                                setSelectedVM({
+                                                    vmid: vm.vmid,
+                                                    name: vm.name,
+                                                    node_id: vm.node_id,
+                                                })
+                                            }
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <Monitor className="h-5 w-5 text-violet-500" />
                                                     <div>
-                                                        <p className="font-medium">{vm.name}</p>
+                                                        <p className="font-medium">
+                                                            {vm.name}
+                                                        </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            VMID: {vm.vmid} · Node: {vm.node_name}
+                                                            VMID: {vm.vmid} ·
+                                                            Node: {vm.node_name}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Badge variant={vm.status === 'running' ? 'default' : 'secondary'}>
+                                                <Badge
+                                                    variant={
+                                                        vm.status === 'running'
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                >
                                                     {vm.status}
                                                 </Badge>
                                             </div>
@@ -1414,12 +1714,16 @@ Recap the important points."
                                     ))}
                                 </div>
                                 <div>
-                                    <Label htmlFor="vm-notes">Notes (optional)</Label>
+                                    <Label htmlFor="vm-notes">
+                                        Notes (optional)
+                                    </Label>
                                     <Textarea
                                         id="vm-notes"
                                         placeholder="Add any notes for the administrator..."
                                         value={vmNotes}
-                                        onChange={(e) => setVmNotes(e.target.value)}
+                                        onChange={(e) =>
+                                            setVmNotes(e.target.value)
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -1444,21 +1748,29 @@ Recap the important points."
                                 setSubmittingVM(true);
                                 try {
                                     await trainingUnitVMAssignmentApi.assign({
-                                        training_unit_id: parseInt(trainingUnitId),
+                                        training_unit_id:
+                                            parseInt(trainingUnitId),
                                         vm_id: selectedVM.vmid,
                                         node_id: selectedVM.node_id,
                                         vm_name: selectedVM.name,
                                         teacher_notes: vmNotes || undefined,
                                     });
-                                    toast.success('VM assignment submitted for approval');
+                                    toast.success(
+                                        'VM assignment submitted for approval',
+                                    );
                                     setShowVMDialog(false);
                                     setSelectedVM(null);
                                     setVmNotes('');
                                     // Reload page to get updated assignment
                                     window.location.reload();
                                 } catch (e) {
-                                    console.error('Failed to submit VM assignment:', e);
-                                    toast.error('Failed to submit VM assignment');
+                                    console.error(
+                                        'Failed to submit VM assignment:',
+                                        e,
+                                    );
+                                    toast.error(
+                                        'Failed to submit VM assignment',
+                                    );
                                 } finally {
                                     setSubmittingVM(false);
                                 }
@@ -1479,4 +1791,3 @@ Recap the important points."
         </AppLayout>
     );
 }
-

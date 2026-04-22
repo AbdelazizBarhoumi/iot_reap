@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AssignVMToTrainingUnitRequest extends FormRequest
@@ -9,7 +10,7 @@ class AssignVMToTrainingUnitRequest extends FormRequest
     public function authorize(): bool
     {
         // Teachers and admins can assign VMs
-        return $this->user()?->hasRole(\App\Enums\UserRole::TEACHER)
+        return $this->user()?->hasRole(UserRole::TEACHER)
             || $this->user()?->isAdmin();
     }
 

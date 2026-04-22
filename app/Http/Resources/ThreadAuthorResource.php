@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,10 +27,10 @@ class ThreadAuthorResource extends JsonResource
 
     private function getRole(): string
     {
-        if ($this->hasRole(\App\Enums\UserRole::ADMIN)) {
+        if ($this->hasRole(UserRole::ADMIN)) {
             return 'admin';
         }
-        if ($this->hasRole(\App\Enums\UserRole::TEACHER)) {
+        if ($this->hasRole(UserRole::TEACHER)) {
             return 'teacher';
         }
 
@@ -38,10 +39,10 @@ class ThreadAuthorResource extends JsonResource
 
     private function getBadge(): ?string
     {
-        if ($this->hasRole(\App\Enums\UserRole::ADMIN)) {
+        if ($this->hasRole(UserRole::ADMIN)) {
             return 'Admin';
         }
-        if ($this->hasRole(\App\Enums\UserRole::TEACHER)) {
+        if ($this->hasRole(UserRole::TEACHER)) {
             return 'Instructor';
         }
 

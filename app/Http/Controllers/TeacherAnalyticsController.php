@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\TrainingPath;
-use App\Services\TrainingPathAnalyticsService;
 use App\Services\RevenueService;
+use App\Services\TrainingPathAnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeacherAnalyticsController extends Controller
 {
@@ -141,7 +142,7 @@ class TeacherAnalyticsController extends Controller
     /**
      * Download earnings CSV.
      */
-    public function exportEarnings(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportEarnings(Request $request): StreamedResponse
     {
         $teacher = $request->user();
         $startDate = $request->get('start_date', now()->subDays(30)->toDateString());

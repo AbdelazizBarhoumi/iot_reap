@@ -10,7 +10,17 @@ export type NotificationType =
     | 'quiz_graded'
     | 'certificate_ready'
     | 'system'
-    | 'announcement';
+    | 'announcement'
+    | 'reservation_approved'
+    | 'reservation_rejected'
+    | 'session_started'
+    | 'session_ending'
+    | 'session_activation_failed'
+    | 'usb_device_available'
+    | 'payout_approved'
+    | 'payout_rejected'
+    | 'refund_approved'
+    | 'refund_rejected';
 export interface Notification {
     id: string;
     type: NotificationType;

@@ -7,7 +7,7 @@ use App\Models\TrainingPathModule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TrainingPathModule>
+ * @extends Factory<TrainingPathModule>
  */
 class TrainingPathModuleFactory extends Factory
 {

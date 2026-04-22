@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\TrainingPath;
 use App\Models\User;
-use App\Services\TrainingPathAnalyticsService;
 use App\Services\RevenueService;
+use App\Services\TrainingPathAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -163,7 +163,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_can_view_student_roster_for_owned_trainingPath(): void
+    public function test_teacher_can_view_student_roster_for_owned_training_path(): void
     {
         $roster = [
             'data' => [
@@ -188,7 +188,7 @@ class TeacherAnalyticsControllerTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_teacher_cannot_view_student_roster_for_unowned_trainingPath(): void
+    public function test_teacher_cannot_view_student_roster_for_unowned_training_path(): void
     {
         $response = $this->actingAs($this->teacher)
             ->get("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/students");
@@ -196,7 +196,7 @@ class TeacherAnalyticsControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_teacher_can_get_completion_funnel_for_owned_trainingPath(): void
+    public function test_teacher_can_get_completion_funnel_for_owned_training_path(): void
     {
         $funnel = [
             'enrolled' => 100,
@@ -219,7 +219,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_cannot_get_completion_funnel_for_unowned_trainingPath(): void
+    public function test_teacher_cannot_get_completion_funnel_for_unowned_training_path(): void
     {
         $response = $this->actingAs($this->teacher)
             ->getJson("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/funnel");

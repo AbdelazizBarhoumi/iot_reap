@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // Create admin users (all roles)
-        $this->call(\Database\Seeders\AdminUserSeeder::class);
+        $this->call(AdminUserSeeder::class);
 
         // Seed 7 Proxmox nodes
         $this->seedProxmoxNodes();
@@ -37,33 +37,33 @@ class DatabaseSeeder extends Seeder
         $this->seedVMSessions($testUser);
 
         // Seed trainingPaths with modules and trainingUnits
-        $this->call(\Database\Seeders\TrainingPathSeeder::class);
+        $this->call(TrainingPathSeeder::class);
 
         // Seed robots and cameras
-        $this->call(\Database\Seeders\CameraSeeder::class);
+        $this->call(CameraSeeder::class);
 
         // ── COMPREHENSIVE SEEDING FOR ALL MODELS ──
 
         // Learning & Progress
-        $this->call(\Database\Seeders\EnrollmentSeeder::class);
-        $this->call(\Database\Seeders\QuizSeeder::class);
-        $this->call(\Database\Seeders\ContentSeeder::class);
+        $this->call(EnrollmentSeeder::class);
+        $this->call(QuizSeeder::class);
+        $this->call(ContentSeeder::class);
 
         // Community & Discussion
-        $this->call(\Database\Seeders\ForumSeeder::class);
+        $this->call(ForumSeeder::class);
 
         // Infrastructure & Hardware
-        $this->call(\Database\Seeders\HardwareSeeder::class);
-        $this->call(\Database\Seeders\ReservationSeeder::class);
+        $this->call(HardwareSeeder::class);
+        $this->call(ReservationSeeder::class);
 
         // Payments & Finance
-        $this->call(\Database\Seeders\PaymentSeeder::class);
+        $this->call(PaymentSeeder::class);
 
         // Notifications & Alerts
-        $this->call(\Database\Seeders\NotificationSeeder::class);
+        $this->call(NotificationSeeder::class);
 
         // Complete model coverage - all remaining models with all status variations
-        $this->call(\Database\Seeders\ComprehensiveModelSeeder::class);
+        $this->call(ComprehensiveModelSeeder::class);
 
         $this->command->info('✅ Database seeding completed with comprehensive test data for ALL 45 models!');
     }

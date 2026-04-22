@@ -1,43 +1,112 @@
-/**
- * Notifications Index Page
- * View all user notifications.
- */
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Bell, BellOff, Check, CheckCheck, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { notificationApi } from '@/api/notification.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-interface Notification {
-    id: string;
-    type: string;
-    title: string;
-    message: string;
-    read: boolean;
-    createdAt: string;
-    data?: Record<string, unknown>;
-}
+import type { Notification } from '@/types/notification.types';
+
 interface Props {
-    notifications: Notification[];
-    unreadCount: number;
+    notifications?: Notification[] | { data?: Notification[] };
+    unread_count?: number;
 }
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Notifications', href: '/notifications' },
 ];
+
 export default function NotificationsPage({
-    notifications = [],
-    unreadCount = 0,
+    notifications: notificationsProp,
+    unread_count = 0,
 }: Props) {
-    const markAsRead = (id: string) => {
-        router.post(`/notifications/${id}/read`);
+    const initialNotifications = useMemo(
+        () =>
+            Array.isArray(notificationsProp)
+                ? notificationsProp
+                : notificationsProp?.data ?? [],
+        [notificationsProp],
+    );
+
+    const [notifications, setNotifications] =
+        useState<Notification[]>(initialNotifications);
+    const [unreadCount, setUnreadCount] = useState(unread_count);
+    const [loading, setLoading] = useState(false);
+
+    const markAsRead = async (id: string) => {
+        setNotifications((current) =>
+            current.map((notification) =>
+                notification.id === id
+                    ? { ...notification, read: true }
+                    : notification,
+            ),
+        );
+        setUnreadCount((count) => Math.max(0, count - 1));
+
+        try {
+            await notificationApi.markAsRead(id);
+        } catch {
+            setNotifications((current) =>
+                current.map((notification) =>
+                    notification.id === id
+                        ? { ...notification, read: false }
+                        : notification,
+                ),
+            );
+            setUnreadCount((count) => count + 1);
+        }
     };
-    const markAllAsRead = () => {
-        router.post('/notifications/read-all');
+
+    const markAllAsRead = async () => {
+        setLoading(true);
+        const previousNotifications = notifications;
+        const previousUnreadCount = unreadCount;
+
+        setNotifications((current) =>
+            current.map((notification) => ({ ...notification, read: true })),
+        );
+        setUnreadCount(0);
+
+        try {
+            await notificationApi.markAllAsRead();
+        } catch {
+            setNotifications(previousNotifications);
+            setUnreadCount(previousUnreadCount);
+        } finally {
+            setLoading(false);
+        }
     };
-    const deleteNotification = (id: string) => {
-        router.delete(`/notifications/${id}`);
+
+    const deleteNotification = async (id: string) => {
+        const target = notifications.find((notification) => notification.id === id);
+
+        setNotifications((current) =>
+            current.filter((notification) => notification.id !== id),
+        );
+
+        if (target && !target.read) {
+            setUnreadCount((count) => Math.max(0, count - 1));
+        }
+
+        try {
+            await notificationApi.delete(id);
+        } catch {
+            setNotifications((current) => {
+                if (!target || current.some((notification) => notification.id === id)) {
+                    return current;
+                }
+
+                return [target, ...current];
+            });
+
+            if (target && !target.read) {
+                setUnreadCount((count) => count + 1);
+            }
+        }
     };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Notifications" />
@@ -52,7 +121,11 @@ export default function NotificationsPage({
                         </p>
                     </div>
                     {unreadCount > 0 && (
-                        <Button variant="outline" onClick={markAllAsRead}>
+                        <Button
+                            variant="outline"
+                            onClick={() => void markAllAsRead()}
+                            disabled={loading}
+                        >
                             <CheckCheck className="mr-2 h-4 w-4" />
                             Mark all as read
                         </Button>
@@ -72,9 +145,7 @@ export default function NotificationsPage({
                         notifications.map((notification) => (
                             <Card
                                 key={notification.id}
-                                className={
-                                    notification.read ? 'opacity-60' : ''
-                                }
+                                className={notification.read ? 'opacity-60' : ''}
                             >
                                 <CardContent className="flex items-start gap-4 p-4">
                                     <div
@@ -106,7 +177,7 @@ export default function NotificationsPage({
                                         <div className="mt-3 flex items-center gap-4">
                                             <span className="text-xs text-muted-foreground">
                                                 {new Date(
-                                                    notification.createdAt,
+                                                    notification.created_at,
                                                 ).toLocaleString()}
                                             </span>
                                             <div className="flex gap-2">
@@ -114,11 +185,11 @@ export default function NotificationsPage({
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        onClick={() =>
-                                                            markAsRead(
+                                                        onClick={() => {
+                                                            void markAsRead(
                                                                 notification.id,
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                     >
                                                         <Check className="mr-1 h-3 w-3" />
                                                         Mark read
@@ -128,11 +199,11 @@ export default function NotificationsPage({
                                                     size="sm"
                                                     variant="ghost"
                                                     className="text-destructive hover:text-destructive"
-                                                    onClick={() =>
-                                                        deleteNotification(
+                                                    onClick={() => {
+                                                        void deleteNotification(
                                                             notification.id,
-                                                        )
-                                                    }
+                                                        );
+                                                    }}
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
@@ -148,4 +219,3 @@ export default function NotificationsPage({
         </AppLayout>
     );
 }
-

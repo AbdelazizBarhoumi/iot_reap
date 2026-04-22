@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +24,7 @@ class EnsureRole
 
         $allowed = array_map('trim', $roles);
 
-        $current = $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role;
+        $current = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
         if (! in_array($current, $allowed, true)) {
             return response()->json(['message' => 'Access denied. Insufficient role permissions.'], 403);

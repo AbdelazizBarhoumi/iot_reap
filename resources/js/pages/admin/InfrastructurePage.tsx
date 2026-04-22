@@ -16,13 +16,13 @@ import {
     Check,
     ChevronDown,
     ChevronRight,
-     Clock,
+    Clock,
     Loader2,
     MoreVertical,
     PlusCircle,
     Plug,
     PlugZap,
-     Power,
+    Power,
     RefreshCw,
     Search,
     Server,
@@ -48,7 +48,11 @@ import * as adminApi from '@/api/admin.api';
 import { adminCameraApi } from '@/api/camera.api';
 import client from '@/api/client';
 import { hardwareApi } from '@/api/hardware.api';
-import { connectionPreferencesApi, proxmoxVMApi, vmSessionApi } from '@/api/vm.api';
+import {
+    connectionPreferencesApi,
+    proxmoxVMApi,
+    vmSessionApi,
+} from '@/api/vm.api';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { SessionCountdown } from '@/components/SessionCountdown';
 import { SessionExtendButton } from '@/components/SessionExtendButton';
@@ -246,7 +250,10 @@ function clampSplitLeftPercent(value: number, containerWidth: number): number {
     return Math.min(maxPercent, Math.max(minPercent, value));
 }
 
-const statsIconClass: Record<'info' | 'success' | 'warning' | 'secondary', string> = {
+const statsIconClass: Record<
+    'info' | 'success' | 'warning' | 'secondary',
+    string
+> = {
     info: 'bg-info/10 text-info',
     success: 'bg-success/10 text-success',
     warning: 'bg-warning/10 text-warning',
@@ -320,7 +327,9 @@ function NodeCard({ node, onSelectNode, selectedNodeId }: NodeCardProps) {
                     variant="outline"
                     className={`${textColor} border-current capitalize`}
                 >
-                    <span className={`mr-1.5 h-2 w-2 rounded-full ${statusColor}`} />
+                    <span
+                        className={`mr-1.5 h-2 w-2 rounded-full ${statusColor}`}
+                    />
                     {node.status}
                 </Badge>
             </div>
@@ -339,7 +348,9 @@ function NodeCard({ node, onSelectNode, selectedNodeId }: NodeCardProps) {
                     <div className="mt-2 flex justify-between text-xs text-muted-foreground">
                         <span>VMs: {node.active_vm_count ?? 0}</span>
                         {node.uptime_seconds !== undefined && (
-                            <span>Uptime: {formatUptime(node.uptime_seconds)}</span>
+                            <span>
+                                Uptime: {formatUptime(node.uptime_seconds)}
+                            </span>
                         )}
                     </div>
                 </div>
@@ -420,8 +431,12 @@ function VMsPanel({
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base">VMs on {nodeName}</CardTitle>
-                        <CardDescription>{vms.length} virtual machines</CardDescription>
+                        <CardTitle className="text-base">
+                            VMs on {nodeName}
+                        </CardTitle>
+                        <CardDescription>
+                            {vms.length} virtual machines
+                        </CardDescription>
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -430,7 +445,9 @@ function VMsPanel({
                             onClick={fetchVMs}
                             disabled={loading}
                         >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw
+                                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+                            />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={onClose}>
                             <X className="h-4 w-4" />
@@ -556,17 +573,20 @@ function ServerCard({
                                         <Check className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={onSyncNodes}>
-                                        <RefreshCw className="mr-2 h-4 w-4" /> Sync Nodes
+                                        <RefreshCw className="mr-2 h-4 w-4" />{' '}
+                                        Sync Nodes
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={onToggleActive}>
                                         {server.is_active ? (
                                             <>
-                                                <X className="mr-2 h-4 w-4" /> Deactivate
+                                                <X className="mr-2 h-4 w-4" />{' '}
+                                                Deactivate
                                             </>
                                         ) : (
                                             <>
-                                                <Check className="mr-2 h-4 w-4" /> Activate
+                                                <Check className="mr-2 h-4 w-4" />{' '}
+                                                Activate
                                             </>
                                         )}
                                     </DropdownMenuItem>
@@ -574,7 +594,8 @@ function ServerCard({
                                         onClick={onDelete}
                                         className="text-destructive"
                                     >
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" />{' '}
+                                        Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -592,7 +613,10 @@ function ServerCard({
                         {server.active_sessions_count !== undefined && (
                             <>
                                 <span>|</span>
-                                <span>{server.active_sessions_count} active sessions</span>
+                                <span>
+                                    {server.active_sessions_count} active
+                                    sessions
+                                </span>
                             </>
                         )}
                     </div>
@@ -606,8 +630,8 @@ function ServerCard({
                         ) : serverNodes.length === 0 ? (
                             <div className="py-8 text-center text-muted-foreground">
                                 <p>
-                                    No nodes found. Click "Sync Nodes" to discover nodes from
-                                    this server.
+                                    No nodes found. Click "Sync Nodes" to
+                                    discover nodes from this server.
                                 </p>
                             </div>
                         ) : (
@@ -725,7 +749,11 @@ function AttachDialog({
     );
 
     const canAttach =
-        !!device && !!selectedVm && !!selectedVm.ip_address && !loading && !loadingVms;
+        !!device &&
+        !!selectedVm &&
+        !!selectedVm.ip_address &&
+        !loading &&
+        !loadingVms;
 
     const handleAttach = async () => {
         if (!device || !selectedVm || !selectedVm.ip_address) {
@@ -757,7 +785,8 @@ function AttachDialog({
                 <DialogHeader>
                     <DialogTitle>Attach USB Device</DialogTitle>
                     <DialogDescription>
-                        Select a running VM to attach <strong>{device?.name}</strong>.
+                        Select a running VM to attach{' '}
+                        <strong>{device?.name}</strong>.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-2">
@@ -804,10 +833,12 @@ function AttachDialog({
                                 <strong>VM:</strong> {selectedVm.name}
                             </p>
                             <p>
-                                <strong>IP:</strong> {selectedVm.ip_address ?? 'Not available'}
+                                <strong>IP:</strong>{' '}
+                                {selectedVm.ip_address ?? 'Not available'}
                             </p>
                             <p>
-                                <strong>Node:</strong> {selectedVm.node} ({selectedVm.server_name})
+                                <strong>Node:</strong> {selectedVm.node} (
+                                {selectedVm.server_name})
                             </p>
                         </div>
                     )}
@@ -860,22 +891,28 @@ function UsbDeviceRow({
                         ) : (
                             <Usb className="h-4 w-4 shrink-0 text-muted-foreground" />
                         )}
-                        <p className="truncate text-sm font-medium">{device.name}</p>
+                        <p className="truncate text-sm font-medium">
+                            {device.name}
+                        </p>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                        Bus {device.busid} · VID:PID {device.vendor_id}:{device.product_id}
+                        Bus {device.busid} · VID:PID {device.vendor_id}:
+                        {device.product_id}
                     </p>
                     {device.attached_to && !hasCameraRegistration && (
                         <p className="mt-1 text-xs text-muted-foreground">
                             Attached to: {device.attached_to}
                         </p>
                     )}
-                    {device.status === 'pending_attach' && device.pending_vmid && (
-                        <p className="mt-1 text-xs text-amber-600">
-                            Pending on VM #{device.pending_vmid}
-                            {device.pending_vm_name ? ` (${device.pending_vm_name})` : ''}
-                        </p>
-                    )}
+                    {device.status === 'pending_attach' &&
+                        device.pending_vmid && (
+                            <p className="mt-1 text-xs text-amber-600">
+                                Pending on VM #{device.pending_vmid}
+                                {device.pending_vm_name
+                                    ? ` (${device.pending_vm_name})`
+                                    : ''}
+                            </p>
+                        )}
                 </div>
                 {hasCameraRegistration ? (
                     <Badge
@@ -933,7 +970,11 @@ function UsbDeviceRow({
 
                         {device.status === 'bound' && (
                             <>
-                                <Button size="sm" onClick={onAttach} disabled={loading}>
+                                <Button
+                                    size="sm"
+                                    onClick={onAttach}
+                                    disabled={loading}
+                                >
                                     <PlugZap className="mr-1 h-3 w-3" />
                                     Attach
                                 </Button>
@@ -1041,7 +1082,8 @@ function GatewayNodeCard({
                                         {node.name}
                                     </CardTitle>
                                     <CardDescription>
-                                        {node.ip}:{node.port} &middot; {devices.length} USB device
+                                        {node.ip}:{node.port} &middot;{' '}
+                                        {devices.length} USB device
                                         {devices.length !== 1 ? 's' : ''}
                                     </CardDescription>
                                 </div>
@@ -1080,8 +1122,12 @@ function GatewayNodeCard({
 
                             <Button
                                 size="sm"
-                                variant={node.is_verified ? 'outline' : 'default'}
-                                onClick={() => onVerifyNode(node.id, !node.is_verified)}
+                                variant={
+                                    node.is_verified ? 'outline' : 'default'
+                                }
+                                onClick={() =>
+                                    onVerifyNode(node.id, !node.is_verified)
+                                }
                                 disabled={loading}
                             >
                                 {node.is_verified ? 'Unverify' : 'Verify'}
@@ -1107,7 +1153,8 @@ function GatewayNodeCard({
                     <CardContent className="pt-0">
                         {!node.is_verified ? (
                             <p className="py-4 text-center text-sm text-muted-foreground">
-                                Verify this gateway to view and manage USB devices.
+                                Verify this gateway to view and manage USB
+                                devices.
                             </p>
                         ) : devices.length === 0 ? (
                             <p className="py-4 text-center text-sm text-muted-foreground">
@@ -1121,12 +1168,22 @@ function GatewayNodeCard({
                                         device={device}
                                         loading={loading}
                                         onBind={() => onBindDevice(device.id)}
-                                        onUnbind={() => onUnbindDevice(device.id)}
+                                        onUnbind={() =>
+                                            onUnbindDevice(device.id)
+                                        }
                                         onAttach={() => onAttachDevice(device)}
-                                        onDetach={() => onDetachDevice(device.id)}
-                                        onCancelPending={() => onCancelPending(device.id)}
-                                        onMarkAsCamera={() => onMarkAsCamera(device.id)}
-                                        onRemoveCamera={() => onRemoveCamera(device.id)}
+                                        onDetach={() =>
+                                            onDetachDevice(device.id)
+                                        }
+                                        onCancelPending={() =>
+                                            onCancelPending(device.id)
+                                        }
+                                        onMarkAsCamera={() =>
+                                            onMarkAsCamera(device.id)
+                                        }
+                                        onRemoveCamera={() =>
+                                            onRemoveCamera(device.id)
+                                        }
                                     />
                                 ))}
                             </div>
@@ -1195,7 +1252,9 @@ function CameraCard({
                     variant="outline"
                     className={`${textColor} border-current text-xs capitalize`}
                 >
-                    <span className={`mr-1.5 h-2 w-2 rounded-full ${statusColor}`} />
+                    <span
+                        className={`mr-1.5 h-2 w-2 rounded-full ${statusColor}`}
+                    />
                     {cam.status}
                 </Badge>
             </div>
@@ -1207,7 +1266,8 @@ function CameraCard({
                 <p>Stream: {cam.stream_key}</p>
                 {cam.is_controlled && cam.control && (
                     <p className="text-amber-600">
-                        Controlled by session #{cam.control.session_id.slice(0, 8)}
+                        Controlled by session #
+                        {cam.control.session_id.slice(0, 8)}
                     </p>
                 )}
                 {hasReservation && !cam.control && (
@@ -1365,7 +1425,8 @@ function CameraAttachDialog({
                 <DialogHeader>
                     <DialogTitle>Attach Camera to VM</DialogTitle>
                     <DialogDescription>
-                        Reserve <strong>{camera?.name}</strong> for a virtual machine.
+                        Reserve <strong>{camera?.name}</strong> for a virtual
+                        machine.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -1411,10 +1472,12 @@ function CameraAttachDialog({
                                 <strong>VM:</strong> {selectedVm.name}
                             </p>
                             <p>
-                                <strong>IP:</strong> {selectedVm.ip_address ?? 'Not available'}
+                                <strong>IP:</strong>{' '}
+                                {selectedVm.ip_address ?? 'Not available'}
                             </p>
                             <p>
-                                <strong>Node:</strong> {selectedVm.node} ({selectedVm.server_name})
+                                <strong>Node:</strong> {selectedVm.node} (
+                                {selectedVm.server_name})
                             </p>
                         </div>
                     )}
@@ -1435,10 +1498,16 @@ function CameraAttachDialog({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function InfrastructurePage() {
-    const [activeTab, setActiveTab] = useState<
-        'proxmox' | 'hardware' | 'cameras' | 'sessions'
-    >('proxmox');
+type InfrastructureTab = 'proxmox' | 'hardware' | 'cameras' | 'sessions';
+
+interface InfrastructurePageProps {
+    initialTab?: InfrastructureTab;
+}
+
+export default function InfrastructurePage({
+    initialTab = 'proxmox',
+}: InfrastructurePageProps) {
+    const [activeTab, setActiveTab] = useState<InfrastructureTab>(initialTab);
 
     // ── Proxmox state ──
     const [servers, setServers] = useState<ProxmoxServerAdmin[]>([]);
@@ -1446,15 +1515,21 @@ export default function InfrastructurePage() {
     const [loading, setLoading] = useState(true);
     const [nodesLoading, setNodesLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [expandedServers, setExpandedServers] = useState<Set<number>>(new Set());
+    const [expandedServers, setExpandedServers] = useState<Set<number>>(
+        new Set(),
+    );
 
     // ── Dialog state ──
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingServer, setEditingServer] = useState<ProxmoxServerAdmin | null>(null);
-    const [formData, setFormData] = useState<ProxmoxServerFormData>(initialFormData);
+    const [editingServer, setEditingServer] =
+        useState<ProxmoxServerAdmin | null>(null);
+    const [formData, setFormData] =
+        useState<ProxmoxServerFormData>(initialFormData);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
-    const [deleteServer, setDeleteServer] = useState<ProxmoxServerAdmin | null>(null);
+    const [deleteServer, setDeleteServer] = useState<ProxmoxServerAdmin | null>(
+        null,
+    );
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     // ── Hardware state (via hook) ──
@@ -1476,15 +1551,15 @@ export default function InfrastructurePage() {
         verifyNode,
     } = useHardwareGateway();
 
-    const [attachDialogDevice, setAttachDialogDevice] = useState<UsbDevice | null>(
-        null,
-    );
+    const [attachDialogDevice, setAttachDialogDevice] =
+        useState<UsbDevice | null>(null);
 
     // ── Camera state ──
     const [cameras, setCameras] = useState<CameraType[]>([]);
     const [camerasLoading, setCamerasLoading] = useState(false);
     const [cameraActionLoading, setCameraActionLoading] = useState(false);
-    const [cameraAttachTarget, setCameraAttachTarget] = useState<CameraType | null>(null);
+    const [cameraAttachTarget, setCameraAttachTarget] =
+        useState<CameraType | null>(null);
     const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
     const [selectedCameraIds, setSelectedCameraIds] = useState<number[]>([]);
     const [bulkAssignVmKey, setBulkAssignVmKey] = useState('');
@@ -1500,9 +1575,8 @@ export default function InfrastructurePage() {
         refetch: refetchSessions,
         terminateSession,
     } = useVMSessions();
-    const [selectedLaunchVm, setSelectedLaunchVm] = useState<LaunchableVM | null>(
-        null,
-    );
+    const [selectedLaunchVm, setSelectedLaunchVm] =
+        useState<LaunchableVM | null>(null);
     const [isLaunchDialogOpen, setIsLaunchDialogOpen] = useState(false);
     const [launchDuration, setLaunchDuration] = useState<number>(60);
     const [launchLoading, setLaunchLoading] = useState(false);
@@ -1524,13 +1598,14 @@ export default function InfrastructurePage() {
         ssh: [],
     });
     const [protocolDisabled, setProtocolDisabled] = useState(false);
-    const [launchReturnSnapshot, setLaunchReturnSnapshot] = useState<string>('');
+    const [launchReturnSnapshot, setLaunchReturnSnapshot] =
+        useState<string>('');
     const [vmSnapshots, setVmSnapshots] = useState<VMSnapshot[]>([]);
     const [snapshotsLoading, setSnapshotsLoading] = useState(false);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-    const [terminatingSessionId, setTerminatingSessionId] = useState<string | null>(
-        null,
-    );
+    const [terminatingSessionId, setTerminatingSessionId] = useState<
+        string | null
+    >(null);
     const [splitLeftWidth, setSplitLeftWidth] = useState<number>(58);
     const [isResizingSplit, setIsResizingSplit] = useState(false);
     const [isWorkspaceFullscreen, setIsWorkspaceFullscreen] = useState(false);
@@ -1554,7 +1629,9 @@ export default function InfrastructurePage() {
             );
             setServers(response.data.data);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch servers');
+            setError(
+                err instanceof Error ? err.message : 'Failed to fetch servers',
+            );
         } finally {
             setLoading(false);
         }
@@ -1866,7 +1943,10 @@ export default function InfrastructurePage() {
                 const payload: Record<string, unknown> = { ...formData };
                 if (!formData.token_id) delete payload.token_id;
                 if (!formData.token_secret) delete payload.token_secret;
-                await client.patch(`/admin/proxmox-servers/${editingServer.id}`, payload);
+                await client.patch(
+                    `/admin/proxmox-servers/${editingServer.id}`,
+                    payload,
+                );
             } else {
                 await client.post('/admin/proxmox-servers', formData);
             }
@@ -1898,7 +1978,11 @@ export default function InfrastructurePage() {
             } else if (axiosErr.response?.data?.message) {
                 setFormError(axiosErr.response.data.message);
             } else {
-                setFormError(err instanceof Error ? err.message : 'Failed to save server');
+                setFormError(
+                    err instanceof Error
+                        ? err.message
+                        : 'Failed to save server',
+                );
             }
         } finally {
             setFormLoading(false);
@@ -1912,7 +1996,9 @@ export default function InfrastructurePage() {
             });
             fetchServers();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update server');
+            setError(
+                err instanceof Error ? err.message : 'Failed to update server',
+            );
         }
     };
 
@@ -1924,7 +2010,9 @@ export default function InfrastructurePage() {
             setDeleteServer(null);
             fetchServers();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete server');
+            setError(
+                err instanceof Error ? err.message : 'Failed to delete server',
+            );
         } finally {
             setDeleteLoading(false);
         }
@@ -1935,7 +2023,9 @@ export default function InfrastructurePage() {
             await client.post(`/admin/proxmox-servers/${serverId}/sync-nodes`);
             fetchNodes();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to sync nodes');
+            setError(
+                err instanceof Error ? err.message : 'Failed to sync nodes',
+            );
         }
     };
 
@@ -1996,7 +2086,9 @@ export default function InfrastructurePage() {
             toast.success('Camera attached successfully');
         } catch (err) {
             console.error('Failed to attach camera:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to attach camera');
+            toast.error(
+                err instanceof Error ? err.message : 'Failed to attach camera',
+            );
         } finally {
             setCameraActionLoading(false);
         }
@@ -2011,12 +2103,16 @@ export default function InfrastructurePage() {
                 throw new Error('No active reservation found for this camera');
             }
 
-            await adminCameraApi.cancelReservation(camera.active_reservation_id);
+            await adminCameraApi.cancelReservation(
+                camera.active_reservation_id,
+            );
             await fetchCameras();
             toast.success('Camera detached successfully');
         } catch (err) {
             console.error('Failed to detach camera:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to detach camera');
+            toast.error(
+                err instanceof Error ? err.message : 'Failed to detach camera',
+            );
         } finally {
             setCameraActionLoading(false);
         }
@@ -2031,7 +2127,11 @@ export default function InfrastructurePage() {
             toast.success('Camera activated successfully');
         } catch (err) {
             console.error('Failed to activate camera:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to activate camera');
+            toast.error(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to activate camera',
+            );
         } finally {
             setCameraActionLoading(false);
         }
@@ -2041,12 +2141,19 @@ export default function InfrastructurePage() {
         setCameraActionLoading(true);
 
         try {
-            await adminCameraApi.deactivate(cameraId, 'Deactivated via Infrastructure page');
+            await adminCameraApi.deactivate(
+                cameraId,
+                'Deactivated via Infrastructure page',
+            );
             await fetchCameras();
             toast.success('Camera deactivated successfully');
         } catch (err) {
             console.error('Failed to deactivate camera:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to deactivate camera');
+            toast.error(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to deactivate camera',
+            );
         } finally {
             setCameraActionLoading(false);
         }
@@ -2141,7 +2248,8 @@ export default function InfrastructurePage() {
 
     const handleMakeWorkspaceWider = useCallback(() => {
         setIsWorkspaceFullscreen(false);
-        const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+        const width =
+            splitContainerRef.current?.getBoundingClientRect().width ?? 0;
         setSplitLeftWidth((current) =>
             clampSplitLeftPercent(current - SPLIT_STEP_PERCENT, width),
         );
@@ -2149,7 +2257,8 @@ export default function InfrastructurePage() {
 
     const handleMakeWorkspaceNarrower = useCallback(() => {
         setIsWorkspaceFullscreen(false);
-        const width = splitContainerRef.current?.getBoundingClientRect().width ?? 0;
+        const width =
+            splitContainerRef.current?.getBoundingClientRect().width ?? 0;
         setSplitLeftWidth((current) =>
             clampSplitLeftPercent(current + SPLIT_STEP_PERCENT, width),
         );
@@ -2158,7 +2267,10 @@ export default function InfrastructurePage() {
     // ── Derived stats ──
     const activeServers = servers.filter((s) => s.is_active).length;
     const onlineNodes = nodes.filter((n) => n.status === 'online').length;
-    const totalVMs = nodes.reduce((sum, n) => sum + (n.active_vm_count ?? 0), 0);
+    const totalVMs = nodes.reduce(
+        (sum, n) => sum + (n.active_vm_count ?? 0),
+        0,
+    );
     const activeCameras = cameras.filter((c) => c.status === 'active').length;
     const onlineGateways = (gatewayNodes ?? []).filter((n) => n.online).length;
     const activeSessions = sessions.filter(
@@ -2167,13 +2279,14 @@ export default function InfrastructurePage() {
     );
     const provisioningSessions = sessions.filter(
         (session) =>
-            (session.status === 'provisioning' || session.status === 'pending') &&
+            (session.status === 'provisioning' ||
+                session.status === 'pending') &&
             session.time_remaining_seconds > 0,
     );
     const visibleSessionCount =
         activeSessions.length + provisioningSessions.length;
     const activeSession = activeSessionId
-        ? sessions.find((session) => session.id === activeSessionId) ?? null
+        ? (sessions.find((session) => session.id === activeSessionId) ?? null)
         : null;
     const splitContainerWidth =
         splitContainerRef.current?.getBoundingClientRect().width ?? 0;
@@ -2208,7 +2321,8 @@ export default function InfrastructurePage() {
                                 Infrastructure
                             </h1>
                             <p className="text-muted-foreground">
-                                Manage Proxmox servers, hardware gateways, and cameras
+                                Manage Proxmox servers, hardware gateways, and
+                                cameras
                             </p>
                         </div>
                     </div>
@@ -2242,11 +2356,15 @@ export default function InfrastructurePage() {
                                 size="sm"
                                 className="bg-info text-info-foreground hover:bg-info/90"
                                 onClick={handleDiscoverGateways}
-                                disabled={hardwareLoading || hardwareActionLoading}
+                                disabled={
+                                    hardwareLoading || hardwareActionLoading
+                                }
                             >
                                 <Search
                                     className={`mr-2 h-4 w-4 ${
-                                        hardwareActionLoading ? 'animate-pulse' : ''
+                                        hardwareActionLoading
+                                            ? 'animate-pulse'
+                                            : ''
                                     }`}
                                 />
                                 Discover Gateways
@@ -2280,36 +2398,38 @@ export default function InfrastructurePage() {
 
                 {/* Stats Cards */}
                 <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {([
-                        {
-                            icon: Server,
-                            color: 'info',
-                            label: 'Active Servers',
-                            value: `${activeServers}/${servers.length}`,
-                            delay: 0.1,
-                        },
-                        {
-                            icon: Activity,
-                            color: 'success',
-                            label: 'Nodes Online',
-                            value: `${onlineNodes}/${nodes.length}`,
-                            delay: 0.2,
-                        },
-                        {
-                            icon: Monitor,
-                            color: 'warning',
-                            label: 'Total VMs',
-                            value: String(totalVMs),
-                            delay: 0.3,
-                        },
-                        {
-                            icon: Camera,
-                            color: 'secondary',
-                            label: 'Cameras Active',
-                            value: `${activeCameras}/${cameras.length}`,
-                            delay: 0.4,
-                        },
-                    ] as const).map(({ icon: Icon, color, label, value, delay }) => (
+                    {(
+                        [
+                            {
+                                icon: Server,
+                                color: 'info',
+                                label: 'Active Servers',
+                                value: `${activeServers}/${servers.length}`,
+                                delay: 0.1,
+                            },
+                            {
+                                icon: Activity,
+                                color: 'success',
+                                label: 'Nodes Online',
+                                value: `${onlineNodes}/${nodes.length}`,
+                                delay: 0.2,
+                            },
+                            {
+                                icon: Monitor,
+                                color: 'warning',
+                                label: 'Total VMs',
+                                value: String(totalVMs),
+                                delay: 0.3,
+                            },
+                            {
+                                icon: Camera,
+                                color: 'secondary',
+                                label: 'Cameras Active',
+                                value: `${activeCameras}/${cameras.length}`,
+                                delay: 0.4,
+                            },
+                        ] as const
+                    ).map(({ icon: Icon, color, label, value, delay }) => (
                         <motion.div
                             key={label}
                             initial={{ opacity: 0, y: 20 }}
@@ -2326,7 +2446,9 @@ export default function InfrastructurePage() {
                                         <Icon className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-muted-foreground">{label}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {label}
+                                        </p>
                                         <p className="font-heading text-2xl font-bold text-foreground">
                                             {value}
                                         </p>
@@ -2380,28 +2502,50 @@ export default function InfrastructurePage() {
                             }
                         >
                             <TabsList className="mb-6">
-                                <TabsTrigger value="proxmox" className="flex items-center gap-2">
+                                <TabsTrigger
+                                    value="proxmox"
+                                    className="flex items-center gap-2"
+                                >
                                     <Server className="h-4 w-4" />
                                     Proxmox
-                                    <Badge variant="secondary" className="ml-1 text-xs">
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 text-xs"
+                                    >
                                         {servers.length}
                                     </Badge>
                                 </TabsTrigger>
-                                <TabsTrigger value="hardware" className="flex items-center gap-2">
+                                <TabsTrigger
+                                    value="hardware"
+                                    className="flex items-center gap-2"
+                                >
                                     <Usb className="h-4 w-4" />
                                     Hardware Gateways
-                                    <Badge variant="secondary" className="ml-1 text-xs">
-                                        {onlineGateways}/{(gatewayNodes ?? []).length}
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 text-xs"
+                                    >
+                                        {onlineGateways}/
+                                        {(gatewayNodes ?? []).length}
                                     </Badge>
                                 </TabsTrigger>
-                                <TabsTrigger value="cameras" className="flex items-center gap-2">
+                                <TabsTrigger
+                                    value="cameras"
+                                    className="flex items-center gap-2"
+                                >
                                     <Video className="h-4 w-4" />
                                     Cameras
                                 </TabsTrigger>
-                                <TabsTrigger value="sessions" className="flex items-center gap-2">
+                                <TabsTrigger
+                                    value="sessions"
+                                    className="flex items-center gap-2"
+                                >
                                     <Activity className="h-4 w-4" />
                                     Active Sessions
-                                    <Badge variant="secondary" className="ml-1 text-xs">
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 text-xs"
+                                    >
                                         {visibleSessionCount}
                                     </Badge>
                                 </TabsTrigger>
@@ -2424,11 +2568,14 @@ export default function InfrastructurePage() {
                                             No Proxmox servers configured
                                         </h3>
                                         <p className="mb-4 text-muted-foreground">
-                                            Add your first Proxmox VE cluster to get started.
+                                            Add your first Proxmox VE cluster to
+                                            get started.
                                         </p>
                                         <Button
                                             className="bg-info text-info-foreground hover:bg-info/90"
-                                            onClick={() => setIsDialogOpen(true)}
+                                            onClick={() =>
+                                                setIsDialogOpen(true)
+                                            }
                                         >
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             Add Server
@@ -2447,26 +2594,58 @@ export default function InfrastructurePage() {
                                                     server={server}
                                                     nodes={nodes}
                                                     nodesLoading={nodesLoading}
-                                                    isExpanded={expandedServers.has(server.id)}
-                                                    onOpenLaunch={handleOpenLaunch}
-                                                    onToggleExpand={() => handleToggleExpand(server.id)}
+                                                    isExpanded={expandedServers.has(
+                                                        server.id,
+                                                    )}
+                                                    onOpenLaunch={
+                                                        handleOpenLaunch
+                                                    }
+                                                    onToggleExpand={() =>
+                                                        handleToggleExpand(
+                                                            server.id,
+                                                        )
+                                                    }
                                                     onEdit={() => {
-                                                        setEditingServer(server);
+                                                        setEditingServer(
+                                                            server,
+                                                        );
                                                         setFormData({
-                                                            name: server.name ?? '',
-                                                            description: server.description ?? '',
-                                                            host: server.host ?? '',
-                                                            port: server.port ?? 8006,
-                                                            realm: server.realm ?? 'pam',
+                                                            name:
+                                                                server.name ??
+                                                                '',
+                                                            description:
+                                                                server.description ??
+                                                                '',
+                                                            host:
+                                                                server.host ??
+                                                                '',
+                                                            port:
+                                                                server.port ??
+                                                                8006,
+                                                            realm:
+                                                                server.realm ??
+                                                                'pam',
                                                             token_id: '',
                                                             token_secret: '',
-                                                            verify_ssl: server.verify_ssl ?? true,
+                                                            verify_ssl:
+                                                                server.verify_ssl ??
+                                                                true,
                                                         });
                                                         setIsDialogOpen(true);
                                                     }}
-                                                    onToggleActive={() => handleToggleActive(server)}
-                                                    onDelete={() => setDeleteServer(server)}
-                                                    onSyncNodes={() => handleSyncNodes(server.id)}
+                                                    onToggleActive={() =>
+                                                        handleToggleActive(
+                                                            server,
+                                                        )
+                                                    }
+                                                    onDelete={() =>
+                                                        setDeleteServer(server)
+                                                    }
+                                                    onSyncNodes={() =>
+                                                        handleSyncNodes(
+                                                            server.id,
+                                                        )
+                                                    }
                                                 />
                                             </motion.div>
                                         ))}
@@ -2477,11 +2656,17 @@ export default function InfrastructurePage() {
                             {/* ── Hardware Tab ── */}
                             <TabsContent value="hardware">
                                 {hardwareError && (
-                                    <Alert variant="destructive" className="mb-4">
-                                        <AlertDescription>{hardwareError}</AlertDescription>
+                                    <Alert
+                                        variant="destructive"
+                                        className="mb-4"
+                                    >
+                                        <AlertDescription>
+                                            {hardwareError}
+                                        </AlertDescription>
                                     </Alert>
                                 )}
-                                {hardwareLoading && (gatewayNodes ?? []).length === 0 ? (
+                                {hardwareLoading &&
+                                (gatewayNodes ?? []).length === 0 ? (
                                     <div className="flex items-center justify-center py-12">
                                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                     </div>
@@ -2492,7 +2677,8 @@ export default function InfrastructurePage() {
                                             No hardware gateways found
                                         </h3>
                                         <p className="text-muted-foreground">
-                                            Gateway nodes will appear here once they are registered.
+                                            Gateway nodes will appear here once
+                                            they are registered.
                                         </p>
                                         <Button
                                             size="sm"
@@ -2521,16 +2707,30 @@ export default function InfrastructurePage() {
                                             >
                                                 <GatewayNodeCard
                                                     node={node}
-                                                    loading={hardwareActionLoading}
+                                                    loading={
+                                                        hardwareActionLoading
+                                                    }
                                                     onRefreshNode={refreshNode}
                                                     onVerifyNode={verifyNode}
                                                     onBindDevice={bindDevice}
-                                                    onUnbindDevice={unbindDevice}
-                                                    onAttachDevice={setAttachDialogDevice}
-                                                    onDetachDevice={detachDevice}
-                                                    onCancelPending={cancelPendingAttachment}
-                                                    onMarkAsCamera={handleMarkAsCamera}
-                                                    onRemoveCamera={handleRemoveCamera}
+                                                    onUnbindDevice={
+                                                        unbindDevice
+                                                    }
+                                                    onAttachDevice={
+                                                        setAttachDialogDevice
+                                                    }
+                                                    onDetachDevice={
+                                                        detachDevice
+                                                    }
+                                                    onCancelPending={
+                                                        cancelPendingAttachment
+                                                    }
+                                                    onMarkAsCamera={
+                                                        handleMarkAsCamera
+                                                    }
+                                                    onRemoveCamera={
+                                                        handleRemoveCamera
+                                                    }
                                                 />
                                             </motion.div>
                                         ))}
@@ -2541,7 +2741,9 @@ export default function InfrastructurePage() {
                             {/* ── Cameras Tab ── */}
                             <TabsContent value="cameras">
                                 <p className="mb-3 text-xs text-muted-foreground">
-                                    Reservation approvals moved to Admin Reservations. Attach/detach actions remain available here.
+                                    Reservation approvals moved to Admin
+                                    Reservations. Attach/detach actions remain
+                                    available here.
                                 </p>
 
                                 <div>
@@ -2549,7 +2751,8 @@ export default function InfrastructurePage() {
                                         <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                                             <Eye className="h-4 w-4" />
                                             All Cameras ({cameras.length})
-                                            {(camerasLoading || cameraActionLoading) && (
+                                            {(camerasLoading ||
+                                                cameraActionLoading) && (
                                                 <Loader2 className="ml-1 h-3 w-3 animate-spin" />
                                             )}
                                         </h3>
@@ -2558,10 +2761,12 @@ export default function InfrastructurePage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => setSelectedCameraIds([])}
+                                                onClick={() =>
+                                                    setSelectedCameraIds([])
+                                                }
                                                 disabled={
-                                                    selectedCameraIds.length === 0 ||
-                                                    cameraActionLoading
+                                                    selectedCameraIds.length ===
+                                                        0 || cameraActionLoading
                                                 }
                                             >
                                                 Clear Selection
@@ -2569,24 +2774,33 @@ export default function InfrastructurePage() {
 
                                             <Button
                                                 size="sm"
-                                                onClick={() => setBulkAssignDialogOpen(true)}
+                                                onClick={() =>
+                                                    setBulkAssignDialogOpen(
+                                                        true,
+                                                    )
+                                                }
                                                 disabled={
-                                                    selectedCameraIds.length === 0 ||
-                                                    cameraActionLoading
+                                                    selectedCameraIds.length ===
+                                                        0 || cameraActionLoading
                                                 }
                                             >
-                                                Bulk Assign ({selectedCameraIds.length})
+                                                Bulk Assign (
+                                                {selectedCameraIds.length})
                                             </Button>
 
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={fetchCameras}
-                                                disabled={camerasLoading || cameraActionLoading}
+                                                disabled={
+                                                    camerasLoading ||
+                                                    cameraActionLoading
+                                                }
                                             >
                                                 <RefreshCw
                                                     className={`mr-2 h-4 w-4 ${
-                                                        camerasLoading || cameraActionLoading
+                                                        camerasLoading ||
+                                                        cameraActionLoading
                                                             ? 'animate-spin'
                                                             : ''
                                                     }`}
@@ -2602,7 +2816,8 @@ export default function InfrastructurePage() {
                                         </div>
                                     ) : cameras.length === 0 ? (
                                         <p className="py-8 text-center text-muted-foreground">
-                                            No cameras configured. Run the camera seeder to add cameras.
+                                            No cameras configured. Run the
+                                            camera seeder to add cameras.
                                         </p>
                                     ) : (
                                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -2610,18 +2825,38 @@ export default function InfrastructurePage() {
                                                 <CameraCard
                                                     key={cam.id}
                                                     cam={cam}
-                                                    loading={cameraActionLoading}
-                                                    selected={selectedCameraIds.includes(cam.id)}
+                                                    loading={
+                                                        cameraActionLoading
+                                                    }
+                                                    selected={selectedCameraIds.includes(
+                                                        cam.id,
+                                                    )}
                                                     onToggleSelect={(checked) =>
                                                         handleToggleBulkCameraSelection(
                                                             cam.id,
                                                             checked,
                                                         )
                                                     }
-                                                    onAttach={() => setCameraAttachTarget(cam)}
-                                                    onDetach={() => handleDetachCamera(cam.id)}
-                                                    onActivate={() => handleActivateCamera(cam.id)}
-                                                    onDeactivate={() => handleDeactivateCamera(cam.id)}
+                                                    onAttach={() =>
+                                                        setCameraAttachTarget(
+                                                            cam,
+                                                        )
+                                                    }
+                                                    onDetach={() =>
+                                                        handleDetachCamera(
+                                                            cam.id,
+                                                        )
+                                                    }
+                                                    onActivate={() =>
+                                                        handleActivateCamera(
+                                                            cam.id,
+                                                        )
+                                                    }
+                                                    onDeactivate={() =>
+                                                        handleDeactivateCamera(
+                                                            cam.id,
+                                                        )
+                                                    }
                                                 />
                                             ))}
                                         </div>
@@ -2633,7 +2868,8 @@ export default function InfrastructurePage() {
                             <TabsContent value="sessions">
                                 <div className="mb-4 flex items-center justify-between gap-2">
                                     <p className="text-sm text-muted-foreground">
-                                        View and manage your active or provisioning VM sessions.
+                                        View and manage your active or
+                                        provisioning VM sessions.
                                     </p>
                                     <Button
                                         variant="outline"
@@ -2650,21 +2886,25 @@ export default function InfrastructurePage() {
                                     </Button>
                                 </div>
 
-                                {sessionsLoading && visibleSessionCount === 0 ? (
+                                {sessionsLoading &&
+                                visibleSessionCount === 0 ? (
                                     <div className="flex items-center justify-center py-12">
                                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                     </div>
                                 ) : visibleSessionCount === 0 ? (
                                     <Alert>
                                         <AlertDescription>
-                                            No active sessions found. Launch a VM from the Proxmox tab to start a new session.
+                                            No active sessions found. Launch a
+                                            VM from the Proxmox tab to start a
+                                            new session.
                                         </AlertDescription>
                                     </Alert>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                         {activeSessions.map((session) => {
                                             const isTerminating =
-                                                terminatingSessionId === session.id;
+                                                terminatingSessionId ===
+                                                session.id;
 
                                             return (
                                                 <Card
@@ -2675,11 +2915,15 @@ export default function InfrastructurePage() {
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div>
                                                                 <CardTitle className="text-base">
-                                                                    {session.template?.name ??
+                                                                    {session
+                                                                        .template
+                                                                        ?.name ??
                                                                         `VM #${session.vm_id}`}
                                                                 </CardTitle>
                                                                 <CardDescription>
-                                                                    {session.node_name}
+                                                                    {
+                                                                        session.node_name
+                                                                    }
                                                                 </CardDescription>
                                                             </div>
                                                             <Badge className="border-success/30 bg-success/10 text-success">
@@ -2703,7 +2947,9 @@ export default function InfrastructurePage() {
                                                             className="flex-1 bg-info text-info-foreground hover:bg-info/90"
                                                             size="sm"
                                                             onClick={() =>
-                                                                setActiveSessionId(session.id)
+                                                                setActiveSessionId(
+                                                                    session.id,
+                                                                )
                                                             }
                                                         >
                                                             Open Workspace
@@ -2717,7 +2963,9 @@ export default function InfrastructurePage() {
                                                                     session.id,
                                                                 );
                                                             }}
-                                                            disabled={isTerminating}
+                                                            disabled={
+                                                                isTerminating
+                                                            }
                                                         >
                                                             {isTerminating ? (
                                                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -2739,11 +2987,15 @@ export default function InfrastructurePage() {
                                                     <div className="flex items-start justify-between gap-3">
                                                         <div>
                                                             <CardTitle className="text-base">
-                                                                {session.template?.name ??
+                                                                {session
+                                                                    .template
+                                                                    ?.name ??
                                                                     `VM #${session.vm_id}`}
                                                             </CardTitle>
                                                             <CardDescription>
-                                                                {session.node_name}
+                                                                {
+                                                                    session.node_name
+                                                                }
                                                             </CardDescription>
                                                         </div>
                                                         <Badge className="border-warning/30 bg-warning/10 text-warning capitalize">
@@ -2752,7 +3004,9 @@ export default function InfrastructurePage() {
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent className="pb-3 text-sm text-muted-foreground">
-                                                    Provisioning in progress. This may take a few minutes...
+                                                    Provisioning in progress.
+                                                    This may take a few
+                                                    minutes...
                                                 </CardContent>
                                                 <div className="mt-auto border-t p-3">
                                                     <Button
@@ -2760,7 +3014,9 @@ export default function InfrastructurePage() {
                                                         size="sm"
                                                         className="w-full"
                                                         onClick={() =>
-                                                            setActiveSessionId(session.id)
+                                                            setActiveSessionId(
+                                                                session.id,
+                                                            )
                                                         }
                                                     >
                                                         View Workspace
@@ -2779,7 +3035,7 @@ export default function InfrastructurePage() {
                             role="separator"
                             aria-orientation="vertical"
                             aria-label="Resize workspace split"
-                            className="relative hidden w-3 shrink-0 self-stretch cursor-col-resize xl:block"
+                            className="relative hidden w-3 shrink-0 cursor-col-resize self-stretch xl:block"
                             onPointerDown={(event) => {
                                 event.preventDefault();
                                 setIsResizingSplit(true);
@@ -2791,7 +3047,7 @@ export default function InfrastructurePage() {
                                 }`}
                             />
                             <div
-                                className={`absolute left-1/2 top-1/2 h-10 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border ${
+                                className={`absolute top-1/2 left-1/2 h-10 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border ${
                                     isResizingSplit
                                         ? 'border-info/40 bg-info/10'
                                         : 'border-border bg-background'
@@ -2804,137 +3060,177 @@ export default function InfrastructurePage() {
                         <div
                             className={
                                 isWorkspaceFullscreen
-                                    ? 'min-w-0 w-full'
+                                    ? 'w-full min-w-0'
                                     : 'min-w-0 flex-1 xl:min-w-[500px] xl:pl-3'
                             }
                         >
-                        <Card
-                            className={`h-fit shadow-card ${
-                                isWorkspaceFullscreen ? '' : 'xl:sticky xl:top-4'
-                            }`}
-                        >
-                            <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <CardTitle className="text-base">Session Workspace</CardTitle>
-                                        <CardDescription>
-                                            {activeSession
-                                                ? `${activeSession.template?.name ?? 'VM Session'} · ${activeSession.status}`
-                                                : 'Loading session details...'}
-                                        </CardDescription>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="hidden xl:inline-flex"
-                                            onClick={handleMakeWorkspaceNarrower}
-                                            disabled={
-                                                isWorkspaceFullscreen ||
-                                                splitLeftWidth >=
-                                                    maxSplitLeftPercent
-                                            }
-                                        >
-                                            Narrower
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="hidden xl:inline-flex"
-                                            onClick={handleMakeWorkspaceWider}
-                                            disabled={
-                                                isWorkspaceFullscreen ||
-                                                splitLeftWidth <=
-                                                    minSplitLeftPercent
-                                            }
-                                        >
-                                            Wider
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setIsWorkspaceFullscreen((prev) => !prev)
-                                            }
-                                        >
-                                            {isWorkspaceFullscreen
-                                                ? 'Split View'
-                                                : 'Full Workspace'}
-                                        </Button>
-                                        {activeSession && (
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link href={`/sessions/${activeSession.id}`}>
-                                                    Open Full Page
-                                                </Link>
-                                            </Button>
-                                        )}
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setActiveSessionId(null)}
-                                            aria-label="Close embedded session"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {sessionsLoading && !activeSession ? (
-                                    <div className="flex items-center justify-center py-12">
-                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                    </div>
-                                ) : !activeSession ? (
-                                    <Alert>
-                                        <AlertDescription>
-                                            Session not found. It may have expired or been terminated.
-                                        </AlertDescription>
-                                    </Alert>
-                                ) : (
-                                    <>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <SessionCountdown expiresAt={activeSession.expires_at} />
-                                            <SessionExtendButton
-                                                sessionId={activeSession.id}
-                                                onExtended={() => {
-                                                    void refetchSessions();
-                                                }}
-                                                disabled={activeSession.status !== 'active'}
-                                            />
-                                            <TerminateSessionButton
-                                                sessionId={activeSession.id}
-                                                onTerminated={() => {
-                                                    setActiveSessionId(null);
-                                                    void refetchSessions();
-                                                }}
-                                                disabled={
-                                                    activeSession.status === 'expired' ||
-                                                    activeSession.status === 'terminated'
+                            <Card
+                                className={`h-fit shadow-card ${
+                                    isWorkspaceFullscreen
+                                        ? ''
+                                        : 'xl:sticky xl:top-4'
+                                }`}
+                            >
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <CardTitle className="text-base">
+                                                Session Workspace
+                                            </CardTitle>
+                                            <CardDescription>
+                                                {activeSession
+                                                    ? `${activeSession.template?.name ?? 'VM Session'} · ${activeSession.status}`
+                                                    : 'Loading session details...'}
+                                            </CardDescription>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="hidden xl:inline-flex"
+                                                onClick={
+                                                    handleMakeWorkspaceNarrower
                                                 }
-                                            />
+                                                disabled={
+                                                    isWorkspaceFullscreen ||
+                                                    splitLeftWidth >=
+                                                        maxSplitLeftPercent
+                                                }
+                                            >
+                                                Narrower
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="hidden xl:inline-flex"
+                                                onClick={
+                                                    handleMakeWorkspaceWider
+                                                }
+                                                disabled={
+                                                    isWorkspaceFullscreen ||
+                                                    splitLeftWidth <=
+                                                        minSplitLeftPercent
+                                                }
+                                            >
+                                                Wider
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setIsWorkspaceFullscreen(
+                                                        (prev) => !prev,
+                                                    )
+                                                }
+                                            >
+                                                {isWorkspaceFullscreen
+                                                    ? 'Split View'
+                                                    : 'Full Workspace'}
+                                            </Button>
+                                            {activeSession && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/sessions/${activeSession.id}`}
+                                                    >
+                                                        Open Full Page
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                onClick={() =>
+                                                    setActiveSessionId(null)
+                                                }
+                                                aria-label="Close embedded session"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
                                         </div>
-
-                                        {activeSession.status !== 'active' && (
-                                            <Alert>
-                                                <AlertDescription>
-                                                    Session is {activeSession.status}. Viewer will connect automatically once it becomes active.
-                                                </AlertDescription>
-                                            </Alert>
-                                        )}
-
-                                        <div className="rounded-lg border p-2">
-                                            <GuacamoleViewer
-                                                sessionId={activeSession.id}
-                                                isActive={activeSession.status === 'active'}
-                                                protocol={activeSession.protocol.toUpperCase()}
-                                                vmIpAddress={activeSession.vm_ip_address}
-                                            />
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {sessionsLoading && !activeSession ? (
+                                        <div className="flex items-center justify-center py-12">
+                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                         </div>
-                                    </>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    ) : !activeSession ? (
+                                        <Alert>
+                                            <AlertDescription>
+                                                Session not found. It may have
+                                                expired or been terminated.
+                                            </AlertDescription>
+                                        </Alert>
+                                    ) : (
+                                        <>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <SessionCountdown
+                                                    expiresAt={
+                                                        activeSession.expires_at
+                                                    }
+                                                />
+                                                <SessionExtendButton
+                                                    sessionId={activeSession.id}
+                                                    onExtended={() => {
+                                                        void refetchSessions();
+                                                    }}
+                                                    disabled={
+                                                        activeSession.status !==
+                                                        'active'
+                                                    }
+                                                />
+                                                <TerminateSessionButton
+                                                    sessionId={activeSession.id}
+                                                    onTerminated={() => {
+                                                        setActiveSessionId(
+                                                            null,
+                                                        );
+                                                        void refetchSessions();
+                                                    }}
+                                                    disabled={
+                                                        activeSession.status ===
+                                                            'expired' ||
+                                                        activeSession.status ===
+                                                            'terminated'
+                                                    }
+                                                />
+                                            </div>
+
+                                            {activeSession.status !==
+                                                'active' && (
+                                                <Alert>
+                                                    <AlertDescription>
+                                                        Session is{' '}
+                                                        {activeSession.status}.
+                                                        Viewer will connect
+                                                        automatically once it
+                                                        becomes active.
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
+
+                                            <div className="rounded-lg border p-2">
+                                                <GuacamoleViewer
+                                                    sessionId={activeSession.id}
+                                                    isActive={
+                                                        activeSession.status ===
+                                                        'active'
+                                                    }
+                                                    protocol={activeSession.protocol.toUpperCase()}
+                                                    vmIpAddress={
+                                                        activeSession.vm_ip_address
+                                                    }
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
                     )}
                 </div>
@@ -2952,7 +3248,9 @@ export default function InfrastructurePage() {
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>
-                            Launch Session — {selectedLaunchVm?.name || `VM ${selectedLaunchVm?.vmid}`}
+                            Launch Session —{' '}
+                            {selectedLaunchVm?.name ||
+                                `VM ${selectedLaunchVm?.vmid}`}
                         </DialogTitle>
                         <DialogDescription>
                             {useExisting
@@ -2982,10 +3280,14 @@ export default function InfrastructurePage() {
                         )}
 
                         <div className="grid gap-2">
-                            <Label htmlFor="launch-duration">Session Duration</Label>
+                            <Label htmlFor="launch-duration">
+                                Session Duration
+                            </Label>
                             <Select
                                 value={launchDuration.toString()}
-                                onValueChange={(value) => setLaunchDuration(Number(value))}
+                                onValueChange={(value) =>
+                                    setLaunchDuration(Number(value))
+                                }
                                 disabled={launchLoading}
                             >
                                 <SelectTrigger id="launch-duration">
@@ -3012,7 +3314,8 @@ export default function InfrastructurePage() {
                                     setUseExisting(checked);
                                 }}
                                 disabled={
-                                    launchLoading || selectedLaunchVm?.is_template === true
+                                    launchLoading ||
+                                    selectedLaunchVm?.is_template === true
                                 }
                             />
                             <Label htmlFor="use-existing" className="text-sm">
@@ -3021,7 +3324,9 @@ export default function InfrastructurePage() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="launch-protocol">Connection Protocol</Label>
+                            <Label htmlFor="launch-protocol">
+                                Connection Protocol
+                            </Label>
                             <Select
                                 value={launchProtocol}
                                 onValueChange={setLaunchProtocol}
@@ -3031,14 +3336,17 @@ export default function InfrastructurePage() {
                                     <SelectValue placeholder="Select protocol" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="rdp">RDP (Remote Desktop)</SelectItem>
+                                    <SelectItem value="rdp">
+                                        RDP (Remote Desktop)
+                                    </SelectItem>
                                     <SelectItem value="vnc">VNC</SelectItem>
                                     <SelectItem value="ssh">SSH</SelectItem>
                                 </SelectContent>
                             </Select>
                             {protocolDisabled && (
                                 <p className="text-xs text-muted-foreground">
-                                    Protocol is locked for template-based launches.
+                                    Protocol is locked for template-based
+                                    launches.
                                 </p>
                             )}
                         </div>
@@ -3068,7 +3376,9 @@ export default function InfrastructurePage() {
                                     <SelectValue placeholder="Use protocol default" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
+                                    <SelectItem
+                                        value={NO_PROFILE_SELECTED_VALUE}
+                                    >
                                         {defaultLaunchProfile
                                             ? `Use default (${defaultLaunchProfile.profile_name}) ★`
                                             : 'Use protocol default'}
@@ -3086,8 +3396,8 @@ export default function InfrastructurePage() {
                             </Select>
 
                             <p className="text-xs text-muted-foreground">
-                                If you don&apos;t choose one, the starred default
-                                profile is used automatically.
+                                If you don&apos;t choose one, the starred
+                                default profile is used automatically.
                             </p>
                         </div>
 
@@ -3135,7 +3445,9 @@ export default function InfrastructurePage() {
                                     variant="ghost"
                                     size="sm"
                                     className="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
-                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    onClick={() =>
+                                        setShowPassword((prev) => !prev)
+                                    }
                                     tabIndex={-1}
                                 >
                                     {showPassword ? (
@@ -3155,10 +3467,14 @@ export default function InfrastructurePage() {
                                 </span>
                             </Label>
                             <Select
-                                value={launchReturnSnapshot || NO_SNAPSHOT_VALUE}
+                                value={
+                                    launchReturnSnapshot || NO_SNAPSHOT_VALUE
+                                }
                                 onValueChange={(value) =>
                                     setLaunchReturnSnapshot(
-                                        value === NO_SNAPSHOT_VALUE ? '' : value,
+                                        value === NO_SNAPSHOT_VALUE
+                                            ? ''
+                                            : value,
                                     )
                                 }
                                 disabled={launchLoading || snapshotsLoading}
@@ -3177,7 +3493,10 @@ export default function InfrastructurePage() {
                                         No snapshot (default)
                                     </SelectItem>
                                     {vmSnapshots
-                                        .filter((snapshot) => snapshot.name !== 'current')
+                                        .filter(
+                                            (snapshot) =>
+                                                snapshot.name !== 'current',
+                                        )
                                         .map((snapshot) => (
                                             <SelectItem
                                                 key={snapshot.name}
@@ -3193,7 +3512,9 @@ export default function InfrastructurePage() {
                         {launchError && (
                             <Alert variant="destructive">
                                 <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{launchError}</AlertDescription>
+                                <AlertDescription>
+                                    {launchError}
+                                </AlertDescription>
                             </Alert>
                         )}
 
@@ -3217,7 +3538,10 @@ export default function InfrastructurePage() {
                         >
                             Cancel
                         </Button>
-                        <Button onClick={handleLaunchSession} disabled={launchLoading}>
+                        <Button
+                            onClick={handleLaunchSession}
+                            disabled={launchLoading}
+                        >
                             {launchLoading && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
@@ -3236,7 +3560,9 @@ export default function InfrastructurePage() {
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingServer ? 'Edit Proxmox Server' : 'Add Proxmox Server'}
+                            {editingServer
+                                ? 'Edit Proxmox Server'
+                                : 'Add Proxmox Server'}
                         </DialogTitle>
                         <DialogDescription>
                             {editingServer
@@ -3252,19 +3578,27 @@ export default function InfrastructurePage() {
                                 placeholder="Production Cluster"
                                 value={formData.name}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
+                                    setFormData({
+                                        ...formData,
+                                        name: e.target.value,
+                                    })
                                 }
                                 disabled={formLoading}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description (optional)</Label>
+                            <Label htmlFor="description">
+                                Description (optional)
+                            </Label>
                             <Input
                                 id="description"
                                 placeholder="Main datacenter cluster"
                                 value={formData.description}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
+                                    setFormData({
+                                        ...formData,
+                                        description: e.target.value,
+                                    })
                                 }
                                 disabled={formLoading}
                             />
@@ -3277,7 +3611,10 @@ export default function InfrastructurePage() {
                                     placeholder="192.168.1.100"
                                     value={formData.host}
                                     onChange={(e) =>
-                                        setFormData({ ...formData, host: e.target.value })
+                                        setFormData({
+                                            ...formData,
+                                            host: e.target.value,
+                                        })
                                     }
                                     disabled={formLoading}
                                 />
@@ -3305,20 +3642,28 @@ export default function InfrastructurePage() {
                                 placeholder="user@pam!token-name"
                                 value={formData.token_id}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, token_id: e.target.value })
+                                    setFormData({
+                                        ...formData,
+                                        token_id: e.target.value,
+                                    })
                                 }
                                 disabled={formLoading}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="token_secret">API Token Secret</Label>
+                            <Label htmlFor="token_secret">
+                                API Token Secret
+                            </Label>
                             <Input
                                 id="token_secret"
                                 type="password"
                                 placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                                 value={formData.token_secret}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, token_secret: e.target.value })
+                                    setFormData({
+                                        ...formData,
+                                        token_secret: e.target.value,
+                                    })
                                 }
                                 disabled={formLoading}
                             />
@@ -3328,11 +3673,16 @@ export default function InfrastructurePage() {
                                 id="verify_ssl"
                                 checked={formData.verify_ssl}
                                 onCheckedChange={(checked: boolean) =>
-                                    setFormData({ ...formData, verify_ssl: checked })
+                                    setFormData({
+                                        ...formData,
+                                        verify_ssl: checked,
+                                    })
                                 }
                                 disabled={formLoading}
                             />
-                            <Label htmlFor="verify_ssl">Verify SSL Certificate</Label>
+                            <Label htmlFor="verify_ssl">
+                                Verify SSL Certificate
+                            </Label>
                         </div>
                         {formError && (
                             <Alert variant="destructive">
@@ -3352,7 +3702,10 @@ export default function InfrastructurePage() {
                         >
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveServer} disabled={formLoading}>
+                        <Button
+                            onClick={handleSaveServer}
+                            disabled={formLoading}
+                        >
                             {formLoading && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
@@ -3367,13 +3720,16 @@ export default function InfrastructurePage() {
             </Dialog>
 
             {/* ── Delete Confirmation Dialog ── */}
-            <Dialog open={!!deleteServer} onOpenChange={() => setDeleteServer(null)}>
+            <Dialog
+                open={!!deleteServer}
+                onOpenChange={() => setDeleteServer(null)}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Server</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete "{deleteServer?.name}"? This action
-                            cannot be undone.
+                            Are you sure you want to delete "
+                            {deleteServer?.name}"? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -3411,8 +3767,8 @@ export default function InfrastructurePage() {
                     <DialogHeader>
                         <DialogTitle>Bulk Assign Cameras</DialogTitle>
                         <DialogDescription>
-                            Assign {selectedCameraIds.length} selected camera(s) to a
-                            running VM.
+                            Assign {selectedCameraIds.length} selected camera(s)
+                            to a running VM.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -3450,22 +3806,27 @@ export default function InfrastructurePage() {
                         {selectedBulkAssignVm && (
                             <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
                                 <p>
-                                    <strong>VM:</strong> {selectedBulkAssignVm.name}
+                                    <strong>VM:</strong>{' '}
+                                    {selectedBulkAssignVm.name}
                                 </p>
                                 <p>
-                                    <strong>Node:</strong> {selectedBulkAssignVm.node} (
+                                    <strong>Node:</strong>{' '}
+                                    {selectedBulkAssignVm.node} (
                                     {selectedBulkAssignVm.server_name})
                                 </p>
                                 <p>
                                     <strong>IP:</strong>{' '}
-                                    {selectedBulkAssignVm.ip_address ?? 'Not available'}
+                                    {selectedBulkAssignVm.ip_address ??
+                                        'Not available'}
                                 </p>
                             </div>
                         )}
 
                         {bulkAssignError && (
                             <Alert variant="destructive">
-                                <AlertDescription>{bulkAssignError}</AlertDescription>
+                                <AlertDescription>
+                                    {bulkAssignError}
+                                </AlertDescription>
                             </Alert>
                         )}
                     </div>

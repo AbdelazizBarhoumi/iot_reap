@@ -13,7 +13,7 @@ class AdminTrainingPathControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_view_pending_trainingPaths(): void
+    public function test_admin_can_view_pending_training_paths(): void
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         TrainingPath::factory()->pendingReview()->count(2)->create();
@@ -24,11 +24,12 @@ class AdminTrainingPathControllerTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('admin/TrainingPathsPage')
+            ->has('trainingPaths', 3)
             ->has('pendingTrainingPaths', 2)
         );
     }
 
-    public function test_non_admin_cannot_view_pending_trainingPaths(): void
+    public function test_non_admin_cannot_view_pending_training_paths(): void
     {
         $user = User::factory()->create(['role' => UserRole::ENGINEER]);
 
@@ -37,14 +38,14 @@ class AdminTrainingPathControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_guest_cannot_view_pending_trainingPaths(): void
+    public function test_guest_cannot_view_pending_training_paths(): void
     {
         $response = $this->get('/admin/trainingPaths');
 
         $response->assertRedirect('/login');
     }
 
-    public function test_admin_can_approve_trainingPath(): void
+    public function test_admin_can_approve_training_path(): void
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         $trainingPath = TrainingPath::factory()->pendingReview()->create();
@@ -58,7 +59,7 @@ class AdminTrainingPathControllerTest extends TestCase
         ]);
     }
 
-    public function test_non_admin_cannot_approve_trainingPath(): void
+    public function test_non_admin_cannot_approve_training_path(): void
     {
         $user = User::factory()->create(['role' => UserRole::ENGINEER]);
         $trainingPath = TrainingPath::factory()->pendingReview()->create();
@@ -89,7 +90,7 @@ class AdminTrainingPathControllerTest extends TestCase
         ]);
     }
 
-    public function test_non_admin_cannot_reject_trainingPath(): void
+    public function test_non_admin_cannot_reject_training_path(): void
     {
         $user = User::factory()->create(['role' => UserRole::ENGINEER]);
         $trainingPath = TrainingPath::factory()->pendingReview()->create();

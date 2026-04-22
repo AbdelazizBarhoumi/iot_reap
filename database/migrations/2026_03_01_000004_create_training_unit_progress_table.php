@@ -17,17 +17,17 @@ return new class extends Migration
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->unsignedInteger('time_spent_seconds')->default(0);
-            
+
             // Video tracking
             $table->unsignedInteger('video_watch_percentage')->default(0);
             $table->unsignedInteger('video_position_seconds')->default(0);
-            
+
             // TrainingUnit type tracking
             $table->boolean('completed')->default(false);
             $table->boolean('quiz_passed')->default(false);
             $table->boolean('article_read')->default(false);
             $table->timestamp('article_read_at')->nullable();
-            
+
             $table->timestamps();
 
             $table->unique(['user_id', 'training_unit_id']);

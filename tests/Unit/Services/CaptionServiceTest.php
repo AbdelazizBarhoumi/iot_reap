@@ -95,7 +95,7 @@ class CaptionServiceTest extends TestCase
 
         $existingCaption = $this->createMock(Caption::class);
         $existingCaption->method('__get')->willReturnCallback(function ($property) use ($oldFilePath) {
-            return match($property) {
+            return match ($property) {
                 'file_path' => $oldFilePath,
                 'id' => 1,
                 'video_id' => 1,
@@ -245,7 +245,7 @@ class CaptionServiceTest extends TestCase
 
         $caption = $this->createMock(Caption::class);
         $caption->method('__get')->willReturnCallback(function ($property) use ($filePath) {
-            return match($property) {
+            return match ($property) {
                 'file_path' => $filePath,
                 'id' => 1,
                 'is_default' => true,

@@ -3,23 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TrainingPath\CreateTrainingPathRequest;
-use App\Http\Requests\TrainingPath\ReorderTrainingUnitsRequest;
 use App\Http\Requests\TrainingPath\ReorderModulesRequest;
-use App\Http\Requests\TrainingPath\StoreTrainingUnitRequest;
+use App\Http\Requests\TrainingPath\ReorderTrainingUnitsRequest;
 use App\Http\Requests\TrainingPath\StoreModuleRequest;
+use App\Http\Requests\TrainingPath\StoreTrainingUnitRequest;
+use App\Http\Requests\TrainingPath\UpdateModuleRequest;
 use App\Http\Requests\TrainingPath\UpdateTrainingPathRequest;
 use App\Http\Requests\TrainingPath\UpdateTrainingUnitRequest;
-use App\Http\Requests\TrainingPath\UpdateModuleRequest;
 use App\Http\Resources\TrainingPathModuleResource;
 use App\Http\Resources\TrainingPathResource;
 use App\Http\Resources\TrainingUnitResource;
+use App\Http\Resources\TrainingUnitVMAssignmentResource;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
+use App\Models\TrainingUnitVMAssignment;
 use App\Repositories\TrainingPathRepository;
 use App\Services\TrainingPathService;
 use App\Services\TrainingUnitService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -98,7 +101,7 @@ class TeachingController extends Controller
     /**
      * Store a new trainingPath.
      */
-    public function store(CreateTrainingPathRequest $request): \Illuminate\Http\RedirectResponse
+    public function store(CreateTrainingPathRequest $request): RedirectResponse
     {
         try {
             Log::info('Creating trainingPath', ['user' => $request->user()->id, 'data_keys' => array_keys($request->validated())]);
@@ -327,6 +330,11 @@ class TeachingController extends Controller
         }
 
         $trainingPath = $trainingUnit->module->trainingPath;
+        $vmAssignment = TrainingUnitVMAssignment::query()
+            ->where('training_unit_id', $trainingUnitId)
+            ->with(['node', 'assignedByUser', 'approvedByUser'])
+            ->latest('created_at')
+            ->first();
 
         if (! $trainingPath->isOwnedBy($request->user()) && ! $request->user()->isAdmin()) {
             abort(403);
@@ -336,6 +344,7 @@ class TeachingController extends Controller
             return response()->json([
                 'trainingUnit' => new TrainingUnitResource($trainingUnit),
                 'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
+                'vmAssignment' => $vmAssignment ? new TrainingUnitVMAssignmentResource($vmAssignment) : null,
             ]);
         }
 
@@ -345,6 +354,7 @@ class TeachingController extends Controller
             'trainingUnitId' => (string) $trainingUnitId,
             'trainingUnit' => new TrainingUnitResource($trainingUnit),
             'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
+            'vmAssignment' => $vmAssignment ? new TrainingUnitVMAssignmentResource($vmAssignment) : null,
         ]);
     }
 

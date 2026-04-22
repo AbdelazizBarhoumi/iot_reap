@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\SearchService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
 
@@ -34,9 +36,9 @@ class SearchControllerTest extends TestCase
             'total' => 0,
         ];
 
-            $categories = [
-                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
-            ];
+        $categories = [
+            ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
+        ];
 
         $this->searchServiceMock
             ->shouldReceive('search')
@@ -60,6 +62,39 @@ class SearchControllerTest extends TestCase
                 'sort',
                 'categories',
             ]);
+    }
+
+    public function test_search_page_renders_inertia_response_for_browser_requests(): void
+    {
+        $searchResult = [
+            'results' => collect([]),
+            'total' => 0,
+        ];
+
+        $categories = [
+            ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
+        ];
+
+        $this->searchServiceMock
+            ->shouldReceive('search')
+            ->once()
+            ->andReturnUsing(fn () => $searchResult);
+
+        $this->searchServiceMock
+            ->shouldReceive('getCategories')
+            ->once()
+            ->andReturn($categories);
+
+        $this->get('/search?q=laravel')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('trainingPaths/search')
+                ->where('query', 'laravel')
+                ->where('total', 0)
+                ->has('results', 0)
+                ->has('trainingPaths', 0)
+                ->has('categories', 1)
+            );
     }
 
     public function test_search_requires_query_parameter(): void
@@ -90,7 +125,7 @@ class SearchControllerTest extends TestCase
         $categories = [];
 
         $expectedFilters = [
-                'category' => 'smart-manufacturing',
+            'category' => 'smart-manufacturing',
             'level' => 'Beginner',
             'price_min' => 10.0,
             'price_max' => 100.0,
@@ -111,7 +146,7 @@ class SearchControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->getJson('/search?'.http_build_query([
                 'q' => 'laravel',
-                    'category' => 'smart-manufacturing',
+                'category' => 'smart-manufacturing',
                 'level' => 'Beginner',
                 'price_min' => 10,
                 'price_max' => 100,
@@ -167,7 +202,7 @@ class SearchControllerTest extends TestCase
         ]);
 
         // Use Eloquent collection instead of Support collection
-        $eloquentCollection = \Illuminate\Database\Eloquent\Collection::make($recentSearches);
+        $eloquentCollection = Collection::make($recentSearches);
 
         $this->searchServiceMock
             ->shouldReceive('getRecentSearches')
@@ -210,8 +245,8 @@ class SearchControllerTest extends TestCase
     public function test_categories_endpoint(): void
     {
         $categories = [
-                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing', 'count' => 15],
-                ['name' => 'Predictive Maintenance', 'slug' => 'predictive-maintenance', 'count' => 8],
+            ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing', 'count' => 15],
+            ['name' => 'Predictive Maintenance', 'slug' => 'predictive-maintenance', 'count' => 8],
         ];
 
         $this->searchServiceMock
@@ -229,9 +264,9 @@ class SearchControllerTest extends TestCase
 
     public function test_by_category_endpoint_returns_json(): void
     {
-        $trainingPaths = \Illuminate\Database\Eloquent\Collection::make([]);
+        $trainingPaths = Collection::make([]);
         $categories = [
-                ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
+            ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing'],
         ];
 
         $this->searchServiceMock
@@ -252,13 +287,42 @@ class SearchControllerTest extends TestCase
                 'category',
             ])
             ->assertJson([
-                    'category' => 'Smart Manufacturing',
+                'category' => 'Smart Manufacturing',
             ]);
+    }
+
+    public function test_by_category_page_renders_inertia_response_for_browser_requests(): void
+    {
+        $trainingPaths = Collection::make([]);
+        $categories = [
+            ['name' => 'Smart Manufacturing', 'slug' => 'smart-manufacturing', 'count' => 0],
+        ];
+
+        $this->searchServiceMock
+            ->shouldReceive('getTrainingPathsByCategory')
+            ->once()
+            ->andReturn($trainingPaths);
+
+        $this->searchServiceMock
+            ->shouldReceive('getCategories')
+            ->once()
+            ->andReturn($categories);
+
+        $this->get('/search/category/smart-manufacturing')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('trainingPaths/category')
+                ->where('category', 'Smart Manufacturing')
+                ->where('slug', 'smart-manufacturing')
+                ->where('total', 0)
+                ->has('trainingPaths', 0)
+                ->has('categories', 1)
+            );
     }
 
     public function test_by_category_endpoint_with_unknown_category(): void
     {
-        $trainingPaths = \Illuminate\Database\Eloquent\Collection::make([]);
+        $trainingPaths = Collection::make([]);
         $categories = [];
 
         $this->searchServiceMock

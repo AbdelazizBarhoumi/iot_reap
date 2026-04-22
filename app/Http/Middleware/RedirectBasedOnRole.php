@@ -12,7 +12,7 @@ class RedirectBasedOnRole
     /**
      * Handle an incoming request.
      * Redirects authenticated users to role-appropriate pages:
-     * - Engineer: redirect to trainingPaths
+    * - Engineer: redirect to training paths
      * - Teacher: redirect to teaching dashboard
      * - Security Officer: redirect to trainingPaths
      * - Admin: redirect to admin dashboard
@@ -33,7 +33,7 @@ class RedirectBasedOnRole
 
         // If already on a dashboard/home page after login, redirect based on role
         $path = $request->path();
-        if ($path === 'dashboard' || $path === '/') {
+        if ($path === 'dashboard' || $path === 'vmdashboard' || $path === '/') {
             if ($user->role === UserRole::TEACHER) {
                 if ($user->isTeacherApproved()) {
                     return redirect()->route('teaching.index');
@@ -42,11 +42,15 @@ class RedirectBasedOnRole
                 }
             }
 
-            return match ($user->role) {
-                UserRole::ENGINEER => redirect()->route('trainingPaths.index'),
-                UserRole::ADMIN => $next($request),
-                default => $next($request),
-            };
+            if ($user->role === UserRole::ADMIN) {
+                return redirect()->route('admin.dashboard');
+            }
+
+            if ($path === '/' && $user->role === UserRole::ENGINEER) {
+                return redirect()->route('trainingPaths.index');
+            }
+
+            return $next($request);
         }
 
         return $next($request);

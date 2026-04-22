@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Enums\TrainingUnitVMAssignmentStatus;
 use App\Enums\ProxmoxNodeStatus;
-use App\Models\TrainingUnit;
-use App\Models\TrainingUnitVMAssignment;
+use App\Enums\TrainingUnitVMAssignmentStatus;
+use App\Enums\UserRole;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
+use App\Models\TrainingUnit;
+use App\Models\TrainingUnitVMAssignment;
 use App\Models\User;
 use App\Repositories\TrainingUnitVMAssignmentRepository;
 use Illuminate\Database\Eloquent\Collection;
@@ -234,7 +235,7 @@ class TrainingUnitVMAssignmentService
             ->where('user_id', $user->id)
             ->exists();
 
-        if (! $isEnrolled && ! $user->isAdmin() && ! $user->hasRole(\App\Enums\UserRole::TEACHER)) {
+        if (! $isEnrolled && ! $user->isAdmin() && ! $user->hasRole(UserRole::TEACHER)) {
             return null;
         }
 

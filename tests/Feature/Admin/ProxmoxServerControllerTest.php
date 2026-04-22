@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\NodeCredentialsLog;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
+use App\Models\VMSession;
 use App\Services\ProxmoxConnection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -484,8 +486,8 @@ class ProxmoxServerControllerTest extends TestCase
         $nodes = ProxmoxNode::factory(2)->create(['proxmox_server_id' => $server->id]);
 
         // create a couple of VM sessions tied to those nodes
-        $session1 = \App\Models\VMSession::factory()->create(['node_id' => $nodes[0]->id]);
-        $session2 = \App\Models\VMSession::factory()->create(['node_id' => $nodes[1]->id]);
+        $session1 = VMSession::factory()->create(['node_id' => $nodes[0]->id]);
+        $session2 = VMSession::factory()->create(['node_id' => $nodes[1]->id]);
 
         $response = $this->actingAs($this->admin)
             ->deleteJson("/admin/proxmox-servers/{$server->id}");
@@ -516,12 +518,12 @@ class ProxmoxServerControllerTest extends TestCase
         $otherServer = ProxmoxServer::factory()->create();
         $otherNode = ProxmoxNode::factory()->create(['proxmox_server_id' => $otherServer->id]);
 
-        $session = \App\Models\VMSession::factory()->create([
+        $session = VMSession::factory()->create([
             'node_id' => $node->id,
             'proxmox_server_id' => $server->id,
         ]);
 
-        $staleSession = \App\Models\VMSession::factory()->create([
+        $staleSession = VMSession::factory()->create([
             'node_id' => $otherNode->id,
             'proxmox_server_id' => $server->id,
         ]);
@@ -564,7 +566,7 @@ class ProxmoxServerControllerTest extends TestCase
             'changed_by' => $this->admin->id,
         ]);
 
-        $log = \App\Models\NodeCredentialsLog::where('changed_by', $this->admin->id)
+        $log = NodeCredentialsLog::where('changed_by', $this->admin->id)
             ->where('action', 'deleted')
             ->latest()
             ->first();

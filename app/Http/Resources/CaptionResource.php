@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Caption;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Caption
+ * @mixin Caption
  */
 class CaptionResource extends JsonResource
 {

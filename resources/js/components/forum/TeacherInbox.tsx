@@ -33,9 +33,14 @@ interface TeacherInboxProps {
     flaggedThreads: DiscussionThread[];
     unansweredThreads: DiscussionThread[];
     recentThreads: DiscussionThread[];
-    onViewThread?: (threadId: string, trainingPathSlug: string) => void;
+    onViewThread?: (
+        threadId: string,
+        trainingPathId: string,
+        filter: 'flagged' | 'unanswered' | 'recent',
+    ) => void;
     onResolveFlag?: (threadId: string) => void;
     onPinThread?: (threadId: string) => void;
+    onUnpinThread?: (threadId: string) => void;
     onLockThread?: (threadId: string) => void;
     onUnlockThread?: (threadId: string) => void;
     onRefresh?: () => void;
@@ -174,6 +179,7 @@ export function TeacherInbox({
     onViewThread,
     onResolveFlag,
     onPinThread,
+    onUnpinThread,
     onLockThread,
     onUnlockThread,
     onRefresh,
@@ -265,6 +271,7 @@ export function TeacherInbox({
                                             onViewThread?.(
                                                 thread.id,
                                                 String(thread.trainingPathId),
+                                                'flagged',
                                             )
                                         }
                                         onAction={() =>
@@ -277,8 +284,12 @@ export function TeacherInbox({
                                                 ? onUnlockThread?.(thread.id)
                                                 : onLockThread?.(thread.id)
                                         }
-                                        secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
-                                        secondaryActionIcon={thread.isLocked ? Unlock : Lock}
+                                        secondaryActionLabel={
+                                            thread.isLocked ? 'Unlock' : 'Lock'
+                                        }
+                                        secondaryActionIcon={
+                                            thread.isLocked ? Unlock : Lock
+                                        }
                                         showFlag
                                     />
                                 ))}
@@ -303,20 +314,29 @@ export function TeacherInbox({
                                             onViewThread?.(
                                                 thread.id,
                                                 String(thread.trainingPathId),
+                                                'unanswered',
                                             )
                                         }
                                         onAction={() =>
-                                            onPinThread?.(thread.id)
+                                            thread.isPinned
+                                                ? onUnpinThread?.(thread.id)
+                                                : onPinThread?.(thread.id)
                                         }
-                                        actionLabel="Pin"
+                                        actionLabel={
+                                            thread.isPinned ? 'Unpin' : 'Pin'
+                                        }
                                         actionIcon={Pin}
                                         onSecondaryAction={() =>
                                             thread.isLocked
                                                 ? onUnlockThread?.(thread.id)
                                                 : onLockThread?.(thread.id)
                                         }
-                                        secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
-                                        secondaryActionIcon={thread.isLocked ? Unlock : Lock}
+                                        secondaryActionLabel={
+                                            thread.isLocked ? 'Unlock' : 'Lock'
+                                        }
+                                        secondaryActionIcon={
+                                            thread.isLocked ? Unlock : Lock
+                                        }
                                     />
                                 ))}
                             </div>
@@ -340,15 +360,29 @@ export function TeacherInbox({
                                             onViewThread?.(
                                                 thread.id,
                                                 String(thread.trainingPathId),
+                                                'recent',
                                             )
                                         }
-                                            onSecondaryAction={() =>
-                                                thread.isLocked
-                                                    ? onUnlockThread?.(thread.id)
-                                                    : onLockThread?.(thread.id)
-                                            }
-                                            secondaryActionLabel={thread.isLocked ? 'Unlock' : 'Lock'}
-                                            secondaryActionIcon={thread.isLocked ? Unlock : Lock}
+                                        onAction={() =>
+                                            thread.isPinned
+                                                ? onUnpinThread?.(thread.id)
+                                                : onPinThread?.(thread.id)
+                                        }
+                                        actionLabel={
+                                            thread.isPinned ? 'Unpin' : 'Pin'
+                                        }
+                                        actionIcon={Pin}
+                                        onSecondaryAction={() =>
+                                            thread.isLocked
+                                                ? onUnlockThread?.(thread.id)
+                                                : onLockThread?.(thread.id)
+                                        }
+                                        secondaryActionLabel={
+                                            thread.isLocked ? 'Unlock' : 'Lock'
+                                        }
+                                        secondaryActionIcon={
+                                            thread.isLocked ? Unlock : Lock
+                                        }
                                     />
                                 ))}
                             </div>
@@ -366,5 +400,3 @@ export function TeacherInbox({
         </Card>
     );
 }
-
-

@@ -80,9 +80,9 @@ class UsbDeviceReservationRepository
             'reservable_type' => 'App\Models\UsbDevice',
             'reservable_id' => $data['usb_device_id'] ?? null,
         ]);
-        
+
         unset($reservationData['usb_device_id']);
-        
+
         return Reservation::create($reservationData);
     }
 

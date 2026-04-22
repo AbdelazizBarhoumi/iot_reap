@@ -21,6 +21,7 @@ import TrainingPathCard from '@/components/TrainingPaths/TrainingPathCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { dashboard, login, register, logout } from '@/routes';
+import admin from '@/routes/admin';
 import teaching from '@/routes/teaching';
 import trainingPaths from '@/routes/trainingPaths';
 import type { TrainingPath } from '@/types/TrainingPath.types';
@@ -66,6 +67,10 @@ export default function Welcome({
 }: Props) {
     const { auth } = usePage().props;
     const [mobileOpen, setMobileOpen] = useState(false);
+    const operationsDashboardUrl =
+        auth.user?.role === 'admin'
+            ? admin.dashboard.url()
+            : dashboard().url;
     // fallback for legacy dev mode: if no trainingPaths provided, don't crash
     const showcase = featuredTrainingPaths || [];
     return (
@@ -91,7 +96,7 @@ export default function Welcome({
                             </Link>
                             {auth.user && (
                                 <Button asChild>
-                                    <Link href={dashboard()}>
+                                    <Link href={operationsDashboardUrl}>
                                         <Home className="mr-2 h-4 w-4" />{' '}
                                         Operations Dashboard
                                     </Link>
@@ -165,7 +170,7 @@ export default function Welcome({
                                     </Link>
                                     {auth.user && (
                                         <Link
-                                            href={dashboard()}
+                                            href={operationsDashboardUrl}
                                             className="text-sm font-medium text-muted-foreground hover:text-primary"
                                             onClick={() => setMobileOpen(false)}
                                         >
@@ -282,7 +287,11 @@ export default function Welcome({
                                     asChild
                                 >
                                     <Link
-                                        href={auth.user ? dashboard() : login()}
+                                        href={
+                                            auth.user
+                                                ? operationsDashboardUrl
+                                                : login().url
+                                        }
                                     >
                                         <Monitor className="mr-2 h-4 w-4" />
                                         {auth.user
@@ -459,7 +468,7 @@ export default function Welcome({
                             </Link>
                             {auth.user && (
                                 <Link
-                                    href={dashboard()}
+                                    href={operationsDashboardUrl}
                                     className="transition-colors hover:text-foreground"
                                 >
                                     Dashboard

@@ -4,9 +4,10 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TeacherAnalyticsController;
-use App\Http\Controllers\TeachingController;
-use App\Http\Controllers\VideoController;
 use App\Http\Controllers\TeacherPayoutController;
+use App\Http\Controllers\TeachingController;
+use App\Http\Controllers\TrainingUnitVMAssignmentController;
+use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('teaching.')->group(function () {
@@ -84,6 +85,7 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
         Route::get('/inbox', 'teacherInbox')->name('inbox');
         Route::post('/threads/{threadId}/pin', 'pin')->name('threads.pin');
         Route::post('/threads/{threadId}/unpin', 'unpin')->name('threads.unpin');
+        Route::post('/threads/{threadId}/resolve-flag', 'resolveFlag')->name('threads.resolve-flag');
         Route::post('/threads/{threadId}/lock', 'lock')->name('threads.lock');
         Route::post('/threads/{threadId}/unlock', 'unlock')->name('threads.unlock');
         Route::post('/replies/{replyId}/answer', 'markAnswer')->name('replies.answer');
@@ -108,7 +110,7 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
     });
 
     // TrainingUnit VM Assignments (teacher submission)
-    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(\App\Http\Controllers\TrainingUnitVMAssignmentController::class)->group(function () {
+    Route::prefix('trainingUnit-assignments')->name('trainingUnit-assignments.')->controller(TrainingUnitVMAssignmentController::class)->group(function () {
         Route::get('/available-vms', 'availableVMs')->name('available-vms');
         Route::post('/', 'store')->name('store');
         Route::get('/my-assignments', 'myAssignments')->name('my');
@@ -116,5 +118,5 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
     });
 
     // Get assignment for a trainingUnit (to check if VM is enabled)
-    Route::get('/trainingUnits/{trainingUnitId}/vm-assignment', [\App\Http\Controllers\TrainingUnitVMAssignmentController::class, 'forTrainingUnit'])->name('trainingUnit.vm-assignment');
+    Route::get('/trainingUnits/{trainingUnitId}/vm-assignment', [TrainingUnitVMAssignmentController::class, 'forTrainingUnit'])->name('trainingUnit.vm-assignment');
 });

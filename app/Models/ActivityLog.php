@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Activity Log Model
- * 
+ *
  * Audit trail for all system activity
  * Examples: User enrolled in trainingPath, VM provisioned, Payment received, TrainingPath completed
  */
@@ -83,7 +83,7 @@ class ActivityLog extends Model
         string $action,
         string $description,
         array $metadata = [],
-        User|null $user = null,
+        ?User $user = null,
         string $status = 'completed'
     ): self {
         return self::create([

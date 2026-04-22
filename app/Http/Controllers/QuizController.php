@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Quiz\CreateQuestionRequest;
 use App\Http\Requests\Quiz\CreateQuizRequest;
+use App\Http\Requests\Quiz\ReorderQuestionsRequest;
 use App\Http\Requests\Quiz\SubmitQuizAttemptRequest;
 use App\Http\Requests\Quiz\UpdateQuestionRequest;
 use App\Http\Requests\Quiz\UpdateQuizRequest;
 use App\Http\Resources\QuizAttemptResource;
 use App\Http\Resources\QuizQuestionResource;
 use App\Http\Resources\QuizResource;
-use App\Models\TrainingUnit;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
+use App\Models\TrainingUnit;
 use App\Services\QuestionService;
 use App\Services\QuizService;
 use Illuminate\Http\JsonResponse;
@@ -196,7 +197,7 @@ class QuizController extends Controller
     /**
      * Reorder questions.
      */
-    public function reorderQuestions(\App\Http\Requests\Quiz\ReorderQuestionsRequest $request, Quiz $quiz): JsonResponse
+    public function reorderQuestions(ReorderQuestionsRequest $request, Quiz $quiz): JsonResponse
     {
         $this->authorizeTeacher($quiz->trainingUnit);
 

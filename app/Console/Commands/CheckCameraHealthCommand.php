@@ -7,6 +7,7 @@ use App\Models\Camera;
 use App\Models\GatewayNode;
 use App\Services\GatewayService;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -336,7 +337,7 @@ class CheckCameraHealthCommand extends Command
         ];
     }
 
-    private function cleanupOrphanStreams(\Illuminate\Database\Eloquent\Collection $cameras): int
+    private function cleanupOrphanStreams(Collection $cameras): int
     {
         $cleanupCount = 0;
 

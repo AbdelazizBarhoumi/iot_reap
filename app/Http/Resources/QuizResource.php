@@ -2,13 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * API resource for Quiz model.
  *
- * @property \App\Models\Quiz $resource
+ * @property Quiz $resource
  */
 class QuizResource extends JsonResource
 {

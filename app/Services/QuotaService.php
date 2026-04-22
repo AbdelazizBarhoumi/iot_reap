@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\VMSessionStatus;
+use App\Exceptions\QuotaExceededException;
 use App\Models\User;
 use App\Models\VMSession;
 
@@ -18,7 +19,7 @@ class QuotaService
     /**
      * Assert that a user can create a new session with the given duration.
      *
-     * @throws \App\Exceptions\QuotaExceededException if quota would be exceeded
+     * @throws QuotaExceededException if quota would be exceeded
      */
     public function assertAllowedToCreate(User $user, int $durationMinutes): void
     {
@@ -59,7 +60,7 @@ class QuotaService
     /**
      * Assert that extending a user's session won't exceed quota.
      *
-     * @throws \App\Exceptions\QuotaExceededException if extension would exceed quota
+     * @throws QuotaExceededException if extension would exceed quota
      */
     public function assertExtensionNotExceeded(User $user, int $additionalMinutes): void
     {

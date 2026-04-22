@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Repositories\TrainingPathRepository;
 use App\Repositories\SearchRepository;
+use App\Repositories\TrainingPathRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;

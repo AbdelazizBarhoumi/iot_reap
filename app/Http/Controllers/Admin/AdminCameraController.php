@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AssignCameraToVmRequest;
+use App\Http\Requests\Admin\BulkAssignCamerasRequest;
 use App\Http\Requests\Camera\ApproveCameraReservationRequest;
 use App\Http\Requests\Camera\CreateAdminCameraBlockRequest;
 use App\Http\Resources\CameraReservationResource;
@@ -15,6 +17,9 @@ use App\Services\GatewayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Admin controller for managing camera reservations and cameras.
@@ -34,9 +39,15 @@ class AdminCameraController extends Controller
     /**
      * List all cameras with reservation info for admin.
      */
-    public function cameras(): JsonResponse
+    public function cameras(Request $request): JsonResponse|InertiaResponse
     {
         Gate::authorize('admin-only');
+
+        if (! $request->wantsJson()) {
+            return Inertia::render('admin/InfrastructurePage', [
+                'initialTab' => 'cameras',
+            ]);
+        }
 
         try {
             $cameras = $this->cameraService->getAllCamerasWithReservations();
@@ -46,7 +57,7 @@ class AdminCameraController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the error for debugging, but return empty list to prevent page blocking
-            \Illuminate\Support\Facades\Log::error('Failed to fetch cameras', [
+            Log::error('Failed to fetch cameras', [
                 'error' => $e->getMessage(),
                 'exception' => $e,
             ]);
@@ -64,7 +75,7 @@ class AdminCameraController extends Controller
      *
      * PUT /admin/cameras/{camera}/assign
      */
-    public function assignToVm(Camera $camera, \App\Http\Requests\Admin\AssignCameraToVmRequest $request): JsonResponse
+    public function assignToVm(Camera $camera, AssignCameraToVmRequest $request): JsonResponse
     {
         Gate::authorize('admin-only');
 
@@ -72,7 +83,7 @@ class AdminCameraController extends Controller
 
         $camera->assignToVm($vmId);
 
-        \Illuminate\Support\Facades\Log::info('Camera assigned to VM', [
+        Log::info('Camera assigned to VM', [
             'camera_id' => $camera->id,
             'camera_name' => $camera->name,
             'assigned_vm_id' => $vmId,
@@ -106,7 +117,7 @@ class AdminCameraController extends Controller
 
         $camera->unassignFromVm();
 
-        \Illuminate\Support\Facades\Log::info('Camera unassigned from VM', [
+        Log::info('Camera unassigned from VM', [
             'camera_id' => $camera->id,
             'camera_name' => $camera->name,
             'previous_vm_id' => $previousVmId,
@@ -125,7 +136,7 @@ class AdminCameraController extends Controller
      *
      * POST /admin/cameras/bulk-assign
      */
-    public function bulkAssign(\App\Http\Requests\Admin\BulkAssignCamerasRequest $request): JsonResponse
+    public function bulkAssign(BulkAssignCamerasRequest $request): JsonResponse
     {
         Gate::authorize('admin-only');
 
@@ -140,6 +151,7 @@ class AdminCameraController extends Controller
                     'success' => false,
                     'message' => 'Camera not found',
                 ];
+
                 continue;
             }
 
@@ -149,7 +161,7 @@ class AdminCameraController extends Controller
                 $results[] = [
                     'camera_id' => $camera->id,
                     'success' => true,
-                    'message' => "Unassigned from VM",
+                    'message' => 'Unassigned from VM',
                 ];
             } else {
                 $camera->assignToVm($vmId);
@@ -161,7 +173,7 @@ class AdminCameraController extends Controller
             }
         }
 
-        \Illuminate\Support\Facades\Log::info('Bulk camera assignment', [
+        Log::info('Bulk camera assignment', [
             'admin_id' => auth()->id(),
             'assignment_count' => count($assignments),
         ]);
@@ -189,7 +201,7 @@ class AdminCameraController extends Controller
         try {
             $activated = $this->cameraService->activate($camera, $this->gatewayService);
         } catch (\RuntimeException $e) {
-            \Illuminate\Support\Facades\Log::warning('Camera activation failed', [
+            Log::warning('Camera activation failed', [
                 'camera_id' => $camera->id,
                 'camera_name' => $camera->name,
                 'admin_id' => auth()->id(),
@@ -202,7 +214,7 @@ class AdminCameraController extends Controller
             ], 422);
         }
 
-        \Illuminate\Support\Facades\Log::info('Camera activated by admin', [
+        Log::info('Camera activated by admin', [
             'camera_id' => $camera->id,
             'camera_name' => $camera->name,
             'admin_id' => auth()->id(),
@@ -227,7 +239,7 @@ class AdminCameraController extends Controller
         $reason = $request->input('reason');
         $deactivated = $this->cameraService->deactivate($camera, $this->gatewayService, $reason);
 
-        \Illuminate\Support\Facades\Log::info('Camera deactivated by admin', [
+        Log::info('Camera deactivated by admin', [
             'camera_id' => $camera->id,
             'camera_name' => $camera->name,
             'reason' => $reason,
@@ -260,7 +272,7 @@ class AdminCameraController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the error for debugging, but return empty list to prevent page blocking
-            \Illuminate\Support\Facades\Log::error('Failed to fetch pending camera reservations', [
+            Log::error('Failed to fetch pending camera reservations', [
                 'error' => $e->getMessage(),
                 'exception' => $e,
             ]);

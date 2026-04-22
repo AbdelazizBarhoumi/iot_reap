@@ -6,6 +6,7 @@ use App\Services\StripeWebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Stripe\Exception\SignatureVerificationException;
 
 class StripeWebhookController extends Controller
 {
@@ -36,7 +37,7 @@ class StripeWebhookController extends Controller
             Log::error('Invalid Stripe webhook payload', ['error' => $e->getMessage()]);
 
             return response('Invalid payload', 400);
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        } catch (SignatureVerificationException $e) {
             Log::error('Invalid Stripe webhook signature', ['error' => $e->getMessage()]);
 
             return response('Invalid signature', 400);

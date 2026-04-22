@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\CameraReservationStatus;
+use App\Models\CameraSessionControl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -57,18 +59,18 @@ class CameraResource extends JsonResource
                 'hls' => "http://{$baseHost}:{$hlsPort}/{$this->stream_key}/index.m3u8",
                 'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$this->stream_key}",
             ],
-            'control' => $this->when($activeControl !== null && $activeControl instanceof \App\Models\CameraSessionControl, fn () => [
+            'control' => $this->when($activeControl !== null && $activeControl instanceof CameraSessionControl, fn () => [
                 'session_id' => $activeControl->session_id,
                 'acquired_at' => $activeControl->acquired_at?->toIso8601String(),
             ]),
-            'is_controlled' => $activeControl !== null && $activeControl instanceof \App\Models\CameraSessionControl,
+            'is_controlled' => $activeControl !== null && $activeControl instanceof CameraSessionControl,
             'has_active_reservation' => $this->hasActiveReservation(),
             // if there is an approved/active reservation overlapping now, include its id
             'active_reservation_id' => $this->hasActiveReservation()
                 ? $this->reservations()
                     ->whereIn('status', [
-                        \App\Enums\CameraReservationStatus::APPROVED->value,
-                        \App\Enums\CameraReservationStatus::ACTIVE->value,
+                        CameraReservationStatus::APPROVED->value,
+                        CameraReservationStatus::ACTIVE->value,
                     ])
                     ->whereNotNull('approved_start_at')
                     ->where('approved_start_at', '<=', now())

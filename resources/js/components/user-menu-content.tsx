@@ -1,5 +1,11 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import {
+    CreditCard,
+    LogOut,
+    RotateCcw,
+    Settings,
+    SlidersHorizontal,
+} from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -16,6 +22,7 @@ type Props = {
 };
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const showEngineerTools = user.role === 'admin';
     const handleLogout = () => {
         cleanup();
         router.flushAll();
@@ -38,6 +45,38 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <Settings className="mr-2" />
                         Settings
+                    </Link>
+                </DropdownMenuItem>
+                {showEngineerTools && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href="/connection-preferences"
+                            onClick={cleanup}
+                        >
+                            <SlidersHorizontal className="mr-2" />
+                            Connection Preferences
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/checkout/payments"
+                        onClick={cleanup}
+                    >
+                        <CreditCard className="mr-2" />
+                        Payments
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/checkout/refunds"
+                        onClick={cleanup}
+                    >
+                        <RotateCcw className="mr-2" />
+                        Refunds
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

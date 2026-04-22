@@ -53,7 +53,10 @@ class SearchController extends Controller
             return response()->json($responseData);
         }
 
-        return Inertia::render('trainingPaths/search', $responseData);
+        return Inertia::render('trainingPaths/search', [
+            ...$responseData,
+            'trainingPaths' => $responseData['results'],
+        ]);
     }
 
     /**
@@ -135,7 +138,9 @@ class SearchController extends Controller
             'trainingPaths' => SearchResultResource::collection($trainingPaths),
             'category' => $categoryName,
             'slug' => $slug,
+            'total' => $trainingPaths->count(),
             'categories' => $categories,
+            'allCategories' => collect($categories)->pluck('name')->values(),
         ]);
     }
 }

@@ -36,7 +36,7 @@ class ReservationFactory extends Factory
     /**
      * Create a reservation for a camera.
      */
-    public function forCamera(Camera $camera = null): static
+    public function forCamera(?Camera $camera = null): static
     {
         return $this->state(function (array $attributes) use ($camera) {
             return [
@@ -49,7 +49,7 @@ class ReservationFactory extends Factory
     /**
      * Create a reservation for a USB device.
      */
-    public function forUsbDevice(UsbDevice $device = null): static
+    public function forUsbDevice(?UsbDevice $device = null): static
     {
         return $this->state(function (array $attributes) use ($device) {
             return [

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\UsbDeviceStatus;
 use App\Models\Camera;
 use App\Models\GatewayNode;
 use App\Models\UsbDevice;
@@ -88,7 +87,7 @@ class MaintenanceControllerTest extends TestCase
     public function test_maintenance_page_returns_inertia_response_for_html(): void
     {
         UsbDevice::factory()->for($this->gateway)->create();
-        
+
         $response = $this->actingAs($this->admin)
             ->get(route('admin.maintenance.index'));
 

@@ -247,7 +247,7 @@ class CertificateServiceTest extends TestCase
     // issueCertificate() tests
     // =========================================================================
 
-    public function test_issue_certificate_creates_certificate_for_completed_trainingPath(): void
+    public function test_issue_certificate_creates_certificate_for_completed_training_path(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();

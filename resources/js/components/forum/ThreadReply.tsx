@@ -75,6 +75,11 @@ export function ThreadReply({
 }: ThreadReplyProps) {
     const [showReplies, setShowReplies] = useState(true);
     const isAuthor = reply.author.id === currentUserId;
+    const canEdit = isAuthor && !!onEdit;
+    const canDelete = isAuthor && !!onDelete;
+    const canMarkAnswer = isThreadOwner && !reply.isAnswer && !!onMarkAnswer;
+    const canFlag = !!onFlag;
+    const hasMenuActions = canEdit || canDelete || canMarkAnswer || canFlag;
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -161,26 +166,28 @@ export function ThreadReply({
                         </div>
                     </div>
                     {/* Actions Menu */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                aria-label="Reply options"
-                            >
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {isAuthor && (
-                                <>
+                    {hasMenuActions && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    aria-label="Reply options"
+                                >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {canEdit && (
                                     <DropdownMenuItem
                                         onClick={() => onEdit?.(reply.id)}
                                     >
                                         <Edit2 className="mr-2 h-4 w-4" />
                                         Edit
                                     </DropdownMenuItem>
+                                )}
+                                {canDelete && (
                                     <DropdownMenuItem
                                         onClick={() => onDelete?.(reply.id)}
                                         className="text-destructive focus:text-destructive"
@@ -188,25 +195,30 @@ export function ThreadReply({
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                </>
-                            )}
-                            {isThreadOwner && !reply.isAnswer && (
-                                <DropdownMenuItem
-                                    onClick={() => onMarkAnswer?.(reply.id)}
-                                >
-                                    <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
-                                    Mark as Answer
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                                onClick={() => onFlag?.(reply.id)}
-                            >
-                                <Flag className="mr-2 h-4 w-4 text-amber-500" />
-                                Report
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                )}
+                                {(canEdit || canDelete) &&
+                                    (canMarkAnswer || canFlag) && (
+                                        <DropdownMenuSeparator />
+                                    )}
+                                {canMarkAnswer && (
+                                    <DropdownMenuItem
+                                        onClick={() => onMarkAnswer?.(reply.id)}
+                                    >
+                                        <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
+                                        Mark as Answer
+                                    </DropdownMenuItem>
+                                )}
+                                {canFlag && (
+                                    <DropdownMenuItem
+                                        onClick={() => onFlag?.(reply.id)}
+                                    >
+                                        <Flag className="mr-2 h-4 w-4 text-amber-500" />
+                                        Report
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
                 {/* Content */}
                 <div className="prose prose-sm dark:prose-invert mb-3 max-w-none">
@@ -221,6 +233,7 @@ export function ThreadReply({
                         variant="ghost"
                         size="sm"
                         onClick={() => onUpvote?.(reply.id)}
+                        disabled={!onUpvote}
                         className={cn(
                             'h-7 gap-1.5 px-2',
                             reply.hasUpvoted
@@ -237,7 +250,7 @@ export function ThreadReply({
                         <span className="text-xs">{reply.upvotes}</span>
                     </Button>
                     {/* Reply */}
-                    {depth < maxDepth && (
+                    {depth < maxDepth && onReply && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -289,5 +302,3 @@ export function ThreadReply({
         </motion.div>
     );
 }
-
-

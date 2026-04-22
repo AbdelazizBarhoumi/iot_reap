@@ -4,11 +4,10 @@ namespace App\Services;
 
 use App\Models\SystemAlert;
 use App\Models\User;
-use Illuminate\Pagination\Paginate;
 
 /**
  * Alert Service
- * 
+ *
  * Manages system alerts (infrastructure warnings, errors, critical issues)
  */
 class AlertService
@@ -19,8 +18,8 @@ class AlertService
     public function create(
         string $severity,
         string $title,
-        string $description = null,
-        string $source = null,
+        ?string $description = null,
+        ?string $source = null,
         array $metadata = []
     ): SystemAlert {
         return SystemAlert::create([
@@ -74,7 +73,7 @@ class AlertService
     /**
      * Acknowledge an alert
      */
-    public function acknowledge(SystemAlert $alert, User $user = null): void
+    public function acknowledge(SystemAlert $alert, ?User $user = null): void
     {
         $alert->acknowledge($user);
     }

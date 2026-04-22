@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthServiceTest extends TestCase
@@ -59,12 +60,12 @@ class AuthServiceTest extends TestCase
             'name' => 'Teacher User',
             'email' => 'teacher@example.com',
             'password' => 'super-secret',
-            'role' => \App\Enums\UserRole::TEACHER->value,
+            'role' => UserRole::TEACHER->value,
         ]);
 
-        $this->assertEquals(\App\Enums\UserRole::TEACHER, $user->role);
+        $this->assertEquals(UserRole::TEACHER, $user->role);
         $this->assertNull($user->teacher_approved_at);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('super-secret', $user->password));
+        $this->assertTrue(Hash::check('super-secret', $user->password));
         $this->assertDatabaseHas('users', [
             'email' => 'teacher@example.com',
             'teacher_approved_at' => null,

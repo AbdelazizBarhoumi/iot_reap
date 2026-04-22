@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TrainingUnitVMAssignmentStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,9 +28,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $vm_name Cached VM name for display
  * @property int|null $template_id
  * @property bool $is_direct_vm
- * @property \Carbon\Carbon|null $created_at
- * @property \Carbon\Carbon|null $updated_at
- *
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read TrainingUnit $trainingUnit
  * @property-read ProxmoxNode|null $node
  * @property-read User|null $assignedByUser
@@ -140,4 +140,3 @@ class TrainingUnitVMAssignment extends Model
         return $query->where('status', TrainingUnitVMAssignmentStatus::PENDING);
     }
 }
-

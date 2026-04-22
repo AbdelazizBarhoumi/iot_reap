@@ -7,9 +7,14 @@ use App\Enums\RefundStatus;
 use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Models\User;
+use App\Notifications\RefundApprovedNotification;
+use App\Notifications\RefundRejectedNotification;
 use App\Repositories\PaymentRepository;
 use App\Repositories\RefundRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use Stripe\Exception\ApiErrorException;
 use Stripe\Refund;
 use Stripe\Stripe;
 
@@ -90,7 +95,7 @@ class RefundService
         ]);
 
         // Notify the user
-        $refundRequest->user->notify(new \App\Notifications\RefundRejectedNotification($refundRequest, $reason));
+        $refundRequest->user->notify(new RefundRejectedNotification($refundRequest, $reason));
 
         return $refundRequest;
     }
@@ -132,8 +137,8 @@ class RefundService
             ]);
 
             // Notify the user that refund was processed
-            $refundRequest->user->notify(new \App\Notifications\RefundApprovedNotification($refundRequest));
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $refundRequest->user->notify(new RefundApprovedNotification($refundRequest));
+        } catch (ApiErrorException $e) {
             $refundRequest->markAsFailed($e->getMessage());
 
             Log::error('Stripe refund failed', [
@@ -150,7 +155,7 @@ class RefundService
     /**
      * Get pending refund requests for admin review.
      */
-    public function getPendingRefunds(int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function getPendingRefunds(int $perPage = 20): LengthAwarePaginator
     {
         return $this->refundRepository->getPendingPaginated($perPage);
     }
@@ -158,7 +163,7 @@ class RefundService
     /**
      * Get user's refund requests.
      */
-    public function getUserRefundRequests(User $user): \Illuminate\Database\Eloquent\Collection
+    public function getUserRefundRequests(User $user): Collection
     {
         return $this->refundRepository->getByUser($user);
     }
@@ -171,7 +176,7 @@ class RefundService
         $pending = RefundRequest::where('status', RefundStatus::PENDING)->count();
         $approved = RefundRequest::where('status', RefundStatus::APPROVED)->count();
         $rejected = RefundRequest::where('status', RefundStatus::REJECTED)->count();
-        
+
         $totalRefunded = RefundRequest::where('status', RefundStatus::COMPLETED)
             ->sum('refund_amount_cents') / 100;
 

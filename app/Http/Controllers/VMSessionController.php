@@ -10,6 +10,7 @@ use App\Http\Requests\ExtendVMSessionRequest;
 use App\Http\Requests\TerminateVMSessionRequest;
 use App\Http\Resources\VMSessionResource;
 use App\Jobs\TerminateVMJob;
+use App\Models\ProxmoxNode;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
 use App\Services\ExtendSessionService;
@@ -19,6 +20,7 @@ use App\Services\QuotaService;
 use App\Services\VMSessionCleanupService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -73,7 +75,7 @@ class VMSessionController extends Controller
 
         try {
             // always create a session for the supplied existing VM
-            $node = \App\Models\ProxmoxNode::findOrFail($request->validated('node_id'));
+            $node = ProxmoxNode::findOrFail($request->validated('node_id'));
             $serverId = $node->proxmox_server_id;
 
             Log::info('Creating session for existing VM', [
@@ -182,7 +184,7 @@ class VMSessionController extends Controller
      * @throws AuthorizationException
      */
     public function show(Request $request, string $sessionId): JsonResponse|InertiaResponse|
-    \Illuminate\Http\RedirectResponse
+    RedirectResponse
     {
         $session = VMSession::findOrFail($sessionId);
 

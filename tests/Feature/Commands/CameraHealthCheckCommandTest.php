@@ -34,7 +34,7 @@ class CameraHealthCheckCommandTest extends TestCase
             'source_url' => '/dev/video9',
         ]);
 
-        $this->mock(GatewayService::class, function ($mock) use ($camera, $device, $node) {
+        $this->mock(GatewayService::class, function ($mock) use ($device, $node) {
             $mock->shouldReceive('getCameraStreamStatus')
                 ->twice()
                 ->withArgs(fn ($gatewayNode, $streamKey) => $gatewayNode->is($node) && $streamKey === 'usb-gateway-51')

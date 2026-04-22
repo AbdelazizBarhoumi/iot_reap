@@ -15,6 +15,7 @@ class GoogleOAuthService
      * Returns an array with user, isNewUser flag, and OAuth data.
      *
      * @return array{user: User|null, isNewUser: bool, googleData: array}
+     *
      * @throws \Exception if processing fails
      */
     public function handleCallback(): array
@@ -34,6 +35,7 @@ class GoogleOAuthService
         if ($user) {
             // Update the user's Google data in case profile info changed
             $user->update(['google_data' => $googleData]);
+
             return [
                 'user' => $user,
                 'isNewUser' => false,
@@ -93,7 +95,7 @@ class GoogleOAuthService
         }
 
         $payload = json_decode($decoded, true);
-        if (!$payload || !is_array($payload)) {
+        if (! $payload || ! is_array($payload)) {
             throw new \Exception('Invalid JWT payload: cannot parse JSON');
         }
 
@@ -105,7 +107,7 @@ class GoogleOAuthService
             'avatar' => $payload['picture'] ?? null,
         ];
 
-        if (!$googleData['google_id']) {
+        if (! $googleData['google_id']) {
             throw new \Exception('Invalid JWT: missing subject (sub)');
         }
 
@@ -115,6 +117,7 @@ class GoogleOAuthService
         if ($user) {
             // Update the user's Google data
             $user->update(['google_data' => $googleData]);
+
             return [
                 'user' => $user,
                 'isNewUser' => false,
@@ -151,9 +154,9 @@ class GoogleOAuthService
      * Complete the OAuth signup with a role selection.
      * Creates the new user with the selected role.
      *
-     * @param array $googleData OAuth data from session
-     * @param string $role Selected role ('engineer' or 'teacher')
-     * @return User
+     * @param  array  $googleData  OAuth data from session
+     * @param  string  $role  Selected role ('engineer' or 'teacher')
+     *
      * @throws \Exception if user creation fails
      */
     public function completeSignup(array $googleData, string $role): User

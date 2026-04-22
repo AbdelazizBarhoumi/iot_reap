@@ -14,10 +14,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { getHttpErrorMessage } from '@/lib/http-errors';
 import AppLayout from '@/layouts/app-layout';
-import type { DiscussionThread, ThreadReply } from '@/types/forum.types';
+import { getHttpErrorMessage } from '@/lib/http-errors';
 import type { BreadcrumbItem } from '@/types';
+import type { DiscussionThread, ThreadReply } from '@/types/forum.types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/dashboard' },

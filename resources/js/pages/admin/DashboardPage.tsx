@@ -99,6 +99,26 @@ interface BackendServiceHealth {
     latency_ms?: number | null;
     message?: string;
 }
+
+interface BackendAlert {
+    id: string | number;
+    severity: 'info' | 'warning' | 'error' | 'critical';
+    title: string;
+    description?: string | null;
+    source?: string | null;
+    acknowledged: boolean;
+    created_at: string;
+}
+
+interface BackendActivityLog {
+    id: string | number;
+    type: string;
+    action: string;
+    description: string;
+    user_name?: string | null;
+    created_at: string;
+    metadata?: Record<string, unknown> | null;
+}
 interface BackendSystemMetrics {
     php_memory?: {
         used_mb?: number;
@@ -129,6 +149,8 @@ interface DashboardPageProps extends PageProps {
     userGrowthByRole: Record<string, number>;
     recentActivity: ActivityItem[];
     systemHealth: BackendSystemHealth;
+    alerts: BackendAlert[];
+    activityLogs: BackendActivityLog[];
     period: string;
 }
 const COLORS = [
@@ -262,7 +284,9 @@ const toSystemMetrics = (health: BackendSystemHealth): SystemMetric[] => {
     return metrics;
 };
 
-const toActivityType = (type: ActivityItem['type']): ActivityLogItem['type'] => {
+const toActivityType = (
+    type: ActivityItem['type'],
+): ActivityLogItem['type'] => {
     switch (type) {
         case 'enrollment':
             return 'trainingPath';
@@ -285,6 +309,48 @@ const toActivityAction = (type: ActivityItem['type']): string => {
             return 'Payment';
     }
 };
+
+const toAlertItems = (alerts: BackendAlert[]) =>
+    alerts.map((alert) => ({
+        id: String(alert.id),
+        severity: alert.severity,
+        title: alert.title,
+        message: alert.description ?? '',
+        source: alert.source ?? 'system',
+        timestamp: alert.created_at,
+        acknowledged: alert.acknowledged,
+    }));
+
+const toActivityLogType = (
+    type: string | undefined,
+): ActivityLogItem['type'] => {
+    switch (type) {
+        case 'vm':
+        case 'user':
+        case 'trainingPath':
+        case 'system':
+        case 'security':
+            return type;
+        case 'training_path':
+            return 'trainingPath';
+        default:
+            return 'system';
+    }
+};
+
+const toActivityLogItems = (
+    activityLogs: BackendActivityLog[],
+): ActivityLogItem[] =>
+    activityLogs.map((log) => ({
+        id: String(log.id),
+        type: toActivityLogType(log.type),
+        action: log.action,
+        details: log.description,
+        user: log.user_name ?? undefined,
+        timestamp: log.created_at,
+        metadata: log.metadata ?? undefined,
+    }));
+
 export default function DashboardPage() {
     const {
         kpis,
@@ -293,6 +359,8 @@ export default function DashboardPage() {
         userGrowthByRole,
         recentActivity,
         systemHealth,
+        alerts,
+        activityLogs,
         period,
     } = usePage<DashboardPageProps>().props;
     const [selectedPeriod, setSelectedPeriod] = useState(period);
@@ -324,19 +392,23 @@ export default function DashboardPage() {
 
     const monitoringActivities = useMemo<ActivityLogItem[]>(
         () =>
-            recentActivity.map((activity, index) => ({
-                id: `${activity.type}-${activity.timestamp}-${index}`,
-                type: toActivityType(activity.type),
-                action: toActivityAction(activity.type),
-                details: activity.message,
-                timestamp: activity.timestamp,
-                metadata:
-                    typeof activity.amount === 'number'
-                        ? { amount: activity.amount }
-                        : undefined,
-            })),
-        [recentActivity],
+            activityLogs.length > 0
+                ? toActivityLogItems(activityLogs)
+                : recentActivity.map((activity, index) => ({
+                      id: `${activity.type}-${activity.timestamp}-${index}`,
+                      type: toActivityType(activity.type),
+                      action: toActivityAction(activity.type),
+                      details: activity.message,
+                      timestamp: activity.timestamp,
+                      metadata:
+                          typeof activity.amount === 'number'
+                              ? { amount: activity.amount }
+                              : undefined,
+                  })),
+        [activityLogs, recentActivity],
     );
+
+    const monitoringAlerts = useMemo(() => toAlertItems(alerts), [alerts]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -695,28 +767,35 @@ export default function DashboardPage() {
                                             No path data available
                                         </p>
                                     ) : (
-                                        topTrainingPaths.map((trainingPath, idx) => (
-                                            <div
-                                                key={trainingPath.id}
-                                                className="flex items-center gap-4"
-                                            >
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
-                                                    {idx + 1}
+                                        topTrainingPaths.map(
+                                            (trainingPath, idx) => (
+                                                <div
+                                                    key={trainingPath.id}
+                                                    className="flex items-center gap-4"
+                                                >
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate font-medium text-foreground">
+                                                            {trainingPath.title}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            by{' '}
+                                                            {
+                                                                trainingPath.instructor
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <Badge variant="secondary">
+                                                        {
+                                                            trainingPath.enrollments
+                                                        }{' '}
+                                                        enrollments
+                                                    </Badge>
                                                 </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate font-medium text-foreground">
-                                                        {trainingPath.title}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        by {trainingPath.instructor}
-                                                    </p>
-                                                </div>
-                                                <Badge variant="secondary">
-                                                    {trainingPath.enrollments}{' '}
-                                                    enrollments
-                                                </Badge>
-                                            </div>
-                                        ))
+                                            ),
+                                        )
                                     )}
                                 </div>
                             </CardContent>
@@ -766,12 +845,14 @@ export default function DashboardPage() {
                                         </span>
                                         <Badge
                                             variant={
-                                                systemHealth.pending_trainingPaths > 0
+                                                systemHealth.pending_trainingPaths >
+                                                0
                                                     ? 'default'
                                                     : 'secondary'
                                             }
                                             className={
-                                                systemHealth.pending_trainingPaths > 0
+                                                systemHealth.pending_trainingPaths >
+                                                0
                                                     ? 'bg-warning text-warning-foreground'
                                                     : ''
                                             }
@@ -875,7 +956,9 @@ export default function DashboardPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <SystemHealthOverview health={monitoringHealth} />
+                                <SystemHealthOverview
+                                    health={monitoringHealth}
+                                />
                             </motion.div>
                             {/* System Alerts */}
                             <motion.div
@@ -883,7 +966,7 @@ export default function DashboardPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.5 }}
                             >
-                                <AlertsPanel alerts={[]} />
+                                <AlertsPanel alerts={monitoringAlerts} />
                             </motion.div>
                         </div>
                         {/* Metrics Charts */}
@@ -908,4 +991,3 @@ export default function DashboardPage() {
         </AppLayout>
     );
 }
-

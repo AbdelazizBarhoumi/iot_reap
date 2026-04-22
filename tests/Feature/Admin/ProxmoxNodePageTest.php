@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\ProxmoxNode;
+use App\Models\ProxmoxServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -28,7 +30,7 @@ class ProxmoxNodePageTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         // Ensure at least one node exists so the response contains an item
-        \App\Models\ProxmoxNode::factory()->create();
+        ProxmoxNode::factory()->create();
 
         $response = $this->actingAs($admin)->getJson('/admin/nodes');
 
@@ -40,7 +42,7 @@ class ProxmoxNodePageTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $server = \App\Models\ProxmoxServer::create([
+        $server = ProxmoxServer::create([
             'name' => 'Inactive Cluster',
             'host' => '10.0.0.5',
             'port' => 8006,
@@ -49,7 +51,7 @@ class ProxmoxNodePageTest extends TestCase
             'is_active' => false,
         ]);
 
-        $node = \App\Models\ProxmoxNode::create([
+        $node = ProxmoxNode::create([
             'proxmox_server_id' => $server->id,
             'name' => 'inactive-node',
             'hostname' => 'inactive.example',

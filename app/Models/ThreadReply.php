@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ThreadStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -108,7 +109,7 @@ class ThreadReply extends Model
         $this->update(['is_answer' => true]);
 
         // Mark thread as resolved
-        $this->thread->update(['status' => \App\Enums\ThreadStatus::RESOLVED]);
+        $this->thread->update(['status' => ThreadStatus::RESOLVED]);
     }
 
     public function hasUpvotedBy(User $user): bool

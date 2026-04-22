@@ -3,8 +3,9 @@
 namespace Tests\Feature\Security;
 
 use App\Enums\PaymentStatus;
-use App\Models\TrainingPath;
 use App\Models\Payment;
+use App\Models\RefundRequest;
+use App\Models\TrainingPath;
 use App\Models\User;
 use App\Services\CheckoutService;
 use App\Services\RefundService;
@@ -70,7 +71,7 @@ class CheckoutIdorTest extends TestCase
     public function test_user_can_request_refund_for_own_payment(): void
     {
         // Create a RefundRequest model factory instead of using mock
-        $refundRequestModel = \App\Models\RefundRequest::factory()->create([
+        $refundRequestModel = RefundRequest::factory()->create([
             'user_id' => $this->user->id,
             'status' => 'pending',
         ]);

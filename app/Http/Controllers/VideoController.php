@@ -11,6 +11,7 @@ use App\Models\Video;
 use App\Services\CaptionService;
 use App\Services\VideoService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -182,7 +183,7 @@ class VideoController extends Controller
             ], 404);
         }
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $diskAdapter */
+        /** @var FilesystemAdapter $diskAdapter */
         $diskAdapter = Storage::disk($disk);
 
         return $diskAdapter->response($path, null, [
@@ -231,7 +232,7 @@ class VideoController extends Controller
             ? 'application/vnd.apple.mpegurl'
             : 'video/mp2t';
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $diskAdapter */
+        /** @var FilesystemAdapter $diskAdapter */
         $diskAdapter = Storage::disk($disk);
 
         return $diskAdapter->response($path, null, [

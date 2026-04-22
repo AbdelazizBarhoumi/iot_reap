@@ -2,14 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Enums\VMSessionProtocol;
 use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\User;
+use App\Models\VMSession;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\VMSession>
+ * @extends Factory<VMSession>
  */
 class VMSessionFactory extends Factory
 {
@@ -26,7 +28,7 @@ class VMSessionFactory extends Factory
             'node_id' => ProxmoxNode::factory(),
             'vm_id' => null,
             'status' => VMSessionStatus::PENDING->value,
-            'protocol' => \App\Enums\VMSessionProtocol::RDP->value, // default for tests
+            'protocol' => VMSessionProtocol::RDP->value, // default for tests
             'connection_profile_name' => null,
             'ip_address' => null,
             'guacamole_connection_id' => null,
@@ -38,7 +40,7 @@ class VMSessionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => VMSessionStatus::ACTIVE->value,
-            'protocol' => \App\Enums\VMSessionProtocol::RDP->value,
+            'protocol' => VMSessionProtocol::RDP->value,
             'vm_id' => fake()->unique()->numberBetween(200, 999),
             'ip_address' => fake()->ipv4(),
             'guacamole_connection_id' => fake()->numberBetween(1, 1000),

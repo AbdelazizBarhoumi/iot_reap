@@ -8,6 +8,7 @@ use App\Repositories\UserConnectionPreferenceRepository;
 use App\Repositories\UserVMConnectionDefaultProfileRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -93,6 +94,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function store(StoreConnectionProfileRequest $request, string $protocol): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -130,6 +133,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function update(UpdateConnectionPreferencesRequest $request, string $protocol, string $profile = 'Default'): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -167,6 +172,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function destroy(Request $request, string $protocol, string $profile): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -186,6 +193,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function setDefault(Request $request, string $protocol, string $profile): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -240,6 +249,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function setPerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -284,6 +295,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function updatePerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         return $this->setPerVMDefault($request, $vmId, $protocol);
     }
 
@@ -294,6 +307,8 @@ class ConnectionPreferencesController extends Controller
      */
     public function deletePerVMDefault(Request $request, int $vmId, string $protocol): JsonResponse
     {
+        Gate::authorize('admin-only');
+
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
@@ -307,7 +322,7 @@ class ConnectionPreferencesController extends Controller
             // It's okay if it doesn't exist; return success anyway
         }
 
-        return response()->json(['message' => 'Per-VM default cleared for VM ' . $vmId]);
+        return response()->json(['message' => 'Per-VM default cleared for VM '.$vmId]);
     }
 
     /**
