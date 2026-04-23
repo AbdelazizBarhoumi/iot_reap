@@ -37,6 +37,7 @@ class TeachingController extends Controller
         private readonly TrainingPathService $trainingPathService,
         private readonly TrainingUnitService $trainingUnitService,
         private readonly TrainingPathRepository $trainingPathRepository,
+        private readonly TrainingUnitVMAssignmentService $vmAssignmentService,
     ) {}
 
     /**
@@ -93,8 +94,12 @@ class TeachingController extends Controller
             ];
         }
 
+        // Get available VMs for curriculum setup
+        $availableVMs = $this->vmAssignmentService->getAvailableVMs();
+
         return Inertia::render('teaching/create', [
             'categories' => $categories,
+            'availableVMs' => $availableVMs,
         ]);
     }
 

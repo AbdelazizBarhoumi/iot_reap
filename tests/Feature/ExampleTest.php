@@ -14,17 +14,17 @@ class ExampleTest extends TestCase
     {
         $user = User::factory()->admin()->create();
 
-        $response = $this->actingAs($user)->get(route('home'));
+        $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
         $response->assertOk();
     }
 
-    public function test_engineers_are_redirected_from_home_to_dashboard()
+    public function test_engineers_are_redirected_from_home_to_training_paths()
     {
         $user = User::factory()->engineer()->create();
 
         $response = $this->actingAs($user)->get(route('home'));
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('trainingPaths.index'));
     }
 }

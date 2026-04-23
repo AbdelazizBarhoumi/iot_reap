@@ -12,7 +12,7 @@ class RedirectBasedOnRole
     /**
      * Handle an incoming request.
      * Redirects authenticated users to role-appropriate pages:
-    * - Engineer: redirect to training paths
+     * - Engineer: redirect to training paths
      * - Teacher: redirect to teaching dashboard
      * - Security Officer: redirect to trainingPaths
      * - Admin: redirect to admin dashboard

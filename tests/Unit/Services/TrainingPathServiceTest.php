@@ -27,11 +27,13 @@ class TrainingPathServiceTest extends TestCase
         $this->trainingPathRepository = app(TrainingPathRepository::class);
         $moduleRepository = app(TrainingPathModuleRepository::class);
         $trainingUnitRepository = app(TrainingUnitRepository::class);
+        $vmAssignmentRepository = app(\App\Repositories\TrainingUnitVMAssignmentRepository::class);
         $cacheService = app(TrainingPathCacheService::class);
         $this->trainingPathService = new TrainingPathService(
             $this->trainingPathRepository,
             $moduleRepository,
             $trainingUnitRepository,
+            $vmAssignmentRepository,
             $cacheService
         );
     }

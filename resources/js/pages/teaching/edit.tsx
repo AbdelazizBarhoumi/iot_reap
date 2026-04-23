@@ -539,8 +539,12 @@ export default function EditTrainingPathPage({
                         title: moduleTitle,
                     },
                 );
+                // The backend returns { data: module }
+                const moduleData = (
+                    response.data as unknown as { data: teachingApi.Module }
+                ).data;
                 const newModule: TrainingPathModule = {
-                    id: String(response.data.id),
+                    id: String(moduleData.id),
                     title: moduleTitle,
                     sort_order: modules.length,
                     trainingUnits: [],
@@ -609,8 +613,14 @@ export default function EditTrainingPathPage({
                     type: trainingUnitType,
                 },
             );
+            // The backend returns { data: trainingUnit }
+            const trainingUnitData = (
+                response.data as unknown as {
+                    data: teachingApi.TrainingUnit;
+                }
+            ).data;
             const newTrainingUnit: TrainingUnit = {
-                id: String(response.data.id),
+                id: String(trainingUnitData.id),
                 title: trainingUnitTitle,
                 type: trainingUnitType as TrainingUnit['type'],
                 duration: null,

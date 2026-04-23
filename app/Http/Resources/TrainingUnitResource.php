@@ -25,7 +25,6 @@ class TrainingUnitResource extends JsonResource
     /**
      * Normalize mixed stored values into a clean list of non-empty strings.
      *
-     * @param mixed $value
      * @return array<int, string>
      */
     private function normalizeStringList(mixed $value): array

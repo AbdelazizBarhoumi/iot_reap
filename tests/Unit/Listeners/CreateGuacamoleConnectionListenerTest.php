@@ -183,7 +183,7 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
             ->push(['authToken' => 'first', 'dataSource' => 'mysql'], 200) // initial auth
             ->push(['message' => 'Permission Denied'], 403) // initial create fails
             ->push(['authToken' => 'second', 'dataSource' => 'mysql'], 200) // reauth
-            ->push(['identifier' => 'okay'], 200); // success on retry
+            ->push(['identifier' => 12345], 200); // success on retry
 
         $this->app->singleton(GuacamoleClientInterface::class, fn () => new GuacamoleClient);
 

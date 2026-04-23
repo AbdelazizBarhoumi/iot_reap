@@ -109,10 +109,11 @@ class GuacamoleTokenController extends Controller
 
             // Build the WebSocket tunnel URL for guacamole-common-js client.
             // Format: ws(s)://host/guacamole/websocket-tunnel
-            $guacUrl = rtrim(config('guacamole.url'), '/');
-            $wsScheme = str_starts_with($guacUrl, 'https') ? 'wss' : 'ws';
-            $wsHost = preg_replace('#^https?://#', '', $guacUrl);
-            $tunnelUrl = "{$wsScheme}://{$wsHost}/websocket-tunnel";
+            //
+            // Resolution order:
+            // 1) GUACAMOLE_WS_URL override (if configured)
+            // 2) Derive from GUACAMOLE_URL
+            $tunnelUrl = $this->resolveTunnelUrl();
 
             // TRACE: log full viewer/tunnel URLs so we can inspect what the
             // frontend is attempting to open when the user reports a "black
@@ -121,6 +122,7 @@ class GuacamoleTokenController extends Controller
                 'session_id' => $session->id,
                 'viewer_url' => $viewerUrl,
                 'tunnel_url' => $tunnelUrl,
+                'tunnel_resolution' => config('guacamole.ws_url') ? 'ws_override' : 'derived_from_guacamole_url',
             ]);
 
             return response()->json([
@@ -145,5 +147,27 @@ class GuacamoleTokenController extends Controller
                 'message' => 'Failed to generate session token. Please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Resolve normalized websocket tunnel URL for guacamole-common-js.
+     */
+    private function resolveTunnelUrl(): string
+    {
+        $configuredWsBase = trim((string) config('guacamole.ws_url', ''));
+        $baseUrl = $configuredWsBase !== ''
+            ? rtrim($configuredWsBase, '/')
+            : rtrim((string) config('guacamole.url'), '/');
+
+        if (! preg_match('#^wss?://#i', $baseUrl)) {
+            $baseUrl = preg_replace('#^https://#i', 'wss://', $baseUrl) ?? $baseUrl;
+            $baseUrl = preg_replace('#^http://#i', 'ws://', $baseUrl) ?? $baseUrl;
+        }
+
+        if (! preg_match('#^wss?://#i', $baseUrl)) {
+            $baseUrl = 'ws://'.$baseUrl;
+        }
+
+        return $baseUrl.'/websocket-tunnel';
     }
 }

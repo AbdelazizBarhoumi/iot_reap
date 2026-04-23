@@ -21,8 +21,8 @@ use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayDiscoveryService;
 use App\Services\GatewayService;
 use App\Services\ProxmoxClientFactory;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -638,7 +638,7 @@ class HardwareController extends Controller
         $streamResult = ['success' => false, 'error' => null];
         if ($gatewayNode) {
             $streamResult = $this->gatewayService->startCameraStream(
-            $gatewayNode,
+                $gatewayNode,
                 $camera->stream_key,
                 $camera->source_url,
                 $this->buildGatewayStreamOptionsForUsbDevice($device, [

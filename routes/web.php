@@ -82,11 +82,11 @@ Route::middleware(['auth'])->post('/stop-impersonation', [AdminUserController::c
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 
 // Core domains
-require __DIR__ . '/sessions.php';
-require __DIR__ . '/admin.php';
-require __DIR__ . '/trainingPaths.php';
-require __DIR__ . '/teaching.php';
+require __DIR__.'/sessions.php';
+require __DIR__.'/admin.php';
+require __DIR__.'/trainingPaths.php';
+require __DIR__.'/teaching.php';
 
 // Auth and Settings
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\TrainingPathStatus;
+use App\Enums\TrainingUnitVMAssignmentStatus;
 use App\Models\TrainingPath;
 use App\Models\User;
 use App\Notifications\TrainingPathApprovedNotification;
@@ -10,6 +11,7 @@ use App\Notifications\TrainingPathRejectedNotification;
 use App\Repositories\TrainingPathModuleRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitRepository;
+use App\Repositories\TrainingUnitVMAssignmentRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -24,6 +26,7 @@ class TrainingPathService
         private readonly TrainingPathRepository $trainingPathRepository,
         private readonly TrainingPathModuleRepository $moduleRepository,
         private readonly TrainingUnitRepository $trainingUnitRepository,
+        private readonly TrainingUnitVMAssignmentRepository $vmAssignmentRepository,
         private readonly TrainingPathCacheService $cacheService,
     ) {}
 
@@ -136,7 +139,7 @@ class TrainingPathService
                     $hasVm = true;
                 }
 
-                $this->trainingUnitRepository->create([
+                $trainingUnit = $this->trainingUnitRepository->create([
                     'module_id' => $module->id,
                     'title' => $trainingUnitData['title'] ?? 'Untitled TrainingUnit',
                     'type' => $trainingUnitData['type'] ?? 'video',
@@ -148,6 +151,19 @@ class TrainingPathService
                     'resources' => $trainingUnitData['resources'] ?? null,
                     'sort_order' => $trainingUnitOrder,
                 ]);
+
+                // Handle VM assignment if provided
+                if ($vmEnabled && ! empty($trainingUnitData['vm_id']) && ! empty($trainingUnitData['node_id'])) {
+                    $this->vmAssignmentRepository->create([
+                        'training_unit_id' => $trainingUnit->id,
+                        'vm_id' => $trainingUnitData['vm_id'],
+                        'node_id' => $trainingUnitData['node_id'],
+                        'vm_name' => $trainingUnitData['vm_name'] ?? null,
+                        'assigned_by' => $instructor->id,
+                        'status' => TrainingUnitVMAssignmentStatus::PENDING,
+                        'teacher_notes' => $trainingUnitData['teacher_notes'] ?? 'Initial assignment during creation',
+                    ]);
+                }
             }
         }
 

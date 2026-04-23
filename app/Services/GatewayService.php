@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\UsbDeviceStatus;
 use App\Enums\CameraStatus;
+use App\Enums\UsbDeviceStatus;
 use App\Exceptions\GatewayApiException;
 use App\Exceptions\ProxmoxApiException;
 use App\Models\GatewayNode;

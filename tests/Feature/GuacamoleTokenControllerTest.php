@@ -67,6 +67,66 @@ class GuacamoleTokenControllerTest extends TestCase
             );
     }
 
+    public function test_tunnel_url_is_derived_from_guacamole_url_when_no_ws_override(): void
+    {
+        config()->set('guacamole.url', 'http://192.168.50.6:8080/guacamole');
+        config()->set('guacamole.ws_url', null);
+
+        $user = User::factory()->engineer()->create();
+        $node = ProxmoxNode::factory()->create();
+
+        $connectionId = $this->app->make(GuacamoleClientInterface::class)
+            ->createConnection(['name' => 'test-session', 'protocol' => 'rdp']);
+
+        $session = VMSession::factory()
+            ->for($user)
+            ->create([
+                'node_id' => $node->id,
+                'status' => VMSessionStatus::ACTIVE,
+                'guacamole_connection_id' => $connectionId,
+                'expires_at' => now()->addHours(1),
+            ]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/sessions/{$session->id}/guacamole-token");
+
+        $response->assertOk()
+            ->assertJsonPath(
+                'tunnel_url',
+                'ws://192.168.50.6:8080/guacamole/websocket-tunnel'
+            );
+    }
+
+    public function test_tunnel_url_prefers_ws_override_when_configured(): void
+    {
+        config()->set('guacamole.url', 'http://192.168.50.6:8080/guacamole');
+        config()->set('guacamole.ws_url', 'wss://remote.example.com/guacamole');
+
+        $user = User::factory()->engineer()->create();
+        $node = ProxmoxNode::factory()->create();
+
+        $connectionId = $this->app->make(GuacamoleClientInterface::class)
+            ->createConnection(['name' => 'test-session', 'protocol' => 'rdp']);
+
+        $session = VMSession::factory()
+            ->for($user)
+            ->create([
+                'node_id' => $node->id,
+                'status' => VMSessionStatus::ACTIVE,
+                'guacamole_connection_id' => $connectionId,
+                'expires_at' => now()->addHours(1),
+            ]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/sessions/{$session->id}/guacamole-token");
+
+        $response->assertOk()
+            ->assertJsonPath(
+                'tunnel_url',
+                'wss://remote.example.com/guacamole/websocket-tunnel'
+            );
+    }
+
     public function test_returns_403_for_non_session_owner(): void
     {
         $ownerUser = User::factory()->engineer()->create();

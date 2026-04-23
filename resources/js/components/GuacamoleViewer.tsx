@@ -252,6 +252,7 @@ export function GuacamoleViewer({
         if (!tokenData || !displayRef.current) return;
         const displayEl = displayRef.current;
         const containerEl = displayEl;
+        let currentState: GuacStateValue = GuacState.IDLE;
         // Tear down any existing client before creating a new one.
         if (clientRef.current) {
             try {
@@ -286,6 +287,7 @@ export function GuacamoleViewer({
         // ── Client event handlers ───────────────────────────────────────────────
         client.onstatechange = (state: number) => {
             const s = state as GuacStateValue;
+            currentState = s;
             console.debug(
                 '[GuacamoleViewer] state →',
                 STATE_LABELS[s] ?? state,
@@ -294,6 +296,17 @@ export function GuacamoleViewer({
             if (s === GuacState.CONNECTING) setConnectionError(null);
             if (s === GuacState.DISCONNECTED)
                 setConnectionError('Remote desktop connection closed.');
+
+            if (s === GuacState.CONNECTED) {
+                // Ensure a first size sync only after tunnel is ready.
+                const { w, h } = getTargetSize(containerEl);
+                try {
+                    client.sendSize(w, h);
+                } catch {
+                    // ignore transient race during state transitions
+                }
+                fitDisplayToContainer(guacDisplay, containerEl);
+            }
         };
         client.onerror = (status: Guacamole.Status) => {
             console.error('[GuacamoleViewer] error', status);
@@ -344,8 +357,16 @@ export function GuacamoleViewer({
         const applyResize = () => {
             if (resizeTimer) clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
+                if (currentState !== GuacState.CONNECTED) {
+                    return;
+                }
                 const { w, h } = getTargetSize(containerEl);
-                client.sendSize(w, h);
+                try {
+                    client.sendSize(w, h);
+                } catch {
+                    // ignore transient race during reconnect/disconnect
+                    return;
+                }
                 fitDisplayToContainer(guacDisplay, containerEl);
             }, 100);
         };

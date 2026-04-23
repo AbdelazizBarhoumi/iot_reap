@@ -53,6 +53,11 @@ class CreateTrainingPathRequest extends FormRequest
             'modules.*.trainingUnits.*.vm_enabled' => ['nullable', 'boolean'],
             'modules.*.trainingUnits.*.vmEnabled' => ['nullable', 'boolean'], // frontend alias
 
+            // VM Assignment fields for creation
+            'modules.*.trainingUnits.*.vm_id' => ['nullable', 'integer'],
+            'modules.*.trainingUnits.*.node_id' => ['nullable', 'integer'],
+            'modules.*.trainingUnits.*.vm_name' => ['nullable', 'string', 'max:255'],
+
             // TrainingUnit content fields (for inline editing during creation)
             'modules.*.trainingUnits.*.content' => ['nullable', 'string', 'max:50000'],
             'modules.*.trainingUnits.*.video_url' => ['nullable', 'url', 'max:2048'],

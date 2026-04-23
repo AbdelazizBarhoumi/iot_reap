@@ -48,7 +48,7 @@ class TeacherApprovalTest extends TestCase
 
         // When visiting the pending approval page while already approved
         $response = $this->get(route('teacher.pending-approval'));
-        
+
         // It should redirect to teaching index (repro of the issue)
         $response->assertRedirect(route('teaching.index'));
     }

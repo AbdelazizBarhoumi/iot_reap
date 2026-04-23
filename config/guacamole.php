@@ -17,6 +17,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Guacamole WebSocket Base URL (Optional Override)
+    |--------------------------------------------------------------------------
+    | Optional explicit base URL used to build the guacamole-common-js
+    | websocket tunnel endpoint returned by the backend.
+    |
+    | When set, this value is preferred over auto-deriving from GUACAMOLE_URL.
+    | Useful when the viewer URL and websocket endpoint differ (reverse proxy,
+    | alternate host, dedicated ws/wss origin).
+    |
+    | Examples:
+    | - ws://192.168.50.6:8080/guacamole
+    | - wss://guac.example.com/guacamole
+    */
+    'ws_url' => env('GUACAMOLE_WS_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Guacamole API Authentication
     |--------------------------------------------------------------------------
     | Username and password for Guacamole REST API authentication.

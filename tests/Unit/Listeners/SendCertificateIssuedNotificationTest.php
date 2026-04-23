@@ -29,7 +29,7 @@ class SendCertificateIssuedNotificationTest extends TestCase
         $notificationService = Mockery::mock(NotificationService::class);
         $notificationService->shouldReceive('notifyCertificateReady')
             ->once()
-            ->with(Mockery::on(fn($u) => $u->id === $user->id), 'Test Path', 'test-hash-123');
+            ->with(Mockery::on(fn ($u) => $u->id === $user->id), 'Test Path', 'test-hash-123');
 
         $listener = new SendCertificateIssuedNotification($notificationService);
         $event = new CertificateIssued($certificate);

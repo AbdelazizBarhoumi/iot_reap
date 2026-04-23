@@ -45,15 +45,12 @@ export function CertificateClaimPrompt({
     const [certificate, setCertificate] = useState<Certificate | null>(null);
 
     useEffect(() => {
-        if (!open) {
-            setStatus('idle');
-            setCertificate(null);
-            return;
-        }
+        if (!open) return;
 
         let cancelled = false;
 
         const check = async () => {
+            setCertificate(null);
             setStatus('checking');
 
             try {
