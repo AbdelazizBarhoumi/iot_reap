@@ -26,6 +26,11 @@ class VMReservationService
 		return $this->vmReservationRepository->findPending();
 	}
 
+	public function listForAdmin(?string $status = null): Collection
+	{
+		return $this->vmReservationRepository->findAll($status);
+	}
+
 	public function createRequest(
 		User $user,
 		int $nodeId,

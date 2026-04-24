@@ -307,45 +307,33 @@ class UsbDeviceQueueService
      */
     public function canUserAttachNow(UsbDevice $device, VMSession $session): array
     {
-        $now = now();
+        $blockingReservation = $this->findOverlappingReservationForSession($device, $session);
 
-        // Check if there's an active reservation
-        $activeReservation = Reservation::where('reservable_type', 'App\Models\UsbDevice')
-            ->where('reservable_id', $device->id)
-            ->whereIn('status', [UsbReservationStatus::APPROVED->value, UsbReservationStatus::ACTIVE->value])
-            ->whereNotNull('approved_start_at')
-            ->where('approved_start_at', '<=', $now)
-            ->where('approved_end_at', '>=', $now)
-            ->first();
+        if ($blockingReservation === null) {
+            return ['can_attach' => true, 'reason' => 'No blocking reservation'];
+        }
 
-        if ($activeReservation) {
-            if (
-                $activeReservation->target_vm_id !== null
-                && $session->vm_id !== null
-                && (int) $activeReservation->target_vm_id === (int) $session->vm_id
-            ) {
-                return ['can_attach' => true, 'reason' => 'Session VM has an active reservation'];
-            }
-
-            if ($activeReservation->user_id === $session->user_id) {
-                return ['can_attach' => true, 'reason' => 'User has active reservation'];
-            }
-
-            $reservedForVm = $activeReservation->target_vm_id !== null
-                ? "VM {$activeReservation->target_vm_id}"
-                : null;
-
+        if ($this->reservationAppliesToSession($blockingReservation, $session)) {
             return [
-                'can_attach' => false,
-                'reason' => $reservedForVm
-                    ? "Device is reserved for {$reservedForVm}"
-                    : 'Device is reserved by another user',
-                'reserved_by' => $activeReservation->user->name,
-                'until' => $activeReservation->approved_end_at->format('Y-m-d H:i:s'),
+                'can_attach' => true,
+                'reason' => $blockingReservation->target_vm_id !== null
+                    ? 'Session VM has an active reservation'
+                    : 'User has active reservation',
             ];
         }
 
-        return ['can_attach' => true, 'reason' => 'No blocking reservation'];
+        $reservedForVm = $blockingReservation->target_vm_id !== null
+            ? "VM {$blockingReservation->target_vm_id}"
+            : null;
+
+        return [
+            'can_attach' => false,
+            'reason' => $reservedForVm
+                ? "Device is reserved for {$reservedForVm}"
+                : 'Device is reserved by another user',
+            'reserved_by' => $blockingReservation->user->name,
+            'until' => $blockingReservation->approved_end_at?->format('Y-m-d H:i:s'),
+        ];
     }
 
     /**
@@ -358,7 +346,15 @@ class UsbDeviceQueueService
     public function getAvailableDevicesForSession(VMSession $session): Collection
     {
         return UsbDevice::whereHas('gatewayNode', fn ($q) => $q->active())
-            ->with(['gatewayNode', 'queueEntries'])
+            ->with(['gatewayNode', 'queueEntries', 'reservations' => function ($query) {
+                $query->whereIn('status', [
+                    UsbReservationStatus::APPROVED->value,
+                    UsbReservationStatus::ACTIVE->value,
+                ])
+                    ->whereNotNull('approved_start_at')
+                    ->whereNotNull('approved_end_at')
+                    ->orderBy('approved_start_at');
+            }])
             ->where(function ($query) {
                 // Include all bound devices (ready for attach)
                 $query->where('status', 'bound')
@@ -370,6 +366,11 @@ class UsbDeviceQueueService
                     });
             })
             ->get()
+            ->filter(function (UsbDevice $device) use ($session): bool {
+                $canAttach = $this->canUserAttachNow($device, $session);
+
+                return $canAttach['can_attach'] || ! array_key_exists('reserved_by', $canAttach);
+            })
             ->map(function (UsbDevice $device) use ($session): array {
                 $canAttach = $this->canUserAttachNow($device, $session);
                 $queuePosition = $this->getQueuePosition($device, $session);
@@ -385,5 +386,38 @@ class UsbDeviceQueueService
                     'gateway_verified' => true, // Always true since we filter by verified
                 ];
             });
+    }
+
+    /**
+     * Find the reservation overlapping the session window, if any.
+     */
+    private function findOverlappingReservationForSession(UsbDevice $device, VMSession $session): ?Reservation
+    {
+        $windowStart = now();
+        $windowEnd = $session->expires_at ?? now();
+
+        return Reservation::where('reservable_type', 'App\\Models\\UsbDevice')
+            ->where('reservable_id', $device->id)
+            ->whereIn('status', [UsbReservationStatus::APPROVED->value, UsbReservationStatus::ACTIVE->value])
+            ->whereNotNull('approved_start_at')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_start_at', '<', $windowEnd)
+            ->where('approved_end_at', '>', $windowStart)
+            ->orderBy('approved_start_at')
+            ->first();
+    }
+
+    /**
+     * Determine whether the reservation belongs to the session owner or VM.
+     */
+    private function reservationAppliesToSession(Reservation $reservation, VMSession $session): bool
+    {
+        if ((string) $reservation->user_id === (string) $session->user_id) {
+            return true;
+        }
+
+        return $reservation->target_vm_id !== null
+            && $session->vm_id !== null
+            && (int) $reservation->target_vm_id === (int) $session->vm_id;
     }
 }

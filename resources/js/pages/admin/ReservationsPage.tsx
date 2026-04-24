@@ -1,6 +1,7 @@
 /**
  * Admin Reservations Page.
- * Manage USB reservation requests/device blocks and camera reservation approvals.
+ * Manage USB reservation requests/device blocks, camera reservation approvals,
+ * and VM reservation approvals.
  */
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -11,6 +12,7 @@ import {
     Clock,
     Loader2,
     Lock,
+    Monitor,
     RefreshCw,
     Usb,
     Video,
@@ -20,6 +22,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminCameraApi } from '@/api/camera.api';
 import { adminReservationApi, hardwareApi } from '@/api/hardware.api';
 import { usersApi } from '@/api/users.api';
+import { vmReservationApi } from '@/api/vm.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,6 +62,7 @@ import type {
     UsbDeviceReservation,
     UsbReservationStatus,
 } from '@/types/hardware.types';
+import type { VMReservation } from '@/types/vm.types';
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/reservations' },
     { title: 'Device Reservations', href: '/admin/reservations' },
@@ -71,6 +75,24 @@ const STATUS_COLORS: Record<UsbReservationStatus, string> = {
     active: 'bg-green-500',
     completed: 'bg-gray-400',
 };
+
+const RESERVATION_BADGE_COLORS: Record<string, string> = {
+    yellow: 'bg-yellow-500',
+    blue: 'bg-blue-500',
+    red: 'bg-red-500',
+    gray: 'bg-gray-500',
+    green: 'bg-green-500',
+};
+
+const VM_STATUS_COLORS: Record<VMReservation['status'], string> = {
+    pending: 'bg-yellow-500',
+    approved: 'bg-blue-500',
+    rejected: 'bg-red-500',
+    cancelled: 'bg-gray-500',
+    active: 'bg-green-500',
+    completed: 'bg-gray-400',
+};
+
 function formatDateTime(iso: string | null): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleString();
@@ -197,6 +219,7 @@ interface CameraReservationCardProps {
     onApprove: (id: number) => void;
     onReject: (id: number) => void;
     actionLoading: boolean;
+    showActions?: boolean;
 }
 
 function CameraReservationCard({
@@ -204,6 +227,7 @@ function CameraReservationCard({
     onApprove,
     onReject,
     actionLoading,
+    showActions = true,
 }: CameraReservationCardProps) {
     return (
         <Card className="mb-4 border-yellow-200/50">
@@ -223,7 +247,11 @@ function CameraReservationCard({
                         </div>
                     </div>
 
-                    <Badge className="bg-yellow-500 text-white">Pending</Badge>
+                    <Badge
+                        className={`${RESERVATION_BADGE_COLORS[reservation.status_color] ?? 'bg-yellow-500'} text-white`}
+                    >
+                        {reservation.status_label}
+                    </Badge>
                 </div>
             </CardHeader>
 
@@ -244,31 +272,143 @@ function CameraReservationCard({
                         </div>
                     )}
 
+                    {(reservation.approved_start_at || reservation.approved_end_at) && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Approved Period:</span>
+                            <span>
+                                {formatDateTime(reservation.approved_start_at)} —{' '}
+                                {formatDateTime(reservation.approved_end_at)}
+                            </span>
+                        </div>
+                    )}
+
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Submitted:</span>
                         <span>{formatDateTime(reservation.created_at)}</span>
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-2 border-t pt-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onReject(reservation.id)}
-                        disabled={actionLoading}
+                {showActions && (
+                    <div className="flex justify-end gap-2 border-t pt-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onReject(reservation.id)}
+                            disabled={actionLoading}
+                        >
+                            <X className="mr-1 h-4 w-4" />
+                            Reject
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => onApprove(reservation.id)}
+                            disabled={actionLoading}
+                        >
+                            <Check className="mr-1 h-4 w-4" />
+                            Approve
+                        </Button>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+interface VMReservationCardProps {
+    reservation: VMReservation;
+    onApprove: (id: number) => void;
+    onReject: (id: number) => void;
+    actionLoading: boolean;
+    showActions?: boolean;
+}
+
+function VMReservationCard({
+    reservation,
+    onApprove,
+    onReject,
+    actionLoading,
+    showActions = true,
+}: VMReservationCardProps) {
+    return (
+        <Card className="mb-4 border-sky-200/50">
+            <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-sky-500/10 p-2 text-sky-600">
+                            <Monitor className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base">
+                                {reservation.vm_name ?? `VM #${reservation.vm_id}`}
+                            </CardTitle>
+                            <CardDescription>
+                                Requested by {reservation.user?.name ?? 'Unknown User'}
+                            </CardDescription>
+                        </div>
+                    </div>
+
+                    <Badge
+                        className={`${VM_STATUS_COLORS[reservation.status] ?? 'bg-sky-500'} text-white`}
                     >
-                        <X className="mr-1 h-4 w-4" />
-                        Reject
-                    </Button>
-                    <Button
-                        size="sm"
-                        onClick={() => onApprove(reservation.id)}
-                        disabled={actionLoading}
-                    >
-                        <Check className="mr-1 h-4 w-4" />
-                        Approve
-                    </Button>
+                        {reservation.status_label}
+                    </Badge>
                 </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+                <div className="grid gap-2 text-sm">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Requested Period:</span>
+                        <span>
+                            {formatDateTime(reservation.requested_start_at)} —{' '}
+                            {formatDateTime(reservation.requested_end_at)}
+                        </span>
+                    </div>
+
+                    {reservation.purpose && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Purpose:</span>
+                            <span className="max-w-[220px] truncate">{reservation.purpose}</span>
+                        </div>
+                    )}
+
+                    {(reservation.approved_start_at || reservation.approved_end_at) && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Approved Period:</span>
+                            <span>
+                                {formatDateTime(reservation.approved_start_at)} —{' '}
+                                {formatDateTime(reservation.approved_end_at)}
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Submitted:</span>
+                        <span>{formatDateTime(reservation.created_at)}</span>
+                    </div>
+                </div>
+
+                {showActions && (
+                    <div className="flex justify-end gap-2 border-t pt-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onReject(reservation.id)}
+                            disabled={actionLoading}
+                        >
+                            <X className="mr-1 h-4 w-4" />
+                            Reject
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => onApprove(reservation.id)}
+                            disabled={actionLoading}
+                        >
+                            <Check className="mr-1 h-4 w-4" />
+                            Approve
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
@@ -896,6 +1036,9 @@ export default function AdminReservationsPage() {
         [],
     );
     const [cameraReservations, setCameraReservations] = useState<CameraReservation[]>([]);
+    const [cameraApprovedReservations, setCameraApprovedReservations] = useState<CameraReservation[]>([]);
+    const [vmReservations, setVmReservations] = useState<VMReservation[]>([]);
+    const [vmApprovedReservations, setVmApprovedReservations] = useState<VMReservation[]>([]);
     const [devices, setDevices] = useState<UsbDevice[]>([]);
     const [cameras, setCameras] = useState<Camera[]>([]);
     const [users, setUsers] = useState<ReservationUser[]>([]);
@@ -913,18 +1056,34 @@ export default function AdminReservationsPage() {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [reservationsData, devicesData, cameraPendingData, camerasData, vmsData, usersData] = await Promise.all([
+            const [
+                reservationsData,
+                devicesData,
+                cameraPendingData,
+                cameraApprovedData,
+                camerasData,
+                vmPendingData,
+                vmApprovedData,
+                vmsData,
+                usersData,
+            ] = await Promise.all([
                 adminReservationApi.getAll(),
                 hardwareApi.getDevices(),
                 adminCameraApi.getPending(),
+                adminCameraApi.getReservations('approved'),
                 adminCameraApi.getCameras(),
+                vmReservationApi.getPendingForAdmin(),
+                vmReservationApi.getReservations('approved'),
                 hardwareApi.getRunningVms(),
                 usersApi.getUsers({ per_page: 1000 }),
             ]);
             setReservations(reservationsData);
             setDevices(devicesData);
             setCameraReservations(cameraPendingData);
+            setCameraApprovedReservations(cameraApprovedData);
             setCameras(camerasData);
+            setVmReservations(vmPendingData);
+            setVmApprovedReservations(vmApprovedData);
             setVms(vmsData);
             setUsers(usersData.data);
             setError(null);
@@ -1000,6 +1159,30 @@ export default function AdminReservationsPage() {
         }
     };
 
+    const handleApproveVmReservation = async (id: number) => {
+        setActionLoading(true);
+        try {
+            await vmReservationApi.approveForAdmin(id, {});
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'VM approval failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRejectVmReservation = async (id: number) => {
+        setActionLoading(true);
+        try {
+            await vmReservationApi.rejectForAdmin(id);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'VM rejection failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleBlockConfirm = async (
         deviceId: number,
         mode: 'block' | 'reserve_to_user' | 'reserve_to_vm',
@@ -1029,6 +1212,9 @@ export default function AdminReservationsPage() {
             setActionLoading(false);
         }
     };
+
+    const cameraApprovedCount = cameraApprovedReservations.length;
+    const vmApprovedCount = vmApprovedReservations.length;
 
     const handleCameraBlockConfirm = async (
         cameraId: number,
@@ -1061,7 +1247,7 @@ export default function AdminReservationsPage() {
     };
     // Filter reservations by tab
     const filteredReservations = reservations.filter((r) => {
-        if (activeTab === 'camera') return false;
+        if (activeTab === 'camera' || activeTab === 'vm') return false;
         if (activeTab === 'pending') return r.status === 'pending';
         if (activeTab === 'approved')
             return r.status === 'approved' || r.status === 'active';
@@ -1078,6 +1264,7 @@ export default function AdminReservationsPage() {
     ).length;
     const blocksCount = reservations.filter((r) => r.is_admin_block).length;
     const cameraPendingCount = cameraReservations.length;
+    const vmPendingCount = vmReservations.length;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -1178,6 +1365,33 @@ export default function AdminReservationsPage() {
                                     </Badge>
                                 )}
                             </TabsTrigger>
+                            <TabsTrigger value="camera-approved" className="gap-2">
+                                <Video className="h-4 w-4" />
+                                Camera Approved
+                                {cameraApprovedCount > 0 && (
+                                    <Badge variant="primary" className="ml-1">
+                                        {cameraApprovedCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
+                            <TabsTrigger value="vm" className="gap-2">
+                                <Monitor className="h-4 w-4" />
+                                VM Pending
+                                {vmPendingCount > 0 && (
+                                    <Badge variant="primary" className="ml-1">
+                                        {vmPendingCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
+                            <TabsTrigger value="vm-approved" className="gap-2">
+                                <Monitor className="h-4 w-4" />
+                                VM Approved
+                                {vmApprovedCount > 0 && (
+                                    <Badge variant="primary" className="ml-1">
+                                        {vmApprovedCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
                             <TabsTrigger value="history" className="gap-2">
                                 <Calendar className="h-4 w-4" />
                                 History
@@ -1208,6 +1422,80 @@ export default function AdminReservationsPage() {
                                         ))}
                                     </div>
                                 )
+                            ) : activeTab === 'camera-approved' ? (
+                                loading ? (
+                                    <LoadingSkeleton />
+                                ) : cameraApprovedReservations.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="p-12 text-center">
+                                            <p className="text-muted-foreground">
+                                                No approved camera reservations
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {cameraApprovedReservations.map((reservation) => (
+                                            <CameraReservationCard
+                                                key={reservation.id}
+                                                reservation={reservation}
+                                                onApprove={handleApproveCameraReservation}
+                                                onReject={handleRejectCameraReservation}
+                                                actionLoading={actionLoading}
+                                                showActions={false}
+                                            />
+                                        ))}
+                                    </div>
+                                )
+                            ) : activeTab === 'vm' ? (
+                                loading ? (
+                                    <LoadingSkeleton />
+                                ) : vmReservations.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="p-12 text-center">
+                                            <p className="text-muted-foreground">
+                                                No pending VM reservations
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {vmReservations.map((reservation) => (
+                                            <VMReservationCard
+                                                key={reservation.id}
+                                                reservation={reservation}
+                                                onApprove={handleApproveVmReservation}
+                                                onReject={handleRejectVmReservation}
+                                                actionLoading={actionLoading}
+                                            />
+                                        ))}
+                                    </div>
+                                )
+                            ) : activeTab === 'vm-approved' ? (
+                                loading ? (
+                                    <LoadingSkeleton />
+                                ) : vmApprovedReservations.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="p-12 text-center">
+                                            <p className="text-muted-foreground">
+                                                No approved VM reservations
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {vmApprovedReservations.map((reservation) => (
+                                            <VMReservationCard
+                                                key={reservation.id}
+                                                reservation={reservation}
+                                                onApprove={handleApproveVmReservation}
+                                                onReject={handleRejectVmReservation}
+                                                actionLoading={actionLoading}
+                                                showActions={false}
+                                            />
+                                        ))}
+                                    </div>
+                                )
                             ) : loading ? (
                                 <LoadingSkeleton />
                             ) : filteredReservations.length === 0 ? (
@@ -1220,6 +1508,12 @@ export default function AdminReservationsPage() {
                                                 'No approved reservations'}
                                             {activeTab === 'blocks' &&
                                                 'No active device blocks'}
+                                            {activeTab === 'camera-approved' &&
+                                                'No approved camera reservations'}
+                                            {activeTab === 'vm-approved' &&
+                                                'No approved VM reservations'}
+                                            {activeTab === 'vm' &&
+                                                'No pending VM reservations'}
                                             {activeTab === 'history' &&
                                                 'No reservation history'}
                                         </p>

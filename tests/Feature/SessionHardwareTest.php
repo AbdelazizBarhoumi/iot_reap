@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\GatewayNode;
+use App\Models\Reservation;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
@@ -105,6 +106,53 @@ class SessionHardwareTest extends TestCase
                 'available_devices',
             ],
         ]);
+    }
+
+    public function test_user_does_not_see_usb_device_reserved_by_another_user_during_session_window(): void
+    {
+        $this->session->update([
+            'expires_at' => now()->addHours(4),
+        ]);
+
+        $hiddenDevice = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create(['busid' => '1-10', 'name' => 'Hidden USB']);
+
+        $visibleDevice = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create(['busid' => '1-11', 'name' => 'Visible USB']);
+
+        $otherReservationUser = User::factory()->engineer()->create();
+
+        Reservation::factory()->forUsbDevice($hiddenDevice)->approved()->create([
+            'user_id' => $otherReservationUser->id,
+            'approved_start_at' => now()->addHour(),
+            'approved_end_at' => now()->addHours(2),
+            'requested_start_at' => now()->addHour(),
+            'requested_end_at' => now()->addHours(2),
+        ]);
+
+        Reservation::factory()->forUsbDevice($visibleDevice)->approved()->create([
+            'user_id' => $this->user->id,
+            'approved_start_at' => now()->addHour(),
+            'approved_end_at' => now()->addHours(2),
+            'requested_start_at' => now()->addHour(),
+            'requested_end_at' => now()->addHours(2),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+
+        $response->assertOk();
+
+        $availableDeviceIds = collect($response->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertNotContains($hiddenDevice->id, $availableDeviceIds);
+        $this->assertContains($visibleDevice->id, $availableDeviceIds);
     }
 
     public function test_user_cannot_access_other_users_session_hardware(): void

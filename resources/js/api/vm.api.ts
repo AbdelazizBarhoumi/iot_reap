@@ -372,6 +372,13 @@ export const trainingUnitVMAssignmentApi = {
 };
 
 export const vmReservationApi = {
+    async getReservations(status?: string): Promise<VMReservation[]> {
+        const response = await client.get<ApiResponse<VMReservation[]>>('/admin/vm-reservations', {
+            params: status ? { status } : undefined,
+        });
+        return response.data.data;
+    },
+
     async getMyReservations(): Promise<VMReservation[]> {
         const response = await client.get<ApiResponse<VMReservation[]>>('/vm-reservations');
         return response.data.data;
@@ -402,8 +409,7 @@ export const vmReservationApi = {
     },
 
     async getPendingForAdmin(): Promise<VMReservation[]> {
-        const response = await client.get<ApiResponse<VMReservation[]>>('/admin/vm-reservations/pending');
-        return response.data.data;
+        return this.getReservations('pending');
     },
 
     async approveForAdmin(

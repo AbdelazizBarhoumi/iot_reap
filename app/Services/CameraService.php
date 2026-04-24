@@ -12,6 +12,7 @@ use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Models\VMSession;
 use App\Repositories\CameraRepository;
 use App\Repositories\CameraReservationRepository;
 use App\Repositories\VMSessionRepository;
@@ -52,7 +53,9 @@ class CameraService
             return new Collection;
         }
 
-        return $this->cameraRepository->findByVmId($session->vm_id);
+        return $this->cameraRepository->findByVmId($session->vm_id)
+            ->filter(fn (Camera $camera) => ! $this->isCameraBlockedByAnotherReservation($camera, $session))
+            ->values();
     }
 
     /**
@@ -76,8 +79,48 @@ class CameraService
     }
 
     /**
-     * Acquire exclusive PTZ control of a camera for a session.
-     *
+     * Check whether a camera is reserved by someone else during the session window.
+     */
+    private function isCameraBlockedByAnotherReservation(Camera $camera, VMSession $session): bool
+    {
+        $windowStart = now();
+        $windowEnd = $session->expires_at ?? now();
+
+        $blockingReservation = Reservation::where('reservable_type', Camera::class)
+            ->where('reservable_id', $camera->id)
+            ->whereIn('status', [
+                CameraReservationStatus::APPROVED->value,
+                CameraReservationStatus::ACTIVE->value,
+            ])
+            ->whereNotNull('approved_start_at')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_start_at', '<', $windowEnd)
+            ->where('approved_end_at', '>', $windowStart)
+            ->orderBy('approved_start_at')
+            ->first();
+
+        if ($blockingReservation === null) {
+            return false;
+        }
+
+        return ! $this->reservationAppliesToSession($blockingReservation, $session);
+    }
+
+    /**
+     * Determine whether the reservation belongs to the session owner or VM.
+     */
+    private function reservationAppliesToSession(Reservation $reservation, VMSession $session): bool
+    {
+        if ((string) $reservation->user_id === (string) $session->user_id) {
+            return true;
+        }
+
+        return $reservation->target_vm_id !== null
+            && $session->vm_id !== null
+            && (int) $reservation->target_vm_id === (int) $session->vm_id;
+    }
+
+    /**
      * @throws CameraControlConflictException if another session already controls it
      * @throws CameraNotControllableException if the camera doesn't support PTZ
      */

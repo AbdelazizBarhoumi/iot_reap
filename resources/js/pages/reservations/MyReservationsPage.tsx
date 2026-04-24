@@ -900,13 +900,7 @@ export default function MyReservationsPage() {
 
             if (kind === 'camera') {
                 const availableCameras = await cameraReservationApi.getCameras();
-                setCameras(
-                    availableCameras.filter(
-                        (camera) =>
-                            camera.status === 'active' &&
-                            camera.usb_device_id !== null,
-                    ),
-                );
+                setCameras(availableCameras.filter((camera) => camera.status === 'active'));
                 return;
             }
 

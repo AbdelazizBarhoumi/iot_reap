@@ -117,4 +117,66 @@ class VMReservationTest extends TestCase
         $second->refresh();
         $this->assertFalse((bool) $second->is_backup_for_training_path);
     }
+
+    public function test_admin_can_list_pending_vm_reservations(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $engineer = User::factory()->engineer()->create();
+        $node = ProxmoxNode::factory()->online()->create();
+
+        Reservation::factory()->count(2)->create([
+            'reservable_type' => ProxmoxNode::class,
+            'reservable_id' => $node->id,
+            'user_id' => $engineer->id,
+            'status' => 'pending',
+            'requested_start_at' => now()->addDay(),
+            'requested_end_at' => now()->addDay()->addHours(2),
+        ]);
+
+        Reservation::factory()->create([
+            'reservable_type' => ProxmoxNode::class,
+            'reservable_id' => $node->id,
+            'user_id' => $engineer->id,
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_start_at' => now()->addDay(),
+            'approved_end_at' => now()->addDay()->addHours(2),
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/admin/vm-reservations/pending');
+
+        $response->assertOk()->assertJsonCount(2, 'data');
+    }
+
+    public function test_admin_can_list_approved_vm_reservations(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $engineer = User::factory()->engineer()->create();
+        $node = ProxmoxNode::factory()->online()->create();
+
+        Reservation::factory()->create([
+            'reservable_type' => ProxmoxNode::class,
+            'reservable_id' => $node->id,
+            'user_id' => $engineer->id,
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_start_at' => now()->addDay(),
+            'approved_end_at' => now()->addDay()->addHours(2),
+            'requested_start_at' => now()->addDay(),
+            'requested_end_at' => now()->addDay()->addHours(2),
+        ]);
+
+        Reservation::factory()->create([
+            'reservable_type' => ProxmoxNode::class,
+            'reservable_id' => $node->id,
+            'user_id' => $engineer->id,
+            'status' => 'pending',
+            'requested_start_at' => now()->addDay(),
+            'requested_end_at' => now()->addDay()->addHours(2),
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/admin/vm-reservations?status=approved');
+
+        $response->assertOk()->assertJsonCount(1, 'data');
+    }
 }

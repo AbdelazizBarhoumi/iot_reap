@@ -162,4 +162,18 @@ class VMSessionRepository
             ->orderBy('created_at', 'desc')
             ->get();
     }
+
+    /**
+     * Count active sessions for a user.
+     */
+    public function countActiveByUser(User $user): int
+    {
+        return VMSession::where('user_id', $user->id)
+            ->whereIn('status', [
+                VMSessionStatus::ACTIVE,
+                VMSessionStatus::PENDING,
+                VMSessionStatus::PROVISIONING,
+            ])
+            ->count();
+    }
 }

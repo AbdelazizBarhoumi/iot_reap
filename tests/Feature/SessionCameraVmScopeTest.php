@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Camera;
+use App\Models\Reservation;
 use App\Models\Robot;
 use App\Models\User;
 use App\Models\VMSession;
@@ -107,6 +108,57 @@ class SessionCameraVmScopeTest extends TestCase
         $cameraNames = collect($response->json('data'))->pluck('name')->toArray();
         $this->assertContains('Unassigned Camera', $cameraNames);
         $this->assertNotContains('Assigned Camera', $cameraNames);
+    }
+
+    public function test_user_does_not_see_camera_reserved_by_another_user_during_session_window(): void
+    {
+        $session = VMSession::factory()->active()->create([
+            'user_id' => $this->user->id,
+            'vm_id' => 100,
+            'expires_at' => now()->addHours(4),
+        ]);
+
+        $robot = Robot::factory()->create();
+
+        $hiddenCamera = Camera::factory()->active()->create([
+            'robot_id' => $robot->id,
+            'assigned_vm_id' => 100,
+            'name' => 'Hidden Camera',
+        ]);
+
+        $visibleCamera = Camera::factory()->active()->create([
+            'robot_id' => $robot->id,
+            'assigned_vm_id' => 100,
+            'name' => 'Visible Camera',
+        ]);
+
+        $otherUser = User::factory()->engineer()->create();
+
+        Reservation::factory()->forCamera($hiddenCamera)->approved()->create([
+            'user_id' => $otherUser->id,
+            'approved_start_at' => now()->addHour(),
+            'approved_end_at' => now()->addHours(2),
+            'requested_start_at' => now()->addHour(),
+            'requested_end_at' => now()->addHours(2),
+        ]);
+
+        Reservation::factory()->forCamera($visibleCamera)->approved()->create([
+            'user_id' => $this->user->id,
+            'approved_start_at' => now()->addHour(),
+            'approved_end_at' => now()->addHours(2),
+            'requested_start_at' => now()->addHour(),
+            'requested_end_at' => now()->addHours(2),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$session->id}/cameras");
+
+        $response->assertOk();
+
+        $cameraNames = collect($response->json('data'))->pluck('name')->all();
+
+        $this->assertNotContains('Hidden Camera', $cameraNames);
+        $this->assertContains('Visible Camera', $cameraNames);
     }
 
     public function test_users_with_different_vms_see_different_cameras(): void

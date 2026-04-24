@@ -6,6 +6,7 @@ use App\Enums\ProxmoxNodeStatus;
 use App\Enums\VMSessionStatus;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
+use App\Models\Reservation;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Services\GuacamoleClientInterface;
@@ -200,6 +201,36 @@ class VMSessionControllerTest extends TestCase
             'user_id' => $this->user->id,
             'vm_id' => 202,
             'connection_profile_name' => 'Lab High Res',
+        ]);
+    }
+
+    public function test_user_cannot_create_session_during_another_users_approved_vm_reservation(): void
+    {
+        $otherUser = User::factory()->create();
+
+        Reservation::create([
+            'reservable_type' => ProxmoxNode::class,
+            'reservable_id' => $this->node->id,
+            'target_vm_id' => 203,
+            'user_id' => $otherUser->id,
+            'status' => 'approved',
+            'requested_start_at' => now()->addHour(),
+            'requested_end_at' => now()->addHours(2),
+            'approved_start_at' => now()->addHour(),
+            'approved_end_at' => now()->addHours(2),
+            'purpose' => 'Reserved VM slot',
+            'priority' => 80,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            'vmid' => 203,
+            'node_id' => $this->node->id,
+            'duration_minutes' => 60,
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonFragment([
+            'message' => 'Cannot create session',
         ]);
     }
 

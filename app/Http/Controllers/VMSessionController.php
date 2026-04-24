@@ -17,6 +17,7 @@ use App\Services\ExtendSessionService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
 use App\Services\QuotaService;
+use App\Services\VMSessionService;
 use App\Services\VMSessionCleanupService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +41,7 @@ class VMSessionController extends Controller
         private readonly VMSessionCleanupService $cleanupService,
         private readonly ExtendSessionService $extendSessionService,
         private readonly QuotaService $quotaService,
+        private readonly VMSessionService $vmSessionService,
     ) {}
 
     /**
@@ -91,6 +93,16 @@ class VMSessionController extends Controller
 
             $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
 
+            $startAt = now();
+            $endAt = now()->addMinutes($durationMinutes);
+            $this->vmSessionService->assertSessionWindowAvailable(
+                user: $request->user(),
+                nodeId: $node->id,
+                vmId: (int) $request->validated('vmid'),
+                startAt: $startAt,
+                endAt: $endAt,
+            );
+
             // Determine protocol order: explicit param, connection preference override,
             // or fallback default (rdp) to avoid null values that would break the resource.
             $protocol = $request->validated('protocol')
@@ -105,7 +117,7 @@ class VMSessionController extends Controller
                 'status' => VMSessionStatus::PENDING,
                 'protocol' => $protocol,
                 'connection_profile_name' => $request->validated('connection_preference_profile'),
-                'expires_at' => now()->addMinutes($durationMinutes),
+                'expires_at' => $endAt,
                 'credentials' => array_filter([
                     'username' => $request->validated('username'),
                     'password' => $request->validated('password'),
@@ -117,7 +129,7 @@ class VMSessionController extends Controller
 
             Log::info('Session record created, activating synchronously', [
                 'session_id' => $session->id,
-                'expires_at' => $session->expires_at->toIso8601String(),
+                'expires_at' => $session->expires_at?->format(DATE_ATOM),
             ]);
 
             event(new VMSessionCreated($session));
@@ -200,7 +212,8 @@ class VMSessionController extends Controller
         // Lazy expiration: if session is past its expiry but still marked
         // active/pending/provisioning, expire it now so the user sees the
         // correct state without needing a queue worker.
-        $isTimeExpired = $session->expires_at && $session->expires_at->isPast();
+        $isTimeExpired = $session->expires_at !== null
+            && $session->expires_at->getTimestamp() < now()->getTimestamp();
         if ($isTimeExpired && in_array($session->status, [
             VMSessionStatus::ACTIVE,
             VMSessionStatus::PENDING,

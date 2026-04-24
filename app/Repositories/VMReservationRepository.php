@@ -9,6 +9,20 @@ use Illuminate\Database\Eloquent\Collection;
 
 class VMReservationRepository
 {
+	public function findAll(?string $status = null): Collection
+	{
+		$query = Reservation::query()
+			->where('reservable_type', ProxmoxNode::class)
+			->with(['reservable', 'user', 'approver', 'trainingPath'])
+			->orderByDesc('requested_start_at');
+
+		if ($status !== null) {
+			$query->where('status', $status);
+		}
+
+		return $query->get();
+	}
+
 	public function findByUser(User $user): Collection
 	{
 		return Reservation::query()
@@ -21,12 +35,7 @@ class VMReservationRepository
 
 	public function findPending(): Collection
 	{
-		return Reservation::query()
-			->where('reservable_type', ProxmoxNode::class)
-			->where('status', 'pending')
-			->with(['reservable', 'user', 'trainingPath'])
-			->orderBy('requested_start_at')
-			->get();
+		return $this->findAll('pending');
 	}
 
 	public function create(array $data): Reservation
@@ -68,6 +77,26 @@ class VMReservationRepository
 		return $query->exists();
 	}
 
+	public function findConflictingVmReservation(int $nodeId, int $vmId, \DateTimeInterface $startAt, \DateTimeInterface $endAt, ?int $excludeId = null): ?Reservation
+	{
+		$query = Reservation::query()
+			->where('reservable_type', ProxmoxNode::class)
+			->where('reservable_id', $nodeId)
+			->where('target_vm_id', $vmId)
+			->whereIn('status', ['approved', 'active'])
+			->whereNotNull('approved_start_at')
+			->whereNotNull('approved_end_at')
+			->where('approved_start_at', '<', $endAt)
+			->where('approved_end_at', '>', $startAt)
+			->with(['reservable', 'user', 'approver', 'trainingPath'])
+			->orderBy('approved_start_at');
+
+		if ($excludeId !== null) {
+			$query->where('id', '!=', $excludeId);
+		}
+
+		return $query->first();
+	}
 	public function findActiveVmReservation(int $nodeId, int $vmId): ?Reservation
 	{
 		$now = now();

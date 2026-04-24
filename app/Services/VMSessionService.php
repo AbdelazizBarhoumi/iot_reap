@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Repositories\VMSessionRepository;
+use App\Repositories\VMReservationRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -17,6 +18,7 @@ class VMSessionService
 {
     public function __construct(
         private readonly VMSessionRepository $vmSessionRepository,
+        private readonly VMReservationRepository $vmReservationRepository,
         private readonly GuacamoleClientInterface $guacamoleClient,
         private readonly ProxmoxClientInterface $proxmoxClient,
     ) {}
@@ -31,6 +33,26 @@ class VMSessionService
         Log::info('Creating VM session', ['user_id' => $data['user_id'] ?? null]);
 
         return $this->vmSessionRepository->create($data);
+    }
+
+    /**
+     * Ensure the requested VM session window does not overlap another user's approved reservation.
+     */
+    public function assertSessionWindowAvailable(User $user, int $nodeId, int $vmId, \DateTimeInterface $startAt, \DateTimeInterface $endAt): void
+    {
+        $conflict = $this->vmReservationRepository->findConflictingVmReservation($nodeId, $vmId, $startAt, $endAt);
+
+        if (! $conflict || (string) $conflict->user_id === (string) $user->id) {
+            return;
+        }
+
+        $reservedBy = $conflict->user?->name ?? 'another user';
+        $until = $conflict->approved_end_at?->format('Y-m-d H:i:s');
+
+        throw new \DomainException($until
+            ? "VM is reserved by {$reservedBy} until {$until}."
+            : "VM is reserved by {$reservedBy}."
+        );
     }
 
     /**

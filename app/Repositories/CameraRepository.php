@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\UsbDevice;
+use App\Enums\CameraReservationStatus;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -59,7 +60,15 @@ class CameraRepository
         if ($vmId === null) {
             return Camera::whereNull('assigned_vm_id')
                 ->where('status', 'active')
-                ->with(['robot', 'gatewayNode', 'activeControl.session'])
+                ->with(['robot', 'gatewayNode', 'activeControl.session', 'reservations' => function ($query) {
+                    $query->whereIn('status', [
+                        CameraReservationStatus::APPROVED->value,
+                        CameraReservationStatus::ACTIVE->value,
+                    ])
+                        ->whereNotNull('approved_start_at')
+                        ->whereNotNull('approved_end_at')
+                        ->orderBy('approved_start_at');
+                }])
                 ->get();
         }
 
@@ -68,7 +77,15 @@ class CameraRepository
                 ->orWhereNull('assigned_vm_id');
         })
             ->where('status', 'active')
-            ->with(['robot', 'gatewayNode', 'activeControl.session'])
+            ->with(['robot', 'gatewayNode', 'activeControl.session', 'reservations' => function ($query) {
+                $query->whereIn('status', [
+                    CameraReservationStatus::APPROVED->value,
+                    CameraReservationStatus::ACTIVE->value,
+                ])
+                    ->whereNotNull('approved_start_at')
+                    ->whereNotNull('approved_end_at')
+                    ->orderBy('approved_start_at');
+            }])
             ->get();
     }
 

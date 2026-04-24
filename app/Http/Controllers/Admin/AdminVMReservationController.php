@@ -17,18 +17,23 @@ class AdminVMReservationController extends Controller
 		private readonly VMReservationService $vmReservationService,
 	) {}
 
-	public function index(): JsonResponse
+	public function index(Request $request): JsonResponse
 	{
 		Gate::authorize('admin-only');
 
+		$status = $request->query('status');
+		if ($status === null || $status === '') {
+			$status = 'pending';
+		}
+
 		return response()->json([
-			'data' => VMReservationResource::collection($this->vmReservationService->pendingForAdmin()),
+			'data' => VMReservationResource::collection($this->vmReservationService->listForAdmin($status)),
 		]);
 	}
 
 	public function pending(): JsonResponse
 	{
-		return $this->index();
+		return $this->index(request());
 	}
 
 	public function approve(Reservation $reservation, ApproveVMReservationRequest $request): JsonResponse

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CameraStatus;
-use App\Enums\UsbDeviceStatus;
 use App\Http\Requests\Camera\CreateCameraReservationRequest;
 use App\Http\Resources\CameraReservationResource;
 use App\Http\Resources\CameraResource;
@@ -32,7 +31,11 @@ class CameraReservationController extends Controller
      */
     public function index(Request $request): JsonResponse|RedirectResponse
     {
-        $reservations = $this->reservationRepository->findByUser(auth()->user());
+        $user = $request->user();
+
+        abort_unless($user !== null, 401);
+
+        $reservations = $this->reservationRepository->findByUser($user);
 
         if (! $request->wantsJson()) {
             return redirect()->route('reservations.index', ['tab' => 'cameras']);
@@ -46,21 +49,13 @@ class CameraReservationController extends Controller
     /**
      * List cameras that engineers can reserve.
      *
-     * Only cameras that are ACTIVE and linked to a bound/attached USB device
-     * are exposed to engineers.
+     * Active cameras are exposed to engineers.
      */
     public function cameras(): JsonResponse
     {
         $cameras = Camera::query()
             ->with(['gatewayNode', 'usbDevice', 'robot'])
             ->where('status', CameraStatus::ACTIVE)
-            ->whereNotNull('usb_device_id')
-            ->whereHas('usbDevice', function ($query) {
-                $query->whereIn('status', [
-                    UsbDeviceStatus::BOUND,
-                    UsbDeviceStatus::ATTACHED,
-                ]);
-            })
             ->orderBy('name')
             ->get();
 
@@ -75,6 +70,9 @@ class CameraReservationController extends Controller
     public function store(CreateCameraReservationRequest $request): JsonResponse
     {
         $camera = Camera::with('robot')->findOrFail($request->validated('camera_id'));
+        $user = $request->user();
+
+        abort_unless($user !== null, 401);
 
         $startAt = new \DateTime($request->validated('start_at'));
         $endAt = new \DateTime($request->validated('end_at'));
@@ -82,7 +80,7 @@ class CameraReservationController extends Controller
         try {
             $reservation = $this->cameraService->requestReservation(
                 camera: $camera,
-                user: auth()->user(),
+                user: $user,
                 startAt: $startAt,
                 endAt: $endAt,
                 purpose: $request->validated('purpose'),
@@ -104,15 +102,19 @@ class CameraReservationController extends Controller
     /**
      * Show a specific camera reservation.
      */
-    public function show(Reservation $reservation): JsonResponse
+    public function show(Request $request, Reservation $reservation): JsonResponse
     {
+        $user = $request->user();
+
+        abort_unless($user !== null, 401);
+
         // Ensure this is a camera reservation
         if ($reservation->reservable_type !== 'App\Models\Camera') {
             abort(404);
         }
 
         // Users can only view their own reservations
-        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== $user->id && ! $user->isAdmin()) {
             abort(403);
         }
 
@@ -126,15 +128,19 @@ class CameraReservationController extends Controller
     /**
      * Cancel a camera reservation.
      */
-    public function cancel(Reservation $reservation): JsonResponse
+    public function cancel(Request $request, Reservation $reservation): JsonResponse
     {
+        $user = $request->user();
+
+        abort_unless($user !== null, 401);
+
         // Ensure this is a camera reservation
         if ($reservation->reservable_type !== 'App\Models\Camera') {
             abort(404);
         }
 
         // Users can only cancel their own reservations
-        if ($reservation->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+        if ($reservation->user_id !== $user->id && ! $user->isAdmin()) {
             abort(403);
         }
 
