@@ -66,7 +66,7 @@ class CameraStreamingFlowTest extends TestCase
                         'type',
                         'status',
                         'stream_settings' => ['width', 'height', 'framerate', 'input_format', 'resolution_label'],
-                        'stream_urls' => ['hls', 'webrtc'],
+                        'stream_urls' => ['webrtc'],
                     ],
                 ],
             ]);
@@ -84,7 +84,6 @@ class CameraStreamingFlowTest extends TestCase
 
         foreach ($cameras as $cam) {
             $this->assertArrayHasKey('webrtc', $cam['stream_urls']);
-            $this->assertArrayHasKey('hls', $cam['stream_urls']);
             // WebRTC URL should contain the stream_key
             $this->assertStringContainsString($cam['stream_key'], $cam['stream_urls']['webrtc']);
         }
@@ -312,10 +311,6 @@ class CameraStreamingFlowTest extends TestCase
 
         $data = $response->json('data');
         $streamKey = $data['stream_key'];
-
-        // HLS URL must end with /index.m3u8
-        $this->assertStringEndsWith('/index.m3u8', $data['stream_urls']['hls']);
-        $this->assertStringContainsString($streamKey, $data['stream_urls']['hls']);
 
         // WebRTC URL must contain the stream_key
         $this->assertStringContainsString($streamKey, $data['stream_urls']['webrtc']);

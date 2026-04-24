@@ -1574,7 +1574,7 @@ export default function InfrastructurePage({
         loading: sessionsLoading,
         refetch: refetchSessions,
         terminateSession,
-    } = useVMSessions();
+    } = useVMSessions({ all: true });
     const [selectedLaunchVm, setSelectedLaunchVm] =
         useState<LaunchableVM | null>(null);
     const [isLaunchDialogOpen, setIsLaunchDialogOpen] = useState(false);
@@ -1610,14 +1610,71 @@ export default function InfrastructurePage({
     const [isResizingSplit, setIsResizingSplit] = useState(false);
     const [isWorkspaceFullscreen, setIsWorkspaceFullscreen] = useState(false);
     const splitContainerRef = useRef<HTMLDivElement | null>(null);
+    const [perVmDefaultProfile, setPerVmDefaultProfile] = useState<{
+        name: string | null;
+        isAdmin: boolean;
+    }>({ name: null, isAdmin: false });
+
     const launchProfiles = useMemo(
         () => savedProfiles[launchProtocol as keyof typeof savedProfiles] ?? [],
         [launchProtocol, savedProfiles],
     );
-    const defaultLaunchProfile = useMemo(
-        () => launchProfiles.find((profile) => profile.is_default) ?? null,
-        [launchProfiles],
-    );
+
+    const defaultLaunchProfile = useMemo(() => {
+        // 1. If a per-VM default is set (by user or admin), prioritize it
+        if (perVmDefaultProfile.name) {
+            return (
+                launchProfiles.find(
+                    (p) => p.profile_name === perVmDefaultProfile.name,
+                ) ?? {
+                    profile_name: perVmDefaultProfile.name,
+                    is_default: true,
+                }
+            );
+        }
+        // 2. Fall back to the user's protocol-level default profile
+        return launchProfiles.find((profile) => profile.is_default) ?? null;
+    }, [launchProfiles, perVmDefaultProfile]);
+
+    const [saveAsVmDefault, setSaveAsVmDefault] = useState(false);
+
+    // Auto-update the "saveAsVmDefault" checkbox if the user selects a profile that is already their per-VM default
+    useEffect(() => {
+        if (
+            perVmDefaultProfile.name &&
+            selectedConnectionProfile === perVmDefaultProfile.name
+        ) {
+            setSaveAsVmDefault(true);
+        } else if (selectedConnectionProfile === NO_PROFILE_SELECTED_VALUE) {
+            // When resetting to protocol default, uncheck
+            setSaveAsVmDefault(false);
+        }
+    }, [selectedConnectionProfile, perVmDefaultProfile]);
+
+    // Refresh per-VM default when VM or protocol changes
+    useEffect(() => {
+        if (!selectedLaunchVm || !isLaunchDialogOpen) {
+            setPerVmDefaultProfile({ name: null, isAdmin: false });
+            setSaveAsVmDefault(false);
+            return;
+        }
+
+        connectionPreferencesApi
+            .getPerVMDefault(selectedLaunchVm.vmid, launchProtocol)
+            .then((res: any) => {
+                const data = res.data || res;
+                setPerVmDefaultProfile({
+                    name: data.preferred_profile_name,
+                    isAdmin: !!data.is_admin_defined,
+                });
+                // If a default is found and it belongs to this user (the admin), check the box
+                setSaveAsVmDefault(!!data.preferred_profile_name && !data.is_admin_defined);
+            })
+            .catch(() => {
+                setPerVmDefaultProfile({ name: null, isAdmin: false });
+                setSaveAsVmDefault(false);
+            });
+    }, [selectedLaunchVm, launchProtocol, isLaunchDialogOpen]);
 
     // ── Data fetching ──
     const fetchServers = useCallback(async () => {
@@ -1861,6 +1918,18 @@ export default function InfrastructurePage({
         setLaunchError(null);
 
         try {
+            // Save as per-VM default if requested
+            if (
+                saveAsVmDefault &&
+                selectedConnectionProfile !== NO_PROFILE_SELECTED_VALUE
+            ) {
+                await connectionPreferencesApi.setPerVMDefault(
+                    selectedLaunchVm.vmid,
+                    launchProtocol,
+                    selectedConnectionProfile,
+                );
+            }
+
             const payload: CreateVMSessionRequest = {
                 vmid: selectedLaunchVm.vmid,
                 node_id: selectedLaunchVm.node_id,
@@ -1907,6 +1976,7 @@ export default function InfrastructurePage({
         selectedConnectionProfile,
         launchReturnSnapshot,
         useExisting,
+        saveAsVmDefault,
         refetchSessions,
     ]);
 
@@ -2925,6 +2995,17 @@ export default function InfrastructurePage({
                                                                         session.node_name
                                                                     }
                                                                 </CardDescription>
+                                                                {session.user && (
+                                                                    <div className="mt-1 flex items-center gap-1 text-xs font-medium text-info">
+                                                                        <span className="truncate">
+                                                                            {
+                                                                                session
+                                                                                    .user
+                                                                                    .name
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <Badge className="border-success/30 bg-success/10 text-success">
                                                                 Active
@@ -2997,6 +3078,17 @@ export default function InfrastructurePage({
                                                                     session.node_name
                                                                 }
                                                             </CardDescription>
+                                                            {session.user && (
+                                                                <div className="mt-1 flex items-center gap-1 text-xs font-medium text-info">
+                                                                    <span className="truncate">
+                                                                        {
+                                                                            session
+                                                                                .user
+                                                                                .name
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <Badge className="border-warning/30 bg-warning/10 text-warning capitalize">
                                                             {session.status}
@@ -3376,13 +3468,14 @@ export default function InfrastructurePage({
                                     <SelectValue placeholder="Use protocol default" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem
-                                        value={NO_PROFILE_SELECTED_VALUE}
-                                    >
+                                    <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
                                         {defaultLaunchProfile
-                                            ? `Use default (${defaultLaunchProfile.profile_name}) ★`
+                                            ? perVmDefaultProfile.isAdmin
+                                                ? `Use Admin Default (${defaultLaunchProfile.profile_name}) ★`
+                                                : `Use default (${defaultLaunchProfile.profile_name}) ★`
                                             : 'Use protocol default'}
                                     </SelectItem>
+
                                     {launchProfiles.map((profile) => (
                                         <SelectItem
                                             key={profile.profile_name}
@@ -3392,14 +3485,31 @@ export default function InfrastructurePage({
                                             {profile.is_default ? ' ★' : ''}
                                         </SelectItem>
                                     ))}
-                                </SelectContent>
-                            </Select>
+                                    </SelectContent>
+                                    </Select>
 
-                            <p className="text-xs text-muted-foreground">
-                                If you don&apos;t choose one, the starred
-                                default profile is used automatically.
-                            </p>
-                        </div>
+                                    <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                    id="save-as-vm-default"
+                                    checked={saveAsVmDefault}
+                                    onCheckedChange={(checked) =>
+                                        setSaveAsVmDefault(checked === true)
+                                    }
+                                    />
+                                    <Label
+                                    htmlFor="save-as-vm-default"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                    Set as default for this VM
+                                    </Label>
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground">
+                                    If you don&apos;t choose one, the starred default
+                                    profile is used automatically.
+                                    </p>
+                                    </div>
+
 
                         <div className="grid gap-2">
                             <Label htmlFor="launch-username">

@@ -67,12 +67,10 @@ class CameraService
         $camera->loadMissing('gatewayNode');
         $baseHost = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
         $rtspPort = config('gateway.mediamtx_rtsp_port', 8554);
-        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
 
         return [
             'rtsp' => "rtsp://{$baseHost}:{$rtspPort}/{$camera->stream_key}",
-            'hls' => "http://{$baseHost}:{$hlsPort}/{$camera->stream_key}/index.m3u8",
             'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$camera->stream_key}",
         ];
     }

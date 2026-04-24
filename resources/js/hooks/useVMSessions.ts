@@ -13,7 +13,9 @@ interface UseVMSessionsResult {
     createSession: (data: CreateVMSessionRequest) => Promise<VMSession>;
     terminateSession: (sessionId: string) => Promise<void>;
 }
-export function useVMSessions(): UseVMSessionsResult {
+export function useVMSessions(
+    params?: Record<string, string | number | boolean>,
+): UseVMSessionsResult {
     const [sessions, setSessions] = useState<VMSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function useVMSessions(): UseVMSessionsResult {
         setLoading(true);
         setError(null);
         try {
-            const data = await vmSessionApi.list();
+            const data = await vmSessionApi.list(params);
             setSessions(data);
         } catch (e) {
             const message =
@@ -30,7 +32,7 @@ export function useVMSessions(): UseVMSessionsResult {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [JSON.stringify(params)]);
     const createSession = useCallback(
         async (data: CreateVMSessionRequest): Promise<VMSession> => {
             const session = await vmSessionApi.create(data);

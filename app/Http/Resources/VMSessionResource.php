@@ -41,6 +41,13 @@ class VMSessionResource extends JsonResource
             'guacamole_connection_id' => $this->guacamole_connection_id,
             'guacamole_url' => $this->getGuacamoleUrl(),
             'created_at' => $this->created_at->toIso8601String(),
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                ];
+            }),
         ];
     }
 

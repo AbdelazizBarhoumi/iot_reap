@@ -48,9 +48,9 @@ export const vmSessionApi = {
      * Get all sessions for the current user.
      * `index` returns a wrapped payload, so we still access `.data` directly.
      */
-    async list(): Promise<VMSession[]> {
+    async list(params?: Record<string, string | number | boolean>): Promise<VMSession[]> {
         const response =
-            await client.get<ApiResponse<VMSession[]>>('/sessions');
+            await client.get<ApiResponse<VMSession[]>>('/sessions', { params });
         return response.data.data;
     },
     /**

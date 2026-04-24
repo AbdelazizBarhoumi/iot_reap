@@ -283,4 +283,60 @@ class CreateGuacamoleConnectionListenerTest extends TestCase
         $this->assertEquals('10.0.0.50', $connection['parameters']['hostname']);
         $this->assertEquals('3389', $connection['parameters']['port']);
     }
+
+    public function test_listener_retries_with_system_defaults_when_profile_params_fail_once(): void
+    {
+        $vmId = 208;
+        $user = User::factory()->engineer()->create();
+
+        $this->proxmoxClient->registerVM('pve-1', $vmId, 'running', '10.0.0.88');
+
+        GuacamoleConnectionPreference::create([
+            'user_id' => $user->id,
+            'vm_session_type' => 'rdp',
+            'profile_name' => 'Rdp Profile',
+            'is_default' => true,
+            'parameters' => [
+                'port' => 13390,
+            ],
+        ]);
+
+        $guacMock = \Mockery::mock(GuacamoleClientInterface::class);
+        $guacMock->shouldReceive('createConnection')
+            ->once()
+            ->withArgs(function (array $params): bool {
+                return ($params['protocol'] ?? null) === 'rdp'
+                    && ($params['parameters']['port'] ?? null) === '13390';
+            })
+            ->andThrow(new GuacamoleApiException('invalid profile params'));
+
+        $guacMock->shouldReceive('createConnection')
+            ->once()
+            ->withArgs(function (array $params): bool {
+                return ($params['protocol'] ?? null) === 'rdp'
+                    && ($params['parameters']['port'] ?? null) === '3389';
+            })
+            ->andReturn('42');
+
+        $this->app->instance(GuacamoleClientInterface::class, $guacMock);
+
+        $session = VMSession::factory()
+            ->for($user)
+            ->create([
+                'node_id' => $this->node->id,
+                'vm_id' => $vmId,
+                'status' => VMSessionStatus::PENDING,
+                'ip_address' => null,
+                'guacamole_connection_id' => null,
+                'protocol' => VMSessionProtocol::RDP->value,
+            ]);
+
+        $listener = app(CreateGuacamoleConnectionListener::class);
+        $listener->handle(new VMSessionActivated($session));
+
+        $session->refresh();
+        $this->assertEquals(VMSessionStatus::ACTIVE, $session->status);
+        $this->assertEquals(42, $session->guacamole_connection_id);
+        $this->assertEquals('10.0.0.88', $session->ip_address);
+    }
 }

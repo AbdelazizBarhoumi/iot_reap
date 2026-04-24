@@ -141,13 +141,16 @@ fi
 echo ""
 echo "   Testing stream availability (this may take 5 seconds)..."
 for i in {1..5}; do
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8888/${STREAM_KEY}/index.m3u8" 2>/dev/null || echo "000")
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:9997/v3/paths/get/${STREAM_KEY}" 2>/dev/null || echo "000")
     if [ "$HTTP_CODE" = "200" ]; then
-        echo "   ✓ Stream is PUBLISHING and LIVE!"
-        echo ""
-        echo "   HLS URL: http://${GATEWAY_IP}:8888/${STREAM_KEY}/index.m3u8"
-        echo "   WebRTC URL: ws://${GATEWAY_IP}:8889/${STREAM_KEY}/whep"
-        exit 0
+        # Check if publishing via API
+        JSON=$(curl -s "http://127.0.0.1:9997/v3/paths/get/${STREAM_KEY}" 2>/dev/null)
+        if echo "$JSON" | grep -q "\"source\":"; then
+            echo "   ✓ Stream is PUBLISHING and LIVE (WebRTC)!"
+            echo ""
+            echo "   WebRTC URL: http://${GATEWAY_IP}:8889/${STREAM_KEY}"
+            exit 0
+        fi
     fi
     echo "   [Attempt $i/5] HTTP $HTTP_CODE - retrying..."
     sleep 1
@@ -171,10 +174,10 @@ echo "Next steps:"
 echo ""
 echo "1. Create a new VM session in your app"
 echo "2. Navigate to the session camera view"
-echo "3. The camera should stream automatically (WebRTC → HLS fallback)"
+echo "3. The camera should stream automatically via WebRTC (low-latency)"
 echo ""
 echo "Testing:"
-echo "  • HLS stream:    curl http://${GATEWAY_IP}:8888/${STREAM_KEY}/index.m3u8"
+echo "  • Stream info:   curl http://${GATEWAY_IP}:9997/v3/paths/get/${STREAM_KEY}"
 echo "  • Gateway logs:  ssh root@${GATEWAY_IP} journalctl -u iot-reap-camera-${STREAM_KEY} -f"
 echo "  • MediaMTX:      ssh root@${GATEWAY_IP} systemctl status mediamtx"
 echo ""

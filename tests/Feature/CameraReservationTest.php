@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\CameraReservationStatus;
+use App\Enums\CameraStatus;
+use App\Enums\UsbDeviceStatus;
 use App\Models\Camera;
 use App\Models\CameraReservation;
+use App\Models\GatewayNode;
 use App\Models\Robot;
+use App\Models\UsbDevice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -159,6 +163,70 @@ class CameraReservationTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');
+    }
+
+    public function test_user_camera_catalog_only_shows_active_cameras_with_bound_or_attached_usb(): void
+    {
+        $gateway = GatewayNode::factory()->online()->verified()->create();
+
+        $boundUsb = UsbDevice::factory()->for($gateway)->bound()->create();
+        $attachedUsb = UsbDevice::factory()->for($gateway)->attached()->create();
+        $availableUsb = UsbDevice::factory()->for($gateway)->available()->create();
+
+        $visibleBoundCamera = Camera::factory()->create([
+            'gateway_node_id' => $gateway->id,
+            'usb_device_id' => $boundUsb->id,
+            'robot_id' => null,
+            'status' => CameraStatus::ACTIVE,
+        ]);
+
+        $visibleAttachedCamera = Camera::factory()->create([
+            'gateway_node_id' => $gateway->id,
+            'usb_device_id' => $attachedUsb->id,
+            'robot_id' => null,
+            'status' => CameraStatus::ACTIVE,
+        ]);
+
+        Camera::factory()->create([
+            'gateway_node_id' => $gateway->id,
+            'usb_device_id' => $availableUsb->id,
+            'robot_id' => null,
+            'status' => CameraStatus::ACTIVE,
+        ]);
+
+        Camera::factory()->inactive()->create([
+            'gateway_node_id' => $gateway->id,
+            'usb_device_id' => $boundUsb->id,
+            'robot_id' => null,
+        ]);
+
+        Camera::factory()->for(Robot::factory())->create([
+            'status' => CameraStatus::ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson('/camera-reservations/cameras');
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['id' => $visibleBoundCamera->id])
+            ->assertJsonFragment(['id' => $visibleAttachedCamera->id]);
+
+        $returnedStatuses = collect($response->json('data'))->pluck('status')->unique()->values()->all();
+        $this->assertSame([CameraStatus::ACTIVE->value], $returnedStatuses);
+
+        $returnedUsbStatuses = UsbDevice::query()
+            ->whereIn('id', collect($response->json('data'))->pluck('usb_device_id')->all())
+            ->pluck('status')
+            ->map(fn (UsbDeviceStatus|string $status) => $status instanceof UsbDeviceStatus ? $status->value : $status)
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->assertEmpty(array_diff($returnedUsbStatuses, [
+            UsbDeviceStatus::BOUND->value,
+            UsbDeviceStatus::ATTACHED->value,
+        ]));
     }
 
     public function test_unauthenticated_user_cannot_access_reservations(): void

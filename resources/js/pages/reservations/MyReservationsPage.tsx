@@ -893,14 +893,20 @@ export default function MyReservationsPage() {
             if (kind === 'usb') {
                 const devices = await hardwareApi.getDevices();
                 setUsbDevices(
-                    devices.filter((device) => device.status !== 'disconnected'),
+                    devices.filter((device) => device.status === 'bound'),
                 );
                 return;
             }
 
             if (kind === 'camera') {
                 const availableCameras = await cameraReservationApi.getCameras();
-                setCameras(availableCameras);
+                setCameras(
+                    availableCameras.filter(
+                        (camera) =>
+                            camera.status === 'active' &&
+                            camera.usb_device_id !== null,
+                    ),
+                );
                 return;
             }
 

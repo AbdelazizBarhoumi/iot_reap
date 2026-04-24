@@ -96,7 +96,6 @@ class CameraServiceTest extends BaseTestCase
         $camera->setRelation('gatewayNode', (object) ['ip' => '192.168.50.10']);
 
         config(['gateway.mediamtx_rtsp_port' => 8554]);
-        config(['gateway.mediamtx_hls_port' => 8888]);
         config(['gateway.mediamtx_webrtc_port' => 8889]);
 
         // Act
@@ -105,7 +104,6 @@ class CameraServiceTest extends BaseTestCase
         // Assert
         $expected = [
             'rtsp' => 'rtsp://192.168.50.10:8554/camera_001',
-            'hls' => 'http://192.168.50.10:8888/camera_001/index.m3u8',
             'webrtc' => 'http://192.168.50.10:8889/camera_001',
         ];
 

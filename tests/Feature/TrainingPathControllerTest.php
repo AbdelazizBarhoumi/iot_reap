@@ -112,7 +112,7 @@ class TrainingPathControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('trainingPaths/trainingUnit')
+            ->component('trainingPaths/TrainingUnit')
             ->has('trainingPath')
             ->has('trainingUnit')
             ->where('trainingUnit.id', (string) $trainingUnit->id)

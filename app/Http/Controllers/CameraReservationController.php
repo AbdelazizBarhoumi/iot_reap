@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CameraStatus;
+use App\Enums\UsbDeviceStatus;
 use App\Http\Requests\Camera\CreateCameraReservationRequest;
 use App\Http\Resources\CameraReservationResource;
 use App\Http\Resources\CameraResource;
@@ -43,13 +44,23 @@ class CameraReservationController extends Controller
     }
 
     /**
-     * List cameras that engineers can reserve.  
-     * Includes both ACTIVE and INACTIVE cameras.   */
+     * List cameras that engineers can reserve.
+     *
+     * Only cameras that are ACTIVE and linked to a bound/attached USB device
+     * are exposed to engineers.
+     */
     public function cameras(): JsonResponse
     {
         $cameras = Camera::query()
             ->with(['gatewayNode', 'usbDevice', 'robot'])
-            ->whereIn('status', [CameraStatus::ACTIVE, CameraStatus::INACTIVE])
+            ->where('status', CameraStatus::ACTIVE)
+            ->whereNotNull('usb_device_id')
+            ->whereHas('usbDevice', function ($query) {
+                $query->whereIn('status', [
+                    UsbDeviceStatus::BOUND,
+                    UsbDeviceStatus::ATTACHED,
+                ]);
+            })
             ->orderBy('name')
             ->get();
 

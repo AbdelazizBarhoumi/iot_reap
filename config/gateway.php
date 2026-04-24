@@ -79,6 +79,7 @@ return [
     'mediamtx_rtsp_port' => (int) env('MEDIAMTX_RTSP_PORT', 8554),
     'mediamtx_hls_port' => (int) env('MEDIAMTX_HLS_PORT', 8888),
     'mediamtx_webrtc_port' => (int) env('MEDIAMTX_WEBRTC_PORT', 8889),
+    'mediamtx_api_port' => (int) env('MEDIAMTX_API_PORT', 9997),
     'camera_api_port' => (int) env('GATEWAY_CAMERA_API_PORT', 8001),
 
     /*

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Verify camera health and update status based on stream availability.
  *
- * Checks if camera streams are actually reachable via MediaMTX HLS endpoint.
+ * Checks if camera streams are actually reachable via MediaMTX API.
  * Cameras that are marked 'active' but have unreachable streams are marked 'inactive'.
  * Cameras that are marked 'inactive' but have reachable streams are marked 'active'.
  *
@@ -141,21 +141,6 @@ class CheckCameraHealthCommand extends Command
     }
 
     /**
-     * Check if a non-USB stream URL is reachable by requesting the HLS playlist.
-     */
-    private function checkStreamReachable(string $url, int $timeout): bool
-    {
-        try {
-            $response = Http::timeout($timeout)->get($url);
-
-            // HLS endpoint returns 200 if stream exists, 404 if not
-            return $response->successful();
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
      * @return array{
      *     current: string,
      *     expected: string,
@@ -169,11 +154,31 @@ class CheckCameraHealthCommand extends Command
      */
     private function checkStandardCamera(Camera $camera, bool $fix, int $timeout): array
     {
-        $gatewayIp = $camera->gatewayNode?->ip ?? config('gateway.mediamtx_url', '192.168.50.6');
-        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
-        $hlsUrl = "http://{$gatewayIp}:{$hlsPort}/{$camera->stream_key}/index.m3u8";
+        $camera->loadMissing('gatewayNode');
 
-        $isReachable = $this->checkStreamReachable($hlsUrl, $timeout);
+        $gatewayNode = $camera->gatewayNode;
+        $mediamtxHost = $gatewayNode?->ip ?: config('gateway.mediamtx_url', '192.168.50.6');
+        $apiPort = config('gateway.mediamtx_api_port', 9997);
+        $apiUrl = "http://{$mediamtxHost}:{$apiPort}/v3/paths/get/{$camera->stream_key}";
+
+        if ($gatewayNode) {
+            $streamStatus = $this->gatewayService->getCameraStreamStatus($gatewayNode, $camera->stream_key);
+            $isReachable = (bool) ($streamStatus['running'] ?? false);
+        } else {
+            // No gateway node assigned? Check default MediaMTX instance
+            $mediamtxHost = config('gateway.mediamtx_url', '192.168.50.6');
+            $apiPort = config('gateway.mediamtx_api_port', 9997);
+            $apiUrl = "http://{$mediamtxHost}:{$apiPort}/v3/paths/get/{$camera->stream_key}";
+
+            try {
+                $response = Http::timeout($timeout)->get($apiUrl);
+                $data = $response->json();
+                $isReachable = $response->successful() && ! empty($data['source']);
+            } catch (\Exception $e) {
+                $isReachable = false;
+            }
+        }
+
         $currentStatus = $camera->status->value;
         $expectedStatus = $isReachable ? CameraStatus::ACTIVE->value : CameraStatus::INACTIVE->value;
         $statusChanged = false;
@@ -199,7 +204,7 @@ class CheckCameraHealthCommand extends Command
             'expected' => $expectedStatus,
             'match' => $currentStatus === $expectedStatus,
             'action' => $statusChanged ? 'status-updated' : 'checked',
-            'url' => $hlsUrl,
+            'url' => $apiUrl,
             'status_changed' => $statusChanged,
             'recovered' => false,
             'path_updated' => false,
@@ -227,9 +232,9 @@ class CheckCameraHealthCommand extends Command
         }
 
         $currentStatus = $camera->status->value;
-        $gatewayIp = $camera->gatewayNode->ip;
-        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
-        $hlsUrl = "http://{$gatewayIp}:{$hlsPort}/{$camera->stream_key}/index.m3u8";
+        $mediamtxHost = $camera->gatewayNode->ip;
+        $apiPort = config('gateway.mediamtx_api_port', 9997);
+        $apiUrl = "http://{$mediamtxHost}:{$apiPort}/v3/paths/get/{$camera->stream_key}";
 
         $streamStatus = $this->gatewayService->getCameraStreamStatus($camera->gatewayNode, $camera->stream_key);
         $running = (bool) ($streamStatus['running'] ?? false);
@@ -330,7 +335,7 @@ class CheckCameraHealthCommand extends Command
             'expected' => $expectedStatus,
             'match' => $currentStatus === $expectedStatus,
             'action' => implode(', ', array_unique($actions)),
-            'url' => $hlsUrl,
+            'url' => $apiUrl,
             'status_changed' => $statusChanged,
             'recovered' => $recovered,
             'path_updated' => $pathUpdated,

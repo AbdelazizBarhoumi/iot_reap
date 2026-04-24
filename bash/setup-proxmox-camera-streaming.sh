@@ -11,7 +11,7 @@
 # - Runs ffmpeg as systemd services for each camera
 # - Supports multiple cameras with different resolutions
 # - Uses MJPEG input format for USB/IP compatibility
-# - Streams to MediaMTX RTSP server for HLS/WebRTC output
+# - Streams to MediaMTX RTSP server for WebRTC output
 #
 # Usage:
 #   ./setup-proxmox-camera-streaming.sh
@@ -285,7 +285,6 @@ start_stream() {
     
     if systemctl is-active --quiet "${service_name}.service"; then
         log "Stream started: ${stream_key} -> rtsp://${MEDIAMTX_HOST}:${MEDIAMTX_RTSP_PORT}/${stream_key}"
-        log "HLS URL: http://${MEDIAMTX_HOST}:8888/${stream_key}/index.m3u8"
         return 0
     else
         log "Failed to start stream, check logs: journalctl -u ${service_name}"
@@ -358,7 +357,6 @@ from pathlib import Path
 PORT = 8001  # Default port for camera API
 CONFIG_DIR = "/etc/iot-reap"
 MEDIAMTX_RTSP_PORT = int(os.environ.get('MEDIAMTX_RTSP_PORT', '8554'))
-MEDIAMTX_HLS_PORT = int(os.environ.get('MEDIAMTX_HLS_PORT', '8888'))
 
 def gateway_host() -> str:
     result = subprocess.run(['hostname', '-I'], capture_output=True, text=True)
@@ -618,8 +616,7 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
                     'status': 'started',
                     'stream_key': stream_key,
                     'device_path': device_path,
-                    'rtsp_url': f'rtsp://{gateway_host()}:{MEDIAMTX_RTSP_PORT}/{stream_key}',
-                    'hls_url': f'http://{gateway_host()}:{MEDIAMTX_HLS_PORT}/{stream_key}/index.m3u8'
+                    'rtsp_url': f'rtsp://{gateway_host()}:{MEDIAMTX_RTSP_PORT}/{stream_key}'
                 })
             else:
                 self._send_json({'error': result.stderr or result.stdout}, 500)

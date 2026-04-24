@@ -52,7 +52,11 @@ class VMSessionController extends Controller
         // frontend always sees correct statuses without queue:work.
         $this->cleanupService->expireOverdueSessions();
 
-        $sessions = $this->sessionRepository->findByUser($request->user());
+        if ($request->user()->can('admin-only') && $request->has('all')) {
+            $sessions = $this->sessionRepository->findAllActive();
+        } else {
+            $sessions = $this->sessionRepository->findByUser($request->user());
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

@@ -3467,29 +3467,39 @@ class GatewayService
     }
 
     /**
-     * Check if a path is being served by MediaMTX.
-     * Hitting the HLS manifest is more reliable than the optional API port.
+     * Check if a path is being served by MediaMTX using its REST API.
      */
     private function checkMediaMTXPath(GatewayNode $node, string $streamKey): array
     {
         $mediamtxHost = $node->ip ?: config('gateway.mediamtx_url', '192.168.50.6');
-        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
-        $manifestUrl = "http://{$mediamtxHost}:{$hlsPort}/{$streamKey}/index.m3u8";
+        $apiPort = config('gateway.mediamtx_api_port', 9997);
+        $apiUrl = "http://{$mediamtxHost}:{$apiPort}/v3/paths/get/{$streamKey}";
 
         try {
-            $response = Http::timeout(3)->get($manifestUrl);
+            $response = Http::timeout(3)->get($apiUrl);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return [
+                    'exists' => true,
+                    'publishing' => ! empty($data['source']), // Path has a source (publisher)
+                    'status' => $response->status(),
+                    'url' => $apiUrl,
+                ];
+            }
 
             return [
-                'exists' => $response->successful(),
-                'publishing' => $response->successful(),
+                'exists' => false,
+                'publishing' => false,
                 'status' => $response->status(),
-                'url' => $manifestUrl,
+                'url' => $apiUrl,
             ];
         } catch (\Exception $e) {
             return [
                 'exists' => false,
                 'publishing' => false,
-                'url' => $manifestUrl,
+                'url' => $apiUrl,
                 'error' => $e->getMessage(),
             ];
         }

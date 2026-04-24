@@ -260,6 +260,35 @@ class GuacamoleConnectionParamsBuilderTest extends TestCase
         $this->assertEquals('10.0.0.82', $params['parameters']['hostname']);
     }
 
+    public function test_can_ignore_user_preferences_and_use_system_defaults(): void
+    {
+        $user = User::factory()->engineer()->create();
+
+        // User default profile overrides RDP port normally.
+        $this->prefRepo->save(
+            user: $user,
+            sessionType: 'rdp',
+            params: [
+                'port' => 13389,
+            ],
+            profileName: 'Default',
+            isDefault: true,
+        );
+
+        $session = $this->makeSession(
+            user: $user,
+            protocol: VMSessionProtocol::RDP,
+            ip: '10.0.0.87',
+        );
+
+        $withPreferences = $this->builder->buildParams($session, $user);
+        $withoutPreferences = $this->builder->buildParams($session, $user, true);
+
+        $this->assertEquals('13389', $withPreferences['parameters']['port']);
+        $this->assertEquals('3389', $withoutPreferences['parameters']['port']);
+        $this->assertEquals('10.0.0.87', $withoutPreferences['parameters']['hostname']);
+    }
+
     public function test_uses_per_vm_default_over_protocol_default(): void
     {
         $user = User::factory()->engineer()->create();

@@ -230,6 +230,7 @@ class ConnectionPreferencesController extends Controller
                 'vm_id' => $vmId,
                 'protocol' => $protocol,
                 'preferred_profile_name' => $vmDefault->preferred_profile_name,
+                'is_admin_defined' => $vmDefault->user_id !== $request->user()->id,
             ],
         ]);
     }
@@ -244,11 +245,11 @@ class ConnectionPreferencesController extends Controller
         $protocol = strtolower($protocol);
         $this->validateProtocol($protocol);
 
-        $request->validate([
+        $validated = $request->validate([
             'profile_name' => ['required', 'string', 'max:100'],
         ]);
 
-        $profileName = $request->validated('profile_name');
+        $profileName = $validated['profile_name'];
 
         // Verify that the profile exists for the user + protocol
         $profile = $this->preferenceRepository->findByProfile(

@@ -35,7 +35,7 @@ class GuacamoleConnectionParamsBuilder
      *
      * @throws RuntimeException When ip_address is null or the protocol is unsupported.
      */
-    public function buildParams(VMSession $session, User $user): array
+    public function buildParams(VMSession $session, User $user, bool $ignoreUserPreferences = false): array
     {
         if (empty($session->ip_address)) {
             throw new RuntimeException(
@@ -55,30 +55,32 @@ class GuacamoleConnectionParamsBuilder
         // 4. Hardcoded sensible defaults (if no profiles exist)
         $preference = null;
 
-        // 1. Check session-level selection
-        if (! empty($session->connection_profile_name)) {
-            $preference = $this->preferenceRepository->findByProfile(
-                $user,
-                $protocol->value,
-                $session->connection_profile_name,
-            );
-        }
-
-        // 2. Check per-VM default (if session selection didn't match)
-        if (! $preference && ! empty($session->vm_id)) {
-            $vmDefault = $this->vmDefaultRepository->findPerVMDefault($user, $session->vm_id, $protocol->value);
-            if ($vmDefault) {
+        if (! $ignoreUserPreferences) {
+            // 1. Check session-level selection (user explicitly chose a profile in launch dialog)
+            if (! empty($session->connection_profile_name)) {
                 $preference = $this->preferenceRepository->findByProfile(
                     $user,
                     $protocol->value,
-                    $vmDefault->preferred_profile_name,
+                    $session->connection_profile_name,
                 );
             }
-        }
 
-        // 3. Fall back to protocol-level default
-        if (! $preference) {
-            $preference = $this->preferenceRepository->findByUser($user, $protocol->value);
+            // 2. Check per-VM default (user's preferred profile for THIS VM)
+            if (! $preference && ! empty($session->vm_id)) {
+                $vmDefault = $this->vmDefaultRepository->findPerVMDefault($user, $session->vm_id, $protocol->value);
+                if ($vmDefault) {
+                    $preference = $this->preferenceRepository->findByProfile(
+                        $vmDefault->user,
+                        $protocol->value,
+                        $vmDefault->preferred_profile_name,
+                    );
+                }
+            }
+
+            // 3. Fall back to protocol-level default
+            if (! $preference) {
+                $preference = $this->preferenceRepository->findByUser($user, $protocol->value);
+            }
         }
 
         $userSettings = $preference?->parameters ?? [];

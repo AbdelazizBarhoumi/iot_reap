@@ -122,7 +122,28 @@ class CreateGuacamoleConnectionListener
             $params = $this->paramsBuilder->buildParams($session, $session->user);
 
             // ── Step 6: create connection in Guacamole ─────────────────────────
-            $connectionId = $this->guacamoleClient->createConnection($params);
+            // If the user's saved profile contains incompatible values, retry once
+            // with system defaults (no saved preferences) so the session can still
+            // become usable.
+            try {
+                $connectionId = $this->guacamoleClient->createConnection($params);
+            } catch (GuacamoleApiException $firstAttemptException) {
+                Log::warning('CreateGuacamoleConnectionListener: profile-based params failed, retrying with system defaults', [
+                    'session_id' => $session->id,
+                    'user_id' => $session->user_id,
+                    'protocol' => $session->getProtocol()->value,
+                    'connection_profile_name' => $session->connection_profile_name,
+                    'error' => $firstAttemptException->getMessage(),
+                ]);
+
+                $fallbackParams = $this->paramsBuilder->buildParams(
+                    session: $session,
+                    user: $session->user,
+                    ignoreUserPreferences: true,
+                );
+
+                $connectionId = $this->guacamoleClient->createConnection($fallbackParams);
+            }
 
             // ── Step 7: persist connection ID and mark session active ──────────
             $session->update([

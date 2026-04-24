@@ -118,12 +118,12 @@ class GatewayServiceCameraApiTest extends TestCase
         $this->assertStringContainsString('http://192.168.50.12:8000/camera/status', $result['error']);
     }
 
-    public function test_it_marks_the_stream_as_running_when_the_hls_manifest_is_reachable(): void
+    public function test_it_marks_the_stream_as_running_when_the_mediamtx_path_exists_via_api(): void
     {
         config([
             'gateway.camera_api_port' => 8001,
             'gateway.mediamtx_url' => '192.168.50.99',
-            'gateway.mediamtx_hls_port' => 8888,
+            'gateway.mediamtx_api_port' => 9997,
         ]);
 
         $node = GatewayNode::factory()->create([
@@ -135,7 +135,10 @@ class GatewayServiceCameraApiTest extends TestCase
         Http::fake([
             'http://192.168.50.13:8001/streams' => Http::response(['detail' => 'Not Found'], 404),
             'http://192.168.50.13:8000/camera/status' => Http::response(['detail' => 'Not Found'], 404),
-            'http://192.168.50.13:8888/usb-gateway-54/index.m3u8' => Http::response('', 200),
+            'http://192.168.50.13:9997/v3/paths/get/usb-gateway-54' => Http::response([
+                'name' => 'usb-gateway-54',
+                'source' => ['type' => 'rtspSession'],
+            ], 200),
         ]);
 
         $result = app(GatewayService::class)->getCameraStreamStatus($node, 'usb-gateway-54');
@@ -143,10 +146,10 @@ class GatewayServiceCameraApiTest extends TestCase
         $this->assertTrue($result['running']);
         $this->assertFalse($result['gateway_api_available']);
         $this->assertTrue($result['mediamtx_status']['exists']);
+        $this->assertTrue($result['mediamtx_status']['publishing']);
         $this->assertSame(200, $result['mediamtx_status']['status']);
 
-        Http::assertSent(fn ($request) => $request->url() === 'http://192.168.50.13:8888/usb-gateway-54/index.m3u8');
-        Http::assertNotSent(fn ($request) => $request->url() === 'http://192.168.50.99:8888/usb-gateway-54/index.m3u8');
+        Http::assertSent(fn ($request) => $request->url() === 'http://192.168.50.13:9997/v3/paths/get/usb-gateway-54');
     }
 
     public function test_it_can_list_capture_devices_from_the_camera_api(): void

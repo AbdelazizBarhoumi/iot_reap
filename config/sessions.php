@@ -27,7 +27,7 @@ return [
     |
     */
 
-    'max_concurrent_sessions' => env('SESSION_MAX_CONCURRENT_SESSIONS', 2),
-    'max_concurrent_minutes' => env('SESSION_MAX_CONCURRENT_MINUTES', 240),
+    'max_concurrent_sessions' => env('SESSION_MAX_CONCURRENT_SESSIONS', 100),
+    'max_concurrent_minutes' => env('SESSION_MAX_CONCURRENT_MINUTES', 10000),
 
 ];

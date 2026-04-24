@@ -60,14 +60,14 @@ else
     warn "Start it with: systemctl restart mediamtx"
 fi
 
-# Test HLS port
-if timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/8888" 2>/dev/null; then
-    pass "HLS port 8888 is listening"
+# Test API port
+if timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/9997" 2>/dev/null; then
+    pass "MediaMTX API port 9997 is listening"
 else
-    fail "HLS port 8888 is NOT listening"
+    fail "MediaMTX API port 9997 is NOT listening"
 fi
 
-# Test WHEP port
+# Test WebRTC WHEP port
 if timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/8889" 2>/dev/null; then
     pass "WebRTC WHEP port 8889 is listening"
 else
@@ -79,13 +79,6 @@ if timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/8554" 2>/dev/null; then
     pass "RTSP port 8554 is listening"
 else
     fail "RTSP port 8554 is NOT listening"
-fi
-
-# Test API port
-if timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/9997" 2>/dev/null; then
-    pass "API port 9997 is listening"
-else
-    warn "API port 9997 is NOT listening (not critical)"
 fi
 
 # ─── 3. Camera Capture Services ────────────────────────────────────────────────
@@ -169,20 +162,22 @@ TEST_STREAMS=(
 AVAILABLE_COUNT=0
 
 for stream in "${TEST_STREAMS[@]}"; do
-    # Test HLS manifest
-    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8888/${stream}/index.m3u8" 2>/dev/null)
+    # Test path via MediaMTX API
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:9997/v3/paths/get/${stream}" 2>/dev/null)
     
     if [ "$RESPONSE" = "200" ]; then
-        pass "Stream '$stream' is PUBLISHING (HLS available)"
-        AVAILABLE_COUNT=$((AVAILABLE_COUNT + 1))
-        
-        # Try to fetch first few bytes of manifest
-        MANIFEST=$(curl -s "http://127.0.0.1:8888/${stream}/index.m3u8" 2>/dev/null | head -5)
-        info "  Manifest preview: $(echo "$MANIFEST" | tr '\n' ' ')"
+        # Check if it has a source (is publishing)
+        JSON=$(curl -s "http://127.0.0.1:9997/v3/paths/get/${stream}" 2>/dev/null)
+        if echo "$JSON" | grep -q "\"source\":"; then
+            pass "Stream '$stream' is PUBLISHING (via API)"
+            AVAILABLE_COUNT=$((AVAILABLE_COUNT + 1))
+        else
+            warn "Stream '$stream' exists but is NOT publishing"
+        fi
     elif [ "$RESPONSE" = "404" ]; then
-        warn "Stream '$stream' NOT publishing (404)"
+        warn "Stream '$stream' path not found (404)"
     else
-        warn "Stream '$stream' returned HTTP $RESPONSE"
+        warn "Stream '$stream' API check returned HTTP $RESPONSE"
     fi
 done
 
@@ -299,5 +294,5 @@ echo "  • All cameras:     systemctl restart iot-reap-camera-*"
 echo "  • Camera API:      systemctl restart iot-reap-camera-api"
 echo ""
 echo "To manually test a stream:"
-echo "  • curl http://127.0.0.1:8888/usb-gateway-11/index.m3u8"
+echo "  • curl http://127.0.0.1:9997/v3/paths/get/usb-gateway-11"
 echo ""

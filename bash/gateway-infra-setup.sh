@@ -122,9 +122,7 @@ apiAddress: :9997
 rtsp: yes
 rtspAddress: :8554
 
-hls: yes
-hlsAddress: :8888
-hlsAlwaysRemux: yes
+hls: no
 
 webrtc: yes
 webrtcAddress: :8889
@@ -140,7 +138,7 @@ EOF
 # systemd unit
 cat > /etc/systemd/system/mediamtx.service <<EOF
 [Unit]
-Description=MediaMTX RTSP/HLS/WebRTC Proxy
+Description=MediaMTX RTSP/WebRTC Proxy
 After=network-online.target
 Wants=network-online.target
 
@@ -157,7 +155,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now mediamtx
-ok "MediaMTX service running on ports 8554/8888/8889."
+ok "MediaMTX service running on ports 8554/8889."
 
 # ────────────────────────────────────────────────────────────────
 # 3b. Camera Management API and Capture Services
@@ -313,7 +311,6 @@ fi
 if command -v ufw &>/dev/null; then
     info "Configuring UFW rules ..."
     ufw allow 8554/tcp comment "MediaMTX RTSP"
-    ufw allow 8888/tcp comment "MediaMTX HLS"
     ufw allow 8889/tcp comment "MediaMTX WebRTC"
     ufw allow 5000/tcp comment "Frigate NVR"
     ufw allow 631/tcp  comment "CUPS"
@@ -360,4 +357,4 @@ echo "────────────────────────�
 echo ""
 ok "Gateway infrastructure setup complete!"
 info "Container IP: ${GATEWAY_IP}"
-info "Ports: MediaMTX(8554/8888/8889), Frigate(5000), CUPS(631), ser2net(2001)"
+info "Ports: MediaMTX(8554/8889), Frigate(5000), CUPS(631), ser2net(2001)"

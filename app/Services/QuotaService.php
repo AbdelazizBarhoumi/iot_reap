@@ -39,22 +39,22 @@ class QuotaService
             ->where('expires_at', '>', now())
             ->count();
 
-        if ($activeCount >= $maxConcurrent) {
-            throw new \DomainException(
-                "Maximum concurrent sessions ({$maxConcurrent}) reached. ".
-                'Please terminate an existing session before creating a new one.'
-            );
-        }
+        // if ($activeCount >= $maxConcurrent) {
+        //     throw new \DomainException(
+        //         "Maximum concurrent sessions ({$maxConcurrent}) reached. ".
+        //         'Please terminate an existing session before creating a new one.'
+        //     );
+        // }
 
         // Check total concurrent minutes
         $totalMinutes = $this->getTotalActiveMinutes($user);
 
-        if ($totalMinutes + $durationMinutes > $maxMinutes) {
-            throw new \DomainException(
-                "Requesting {$durationMinutes} minutes would exceed quota. ".
-                "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m"
-            );
-        }
+        // if ($totalMinutes + $durationMinutes > $maxMinutes) {
+        //     throw new \DomainException(
+        //         "Requesting {$durationMinutes} minutes would exceed quota. ".
+        //         "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m"
+        //     );
+        // }
     }
 
     /**
@@ -67,13 +67,13 @@ class QuotaService
         $maxMinutes = config('sessions.max_concurrent_minutes');
         $totalMinutes = $this->getTotalActiveMinutes($user);
 
-        if ($totalMinutes + $additionalMinutes > $maxMinutes) {
-            throw new \DomainException(
-                "Cannot extend by {$additionalMinutes} minutes. ".
-                "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m, ".
-                '(requested total: '.($totalMinutes + $additionalMinutes).'m)'
-            );
-        }
+        // if ($totalMinutes + $additionalMinutes > $maxMinutes) {
+        //     throw new \DomainException(
+        //         "Cannot extend by {$additionalMinutes} minutes. ".
+        //         "Current usage: {$totalMinutes}m, max allowed: {$maxMinutes}m, ".
+        //         '(requested total: '.($totalMinutes + $additionalMinutes).'m)'
+        //     );
+        // }
     }
 
     /**

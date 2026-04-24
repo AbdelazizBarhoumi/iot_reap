@@ -152,14 +152,31 @@ export default function Dashboard() {
     );
     const hasActiveSessions =
         activeSessions.length > 0 || provisioningSessions.length > 0;
+    const [perVmDefaultProfile, setPerVmDefaultProfile] = useState<{
+        name: string | null;
+        isAdmin: boolean;
+    }>({ name: null, isAdmin: false });
+
     const launchProfiles = useMemo(
         () => savedProfiles[launchProtocol as keyof typeof savedProfiles] ?? [],
         [launchProtocol, savedProfiles],
     );
-    const defaultLaunchProfile = useMemo(
-        () => launchProfiles.find((profile) => profile.is_default) ?? null,
-        [launchProfiles],
-    );
+
+    const defaultLaunchProfile = useMemo(() => {
+        // 1. If a per-VM default is set (by user or admin), prioritize it
+        if (perVmDefaultProfile.name) {
+            return (
+                launchProfiles.find(
+                    (p) => p.profile_name === perVmDefaultProfile.name,
+                ) ?? {
+                    profile_name: perVmDefaultProfile.name,
+                    is_default: true,
+                }
+            );
+        }
+        // 2. Fall back to the user's protocol-level default profile
+        return launchProfiles.find((profile) => profile.is_default) ?? null;
+    }, [launchProfiles, perVmDefaultProfile]);
 
     // Load saved connection profiles on mount
     useEffect(() => {
@@ -172,6 +189,27 @@ export default function Dashboard() {
                 /* Silently ignore — profiles are optional */
             });
     }, []);
+
+    // Refresh per-VM default when VM or protocol changes
+    useEffect(() => {
+        if (!selectedVM || !isLaunchOpen) {
+            setPerVmDefaultProfile({ name: null, isAdmin: false });
+            return;
+        }
+
+        connectionPreferencesApi
+            .getPerVMDefault(selectedVM.vmid, launchProtocol)
+            .then((res: any) => {
+                const data = res.data || res;
+                setPerVmDefaultProfile({
+                    name: data.preferred_profile_name,
+                    isAdmin: !!data.is_admin_defined,
+                });
+            })
+            .catch(() => {
+                setPerVmDefaultProfile({ name: null, isAdmin: false });
+            });
+    }, [selectedVM, launchProtocol, isLaunchOpen]);
     const handleOpenLaunch = useCallback((vm: ProxmoxVMInfo) => {
         setSelectedVM(vm);
         setLaunchError(null);
@@ -847,7 +885,9 @@ export default function Dashboard() {
                                 <SelectContent>
                                     <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
                                         {defaultLaunchProfile
-                                            ? `Use default (${defaultLaunchProfile.profile_name}) ★`
+                                            ? perVmDefaultProfile.isAdmin
+                                                ? `Use Admin Default (${defaultLaunchProfile.profile_name}) ★`
+                                                : `Use default (${defaultLaunchProfile.profile_name}) ★`
                                             : 'Use protocol default'}
                                     </SelectItem>
                                     {launchProfiles.map((profile) => (

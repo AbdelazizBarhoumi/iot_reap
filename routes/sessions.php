@@ -93,7 +93,6 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         Route::post('/{camera}/move', 'move')->name('move');
         Route::put('/{camera}/resolution', 'changeResolution')->name('resolution');
         Route::post('/{camera}/whep', 'whepProxy')->name('whep');
-        Route::get('/{camera}/hls/{path?}', 'hlsProxy')->where('path', '.*')->name('hls');
     });
 
     // Session-specific hardware management (attach/detach devices to session)

@@ -35,8 +35,8 @@ class GuacamoleTokenController extends Controller
     {
         $user = auth()->user();
 
-        // Authorization: only session owner can get token
-        if ($session->user_id !== $user->id) {
+        // Authorization: only session owner or admin can get token
+        if ($session->user_id !== $user->id && ! $user->can('admin-only')) {
             Log::warning('Unauthorized Guacamole token request', [
                 'session_id' => $session->id,
                 'session_owner_id' => $session->user_id,

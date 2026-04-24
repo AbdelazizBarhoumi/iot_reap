@@ -171,7 +171,6 @@ start_stream_with_auto_format() {
     if systemctl is-active --quiet "${service_name}.service"; then
         log "✓ Stream started successfully!"
         log "  RTSP URL: rtsp://${MEDIAMTX_HOST}:${MEDIAMTX_RTSP_PORT}/${stream_key}"
-        log "  HLS URL: http://${MEDIAMTX_HOST}:8888/${stream_key}/index.m3u8"
         log "  Check logs: journalctl -u ${service_name} -f"
         return 0
     else

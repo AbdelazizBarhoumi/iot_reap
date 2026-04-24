@@ -26,7 +26,6 @@ class CameraResource extends JsonResource
             ? $this->gatewayNode->ip
             : config('gateway.mediamtx_url', '192.168.50.6');
         $baseHost = $gatewayIp;
-        $hlsPort = config('gateway.mediamtx_hls_port', 8888);
         $webrtcPort = config('gateway.mediamtx_webrtc_port', 8889);
 
         $activeControl = $this->whenLoaded('activeControl');
@@ -56,7 +55,6 @@ class CameraResource extends JsonResource
                 'resolution_label' => $this->getResolutionLabel(),
             ],
             'stream_urls' => [
-                'hls' => "http://{$baseHost}:{$hlsPort}/{$this->stream_key}/index.m3u8",
                 'webrtc' => "http://{$baseHost}:{$webrtcPort}/{$this->stream_key}",
             ],
             'control' => $this->when($activeControl !== null && $activeControl instanceof CameraSessionControl, fn () => [

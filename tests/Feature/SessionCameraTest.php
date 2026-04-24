@@ -91,7 +91,7 @@ class SessionCameraTest extends TestCase
                         'status',
                         'status_label',
                         'ptz_capable',
-                        'stream_urls' => ['hls', 'webrtc'],
+                        'stream_urls' => ['webrtc'],
                         'is_controlled',
                         'created_at',
                     ],
@@ -317,7 +317,6 @@ class SessionCameraTest extends TestCase
                     'name' => 'PTZ Camera',
                     'ptz_capable' => true,
                     'stream_urls' => [
-                        'hls' => 'http://192.168.50.6:8888/test-ptz-cam/index.m3u8',
                         'webrtc' => 'http://192.168.50.6:8889/test-ptz-cam',
                     ],
                 ],

@@ -14,13 +14,35 @@ class UserVMConnectionDefaultProfileRepository
 {
     /**
      * Find the default profile for a user + VM + protocol combination.
-     * Returns null when no per-VM default is set.
+     * Fallback to any admin-defined default for this VM if the user hasn't set one.
+     * Returns null when no per-VM default is set by user or admin.
      */
-    public function findPerVMDefault(User $user, int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
+    public function findPerVMDefault(\App\Models\User $user, int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
     {
-        return UserVMConnectionDefaultProfile::where('user_id', $user->id)
+        // 1. Try user's own preferred profile for this VM
+        $userDefault = UserVMConnectionDefaultProfile::where('user_id', $user->id)
             ->where('vm_id', $vmId)
             ->where('vm_session_protocol', $protocol)
+            ->first();
+
+        if ($userDefault) {
+            return $userDefault;
+        }
+
+        return $this->findGlobalDefault($vmId, $protocol);
+    }
+
+    /**
+     * Find an admin-defined default for this VM + protocol.
+     */
+    public function findGlobalDefault(int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
+    {
+        return UserVMConnectionDefaultProfile::whereHas('user', function ($query) {
+            $query->where('role', \App\Enums\UserRole::ADMIN->value);
+        })
+            ->where('vm_id', $vmId)
+            ->where('vm_session_protocol', $protocol)
+            ->orderBy('updated_at', 'desc')
             ->first();
     }
 

@@ -127,6 +127,21 @@ class VMSessionRepository
     }
 
     /**
+     * Find all active/pending/provisioning sessions across all users.
+     */
+    public function findAllActive(): Collection
+    {
+        return VMSession::whereIn('status', [
+            VMSessionStatus::ACTIVE,
+            VMSessionStatus::PENDING,
+            VMSessionStatus::PROVISIONING,
+        ])
+            ->with(['proxmoxServer', 'node', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
      * Find pending sessions.
      */
     public function findPending(): Collection
