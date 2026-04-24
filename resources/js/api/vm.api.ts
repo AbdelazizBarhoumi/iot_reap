@@ -166,12 +166,18 @@ export const connectionPreferencesApi = {
     async getPerVMDefault(
         vmId: number,
         protocol: string,
-    ): Promise<{ vm_id: number; protocol: string; preferred_profile_name: string | null }> {
+    ): Promise<{
+        vm_id: number;
+        protocol: string;
+        preferred_profile_name: string | null;
+        is_admin_defined?: boolean;
+    }> {
         const response = await client.get<
             ApiResponse<{
                 vm_id: number;
                 protocol: string;
                 preferred_profile_name: string | null;
+                is_admin_defined?: boolean;
             }>
         >(`/connection-preferences/vm/${vmId}/${protocol}`);
         return response.data.data;

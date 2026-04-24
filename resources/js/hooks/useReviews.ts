@@ -1,8 +1,8 @@
 /**
  * useReviews hook for managing trainingPath reviews.
  */
-import { useState, useCallback, useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type {
     TrainingPathReview,
@@ -10,6 +10,7 @@ import type {
     CreateReviewData,
 } from '@/api/reviews.api';
 import { reviewsApi } from '@/api/reviews.api';
+import type { PageProps } from '@/types/api.types';
 interface UseReviewsOptions {
     trainingPathId: number;
     autoFetch?: boolean;
@@ -51,7 +52,7 @@ export function useReviews({
     const [totalPages, setTotalPages] = useState(1);
     const [totalReviews, setTotalReviews] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { auth } = usePage().props as any;
+    const { auth } = usePage<PageProps>().props;
     const fetchReviews = useCallback(
         async (page = 1) => {
             setLoading(true);

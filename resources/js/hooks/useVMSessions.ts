@@ -19,6 +19,7 @@ export function useVMSessions(
     const [sessions, setSessions] = useState<VMSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
     const fetchSessions = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -32,7 +33,7 @@ export function useVMSessions(
         } finally {
             setLoading(false);
         }
-    }, [JSON.stringify(params)]);
+    }, [params]);
     const createSession = useCallback(
         async (data: CreateVMSessionRequest): Promise<VMSession> => {
             const session = await vmSessionApi.create(data);

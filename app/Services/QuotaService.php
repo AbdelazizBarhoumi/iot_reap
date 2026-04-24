@@ -32,9 +32,9 @@ class QuotaService
         // hasn't run yet — don't count those as blocking quota.
         $activeCount = VMSession::where('user_id', $user->id)
             ->whereIn('status', [
-                VMSessionStatus::ACTIVE,
-                VMSessionStatus::PENDING,
-                VMSessionStatus::PROVISIONING,
+                VMSessionStatus::ACTIVE->value,
+                VMSessionStatus::PENDING->value,
+                VMSessionStatus::PROVISIONING->value,
             ])
             ->where('expires_at', '>', now())
             ->count();
@@ -85,7 +85,7 @@ class QuotaService
     private function getTotalActiveMinutes(User $user): int
     {
         $activeSessions = VMSession::where('user_id', $user->id)
-            ->where('status', VMSessionStatus::ACTIVE)
+            ->where('status', VMSessionStatus::ACTIVE->value)
             ->where('expires_at', '>', now())
             ->get();
 

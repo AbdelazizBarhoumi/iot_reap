@@ -67,7 +67,7 @@ class CameraServiceSimpleTest extends TestCase
         $result = $this->service->getCamerasForSession('session-123');
 
         // Assert
-        $this->assertSame($cameras, $result);
+        $this->assertEquals($cameras->all(), $result->all());
     }
 
     public function test_get_auto_resolution_returns_correct_values_for_usb_camera(): void

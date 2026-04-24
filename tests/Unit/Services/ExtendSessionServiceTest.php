@@ -129,15 +129,17 @@ class ExtendSessionServiceTest extends TestCase
     public function test_extend_respects_maximum_total_duration(): void
     {
         $maxMinutes = config('sessions.max_concurrent_minutes', 240);
+        $minutesAlreadyUsed = max(1, $maxMinutes - 5);
+        $minutesToExtend = 10;
 
-        // Set session to use 200 minutes
+        // Put session close to quota ceiling, then request an extension that crosses it.
         $this->session->update([
-            'expires_at' => now()->addMinutes(200),
+            'expires_at' => now()->addMinutes($minutesAlreadyUsed),
         ]);
 
-        // Try to extend by 50 minutes (would be 250 total)
-        $this->expectException(\Exception::class);
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Cannot extend by');
 
-        $this->service->extend($this->session, 50);
+        $this->service->extend($this->session, $minutesToExtend);
     }
 }

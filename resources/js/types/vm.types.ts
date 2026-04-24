@@ -45,6 +45,11 @@ export interface VMSession {
     guacamole_connection_id: string | null;
     guacamole_url: string | null;
     created_at: string;
+    user?: {
+        id?: string;
+        name: string;
+        email?: string;
+    };
     template?: { name: string; id: number };
     node?: { node_name: string; name: string; id: number };
 }

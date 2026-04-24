@@ -199,8 +199,7 @@ export default function Dashboard() {
 
         connectionPreferencesApi
             .getPerVMDefault(selectedVM.vmid, launchProtocol)
-            .then((res: any) => {
-                const data = res.data || res;
+            .then((data) => {
                 setPerVmDefaultProfile({
                     name: data.preferred_profile_name,
                     isAdmin: !!data.is_admin_defined,

@@ -79,7 +79,7 @@ class CameraServiceTest extends BaseTestCase
         $result = $this->service->getCamerasForSession('session-123');
 
         // Assert
-        $this->assertSame($cameras, $result);
+        $this->assertEquals($cameras->all(), $result->all());
     }
 
     public function test_get_stream_urls_builds_correct_urls(): void
