@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @property string $busid
  * @property string $vendor_id
  * @property string $product_id
+ * @property string|null $serial
  * @property string $name
  * @property string|null $admin_description
  * @property bool $maintenance_mode
@@ -53,6 +54,7 @@ class UsbDevice extends Model
         'busid',
         'vendor_id',
         'product_id',
+        'serial',
         'name',
         'admin_description',
         'maintenance_mode',

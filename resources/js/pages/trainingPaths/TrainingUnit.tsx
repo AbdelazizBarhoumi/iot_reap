@@ -59,6 +59,9 @@ interface TrainingUnitVMInfo {
     vm_id: number;
     node_id: number;
     vm_name: string | null;
+    available?: boolean;
+    unavailable_reason?: string | null;
+    reserved_training_path?: string | null;
     node?: { id: number; name: string } | null;
 }
 
@@ -424,7 +427,11 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
             </Card>
         );
     }
-    const { vm, queue_status, can_start, my_position } = vmInfo;
+    const vm = vmInfo.vm ?? vmInfo;
+    const queueStatus = vmInfo.queue_status;
+    const canStartFromQueue = vmInfo.can_start ?? true;
+    const myPosition = vmInfo.my_position ?? null;
+    const isAvailable = vm.available ?? true;
     const vmName = vm.vm_name ?? `VM ${vm.vm_id}`;
 
     return (
@@ -437,25 +444,25 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
                     </h4>
                 </div>
                 {/* Queue status */}
-                {queue_status.in_use && (
+                {queueStatus?.in_use && (
                     <div className="mb-4 rounded-lg bg-muted/50 p-3">
                         <div className="flex items-center gap-2 text-sm">
                             <Users className="h-4 w-4 text-muted-foreground" />
                             <span className="text-muted-foreground">
-                                Currently in use by {queue_status.current_user}
+                                Currently in use by {queueStatus.current_user}
                             </span>
                         </div>
-                        {queue_status.queue_count > 0 && (
+                        {queueStatus.queue_count > 0 && (
                             <div className="mt-1 flex items-center gap-2 text-sm">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-muted-foreground">
-                                    {queue_status.queue_count} in queue
-                                    {queue_status.estimated_wait_minutes && (
+                                    {queueStatus.queue_count} in queue
+                                    {queueStatus.estimated_wait_minutes && (
                                         <>
                                             {' '}
                                             · ~
                                             {
-                                                queue_status.estimated_wait_minutes
+                                                queueStatus.estimated_wait_minutes
                                             }{' '}
                                             min wait
                                         </>
@@ -463,16 +470,23 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
                                 </span>
                             </div>
                         )}
-                        {my_position !== null && my_position > 0 && (
+                        {myPosition !== null && myPosition > 0 && (
                             <p className="mt-2 text-sm text-primary">
-                                You are #{my_position} in the queue
+                                You are #{myPosition} in the queue
                             </p>
                         )}
                     </div>
                 )}
+
+                {!isAvailable && (
+                    <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                        <p className="font-medium">VM currently unavailable</p>
+                        <p>{vm.unavailable_reason ?? 'This assigned VM is temporarily reserved.'}</p>
+                    </div>
+                )}
                 <Button
                     onClick={handleLaunchVM}
-                    disabled={launching || !can_start}
+                    disabled={launching || !canStartFromQueue || !isAvailable}
                     className="w-full"
                 >
                     {launching ? (
@@ -480,7 +494,12 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Starting...
                         </>
-                    ) : can_start ? (
+                    ) : !isAvailable ? (
+                        <>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Not Available Right Now
+                        </>
+                    ) : canStartFromQueue ? (
                         <>
                             <Play className="mr-2 h-4 w-4" />
                             Start VM Session

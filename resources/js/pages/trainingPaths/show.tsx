@@ -92,16 +92,18 @@ export default function TrainingPathDetailPage() {
     const [expandedModules, setExpandedModules] = useState<
         Set<string | number>
     >(new Set());
-    const [activeTab, setActiveTab] = useState('curriculum');
+    const queryParams = new URLSearchParams(window.location.search);
+    const initialTab = queryParams.get('tab') || 'curriculum';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [showCertificatePrompt, setShowCertificatePrompt] = useState(false);
     const displayPrice =
         trainingPath?.formattedPrice ??
         (trainingPath?.isFree
             ? 'Free'
             : new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: trainingPath?.currency || 'USD',
-              }).format(trainingPath?.price || 0));
+                style: 'currency',
+                currency: trainingPath?.currency || 'USD',
+            }).format(trainingPath?.price || 0));
     // Forum hook for trainingPath-level discussions
     const {
         threads,
@@ -510,7 +512,7 @@ export default function TrainingPathDetailPage() {
                                 <CardContent className="p-0">
                                     <div className="aspect-video w-full bg-black">
                                         {trainingPath.video_type ===
-                                        'youtube' ? (
+                                            'youtube' ? (
                                             <iframe
                                                 src={trainingPath.video_url}
                                                 title="Training path introduction video"
@@ -618,7 +620,7 @@ export default function TrainingPathDetailPage() {
                                             className="text-muted-foreground"
                                         >
                                             {expandedModules.size ===
-                                            trainingPath.modules?.length
+                                                trainingPath.modules?.length
                                                 ? 'Collapse all'
                                                 : 'Expand all'}
                                         </Button>
@@ -663,11 +665,10 @@ export default function TrainingPathDetailPage() {
                                                             >
                                                                 <div className="flex items-center gap-4">
                                                                     <div
-                                                                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                                                                            isModuleComplete
+                                                                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${isModuleComplete
                                                                                 ? 'bg-emerald-500/10 text-emerald-500'
                                                                                 : 'bg-muted text-muted-foreground'
-                                                                        }`}
+                                                                            }`}
                                                                     >
                                                                         {isModuleComplete ? (
                                                                             <Trophy className="h-5 w-5" />
@@ -693,7 +694,7 @@ export default function TrainingPathDetailPage() {
                                                                             trainingUnits
                                                                             {isEnrolled &&
                                                                                 moduleProgress.completed >
-                                                                                    0 && (
+                                                                                0 && (
                                                                                     <span className="ml-2 text-primary">
                                                                                         ·{' '}
                                                                                         {
@@ -713,7 +714,7 @@ export default function TrainingPathDetailPage() {
                                                                 <div className="flex items-center gap-3">
                                                                     {isEnrolled &&
                                                                         moduleProgress.percentage >
-                                                                            0 && (
+                                                                        0 && (
                                                                             <div className="hidden w-24 sm:block">
                                                                                 <Progress
                                                                                     value={
@@ -759,14 +760,14 @@ export default function TrainingPathDetailPage() {
                                                                                 ) => {
                                                                                     const Icon =
                                                                                         trainingUnitIcons[
-                                                                                            trainingUnit
-                                                                                                .type
+                                                                                        trainingUnit
+                                                                                            .type
                                                                                         ] ||
                                                                                         BookOpen;
                                                                                     const colorClass =
                                                                                         trainingUnitColors[
-                                                                                            trainingUnit
-                                                                                                .type
+                                                                                        trainingUnit
+                                                                                            .type
                                                                                         ] ||
                                                                                         'bg-muted text-muted-foreground';
                                                                                     const completed =
@@ -787,11 +788,10 @@ export default function TrainingPathDetailPage() {
                                                                                                     className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/30"
                                                                                                 >
                                                                                                     <div
-                                                                                                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                                                                                                            completed
+                                                                                                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${completed
                                                                                                                 ? 'bg-emerald-500/10 text-emerald-500'
                                                                                                                 : colorClass
-                                                                                                        }`}
+                                                                                                            }`}
                                                                                                     >
                                                                                                         {completed ? (
                                                                                                             <CheckCircle2 className="h-4 w-4" />
@@ -801,11 +801,10 @@ export default function TrainingPathDetailPage() {
                                                                                                     </div>
                                                                                                     <div className="min-w-0 flex-1">
                                                                                                         <p
-                                                                                                            className={`truncate text-sm font-medium ${
-                                                                                                                completed
+                                                                                                            className={`truncate text-sm font-medium ${completed
                                                                                                                     ? 'text-muted-foreground'
                                                                                                                     : 'text-foreground group-hover:text-primary'
-                                                                                                            } transition-colors`}
+                                                                                                                } transition-colors`}
                                                                                                         >
                                                                                                             {
                                                                                                                 trainingUnit.title
@@ -912,9 +911,9 @@ export default function TrainingPathDetailPage() {
                                                 onUpvote={
                                                     isAuthenticated
                                                         ? (threadId) =>
-                                                              upvoteThread(
-                                                                  threadId,
-                                                              )
+                                                            upvoteThread(
+                                                                threadId,
+                                                            )
                                                         : undefined
                                                 }
                                                 showNewButton={false}
@@ -966,8 +965,8 @@ export default function TrainingPathDetailPage() {
                             ? 'Enrolling...'
                             : 'Opening Checkout...'
                         : trainingPath?.isFree
-                          ? 'Enroll Now'
-                          : `Checkout - ${displayPrice}`
+                            ? 'Enroll Now'
+                            : `Checkout - ${displayPrice}`
                 }
                 cancelText="Maybe Later"
                 variant="default"

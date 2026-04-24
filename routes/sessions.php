@@ -9,6 +9,7 @@ use App\Http\Controllers\ProxmoxVMBrowserController;
 use App\Http\Controllers\SessionCameraController;
 use App\Http\Controllers\SessionHardwareController;
 use App\Http\Controllers\UsbDeviceReservationController;
+use App\Http\Controllers\VMReservationController;
 use App\Http\Controllers\VMSessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -54,8 +55,8 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
     // Proxmox servers (active, for engineers to see available clusters)
     Route::get('/proxmox-servers/active', [ProxmoxServerController::class, 'listActive'])->name('proxmox-servers.active');
 
-    // USB/IP Hardware Gateway (admin-only)
-    Route::middleware('can:admin-only')->prefix('hardware')->name('hardware.')->controller(HardwareController::class)->group(function () {
+    // USB/IP Hardware Gateway (engineer & admin)
+    Route::prefix('hardware')->name('hardware.')->controller(HardwareController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/devices', 'devices')->name('devices');
         Route::post('/refresh', 'refresh')->name('refresh');
@@ -66,10 +67,20 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         Route::post('/devices/{device}/attach', 'attach')->name('devices.attach');
         Route::post('/devices/{device}/detach', 'detach')->name('devices.detach');
         Route::post('/devices/{device}/cancel-pending', 'cancelPending')->name('devices.cancel-pending');
-        Route::post('/devices/{device}/convert-to-camera', 'convertToCamera')->name('devices.convert-to-camera');
-        Route::post('/devices/{device}/activate-camera', 'activateCamera')->name('devices.activate-camera');
-        Route::put('/devices/{device}/camera-settings', 'updateCameraSettings')->name('devices.update-camera-settings');
-        Route::delete('/devices/{device}/camera', 'removeCamera')->name('devices.remove-camera');
+
+        Route::middleware('can:admin-only')->group(function () {
+            Route::post('/devices/{device}/convert-to-camera', 'convertToCamera')
+                ->name('devices.convert-to-camera');
+
+            Route::post('/devices/{device}/activate-camera', 'activateCamera')
+                ->name('devices.activate-camera');
+
+            Route::put('/devices/{device}/camera-settings', 'updateCameraSettings')
+                ->name('devices.update-camera-settings');
+
+            Route::delete('/devices/{device}/camera', 'removeCamera')
+                ->name('devices.remove-camera');
+        });
     });
 
     // Session-specific camera management (view streams, PTZ control)
@@ -111,5 +122,15 @@ Route::middleware(['auth', 'verified', 'can:provision-vm'])->group(function () {
         Route::get('/{reservation}', 'show')->name('show');
         Route::post('/{reservation}/cancel', 'cancel')->name('cancel');
         Route::get('/cameras/{camera}/calendar', 'cameraReservations')->name('camera.calendar');
+    });
+
+    // VM reservations (user-facing) - rate limited
+    Route::prefix('vm-reservations')->middleware('throttle:20,1')->name('vm-reservations.')->controller(VMReservationController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/available-vms', 'availableVMs')->name('available-vms');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{reservation}', 'show')->name('show');
+        Route::post('/{reservation}/cancel', 'cancel')->name('cancel');
+        Route::get('/nodes/{nodeId}/vms/{vmId}/calendar', 'vmReservationsCalendar')->name('calendar');
     });
 });

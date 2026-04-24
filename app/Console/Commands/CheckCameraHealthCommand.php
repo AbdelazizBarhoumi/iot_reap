@@ -393,6 +393,7 @@ class CheckCameraHealthCommand extends Command
             $options['usb_busid'] = $camera->usbDevice->busid;
             $options['vendor_id'] = $camera->usbDevice->vendor_id;
             $options['product_id'] = $camera->usbDevice->product_id;
+            $options['serial'] = $camera->usbDevice->serial;
         }
 
         return $options;

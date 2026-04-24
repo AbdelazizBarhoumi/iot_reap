@@ -42,7 +42,10 @@ class Reservation extends Model
         'usb_device_id',
         'user_id',
         'target_vm_id',
+        'vm_name',
         'target_user_id',
+        'training_path_id',
+        'is_backup_for_training_path',
         'approved_by',
         'status',
         'requested_start_at',
@@ -59,6 +62,8 @@ class Reservation extends Model
     protected $casts = [
         'status' => UsbReservationStatus::class,
         'target_vm_id' => 'integer',
+        'training_path_id' => 'integer',
+        'is_backup_for_training_path' => 'boolean',
         'requested_start_at' => 'datetime',
         'requested_end_at' => 'datetime',
         'approved_start_at' => 'datetime',
@@ -157,6 +162,14 @@ class Reservation extends Model
     public function approver(): BelongsTo
     {
         return $this->approvedBy();
+    }
+
+    /**
+     * Optional training path associated with the reservation.
+     */
+    public function trainingPath(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPath::class, 'training_path_id');
     }
 
     // ─────────────────────────────────────────────────────────────────────────

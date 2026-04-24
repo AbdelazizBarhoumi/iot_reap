@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminReservationController;
 use App\Http\Controllers\Admin\AdminTrainingPathController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVMAssignmentController;
+use App\Http\Controllers\Admin\AdminVMReservationController;
 use App\Http\Controllers\Admin\MaintenanceController;
 use App\Http\Controllers\Admin\ProxmoxNodeController;
 use App\Http\Controllers\Admin\ProxmoxServerController;
@@ -98,6 +99,14 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::post('/{reservation}/approve', 'approve')->name('approve');
         Route::post('/{reservation}/reject', 'reject')->name('reject');
         Route::post('/block', 'createBlock')->name('block');
+    });
+
+    // Admin VM reservation approvals
+    Route::prefix('vm-reservations')->name('vm-reservations.')->controller(AdminVMReservationController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/pending', 'pending')->name('pending');
+        Route::post('/{reservation}/approve', 'approve')->name('approve');
+        Route::post('/{reservation}/reject', 'reject')->name('reject');
     });
 
     // Admin camera management + camera reservations

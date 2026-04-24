@@ -68,11 +68,13 @@ class HardwareController extends Controller
 
     /**
      * Get all USB devices across all gateway nodes.
+     *  Only returns non-camera devices.
      */
     public function devices(Request $request): JsonResponse
     {
-        $devices = $this->deviceRepository->all();
-
+        $devices = UsbDevice::nonCameras()
+            ->with('gatewayNode')
+            ->get();
         return response()->json([
             'data' => UsbDeviceResource::collection($devices),
         ]);
@@ -334,7 +336,7 @@ class HardwareController extends Controller
         }
 
         // Generate a unique stream key
-        $streamKey = 'usb-'.$gatewayNode->name.'-'.str_replace(['.', '-'], '', $device->busid);
+        $streamKey = 'usb-' . $gatewayNode->name . '-' . str_replace(['.', '-'], '', $device->busid);
 
         // Resolve the real capture device when the gateway camera API is available.
         // This avoids guessing /dev/videoN and supports multiple cameras on one gateway.
@@ -666,7 +668,7 @@ class HardwareController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Camera settings updated'.($streamResult['success'] ? ' and stream restarted' : ''),
+            'message' => 'Camera settings updated' . ($streamResult['success'] ? ' and stream restarted' : ''),
             'camera' => new CameraResource($camera->fresh()->load(['gatewayNode', 'usbDevice'])),
             'stream_restarted' => $streamResult['success'],
             'stream_error' => $streamResult['error'] ?? null,
@@ -725,6 +727,7 @@ class HardwareController extends Controller
             'usb_busid' => $device->busid,
             'vendor_id' => $device->vendor_id,
             'product_id' => $device->product_id,
+            'serial' => $device->serial,
         ]);
     }
 
@@ -895,7 +898,7 @@ class HardwareController extends Controller
             $onlineCount = $discovered->where('online', true)->count();
             $offlineCount = $discovered->where('online', false)->count();
 
-            $discovered->each(fn ($gateway) => $gateway->load('usbDevices'));
+            $discovered->each(fn($gateway) => $gateway->load('usbDevices'));
 
             return response()->json([
                 'success' => true,
@@ -913,7 +916,7 @@ class HardwareController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to discover gateways: '.$e->getMessage(),
+                'message' => 'Failed to discover gateways: ' . $e->getMessage(),
             ], 500);
         }
     }

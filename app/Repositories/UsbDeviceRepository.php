@@ -350,4 +350,18 @@ class UsbDeviceRepository
 
         return $query->first();
     }
+
+    /**
+     * Find a USB device by serial number.
+     */
+    public function findBySerial(string $serial, ?int $gatewayNodeId = null): ?UsbDevice
+    {
+        $query = UsbDevice::where('serial', strtolower($serial));
+
+        if ($gatewayNodeId !== null) {
+            $query->where('gateway_node_id', $gatewayNodeId);
+        }
+
+        return $query->first();
+    }
 }

@@ -157,7 +157,7 @@ function EnrolledTrainingPathCard({
                         </span>
                     </div>
                 </CardContent>
-                <CardFooter className="p-5 pt-0">
+                <CardFooter className="p-5 pt-0 gap-2">
                     {nextTrainingUnit ? (
                         <Button
                             className={`w-full ${isCompleted ? 'bg-success text-success-foreground hover:bg-success/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
@@ -166,10 +166,10 @@ function EnrolledTrainingPathCard({
                             <Link
                                 href={`/trainingPaths/${trainingPath.id}/trainingUnit/${nextTrainingUnit.id}`}
                             >
-                                        {isCompleted ? (
+                                {isCompleted ? (
                                     <>
                                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        Review Path
+                                        Review Content
                                     </>
                                 ) : (
                                     <>
@@ -184,6 +184,18 @@ function EnrolledTrainingPathCard({
                             <Link href={`/trainingPaths/${trainingPath.id}`}>
                                 View Path{' '}
                                 <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    )}
+                    {isCompleted && (
+                        <Button
+                            variant="outline"
+                            className="w-full border-warning/50 text-warning hover:bg-warning/10 hover:text-warning"
+                            asChild
+                        >
+                            <Link href={`/trainingPaths/${trainingPath.id}?tab=reviews`}>
+                                <Star className="mr-2 h-4 w-4 fill-warning" />
+                                Rate & Review
                             </Link>
                         </Button>
                     )}

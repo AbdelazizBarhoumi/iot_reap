@@ -182,8 +182,14 @@ class TrainingPathReviewService
     public function canUserReview(int $trainingPathId, User $user): bool
     {
         // Must be enrolled (or admin) and not already reviewed
-        return ($user->isAdmin() || $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId))
-            && ! $this->reviewRepository->hasUserReviewed($trainingPathId, $user);
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId) && ! $this->reviewRepository->hasUserReviewed(
+            $trainingPathId,
+            $user
+        );;
     }
 
     /**

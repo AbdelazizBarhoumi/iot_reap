@@ -22,6 +22,7 @@ class TrainingUnitVMAssignmentService
     public function __construct(
         private TrainingUnitVMAssignmentRepository $assignmentRepository,
         private ProxmoxClientFactory $clientFactory,
+        private VMReservationService $vmReservationService,
     ) {}
 
     /**
@@ -229,6 +230,7 @@ class TrainingUnitVMAssignmentService
     public function getAccessibleVMForTrainingUnit(int $trainingUnitId, User $user): ?array
     {
         $trainingUnit = TrainingUnit::with('module.trainingPath.enrollments')->findOrFail($trainingUnitId);
+        $trainingPathId = (int) $trainingUnit->module->trainingPath->id;
 
         // Check if user is enrolled in the trainingPath
         $isEnrolled = $trainingUnit->module->trainingPath->enrollments()
@@ -246,10 +248,19 @@ class TrainingUnitVMAssignmentService
             return null;
         }
 
+        $availability = $this->vmReservationService->availabilityForTrainingPathVm(
+            nodeId: (int) $assignment->node_id,
+            vmId: (int) $assignment->vm_id,
+            trainingPathId: $trainingPathId,
+        );
+
         return [
             'vm_id' => $assignment->vm_id,
             'node_id' => $assignment->node_id,
             'vm_name' => $assignment->vm_name,
+            'available' => $availability['available'],
+            'unavailable_reason' => $availability['reason'],
+            'reserved_training_path' => $availability['reserved_training_path'],
         ];
     }
 }

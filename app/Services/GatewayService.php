@@ -139,6 +139,7 @@ class GatewayService
 
             foreach ($devices as $device) {
                 $currentBusIds[] = $device['busid'];
+                $serial = strtolower(trim((string) ($device['serial'] ?? '')));
 
                 // Check if device is a camera based on VID:PID
                 $isCamera = UsbDevice::isKnownCamera(
@@ -146,46 +147,34 @@ class GatewayService
                     $device['product_id']
                 );
 
-                // Check if this device already exists at a different port (port change)
-                // This handles cases where a device is unplugged and plugged into a different port.
-                // Important for dedicated devices that must persist their assignment.
-                $existingDevice = UsbDevice::where('gateway_node_id', $node->id)
-                    ->where('vendor_id', strtolower($device['vendor_id']))
-                    ->where('product_id', strtolower($device['product_id']))
-                    ->where('busid', '!=', $device['busid'])
-                    ->first();
+                $lookupAttributes = ['gateway_node_id' => $node->id];
 
-                if ($existingDevice && $existingDevice->isDedicated()) {
-                    // Device moved to a new port - update busid instead of creating duplicate
-                    Log::info('Dedicated USB device changed port, updating busid', [
+                if ($serial !== '') {
+                    $lookupAttributes['serial'] = $serial;
+                } else {
+                    $lookupAttributes['busid'] = $device['busid'];
+                }
+
+                $existingDevice = $this->deviceRepository->updateOrCreate(
+                    $lookupAttributes,
+                    [
+                        'busid' => $device['busid'],
+                        'vendor_id' => strtolower($device['vendor_id']),
+                        'product_id' => strtolower($device['product_id']),
+                        'serial' => $serial !== '' ? $serial : null,
+                        'name' => $device['name'],
+                        'is_camera' => $isCamera,
+                    ]
+                );
+
+                if ($serial !== '' && $existingDevice->getOriginal('busid') !== $device['busid']) {
+                    Log::info('USB device re-identified by serial after port change', [
                         'device_id' => $existingDevice->id,
-                        'old_busid' => $existingDevice->busid,
+                        'serial' => $serial,
+                        'old_busid' => $existingDevice->getOriginal('busid'),
                         'new_busid' => $device['busid'],
                         'vid_pid' => "{$device['vendor_id']}:{$device['product_id']}",
-                        'dedicated_vmid' => $existingDevice->dedicated_vmid,
                     ]);
-                    $existingDevice->update([
-                        'busid' => $device['busid'],
-                        'name' => $device['name'],
-                        // If it was disconnected, mark it available again
-                        'status' => $existingDevice->status === UsbDeviceStatus::DISCONNECTED
-                            ? UsbDeviceStatus::AVAILABLE
-                            : $existingDevice->status,
-                    ]);
-                } else {
-                    // Normal case: update or create by gateway_node_id + busid
-                    $this->deviceRepository->updateOrCreate(
-                        [
-                            'gateway_node_id' => $node->id,
-                            'busid' => $device['busid'],
-                        ],
-                        [
-                            'vendor_id' => $device['vendor_id'],
-                            'product_id' => $device['product_id'],
-                            'name' => $device['name'],
-                            'is_camera' => $isCamera,
-                        ]
-                    );
                 }
             }
 
@@ -3435,6 +3424,18 @@ class GatewayService
     {
         try {
             $devices = collect($this->listCameraCaptureDevices($node));
+
+            $serial = strtolower(trim((string) ($device->serial ?? '')));
+
+            if ($serial !== '') {
+                $serialMatch = $devices->first(function (array $cameraDevice) use ($serial): bool {
+                    return strtolower((string) ($cameraDevice['serial'] ?? '')) === $serial;
+                });
+
+                if ($serialMatch !== null) {
+                    return $serialMatch['device_path'] ?? $serialMatch['device'] ?? null;
+                }
+            }
 
             $match = $devices->first(
                 fn (array $cameraDevice): bool => ($cameraDevice['usb_busid'] ?? null) === $device->busid

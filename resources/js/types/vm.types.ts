@@ -270,6 +270,51 @@ export interface AssignVMToTrainingUnitRequest {
     teacher_notes?: string;
 }
 
+export interface VMReservation {
+    id: number;
+    node_id: number;
+    node_name?: string | null;
+    vm_id: number;
+    vm_name: string | null;
+    user_id: string;
+    approved_by: string | null;
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
+    status_label: string;
+    requested_start_at: string;
+    requested_end_at: string;
+    approved_start_at: string | null;
+    approved_end_at: string | null;
+    purpose: string | null;
+    admin_notes: string | null;
+    training_path_id: number | null;
+    is_backup_for_training_path: boolean;
+    training_path?: {
+        id: number;
+        title: string;
+    } | null;
+    user?: {
+        id: string;
+        name: string;
+        email?: string;
+    };
+    approver?: {
+        id: string;
+        name: string;
+    } | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateVMReservationRequest {
+    node_id: number;
+    vm_id: number;
+    vm_name?: string;
+    training_path_id?: number;
+    start_at: string;
+    end_at: string;
+    purpose?: string;
+}
+
 /**
  * VM info for trainingUnit display (after assignment is approved).
  */

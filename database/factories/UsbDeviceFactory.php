@@ -30,6 +30,7 @@ class UsbDeviceFactory extends Factory
             'busid' => "1-{$deviceNumber}",
             'vendor_id' => $this->faker->hexColor(),
             'product_id' => $this->faker->hexColor(),
+            'serial' => $this->faker->unique()->bothify('SN####??'),
             'name' => $this->faker->randomElement([
                 'Samsung Galaxy (MTP mode)',
                 'SanDisk Cruzer Blade',

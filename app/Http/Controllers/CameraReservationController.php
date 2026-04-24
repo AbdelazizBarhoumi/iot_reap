@@ -43,13 +43,13 @@ class CameraReservationController extends Controller
     }
 
     /**
-     * List active cameras that engineers can reserve.
-     */
+     * List cameras that engineers can reserve.  
+     * Includes both ACTIVE and INACTIVE cameras.   */
     public function cameras(): JsonResponse
     {
         $cameras = Camera::query()
             ->with(['gatewayNode', 'usbDevice', 'robot'])
-            ->where('status', CameraStatus::ACTIVE)
+            ->whereIn('status', [CameraStatus::ACTIVE, CameraStatus::INACTIVE])
             ->orderBy('name')
             ->get();
 
@@ -82,7 +82,7 @@ class CameraReservationController extends Controller
                 'message' => 'Camera reservation request submitted for approval',
                 'data' => new CameraReservationResource($reservation->load(['reservable', 'user'])),
             ], 201);
-        } catch (\InvalidArgumentException|\DomainException $e) {
+        } catch (\InvalidArgumentException | \DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

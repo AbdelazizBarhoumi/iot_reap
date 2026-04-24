@@ -91,6 +91,11 @@ class TrainingPath extends Model
     {
         return $this->hasMany(TrainingPathEnrollment::class);
     }
+    public function reviews(): HasMany
+    {
+        return
+            $this->hasMany(TrainingPathReview::class);
+    }
 
     public function students(): BelongsToMany
     {
@@ -163,7 +168,7 @@ class TrainingPath extends Model
             return 'Free';
         }
 
-        return '$'.number_format($this->price, 2);
+        return '$' . number_format($this->price, 2);
     }
 
     public function getThumbnailUrlAttribute(): ?string

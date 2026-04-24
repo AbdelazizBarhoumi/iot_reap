@@ -8,6 +8,7 @@ import type {
     AssignVMToTrainingUnitRequest,
     ConnectionProfile,
     CreateVMSessionRequest,
+    CreateVMReservationRequest,
     ExtendSessionRequest,
     GuacamoleTokenResponse,
     TrainingUnitVMAssignment,
@@ -15,6 +16,7 @@ import type {
     ProxmoxVM,
     ProxmoxVMInfo,
     TerminateSessionRequest,
+    VMReservation,
     VMSession,
     VMSnapshot,
 } from '../types/vm.types';
@@ -366,6 +368,60 @@ export const trainingUnitVMAssignmentApi = {
             { admin_notes: adminNotes },
         );
         return response.data.data;
+    },
+};
+
+export const vmReservationApi = {
+    async getMyReservations(): Promise<VMReservation[]> {
+        const response = await client.get<ApiResponse<VMReservation[]>>('/vm-reservations');
+        return response.data.data;
+    },
+
+    async getAvailableVMs(): Promise<ProxmoxVMInfo[]> {
+        const response = await client.get<ApiResponse<ProxmoxVMInfo[]>>('/vm-reservations/available-vms');
+        return response.data.data;
+    },
+
+    async create(data: CreateVMReservationRequest): Promise<VMReservation> {
+        const response = await client.post<ApiResponse<VMReservation>>('/vm-reservations', data);
+        return response.data.data;
+    },
+
+    async get(reservationId: number): Promise<VMReservation> {
+        const response = await client.get<ApiResponse<VMReservation>>(`/vm-reservations/${reservationId}`);
+        return response.data.data;
+    },
+
+    async cancel(reservationId: number): Promise<void> {
+        await client.post(`/vm-reservations/${reservationId}/cancel`);
+    },
+
+    async getVmCalendar(nodeId: number, vmId: number): Promise<VMReservation[]> {
+        const response = await client.get<ApiResponse<VMReservation[]>>(`/vm-reservations/nodes/${nodeId}/vms/${vmId}/calendar`);
+        return response.data.data;
+    },
+
+    async getPendingForAdmin(): Promise<VMReservation[]> {
+        const response = await client.get<ApiResponse<VMReservation[]>>('/admin/vm-reservations/pending');
+        return response.data.data;
+    },
+
+    async approveForAdmin(
+        reservationId: number,
+        payload: { approved_start_at?: string; approved_end_at?: string; admin_notes?: string },
+    ): Promise<void> {
+        await client.post(`/admin/vm-reservations/${reservationId}/approve`, payload);
+    },
+
+    async rejectForAdmin(reservationId: number, admin_notes?: string): Promise<void> {
+        await client.post(`/admin/vm-reservations/${reservationId}/reject`, { admin_notes });
+    },
+
+    async getMyTrainingPaths(): Promise<Array<{ id: number; title: string }>> {
+        const response = await client.get<{ data: Array<{ trainingPath: { id: number; title: string } }> }>('/my-trainingPaths');
+        return response.data.data
+            .map((row) => row.trainingPath)
+            .filter((trainingPath): trainingPath is { id: number; title: string } => Boolean(trainingPath?.id));
     },
 };
 

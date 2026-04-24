@@ -8,6 +8,7 @@ import {
     Camera as CameraIcon,
     CheckCircle2,
     Clock,
+    Database,
     Eye,
     HelpCircle,
     Loader2,
@@ -21,6 +22,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { cameraReservationApi } from '@/api/camera.api';
 import { hardwareApi, reservationApi } from '@/api/hardware.api';
+import { vmReservationApi } from '@/api/vm.api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,10 +65,14 @@ import type {
     UsbDeviceReservation,
     UsbReservationStatus,
 } from '@/types/hardware.types';
+import type {
+    ProxmoxVMInfo,
+    VMReservation,
+} from '@/types/vm.types';
 
-type ReservationKind = 'usb' | 'camera';
-type ReservationStatus = UsbReservationStatus | CameraReservationStatus;
-type ReservationRecord = UsbDeviceReservation | CameraReservation;
+type ReservationKind = 'usb' | 'camera' | 'vm';
+type ReservationStatus = UsbReservationStatus | CameraReservationStatus | 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
+type ReservationRecord = UsbDeviceReservation | CameraReservation | VMReservation;
 
 interface RequestableItem {
     id: number;
@@ -125,9 +131,10 @@ function formatDateTimeShort(value: string | null | undefined): string {
 }
 
 function getReservationId(kind: ReservationKind, reservation: ReservationRecord): number {
-    return kind === 'usb'
-        ? (reservation as UsbDeviceReservation).id
-        : (reservation as CameraReservation).id;
+    if (kind === 'usb' || kind === 'camera') {
+        return (reservation as UsbDeviceReservation | CameraReservation).id;
+    }
+    return (reservation as VMReservation).id;
 }
 
 function getReservationStatus(
@@ -151,8 +158,13 @@ function getReservationSubject(
         );
     }
 
-    const cameraReservation = reservation as CameraReservation;
-    return cameraReservation.camera?.name ?? `Camera #${cameraReservation.camera_id}`;
+    if (kind === 'camera') {
+        const cameraReservation = reservation as CameraReservation;
+        return cameraReservation.camera?.name ?? `Camera #${cameraReservation.camera_id}`;
+    }
+
+    const vmReservation = reservation as VMReservation;
+    return vmReservation.vm_name ?? `VM #${vmReservation.vm_id}`;
 }
 
 function getReservationSource(
@@ -166,21 +178,30 @@ function getReservationSource(
         );
     }
 
-    return (
-        (reservation as CameraReservation).camera?.source_name ??
-        (reservation as CameraReservation).camera?.gateway_name ??
-        (reservation as CameraReservation).camera?.robot_name ??
-        'Unknown source'
-    );
+    if (kind === 'camera') {
+        return (
+            (reservation as CameraReservation).camera?.source_name ??
+            (reservation as CameraReservation).camera?.gateway_name ??
+            (reservation as CameraReservation).camera?.robot_name ??
+            'Unknown source'
+        );
+    }
+
+    const vmReservation = reservation as VMReservation;
+    return vmReservation.node_name ?? 'Unknown node';
 }
 
 function getReservationResourceId(
     kind: ReservationKind,
     reservation: ReservationRecord,
 ): number {
-    return kind === 'usb'
-        ? (reservation as UsbDeviceReservation).usb_device_id
-        : (reservation as CameraReservation).camera_id;
+    if (kind === 'usb') {
+        return (reservation as UsbDeviceReservation).usb_device_id;
+    }
+    if (kind === 'camera') {
+        return (reservation as CameraReservation).camera_id;
+    }
+    return (reservation as VMReservation).vm_id;
 }
 
 function getReservationRequestedStart(reservation: ReservationRecord): string | null {
@@ -231,7 +252,7 @@ function ReservationCard({
     const reservationId = getReservationId(kind, reservation);
     const subject = getReservationSubject(kind, reservation);
     const source = getReservationSource(kind, reservation);
-    const Icon = kind === 'usb' ? Usb : CameraIcon;
+    const Icon = kind === 'usb' ? Usb : kind === 'camera' ? CameraIcon : Database;
 
     return (
         <motion.div
@@ -371,11 +392,13 @@ interface RequestReservationDialogProps {
     kind: ReservationKind;
     items: RequestableItem[];
     itemsLoading: boolean;
+    trainingPaths?: Array<{ id: number; title: string }>;
     onSubmit: (data: {
         resourceId: number;
         startAt: string;
         endAt: string;
         purpose: string;
+        trainingPathId?: number;
     }) => void;
     submitting: boolean;
 }
@@ -386,6 +409,7 @@ function RequestReservationDialog({
     kind,
     items,
     itemsLoading,
+    trainingPaths,
     onSubmit,
     submitting,
 }: RequestReservationDialogProps) {
@@ -395,6 +419,7 @@ function RequestReservationDialog({
     const [endDate, setEndDate] = useState('');
     const [endTime, setEndTime] = useState('');
     const [purpose, setPurpose] = useState('');
+    const [trainingPathId, setTrainingPathId] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
     const resetForm = () => {
@@ -404,6 +429,7 @@ function RequestReservationDialog({
         setEndDate('');
         setEndTime('');
         setPurpose('');
+        setTrainingPathId('');
         setError(null);
     };
 
@@ -417,7 +443,7 @@ function RequestReservationDialog({
 
         if (!selectedResourceId) {
             setError(
-                `Please select a ${kind === 'usb' ? 'USB device' : 'camera'}`,
+                `Please select a ${kind === 'usb' ? 'USB device' : kind === 'camera' ? 'camera' : 'VM'}`,
             );
             return;
         }
@@ -447,6 +473,7 @@ function RequestReservationDialog({
             startAt,
             endAt,
             purpose,
+            trainingPathId: trainingPathId ? Number(trainingPathId) : undefined,
         });
     };
 
@@ -457,14 +484,15 @@ function RequestReservationDialog({
                     <DialogTitle className="flex items-center gap-2">
                         {kind === 'usb' ? (
                             <Usb className="h-5 w-5" />
-                        ) : (
+                        ) : kind === 'camera' ? (
                             <CameraIcon className="h-5 w-5" />
+                        ) : (
+                            <Database className="h-5 w-5" />
                         )}
-                        Request {kind === 'usb' ? 'USB Device' : 'Camera'} Reservation
+                        Request {kind === 'usb' ? 'USB Device' : kind === 'camera' ? 'Camera' : 'VM'} Reservation
                     </DialogTitle>
                     <DialogDescription>
-                        Request exclusive access to a{' '}
-                        {kind === 'usb' ? 'USB device' : 'camera'} for a specific
+                        Request exclusive access to a{' '}                        {kind === 'usb' ? 'USB device' : kind === 'camera' ? 'camera' : 'VM'} for a specific
                         time period. An administrator will review your request.
                     </DialogDescription>
                 </DialogHeader>
@@ -477,7 +505,7 @@ function RequestReservationDialog({
                     )}
                     <div className="space-y-2">
                         <Label htmlFor="reservation-item">
-                            {kind === 'usb' ? 'USB Device' : 'Camera'}
+                            {kind === 'usb' ? 'USB Device' : kind === 'camera' ? 'Camera' : 'VM'}
                         </Label>
                         {itemsLoading ? (
                             <Skeleton className="h-10 w-full" />
@@ -488,7 +516,7 @@ function RequestReservationDialog({
                             >
                                 <SelectTrigger id="reservation-item">
                                     <SelectValue
-                                        placeholder={`Select a ${kind === 'usb' ? 'device' : 'camera'}...`}
+                                        placeholder={`Select a ${kind === 'usb' ? 'device' : kind === 'camera' ? 'camera' : 'VM'}...`}
                                     />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -517,6 +545,37 @@ function RequestReservationDialog({
                             </Select>
                         )}
                     </div>
+                    {kind === 'vm' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="training-path">
+                                Training Path
+                                <span className="ml-1 text-muted-foreground">
+                                    (optional)
+                                </span>
+                            </Label>
+                            <Select
+                                value={trainingPathId || '__none__'}
+                                onValueChange={(value) =>
+                                    setTrainingPathId(value === '__none__' ? '' : value)
+                                }
+                            >
+                                <SelectTrigger id="training-path">
+                                    <SelectValue placeholder="Select a training path (optional)..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">None</SelectItem>
+                                    {trainingPaths?.map((path) => (
+                                        <SelectItem
+                                            key={path.id}
+                                            value={String(path.id)}
+                                        >
+                                            {path.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="start-date">Start Date</Label>
@@ -775,8 +834,11 @@ function splitReservations<T extends ReservationRecord>(reservations: T[]) {
 export default function MyReservationsPage() {
     const [usbReservations, setUsbReservations] = useState<UsbDeviceReservation[]>([]);
     const [cameraReservations, setCameraReservations] = useState<CameraReservation[]>([]);
+    const [vmReservations, setVmReservations] = useState<VMReservation[]>([]);
     const [usbDevices, setUsbDevices] = useState<UsbDevice[]>([]);
     const [cameras, setCameras] = useState<Camera[]>([]);
+    const [vms, setVms] = useState<ProxmoxVMInfo[]>([]);
+    const [trainingPaths, setTrainingPaths] = useState<Array<{ id: number; title: string }>>([]);
     const [loading, setLoading] = useState(true);
     const [resourceLoading, setResourceLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
@@ -808,13 +870,15 @@ export default function MyReservationsPage() {
             setLoading(true);
             setError(null);
 
-            const [usbData, cameraData] = await Promise.all([
+            const [usbData, cameraData, vmData] = await Promise.all([
                 reservationApi.getMyReservations(),
                 cameraReservationApi.getMyReservations(),
+                vmReservationApi.getMyReservations(),
             ]);
 
             setUsbReservations(usbData);
             setCameraReservations(cameraData);
+            setVmReservations(vmData);
         } catch {
             setError('Failed to load reservations');
         } finally {
@@ -834,8 +898,20 @@ export default function MyReservationsPage() {
                 return;
             }
 
-            const availableCameras = await cameraReservationApi.getCameras();
-            setCameras(availableCameras);
+            if (kind === 'camera') {
+                const availableCameras = await cameraReservationApi.getCameras();
+                setCameras(availableCameras);
+                return;
+            }
+
+            if (kind === 'vm') {
+                const [availableVMs, paths] = await Promise.all([
+                    vmReservationApi.getAvailableVMs(),
+                    vmReservationApi.getMyTrainingPaths(),
+                ]);
+                setVms(availableVMs);
+                setTrainingPaths(paths);
+            }
         } finally {
             setResourceLoading(false);
         }
@@ -846,7 +922,7 @@ export default function MyReservationsPage() {
     }, [fetchReservations]);
 
     useEffect(() => {
-        const hasPending = [...usbReservations, ...cameraReservations].some(
+        const hasPending = [...usbReservations, ...cameraReservations, ...vmReservations].some(
             (reservation) => reservation.status === 'pending',
         );
 
@@ -859,7 +935,7 @@ export default function MyReservationsPage() {
         }, 30000);
 
         return () => clearInterval(interval);
-    }, [cameraReservations, fetchReservations, usbReservations]);
+    }, [cameraReservations, fetchReservations, usbReservations, vmReservations]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -879,8 +955,12 @@ export default function MyReservationsPage() {
         () => splitReservations(cameraReservations),
         [cameraReservations],
     );
+    const vmBreakdown = useMemo(
+        () => splitReservations(vmReservations),
+        [vmReservations],
+    );
 
-    const currentBreakdown = resourceTab === 'usb' ? usbBreakdown : cameraBreakdown;
+    const currentBreakdown = resourceTab === 'usb' ? usbBreakdown : resourceTab === 'camera' ? cameraBreakdown : vmBreakdown;
     const currentReservations =
         statusTab === 'active'
             ? currentBreakdown.active
@@ -896,12 +976,18 @@ export default function MyReservationsPage() {
                       label: device.name,
                       description: device.gateway_node_name || device.busid,
                   }))
-                : cameras.map((camera) => ({
-                      id: camera.id,
-                      label: camera.name,
-                      description: camera.source_name,
-                  })),
-        [cameras, resourceTab, usbDevices],
+                : resourceTab === 'camera'
+                  ? cameras.map((camera) => ({
+                        id: camera.id,
+                        label: camera.name,
+                        description: camera.source_name,
+                    }))
+                  : vms.map((vm) => ({
+                        id: vm.vmid,
+                        label: vm.name,
+                        description: `${vm.node_name} (${vm.server_name})`,
+                    })),
+        [cameras, resourceTab, usbDevices, vms],
     );
 
     const handleOpenRequestDialog = () => {
@@ -918,8 +1004,10 @@ export default function MyReservationsPage() {
 
             if (kind === 'usb') {
                 await reservationApi.cancel(reservationId);
-            } else {
+            } else if (kind === 'camera') {
                 await cameraReservationApi.cancel(reservationId);
+            } else {
+                await vmReservationApi.cancel(reservationId);
             }
 
             await fetchReservations();
@@ -935,6 +1023,7 @@ export default function MyReservationsPage() {
         startAt: string;
         endAt: string;
         purpose: string;
+        trainingPathId?: number;
     }) => {
         try {
             setSubmitting(true);
@@ -947,12 +1036,24 @@ export default function MyReservationsPage() {
                     end_at: data.endAt,
                     purpose: data.purpose || undefined,
                 });
-            } else {
+            } else if (resourceTab === 'camera') {
                 await cameraReservationApi.create({
                     camera_id: data.resourceId,
                     start_at: data.startAt,
                     end_at: data.endAt,
                     purpose: data.purpose || undefined,
+                });
+            } else {
+                const vm = vms.find((v) => v.vmid === data.resourceId);
+                if (!vm) throw new Error('VM not found');
+                await vmReservationApi.create({
+                    node_id: vm.node_id,
+                    vm_id: vm.vmid,
+                    vm_name: vm.name,
+                    start_at: data.startAt,
+                    end_at: data.endAt,
+                    purpose: data.purpose || undefined,
+                    training_path_id: data.trainingPathId,
                 });
             }
 
@@ -980,8 +1081,10 @@ export default function MyReservationsPage() {
 
             if (kind === 'usb') {
                 setDetailsReservation(await reservationApi.get(reservationId));
-            } else {
+            } else if (kind === 'camera') {
                 setDetailsReservation(await cameraReservationApi.get(reservationId));
+            } else {
+                setDetailsReservation(await vmReservationApi.get(reservationId));
             }
 
             setDetailsOpen(true);
@@ -1005,9 +1108,15 @@ export default function MyReservationsPage() {
 
             if (kind === 'usb') {
                 setCalendarReservations(await reservationApi.getDeviceCalendar(resourceId));
-            } else {
+            } else if (kind === 'camera') {
                 setCalendarReservations(
                     await cameraReservationApi.getCameraCalendar(resourceId),
+                );
+            } else {
+                const vm = vms.find((v) => v.vmid === resourceId);
+                if (!vm) throw new Error('VM not found');
+                setCalendarReservations(
+                    await vmReservationApi.getVmCalendar(vm.node_id, vm.vmid),
                 );
             }
         } catch {
@@ -1027,7 +1136,7 @@ export default function MyReservationsPage() {
                             Reservations
                         </h1>
                         <p className="text-muted-foreground">
-                            Manage USB device and camera reservation requests.
+                            Manage USB device, camera, and VM reservation requests.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1043,7 +1152,7 @@ export default function MyReservationsPage() {
                         </Button>
                         <Button onClick={handleOpenRequestDialog}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Request {resourceTab === 'usb' ? 'USB Device' : 'Camera'}
+                            Request {resourceTab === 'usb' ? 'USB Device' : resourceTab === 'camera' ? 'Camera' : 'VM'}
                         </Button>
                     </div>
                 </div>
@@ -1053,7 +1162,7 @@ export default function MyReservationsPage() {
                     <AlertTitle>How Reservations Work</AlertTitle>
                     <AlertDescription>
                         Request the time slot you need, wait for admin approval,
-                        then use the approved USB device or camera during that
+                        then use the approved USB device, camera, or VM during that
                         reserved window.
                     </AlertDescription>
                 </Alert>
@@ -1080,6 +1189,10 @@ export default function MyReservationsPage() {
                         <TabsTrigger value="camera" className="gap-2">
                             <CameraIcon className="h-4 w-4" />
                             Cameras
+                        </TabsTrigger>
+                        <TabsTrigger value="vm" className="gap-2">
+                            <Database className="h-4 w-4" />
+                            VMs
                         </TabsTrigger>
                     </TabsList>
 
@@ -1150,15 +1263,17 @@ export default function MyReservationsPage() {
                                         <CardContent className="flex flex-col items-center justify-center py-12">
                                             {resourceTab === 'usb' ? (
                                                 <Usb className="mb-4 h-12 w-12 text-muted-foreground" />
-                                            ) : (
+                                            ) : resourceTab === 'camera' ? (
                                                 <CameraIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+                                            ) : (
+                                                <Database className="mb-4 h-12 w-12 text-muted-foreground" />
                                             )}
                                             <p className="mb-4 text-center text-muted-foreground">
-                                                No {resourceTab === 'usb' ? 'USB device' : 'camera'} reservations in this section.
+                                                No {resourceTab === 'usb' ? 'USB device' : resourceTab === 'camera' ? 'camera' : 'VM'} reservations in this section.
                                             </p>
                                             <Button onClick={handleOpenRequestDialog}>
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                Request {resourceTab === 'usb' ? 'USB Device' : 'Camera'}
+                                                Request {resourceTab === 'usb' ? 'USB Device' : resourceTab === 'camera' ? 'Camera' : 'VM'}
                                             </Button>
                                         </CardContent>
                                     </Card>
@@ -1187,6 +1302,7 @@ export default function MyReservationsPage() {
                 kind={resourceTab}
                 items={requestableItems}
                 itemsLoading={resourceLoading}
+                trainingPaths={trainingPaths}
                 onSubmit={handleSubmitReservation}
                 submitting={submitting}
             />
