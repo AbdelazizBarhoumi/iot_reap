@@ -5,15 +5,24 @@ import TrainingPathCard from '../TrainingPathCard';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) => (
+        div: ({
+            children,
+            ...props
+        }: { children?: React.ReactNode } & Record<string, unknown>) => (
             <div {...props}>{children}</div>
         ),
     },
-    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => (
+        <>{children}</>
+    ),
 }));
 // Mock Inertia Link
 vi.mock('@inertiajs/react', () => ({
-    Link: ({ children, href, className }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    Link: ({
+        children,
+        href,
+        className,
+    }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
         <a href={href} className={className}>
             {children}
         </a>
@@ -31,10 +40,8 @@ describe('TrainingPathCard Component', () => {
         rating: 4.5,
         students: 1250,
         hasVirtualMachine: true,
-        modules: [
-            { trainingUnits: [1, 2, 3] },
-            { trainingUnits: [4, 5] }
-        ]
+        thumbnail: null,
+        modules: [{ trainingUnits: [1, 2, 3] }, { trainingUnits: [4, 5] }],
     };
     it('renders trainingPath title correctly', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
@@ -42,7 +49,9 @@ describe('TrainingPathCard Component', () => {
     });
     it('renders trainingPath description correctly', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
-        expect(screen.getByText('Learn the fundamentals of React development')).toBeInTheDocument();
+        expect(
+            screen.getByText('Learn the fundamentals of React development'),
+        ).toBeInTheDocument();
     });
     it('renders instructor name correctly', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
@@ -69,6 +78,21 @@ describe('TrainingPathCard Component', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
         expect(screen.getByText('Smart Manufacturing')).toBeInTheDocument();
     });
+    it('renders thumbnail image when provided', () => {
+        const trainingPathWithThumbnail = {
+            ...mockTrainingPath,
+            thumbnail_url: 'https://example.com/path-thumbnail.png',
+        };
+
+        render(<TrainingPathCard trainingPath={trainingPathWithThumbnail} />);
+
+        expect(
+            screen.getByAltText('Introduction to React thumbnail'),
+        ).toHaveAttribute(
+            'src',
+            'https://example.com/path-thumbnail.png',
+        );
+    });
     it('renders duration when provided', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
         expect(screen.getByText('4 weeks')).toBeInTheDocument();
@@ -83,7 +107,10 @@ describe('TrainingPathCard Component', () => {
         expect(screen.getByText('VM Labs')).toBeInTheDocument();
     });
     it('does not show VM Labs badge when hasVirtualMachine is false', () => {
-        const trainingPathNoVM = { ...mockTrainingPath, hasVirtualMachine: false };
+        const trainingPathNoVM = {
+            ...mockTrainingPath,
+            hasVirtualMachine: false,
+        };
         render(<TrainingPathCard trainingPath={trainingPathNoVM} />);
         expect(screen.queryByText('VM Labs')).not.toBeInTheDocument();
     });
@@ -92,7 +119,10 @@ describe('TrainingPathCard Component', () => {
         expect(screen.getByText('2 modules')).toBeInTheDocument();
     });
     it('does not show module count when no modules provided', () => {
-        const trainingPathNoModules = { ...mockTrainingPath, modules: undefined };
+        const trainingPathNoModules = {
+            ...mockTrainingPath,
+            modules: undefined,
+        };
         render(<TrainingPathCard trainingPath={trainingPathNoModules} />);
         expect(screen.queryByText(/modules/)).not.toBeInTheDocument();
     });
@@ -108,20 +138,27 @@ describe('TrainingPathCard Component', () => {
         expect(link).toHaveAttribute('href', '/trainingPaths/1');
     });
     it('handles different trainingPath levels with appropriate styling', () => {
-        const intermediateTrainingPath = { ...mockTrainingPath, level: 'Intermediate' as const };
+        const intermediateTrainingPath = {
+            ...mockTrainingPath,
+            level: 'Intermediate' as const,
+        };
         render(<TrainingPathCard trainingPath={intermediateTrainingPath} />);
         expect(screen.getByText('Intermediate')).toBeInTheDocument();
     });
     it('handles advanced trainingPath level', () => {
-        const advancedTrainingPath = { ...mockTrainingPath, level: 'Advanced' as const };
+        const advancedTrainingPath = {
+            ...mockTrainingPath,
+            level: 'Advanced' as const,
+        };
         render(<TrainingPathCard trainingPath={advancedTrainingPath} />);
         expect(screen.getByText('Advanced')).toBeInTheDocument();
     });
     it('falls back to default category icon for unknown categories', () => {
-        const unknownCategoryTrainingPath = { ...mockTrainingPath, category: 'Unknown Category' };
+        const unknownCategoryTrainingPath = {
+            ...mockTrainingPath,
+            category: 'Unknown Category',
+        };
         render(<TrainingPathCard trainingPath={unknownCategoryTrainingPath} />);
         expect(screen.getByText('Unknown Category')).toBeInTheDocument();
     });
 });
-
-

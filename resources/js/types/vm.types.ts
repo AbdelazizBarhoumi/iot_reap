@@ -207,7 +207,10 @@ export interface TerminateSessionRequest {
 // TrainingUnit VM Assignment Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type TrainingUnitVMAssignmentStatus = 'pending' | 'approved' | 'rejected';
+export type TrainingUnitVMAssignmentStatus =
+    | 'pending'
+    | 'approved'
+    | 'rejected';
 
 /**
  * TrainingUnit VM Assignment - teacher assigns a VM to a trainingUnit, admin approves.
@@ -283,7 +286,13 @@ export interface VMReservation {
     vm_name: string | null;
     user_id: string;
     approved_by: string | null;
-    status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'active' | 'completed';
+    status:
+        | 'pending'
+        | 'approved'
+        | 'rejected'
+        | 'cancelled'
+        | 'active'
+        | 'completed';
     status_label: string;
     requested_start_at: string;
     requested_end_at: string;
@@ -328,4 +337,3 @@ export interface TrainingUnitVMInfo {
     node_id: number;
     vm_name: string | null;
 }
-

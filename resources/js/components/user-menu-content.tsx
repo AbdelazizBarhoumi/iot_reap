@@ -93,8 +93,7 @@ export function UserMenuContent({ user }: Props) {
                     <LogOut className="mr-2" />
                     Log out
                 </Link>
-            </DropdownMenuItem>        </>
+            </DropdownMenuItem>{' '}
+        </>
     );
 }
-
-

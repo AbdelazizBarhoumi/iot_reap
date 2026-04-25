@@ -81,7 +81,7 @@ const statusConfig = {
 export default function RefundsPage({ refunds = [], stats }: Props) {
     const [search, setSearch] = useState('');
     const [processing, setProcessing] = useState<string | null>(null);
-    const refundList = Array.isArray(refunds) ? refunds : refunds?.data ?? [];
+    const refundList = Array.isArray(refunds) ? refunds : (refunds?.data ?? []);
     const filtered = refundList.filter(
         (r) =>
             r.user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -119,7 +119,9 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
             <div className="container space-y-6 py-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">Training Path Refund Requests</h1>
+                        <h1 className="text-3xl font-bold">
+                            Training Path Refund Requests
+                        </h1>
                         <p className="text-muted-foreground">
                             Review and process training path refunds
                         </p>
@@ -304,4 +306,3 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
         </AppLayout>
     );
 }
-

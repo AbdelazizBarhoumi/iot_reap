@@ -43,4 +43,3 @@ export default function VerifyEmail({ status }: { status?: string }) {
         </AuthLayout>
     );
 }
-

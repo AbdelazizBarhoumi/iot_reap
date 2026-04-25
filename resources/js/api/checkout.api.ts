@@ -25,7 +25,7 @@ export async function getPayments(): Promise<Payment[]> {
 
     return Array.isArray(response.data)
         ? response.data
-        : response.data.data ?? [];
+        : (response.data.data ?? []);
 }
 
 export async function requestRefund(
@@ -44,14 +44,13 @@ export async function requestRefund(
 }
 
 export async function getRefunds(): Promise<RefundRequest[]> {
-    const response = await client.get<{ data?: RefundRequest[] } | RefundRequest[]>(
-        '/checkout/refunds',
-        {
-            headers: { Accept: 'application/json' },
-        },
-    );
+    const response = await client.get<
+        { data?: RefundRequest[] } | RefundRequest[]
+    >('/checkout/refunds', {
+        headers: { Accept: 'application/json' },
+    });
 
     return Array.isArray(response.data)
         ? response.data
-        : response.data.data ?? [];
+        : (response.data.data ?? []);
 }

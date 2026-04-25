@@ -91,7 +91,10 @@ export function useRefunds() {
         fetchRefunds();
     }, []);
 
-    const requestRefund = async (paymentId: string | number, reason: string) => {
+    const requestRefund = async (
+        paymentId: string | number,
+        reason: string,
+    ) => {
         try {
             setLoading(true);
             const data = await checkoutApi.requestRefund(paymentId, reason);
@@ -100,9 +103,7 @@ export function useRefunds() {
             return data;
         } catch (err) {
             const message =
-                err instanceof Error
-                    ? err.message
-                    : 'Failed to request refund';
+                err instanceof Error ? err.message : 'Failed to request refund';
             setError(message);
             throw err;
         } finally {

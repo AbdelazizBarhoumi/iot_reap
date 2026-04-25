@@ -12,7 +12,12 @@ import {
     Target,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { KPICard, EnrollmentChart, RevenueChart, PeriodSelector } from '@/components/analytics';
+import {
+    KPICard,
+    EnrollmentChart,
+    RevenueChart,
+    PeriodSelector,
+} from '@/components/analytics';
 import { CompletionFunnel } from '@/components/analytics/CompletionFunnel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +78,10 @@ export default function AnalyticsPage({
                 count: kpis.total_completions || 0,
                 percentage:
                     totalStudents > 0
-                        ? Math.round((kpis.total_completions || 0) / totalStudents * 100)
+                        ? Math.round(
+                              ((kpis.total_completions || 0) / totalStudents) *
+                                  100,
+                          )
                         : 0,
             },
         ];
@@ -201,7 +209,8 @@ export default function AnalyticsPage({
                                             </Link>
                                         </div>
                                         <div className="text-sm font-medium">
-                                            {trainingPath.formatted_value} enrollments
+                                            {trainingPath.formatted_value}{' '}
+                                            enrollments
                                         </div>
                                     </div>
                                 ))}
@@ -213,4 +222,3 @@ export default function AnalyticsPage({
         </AppLayout>
     );
 }
-

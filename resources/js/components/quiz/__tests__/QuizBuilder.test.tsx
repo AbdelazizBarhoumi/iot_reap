@@ -37,17 +37,19 @@ vi.mock('../QuestionEditor', () => ({
         isOpen ? (
             <div data-testid="question-editor">
                 <button onClick={onClose}>Close Editor</button>
-                <button 
-                    onClick={() => onSave({
-                        id: 1,
-                        type: 'multiple_choice',
-                        question: 'Test Question',
-                        points: 10,
-                        options: [
-                            { option_text: 'Option A', is_correct: true },
-                            { option_text: 'Option B', is_correct: false },
-                        ],
-                    })}
+                <button
+                    onClick={() =>
+                        onSave({
+                            id: 1,
+                            type: 'multiple_choice',
+                            question: 'Test Question',
+                            points: 10,
+                            options: [
+                                { option_text: 'Option A', is_correct: true },
+                                { option_text: 'Option B', is_correct: false },
+                            ],
+                        })
+                    }
                 >
                     Save Question
                 </button>
@@ -70,13 +72,13 @@ const QuizBuilder = ({ quiz, onQuizCreated }: QuizBuilderProps) => {
     const handleCreateQuiz = async () => {
         setIsCreating(true);
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         onQuizCreated({ id: 1, title: 'New Quiz' });
         setIsCreating(false);
     };
     const handlePublish = async () => {
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
     };
     if (!quiz) {
         return (
@@ -86,10 +88,7 @@ const QuizBuilder = ({ quiz, onQuizCreated }: QuizBuilderProps) => {
                 <input id="title" name="title" />
                 <label htmlFor="description">Description</label>
                 <textarea id="description" name="description" />
-                <button 
-                    onClick={handleCreateQuiz}
-                    disabled={isCreating}
-                >
+                <button onClick={handleCreateQuiz} disabled={isCreating}>
                     {isCreating ? 'Creating...' : 'Create Quiz'}
                 </button>
             </div>
@@ -105,8 +104,8 @@ const QuizBuilder = ({ quiz, onQuizCreated }: QuizBuilderProps) => {
             </div>
             <div>
                 <label htmlFor="shuffle_questions">Shuffle Questions</label>
-                <button 
-                    role="switch" 
+                <button
+                    role="switch"
                     aria-checked={quiz.shuffle_questions}
                     data-testid="switch-shuffle_questions"
                 >
@@ -115,12 +114,24 @@ const QuizBuilder = ({ quiz, onQuizCreated }: QuizBuilderProps) => {
             </div>
             <h3>Questions ({quiz.questions?.length || 0})</h3>
             {quiz.questions?.map((question: Question) => (
-                <div key={question.id} data-testid={`reorder-item-${question.id}`}>
+                <div
+                    key={question.id}
+                    data-testid={`reorder-item-${question.id}`}
+                >
                     <span>{question.question}</span>
-                    <button onClick={() => window.confirm('Are you sure?') && console.log('deleted')}>Delete Question</button>
+                    <button
+                        onClick={() =>
+                            window.confirm('Are you sure?') &&
+                            console.log('deleted')
+                        }
+                    >
+                        Delete Question
+                    </button>
                 </div>
             ))}
-            <button onClick={() => setShowAddQuestion(true)}>Add Question</button>
+            <button onClick={() => setShowAddQuestion(true)}>
+                Add Question
+            </button>
             <button onClick={handlePublish}>
                 {quiz.is_published ? 'Unpublish Quiz' : 'Publish Quiz'}
             </button>
@@ -132,8 +143,12 @@ const QuizBuilder = ({ quiz, onQuizCreated }: QuizBuilderProps) => {
             </button>
             {showAddQuestion && (
                 <div data-testid="question-editor">
-                    <button onClick={() => setShowAddQuestion(false)}>Close Editor</button>
-                    <button onClick={() => setShowAddQuestion(false)}>Save Question</button>
+                    <button onClick={() => setShowAddQuestion(false)}>
+                        Close Editor
+                    </button>
+                    <button onClick={() => setShowAddQuestion(false)}>
+                        Save Question
+                    </button>
                 </div>
             )}
         </div>
@@ -173,10 +188,14 @@ describe('QuizBuilder Component', () => {
         };
         it('renders quiz creation form when no quiz provided', () => {
             render(<QuizBuilder {...creationProps} />);
-            expect(screen.getByRole('heading', { level: 2, name: /create quiz/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole('heading', { level: 2, name: /create quiz/i }),
+            ).toBeInTheDocument();
             expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
             expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /create quiz/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole('button', { name: /create quiz/i }),
+            ).toBeInTheDocument();
         });
         it('allows user to fill out quiz creation form', async () => {
             const user = userEvent.setup();
@@ -191,7 +210,9 @@ describe('QuizBuilder Component', () => {
         it('creates quiz when form is submitted', async () => {
             const user = userEvent.setup();
             render(<QuizBuilder {...creationProps} />);
-            const createButton = screen.getByRole('button', { name: /create quiz/i });
+            const createButton = screen.getByRole('button', {
+                name: /create quiz/i,
+            });
             await user.click(createButton);
             await waitFor(() => {
                 expect(mockOnQuizCreated).toHaveBeenCalled();
@@ -200,9 +221,13 @@ describe('QuizBuilder Component', () => {
         it('disables create button while creating quiz', async () => {
             const user = userEvent.setup();
             render(<QuizBuilder {...creationProps} />);
-            const createButton = screen.getByRole('button', { name: /create quiz/i });
+            const createButton = screen.getByRole('button', {
+                name: /create quiz/i,
+            });
             await user.click(createButton);
-            expect(screen.getByRole('button', { name: /creating\.\.\./i })).toBeDisabled();
+            expect(
+                screen.getByRole('button', { name: /creating\.\.\./i }),
+            ).toBeDisabled();
         });
     });
     describe('Editor Mode (Quiz Exists)', () => {
@@ -215,7 +240,9 @@ describe('QuizBuilder Component', () => {
             expect(screen.getByText('Sample Quiz')).toBeInTheDocument();
             expect(screen.getByText(/quiz settings/i)).toBeInTheDocument();
             expect(screen.getByText(/questions \(2\)/i)).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /publish quiz/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole('button', { name: /publish quiz/i }),
+            ).toBeInTheDocument();
         });
         it('displays quiz questions', () => {
             render(<QuizBuilder {...editorProps} />);
@@ -225,28 +252,42 @@ describe('QuizBuilder Component', () => {
         it('shows unpublish button when quiz is published', () => {
             const publishedQuiz = { ...sampleQuiz, is_published: true };
             render(<QuizBuilder {...editorProps} quiz={publishedQuiz} />);
-            expect(screen.getByRole('button', { name: /unpublish quiz/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole('button', { name: /unpublish quiz/i }),
+            ).toBeInTheDocument();
         });
         it('toggles quiz settings switches', async () => {
             render(<QuizBuilder {...editorProps} />);
-            const shuffleQuestionsSwitch = screen.getByTestId('switch-shuffle_questions');
+            const shuffleQuestionsSwitch = screen.getByTestId(
+                'switch-shuffle_questions',
+            );
             expect(shuffleQuestionsSwitch).toHaveTextContent('OFF');
         });
         it('deletes quiz with confirmation', async () => {
             const user = userEvent.setup();
-            vi.stubGlobal('confirm', vi.fn(() => true));
+            vi.stubGlobal(
+                'confirm',
+                vi.fn(() => true),
+            );
             render(<QuizBuilder {...editorProps} />);
-            const deleteButton = screen.getByRole('button', { name: /delete quiz/i });
+            const deleteButton = screen.getByRole('button', {
+                name: /delete quiz/i,
+            });
             await user.click(deleteButton);
             expect(window.confirm).toHaveBeenCalledWith(
-                expect.stringContaining('Are you sure')
+                expect.stringContaining('Are you sure'),
             );
         });
         it('does not delete quiz when confirmation is cancelled', async () => {
             const user = userEvent.setup();
-            vi.stubGlobal('confirm', vi.fn(() => false));
+            vi.stubGlobal(
+                'confirm',
+                vi.fn(() => false),
+            );
             render(<QuizBuilder {...editorProps} />);
-            const deleteButton = screen.getByRole('button', { name: /delete quiz/i });
+            const deleteButton = screen.getByRole('button', {
+                name: /delete quiz/i,
+            });
             await user.click(deleteButton);
             expect(window.confirm).toHaveBeenCalled();
         });
@@ -260,29 +301,40 @@ describe('QuizBuilder Component', () => {
         it('opens question editor when add question button is clicked', async () => {
             const user = userEvent.setup();
             render(<QuizBuilder {...editorProps} />);
-            const addButton = screen.getByRole('button', { name: /add question/i });
+            const addButton = screen.getByRole('button', {
+                name: /add question/i,
+            });
             await user.click(addButton);
             expect(screen.getByTestId('question-editor')).toBeInTheDocument();
         });
         it('closes question editor when close button is clicked', async () => {
             const user = userEvent.setup();
             render(<QuizBuilder {...editorProps} />);
-            const addButton = screen.getByRole('button', { name: /add question/i });
+            const addButton = screen.getByRole('button', {
+                name: /add question/i,
+            });
             await user.click(addButton);
-            const closeButton = screen.getByRole('button', { name: /close editor/i });
+            const closeButton = screen.getByRole('button', {
+                name: /close editor/i,
+            });
             await user.click(closeButton);
-            expect(screen.queryByTestId('question-editor')).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId('question-editor'),
+            ).not.toBeInTheDocument();
         });
         it('deletes question when delete button is clicked', async () => {
             const user = userEvent.setup();
-            vi.stubGlobal('confirm', vi.fn(() => true));
+            vi.stubGlobal(
+                'confirm',
+                vi.fn(() => true),
+            );
             render(<QuizBuilder {...editorProps} />);
-            const deleteButtons = screen.getAllByRole('button', { name: /delete question/i });
+            const deleteButtons = screen.getAllByRole('button', {
+                name: /delete question/i,
+            });
             await user.click(deleteButtons[0]);
             // In a real implementation, we would check the question was removed
             expect(window.confirm).toHaveBeenCalled();
         });
     });
 });
-
-

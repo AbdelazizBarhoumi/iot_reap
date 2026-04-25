@@ -155,4 +155,3 @@ export function useNotes({
         isDeleting,
     };
 }
-

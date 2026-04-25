@@ -91,7 +91,7 @@ export default function PrivacyPolicy() {
                 {
                     subtitle: '5.2 Institutional Administrators',
                     content:
-                        'For institutional accounts, we share appropriate user data with your institution\'s administrators and security officers to enable account management and compliance monitoring.',
+                        "For institutional accounts, we share appropriate user data with your institution's administrators and security officers to enable account management and compliance monitoring.",
                 },
                 {
                     subtitle: '5.3 Legal Disclosure',
@@ -224,7 +224,7 @@ export default function PrivacyPolicy() {
             id: 'children-privacy',
             title: '11. Childrens Privacy',
             content:
-                'The Service is not intended for children under the age of 18. We do not knowingly collect personal information from children. If we become aware that a child under 18 has provided us with personal information, we will take steps to delete such information and terminate the child\'s access to the Service.',
+                "The Service is not intended for children under the age of 18. We do not knowingly collect personal information from children. If we become aware that a child under 18 has provided us with personal information, we will take steps to delete such information and terminate the child's access to the Service.",
         },
         {
             id: 'policy-changes',
@@ -271,7 +271,7 @@ export default function PrivacyPolicy() {
                                     {section.title}
                                 </h2>
                                 {section.content && (
-                                    <p className="mt-3 text-slate-700 leading-relaxed">
+                                    <p className="mt-3 leading-relaxed text-slate-700">
                                         {section.content}
                                     </p>
                                 )}
@@ -282,7 +282,7 @@ export default function PrivacyPolicy() {
                                                 <h3 className="font-medium text-slate-800">
                                                     {sub.subtitle}
                                                 </h3>
-                                                <p className="mt-2 text-slate-700 leading-relaxed">
+                                                <p className="mt-2 leading-relaxed text-slate-700">
                                                     {sub.content}
                                                 </p>
                                             </div>

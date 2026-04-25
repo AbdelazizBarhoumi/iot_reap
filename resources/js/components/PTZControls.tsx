@@ -78,5 +78,3 @@ export function PTZControls({ onMove, disabled = false }: PTZControlsProps) {
         </div>
     );
 }
-
-

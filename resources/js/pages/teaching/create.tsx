@@ -89,7 +89,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 // Step configuration
 const steps = [
-    { id: 1, title: 'Basics', description: 'TrainingPath info', icon: FileText },
+    {
+        id: 1,
+        title: 'Basics',
+        description: 'TrainingPath info',
+        icon: FileText,
+    },
     { id: 2, title: 'Details', description: 'Settings', icon: Target },
     { id: 3, title: 'Curriculum', description: 'Structure', icon: Layers },
     { id: 4, title: 'Review', description: 'Finish', icon: Rocket },
@@ -137,10 +142,10 @@ interface TrainingUnitForm {
     duration: string;
     vmEnabled: boolean;
     // Content fields for inline editing during creation
-    content: string;           // For reading/article trainingUnits
-    videoUrl: string;          // For video trainingUnits (external URL)
-    teacherNotes: string;      // For VM lab trainingUnits
-    resources: Resource[];     // Optional links/files
+    content: string; // For reading/article trainingUnits
+    videoUrl: string; // For video trainingUnits (external URL)
+    teacherNotes: string; // For VM lab trainingUnits
+    resources: Resource[]; // Optional links/files
 }
 interface ModuleForm {
     id: string;
@@ -154,7 +159,12 @@ interface SortableTrainingUnitProps {
     trainingUnitIndex: number;
     expanded: boolean;
     onToggleExpand: () => void;
-    onUpdate: (moduleIndex: number, trainingUnitIndex: number, field: keyof TrainingUnitForm, value: unknown) => void;
+    onUpdate: (
+        moduleIndex: number,
+        trainingUnitIndex: number,
+        field: keyof TrainingUnitForm,
+        value: unknown,
+    ) => void;
     onRemove: (moduleIndex: number, trainingUnitIndex: number) => void;
     canRemove: boolean;
 }
@@ -181,7 +191,9 @@ function SortableTrainingUnit({
         transition,
         opacity: isDragging ? 0.5 : 1,
     };
-    const trainingUnitType = trainingUnitTypes.find((t) => t.value === trainingUnit.type);
+    const trainingUnitType = trainingUnitTypes.find(
+        (t) => t.value === trainingUnit.type,
+    );
     const TrainingUnitIcon = trainingUnitType?.icon || Video;
     // Helper to check if content has been added
     const hasContent = () => {
@@ -200,18 +212,27 @@ function SortableTrainingUnit({
     };
     // Add resource handler
     const addResource = () => {
-        const newResources = [...trainingUnit.resources, { id: Date.now().toString(), title: '', url: '' }];
+        const newResources = [
+            ...trainingUnit.resources,
+            { id: Date.now().toString(), title: '', url: '' },
+        ];
         onUpdate(moduleIndex, trainingUnitIndex, 'resources', newResources);
     };
     // Update resource handler
-    const updateResource = (resourceIndex: number, field: keyof Resource, value: string) => {
+    const updateResource = (
+        resourceIndex: number,
+        field: keyof Resource,
+        value: string,
+    ) => {
         const updated = [...trainingUnit.resources];
         updated[resourceIndex] = { ...updated[resourceIndex], [field]: value };
         onUpdate(moduleIndex, trainingUnitIndex, 'resources', updated);
     };
     // Remove resource handler
     const removeResource = (resourceIndex: number) => {
-        const updated = trainingUnit.resources.filter((_, i) => i !== resourceIndex);
+        const updated = trainingUnit.resources.filter(
+            (_, i) => i !== resourceIndex,
+        );
         onUpdate(moduleIndex, trainingUnitIndex, 'resources', updated);
     };
     // Content editor based on trainingUnit type
@@ -221,18 +242,28 @@ function SortableTrainingUnit({
                 return (
                     <div className="space-y-4">
                         <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="mb-3 flex items-center gap-2">
                                 <Video className="h-4 w-4 text-blue-500" />
-                                <Label className="text-sm font-medium">Video URL</Label>
+                                <Label className="text-sm font-medium">
+                                    Video URL
+                                </Label>
                             </div>
                             <Input
                                 placeholder="https://youtube.com/watch?v=... or external video URL"
                                 value={trainingUnit.videoUrl}
-                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'videoUrl', e.target.value)}
+                                onChange={(e) =>
+                                    onUpdate(
+                                        moduleIndex,
+                                        trainingUnitIndex,
+                                        'videoUrl',
+                                        e.target.value,
+                                    )
+                                }
                                 className="bg-background"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                Enter an external video URL. You can also upload videos after creating the trainingPath.
+                                Enter an external video URL. You can also upload
+                                videos after creating the trainingPath.
                             </p>
                         </div>
                     </div>
@@ -241,18 +272,28 @@ function SortableTrainingUnit({
                 return (
                     <div className="space-y-4">
                         <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="mb-3 flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-green-500" />
-                                <Label className="text-sm font-medium">Article Content</Label>
+                                <Label className="text-sm font-medium">
+                                    Article Content
+                                </Label>
                             </div>
                             <Textarea
                                 placeholder="Write your article content here. Markdown is supported.&#10;&#10;## Introduction&#10;Start with an overview...&#10;&#10;## Main Content&#10;Explain the concepts..."
                                 value={trainingUnit.content}
-                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'content', e.target.value)}
+                                onChange={(e) =>
+                                    onUpdate(
+                                        moduleIndex,
+                                        trainingUnitIndex,
+                                        'content',
+                                        e.target.value,
+                                    )
+                                }
                                 className="min-h-[200px] resize-y bg-background font-mono text-sm"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                {trainingUnit.content.length} characters • Supports Markdown formatting
+                                {trainingUnit.content.length} characters •
+                                Supports Markdown formatting
                             </p>
                         </div>
                     </div>
@@ -261,18 +302,28 @@ function SortableTrainingUnit({
                 return (
                     <div className="space-y-4">
                         <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="mb-3 flex items-center gap-2">
                                 <Zap className="h-4 w-4 text-yellow-500" />
-                                <Label className="text-sm font-medium">Practice Instructions</Label>
+                                <Label className="text-sm font-medium">
+                                    Practice Instructions
+                                </Label>
                             </div>
                             <Textarea
                                 placeholder="Describe the practical exercise or quiz...&#10;&#10;What should operators do?&#10;What skills will they practice?&#10;&#10;Full quiz questions can be added after creating the path."
                                 value={trainingUnit.content}
-                                onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'content', e.target.value)}
+                                onChange={(e) =>
+                                    onUpdate(
+                                        moduleIndex,
+                                        trainingUnitIndex,
+                                        'content',
+                                        e.target.value,
+                                    )
+                                }
                                 className="min-h-[150px] resize-y bg-background"
                             />
                             <p className="mt-2 text-xs text-muted-foreground">
-                                Add detailed quiz questions and answers in the trainingUnit editor after creation.
+                                Add detailed quiz questions and answers in the
+                                trainingUnit editor after creation.
                             </p>
                         </div>
                     </div>
@@ -281,22 +332,34 @@ function SortableTrainingUnit({
                 return (
                     <div className="space-y-4">
                         <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="mb-3 flex items-center gap-2">
                                 <Terminal className="h-4 w-4 text-violet-500" />
-                                <Label className="text-sm font-medium">VM Lab Configuration</Label>
+                                <Label className="text-sm font-medium">
+                                    VM Lab Configuration
+                                </Label>
                             </div>
                             <div className="rounded-lg border border-dashed border-violet-500/30 bg-violet-500/5 p-4 text-center">
-                                <Terminal className="mx-auto h-8 w-8 text-violet-400 mb-2" />
+                                <Terminal className="mx-auto mb-2 h-8 w-8 text-violet-400" />
                                 <p className="text-sm text-muted-foreground">
-                                    VM templates are not available. Configure VM settings after trainingPath creation.
+                                    VM templates are not available. Configure VM
+                                    settings after trainingPath creation.
                                 </p>
                             </div>
                             <div className="mt-3">
-                                <Label className="text-sm font-medium">Lab Instructions</Label>
+                                <Label className="text-sm font-medium">
+                                    Lab Instructions
+                                </Label>
                                 <Textarea
                                     placeholder="Describe what students should do in this VM lab...&#10;&#10;- What software is needed?&#10;- What configuration is required?&#10;- What should students accomplish?"
                                     value={trainingUnit.teacherNotes}
-                                    onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'teacherNotes', e.target.value)}
+                                    onChange={(e) =>
+                                        onUpdate(
+                                            moduleIndex,
+                                            trainingUnitIndex,
+                                            'teacherNotes',
+                                            e.target.value,
+                                        )
+                                    }
                                     className="mt-2 min-h-[100px] resize-y bg-background"
                                 />
                             </div>
@@ -309,9 +372,11 @@ function SortableTrainingUnit({
     };
     // Resources section (common for all types)
     const renderResourcesSection = () => (
-        <div className="space-y-3 pt-3 border-t">
+        <div className="space-y-3 border-t pt-3">
             <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Additional Resources</Label>
+                <Label className="text-sm font-medium">
+                    Additional Resources
+                </Label>
                 <Button
                     type="button"
                     variant="ghost"
@@ -319,24 +384,31 @@ function SortableTrainingUnit({
                     onClick={addResource}
                     className="h-7 text-xs"
                 >
-                    <Plus className="h-3 w-3 mr-1" />
+                    <Plus className="mr-1 h-3 w-3" />
                     Add Link
                 </Button>
             </div>
             {trainingUnit.resources.length > 0 && (
                 <div className="space-y-2">
                     {trainingUnit.resources.map((resource, ri) => (
-                        <div key={resource.id} className="flex items-center gap-2">
+                        <div
+                            key={resource.id}
+                            className="flex items-center gap-2"
+                        >
                             <Input
                                 placeholder="Title (optional)"
                                 value={resource.title}
-                                onChange={(e) => updateResource(ri, 'title', e.target.value)}
+                                onChange={(e) =>
+                                    updateResource(ri, 'title', e.target.value)
+                                }
                                 className="h-8 w-32 text-xs"
                             />
                             <Input
                                 placeholder="https://..."
                                 value={resource.url}
-                                onChange={(e) => updateResource(ri, 'url', e.target.value)}
+                                onChange={(e) =>
+                                    updateResource(ri, 'url', e.target.value)
+                                }
                                 className="h-8 flex-1 text-xs"
                             />
                             <Button
@@ -359,7 +431,9 @@ function SortableTrainingUnit({
             <Collapsible open={expanded} onOpenChange={onToggleExpand}>
                 <div
                     className={`group rounded-lg border bg-background transition-all ${
-                        isDragging ? 'border-primary shadow-lg' : 'border-border hover:bg-muted/30'
+                        isDragging
+                            ? 'border-primary shadow-lg'
+                            : 'border-border hover:bg-muted/30'
                     } ${expanded ? 'border-primary/50' : ''}`}
                 >
                     {/* TrainingUnit Header - Always visible */}
@@ -381,21 +455,40 @@ function SortableTrainingUnit({
                         <Input
                             placeholder="TrainingUnit title"
                             value={trainingUnit.title}
-                            onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'title', e.target.value)}
+                            onChange={(e) =>
+                                onUpdate(
+                                    moduleIndex,
+                                    trainingUnitIndex,
+                                    'title',
+                                    e.target.value,
+                                )
+                            }
                             className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0"
                         />
                         <Select
                             value={trainingUnit.type}
-                            onValueChange={(v) => onUpdate(moduleIndex, trainingUnitIndex, 'type', v)}
+                            onValueChange={(v) =>
+                                onUpdate(
+                                    moduleIndex,
+                                    trainingUnitIndex,
+                                    'type',
+                                    v,
+                                )
+                            }
                         >
                             <SelectTrigger className="h-8 w-28 text-xs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {trainingUnitTypes.map((type) => (
-                                    <SelectItem key={type.value} value={type.value}>
+                                    <SelectItem
+                                        key={type.value}
+                                        value={type.value}
+                                    >
                                         <span className="flex items-center gap-2">
-                                            <type.icon className={`h-3.5 w-3.5 ${type.color}`} />
+                                            <type.icon
+                                                className={`h-3.5 w-3.5 ${type.color}`}
+                                            />
                                             {type.label}
                                         </span>
                                     </SelectItem>
@@ -405,7 +498,14 @@ function SortableTrainingUnit({
                         <Input
                             placeholder="10 min"
                             value={trainingUnit.duration}
-                            onChange={(e) => onUpdate(moduleIndex, trainingUnitIndex, 'duration', e.target.value)}
+                            onChange={(e) =>
+                                onUpdate(
+                                    moduleIndex,
+                                    trainingUnitIndex,
+                                    'duration',
+                                    e.target.value,
+                                )
+                            }
                             className="h-8 w-20 text-center text-xs"
                         />
                         <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1">
@@ -414,7 +514,14 @@ function SortableTrainingUnit({
                             />
                             <Switch
                                 checked={trainingUnit.vmEnabled}
-                                onCheckedChange={(c) => onUpdate(moduleIndex, trainingUnitIndex, 'vmEnabled', c)}
+                                onCheckedChange={(c) =>
+                                    onUpdate(
+                                        moduleIndex,
+                                        trainingUnitIndex,
+                                        'vmEnabled',
+                                        c,
+                                    )
+                                }
                                 className="scale-75"
                             />
                         </div>
@@ -436,22 +543,27 @@ function SortableTrainingUnit({
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 shrink-0 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                                onClick={() => onRemove(moduleIndex, trainingUnitIndex)}
+                                onClick={() =>
+                                    onRemove(moduleIndex, trainingUnitIndex)
+                                }
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                         )}
                         {/* Content indicator badge */}
                         {hasContent() && (
-                            <Badge variant="secondary" className="h-5 text-[10px] bg-green-500/10 text-green-600">
-                                <Check className="h-3 w-3 mr-0.5" />
+                            <Badge
+                                variant="secondary"
+                                className="h-5 bg-green-500/10 text-[10px] text-green-600"
+                            >
+                                <Check className="mr-0.5 h-3 w-3" />
                                 Content
                             </Badge>
                         )}
                     </div>
                     {/* Expandable Content Editor */}
                     <CollapsibleContent>
-                        <div className="border-t bg-muted/20 p-4 space-y-4">
+                        <div className="space-y-4 border-t bg-muted/20 p-4">
                             {renderContentEditor()}
                             {renderResourcesSection()}
                         </div>
@@ -472,7 +584,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
     const [currency, setCurrency] = useState('USD');
     const [isFree, setIsFree] = useState(true);
     const [thumbnail, setThumbnail] = useState<string | null>(null);
-    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(null);
+    const [videoType, setVideoType] = useState<'upload' | 'youtube' | null>(
+        null,
+    );
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [duration, setDuration] = useState('');
     const [objectives, setObjectives] = useState('');
@@ -497,7 +611,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
         },
     ]);
     // Expanded trainingUnit tracking
-    const [expandedTrainingUnits, setExpandedTrainingUnits] = useState<Set<string>>(new Set());
+    const [expandedTrainingUnits, setExpandedTrainingUnits] = useState<
+        Set<string>
+    >(new Set());
     // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -516,7 +632,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
             if (!over || active.id === over.id) return;
             setModules((prev) => {
                 const updated = [...prev];
-                const trainingUnitIds = updated[moduleIndex].trainingUnits.map((l) => l.id);
+                const trainingUnitIds = updated[moduleIndex].trainingUnits.map(
+                    (l) => l.id,
+                );
                 const oldIndex = trainingUnitIds.indexOf(active.id as string);
                 const newIndex = trainingUnitIds.indexOf(over.id as string);
                 if (oldIndex !== -1 && newIndex !== -1) {
@@ -548,6 +666,30 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
         (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0];
             if (file) {
+                const allowedTypes = [
+                    'image/jpeg',
+                    'image/png',
+                    'image/gif',
+                    'image/webp',
+                ];
+
+                if (!allowedTypes.includes(file.type)) {
+                    toast.error('Invalid thumbnail format', {
+                        description:
+                            'Please upload a JPG, PNG, GIF, or WEBP image.',
+                    });
+
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    toast.error('Thumbnail is too large', {
+                        description: 'Please upload an image smaller than 5MB.',
+                    });
+
+                    return;
+                }
+
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     setThumbnail(reader.result as string);
@@ -604,11 +746,14 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
     const removeModule = (index: number) => {
         setModules(modules.filter((_, i) => i !== index));
     };
-    const removeTrainingUnit = (moduleIndex: number, trainingUnitIndex: number) => {
+    const removeTrainingUnit = (
+        moduleIndex: number,
+        trainingUnitIndex: number,
+    ) => {
         const updated = [...modules];
-        updated[moduleIndex].trainingUnits = updated[moduleIndex].trainingUnits.filter(
-            (_, i) => i !== trainingUnitIndex,
-        );
+        updated[moduleIndex].trainingUnits = updated[
+            moduleIndex
+        ].trainingUnits.filter((_, i) => i !== trainingUnitIndex);
         setModules(updated);
     };
     const updateModule = (
@@ -627,7 +772,8 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
         value: unknown,
     ) => {
         const updated = [...modules];
-        const trainingUnit = updated[moduleIndex].trainingUnits[trainingUnitIndex];
+        const trainingUnit =
+            updated[moduleIndex].trainingUnits[trainingUnitIndex];
         updated[moduleIndex].trainingUnits[trainingUnitIndex] = {
             ...trainingUnit,
             [field]: value as never,
@@ -654,11 +800,15 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
         }
     };
     // Calculate stats
-    const totalTrainingUnits = modules.reduce((acc, m) => acc + m.trainingUnits.length, 0);
+    const totalTrainingUnits = modules.reduce(
+        (acc, m) => acc + m.trainingUnits.length,
+        0,
+    );
     const vmTrainingUnits = modules.reduce(
         (acc, m) =>
             acc +
-            m.trainingUnits.filter((l) => l.vmEnabled || l.type === 'vm-lab').length,
+            m.trainingUnits.filter((l) => l.vmEnabled || l.type === 'vm-lab')
+                .length,
         0,
     );
     const completionPercent = Math.round(
@@ -699,7 +849,10 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                     content: l.content || null,
                     video_url: l.videoUrl || null,
                     teacher_notes: l.teacherNotes || null,
-                    resources: l.resources.filter(r => r.url.trim() !== '').map(r => r.url) || null,
+                    resources:
+                        l.resources
+                            .filter((r) => r.url.trim() !== '')
+                            .map((r) => r.url) || null,
                     vm_enabled: l.vmEnabled || l.type === 'vm-lab',
                 })),
             })),
@@ -715,7 +868,10 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
             onError: (errors) => {
                 console.error('TrainingPath creation errors:', errors);
                 const errorMessages = Object.entries(errors)
-                    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .map(
+                        ([key, value]) =>
+                            `${key}: ${Array.isArray(value) ? value.join(', ') : value}`,
+                    )
                     .join('\n');
                 toast.error('Failed to create path', {
                     description: errorMessages || 'Unknown error',
@@ -936,7 +1092,7 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                     <input
                                                         ref={fileInputRef}
                                                         type="file"
-                                                        accept="image/*"
+                                                        accept="image/jpeg,image/png,image/gif,image/webp"
                                                         onChange={
                                                             handleThumbnailUpload
                                                         }
@@ -950,20 +1106,31 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                 <TrainingPathVideoInput
                                                     videoType={videoType}
                                                     videoUrl={videoUrl}
-                                                    onVideoChange={(type, url) => {
+                                                    onVideoChange={(
+                                                        type,
+                                                        url,
+                                                    ) => {
                                                         setVideoType(type);
                                                         setVideoUrl(url);
                                                     }}
                                                     onUpload={async (file) => {
                                                         // In a real app, upload the video file to your backend
                                                         // For now, we'll use data URL
-                                                        return new Promise((resolve) => {
-                                                            const reader = new FileReader();
-                                                            reader.onloadend = () => {
-                                                                resolve(reader.result as string);
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        });
+                                                        return new Promise(
+                                                            (resolve) => {
+                                                                const reader =
+                                                                    new FileReader();
+                                                                reader.onloadend =
+                                                                    () => {
+                                                                        resolve(
+                                                                            reader.result as string,
+                                                                        );
+                                                                    };
+                                                                reader.readAsDataURL(
+                                                                    file,
+                                                                );
+                                                            },
+                                                        );
                                                     }}
                                                 />
                                             </div>
@@ -1146,9 +1313,19 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                             step="0.01"
                                                             value={price}
                                                             onChange={(e) => {
-                                                                setPrice(e.target.value);
-                                                                if (Number(e.target.value) > 0) {
-                                                                    setIsFree(false);
+                                                                setPrice(
+                                                                    e.target
+                                                                        .value,
+                                                                );
+                                                                if (
+                                                                    Number(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) > 0
+                                                                ) {
+                                                                    setIsFree(
+                                                                        false,
+                                                                    );
                                                                 }
                                                             }}
                                                             disabled={isFree}
@@ -1156,7 +1333,16 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         />
                                                         <Input
                                                             value={currency}
-                                                            onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                                                            onChange={(e) =>
+                                                                setCurrency(
+                                                                    e.target.value
+                                                                        .toUpperCase()
+                                                                        .slice(
+                                                                            0,
+                                                                            3,
+                                                                        ),
+                                                                )
+                                                            }
                                                             className="h-12 w-24"
                                                             maxLength={3}
                                                         />
@@ -1167,10 +1353,16 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         </span>
                                                         <Switch
                                                             checked={isFree}
-                                                            onCheckedChange={(checked) => {
-                                                                setIsFree(checked);
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) => {
+                                                                setIsFree(
+                                                                    checked,
+                                                                );
                                                                 if (checked) {
-                                                                    setPrice('0');
+                                                                    setPrice(
+                                                                        '0',
+                                                                    );
                                                                 }
                                                             }}
                                                         />
@@ -1232,9 +1424,12 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                     <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
                                         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                         <AlertDescription className="text-blue-800 dark:text-blue-200">
-                                            <strong>New!</strong> You can now add content directly while creating your path.
-                                            Expand each module to add video URLs, articles, or select VM templates.
-                                            You can also add more content in the edit page later.
+                                            <strong>New!</strong> You can now
+                                            add content directly while creating
+                                            your path. Expand each module to add
+                                            video URLs, articles, or select VM
+                                            templates. You can also add more
+                                            content in the edit page later.
                                         </AlertDescription>
                                     </Alert>
                                     {/* Stats bar */}
@@ -1261,7 +1456,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         </div>
                                                         <div>
                                                             <p className="text-lg font-bold text-foreground">
-                                                                {totalTrainingUnits}
+                                                                {
+                                                                    totalTrainingUnits
+                                                                }
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 Modules
@@ -1274,7 +1471,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         </div>
                                                         <div>
                                                             <p className="text-lg font-bold text-foreground">
-                                                                {vmTrainingUnits}
+                                                                {
+                                                                    vmTrainingUnits
+                                                                }
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 VM Labs
@@ -1340,30 +1539,65 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                 <CardContent className="space-y-3 pt-4">
                                                     <DndContext
                                                         sensors={sensors}
-                                                        collisionDetection={closestCenter}
+                                                        collisionDetection={
+                                                            closestCenter
+                                                        }
                                                         onDragEnd={(event) =>
-                                                            handleTrainingUnitDragEnd(event, mi)
+                                                            handleTrainingUnitDragEnd(
+                                                                event,
+                                                                mi,
+                                                            )
                                                         }
                                                     >
                                                         <SortableContext
-                                                            items={module.trainingUnits.map((l) => l.id)}
-                                                            strategy={verticalListSortingStrategy}
+                                                            items={module.trainingUnits.map(
+                                                                (l) => l.id,
+                                                            )}
+                                                            strategy={
+                                                                verticalListSortingStrategy
+                                                            }
                                                         >
-                                                            {module.trainingUnits.map((trainingUnit, li) => (
-                                                                <SortableTrainingUnit
-                                                                    key={trainingUnit.id}
-                                                                    trainingUnit={trainingUnit}
-                                                                    trainingUnitIndex={li}
-                                                                    moduleIndex={mi}
-                                                                    onUpdate={updateTrainingUnit}
-                                                                    onRemove={removeTrainingUnit}
-                                                                    canRemove={module.trainingUnits.length > 1}
-                                                                    expanded={expandedTrainingUnits.has(trainingUnit.id)}
-                                                                    onToggleExpand={() =>
-                                                                        toggleTrainingUnitExpanded(trainingUnit.id)
-                                                                    }
-                                                                />
-                                                            ))}
+                                                            {module.trainingUnits.map(
+                                                                (
+                                                                    trainingUnit,
+                                                                    li,
+                                                                ) => (
+                                                                    <SortableTrainingUnit
+                                                                        key={
+                                                                            trainingUnit.id
+                                                                        }
+                                                                        trainingUnit={
+                                                                            trainingUnit
+                                                                        }
+                                                                        trainingUnitIndex={
+                                                                            li
+                                                                        }
+                                                                        moduleIndex={
+                                                                            mi
+                                                                        }
+                                                                        onUpdate={
+                                                                            updateTrainingUnit
+                                                                        }
+                                                                        onRemove={
+                                                                            removeTrainingUnit
+                                                                        }
+                                                                        canRemove={
+                                                                            module
+                                                                                .trainingUnits
+                                                                                .length >
+                                                                            1
+                                                                        }
+                                                                        expanded={expandedTrainingUnits.has(
+                                                                            trainingUnit.id,
+                                                                        )}
+                                                                        onToggleExpand={() =>
+                                                                            toggleTrainingUnitExpanded(
+                                                                                trainingUnit.id,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                ),
+                                                            )}
                                                         </SortableContext>
                                                     </DndContext>
                                                     <Button
@@ -1375,7 +1609,7 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
                                                     >
                                                         <Plus className="mr-1 h-4 w-4" />{' '}
-                                                            Add Module
+                                                        Add Module
                                                     </Button>
                                                 </CardContent>
                                             </Card>
@@ -1508,7 +1742,9 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                         </div>
                                                         <div className="flex flex-wrap gap-2 pl-8">
                                                             {module.trainingUnits.map(
-                                                                (trainingUnit) => {
+                                                                (
+                                                                    trainingUnit,
+                                                                ) => {
                                                                     const type =
                                                                         trainingUnitTypes.find(
                                                                             (
@@ -1544,10 +1780,11 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                     Ready to Create!
                                                 </h3>
                                                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                                                    Your trainingPath will be saved as
-                                                    a draft. You can add content
-                                                    to each trainingUnit and submit
-                                                    for review when ready.
+                                                    Your trainingPath will be
+                                                    saved as a draft. You can
+                                                    add content to each
+                                                    trainingUnit and submit for
+                                                    review when ready.
                                                 </p>
                                             </div>
                                         </CardContent>
@@ -1628,4 +1865,3 @@ export default function CreateTrainingPathPage({
         </LearningAppProvider>
     );
 }
-

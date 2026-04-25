@@ -68,9 +68,7 @@ export default function Welcome({
     const { auth } = usePage().props;
     const [mobileOpen, setMobileOpen] = useState(false);
     const operationsDashboardUrl =
-        auth.user?.role === 'admin'
-            ? admin.dashboard.url()
-            : dashboard().url;
+        auth.user?.role === 'admin' ? admin.dashboard.url() : dashboard().url;
     // fallback for legacy dev mode: if no trainingPaths provided, don't crash
     const showcase = featuredTrainingPaths || [];
     return (
@@ -486,4 +484,3 @@ export default function Welcome({
         </>
     );
 }
-

@@ -131,14 +131,17 @@ export const handlers = [
         });
     }),
     // Guacamole Viewer API endpoint
-    http.get('/vm-sessions/:sessionId/guacamole-token', ({ params: _params }) => {
-        return HttpResponse.json({
-            token: 'mock-guacamole-token-123',
-            connection_id: 'conn-123',
-            tunnel_url: 'ws://localhost:8080/websocket-tunnel',
-            expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-        });
-    }),
+    http.get(
+        '/vm-sessions/:sessionId/guacamole-token',
+        ({ params: _params }) => {
+            return HttpResponse.json({
+                token: 'mock-guacamole-token-123',
+                connection_id: 'conn-123',
+                tunnel_url: 'ws://localhost:8080/websocket-tunnel',
+                expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+            });
+        },
+    ),
     // Search API endpoints
     http.get('/search', ({ request }) => {
         const url = new URL(request.url);
@@ -238,7 +241,7 @@ export const handlers = [
         ];
         return HttpResponse.json({
             notifications: mockNotifications.slice(0, Number(limit) || 10),
-            unread_count: mockNotifications.filter(n => !n.read).length,
+            unread_count: mockNotifications.filter((n) => !n.read).length,
         });
     }),
     http.get('/notifications/unread-count', () => {
@@ -265,4 +268,3 @@ export const handlers = [
         });
     }),
 ];
-

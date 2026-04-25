@@ -50,8 +50,7 @@ type Props = {
 function useNavItems(): NavItem[] {
     const { auth } = usePage().props;
     const role = auth.user?.role;
-    const isTeacher =
-        role === 'teacher' && !!auth.user?.teacher_approved_at;
+    const isTeacher = role === 'teacher' && !!auth.user?.teacher_approved_at;
     const isEngineer = role === 'engineer';
     const items: NavItem[] = [];
 
@@ -79,7 +78,6 @@ function useNavItems(): NavItem[] {
                 href: reservations.index.url(),
                 icon: CalendarCheck,
             },
-
         );
     }
     if (auth.user) {
@@ -235,9 +233,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                             >
                                 <Link
                                     href={login().url}
-                                    onClick={() =>
-                                        setMobileOpen(false)
-                                    }
+                                    onClick={() => setMobileOpen(false)}
                                 >
                                     Log in
                                 </Link>
@@ -291,5 +287,3 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         </>
     );
 }
-
-

@@ -24,9 +24,12 @@ export function AppFooter() {
                     <span>IoT-REAP</span>
                 </div>
                 <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-                        <Link href={trainingPaths.index.url()} className="transition-colors hover:text-foreground">
-                            Training Paths
-                        </Link>
+                    <Link
+                        href={trainingPaths.index.url()}
+                        className="transition-colors hover:text-foreground"
+                    >
+                        Training Paths
+                    </Link>
                     {isAuthenticated && (
                         <Link
                             href={trainingPaths.my.url()}
@@ -80,5 +83,3 @@ export function AppFooter() {
         </footer>
     );
 }
-
-

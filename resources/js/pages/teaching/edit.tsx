@@ -460,10 +460,18 @@ export default function EditTrainingPathPage({
     const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            const allowedTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+            ];
+
             // Validate file type
-            if (!file.type.startsWith('image/')) {
+            if (!allowedTypes.includes(file.type)) {
                 toast.error('Invalid file type', {
-                    description: 'Please select an image file.',
+                    description:
+                        'Please select a JPG, PNG, GIF, or WEBP image.',
                 });
                 return;
             }
@@ -1385,7 +1393,7 @@ export default function EditTrainingPathPage({
                                                     <div className="space-y-2">
                                                         <input
                                                             type="file"
-                                                            accept="image/*"
+                                                            accept="image/jpeg,image/png,image/gif,image/webp"
                                                             onChange={
                                                                 handleThumbnailChange
                                                             }

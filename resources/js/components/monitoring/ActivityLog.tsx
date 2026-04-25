@@ -211,7 +211,9 @@ export function ActivityLog({
                     <AnimatePresence mode="popLayout">
                         {filteredActivities.length > 0 ? (
                             filteredActivities.map((activity, index) => {
-                                const config = typeConfig[activity.type] || typeConfig.system;
+                                const config =
+                                    typeConfig[activity.type] ||
+                                    typeConfig.system;
                                 const TypeIcon = config.icon;
                                 return (
                                     <motion.div
@@ -296,5 +298,3 @@ export function ActivityLog({
         </Card>
     );
 }
-
-

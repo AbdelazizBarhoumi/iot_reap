@@ -94,5 +94,3 @@ export function useRole() {
     };
 }
 export default HasRole;
-
-

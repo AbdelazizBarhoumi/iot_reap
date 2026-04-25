@@ -14,7 +14,9 @@ export function ChangeIndicator({ value }: ChangeIndicatorProps) {
     const Icon = isPositive ? TrendingUp : TrendingDown;
 
     return (
-        <div className={`flex items-center gap-1 ${color} text-sm font-semibold`}>
+        <div
+            className={`flex items-center gap-1 ${color} text-sm font-semibold`}
+        >
             <Icon className="h-4 w-4" />
             <span>{Math.abs(value).toFixed(1)}%</span>
         </div>

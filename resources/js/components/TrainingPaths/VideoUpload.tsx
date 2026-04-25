@@ -457,5 +457,3 @@ export default function VideoUpload({
         </div>
     );
 }
-
-

@@ -170,4 +170,3 @@ export interface CreateAdminCameraBlockRequest {
     purpose?: string;
     notes?: string;
 }
-

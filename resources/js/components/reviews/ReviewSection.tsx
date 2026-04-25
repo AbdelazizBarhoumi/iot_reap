@@ -27,7 +27,10 @@ interface ReviewSectionProps {
     trainingPathId: number;
     className?: string;
 }
-export function ReviewSection({ trainingPathId, className }: ReviewSectionProps) {
+export function ReviewSection({
+    trainingPathId,
+    className,
+}: ReviewSectionProps) {
     const {
         reviews,
         stats,
@@ -262,5 +265,3 @@ export function ReviewSection({ trainingPathId, className }: ReviewSectionProps)
         </div>
     );
 }
-
-

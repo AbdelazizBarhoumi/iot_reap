@@ -59,7 +59,9 @@ export async function getReviews(
 /**
  * Get review stats for a trainingPath.
  */
-export async function getReviewStats(trainingPathId: number): Promise<ReviewStats> {
+export async function getReviewStats(
+    trainingPathId: number,
+): Promise<ReviewStats> {
     const response = await client.get<StatsResponse>(
         `/trainingPaths/${trainingPathId}/reviews/stats`,
     );
@@ -68,7 +70,9 @@ export async function getReviewStats(trainingPathId: number): Promise<ReviewStat
 /**
  * Get current user's review for a trainingPath.
  */
-export async function getMyReview(trainingPathId: number): Promise<MyReviewResponse> {
+export async function getMyReview(
+    trainingPathId: number,
+): Promise<MyReviewResponse> {
     const response = await client.get<MyReviewResponse>(
         `/trainingPaths/${trainingPathId}/reviews/my`,
     );
@@ -118,4 +122,3 @@ export const reviewsApi = {
     updateReview,
     deleteReview,
 };
-

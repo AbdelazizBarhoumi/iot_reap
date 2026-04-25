@@ -65,8 +65,13 @@ function RenderNode({ node }: { node: TipTapNode }) {
             );
         case 'heading': {
             const level = (node.attrs?.level as number) || 1;
-            const HeadingTag =
-                `h${Math.min(level, 6)}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";        
+            const HeadingTag = `h${Math.min(level, 6)}` as
+                | 'h1'
+                | 'h2'
+                | 'h3'
+                | 'h4'
+                | 'h5'
+                | 'h6';
             return (
                 <HeadingTag>
                     {node.content?.map((child, i) => (
@@ -179,5 +184,3 @@ function RenderNode({ node }: { node: TipTapNode }) {
             return null;
     }
 }
-
-

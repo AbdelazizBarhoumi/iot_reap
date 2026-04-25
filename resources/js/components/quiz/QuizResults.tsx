@@ -176,5 +176,3 @@ export function QuizResults({ quiz, attempt, results }: QuizResultsProps) {
         </div>
     );
 }
-
-

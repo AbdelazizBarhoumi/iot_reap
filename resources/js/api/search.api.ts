@@ -95,4 +95,3 @@ export const searchApi = {
         return response.data.trainingPaths;
     },
 };
-

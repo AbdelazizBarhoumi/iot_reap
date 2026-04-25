@@ -253,5 +253,3 @@ export function VMListCard({
         </Card>
     );
 }
-
-

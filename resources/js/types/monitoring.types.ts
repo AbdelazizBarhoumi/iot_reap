@@ -51,4 +51,3 @@ export interface ActivityLogItem {
     timestamp: string;
     metadata?: Record<string, unknown>;
 }
-

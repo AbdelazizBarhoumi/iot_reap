@@ -438,7 +438,9 @@ export default function VideoPlayer({
                             {/* Play/Pause */}
                             <button
                                 onClick={togglePlay}
-                                aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                                aria-label={
+                                    isPlaying ? 'Pause video' : 'Play video'
+                                }
                                 className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
                             >
                                 {isPlaying ? (
@@ -476,7 +478,11 @@ export default function VideoPlayer({
                             <div className="group/volume flex items-center gap-2">
                                 <button
                                     onClick={toggleMute}
-                                    aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
+                                    aria-label={
+                                        isMuted || volume === 0
+                                            ? 'Unmute'
+                                            : 'Mute'
+                                    }
                                     className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
                                 >
                                     {isMuted || volume === 0 ? (
@@ -499,7 +505,11 @@ export default function VideoPlayer({
                             {captions.length > 0 && (
                                 <button
                                     onClick={toggleCaptions}
-                                    aria-label={showCaptions ? 'Disable captions' : 'Enable captions'}
+                                    aria-label={
+                                        showCaptions
+                                            ? 'Disable captions'
+                                            : 'Enable captions'
+                                    }
                                     className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                                         showCaptions
                                             ? 'bg-white/20 text-primary'
@@ -516,7 +526,7 @@ export default function VideoPlayer({
                             {/* Settings */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button 
+                                    <button
                                         aria-label="Settings"
                                         className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
                                     >
@@ -552,7 +562,11 @@ export default function VideoPlayer({
                             {/* Fullscreen */}
                             <button
                                 onClick={toggleFullscreen}
-                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                                aria-label={
+                                    isFullscreen
+                                        ? 'Exit fullscreen'
+                                        : 'Enter fullscreen'
+                                }
                                 className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
                             >
                                 {isFullscreen ? (
@@ -568,5 +582,3 @@ export default function VideoPlayer({
         </div>
     );
 }
-
-

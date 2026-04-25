@@ -26,7 +26,7 @@ export default function NotificationsPage({
         () =>
             Array.isArray(notificationsProp)
                 ? notificationsProp
-                : notificationsProp?.data ?? [],
+                : (notificationsProp?.data ?? []),
         [notificationsProp],
     );
 
@@ -80,7 +80,9 @@ export default function NotificationsPage({
     };
 
     const deleteNotification = async (id: string) => {
-        const target = notifications.find((notification) => notification.id === id);
+        const target = notifications.find(
+            (notification) => notification.id === id,
+        );
 
         setNotifications((current) =>
             current.filter((notification) => notification.id !== id),
@@ -94,7 +96,10 @@ export default function NotificationsPage({
             await notificationApi.delete(id);
         } catch {
             setNotifications((current) => {
-                if (!target || current.some((notification) => notification.id === id)) {
+                if (
+                    !target ||
+                    current.some((notification) => notification.id === id)
+                ) {
                     return current;
                 }
 
@@ -145,7 +150,9 @@ export default function NotificationsPage({
                         notifications.map((notification) => (
                             <Card
                                 key={notification.id}
-                                className={notification.read ? 'opacity-60' : ''}
+                                className={
+                                    notification.read ? 'opacity-60' : ''
+                                }
                             >
                                 <CardContent className="flex items-start gap-4 p-4">
                                     <div

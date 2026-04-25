@@ -90,4 +90,3 @@ export function useGuacamoleToken(
     const viewerUrl = tokenData?.viewer_url ?? null;
     return { viewerUrl, tokenData, loading, error, refresh };
 }
-

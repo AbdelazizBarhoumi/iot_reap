@@ -111,29 +111,32 @@ export function QuizBuilder({
     const createQuiz = async () => {
         setIsCreating(true);
         try {
-            const response = await fetch(`/teaching/trainingUnits/${trainingUnitId}/quiz`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN':
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
+            const response = await fetch(
+                `/teaching/trainingUnits/${trainingUnitId}/quiz`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN':
+                            document.cookie
+                                .split('; ')
+                                .find((row) => row.startsWith('XSRF-TOKEN='))
+                                ?.split('=')[1] ?? '',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        title,
+                        description: description || null,
+                        passing_score: passingScore,
+                        time_limit_minutes: timeLimit,
+                        max_attempts: maxAttempts,
+                        shuffle_questions: shuffleQuestions,
+                        shuffle_options: shuffleOptions,
+                        show_correct_answers: showCorrectAnswers,
+                    }),
                 },
-                credentials: 'include',
-                body: JSON.stringify({
-                    title,
-                    description: description || null,
-                    passing_score: passingScore,
-                    time_limit_minutes: timeLimit,
-                    max_attempts: maxAttempts,
-                    shuffle_questions: shuffleQuestions,
-                    shuffle_options: shuffleOptions,
-                    show_correct_answers: showCorrectAnswers,
-                }),
-            });
+            );
             if (!response.ok) throw new Error('Failed to create quiz');
             const data = await response.json();
             setQuiz(data.quiz);
@@ -208,7 +211,10 @@ export function QuizBuilder({
             setQuiz(data.quiz);
             toast.success('Quiz published!');
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to publish quiz';
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to publish quiz';
             toast.error(message);
         }
     };
@@ -238,7 +244,10 @@ export function QuizBuilder({
             setQuiz(data.quiz);
             toast.success('Quiz unpublished - now in draft mode');
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to unpublish quiz';
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to unpublish quiz';
             toast.error(message);
         }
     };
@@ -746,5 +755,3 @@ export function QuizBuilder({
         </div>
     );
 }
-
-

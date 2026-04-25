@@ -41,9 +41,10 @@ export const usersApi = {
     async approveTeacher(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post<{ data: AdminUser; message: string }>(
-            `${USERS_BASE_PATH}/${userId}/approve-teacher`,
-        );
+        const { data } = await client.post<{
+            data: AdminUser;
+            message: string;
+        }>(`${USERS_BASE_PATH}/${userId}/approve-teacher`);
         return data;
     },
     /**
@@ -52,9 +53,10 @@ export const usersApi = {
     async revokeTeacherApproval(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post<{ data: AdminUser; message: string }>(
-            `${USERS_BASE_PATH}/${userId}/revoke-teacher-approval`,
-        );
+        const { data } = await client.post<{
+            data: AdminUser;
+            message: string;
+        }>(`${USERS_BASE_PATH}/${userId}/revoke-teacher-approval`);
         return data;
     },
     /**
@@ -64,10 +66,10 @@ export const usersApi = {
         userId: string,
         reason: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post<{ data: AdminUser; message: string }>(
-            `${USERS_BASE_PATH}/${userId}/suspend`,
-            { reason },
-        );
+        const { data } = await client.post<{
+            data: AdminUser;
+            message: string;
+        }>(`${USERS_BASE_PATH}/${userId}/suspend`, { reason });
         return data;
     },
     /**
@@ -76,9 +78,10 @@ export const usersApi = {
     async unsuspendUser(
         userId: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.post<{ data: AdminUser; message: string }>(
-            `${USERS_BASE_PATH}/${userId}/unsuspend`,
-        );
+        const { data } = await client.post<{
+            data: AdminUser;
+            message: string;
+        }>(`${USERS_BASE_PATH}/${userId}/unsuspend`);
         return data;
     },
     /**
@@ -88,10 +91,10 @@ export const usersApi = {
         userId: string,
         role: string,
     ): Promise<{ data: AdminUser; message: string }> {
-        const { data } = await client.patch<{ data: AdminUser; message: string }>(
-            `${USERS_BASE_PATH}/${userId}/role`,
-            { role },
-        );
+        const { data } = await client.patch<{
+            data: AdminUser;
+            message: string;
+        }>(`${USERS_BASE_PATH}/${userId}/role`, { role });
         return data;
     },
     /**
@@ -113,4 +116,3 @@ export const usersApi = {
     },
 };
 export default usersApi;
-

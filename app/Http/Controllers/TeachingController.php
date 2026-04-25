@@ -21,6 +21,7 @@ use App\Models\TrainingUnitVMAssignment;
 use App\Repositories\TrainingPathRepository;
 use App\Services\TrainingPathService;
 use App\Services\TrainingUnitService;
+use App\Services\TrainingUnitVMAssignmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

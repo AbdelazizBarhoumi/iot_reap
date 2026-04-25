@@ -63,4 +63,3 @@ export interface PaginatedUsers {
         total: number;
     };
 }
-

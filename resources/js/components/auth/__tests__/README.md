@@ -5,9 +5,11 @@ This directory contains comprehensive tests for authentication-related component
 ## Test Files
 
 ### ProtectedRoute.test.tsx
+
 Tests the `ProtectedRoute` component which provides client-side route protection for authenticated users.
 
 **Test Coverage:**
+
 - ✅ Renders children for authenticated users
 - ✅ Redirects unauthenticated users to login (default and custom routes)
 - ✅ Handles fallback component display during redirect
@@ -15,14 +17,17 @@ Tests the `ProtectedRoute` component which provides client-side route protection
 - ✅ Does not render protected content for unauthenticated users
 
 **Key Mocking:**
+
 - `@inertiajs/react` - Mocks `usePage` and `router.visit` functions
 - Uses proper TypeScript interfaces for User types
 - Handles both authenticated and unauthenticated states
 
-### useAuth.test.ts (in hooks/__tests__)
+### useAuth.test.ts (in hooks/**tests**)
+
 Tests the `useAuth` hook which provides access to user authentication state and logout functionality.
 
 **Test Coverage:**
+
 - ✅ Returns authenticated user when available
 - ✅ Provides setUser, clear, and logout functions
 - ✅ Logout calls both setUser(null) and clear() in correct order
@@ -31,6 +36,7 @@ Tests the `useAuth` hook which provides access to user authentication state and 
 - ✅ Works correctly when no user is authenticated
 
 **Key Mocking:**
+
 - `@/store/authStore` - Mocks Zustand auth store with all methods
 - Tests hook behavior with various user states
 - Verifies proper function call order and memoization

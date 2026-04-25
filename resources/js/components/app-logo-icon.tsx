@@ -6,5 +6,3 @@ interface AppLogoIconProps {
 export default function AppLogoIcon({ className }: AppLogoIconProps) {
     return <Server className={cn('h-6 w-6', className)} />;
 }
-
-

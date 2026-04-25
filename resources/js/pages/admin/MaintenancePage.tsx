@@ -97,13 +97,10 @@ const resourceKey = (resource: Pick<Resource, 'id' | 'type'>): string =>
 export default function MaintenancePage({ resources = [] }: Props) {
     const [resourceItems, setResourceItems] = useState<Resource[]>(resources);
     const [search, setSearch] = useState('');
-    const [typeFilter, setTypeFilter] =
-        useState<ResourceTypeFilter>('all');
+    const [typeFilter, setTypeFilter] = useState<ResourceTypeFilter>('all');
     const [maintenanceStatusFilter, setMaintenanceStatusFilter] =
         useState<MaintenanceStatusFilter>('all');
-    const [busyResourceKey, setBusyResourceKey] = useState<string | null>(
-        null,
-    );
+    const [busyResourceKey, setBusyResourceKey] = useState<string | null>(null);
 
     const [maintenanceForm, setMaintenanceForm] =
         useState<MaintenanceFormState>({
@@ -156,9 +153,7 @@ export default function MaintenancePage({ resources = [] }: Props) {
                     ? resource.is_in_maintenance
                     : !resource.is_in_maintenance);
 
-            return (
-                matchesSearch && matchesType && matchesMaintenanceStatus
-            );
+            return matchesSearch && matchesType && matchesMaintenanceStatus;
         });
     }, [maintenanceStatusFilter, resourceItems, search, typeFilter]);
 
@@ -223,10 +218,7 @@ export default function MaintenancePage({ resources = [] }: Props) {
         const targetResourceType = maintenanceForm.resourceType;
         const trimmedNotes = maintenanceForm.notes.trim();
 
-        if (
-            targetResourceId === null ||
-            targetResourceType === null
-        ) {
+        if (targetResourceId === null || targetResourceType === null) {
             return;
         }
 
@@ -366,10 +358,7 @@ export default function MaintenancePage({ resources = [] }: Props) {
         const targetResourceId = descriptionEdit.resourceId;
         const targetResourceType = descriptionEdit.resourceType;
 
-        if (
-            targetResourceId === null ||
-            targetResourceType === null
-        ) {
+        if (targetResourceId === null || targetResourceType === null) {
             return;
         }
 
@@ -579,129 +568,130 @@ export default function MaintenancePage({ resources = [] }: Props) {
                             <div className="space-y-4">
                                 {filteredResources.map((resource) => {
                                     const isBusy =
-                                        busyResourceKey === resourceKey(resource);
+                                        busyResourceKey ===
+                                        resourceKey(resource);
 
                                     return (
-                                    <div
-                                        key={resourceKey(resource)}
-                                        className="flex items-center justify-between rounded-lg border p-4"
-                                    >
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium">
-                                                            {resource.name}
-                                                        </span>
-                                                        <Badge
-                                                            variant={
-                                                                resource.is_in_maintenance
-                                                                    ? 'destructive'
-                                                                    : 'default'
-                                                            }
-                                                        >
-                                                            {resource.is_in_maintenance
-                                                                ? 'IN MAINTENANCE'
-                                                                : 'AVAILABLE'}
-                                                        </Badge>
-                                                        <Badge
-                                                            variant="outline"
-                                                        >
-                                                            {resource.type ===
-                                                            'usb_device'
-                                                                ? 'USB Device'
-                                                                : 'Camera'}
-                                                        </Badge>
-                                                        <Badge
-                                                            variant="secondary"
-                                                        >
-                                                            {resource.status}
-                                                        </Badge>
-                                                        {isBusy && (
-                                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                        <div
+                                            key={resourceKey(resource)}
+                                            className="flex items-center justify-between rounded-lg border p-4"
+                                        >
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium">
+                                                                {resource.name}
+                                                            </span>
+                                                            <Badge
+                                                                variant={
+                                                                    resource.is_in_maintenance
+                                                                        ? 'destructive'
+                                                                        : 'default'
+                                                                }
+                                                            >
+                                                                {resource.is_in_maintenance
+                                                                    ? 'IN MAINTENANCE'
+                                                                    : 'AVAILABLE'}
+                                                            </Badge>
+                                                            <Badge variant="outline">
+                                                                {resource.type ===
+                                                                'usb_device'
+                                                                    ? 'USB Device'
+                                                                    : 'Camera'}
+                                                            </Badge>
+                                                            <Badge variant="secondary">
+                                                                {
+                                                                    resource.status
+                                                                }
+                                                            </Badge>
+                                                            {isBusy && (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                            )}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {resource.gateway ||
+                                                                resource.source ||
+                                                                'N/A'}
+                                                        </div>
+                                                        {resource.description && (
+                                                            <div className="mt-2 text-sm">
+                                                                <span className="font-medium">
+                                                                    Admin Notes:
+                                                                </span>{' '}
+                                                                {
+                                                                    resource.description
+                                                                }
+                                                            </div>
+                                                        )}
+                                                        {resource.maintenance_notes && (
+                                                            <div className="mt-1 text-sm">
+                                                                <span className="font-medium">
+                                                                    Maintenance
+                                                                    Notes:
+                                                                </span>{' '}
+                                                                {
+                                                                    resource.maintenance_notes
+                                                                }
+                                                            </div>
+                                                        )}
+                                                        {resource.maintenance_until && (
+                                                            <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                                                                <Calendar className="h-4 w-4" />
+                                                                Until{' '}
+                                                                {new Date(
+                                                                    resource.maintenance_until,
+                                                                ).toLocaleDateString()}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {resource.gateway ||
-                                                            resource.source ||
-                                                            'N/A'}
-                                                    </div>
-                                                    {resource.description && (
-                                                        <div className="mt-2 text-sm">
-                                                            <span className="font-medium">
-                                                                Admin Notes:
-                                                            </span>{' '}
-                                                            {
-                                                                resource.description
-                                                            }
-                                                        </div>
-                                                    )}
-                                                    {resource.maintenance_notes && (
-                                                        <div className="mt-1 text-sm">
-                                                            <span className="font-medium">
-                                                                Maintenance Notes:
-                                                            </span>{' '}
-                                                            {
-                                                                resource.maintenance_notes
-                                                            }
-                                                        </div>
-                                                    )}
-                                                    {resource.maintenance_until && (
-                                                        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                                                            <Calendar className="h-4 w-4" />
-                                                            Until{' '}
-                                                            {new Date(
-                                                                resource.maintenance_until,
-                                                            ).toLocaleDateString()}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                    openDescriptionEdit(
-                                                        resource,
-                                                    )
-                                                }
-                                                disabled={isBusy}
-                                            >
-                                                <FileText className="h-4 w-4" />
-                                            </Button>
-                                            {resource.is_in_maintenance ? (
+                                            <div className="flex gap-2">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() =>
-                                                        clearMaintenance(
+                                                        openDescriptionEdit(
                                                             resource,
                                                         )
                                                     }
                                                     disabled={isBusy}
                                                 >
-                                                    <Check className="h-4 w-4 text-success" />
+                                                    <FileText className="h-4 w-4" />
                                                 </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        openMaintenanceForm(
-                                                            resource,
-                                                        )
-                                                    }
-                                                    disabled={isBusy}
-                                                >
-                                                    <AlertTriangle className="h-4 w-4 text-warning" />
-                                                </Button>
-                                            )}
+                                                {resource.is_in_maintenance ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            clearMaintenance(
+                                                                resource,
+                                                            )
+                                                        }
+                                                        disabled={isBusy}
+                                                    >
+                                                        <Check className="h-4 w-4 text-success" />
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            openMaintenanceForm(
+                                                                resource,
+                                                            )
+                                                        }
+                                                        disabled={isBusy}
+                                                    >
+                                                        <AlertTriangle className="h-4 w-4 text-warning" />
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )})}
+                                    );
+                                })}
                             </div>
                         )}
                     </CardContent>
@@ -830,9 +820,11 @@ export default function MaintenancePage({ resources = [] }: Props) {
                                                 until: e.target.value,
                                             }))
                                         }
-                                        min={new Date()
-                                            .toISOString()
-                                            .split('T')[0]}
+                                        min={
+                                            new Date()
+                                                .toISOString()
+                                                .split('T')[0]
+                                        }
                                     />
                                     <div className="text-xs text-muted-foreground">
                                         If set, maintenance will auto-clear on
@@ -875,4 +867,3 @@ export default function MaintenancePage({ resources = [] }: Props) {
         </AppLayout>
     );
 }
-

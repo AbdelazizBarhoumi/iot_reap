@@ -157,9 +157,10 @@ export const hardwareApi = {
         deviceId: number,
         data: UpdateCameraSettingsRequest,
     ): Promise<ActionResponse & { camera?: Camera }> {
-        const response = await client.put<
-            ActionResponse & { camera?: Camera }
-        >(`/hardware/devices/${deviceId}/camera-settings`, data);
+        const response = await client.put<ActionResponse & { camera?: Camera }>(
+            `/hardware/devices/${deviceId}/camera-settings`,
+            data,
+        );
         return response.data;
     },
 
@@ -447,4 +448,3 @@ export const adminReservationApi = {
         return response.data;
     },
 };
-

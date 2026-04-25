@@ -115,7 +115,9 @@ export default function AlertsPage() {
             const response = await alertsApi.getAlertStats();
             setStats(response);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to load alert stats'));
+            toast.error(
+                getHttpErrorMessage(error, 'Failed to load alert stats'),
+            );
         }
     }, []);
 
@@ -134,7 +136,9 @@ export default function AlertsPage() {
             toast.success('Alert acknowledged');
             await Promise.all([loadAlerts(), loadStats()]);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to acknowledge alert'));
+            toast.error(
+                getHttpErrorMessage(error, 'Failed to acknowledge alert'),
+            );
         } finally {
             setActionLoadingId(null);
         }
@@ -173,7 +177,9 @@ export default function AlertsPage() {
             toast.success('All alerts acknowledged');
             await Promise.all([loadAlerts(), loadStats()]);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to acknowledge all alerts'));
+            toast.error(
+                getHttpErrorMessage(error, 'Failed to acknowledge all alerts'),
+            );
         } finally {
             setLoading(false);
         }
@@ -188,7 +194,8 @@ export default function AlertsPage() {
                     <div>
                         <h1 className="text-3xl font-bold">System Alerts</h1>
                         <p className="text-muted-foreground">
-                            Review, acknowledge, resolve, and clear platform alerts.
+                            Review, acknowledge, resolve, and clear platform
+                            alerts.
                         </p>
                     </div>
 
@@ -206,7 +213,10 @@ export default function AlertsPage() {
                             Refresh
                         </Button>
 
-                        <Button onClick={() => void handleAcknowledgeAll()} disabled={loading}>
+                        <Button
+                            onClick={() => void handleAcknowledgeAll()}
+                            disabled={loading}
+                        >
                             <CheckCheck className="mr-2 h-4 w-4" />
                             Acknowledge All
                         </Button>
@@ -216,7 +226,9 @@ export default function AlertsPage() {
                 <div className="grid gap-4 md:grid-cols-4">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Total
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold">
                             {stats?.total ?? 0}
@@ -236,7 +248,9 @@ export default function AlertsPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Unresolved</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Unresolved
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-blue-600">
                             {stats?.unresolved ?? 0}
@@ -245,7 +259,9 @@ export default function AlertsPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Critical</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Critical
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-red-700">
                             {stats?.critical ?? 0}
@@ -263,37 +279,59 @@ export default function AlertsPage() {
                         <div className="grid gap-2 sm:grid-cols-3">
                             <Select
                                 value={filters.severity}
-                                onValueChange={(value: AlertFilters['severity']) => {
+                                onValueChange={(
+                                    value: AlertFilters['severity'],
+                                ) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, severity: value }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        severity: value,
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Severity" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Severities</SelectItem>
-                                    <SelectItem value="critical">Critical</SelectItem>
+                                    <SelectItem value="all">
+                                        All Severities
+                                    </SelectItem>
+                                    <SelectItem value="critical">
+                                        Critical
+                                    </SelectItem>
                                     <SelectItem value="error">Error</SelectItem>
-                                    <SelectItem value="warning">Warning</SelectItem>
+                                    <SelectItem value="warning">
+                                        Warning
+                                    </SelectItem>
                                     <SelectItem value="info">Info</SelectItem>
                                 </SelectContent>
                             </Select>
 
                             <Select
                                 value={filters.status}
-                                onValueChange={(value: AlertFilters['status']) => {
+                                onValueChange={(
+                                    value: AlertFilters['status'],
+                                ) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, status: value }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        status: value,
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
-                                    <SelectItem value="unacknowledged">Unacknowledged</SelectItem>
-                                    <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                                    <SelectItem value="all">
+                                        All Statuses
+                                    </SelectItem>
+                                    <SelectItem value="unacknowledged">
+                                        Unacknowledged
+                                    </SelectItem>
+                                    <SelectItem value="acknowledged">
+                                        Acknowledged
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -301,14 +339,19 @@ export default function AlertsPage() {
                                 value={filters.source}
                                 onValueChange={(value: string) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, source: value }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        source: value,
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Source" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Sources</SelectItem>
+                                    <SelectItem value="all">
+                                        All Sources
+                                    </SelectItem>
                                     {sourceOptions.map((source) => (
                                         <SelectItem key={source} value={source}>
                                             {source}
@@ -328,38 +371,58 @@ export default function AlertsPage() {
                                     <TableHead>Source</TableHead>
                                     <TableHead>Created</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="text-right">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {alerts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={6}
+                                            className="py-10 text-center text-muted-foreground"
+                                        >
                                             No alerts found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     alerts.map((alert) => {
-                                        const isActing = actionLoadingId === alert.id;
+                                        const isActing =
+                                            actionLoadingId === alert.id;
 
                                         return (
                                             <TableRow key={alert.id}>
                                                 <TableCell>
                                                     <div className="max-w-[280px]">
-                                                        <p className="font-medium">{alert.title}</p>
+                                                        <p className="font-medium">
+                                                            {alert.title}
+                                                        </p>
                                                         <p className="truncate text-xs text-muted-foreground">
-                                                            {alert.description ?? 'No description'}
+                                                            {alert.description ??
+                                                                'No description'}
                                                         </p>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline" className={severityBadgeClass[alert.severity]}>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={
+                                                            severityBadgeClass[
+                                                                alert.severity
+                                                            ]
+                                                        }
+                                                    >
                                                         {alert.severity}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell>{alert.source ?? 'system'}</TableCell>
+                                                <TableCell>
+                                                    {alert.source ?? 'system'}
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground">
-                                                    {new Date(alert.created_at).toLocaleString()}
+                                                    {new Date(
+                                                        alert.created_at,
+                                                    ).toLocaleString()}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col gap-1">
@@ -371,14 +434,22 @@ export default function AlertsPage() {
                                                                     : 'border-amber-500/30 bg-amber-500/10 text-amber-600'
                                                             }
                                                         >
-                                                            {alert.acknowledged ? 'Acknowledged' : 'Unacknowledged'}
+                                                            {alert.acknowledged
+                                                                ? 'Acknowledged'
+                                                                : 'Unacknowledged'}
                                                         </Badge>
                                                         {alert.resolved ? (
-                                                            <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-blue-500/30 bg-blue-500/10 text-blue-600"
+                                                            >
                                                                 Resolved
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-600">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-red-500/30 bg-red-500/10 text-red-600"
+                                                            >
                                                                 Open
                                                             </Badge>
                                                         )}
@@ -391,9 +462,13 @@ export default function AlertsPage() {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => {
-                                                                    void handleAcknowledge(alert.id);
+                                                                    void handleAcknowledge(
+                                                                        alert.id,
+                                                                    );
                                                                 }}
-                                                                disabled={isActing}
+                                                                disabled={
+                                                                    isActing
+                                                                }
                                                             >
                                                                 <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                                                                 Ack
@@ -405,9 +480,13 @@ export default function AlertsPage() {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => {
-                                                                    void handleResolve(alert.id);
+                                                                    void handleResolve(
+                                                                        alert.id,
+                                                                    );
                                                                 }}
-                                                                disabled={isActing}
+                                                                disabled={
+                                                                    isActing
+                                                                }
                                                             >
                                                                 <ShieldAlert className="mr-1 h-3.5 w-3.5" />
                                                                 Resolve
@@ -419,7 +498,9 @@ export default function AlertsPage() {
                                                             variant="outline"
                                                             className="border-destructive/30 text-destructive hover:bg-destructive/10"
                                                             onClick={() => {
-                                                                void handleDelete(alert.id);
+                                                                void handleDelete(
+                                                                    alert.id,
+                                                                );
                                                             }}
                                                             disabled={isActing}
                                                         >
@@ -438,14 +519,19 @@ export default function AlertsPage() {
                         {meta.last_page > 1 && (
                             <div className="mt-4 flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">
-                                    Page {meta.current_page} of {meta.last_page} ({meta.total} alerts)
+                                    Page {meta.current_page} of {meta.last_page}{' '}
+                                    ({meta.total} alerts)
                                 </span>
 
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                        onClick={() =>
+                                            setPage((prev) =>
+                                                Math.max(1, prev - 1),
+                                            )
+                                        }
                                         disabled={loading || page <= 1}
                                     >
                                         Previous
@@ -453,8 +539,17 @@ export default function AlertsPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setPage((prev) => Math.min(meta.last_page, prev + 1))}
-                                        disabled={loading || page >= meta.last_page}
+                                        onClick={() =>
+                                            setPage((prev) =>
+                                                Math.min(
+                                                    meta.last_page,
+                                                    prev + 1,
+                                                ),
+                                            )
+                                        }
+                                        disabled={
+                                            loading || page >= meta.last_page
+                                        }
                                     >
                                         Next
                                     </Button>

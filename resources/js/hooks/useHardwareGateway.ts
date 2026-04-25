@@ -406,7 +406,9 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
                 return false;
             } catch (e) {
                 const message =
-                    e instanceof Error ? e.message : 'Failed to activate camera';
+                    e instanceof Error
+                        ? e.message
+                        : 'Failed to activate camera';
                 toast.error(message);
                 setError(message);
                 return false;
@@ -439,9 +441,7 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
                 return false;
             } catch (e) {
                 const message =
-                    e instanceof Error
-                        ? e.message
-                        : 'Failed to update camera';
+                    e instanceof Error ? e.message : 'Failed to update camera';
                 toast.error(message);
                 setError(message);
                 return false;
@@ -507,4 +507,3 @@ export function useHardwareGateway(): UseHardwareGatewayResult {
         verifyNode,
     };
 }
-

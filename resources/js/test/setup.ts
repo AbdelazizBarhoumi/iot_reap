@@ -10,7 +10,8 @@ if (!global.ResizeObserver) {
         unobserve() {}
         disconnect() {}
     }
-    global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+    global.ResizeObserver =
+        ResizeObserverMock as unknown as typeof ResizeObserver;
 }
 
 // Start MSW server before all tests
@@ -22,4 +23,3 @@ afterEach(() => {
 });
 // Close server after all tests
 afterAll(() => server.close());
-

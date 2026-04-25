@@ -26,9 +26,8 @@ export default function QuizPage({
     attemptCount,
     maxAttempts,
 }: QuizPageProps) {
-    const [completedAttempt, setCompletedAttempt] = useState<QuizAttempt | null>(
-        null,
-    );
+    const [completedAttempt, setCompletedAttempt] =
+        useState<QuizAttempt | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
@@ -57,7 +56,11 @@ export default function QuizPage({
                 <Head title={`Results: ${quiz.title}`} />
                 <div className="flex h-full flex-1 flex-col gap-6 p-6">
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" onClick={handleCancel}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancel}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                         <div className="flex-1">
@@ -111,4 +114,3 @@ export default function QuizPage({
         </AppLayout>
     );
 }
-

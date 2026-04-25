@@ -312,6 +312,3 @@ export function QuestionEditor({
         </Card>
     );
 }
-
-
-

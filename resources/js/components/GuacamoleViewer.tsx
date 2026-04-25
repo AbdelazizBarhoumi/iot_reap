@@ -453,6 +453,3 @@ export function GuacamoleViewer({
         </div>
     );
 }
-
-
-

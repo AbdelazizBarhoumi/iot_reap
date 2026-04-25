@@ -4,10 +4,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import usersApi, { type GetUsersParams } from '@/api/users.api';
 import { getHttpErrorMessage } from '@/lib/http-errors';
-import type {
-    AdminUser,
-    PaginatedUsers,
-} from '@/types/user.types';
+import type { AdminUser, PaginatedUsers } from '@/types/user.types';
 
 const DEFAULT_META: PaginatedUsers['meta'] = {
     current_page: 1,
@@ -102,8 +99,7 @@ export function useUsers(initialData?: PaginatedUsers) {
             setError(null);
 
             try {
-                const response =
-                    await usersApi.revokeTeacherApproval(userId);
+                const response = await usersApi.revokeTeacherApproval(userId);
                 setUsers((prev) =>
                     prev.map((u) => (u.id === userId ? response.data : u)),
                 );
@@ -209,4 +205,3 @@ export function useUsers(initialData?: PaginatedUsers) {
         setError,
     };
 }
-

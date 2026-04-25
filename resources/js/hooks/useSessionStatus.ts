@@ -129,4 +129,3 @@ export function useSessionStatus(
     }, [fetchSession, pollInterval, sessionId]);
     return { session, loading, error, refetch: fetchSession };
 }
-

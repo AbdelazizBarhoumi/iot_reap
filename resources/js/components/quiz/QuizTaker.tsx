@@ -72,7 +72,8 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
             const data = await response.json();
             setAttempt(data.attempt);
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to start quiz';
+            const message =
+                error instanceof Error ? error.message : 'Failed to start quiz';
             toast.error(message);
         } finally {
             setIsStarting(false);
@@ -122,7 +123,10 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
             setResults(data);
             onComplete?.(data.attempt);
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to submit quiz';
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to submit quiz';
             toast.error(message);
         } finally {
             setIsSubmitting(false);
@@ -480,5 +484,3 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
         </div>
     );
 }
-
-

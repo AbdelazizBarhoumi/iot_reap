@@ -48,16 +48,23 @@ export interface ListAlertsParams {
 }
 
 export const alertsApi = {
-    async listAlerts(params: ListAlertsParams = {}): Promise<PaginatedAlertsResponse> {
-        const { data } = await client.get<PaginatedAlertsResponse>('/admin/alerts', {
-            params,
-        });
+    async listAlerts(
+        params: ListAlertsParams = {},
+    ): Promise<PaginatedAlertsResponse> {
+        const { data } = await client.get<PaginatedAlertsResponse>(
+            '/admin/alerts',
+            {
+                params,
+            },
+        );
 
         return data;
     },
 
     async getUnacknowledgedAlerts(): Promise<SystemAlert[]> {
-        const { data } = await client.get<{ data: SystemAlert[] }>('/admin/alerts/unacknowledged');
+        const { data } = await client.get<{ data: SystemAlert[] }>(
+            '/admin/alerts/unacknowledged',
+        );
 
         return data.data;
     },
@@ -69,9 +76,10 @@ export const alertsApi = {
     },
 
     async acknowledgeAlert(alertId: number): Promise<SystemAlert> {
-        const { data } = await client.post<{ message: string; data: SystemAlert }>(
-            `/admin/alerts/${alertId}/acknowledge`,
-        );
+        const { data } = await client.post<{
+            message: string;
+            data: SystemAlert;
+        }>(`/admin/alerts/${alertId}/acknowledge`);
 
         return data.data;
     },
@@ -81,9 +89,10 @@ export const alertsApi = {
     },
 
     async resolveAlert(alertId: number): Promise<SystemAlert> {
-        const { data } = await client.post<{ message: string; data: SystemAlert }>(
-            `/admin/alerts/${alertId}/resolve`,
-        );
+        const { data } = await client.post<{
+            message: string;
+            data: SystemAlert;
+        }>(`/admin/alerts/${alertId}/resolve`);
 
         return data.data;
     },

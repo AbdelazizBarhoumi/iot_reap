@@ -26,4 +26,3 @@ export interface SearchFilters {
     category?: string;
     level?: string;
 }
-

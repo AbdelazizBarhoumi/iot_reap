@@ -49,10 +49,12 @@ export default function ArticleEditPage({
                     </div>
                 </div>
                 <div className="max-w-4xl">
-                    <ArticleEditor trainingUnitId={trainingUnitId} article={article} />
+                    <ArticleEditor
+                        trainingUnitId={trainingUnitId}
+                        article={article}
+                    />
                 </div>
             </div>
         </AppLayout>
     );
 }
-

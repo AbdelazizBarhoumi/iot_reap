@@ -115,5 +115,3 @@ export function ReviewCard({
         </Card>
     );
 }
-
-

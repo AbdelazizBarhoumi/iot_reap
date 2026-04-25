@@ -69,7 +69,9 @@ export default function VMAssignmentApprovalsPage({
 
     const filtered = assignments.filter(
         (a) =>
-            a.trainingUnit?.title?.toLowerCase().includes(search.toLowerCase()) ||
+            a.trainingUnit?.title
+                ?.toLowerCase()
+                .includes(search.toLowerCase()) ||
             a.trainingUnit?.module?.trainingPath?.title
                 ?.toLowerCase()
                 .includes(search.toLowerCase()) ||
@@ -111,7 +113,8 @@ export default function VMAssignmentApprovalsPage({
                         VM Assignment Approvals
                     </h1>
                     <p className="text-muted-foreground">
-                        Review instructor requests to assign VMs to training modules
+                        Review instructor requests to assign VMs to training
+                        modules
                     </p>
                 </div>
 
@@ -206,7 +209,8 @@ export default function VMAssignmentApprovalsPage({
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
                                                         {assignment.trainingUnit
-                                                            ?.module?.trainingPath
+                                                            ?.module
+                                                            ?.trainingPath
                                                             ?.title ?? 'N/A'}
                                                     </div>
                                                 </div>
@@ -296,4 +300,3 @@ export default function VMAssignmentApprovalsPage({
         </AppLayout>
     );
 }
-

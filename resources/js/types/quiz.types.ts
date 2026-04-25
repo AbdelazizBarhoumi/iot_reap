@@ -115,4 +115,3 @@ export interface QuizAnswerInput {
     selected_option_id?: number;
     text_answer?: string;
 }
-

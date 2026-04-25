@@ -306,4 +306,3 @@ export default function PayoutsPage({ payouts = [], stats }: Props) {
         </AppLayout>
     );
 }
-

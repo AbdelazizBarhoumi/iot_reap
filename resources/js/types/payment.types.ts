@@ -67,4 +67,3 @@ export interface TrainingPathWithPrice {
         name: string;
     };
 }
-

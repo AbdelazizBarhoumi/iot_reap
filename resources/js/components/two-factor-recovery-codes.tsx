@@ -152,5 +152,3 @@ export default function TwoFactorRecoveryCodes({
         </Card>
     );
 }
-
-

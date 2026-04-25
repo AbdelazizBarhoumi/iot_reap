@@ -104,8 +104,18 @@ export function useForum({
             setError(null);
             try {
                 const response = trainingUnitId
-                    ? await forumApi.getTrainingUnitThreads(trainingUnitId, sort, filter, page)
-                    : await forumApi.getTrainingPathThreads(trainingPathId!, sort, filter, page);
+                    ? await forumApi.getTrainingUnitThreads(
+                          trainingUnitId,
+                          sort,
+                          filter,
+                          page,
+                      )
+                    : await forumApi.getTrainingPathThreads(
+                          trainingPathId!,
+                          sort,
+                          filter,
+                          page,
+                      );
                 setThreads(response.data);
                 setCurrentPage(response.pagination.current_page);
                 setTotalPages(response.pagination.last_page);
@@ -160,7 +170,10 @@ export function useForum({
             }
             setIsSubmitting(true);
             try {
-                const newThread = await forumApi.createThread(trainingUnitId, data);
+                const newThread = await forumApi.createThread(
+                    trainingUnitId,
+                    data,
+                );
                 setThreads((prev) => [newThread, ...prev]);
                 setTotalThreads((prev) => prev + 1);
                 toast.success('Discussion started successfully');
@@ -289,7 +302,10 @@ export function useForum({
                                 if (r.id === data.parent_id) {
                                     return {
                                         ...r,
-                                        replies: [...(r.replies || []), newReply],
+                                        replies: [
+                                            ...(r.replies || []),
+                                            newReply,
+                                        ],
                                     };
                                 }
                                 if (r.replies) {
@@ -326,9 +342,7 @@ export function useForum({
                 return newReply;
             } catch (err) {
                 const message =
-                    err instanceof Error
-                        ? err.message
-                        : 'Failed to post reply';
+                    err instanceof Error ? err.message : 'Failed to post reply';
                 toast.error(message);
                 return null;
             } finally {
@@ -438,4 +452,3 @@ export function useForum({
         clearCurrentThread,
     };
 }
-

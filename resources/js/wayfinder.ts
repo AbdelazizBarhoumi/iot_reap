@@ -13,9 +13,10 @@ export type RouteDefinition<T extends string | readonly string[] = string> = {
     url: string;
 } & (T extends readonly string[] ? { methods: T } : { method: T });
 
-export type RouteFormDefinition<T extends string | readonly string[] = string> = {
-    action: string;
-} & (T extends readonly string[] ? { methods: T } : { method: T });
+export type RouteFormDefinition<T extends string | readonly string[] = string> =
+    {
+        action: string;
+    } & (T extends readonly string[] ? { methods: T } : { method: T });
 
 /**
  * Convert query options to URL query string

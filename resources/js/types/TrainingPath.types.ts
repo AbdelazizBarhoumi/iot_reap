@@ -41,6 +41,7 @@ export interface TrainingPath {
     instructor: string;
     instructor_id: number;
     thumbnail: string | null;
+    thumbnail_url?: string | null;
     video_type: VideoType | null;
     video_url: string | null;
     category: string;
@@ -76,4 +77,3 @@ export interface TeacherStats {
     completionRate: number;
     totalRevenue: string;
 }
-

@@ -133,7 +133,7 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
                                                 <p className="text-lg font-semibold text-foreground">
                                                     {certificate.trainingPath
                                                         ?.title ||
-                                                                'Unknown Path'}
+                                                        'Unknown Path'}
                                                 </p>
                                             </div>
                                         </div>
@@ -221,4 +221,3 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
         </>
     );
 }
-

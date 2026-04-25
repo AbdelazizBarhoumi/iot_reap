@@ -75,7 +75,7 @@ function formatDate(dateStr: string): string {
     });
 }
 export default function RefundsPage({ refunds }: RefundsPageProps) {
-    const refundList = Array.isArray(refunds) ? refunds : refunds?.data ?? [];
+    const refundList = Array.isArray(refunds) ? refunds : (refunds?.data ?? []);
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Training Refund Requests" />
@@ -85,9 +85,12 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                         <RotateCcw className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">Training Path Refund Requests</h1>
+                        <h1 className="text-2xl font-bold">
+                            Training Path Refund Requests
+                        </h1>
                         <p className="text-muted-foreground">
-                            Track the status of your training path refund requests
+                            Track the status of your training path refund
+                            requests
                         </p>
                     </div>
                 </div>
@@ -114,7 +117,8 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <CardTitle className="text-base">
-                                                    {refund.trainingPath?.title ??
+                                                    {refund.trainingPath
+                                                        ?.title ??
                                                         'Training Path'}
                                                 </CardTitle>
                                                 <CardDescription>
@@ -167,4 +171,3 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
         </AppLayout>
     );
 }
-

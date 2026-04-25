@@ -130,4 +130,3 @@ export interface PageProps {
     sidebarOpen: boolean;
     [key: string]: unknown;
 }
-

@@ -37,4 +37,3 @@ export function useProxmoxVMs(): UseProxmoxVMsResult {
     }, [fetchVMs]);
     return { vms, loading, error, refetch: fetchVMs };
 }
-

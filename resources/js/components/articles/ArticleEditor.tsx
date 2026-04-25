@@ -221,7 +221,9 @@ function convertToTipTapContent(text: string): TipTapContent {
         }
         // Bullet list item
         else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-            const lastItem = content[content.length - 1] as TipTapNode | undefined;
+            const lastItem = content[content.length - 1] as
+                | TipTapNode
+                | undefined;
             const listItem: TipTapNode = {
                 type: 'listItem',
                 content: [
@@ -242,7 +244,9 @@ function convertToTipTapContent(text: string): TipTapContent {
         }
         // Numbered list item
         else if (/^\d+\.\s/.test(trimmed)) {
-            const lastItem = content[content.length - 1] as TipTapNode | undefined;
+            const lastItem = content[content.length - 1] as
+                | TipTapNode
+                | undefined;
             const text = trimmed.replace(/^\d+\.\s/, '');
             const listItem: TipTapNode = {
                 type: 'listItem',
@@ -292,5 +296,3 @@ function parseInlineFormatting(text: string): unknown[] {
     }
     return result;
 }
-
-

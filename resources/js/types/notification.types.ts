@@ -36,4 +36,3 @@ export interface NotificationGroup {
     label: string;
     notifications: Notification[];
 }
-

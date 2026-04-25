@@ -168,7 +168,10 @@ export function useSessionHardware(
                 await fetchData();
                 return false;
             } catch (e) {
-                const message = getHttpErrorMessage(e, 'Queue operation failed');
+                const message = getHttpErrorMessage(
+                    e,
+                    'Queue operation failed',
+                );
                 toast.error(message);
                 setError(message);
                 await fetchData();
@@ -225,4 +228,3 @@ export function useSessionHardware(
         leaveQueue,
     };
 }
-

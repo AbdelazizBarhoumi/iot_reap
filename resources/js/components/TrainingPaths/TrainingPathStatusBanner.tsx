@@ -88,6 +88,3 @@ export function TrainingPathStatusBanner({
         </div>
     );
 }
-
-
-

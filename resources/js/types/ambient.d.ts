@@ -30,4 +30,3 @@ declare module '@/routes/*' {
     const value: any;
     export default value;
 }
-

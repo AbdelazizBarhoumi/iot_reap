@@ -8,11 +8,30 @@ import { NotificationBell } from '../NotificationBell';
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div>,
-        button: ({ children, onClick, ...props }: { children?: React.ReactNode; onClick?: React.MouseEventHandler<HTMLButtonElement> } & Record<string, unknown>) => (
-            <button onClick={onClick} {...props}>{children}</button>
+        div: ({
+            children,
+            ...props
+        }: { children?: React.ReactNode } & Record<string, unknown>) => (
+            <div {...props}>{children}</div>
         ),
-        span: ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) => <span {...props}>{children}</span>,
+        button: ({
+            children,
+            onClick,
+            ...props
+        }: {
+            children?: React.ReactNode;
+            onClick?: React.MouseEventHandler<HTMLButtonElement>;
+        } & Record<string, unknown>) => (
+            <button onClick={onClick} {...props}>
+                {children}
+            </button>
+        ),
+        span: ({
+            children,
+            ...props
+        }: { children?: React.ReactNode } & Record<string, unknown>) => (
+            <span {...props}>{children}</span>
+        ),
     },
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
 }));
@@ -64,17 +83,23 @@ describe('NotificationBell Component', () => {
                 const url = new URL(request.url);
                 const limit = url.searchParams.get('limit');
                 return HttpResponse.json({
-                    notifications: mockNotifications.slice(0, Number(limit) || 10),
-                    unread_count: mockNotifications.filter(n => !n.read).length,
+                    notifications: mockNotifications.slice(
+                        0,
+                        Number(limit) || 10,
+                    ),
+                    unread_count: mockNotifications.filter((n) => !n.read)
+                        .length,
                 });
             }),
             http.get('/notifications/unread-count', () => {
                 return HttpResponse.json({
-                    count: mockNotifications.filter(n => !n.read).length,
+                    count: mockNotifications.filter((n) => !n.read).length,
                 });
             }),
             http.post('/notifications/:id/read', ({ params }) => {
-                const notification = mockNotifications.find(n => n.id === params.id);
+                const notification = mockNotifications.find(
+                    (n) => n.id === params.id,
+                );
                 if (notification) {
                     notification.read = true;
                     return HttpResponse.json({ notification });
@@ -82,26 +107,29 @@ describe('NotificationBell Component', () => {
                 return new HttpResponse(null, { status: 404 });
             }),
             http.post('/notifications/mark-all-read', () => {
-                mockNotifications.forEach(n => n.read = true);
+                mockNotifications.forEach((n) => (n.read = true));
                 return HttpResponse.json({
                     marked_count: mockNotifications.length,
                     unread_count: 0,
                 });
             }),
             http.delete('/notifications/:id', ({ params }) => {
-                const index = mockNotifications.findIndex(n => n.id === params.id);
+                const index = mockNotifications.findIndex(
+                    (n) => n.id === params.id,
+                );
                 if (index !== -1) {
                     mockNotifications.splice(index, 1);
                     return new HttpResponse(null, { status: 204 });
                 }
                 return new HttpResponse(null, { status: 404 });
-            })
+            }),
         );
     });
     it('renders notification bell button', () => {
         render(<NotificationBell />);
-        const bellButton = screen.getByLabelText(/notifications/i) || 
-                          screen.getByRole('button', { name: /notification/i });
+        const bellButton =
+            screen.getByLabelText(/notifications/i) ||
+            screen.getByRole('button', { name: /notification/i });
         expect(bellButton).toBeInTheDocument();
     });
     it('shows unread count badge when there are unread notifications', async () => {
@@ -117,12 +145,15 @@ describe('NotificationBell Component', () => {
                 return HttpResponse.json({ count: 0 });
             }),
             http.get('/notifications/recent', () => {
-                const readNotifications = mockNotifications.map(n => ({ ...n, read: true }));
+                const readNotifications = mockNotifications.map((n) => ({
+                    ...n,
+                    read: true,
+                }));
                 return HttpResponse.json({
                     notifications: readNotifications,
                     unread_count: 0,
                 });
-            })
+            }),
         );
         render(<NotificationBell />);
         await waitFor(() => {
@@ -132,34 +163,58 @@ describe('NotificationBell Component', () => {
     it('opens notification dropdown when bell is clicked', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
-            expect(screen.getByText('New Student Enrolled')).toBeInTheDocument();
+            expect(
+                screen.getByText('TrainingPath Approved'),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText('New Student Enrolled'),
+            ).toBeInTheDocument();
         });
     });
     it('displays notification titles and messages correctly', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
-            expect(screen.getByText('Your trainingPath "React Basics" has been approved')).toBeInTheDocument();
-            expect(screen.getByText('New Student Enrolled')).toBeInTheDocument();
-            expect(screen.getByText('John Doe enrolled in your trainingPath')).toBeInTheDocument();
+            expect(
+                screen.getByText('TrainingPath Approved'),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText(
+                    'Your trainingPath "React Basics" has been approved',
+                ),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText('New Student Enrolled'),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText('John Doe enrolled in your trainingPath'),
+            ).toBeInTheDocument();
         });
     });
     it('shows different icons for different notification types', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
             // Should render notifications with appropriate icons based on type
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
-            expect(screen.getByText('New Student Enrolled')).toBeInTheDocument();
+            expect(
+                screen.getByText('TrainingPath Approved'),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText('New Student Enrolled'),
+            ).toBeInTheDocument();
             expect(screen.getByText('New Forum Reply')).toBeInTheDocument();
         });
     });
@@ -167,95 +222,139 @@ describe('NotificationBell Component', () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
         // Wait for initial unread count to appear
-        await waitFor(() => {
-            expect(screen.getByText('2')).toBeInTheDocument();
-        }, { timeout: 2000 });
-        
-        const bellButton = screen.getByRole('button', { name: /notifications/i });
+        await waitFor(
+            () => {
+                expect(screen.getByText('2')).toBeInTheDocument();
+            },
+            { timeout: 2000 },
+        );
+
+        const bellButton = screen.getByRole('button', {
+            name: /notifications/i,
+        });
         await user.click(bellButton);
-        
+
         // Wait for notification dropdown to open and show content
-        await waitFor(() => {
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
-        }, { timeout: 3000 });
+        await waitFor(
+            () => {
+                expect(
+                    screen.getByText('TrainingPath Approved'),
+                ).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
     it('shows mark all as read button when there are unread notifications', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
         // Wait for initial render and unread count
-        await waitFor(() => {
-            expect(screen.getByText('2')).toBeInTheDocument();
-        }, { timeout: 2000 });
-        
-        const bellButton = screen.getByRole('button', { name: /notifications/i });
+        await waitFor(
+            () => {
+                expect(screen.getByText('2')).toBeInTheDocument();
+            },
+            { timeout: 2000 },
+        );
+
+        const bellButton = screen.getByRole('button', {
+            name: /notifications/i,
+        });
         await user.click(bellButton);
-        
+
         // Wait for the mark all as read button to appear
-        await waitFor(() => {
-            const buttons = screen.getAllByRole('button');
-            const markAllButton = buttons.find(btn => btn.textContent?.includes('Mark all read'));
-            expect(markAllButton).toBeInTheDocument();
-        }, { timeout: 3000 });
+        await waitFor(
+            () => {
+                const buttons = screen.getAllByRole('button');
+                const markAllButton = buttons.find((btn) =>
+                    btn.textContent?.includes('Mark all read'),
+                );
+                expect(markAllButton).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
     it('marks all notifications as read when mark all button is clicked', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
         // Wait for initial render
-        await waitFor(() => {
-            expect(screen.getByText('2')).toBeInTheDocument();
-        }, { timeout: 2000 });
-        
-        const bellButton = screen.getByRole('button', { name: /notifications/i });
+        await waitFor(
+            () => {
+                expect(screen.getByText('2')).toBeInTheDocument();
+            },
+            { timeout: 2000 },
+        );
+
+        const bellButton = screen.getByRole('button', {
+            name: /notifications/i,
+        });
         await user.click(bellButton);
-        
+
         // Wait for button to appear and click it
-        await waitFor(() => {
-            const buttons = screen.getAllByRole('button');
-            const markAllButton = buttons.find(btn => btn.textContent?.includes('Mark all read'));
-            expect(markAllButton).toBeInTheDocument();
-            if (markAllButton) {
-                markAllButton.click();
-            }
-        }, { timeout: 3000 });
+        await waitFor(
+            () => {
+                const buttons = screen.getAllByRole('button');
+                const markAllButton = buttons.find((btn) =>
+                    btn.textContent?.includes('Mark all read'),
+                );
+                expect(markAllButton).toBeInTheDocument();
+                if (markAllButton) {
+                    markAllButton.click();
+                }
+            },
+            { timeout: 3000 },
+        );
     });
     it('displays timestamps relative to current time', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
 
-        const bellButton = await screen.findByRole('button', { name: /notification/i });
+        const bellButton = await screen.findByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
 
-        await waitFor(() => {
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
-        }, { timeout: 3000 });
+        await waitFor(
+            () => {
+                expect(
+                    screen.getByText('TrainingPath Approved'),
+                ).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
     it('groups notifications by date', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
             // Should show date group headers like "Today", "Yesterday"
-            expect(screen.getByText(/today|yesterday|earlier/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/today|yesterday|earlier/i),
+            ).toBeInTheDocument();
         });
     });
     it('shows loading state while fetching notifications', async () => {
         // Mock delayed response
         server.use(
             http.get('/notifications/recent', async () => {
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise((resolve) => setTimeout(resolve, 100));
                 return HttpResponse.json({
                     notifications: mockNotifications,
                     unread_count: 2,
                 });
-            })
+            }),
         );
         render(<NotificationBell />);
         // Component loads notifications on mount, should eventually render count
-        await waitFor(() => {
-            // Should show the unread count once loaded
-            expect(screen.getByText('2')).toBeInTheDocument();
-        }, { timeout: 3000 });
+        await waitFor(
+            () => {
+                // Should show the unread count once loaded
+                expect(screen.getByText('2')).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
     it('handles empty notifications gracefully', async () => {
         const user = userEvent.setup();
@@ -269,37 +368,51 @@ describe('NotificationBell Component', () => {
             }),
             http.get('/notifications/unread-count', () => {
                 return HttpResponse.json({ count: 0 });
-            })
+            }),
         );
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
-            expect(screen.getByText(/no notifications|no new notifications/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/no notifications|no new notifications/i),
+            ).toBeInTheDocument();
         });
     });
     it('shows settings link in dropdown', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
-            expect(screen.getByText(/settings|preferences/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/settings|preferences/i),
+            ).toBeInTheDocument();
         });
     });
     it('closes dropdown when clicking outside', async () => {
         const user = userEvent.setup();
         render(<NotificationBell />);
         // Open dropdown
-        const bellButton = screen.getByRole('button', { name: /notification/i });
+        const bellButton = screen.getByRole('button', {
+            name: /notification/i,
+        });
         await user.click(bellButton);
         await waitFor(() => {
-            expect(screen.getByText('TrainingPath Approved')).toBeInTheDocument();
+            expect(
+                screen.getByText('TrainingPath Approved'),
+            ).toBeInTheDocument();
         });
         // Click outside
         await user.click(document.body);
         await waitFor(() => {
-            expect(screen.queryByText('TrainingPath Approved')).not.toBeInTheDocument();
+            expect(
+                screen.queryByText('TrainingPath Approved'),
+            ).not.toBeInTheDocument();
         });
     });
     it('handles API errors gracefully', async () => {
@@ -311,12 +424,14 @@ describe('NotificationBell Component', () => {
         server.use(
             http.get('/notifications/recent', () => {
                 return new HttpResponse(null, { status: 500 });
-            })
+            }),
         );
         render(<NotificationBell />);
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /notification/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole('button', { name: /notification/i }),
+            ).toBeInTheDocument();
         });
 
         await waitFor(() => {
@@ -334,7 +449,7 @@ describe('NotificationBell Component', () => {
         server.use(
             http.get('/notifications/recent', () => {
                 return new HttpResponse(null, { status: 401 });
-            })
+            }),
         );
 
         render(<NotificationBell />);
@@ -353,5 +468,3 @@ describe('NotificationBell Component', () => {
         consoleErrorSpy.mockRestore();
     });
 });
-
-

@@ -95,4 +95,3 @@ export const notesApi = {
     updateNote,
     deleteNote,
 };
-

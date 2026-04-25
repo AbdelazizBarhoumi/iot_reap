@@ -14,7 +14,10 @@ interface QuizEditPageProps {
     trainingUnitId: string;
     quiz: Quiz | null;
 }
-export default function QuizEditPage({ trainingUnitId, quiz }: QuizEditPageProps) {
+export default function QuizEditPage({
+    trainingUnitId,
+    quiz,
+}: QuizEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
             { title: 'Teaching', href: '/teaching' },
@@ -53,4 +56,3 @@ export default function QuizEditPage({ trainingUnitId, quiz }: QuizEditPageProps
         </AppLayout>
     );
 }
-

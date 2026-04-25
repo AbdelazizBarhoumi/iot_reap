@@ -89,4 +89,3 @@ consoleMethods.forEach((level) => {
         }
     };
 });
-

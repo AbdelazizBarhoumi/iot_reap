@@ -26,4 +26,3 @@ export interface TipTapMark {
     type: string;
     attrs?: Record<string, unknown>;
 }
-

@@ -196,7 +196,7 @@ export default function TermsOfService() {
                                     {section.title}
                                 </h2>
                                 {section.content && (
-                                    <p className="mt-3 text-slate-700 leading-relaxed">
+                                    <p className="mt-3 leading-relaxed text-slate-700">
                                         {section.content}
                                     </p>
                                 )}
@@ -207,7 +207,7 @@ export default function TermsOfService() {
                                                 <h3 className="font-medium text-slate-800">
                                                     {sub.subtitle}
                                                 </h3>
-                                                <p className="mt-2 text-slate-700 leading-relaxed">
+                                                <p className="mt-2 leading-relaxed text-slate-700">
                                                     {sub.content}
                                                 </p>
                                             </div>

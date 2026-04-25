@@ -145,5 +145,3 @@ export function NoteEditor({
         </motion.div>
     );
 }
-
-

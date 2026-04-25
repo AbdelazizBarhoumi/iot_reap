@@ -45,7 +45,9 @@ export async function getCertificates(): Promise<Certificate[]> {
 /**
  * Issue a certificate for a completed trainingPath.
  */
-export async function issueCertificate(trainingPathId: number): Promise<Certificate> {
+export async function issueCertificate(
+    trainingPathId: number,
+): Promise<Certificate> {
     const response = await client.post<CertificateResponse>(
         `/certificates/trainingPaths/${trainingPathId}`,
     );
@@ -84,4 +86,3 @@ export const certificatesApi = {
     verifyCertificate,
     getCertificateDownloadUrl,
 };
-

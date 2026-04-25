@@ -31,6 +31,7 @@ interface TrainingPathCardData {
     students: number;
     hasVirtualMachine?: boolean;
     thumbnail?: string | null;
+    thumbnail_url?: string | null;
     modules?: { trainingUnits: unknown[] }[];
     price?: number;
     isFree?: boolean;
@@ -49,23 +50,26 @@ const levelConfig: Record<string, { color: string; bg: string }> = {
         bg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
     },
 };
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const categoryIcons: Record<
+    string,
+    React.ComponentType<{ className?: string }>
+> = {
     'Smart Manufacturing': Factory,
     'Industrial IoT': Wifi,
     'Predictive Maintenance': BarChart3,
     'OT Cybersecurity': Shield,
     'Robotics & Automation': Bot,
     'Edge AI & Digital Twins': Cpu,
-    'General': BookOpen,
+    General: BookOpen,
 };
 const categoryGradients: Record<string, string> = {
-        'Smart Manufacturing': 'from-blue-500/20 to-primary/20',
-        'Industrial IoT': 'from-green-500/20 to-primary/20',
-        'Predictive Maintenance': 'from-red-500/20 to-orange-500/20',
-        'OT Cybersecurity': 'from-cyan-500/20 to-sky-500/20',
-        'Robotics & Automation':  'from-violet-500/20 to-fuchsia-500/20',
-        'Edge AI & Digital Twins':  'from-yellow-500/20 to-amber-500/20',
-        'General': 'from-gray-500/20 to-secondary/20',
+    'Smart Manufacturing': 'from-blue-500/20 to-primary/20',
+    'Industrial IoT': 'from-green-500/20 to-primary/20',
+    'Predictive Maintenance': 'from-red-500/20 to-orange-500/20',
+    'OT Cybersecurity': 'from-cyan-500/20 to-sky-500/20',
+    'Robotics & Automation': 'from-violet-500/20 to-fuchsia-500/20',
+    'Edge AI & Digital Twins': 'from-yellow-500/20 to-amber-500/20',
+    General: 'from-gray-500/20 to-secondary/20',
 };
 const TrainingPathCard = ({
     trainingPath,
@@ -76,6 +80,8 @@ const TrainingPathCard = ({
 }) => {
     const moduleCount = trainingPath.modules?.length ?? 0;
     const levelStyle = levelConfig[trainingPath.level] ?? levelConfig.Beginner;
+    const thumbnailSrc =
+        trainingPath.thumbnail ?? trainingPath.thumbnail_url ?? null;
     const gradient =
         categoryGradients[trainingPath.category] ||
         'from-primary/80 via-primary/70 to-secondary/80';
@@ -88,12 +94,25 @@ const TrainingPathCard = ({
             whileHover={{ y: -4 }}
             className="h-full"
         >
-            <Link href={`/trainingPaths/${trainingPath.id}`} className="group block h-full">
+            <Link
+                href={`/trainingPaths/${trainingPath.id}`}
+                className="group block h-full"
+            >
                 <div className="relative h-full overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
                     {/* Header with gradient background */}
                     <div
                         className={`relative h-44 bg-gradient-to-br ${gradient} overflow-hidden`}
                     >
+                        {thumbnailSrc && (
+                            <img
+                                src={thumbnailSrc}
+                                alt={`${trainingPath.title} thumbnail`}
+                                className="absolute inset-0 h-full w-full object-cover"
+                            />
+                        )}
+                        {thumbnailSrc && (
+                            <div className="absolute inset-0 bg-black/25" />
+                        )}
                         {/* Pattern overlay */}
                         <div
                             className="absolute inset-0 opacity-10"
@@ -198,5 +217,3 @@ const TrainingPathCard = ({
     );
 };
 export default TrainingPathCard;
-
-

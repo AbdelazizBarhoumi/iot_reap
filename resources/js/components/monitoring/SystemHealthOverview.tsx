@@ -372,5 +372,3 @@ export function SystemHealthOverview({
         </div>
     );
 }
-
-

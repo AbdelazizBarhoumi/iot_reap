@@ -25,7 +25,12 @@ export default function VideoProcessingPage() {
             const data = await getProcessingStats();
             setStats(data);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to load video processing stats'));
+            toast.error(
+                getHttpErrorMessage(
+                    error,
+                    'Failed to load video processing stats',
+                ),
+            );
         } finally {
             setLoading(false);
         }
@@ -58,13 +63,20 @@ export default function VideoProcessingPage() {
             <div className="container space-y-6 py-8">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">Video Processing Monitor</h1>
+                        <h1 className="text-3xl font-bold">
+                            Video Processing Monitor
+                        </h1>
                         <p className="text-muted-foreground">
-                            Track transcoding queue status and video processing outcomes.
+                            Track transcoding queue status and video processing
+                            outcomes.
                         </p>
                     </div>
 
-                    <Button variant="outline" onClick={() => void loadStats()} disabled={loading}>
+                    <Button
+                        variant="outline"
+                        onClick={() => void loadStats()}
+                        disabled={loading}
+                    >
                         <RefreshCw
                             className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
                         />
@@ -75,7 +87,9 @@ export default function VideoProcessingPage() {
                 <div className="grid gap-4 md:grid-cols-4">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Pending</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Pending
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-amber-600">
                             {stats?.pending ?? 0}
@@ -84,7 +98,9 @@ export default function VideoProcessingPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Processing</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Processing
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-blue-600">
                             {stats?.processing ?? 0}
@@ -93,7 +109,9 @@ export default function VideoProcessingPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Ready</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Ready
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-green-600">
                             {stats?.ready ?? 0}
@@ -102,7 +120,9 @@ export default function VideoProcessingPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Failed</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Failed
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-red-600">
                             {stats?.failed ?? 0}
@@ -119,18 +139,29 @@ export default function VideoProcessingPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Ready ratio</span>
+                            <span className="text-muted-foreground">
+                                Ready ratio
+                            </span>
                             <span className="font-medium">{readyPercent}%</span>
                         </div>
                         <Progress value={readyPercent} className="h-2" />
 
                         <div className="grid gap-2 pt-2 text-sm text-muted-foreground sm:grid-cols-2">
                             <div>
-                                <p>Total tracked videos: <span className="font-medium text-foreground">{total}</span></p>
+                                <p>
+                                    Total tracked videos:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {total}
+                                    </span>
+                                </p>
                             </div>
                             <div>
                                 <p>
-                                    Queue pressure: <span className="font-medium text-foreground">{(stats?.pending ?? 0) + (stats?.processing ?? 0)}</span>
+                                    Queue pressure:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {(stats?.pending ?? 0) +
+                                            (stats?.processing ?? 0)}
+                                    </span>
                                 </p>
                             </div>
                         </div>

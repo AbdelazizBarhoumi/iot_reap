@@ -92,7 +92,9 @@ export const getPeriodOptions = (): Array<{ value: string; label: string }> => {
 /**
  * Determine trend color and icon based on change value
  */
-export const getTrendStyle = (value: number): { color: string; direction: 'up' | 'down' | 'neutral' } => {
+export const getTrendStyle = (
+    value: number,
+): { color: string; direction: 'up' | 'down' | 'neutral' } => {
     if (value === 0) {
         return { color: 'text-muted-foreground', direction: 'neutral' };
     }

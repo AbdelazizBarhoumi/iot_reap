@@ -109,5 +109,3 @@ export function StarRatingDisplay({
         </div>
     );
 }
-
-

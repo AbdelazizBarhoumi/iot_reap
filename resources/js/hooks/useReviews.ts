@@ -29,7 +29,9 @@ interface UseReviewsReturn {
     fetchReviews: (page?: number) => Promise<void>;
     fetchStats: () => Promise<void>;
     fetchMyReview: () => Promise<void>;
-    createReview: (data: CreateReviewData) => Promise<TrainingPathReview | null>;
+    createReview: (
+        data: CreateReviewData,
+    ) => Promise<TrainingPathReview | null>;
     updateReview: (
         reviewId: number,
         data: CreateReviewData,
@@ -58,7 +60,10 @@ export function useReviews({
             setLoading(true);
             setError(null);
             try {
-                const response = await reviewsApi.getReviews(trainingPathId, page);
+                const response = await reviewsApi.getReviews(
+                    trainingPathId,
+                    page,
+                );
                 setReviews(response.data);
                 setCurrentPage(response.meta.current_page);
                 setTotalPages(response.meta.last_page);
@@ -113,7 +118,10 @@ export function useReviews({
         async (data: CreateReviewData): Promise<TrainingPathReview | null> => {
             setIsSubmitting(true);
             try {
-                const newReview = await reviewsApi.createReview(trainingPathId, data);
+                const newReview = await reviewsApi.createReview(
+                    trainingPathId,
+                    data,
+                );
                 setReviews((prev) => [newReview, ...prev]);
                 setMyReview(newReview);
                 setCanReview(false);
@@ -214,4 +222,3 @@ export function useReviews({
         isSubmitting,
     };
 }
-

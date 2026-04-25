@@ -20,5 +20,3 @@ export function CameraStatusBadge({ status, label }: CameraStatusBadgeProps) {
         </Badge>
     );
 }
-
-

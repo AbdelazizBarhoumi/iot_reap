@@ -82,7 +82,9 @@ export default function ActivityLogsPage() {
             setLogs(response.data);
             setMeta(response.meta);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to load activity logs'));
+            toast.error(
+                getHttpErrorMessage(error, 'Failed to load activity logs'),
+            );
         } finally {
             setLoading(false);
         }
@@ -90,10 +92,14 @@ export default function ActivityLogsPage() {
 
     const loadStats = useCallback(async () => {
         try {
-            const response = await activityLogsApi.getActivityStats(filters.days);
+            const response = await activityLogsApi.getActivityStats(
+                filters.days,
+            );
             setStats(response);
         } catch (error) {
-            toast.error(getHttpErrorMessage(error, 'Failed to load activity stats'));
+            toast.error(
+                getHttpErrorMessage(error, 'Failed to load activity stats'),
+            );
         }
     }, [filters.days]);
 
@@ -167,7 +173,9 @@ export default function ActivityLogsPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Total Events</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Total Events
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold">
                             {stats?.total ?? 0}
@@ -176,7 +184,9 @@ export default function ActivityLogsPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Completed</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Completed
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-green-600">
                             {stats?.by_status?.completed ?? 0}
@@ -185,7 +195,9 @@ export default function ActivityLogsPage() {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">Failed</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">
+                                Failed
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="text-2xl font-bold text-red-600">
                             {stats?.by_status?.failed ?? 0}
@@ -220,14 +232,19 @@ export default function ActivityLogsPage() {
                                 value={filters.type}
                                 onValueChange={(value: string) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, type: value }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        type: value,
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Types</SelectItem>
+                                    <SelectItem value="all">
+                                        All Types
+                                    </SelectItem>
                                     {typeOptions.map((type) => (
                                         <SelectItem key={type} value={type}>
                                             {type}
@@ -240,14 +257,19 @@ export default function ActivityLogsPage() {
                                 value={filters.status}
                                 onValueChange={(value: string) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, status: value }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        status: value,
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="all">
+                                        All Statuses
+                                    </SelectItem>
                                     {statusOptions.map((status) => (
                                         <SelectItem key={status} value={status}>
                                             {status}
@@ -260,7 +282,10 @@ export default function ActivityLogsPage() {
                                 value={String(filters.days)}
                                 onValueChange={(value: string) => {
                                     setPage(1);
-                                    setFilters((prev) => ({ ...prev, days: Number(value) }));
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        days: Number(value),
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
@@ -268,8 +293,12 @@ export default function ActivityLogsPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="1">Last 24h</SelectItem>
-                                    <SelectItem value="7">Last 7 days</SelectItem>
-                                    <SelectItem value="30">Last 30 days</SelectItem>
+                                    <SelectItem value="7">
+                                        Last 7 days
+                                    </SelectItem>
+                                    <SelectItem value="30">
+                                        Last 30 days
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -291,7 +320,10 @@ export default function ActivityLogsPage() {
                             <TableBody>
                                 {filteredLogs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={6}
+                                            className="py-10 text-center text-muted-foreground"
+                                        >
                                             No activity entries found.
                                         </TableCell>
                                     </TableRow>
@@ -306,15 +338,20 @@ export default function ActivityLogsPage() {
                                                     {entry.description}
                                                 </p>
                                             </TableCell>
-                                            <TableCell>{entry.user_name ?? 'System'}</TableCell>
                                             <TableCell>
-                                                <Badge variant="outline">{entry.type}</Badge>
+                                                {entry.user_name ?? 'System'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    {entry.type}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
                                                     className={
-                                                        entry.status === 'completed'
+                                                        entry.status ===
+                                                        'completed'
                                                             ? 'border-green-500/30 bg-green-500/10 text-green-600'
                                                             : 'border-red-500/30 bg-red-500/10 text-red-600'
                                                     }
@@ -323,7 +360,9 @@ export default function ActivityLogsPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {new Date(entry.created_at).toLocaleString()}
+                                                {new Date(
+                                                    entry.created_at,
+                                                ).toLocaleString()}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -334,14 +373,19 @@ export default function ActivityLogsPage() {
                         {meta.last_page > 1 && (
                             <div className="mt-4 flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">
-                                    Page {meta.current_page} of {meta.last_page} ({meta.total} events)
+                                    Page {meta.current_page} of {meta.last_page}{' '}
+                                    ({meta.total} events)
                                 </span>
 
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                        onClick={() =>
+                                            setPage((prev) =>
+                                                Math.max(1, prev - 1),
+                                            )
+                                        }
                                         disabled={loading || page <= 1}
                                     >
                                         Previous
@@ -350,9 +394,16 @@ export default function ActivityLogsPage() {
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                            setPage((prev) => Math.min(meta.last_page, prev + 1))
+                                            setPage((prev) =>
+                                                Math.min(
+                                                    meta.last_page,
+                                                    prev + 1,
+                                                ),
+                                            )
                                         }
-                                        disabled={loading || page >= meta.last_page}
+                                        disabled={
+                                            loading || page >= meta.last_page
+                                        }
                                     >
                                         Next
                                     </Button>

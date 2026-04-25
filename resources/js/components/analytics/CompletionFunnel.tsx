@@ -96,5 +96,3 @@ export function CompletionFunnel({
         </Card>
     );
 }
-
-

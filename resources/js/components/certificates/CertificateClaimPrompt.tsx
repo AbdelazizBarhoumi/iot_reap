@@ -2,7 +2,13 @@
  * CertificateClaimPrompt - Prompt to claim certificate after trainingPath completion.
  */
 import { motion } from 'framer-motion';
-import { Award, PartyPopper, Download, Loader2, CheckCircle } from 'lucide-react';
+import {
+    Award,
+    PartyPopper,
+    Download,
+    Loader2,
+    CheckCircle,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -92,7 +98,9 @@ export function CertificateClaimPrompt({
             onClaimed?.(cert);
         } catch (err) {
             const message =
-                err instanceof Error ? err.message : 'Failed to issue certificate';
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to issue certificate';
             toast.error(message);
             setStatus('can_claim');
         }
@@ -141,8 +149,9 @@ export function CertificateClaimPrompt({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 text-center space-y-6">
-                    {(status === 'issued' || status === 'ready') && certificate ? (
+                <div className="space-y-6 py-6 text-center">
+                    {(status === 'issued' || status === 'ready') &&
+                    certificate ? (
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -235,4 +244,4 @@ export function CertificateClaimPrompt({
             </DialogContent>
         </Dialog>
     );
-} 
+}

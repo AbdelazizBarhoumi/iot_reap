@@ -96,13 +96,18 @@ function getDefaultParams(
 
 // Helper to extract and log validation errors from axios error responses
 function getErrorMessage(error: unknown): string {
-    const isAxiosError = (err: unknown): err is { response?: { data?: { errors?: Record<string, string[]> } } } =>
+    const isAxiosError = (
+        err: unknown,
+    ): err is { response?: { data?: { errors?: Record<string, string[]> } } } =>
         typeof err === 'object' && err !== null && 'response' in err;
 
     if (isAxiosError(error) && error.response?.data?.errors) {
         const validationErrors = error.response.data.errors;
         const errorMessages = Object.entries(validationErrors)
-            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .map(
+                ([field, messages]) =>
+                    `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`,
+            )
             .join('\n');
         console.error('Validation errors:', validationErrors);
         return errorMessages;
@@ -655,7 +660,7 @@ function RDPPreferences({
         'disable-offscreen-caching': 'false',
         'disable-glyph-caching': 'false',
         'disable-gfx': 'false',
-        
+
         // RemoteApp
         'remote-app': '',
         'remote-app-dir': '',
@@ -747,7 +752,9 @@ function RDPPreferences({
             {/* Concurrency Limits */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Concurrency Limits</CardTitle>
+                    <CardTitle className="text-lg">
+                        Concurrency Limits
+                    </CardTitle>
                     <CardDescription>
                         Restrict simultaneous connections to this profile.
                     </CardDescription>
@@ -758,7 +765,9 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['max-connections']}
-                            onChange={(e) => update('max-connections', e.target.value)}
+                            onChange={(e) =>
+                                update('max-connections', e.target.value)
+                            }
                             placeholder="Unlimited if empty"
                         />
                     </div>
@@ -767,7 +776,12 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['max-connections-per-user']}
-                            onChange={(e) => update('max-connections-per-user', e.target.value)}
+                            onChange={(e) =>
+                                update(
+                                    'max-connections-per-user',
+                                    e.target.value,
+                                )
+                            }
                         />
                     </div>
                 </CardContent>
@@ -803,9 +817,12 @@ function RDPPreferences({
             {/* Guacamole Proxy (guacd) */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Guacamole Proxy (guacd)</CardTitle>
+                    <CardTitle className="text-lg">
+                        Guacamole Proxy (guacd)
+                    </CardTitle>
                     <CardDescription>
-                        Configure proxy connection parameters. Leave empty for default.
+                        Configure proxy connection parameters. Leave empty for
+                        default.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-3">
@@ -813,7 +830,9 @@ function RDPPreferences({
                         <Label>Hostname</Label>
                         <Input
                             value={params['guacd-hostname']}
-                            onChange={(e) => update('guacd-hostname', e.target.value)}
+                            onChange={(e) =>
+                                update('guacd-hostname', e.target.value)
+                            }
                             placeholder="localhost"
                         />
                     </div>
@@ -822,7 +841,9 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['guacd-port']}
-                            onChange={(e) => update('guacd-port', e.target.value)}
+                            onChange={(e) =>
+                                update('guacd-port', e.target.value)
+                            }
                             placeholder="4822"
                         />
                     </div>
@@ -836,7 +857,9 @@ function RDPPreferences({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">None (unencrypted)</SelectItem>
+                                <SelectItem value="none">
+                                    None (unencrypted)
+                                </SelectItem>
                                 <SelectItem value="ssl">SSL</SelectItem>
                                 <SelectItem value="tls">TLS</SelectItem>
                             </SelectContent>
@@ -875,9 +898,7 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params.timeout}
-                            onChange={(e) =>
-                                update('timeout', e.target.value)
-                            }
+                            onChange={(e) => update('timeout', e.target.value)}
                         />
                     </div>
                 </CardContent>
@@ -974,7 +995,9 @@ function RDPPreferences({
             {/* Remote Desktop Gateway */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Remote Desktop Gateway</CardTitle>
+                    <CardTitle className="text-lg">
+                        Remote Desktop Gateway
+                    </CardTitle>
                     <CardDescription>
                         Optional gateway for RDP connections through a proxy.
                     </CardDescription>
@@ -984,7 +1007,9 @@ function RDPPreferences({
                         <Label>Hostname</Label>
                         <Input
                             value={params['gateway-hostname']}
-                            onChange={(e) => update('gateway-hostname', e.target.value)}
+                            onChange={(e) =>
+                                update('gateway-hostname', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -992,14 +1017,18 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['gateway-port']}
-                            onChange={(e) => update('gateway-port', e.target.value)}
+                            onChange={(e) =>
+                                update('gateway-port', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Username</Label>
                         <Input
                             value={params['gateway-username']}
-                            onChange={(e) => update('gateway-username', e.target.value)}
+                            onChange={(e) =>
+                                update('gateway-username', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1007,14 +1036,18 @@ function RDPPreferences({
                         <Input
                             type="password"
                             value={params['gateway-password']}
-                            onChange={(e) => update('gateway-password', e.target.value)}
+                            onChange={(e) =>
+                                update('gateway-password', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Domain</Label>
                         <Input
                             value={params['gateway-domain']}
-                            onChange={(e) => update('gateway-domain', e.target.value)}
+                            onChange={(e) =>
+                                update('gateway-domain', e.target.value)
+                            }
                         />
                     </div>
                 </CardContent>
@@ -1063,7 +1096,9 @@ function RDPPreferences({
                                 <SelectItem value="8">8-bit</SelectItem>
                                 <SelectItem value="16">16-bit</SelectItem>
                                 <SelectItem value="24">24-bit</SelectItem>
-                                <SelectItem value="32">32-bit (True Color)</SelectItem>
+                                <SelectItem value="32">
+                                    32-bit (True Color)
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -1077,8 +1112,12 @@ function RDPPreferences({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="display-update">Display Update (RDP 8.1+)</SelectItem>
-                                <SelectItem value="reconnect">Reconnect</SelectItem>
+                                <SelectItem value="display-update">
+                                    Display Update (RDP 8.1+)
+                                </SelectItem>
+                                <SelectItem value="reconnect">
+                                    Reconnect
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -1096,7 +1135,8 @@ function RDPPreferences({
                 <CardHeader>
                     <CardTitle className="text-lg">Clipboard</CardTitle>
                     <CardDescription>
-                        Control clipboard access between client and remote desktop.
+                        Control clipboard access between client and remote
+                        desktop.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -1112,9 +1152,13 @@ function RDPPreferences({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="preserve">Preserve</SelectItem>
+                                <SelectItem value="preserve">
+                                    Preserve
+                                </SelectItem>
                                 <SelectItem value="unix">Unix (LF)</SelectItem>
-                                <SelectItem value="windows">Windows (CRLF)</SelectItem>
+                                <SelectItem value="windows">
+                                    Windows (CRLF)
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -1136,7 +1180,9 @@ function RDPPreferences({
             {/* Device Redirection */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Device Redirection</CardTitle>
+                    <CardTitle className="text-lg">
+                        Device Redirection
+                    </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                     <CheckboxRow
@@ -1173,7 +1219,9 @@ function RDPPreferences({
                         <Label>Redirected Printer Name</Label>
                         <Input
                             value={params['printer-name']}
-                            onChange={(e) => update('printer-name', e.target.value)}
+                            onChange={(e) =>
+                                update('printer-name', e.target.value)
+                            }
                         />
                     </div>
                     <CheckboxRow
@@ -1186,7 +1234,9 @@ function RDPPreferences({
                         <Label>Drive Name</Label>
                         <Input
                             value={params['drive-name']}
-                            onChange={(e) => update('drive-name', e.target.value)}
+                            onChange={(e) =>
+                                update('drive-name', e.target.value)
+                            }
                             placeholder="e.g., Shared"
                         />
                     </div>
@@ -1194,7 +1244,9 @@ function RDPPreferences({
                         <Label>Drive Path</Label>
                         <Input
                             value={params['drive-path']}
-                            onChange={(e) => update('drive-path', e.target.value)}
+                            onChange={(e) =>
+                                update('drive-path', e.target.value)
+                            }
                         />
                     </div>
                     <CheckboxRow
@@ -1276,8 +1328,12 @@ function RDPPreferences({
                     <CheckboxRow
                         id="enable-desktop-composition"
                         label="Enable desktop composition (Aero)"
-                        checked={params['enable-desktop-composition'] === 'true'}
-                        onChange={() => toggleBool('enable-desktop-composition')}
+                        checked={
+                            params['enable-desktop-composition'] === 'true'
+                        }
+                        onChange={() =>
+                            toggleBool('enable-desktop-composition')
+                        }
                     />
                     <CheckboxRow
                         id="enable-menu-animations"
@@ -1322,7 +1378,9 @@ function RDPPreferences({
                         <Label>Initial Program</Label>
                         <Input
                             value={params['initial-program']}
-                            onChange={(e) => update('initial-program', e.target.value)}
+                            onChange={(e) =>
+                                update('initial-program', e.target.value)
+                            }
                             placeholder="e.g., notepad.exe"
                         />
                     </div>
@@ -1330,14 +1388,18 @@ function RDPPreferences({
                         <Label>Client Name</Label>
                         <Input
                             value={params['client-name']}
-                            onChange={(e) => update('client-name', e.target.value)}
+                            onChange={(e) =>
+                                update('client-name', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Keyboard Layout</Label>
                         <Input
                             value={params['server-layout']}
-                            onChange={(e) => update('server-layout', e.target.value)}
+                            onChange={(e) =>
+                                update('server-layout', e.target.value)
+                            }
                             placeholder="e.g., en-us-qwerty"
                         />
                     </div>
@@ -1370,14 +1432,18 @@ function RDPPreferences({
                         <Label>Recording Path</Label>
                         <Input
                             value={params['recording-path']}
-                            onChange={(e) => update('recording-path', e.target.value)}
+                            onChange={(e) =>
+                                update('recording-path', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Recording Name</Label>
                         <Input
                             value={params['recording-name']}
-                            onChange={(e) => update('recording-name', e.target.value)}
+                            onChange={(e) =>
+                                update('recording-name', e.target.value)
+                            }
                         />
                     </div>
                     <CheckboxRow
@@ -1410,7 +1476,9 @@ function RDPPreferences({
             {/* SFTP */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">SFTP (SSH File Transfer)</CardTitle>
+                    <CardTitle className="text-lg">
+                        SFTP (SSH File Transfer)
+                    </CardTitle>
                     <CardDescription>
                         Enable secure file transfer over SSH.
                     </CardDescription>
@@ -1426,7 +1494,9 @@ function RDPPreferences({
                         <Label>Hostname</Label>
                         <Input
                             value={params['sftp-hostname']}
-                            onChange={(e) => update('sftp-hostname', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-hostname', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1434,7 +1504,9 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['sftp-port']}
-                            onChange={(e) => update('sftp-port', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-port', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1442,14 +1514,18 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['sftp-timeout']}
-                            onChange={(e) => update('sftp-timeout', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-timeout', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Username</Label>
                         <Input
                             value={params['sftp-username']}
-                            onChange={(e) => update('sftp-username', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-username', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1457,14 +1533,18 @@ function RDPPreferences({
                         <Input
                             type="password"
                             value={params['sftp-password']}
-                            onChange={(e) => update('sftp-password', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-password', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Public Host Key (Base64)</Label>
                         <Input
                             value={params['sftp-host-key']}
-                            onChange={(e) => update('sftp-host-key', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-host-key', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1472,7 +1552,9 @@ function RDPPreferences({
                         <Input
                             type="password"
                             value={params['sftp-private-key']}
-                            onChange={(e) => update('sftp-private-key', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-private-key', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1480,21 +1562,27 @@ function RDPPreferences({
                         <Input
                             type="password"
                             value={params['sftp-passphrase']}
-                            onChange={(e) => update('sftp-passphrase', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-passphrase', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>File Browser Root Directory</Label>
                         <Input
                             value={params['sftp-root-directory']}
-                            onChange={(e) => update('sftp-root-directory', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-root-directory', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Default Upload Directory</Label>
                         <Input
                             value={params['sftp-directory']}
-                            onChange={(e) => update('sftp-directory', e.target.value)}
+                            onChange={(e) =>
+                                update('sftp-directory', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
@@ -1502,7 +1590,12 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['sftp-server-alive-interval']}
-                            onChange={(e) => update('sftp-server-alive-interval', e.target.value)}
+                            onChange={(e) =>
+                                update(
+                                    'sftp-server-alive-interval',
+                                    e.target.value,
+                                )
+                            }
                         />
                     </div>
                     <CheckboxRow
@@ -1533,7 +1626,9 @@ function RDPPreferences({
                         <Label>Program</Label>
                         <Input
                             value={params['remote-app']}
-                            onChange={(e) => update('remote-app', e.target.value)}
+                            onChange={(e) =>
+                                update('remote-app', e.target.value)
+                            }
                             placeholder="e.g., C:\\Windows\\System32\\notepad.exe"
                         />
                     </div>
@@ -1541,14 +1636,18 @@ function RDPPreferences({
                         <Label>Working Directory</Label>
                         <Input
                             value={params['remote-app-dir']}
-                            onChange={(e) => update('remote-app-dir', e.target.value)}
+                            onChange={(e) =>
+                                update('remote-app-dir', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Parameters</Label>
                         <Input
                             value={params['remote-app-args']}
-                            onChange={(e) => update('remote-app-args', e.target.value)}
+                            onChange={(e) =>
+                                update('remote-app-args', e.target.value)
+                            }
                         />
                     </div>
                 </CardContent>
@@ -1557,7 +1656,9 @@ function RDPPreferences({
             {/* Preconnection / Hyper-V */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Preconnection / Hyper-V</CardTitle>
+                    <CardTitle className="text-lg">
+                        Preconnection / Hyper-V
+                    </CardTitle>
                     <CardDescription>
                         Configure Hyper-V connection settings.
                     </CardDescription>
@@ -1567,21 +1668,27 @@ function RDPPreferences({
                         <Label>Preconnection BLOB (VM ID)</Label>
                         <Input
                             value={params['preconnection-blob']}
-                            onChange={(e) => update('preconnection-blob', e.target.value)}
+                            onChange={(e) =>
+                                update('preconnection-blob', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Preconnection ID</Label>
                         <Input
                             value={params['preconnection-id']}
-                            onChange={(e) => update('preconnection-id', e.target.value)}
+                            onChange={(e) =>
+                                update('preconnection-id', e.target.value)
+                            }
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Load Balance Info/Cookie</Label>
                         <Input
                             value={params['load-balance-info']}
-                            onChange={(e) => update('load-balance-info', e.target.value)}
+                            onChange={(e) =>
+                                update('load-balance-info', e.target.value)
+                            }
                         />
                     </div>
                 </CardContent>
@@ -1606,7 +1713,9 @@ function RDPPreferences({
                         <Label>MAC Address</Label>
                         <Input
                             value={params['wol-mac-addr']}
-                            onChange={(e) => update('wol-mac-addr', e.target.value)}
+                            onChange={(e) =>
+                                update('wol-mac-addr', e.target.value)
+                            }
                             placeholder="e.g., 00:1A:2B:3C:4D:5E"
                         />
                     </div>
@@ -1614,7 +1723,9 @@ function RDPPreferences({
                         <Label>Broadcast Address</Label>
                         <Input
                             value={params['wol-broadcast-addr']}
-                            onChange={(e) => update('wol-broadcast-addr', e.target.value)}
+                            onChange={(e) =>
+                                update('wol-broadcast-addr', e.target.value)
+                            }
                             placeholder="e.g., 255.255.255.255"
                         />
                     </div>
@@ -1623,7 +1734,9 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['wol-udp-port']}
-                            onChange={(e) => update('wol-udp-port', e.target.value)}
+                            onChange={(e) =>
+                                update('wol-udp-port', e.target.value)
+                            }
                             placeholder="9"
                         />
                     </div>
@@ -1632,7 +1745,9 @@ function RDPPreferences({
                         <Input
                             type="number"
                             value={params['wol-wait-time']}
-                            onChange={(e) => update('wol-wait-time', e.target.value)}
+                            onChange={(e) =>
+                                update('wol-wait-time', e.target.value)
+                            }
                         />
                     </div>
                 </CardContent>
@@ -1748,9 +1863,7 @@ function VNCPreferences({
                         <Input
                             type="number"
                             value={params.timeout}
-                            onChange={(e) =>
-                                update('timeout', e.target.value)
-                            }
+                            onChange={(e) => update('timeout', e.target.value)}
                         />
                     </div>
                 </CardContent>
@@ -1941,9 +2054,7 @@ function SSHPreferences({
                         <Input
                             type="number"
                             value={params.timeout}
-                            onChange={(e) =>
-                                update('timeout', e.target.value)
-                            }
+                            onChange={(e) => update('timeout', e.target.value)}
                         />
                     </div>
                 </CardContent>
@@ -2098,4 +2209,3 @@ function CheckboxRow({
         </div>
     );
 }
-

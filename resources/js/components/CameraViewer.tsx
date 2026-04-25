@@ -412,5 +412,3 @@ export function CameraViewer({
         </div>
     );
 }
-
-

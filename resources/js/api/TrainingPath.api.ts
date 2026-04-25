@@ -187,8 +187,13 @@ export const teachingApi = {
     /**
      * Delete a module
      */
-    deleteModule: async (trainingPathId: number, moduleId: number): Promise<void> => {
-        await apiClient.delete(`/teaching/${trainingPathId}/modules/${moduleId}`);
+    deleteModule: async (
+        trainingPathId: number,
+        moduleId: number,
+    ): Promise<void> => {
+        await apiClient.delete(
+            `/teaching/${trainingPathId}/modules/${moduleId}`,
+        );
     },
     /**
      * Add a trainingUnit to a module
@@ -275,15 +280,23 @@ export const teachingApi = {
     /**
      * Archive a trainingPath (soft-delete)
      */
-    archive: async (trainingPathId: number): Promise<{ data: TrainingPath }> => {
-        const response = await apiClient.post(`/teaching/${trainingPathId}/archive`);
+    archive: async (
+        trainingPathId: number,
+    ): Promise<{ data: TrainingPath }> => {
+        const response = await apiClient.post(
+            `/teaching/${trainingPathId}/archive`,
+        );
         return response.data;
     },
     /**
      * Restore an archived trainingPath
      */
-    restore: async (trainingPathId: number): Promise<{ data: TrainingPath }> => {
-        const response = await apiClient.post(`/teaching/${trainingPathId}/restore`);
+    restore: async (
+        trainingPathId: number,
+    ): Promise<{ data: TrainingPath }> => {
+        const response = await apiClient.post(
+            `/teaching/${trainingPathId}/restore`,
+        );
         return response.data;
     },
 };
@@ -299,17 +312,24 @@ export const adminTrainingPathApi = {
      * Approve a trainingPath
      */
     approve: async (id: number): Promise<{ data: TrainingPath }> => {
-        const response = await apiClient.post(`/admin/trainingPaths/${id}/approve`);
+        const response = await apiClient.post(
+            `/admin/trainingPaths/${id}/approve`,
+        );
         return response.data;
     },
     /**
      * Reject a trainingPath
      */
-    reject: async (id: number, feedback: string): Promise<{ data: TrainingPath }> => {
-        const response = await apiClient.post(`/admin/trainingPaths/${id}/reject`, {
-            feedback,
-        });
+    reject: async (
+        id: number,
+        feedback: string,
+    ): Promise<{ data: TrainingPath }> => {
+        const response = await apiClient.post(
+            `/admin/trainingPaths/${id}/reject`,
+            {
+                feedback,
+            },
+        );
         return response.data;
     },
 };
-

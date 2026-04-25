@@ -48,7 +48,10 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
                                 <div className="flex items-center gap-4">
                                     {payment.trainingPath.thumbnail_url ? (
                                         <img
-                                            src={payment.trainingPath.thumbnail_url}
+                                            src={
+                                                payment.trainingPath
+                                                    .thumbnail_url
+                                            }
                                             alt={payment.trainingPath.title}
                                             className="h-16 w-16 rounded-lg object-cover"
                                         />
@@ -95,4 +98,3 @@ export default function SuccessPage({ payment }: SuccessPageProps) {
         </AppLayout>
     );
 }
-

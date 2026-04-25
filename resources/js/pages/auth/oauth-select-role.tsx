@@ -1,10 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import {
-    GraduationCap,
-    Wrench,
-    ArrowRight,
-    CheckCircle,
-} from 'lucide-react';
+import { GraduationCap, Wrench, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -21,7 +16,10 @@ interface Props {
     completeSignupUrl: string;
 }
 
-export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props) {
+export default function OAuthSelectRole({
+    oauthUser,
+    completeSignupUrl,
+}: Props) {
     return (
         <AuthLayout
             title="Complete Your Profile"
@@ -41,8 +39,12 @@ export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props)
                             />
                         )}
                         <div>
-                            <p className="font-semibold text-foreground">{oauthUser.name}</p>
-                            <p className="text-sm text-muted-foreground">{oauthUser.email}</p>
+                            <p className="font-semibold text-foreground">
+                                {oauthUser.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {oauthUser.email}
+                            </p>
                         </div>
                     </div>
                 </CardContent>
@@ -83,7 +85,9 @@ export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props)
                                                     Engineer
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Learn industrial systems and practice with virtual machines
+                                                    Learn industrial systems and
+                                                    practice with virtual
+                                                    machines
                                                 </p>
                                             </div>
                                         </div>
@@ -112,7 +116,8 @@ export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props)
                                                     Instructor
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Create and manage training courses for your students
+                                                    Create and manage training
+                                                    courses for your students
                                                 </p>
                                             </div>
                                         </div>
@@ -138,7 +143,8 @@ export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props)
 
                         {/* Info Text */}
                         <p className="text-center text-xs text-muted-foreground">
-                            You can change your role anytime in your account settings
+                            You can change your role anytime in your account
+                            settings
                         </p>
                     </>
                 )}
@@ -146,4 +152,3 @@ export default function OAuthSelectRole({ oauthUser, completeSignupUrl }: Props)
         </AuthLayout>
     );
 }
-

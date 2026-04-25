@@ -362,7 +362,9 @@ export default function HardwarePage() {
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <p className="text-sm font-medium">
-                                                                        {device.name}
+                                                                        {
+                                                                            device.name
+                                                                        }
                                                                     </p>
                                                                     {device.has_camera_registration && (
                                                                         <Badge
@@ -447,15 +449,15 @@ export default function HardwarePage() {
                                                                 'bound' && (
                                                                 <>
                                                                     <Button
-                                                                    size="sm"
-                                                                    onClick={() =>
-                                                                        openAttachDialog(
-                                                                            device,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        actionLoading ||
-                                                                        attachableSessions.length ===
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            openAttachDialog(
+                                                                                device,
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            actionLoading ||
+                                                                            attachableSessions.length ===
                                                                                 0
                                                                         }
                                                                     >
@@ -564,7 +566,8 @@ export default function HardwarePage() {
                                                                         }
                                                                     >
                                                                         <CameraIcon className="mr-1 h-3 w-3" />
-                                                                        Remove Camera
+                                                                        Remove
+                                                                        Camera
                                                                     </Button>
                                                                 </>
                                                             ) : node.is_verified ? (
@@ -583,7 +586,8 @@ export default function HardwarePage() {
                                                                     }
                                                                 >
                                                                     <CameraIcon className="mr-1 h-3 w-3" />
-                                                                    Convert to Camera
+                                                                    Convert to
+                                                                    Camera
                                                                 </Button>
                                                             ) : null}
                                                         </div>
@@ -649,10 +653,7 @@ export default function HardwarePage() {
                     </div>
 
                     <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={closeAttachDialog}
-                        >
+                        <Button variant="outline" onClick={closeAttachDialog}>
                             Cancel
                         </Button>
                         <Button
@@ -705,11 +706,16 @@ export default function HardwarePage() {
                                     <SelectValue placeholder="Width" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {['320', '640', '800', '1280', '1920'].map((value) => (
-                                        <SelectItem key={value} value={value}>
-                                            {value}
-                                        </SelectItem>
-                                    ))}
+                                    {['320', '640', '800', '1280', '1920'].map(
+                                        (value) => (
+                                            <SelectItem
+                                                key={value}
+                                                value={value}
+                                            >
+                                                {value}
+                                            </SelectItem>
+                                        ),
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -724,11 +730,16 @@ export default function HardwarePage() {
                                     <SelectValue placeholder="Height" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {['240', '480', '600', '720', '1080'].map((value) => (
-                                        <SelectItem key={value} value={value}>
-                                            {value}
-                                        </SelectItem>
-                                    ))}
+                                    {['240', '480', '600', '720', '1080'].map(
+                                        (value) => (
+                                            <SelectItem
+                                                key={value}
+                                                value={value}
+                                            >
+                                                {value}
+                                            </SelectItem>
+                                        ),
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -743,11 +754,16 @@ export default function HardwarePage() {
                                     <SelectValue placeholder="Framerate" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {['5', '10', '15', '20', '30'].map((value) => (
-                                        <SelectItem key={value} value={value}>
-                                            {value}
-                                        </SelectItem>
-                                    ))}
+                                    {['5', '10', '15', '20', '30'].map(
+                                        (value) => (
+                                            <SelectItem
+                                                key={value}
+                                                value={value}
+                                            >
+                                                {value}
+                                            </SelectItem>
+                                        ),
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -757,16 +773,23 @@ export default function HardwarePage() {
                                 Use Activate if you only need a quick restart.
                             </p>
                             <p>
-                                The backend will restart the stream with the selected settings.
+                                The backend will restart the stream with the
+                                selected settings.
                             </p>
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={closeCameraSettingsDialog}>
+                        <Button
+                            variant="outline"
+                            onClick={closeCameraSettingsDialog}
+                        >
                             Cancel
                         </Button>
-                        <Button onClick={() => void handleSaveCameraSettings()} disabled={actionLoading}>
+                        <Button
+                            onClick={() => void handleSaveCameraSettings()}
+                            disabled={actionLoading}
+                        >
                             {actionLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : null}

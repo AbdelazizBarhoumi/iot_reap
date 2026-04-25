@@ -74,7 +74,9 @@ export function SessionCameraPanel({
         changingResolution,
     } = useSessionCameras(sessionId);
     const [isFeedFocusMode, setIsFeedFocusMode] = useState(false);
-    const visibleCameras = cameras.filter((camera) => camera.status === 'active');
+    const visibleCameras = cameras.filter(
+        (camera) => camera.status === 'active',
+    );
     const activeSelectedCamera =
         selectedCamera?.status === 'active' ? selectedCamera : null;
     const isFocusedView = isFeedFocusMode && activeSelectedCamera !== null;
@@ -220,9 +222,13 @@ export function SessionCameraPanel({
                                 key={camera.id}
                                 number={index + 1}
                                 camera={camera}
-                                isSelected={activeSelectedCamera?.id === camera.id}
+                                isSelected={
+                                    activeSelectedCamera?.id === camera.id
+                                }
                                 isControlledByMe={isControlledByMe(camera)}
-                                isControlledByOther={isControlledByOther(camera)}
+                                isControlledByOther={isControlledByOther(
+                                    camera,
+                                )}
                                 isActive={isActive}
                                 onSelect={() => {
                                     const isDeselecting =
@@ -256,7 +262,10 @@ export function SessionCameraPanel({
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-medium">
                                 <Video className="mr-1 inline h-4 w-4 text-info" />
-                                Camera {visibleCameras.findIndex((c) => c.id === activeSelectedCamera.id) + 1}
+                                Camera{' '}
+                                {visibleCameras.findIndex(
+                                    (c) => c.id === activeSelectedCamera.id,
+                                ) + 1}
                                 <span className="ml-2 text-xs text-muted-foreground">
                                     ({activeSelectedCamera.robot_name})
                                 </span>
@@ -380,7 +389,10 @@ function CameraCard({
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <CameraIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="truncate text-sm font-medium" title={camera.name}>
+                    <span
+                        className="truncate text-sm font-medium"
+                        title={camera.name}
+                    >
                         {number}
                     </span>
                 </div>
@@ -416,7 +428,7 @@ function CameraCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-6 border-destructive/30 text-[10px] text-destructive hover:bg-destructive/10 p-1"
+                                className="h-6 border-destructive/30 p-1 text-[10px] text-destructive hover:bg-destructive/10"
                                 onClick={onReleaseControl}
                             >
                                 <Unlock className="mr-0.5 h-2.5 w-2.5" />
@@ -424,7 +436,7 @@ function CameraCard({
                         ) : isControlledByOther ? (
                             <Badge
                                 variant="outline"
-                                className="border-warning/30 px-1.5 py-0 text-[10px] text-warning p-1"
+                                className="border-warning/30 p-1 px-1.5 py-0 text-[10px] text-warning"
                             >
                                 <Lock className="mr-0.5 h-2.5 w-2.5" />
                                 In Use
@@ -433,7 +445,7 @@ function CameraCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-6 border-primary/30 text-[10px] text-primary hover:bg-primary/10 p-1"
+                                className="h-6 border-primary/30 p-1 text-[10px] text-primary hover:bg-primary/10"
                                 onClick={onAcquireControl}
                             >
                                 <Gamepad2 className="mr-0.5 h-2.5 w-2.5" />
@@ -445,5 +457,3 @@ function CameraCard({
         </div>
     );
 }
-
-

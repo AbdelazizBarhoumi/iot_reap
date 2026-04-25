@@ -34,7 +34,11 @@ export interface TrainingUnit {
     videoUrl?: string;
     resources?: string[];
 }
-export type TrainingPathStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
+export type TrainingPathStatus =
+    | 'draft'
+    | 'pending_review'
+    | 'approved'
+    | 'rejected';
 export interface TeacherStats {
     totalTrainingPaths: number;
     totalStudents: number;
@@ -43,4 +47,3 @@ export interface TeacherStats {
     pendingReviews: number;
     trainingPathsThisMonth: number;
 }
-

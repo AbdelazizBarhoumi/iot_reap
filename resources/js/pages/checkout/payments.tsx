@@ -52,7 +52,9 @@ function getStatusColor(status: Payment['status']): string {
     }
 }
 export default function PaymentsPage({ payments }: PaymentsPageProps) {
-    const paymentList = Array.isArray(payments) ? payments : payments?.data ?? [];
+    const paymentList = Array.isArray(payments)
+        ? payments
+        : (payments?.data ?? []);
     const [refundDialog, setRefundDialog] = useState<Payment | null>(null);
     const [refundReason, setRefundReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,9 +83,7 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
     };
     return (
         <AppLayout
-            breadcrumbs={[
-                { title: 'Payments', href: '/checkout/payments' },
-            ]}
+            breadcrumbs={[{ title: 'Payments', href: '/checkout/payments' }]}
         >
             <Head title="Payment History" />
             <div className="p-6">
@@ -119,13 +119,17 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
                                 <CardHeader className="pb-2">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
-                                            {payment.trainingPath.thumbnail_url ? (
+                                            {payment.trainingPath
+                                                .thumbnail_url ? (
                                                 <img
                                                     src={
                                                         payment.trainingPath
                                                             .thumbnail_url
                                                     }
-                                                    alt={payment.trainingPath.title}
+                                                    alt={
+                                                        payment.trainingPath
+                                                            .title
+                                                    }
                                                     className="h-12 w-12 rounded-lg object-cover"
                                                 />
                                             ) : (
@@ -262,4 +266,3 @@ export default function PaymentsPage({ payments }: PaymentsPageProps) {
         </AppLayout>
     );
 }
-

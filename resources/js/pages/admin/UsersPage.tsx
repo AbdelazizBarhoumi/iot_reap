@@ -481,7 +481,8 @@ export default function UsersPage() {
                                     User Management
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Manage platform users, roles, and permissions
+                                    Manage platform users, roles, and
+                                    permissions
                                 </p>
                             </div>
                         </div>
@@ -1051,4 +1052,3 @@ export default function UsersPage() {
         </AppLayout>
     );
 }
-

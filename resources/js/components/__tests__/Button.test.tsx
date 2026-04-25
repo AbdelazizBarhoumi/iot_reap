@@ -5,7 +5,9 @@ import { Button } from '../ui/button';
 describe('Button Component', () => {
     it('renders children correctly', () => {
         render(<Button>Click me</Button>);
-        expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: /click me/i }),
+        ).toBeInTheDocument();
     });
     it('handles click events', async () => {
         const user = userEvent.setup();
@@ -35,7 +37,9 @@ describe('Button Component', () => {
                 <a href="/test">Link Button</a>
             </Button>,
         );
-        expect(screen.getByRole('link', { name: /link button/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: /link button/i }),
+        ).toBeInTheDocument();
     });
 });
 describe('Example MSW Integration', () => {
@@ -49,5 +53,3 @@ describe('Example MSW Integration', () => {
         });
     });
 });
-
-

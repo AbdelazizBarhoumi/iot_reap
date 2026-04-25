@@ -36,5 +36,3 @@ export function AppShell({ children, variant = 'header' }: Props) {
         </SidebarProvider>
     );
 }
-
-

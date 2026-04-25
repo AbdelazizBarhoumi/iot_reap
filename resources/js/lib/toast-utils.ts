@@ -117,4 +117,3 @@ export const adminToasts = {
             description: 'Feedback has been sent to instructors.',
         }),
 };
-

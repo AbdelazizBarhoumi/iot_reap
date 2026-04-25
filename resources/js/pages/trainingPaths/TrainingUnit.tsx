@@ -51,7 +51,11 @@ import { cn } from '@/lib/utils';
 import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
 import type { Article } from '@/types/article.types';
-import type { TrainingPath, TrainingUnit, TrainingUnitType } from '@/types/TrainingPath.types';
+import type {
+    TrainingPath,
+    TrainingUnit,
+    TrainingUnitType,
+} from '@/types/TrainingPath.types';
 /**
  * VM info from approved trainingUnit assignment.
  */
@@ -128,7 +132,9 @@ function normalizeStringList(value: unknown): string[] {
                 const parsed = JSON.parse(trimmed);
                 if (Array.isArray(parsed)) {
                     return parsed
-                        .filter((item): item is string => typeof item === 'string')
+                        .filter(
+                            (item): item is string => typeof item === 'string',
+                        )
                         .map((item) => item.trim())
                         .filter((item) => item.length > 0);
                 }
@@ -138,7 +144,7 @@ function normalizeStringList(value: unknown): string[] {
         }
 
         return trimmed
-            .split(/\r?\n|,/) 
+            .split(/\r?\n|,/)
             .map((item) => item.trim())
             .filter((item) => item.length > 0);
     }
@@ -171,7 +177,9 @@ function TrainingUnitSidebar({
     completedCount,
 }: TrainingUnitSidebarProps) {
     const progressPercentage =
-        totalTrainingUnits > 0 ? (completedCount / totalTrainingUnits) * 100 : 0;
+        totalTrainingUnits > 0
+            ? (completedCount / totalTrainingUnits) * 100
+            : 0;
     // Find which module contains the current trainingUnit and default open it
     const currentModuleIndex =
         modules?.findIndex((m) =>
@@ -213,9 +221,13 @@ function TrainingUnitSidebar({
                     const moduleCompleted = module.trainingUnits.every((l) =>
                         isTrainingUnitCompleted(l.id, completedTrainingUnitIds),
                     );
-                    const moduleTrainingUnitsCompleted = module.trainingUnits.filter((l) =>
-                        isTrainingUnitCompleted(l.id, completedTrainingUnitIds),
-                    ).length;
+                    const moduleTrainingUnitsCompleted =
+                        module.trainingUnits.filter((l) =>
+                            isTrainingUnitCompleted(
+                                l.id,
+                                completedTrainingUnitIds,
+                            ),
+                        ).length;
                     return (
                         <Collapsible
                             key={module.id}
@@ -239,7 +251,8 @@ function TrainingUnitSidebar({
                                         </p>
                                         <p className="mt-0.5 text-xs text-muted-foreground">
                                             {moduleTrainingUnitsCompleted}/
-                                                {module.trainingUnits.length} modules
+                                            {module.trainingUnits.length}{' '}
+                                            modules
                                         </p>
                                     </div>
                                     <ChevronDown
@@ -253,76 +266,81 @@ function TrainingUnitSidebar({
                             <CollapsibleContent>
                                 {/* TrainingUnits list */}
                                 <ul className="py-1">
-                                    {module.trainingUnits.map((trainingUnit) => {
-                                        const Icon =
-                                            trainingUnitIcons[
-                                                trainingUnit.type as TrainingUnitType
-                                            ] || BookOpen;
-                                        const isActive = isSameId(
-                                            trainingUnit.id,
-                                            currentTrainingUnitId,
-                                        );
-                                        const isCompleted = isTrainingUnitCompleted(
-                                            trainingUnit.id,
-                                            completedTrainingUnitIds,
-                                        );
-                                        return (
-                                            <li key={trainingUnit.id}>
-                                                <Link
-                                                    href={`/trainingPaths/${trainingPathId}/trainingUnit/${trainingUnit.id}`}
-                                                    className={cn(
-                                                        'flex items-center gap-3 px-4 py-3 text-sm transition-colors',
-                                                        'hover:bg-muted/50',
-                                                        isActive &&
-                                                            'border-l-2 border-primary bg-primary/10',
-                                                        isCompleted &&
-                                                            !isActive &&
-                                                            'text-muted-foreground',
-                                                    )}
-                                                >
-                                                    {/* Status indicator */}
-                                                    <div
+                                    {module.trainingUnits.map(
+                                        (trainingUnit) => {
+                                            const Icon =
+                                                trainingUnitIcons[
+                                                    trainingUnit.type as TrainingUnitType
+                                                ] || BookOpen;
+                                            const isActive = isSameId(
+                                                trainingUnit.id,
+                                                currentTrainingUnitId,
+                                            );
+                                            const isCompleted =
+                                                isTrainingUnitCompleted(
+                                                    trainingUnit.id,
+                                                    completedTrainingUnitIds,
+                                                );
+                                            return (
+                                                <li key={trainingUnit.id}>
+                                                    <Link
+                                                        href={`/trainingPaths/${trainingPathId}/trainingUnit/${trainingUnit.id}`}
                                                         className={cn(
-                                                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border',
-                                                            isCompleted
-                                                                ? 'border-success bg-success text-success-foreground'
-                                                                : isActive
-                                                                  ? 'border-primary text-primary'
-                                                                  : 'border-border text-muted-foreground',
+                                                            'flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+                                                            'hover:bg-muted/50',
+                                                            isActive &&
+                                                                'border-l-2 border-primary bg-primary/10',
+                                                            isCompleted &&
+                                                                !isActive &&
+                                                                'text-muted-foreground',
                                                         )}
                                                     >
-                                                        {isCompleted ? (
-                                                            <Check className="h-3.5 w-3.5" />
-                                                        ) : (
-                                                            <Icon className="h-3.5 w-3.5" />
-                                                        )}
-                                                    </div>
-                                                    {/* TrainingUnit info */}
-                                                    <div className="min-w-0 flex-1">
-                                                        <p
+                                                        {/* Status indicator */}
+                                                        <div
                                                             className={cn(
-                                                                'truncate font-medium',
-                                                                isActive &&
-                                                                    'text-primary',
+                                                                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border',
+                                                                isCompleted
+                                                                    ? 'border-success bg-success text-success-foreground'
+                                                                    : isActive
+                                                                      ? 'border-primary text-primary'
+                                                                      : 'border-border text-muted-foreground',
                                                             )}
                                                         >
-                                                            {trainingUnit.title}
-                                                        </p>
-                                                        <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                                                            {trainingUnit.duration ||
-                                                                'N/A'}
-                                                            {trainingUnit.vmEnabled && (
-                                                                <span className="inline-flex items-center gap-0.5 text-primary">
-                                                                    <Terminal className="h-3 w-3" />{' '}
-                                                                    VM
-                                                                </span>
+                                                            {isCompleted ? (
+                                                                <Check className="h-3.5 w-3.5" />
+                                                            ) : (
+                                                                <Icon className="h-3.5 w-3.5" />
                                                             )}
-                                                        </p>
-                                                    </div>
-                                                </Link>
-                                            </li>
-                                        );
-                                    })}
+                                                        </div>
+                                                        {/* TrainingUnit info */}
+                                                        <div className="min-w-0 flex-1">
+                                                            <p
+                                                                className={cn(
+                                                                    'truncate font-medium',
+                                                                    isActive &&
+                                                                        'text-primary',
+                                                                )}
+                                                            >
+                                                                {
+                                                                    trainingUnit.title
+                                                                }
+                                                            </p>
+                                                            <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                                                {trainingUnit.duration ||
+                                                                    'N/A'}
+                                                                {trainingUnit.vmEnabled && (
+                                                                    <span className="inline-flex items-center gap-0.5 text-primary">
+                                                                        <Terminal className="h-3 w-3" />{' '}
+                                                                        VM
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </Link>
+                                                </li>
+                                            );
+                                        },
+                                    )}
                                 </ul>
                             </CollapsibleContent>
                         </Collapsible>
@@ -439,9 +457,7 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
             <CardContent className="py-6">
                 <div className="mb-4 flex items-center gap-2">
                     <Terminal className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium text-foreground">
-                        {vmName}
-                    </h4>
+                    <h4 className="font-medium text-foreground">{vmName}</h4>
                 </div>
                 {/* Queue status */}
                 {queueStatus?.in_use && (
@@ -481,7 +497,10 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
                 {!isAvailable && (
                     <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                         <p className="font-medium">VM currently unavailable</p>
-                        <p>{vm.unavailable_reason ?? 'This assigned VM is temporarily reserved.'}</p>
+                        <p>
+                            {vm.unavailable_reason ??
+                                'This assigned VM is temporarily reserved.'}
+                        </p>
                     </div>
                 )}
                 <Button
@@ -555,11 +574,7 @@ export default function TrainingUnitPage() {
         [trainingUnit?.resources],
     );
     // Forum hook for trainingUnit discussions (must be before any conditional returns)
-    const {
-        threads,
-        createThread,
-        upvoteThread,
-    } = useForum({
+    const { threads, createThread, upvoteThread } = useForum({
         trainingUnitId: trainingUnit?.id ? Number(trainingUnit.id) : undefined,
         autoFetch: !!trainingUnit?.id,
     });
@@ -615,7 +630,8 @@ export default function TrainingUnitPage() {
     const currentIndex = allTrainingUnits.findIndex((l) =>
         isSameId(l.id, trainingUnit?.id),
     );
-    const prevTrainingUnit = currentIndex > 0 ? allTrainingUnits[currentIndex - 1] : null;
+    const prevTrainingUnit =
+        currentIndex > 0 ? allTrainingUnits[currentIndex - 1] : null;
     const nextTrainingUnit =
         currentIndex < allTrainingUnits.length - 1
             ? allTrainingUnits[currentIndex + 1]
@@ -642,15 +658,23 @@ export default function TrainingUnitPage() {
         if (!trainingPath?.id || !trainingUnit?.id) return;
         setMarkingComplete(true);
         try {
-            await trainingPathApi.markTrainingUnitComplete(trainingPath.id, Number(trainingUnit.id));
+            await trainingPathApi.markTrainingUnitComplete(
+                trainingPath.id,
+                Number(trainingUnit.id),
+            );
             // Update local state
             if (!isCurrentTrainingUnitCompleted) {
-                setCompletedTrainingUnitIds((prev) => [...prev, trainingUnit.id]);
+                setCompletedTrainingUnitIds((prev) => [
+                    ...prev,
+                    trainingUnit.id,
+                ]);
                 trainingPathToasts.trainingUnitCompleted(trainingUnit.title);
                 // Check if trainingPath is now completed
                 const newCompletedCount = completedCount + 1;
                 if (newCompletedCount === totalTrainingUnits) {
-                    trainingPathToasts.trainingPathCompleted(trainingPath.title);
+                    trainingPathToasts.trainingPathCompleted(
+                        trainingPath.title,
+                    );
                 }
             }
         } catch (e) {
@@ -672,7 +696,10 @@ export default function TrainingUnitPage() {
         if (!trainingPath?.id || !trainingUnit?.id) return;
         setMarkingComplete(true);
         try {
-            await trainingPathApi.markTrainingUnitIncomplete(trainingPath.id, Number(trainingUnit.id));
+            await trainingPathApi.markTrainingUnitIncomplete(
+                trainingPath.id,
+                Number(trainingUnit.id),
+            );
             // Update local state
             setCompletedTrainingUnitIds((prev) =>
                 prev.filter((id) => !isSameId(id, trainingUnit.id)),
@@ -693,13 +720,16 @@ export default function TrainingUnitPage() {
                         TrainingUnit not found.
                     </p>
                     <Button variant="outline" asChild>
-                        <Link href={trainingPaths.index.url()}>Back to Paths</Link>
+                        <Link href={trainingPaths.index.url()}>
+                            Back to Paths
+                        </Link>
                     </Button>
                 </div>
             </AppLayout>
         );
     }
-    const TypeIcon = trainingUnitIcons[trainingUnit.type as TrainingUnitType] || BookOpen;
+    const TypeIcon =
+        trainingUnitIcons[trainingUnit.type as TrainingUnitType] || BookOpen;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${trainingUnit.title} - ${trainingPath.title}`} />
@@ -734,7 +764,9 @@ export default function TrainingUnitPage() {
                                     <TrainingUnitSidebar
                                         modules={trainingPath.modules}
                                         currentTrainingUnitId={trainingUnit.id}
-                                        completedTrainingUnitIds={completedTrainingUnitIds}
+                                        completedTrainingUnitIds={
+                                            completedTrainingUnitIds
+                                        }
                                         trainingPathId={trainingPath.id}
                                         totalTrainingUnits={totalTrainingUnits}
                                         completedCount={completedCount}
@@ -758,7 +790,9 @@ export default function TrainingUnitPage() {
                                 {currentIndex + 1}/{totalTrainingUnits}
                             </span>
                             <Progress
-                                value={(completedCount / totalTrainingUnits) * 100}
+                                value={
+                                    (completedCount / totalTrainingUnits) * 100
+                                }
                                 className="h-2 w-24"
                             />
                             <span className="font-medium text-muted-foreground">
@@ -784,8 +818,12 @@ export default function TrainingUnitPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                                                {trainingUnit.type.replace('-', ' ')}{' '}
-                                                · {trainingUnit.duration || 'N/A'}
+                                                {trainingUnit.type.replace(
+                                                    '-',
+                                                    ' ',
+                                                )}{' '}
+                                                ·{' '}
+                                                {trainingUnit.duration || 'N/A'}
                                             </p>
                                             <h1 className="font-heading text-2xl font-bold text-foreground">
                                                 {trainingUnit.title}
@@ -825,41 +863,43 @@ export default function TrainingUnitPage() {
                                     </Button>
                                 </div>
                                 {/* Video Player */}
-                                {trainingUnit.type === 'video' && trainingUnit.videoUrl && (
-                                    <div className="mb-8">
-                                        <VideoPlayer
-                                            src={trainingUnit.videoUrl}
-                                            title={trainingUnit.title}
-                                            onComplete={() => {
-                                                // Auto-mark as complete when video finishes
-                                                if (
-                                                    !completedTrainingUnitIds.some(
-                                                        (id) =>
-                                                            isSameId(
-                                                                id,
-                                                                trainingUnit.id,
-                                                            ),
-                                                    )
-                                                ) {
-                                                    handleMarkComplete();
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                                {/* Video placeholder when no URL */}
-                                {trainingUnit.type === 'video' && !trainingUnit.videoUrl && (
-                                    <div className="mb-8 flex aspect-video items-center justify-center rounded-lg bg-slate-900">
-                                        <div className="text-center">
-                                            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                                                <Play className="h-8 w-8 text-primary" />
-                                            </div>
-                                            <p className="text-sm text-white/60">
-                                                Video not available
-                                            </p>
+                                {trainingUnit.type === 'video' &&
+                                    trainingUnit.videoUrl && (
+                                        <div className="mb-8">
+                                            <VideoPlayer
+                                                src={trainingUnit.videoUrl}
+                                                title={trainingUnit.title}
+                                                onComplete={() => {
+                                                    // Auto-mark as complete when video finishes
+                                                    if (
+                                                        !completedTrainingUnitIds.some(
+                                                            (id) =>
+                                                                isSameId(
+                                                                    id,
+                                                                    trainingUnit.id,
+                                                                ),
+                                                        )
+                                                    ) {
+                                                        handleMarkComplete();
+                                                    }
+                                                }}
+                                            />
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                {/* Video placeholder when no URL */}
+                                {trainingUnit.type === 'video' &&
+                                    !trainingUnit.videoUrl && (
+                                        <div className="mb-8 flex aspect-video items-center justify-center rounded-lg bg-slate-900">
+                                            <div className="text-center">
+                                                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+                                                    <Play className="h-8 w-8 text-primary" />
+                                                </div>
+                                                <p className="text-sm text-white/60">
+                                                    Video not available
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 {/* Article Content */}
                                 {trainingUnit.type === 'reading' && article && (
                                     <div className="mb-8">
@@ -881,52 +921,50 @@ export default function TrainingUnitPage() {
                                         )}
                                         {/* Training Objectives */}
                                         {normalizedObjectives.length > 0 && (
-                                                <div className="mt-6 border-t border-border pt-6">
-                                                    <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
-                                                        Training Objectives
-                                                    </h3>
-                                                    <ul className="space-y-2">
-                                                        {normalizedObjectives.map(
-                                                            (obj, i) => (
-                                                                <li
-                                                                    key={i}
-                                                                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                                                                >
-                                                                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                                                                    {obj}
-                                                                </li>
-                                                            ),
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            )}
+                                            <div className="mt-6 border-t border-border pt-6">
+                                                <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
+                                                    Training Objectives
+                                                </h3>
+                                                <ul className="space-y-2">
+                                                    {normalizedObjectives.map(
+                                                        (obj, i) => (
+                                                            <li
+                                                                key={i}
+                                                                className="flex items-start gap-2 text-sm text-muted-foreground"
+                                                            >
+                                                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                                                                {obj}
+                                                            </li>
+                                                        ),
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        )}
                                         {/* Resources */}
                                         {normalizedResources.length > 0 && (
-                                                <div className="mt-6 border-t border-border pt-6">
-                                                    <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
-                                                        Resources
-                                                    </h3>
-                                                    <ul className="space-y-2">
-                                                        {normalizedResources.map(
-                                                            (res, i) => (
-                                                                <li key={i}>
-                                                                    <a
-                                                                        href={
-                                                                            res
-                                                                        }
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="flex items-center gap-1 text-sm text-primary hover:underline"
-                                                                    >
-                                                                        <ExternalLink className="h-3.5 w-3.5" />{' '}
-                                                                        {res}
-                                                                    </a>
-                                                                </li>
-                                                            ),
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            )}
+                                            <div className="mt-6 border-t border-border pt-6">
+                                                <h3 className="mb-3 font-heading text-lg font-semibold text-foreground">
+                                                    Resources
+                                                </h3>
+                                                <ul className="space-y-2">
+                                                    {normalizedResources.map(
+                                                        (res, i) => (
+                                                            <li key={i}>
+                                                                <a
+                                                                    href={res}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-1 text-sm text-primary hover:underline"
+                                                                >
+                                                                    <ExternalLink className="h-3.5 w-3.5" />{' '}
+                                                                    {res}
+                                                                </a>
+                                                            </li>
+                                                        ),
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                                 {/* VM Lab Panel */}
@@ -1086,4 +1124,3 @@ export default function TrainingUnitPage() {
         </AppLayout>
     );
 }
-

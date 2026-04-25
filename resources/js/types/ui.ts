@@ -10,4 +10,3 @@ export type AuthLayoutProps = {
     title?: string;
     description?: string;
 };
-

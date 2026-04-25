@@ -22,7 +22,8 @@ const floatingAnimation: Variants = {
         },
     },
 };
-const pulseAnimation: Variants = {    initial: { scale: 1, opacity: 0.5 },
+const pulseAnimation: Variants = {
+    initial: { scale: 1, opacity: 0.5 },
     animate: {
         scale: [1, 1.2, 1],
         opacity: [0.5, 0.8, 0.5],
@@ -226,4 +227,3 @@ export default function AuthSplitLayout({
         </div>
     );
 }
-

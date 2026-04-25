@@ -12,6 +12,7 @@ use App\Repositories\TrainingPathModuleRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitRepository;
 use App\Repositories\TrainingUnitVMAssignmentRepository;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -353,10 +354,30 @@ class TrainingPathService
      * Save a base64 encoded image to storage and return the URL,
      * or return the original URL if it's already one.
      */
-    private function processThumbnail(?string $thumbnail): ?string
+    private function processThumbnail(mixed $thumbnail): ?string
     {
         if (empty($thumbnail)) {
             Log::debug('processThumbnail: thumbnail is empty');
+
+            return null;
+        }
+
+        if ($thumbnail instanceof UploadedFile) {
+            if (! $thumbnail->isValid()) {
+                Log::warning('processThumbnail: uploaded thumbnail is invalid');
+
+                return null;
+            }
+
+            $path = $thumbnail->store('training_path_thumbnails', 'public');
+
+            return Storage::url($path);
+        }
+
+        if (! is_string($thumbnail)) {
+            Log::warning('processThumbnail: unsupported thumbnail type', [
+                'type' => get_debug_type($thumbnail),
+            ]);
 
             return null;
         }
@@ -367,11 +388,25 @@ class TrainingPathService
         ]);
 
         // If it's a base64 string
-        if (preg_match('/^data:image\/(\w+);base64,/', $thumbnail, $type)) {
-            $extension = strtolower($type[1]); // jpg, png, gif, jpeg
+        if (str_starts_with($thumbnail, 'data:image/')) {
+            if (! preg_match('/^data:image\/([a-zA-Z0-9.+-]+);base64,/', $thumbnail, $type)) {
+                Log::warning('Invalid base64 thumbnail header');
 
-            if (! in_array($extension, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
-                Log::warning('Unsupported image type in base64 thumbnail', ['type' => $extension]);
+                return null;
+            }
+
+            $mimeSubtype = strtolower($type[1]);
+            $extension = match ($mimeSubtype) {
+                'jpeg' => 'jpeg',
+                'jpg' => 'jpg',
+                'png' => 'png',
+                'gif' => 'gif',
+                'webp' => 'webp',
+                default => null,
+            };
+
+            if ($extension === null) {
+                Log::warning('Unsupported image type in base64 thumbnail', ['type' => $mimeSubtype]);
 
                 return null;
             }
@@ -379,7 +414,7 @@ class TrainingPathService
             // Extract the base64 content
             $encodedImage = substr($thumbnail, strpos($thumbnail, ',') + 1);
             $encodedImage = str_replace(' ', '+', $encodedImage);
-            $thumbnailData = base64_decode($encodedImage);
+            $thumbnailData = base64_decode($encodedImage, true);
 
             if ($thumbnailData === false) {
                 Log::error('Failed to decode base64 thumbnail');

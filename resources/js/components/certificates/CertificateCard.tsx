@@ -123,5 +123,3 @@ export function CertificateCard({
         </motion.div>
     );
 }
-
-

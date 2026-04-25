@@ -3,13 +3,7 @@
  * Student roster with progress tracking.
  */
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Search,
-    CheckCircle,
-    Clock,
-    User,
-} from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle, Clock, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -239,4 +233,3 @@ export default function StudentsPage({
         </AppLayout>
     );
 }
-

@@ -53,25 +53,36 @@ export const activityLogsApi = {
     async listActivityLogs(
         params: ListActivityLogsParams = {},
     ): Promise<PaginatedActivityLogsResponse> {
-        const { data } = await client.get<PaginatedActivityLogsResponse>('/admin/activity-logs', {
-            params,
-        });
+        const { data } = await client.get<PaginatedActivityLogsResponse>(
+            '/admin/activity-logs',
+            {
+                params,
+            },
+        );
 
         return data;
     },
 
-    async getRecentActivity(params: RecentActivityParams = {}): Promise<ActivityLogEntry[]> {
-        const { data } = await client.get<{ data: ActivityLogEntry[] }>('/admin/activity-logs/recent', {
-            params,
-        });
+    async getRecentActivity(
+        params: RecentActivityParams = {},
+    ): Promise<ActivityLogEntry[]> {
+        const { data } = await client.get<{ data: ActivityLogEntry[] }>(
+            '/admin/activity-logs/recent',
+            {
+                params,
+            },
+        );
 
         return data.data;
     },
 
     async getActivityStats(days = 7): Promise<ActivityLogStats> {
-        const { data } = await client.get<ActivityLogStats>('/admin/activity-logs/stats', {
-            params: { days },
-        });
+        const { data } = await client.get<ActivityLogStats>(
+            '/admin/activity-logs/stats',
+            {
+                params: { days },
+            },
+        );
 
         return data;
     },
@@ -80,12 +91,15 @@ export const activityLogsApi = {
         userId: number,
         params: Omit<ListActivityLogsParams, 'user_id'> = {},
     ): Promise<PaginatedActivityLogsResponse> {
-        const { data } = await client.get<PaginatedActivityLogsResponse>('/admin/activity-logs/user', {
-            params: {
-                ...params,
-                user_id: userId,
+        const { data } = await client.get<PaginatedActivityLogsResponse>(
+            '/admin/activity-logs/user',
+            {
+                params: {
+                    ...params,
+                    user_id: userId,
+                },
             },
-        });
+        );
 
         return data;
     },

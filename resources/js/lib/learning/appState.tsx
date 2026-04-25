@@ -8,7 +8,11 @@
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 // Status types for trainingPaths
-export type TrainingPathStatus = 'draft' | 'pending_review' | 'approved' | 'rejected';
+export type TrainingPathStatus =
+    | 'draft'
+    | 'pending_review'
+    | 'approved'
+    | 'rejected';
 // Managed trainingPath interface (for admin views)
 export interface ManagedTrainingPath {
     id: string;
@@ -65,15 +69,19 @@ export function useAppState(): LearningAppContextType {
         trainingPaths?: ManagedTrainingPath[];
     }>();
     // Combine trainingPaths from different prop sources
-    const trainingPaths = props.trainingPaths ?? props.pendingTrainingPaths ?? [];
+    const trainingPaths =
+        props.trainingPaths ?? props.pendingTrainingPaths ?? [];
     return {
         trainingPaths: trainingPaths as ManagedTrainingPath[],
         approveTrainingPath: () => {
-            console.warn('approveTrainingPath: Use Inertia router.post() instead');
+            console.warn(
+                'approveTrainingPath: Use Inertia router.post() instead',
+            );
         },
         rejectTrainingPath: () => {
-            console.warn('rejectTrainingPath: Use Inertia router.post() instead');
+            console.warn(
+                'rejectTrainingPath: Use Inertia router.post() instead',
+            );
         },
     };
 }
-

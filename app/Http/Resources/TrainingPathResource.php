@@ -23,6 +23,7 @@ class TrainingPathResource extends JsonResource
             'instructor' => $this->instructor->name,
             'instructor_id' => $this->instructor_id,
             'thumbnail' => $this->thumbnail,
+            'thumbnail_url' => $this->thumbnail_url,
             'category' => $this->category,
             'level' => $this->level->value,
             'duration' => $this->duration,

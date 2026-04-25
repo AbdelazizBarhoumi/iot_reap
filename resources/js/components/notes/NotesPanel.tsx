@@ -71,7 +71,7 @@ export function NotesPanel({
                 variant="outline"
                 size="sm"
                 className={cn(
-                    'fixed bottom-8 right-0 z-50 rounded-l-lg rounded-r-none transition-transform',
+                    'fixed right-0 bottom-8 z-50 rounded-l-lg rounded-r-none transition-transform',
                     isOpen && 'translate-x-80',
                 )}
                 onClick={() => setIsOpen(!isOpen)}
@@ -207,5 +207,3 @@ export function NotesPanel({
         </>
     );
 }
-
-

@@ -5,7 +5,13 @@ export interface PayoutRequestItem {
     amount: number;
     amount_cents: number;
     currency: string;
-    status: 'pending' | 'approved' | 'processing' | 'completed' | 'rejected' | 'failed';
+    status:
+        | 'pending'
+        | 'approved'
+        | 'processing'
+        | 'completed'
+        | 'rejected'
+        | 'failed';
     status_label: string;
     payout_method: string;
     payout_details: Record<string, unknown> | null;
@@ -31,15 +37,18 @@ export interface RequestPayoutPayload {
 
 export const payoutApi = {
     async getMyPayouts(): Promise<TeacherPayoutPayload> {
-        const response = await client.get<TeacherPayoutPayload>('/teaching/payouts');
+        const response =
+            await client.get<TeacherPayoutPayload>('/teaching/payouts');
         return response.data;
     },
 
-    async requestPayout(payload: RequestPayoutPayload): Promise<PayoutRequestItem> {
-        const response = await client.post<{ message: string; data: PayoutRequestItem }>(
-            '/teaching/payouts/request',
-            payload,
-        );
+    async requestPayout(
+        payload: RequestPayoutPayload,
+    ): Promise<PayoutRequestItem> {
+        const response = await client.post<{
+            message: string;
+            data: PayoutRequestItem;
+        }>('/teaching/payouts/request', payload);
         return response.data.data;
     },
 };

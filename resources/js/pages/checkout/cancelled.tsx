@@ -51,7 +51,9 @@ export default function CancelledPage({ trainingPath }: CancelledPageProps) {
                         <div className="flex flex-col gap-3">
                             {trainingPath && (
                                 <Button asChild className="w-full">
-                                    <Link href={`/trainingPaths/${trainingPath.id}`}>
+                                    <Link
+                                        href={`/trainingPaths/${trainingPath.id}`}
+                                    >
                                         <ArrowLeft className="mr-2 h-4 w-4" />
                                         Return to {trainingPath.title}
                                     </Link>
@@ -62,7 +64,9 @@ export default function CancelledPage({ trainingPath }: CancelledPageProps) {
                                 asChild
                                 className="w-full"
                             >
-                                <Link href={trainingPaths.index.url()}>Browse Training Paths</Link>
+                                <Link href={trainingPaths.index.url()}>
+                                    Browse Training Paths
+                                </Link>
                             </Button>
                             <Button variant="ghost" asChild className="w-full">
                                 <a href="mailto:support@iot-reap.com">
@@ -77,4 +81,3 @@ export default function CancelledPage({ trainingPath }: CancelledPageProps) {
         </AppLayout>
     );
 }
-

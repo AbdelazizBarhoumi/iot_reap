@@ -6,16 +6,27 @@ import VideoPlayer from '../VideoPlayer';
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
-            <div {...props}>{children}</div>
-        ),
-        button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+        div: ({
+            children,
+            ...props
+        }: React.HTMLAttributes<HTMLDivElement> & {
+            children?: React.ReactNode;
+        }) => <div {...props}>{children}</div>,
+        button: ({
+            children,
+            onClick,
+            ...props
+        }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+            children?: React.ReactNode;
+        }) => (
             <button onClick={onClick} {...props}>
                 {children}
             </button>
         ),
     },
-    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => (
+        <>{children}</>
+    ),
 }));
 // Mock HLS.js
 const mockHls = {
@@ -109,7 +120,10 @@ describe('VideoPlayer Component', () => {
         // Simulate video playing
         const video = document.querySelector('video');
         if (video) {
-            Object.defineProperty(video, 'paused', { value: false, writable: true });
+            Object.defineProperty(video, 'paused', {
+                value: false,
+                writable: true,
+            });
             fireEvent(video, new Event('play'));
         }
         await waitFor(() => {
@@ -130,7 +144,10 @@ describe('VideoPlayer Component', () => {
         // First simulate video playing
         const video = document.querySelector('video');
         if (video) {
-            Object.defineProperty(video, 'paused', { value: false, writable: true });
+            Object.defineProperty(video, 'paused', {
+                value: false,
+                writable: true,
+            });
             fireEvent(video, new Event('play'));
         }
         await waitFor(async () => {
@@ -158,13 +175,17 @@ describe('VideoPlayer Component', () => {
     it('renders fullscreen button', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
-            expect(screen.getByLabelText(/fullscreen|maximize/i)).toBeInTheDocument();
+            expect(
+                screen.getByLabelText(/fullscreen|maximize/i),
+            ).toBeInTheDocument();
         });
     });
     it('renders settings button for quality selection', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
-            expect(screen.getByLabelText(/settings|quality/i)).toBeInTheDocument();
+            expect(
+                screen.getByLabelText(/settings|quality/i),
+            ).toBeInTheDocument();
         });
     });
     it('shows loading state initially', () => {
@@ -189,13 +210,17 @@ describe('VideoPlayer Component', () => {
     it('renders captions button when captions are provided', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
-            expect(screen.getByLabelText(/captions|subtitles/i)).toBeInTheDocument();
+            expect(
+                screen.getByLabelText(/captions|subtitles/i),
+            ).toBeInTheDocument();
         });
     });
     it('does not render captions button when no captions provided', () => {
         const noCaptionsProps = { ...mockProps, captions: undefined };
         render(<VideoPlayer {...noCaptionsProps} />);
-        expect(screen.queryByLabelText(/captions|subtitles/i)).not.toBeInTheDocument();
+        expect(
+            screen.queryByLabelText(/captions|subtitles/i),
+        ).not.toBeInTheDocument();
     });
     it('displays video title when provided', () => {
         render(<VideoPlayer {...mockProps} />);
@@ -204,14 +229,20 @@ describe('VideoPlayer Component', () => {
     it('renders skip forward and backward buttons', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
-            expect(screen.getByLabelText(/skip forward|forward 10/i)).toBeInTheDocument();
-            expect(screen.getByLabelText(/skip backward|rewind 10|back 10/i)).toBeInTheDocument();
+            expect(
+                screen.getByLabelText(/skip forward|forward 10/i),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByLabelText(/skip backward|rewind 10|back 10/i),
+            ).toBeInTheDocument();
         });
     });
     it('handles skip forward button click', async () => {
         const user = userEvent.setup();
         render(<VideoPlayer {...mockProps} />);
-        const skipButton = await screen.findByLabelText(/skip forward|forward 10/i);
+        const skipButton = await screen.findByLabelText(
+            /skip forward|forward 10/i,
+        );
         await user.click(skipButton);
         // Should advance currentTime by 10 seconds
         const video = document.querySelector('video');
@@ -225,10 +256,10 @@ describe('VideoPlayer Component', () => {
             fireEvent(video, new Event('error'));
         }
         await waitFor(() => {
-            expect(screen.getByText(/error|failed to load/i) || 
-                   screen.getByLabelText(/error/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/error|failed to load/i) ||
+                    screen.getByLabelText(/error/i),
+            ).toBeInTheDocument();
         });
     });
 });
-
-

@@ -73,7 +73,9 @@ export async function getVideoForTrainingUnit(
 /**
  * Get video transcoding status.
  */
-export async function getVideoStatus(trainingUnitId: number): Promise<VideoStatus> {
+export async function getVideoStatus(
+    trainingUnitId: number,
+): Promise<VideoStatus> {
     const response = await client.get<VideoStatus>(
         `/teaching/trainingUnits/${trainingUnitId}/video/status`,
     );
@@ -225,4 +227,3 @@ export async function pollUntilReady(
     }
     throw new Error('Polling timeout: video processing took too long');
 }
-

@@ -11,6 +11,7 @@ import {
     CheckCircle2,
     Clock,
     GraduationCap,
+    Image,
     Play,
     Star,
     Terminal,
@@ -24,7 +25,10 @@ import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem } from '@/types';
-import type { TrainingPath, TrainingPathProgress } from '@/types/TrainingPath.types';
+import type {
+    TrainingPath,
+    TrainingPathProgress,
+} from '@/types/TrainingPath.types';
 interface EnrollmentData {
     enrollment: {
         id: number;
@@ -69,8 +73,12 @@ function EnrolledTrainingPathCard({
             }
         }
         // All completed - return last trainingUnit
-        const lastModule = trainingPath.modules[trainingPath.modules.length - 1];
-        return lastModule?.trainingUnits[lastModule.trainingUnits.length - 1] ?? null;
+        const lastModule =
+            trainingPath.modules[trainingPath.modules.length - 1];
+        return (
+            lastModule?.trainingUnits[lastModule.trainingUnits.length - 1] ??
+            null
+        );
     }, [trainingPath.modules, completedTrainingUnitIds]);
     const isCompleted = progress.percentage >= 100;
     return (
@@ -82,6 +90,23 @@ function EnrolledTrainingPathCard({
             <Card className="group overflow-hidden border-border transition-all duration-300 hover:shadow-card-hover">
                 {/* Header with category gradient */}
                 <div className="h-3 bg-gradient-to-r from-primary/60 to-primary/30" />
+                <div className="h-40 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10">
+                    {trainingPath.thumbnail ?? trainingPath.thumbnail_url ? (
+                        <img
+                            src={
+                                trainingPath.thumbnail ??
+                                trainingPath.thumbnail_url ??
+                                ''
+                            }
+                            alt={`${trainingPath.title} thumbnail`}
+                            className="h-full w-full object-cover"
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                            <Image className="h-10 w-10 text-muted-foreground/50" />
+                        </div>
+                    )}
+                </div>
                 <CardContent className="p-5">
                     {/* TrainingPath info */}
                     <div className="mb-4 flex items-start justify-between gap-4">
@@ -130,7 +155,8 @@ function EnrolledTrainingPathCard({
                         <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                                 <TrendingUp className="h-3 w-3" />
-                                {progress.completed}/{progress.total} trainingUnits
+                                {progress.completed}/{progress.total}{' '}
+                                trainingUnits
                             </span>
                             <span className="font-medium">
                                 {Math.round(progress.percentage)}%
@@ -157,7 +183,7 @@ function EnrolledTrainingPathCard({
                         </span>
                     </div>
                 </CardContent>
-                <CardFooter className="p-5 pt-0 gap-2">
+                <CardFooter className="gap-2 p-5 pt-0">
                     {nextTrainingUnit ? (
                         <Button
                             className={`w-full ${isCompleted ? 'bg-success text-success-foreground hover:bg-success/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
@@ -193,7 +219,9 @@ function EnrolledTrainingPathCard({
                             className="w-full border-warning/50 text-warning hover:bg-warning/10 hover:text-warning"
                             asChild
                         >
-                            <Link href={`/trainingPaths/${trainingPath.id}?tab=reviews`}>
+                            <Link
+                                href={`/trainingPaths/${trainingPath.id}?tab=reviews`}
+                            >
                                 <Star className="mr-2 h-4 w-4 fill-warning" />
                                 Rate & Review
                             </Link>
@@ -368,4 +396,3 @@ export default function MyTrainingPathsPage() {
         </AppLayout>
     );
 }
-

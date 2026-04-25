@@ -251,4 +251,3 @@ export interface RunningVm {
     server_name: string;
     display_name: string;
 }
-

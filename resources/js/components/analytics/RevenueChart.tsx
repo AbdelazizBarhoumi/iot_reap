@@ -97,5 +97,3 @@ export function RevenueChart({ data, title = 'Revenue' }: RevenueChartProps) {
         </Card>
     );
 }
-
-

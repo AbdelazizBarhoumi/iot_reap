@@ -11,6 +11,7 @@ use App\Repositories\TrainingUnitRepository;
 use App\Services\TrainingPathCacheService;
 use App\Services\TrainingPathService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TrainingPathServiceTest extends TestCase
@@ -61,6 +62,48 @@ class TrainingPathServiceTest extends TestCase
             'instructor_id' => $instructor->id,
             'status' => TrainingPathStatus::DRAFT->value,
         ]);
+    }
+
+    public function test_create_training_path_with_base64_thumbnail_stores_public_image(): void
+    {
+        Storage::fake('public');
+
+        $instructor = User::factory()->create();
+
+        // 1x1 PNG
+        $base64Png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO5M9x8AAAAASUVORK5CYII=';
+
+        $trainingPath = $this->trainingPathService->createTrainingPath($instructor, [
+            'title' => 'Thumbnail Training Path',
+            'description' => 'Path with thumbnail',
+            'category' => 'Smart Manufacturing',
+            'level' => 'Beginner',
+            'thumbnail' => $base64Png,
+        ]);
+
+        $this->assertNotNull($trainingPath->thumbnail);
+        $this->assertStringStartsWith('/storage/training_path_thumbnails/', $trainingPath->thumbnail);
+
+        $storedPath = str_replace('/storage/', '', (string) $trainingPath->thumbnail);
+        $this->assertTrue(Storage::disk('public')->exists($storedPath));
+    }
+
+    public function test_create_training_path_with_invalid_data_url_thumbnail_does_not_store_raw_data_url(): void
+    {
+        $instructor = User::factory()->create();
+
+        // SVG is intentionally unsupported
+        $invalidSvgDataUrl = 'data:image/svg+xml;base64,'.base64_encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+
+        $trainingPath = $this->trainingPathService->createTrainingPath($instructor, [
+            'title' => 'Invalid Thumbnail Training Path',
+            'description' => 'Path with unsupported thumbnail format',
+            'category' => 'Smart Manufacturing',
+            'level' => 'Beginner',
+            'thumbnail' => $invalidSvgDataUrl,
+        ]);
+
+        $this->assertNull($trainingPath->thumbnail);
     }
 
     public function test_update_training_path(): void

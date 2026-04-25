@@ -14,6 +14,7 @@ import {
     Edit,
     Eye,
     FileEdit,
+    Image,
     MessageSquare,
     MoreHorizontal,
     Plus,
@@ -606,13 +607,30 @@ export default function TeachingPage() {
                                             >
                                                 <Card className="group overflow-hidden border-border/50 shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
                                                     <CardContent className="p-0">
-                                                        <div className="flex flex-col lg:flex-row lg:items-center">
-                                                            {/* TrainingPath thumbnail/placeholder */}
-                                                            <div className="hidden h-full w-32 shrink-0 items-center justify-center border-r border-border/50 bg-gradient-to-br from-primary/10 to-secondary/10 lg:flex">
-                                                                {trainingPath.hasVirtualMachine ? (
-                                                                    <Terminal className="h-8 w-8 text-primary/60" />
+                                                        <div className="flex flex-col lg:flex-row lg:items-stretch">
+                                                            {/* TrainingPath thumbnail */}
+                                                            <div className="h-48 shrink-0 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 lg:h-auto lg:w-44 lg:border-r lg:border-border/50">
+                                                                {(trainingPath.thumbnail ??
+                                                                    trainingPath.thumbnail_url ??
+                                                                    trainingPath.image_url) ? (
+                                                                    <img
+                                                                        src={
+                                                                            trainingPath.thumbnail ??
+                                                                            trainingPath.thumbnail_url ??
+                                                                            trainingPath.image_url ??
+                                                                            ''
+                                                                        }
+                                                                        alt={`${trainingPath.title} thumbnail`}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
                                                                 ) : (
-                                                                    <BookOpen className="h-8 w-8 text-muted-foreground/60" />
+                                                                    <div className="flex h-full w-full items-center justify-center">
+                                                                        {trainingPath.hasVirtualMachine ? (
+                                                                            <Terminal className="h-10 w-10 text-primary/60" />
+                                                                        ) : (
+                                                                            <Image className="h-10 w-10 text-muted-foreground/60" />
+                                                                        )}
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                             {/* Main content */}

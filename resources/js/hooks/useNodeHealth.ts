@@ -41,4 +41,3 @@ export function useNodeHealth(): UseNodeHealthResult {
     }, [fetchNodes]);
     return { nodes, loading, error, refetch: fetchNodes };
 }
-

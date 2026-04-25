@@ -239,10 +239,12 @@ function CameraReservationCard({
                         </div>
                         <div>
                             <CardTitle className="text-base">
-                                {reservation.camera?.name ?? `Camera #${reservation.camera_id}`}
+                                {reservation.camera?.name ??
+                                    `Camera #${reservation.camera_id}`}
                             </CardTitle>
                             <CardDescription>
-                                Requested by {reservation.user?.name ?? 'Unknown User'}
+                                Requested by{' '}
+                                {reservation.user?.name ?? 'Unknown User'}
                             </CardDescription>
                         </div>
                     </div>
@@ -258,7 +260,9 @@ function CameraReservationCard({
             <CardContent className="space-y-3">
                 <div className="grid gap-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Requested Period:</span>
+                        <span className="text-muted-foreground">
+                            Requested Period:
+                        </span>
                         <span>
                             {formatDateTime(reservation.requested_start_at)} —{' '}
                             {formatDateTime(reservation.requested_end_at)}
@@ -267,23 +271,32 @@ function CameraReservationCard({
 
                     {reservation.purpose && (
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Purpose:</span>
-                            <span className="max-w-[220px] truncate">{reservation.purpose}</span>
+                            <span className="text-muted-foreground">
+                                Purpose:
+                            </span>
+                            <span className="max-w-[220px] truncate">
+                                {reservation.purpose}
+                            </span>
                         </div>
                     )}
 
-                    {(reservation.approved_start_at || reservation.approved_end_at) && (
+                    {(reservation.approved_start_at ||
+                        reservation.approved_end_at) && (
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Approved Period:</span>
+                            <span className="text-muted-foreground">
+                                Approved Period:
+                            </span>
                             <span>
-                                {formatDateTime(reservation.approved_start_at)} —{' '}
-                                {formatDateTime(reservation.approved_end_at)}
+                                {formatDateTime(reservation.approved_start_at)}{' '}
+                                — {formatDateTime(reservation.approved_end_at)}
                             </span>
                         </div>
                     )}
 
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Submitted:</span>
+                        <span className="text-muted-foreground">
+                            Submitted:
+                        </span>
                         <span>{formatDateTime(reservation.created_at)}</span>
                     </div>
                 </div>
@@ -339,10 +352,12 @@ function VMReservationCard({
                         </div>
                         <div>
                             <CardTitle className="text-base">
-                                {reservation.vm_name ?? `VM #${reservation.vm_id}`}
+                                {reservation.vm_name ??
+                                    `VM #${reservation.vm_id}`}
                             </CardTitle>
                             <CardDescription>
-                                Requested by {reservation.user?.name ?? 'Unknown User'}
+                                Requested by{' '}
+                                {reservation.user?.name ?? 'Unknown User'}
                             </CardDescription>
                         </div>
                     </div>
@@ -358,7 +373,9 @@ function VMReservationCard({
             <CardContent className="space-y-3">
                 <div className="grid gap-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Requested Period:</span>
+                        <span className="text-muted-foreground">
+                            Requested Period:
+                        </span>
                         <span>
                             {formatDateTime(reservation.requested_start_at)} —{' '}
                             {formatDateTime(reservation.requested_end_at)}
@@ -367,23 +384,32 @@ function VMReservationCard({
 
                     {reservation.purpose && (
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Purpose:</span>
-                            <span className="max-w-[220px] truncate">{reservation.purpose}</span>
+                            <span className="text-muted-foreground">
+                                Purpose:
+                            </span>
+                            <span className="max-w-[220px] truncate">
+                                {reservation.purpose}
+                            </span>
                         </div>
                     )}
 
-                    {(reservation.approved_start_at || reservation.approved_end_at) && (
+                    {(reservation.approved_start_at ||
+                        reservation.approved_end_at) && (
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Approved Period:</span>
+                            <span className="text-muted-foreground">
+                                Approved Period:
+                            </span>
                             <span>
-                                {formatDateTime(reservation.approved_start_at)} —{' '}
-                                {formatDateTime(reservation.approved_end_at)}
+                                {formatDateTime(reservation.approved_start_at)}{' '}
+                                — {formatDateTime(reservation.approved_end_at)}
                             </span>
                         </div>
                     )}
 
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Submitted:</span>
+                        <span className="text-muted-foreground">
+                            Submitted:
+                        </span>
                         <span>{formatDateTime(reservation.created_at)}</span>
                     </div>
                 </div>
@@ -538,7 +564,9 @@ function BlockDialog({
     loading,
 }: BlockDialogProps) {
     const [deviceId, setDeviceId] = useState<string>('');
-    const [mode, setMode] = useState<'block' | 'reserve_to_user' | 'reserve_to_vm'>('block');
+    const [mode, setMode] = useState<
+        'block' | 'reserve_to_user' | 'reserve_to_vm'
+    >('block');
     const [targetUserId, setTargetUserId] = useState<string>('');
     const [targetVmId, setTargetVmId] = useState<string>('');
     const [start, setStart] = useState('');
@@ -577,7 +605,8 @@ function BlockDialog({
                 <DialogHeader>
                     <DialogTitle>Block Device</DialogTitle>
                     <DialogDescription>
-                        Create an admin block or reservation for a device during a time period.
+                        Create an admin block or reservation for a device during
+                        a time period.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
@@ -611,7 +640,10 @@ function BlockDialog({
                                 value={mode}
                                 onValueChange={(value) =>
                                     setMode(
-                                        value as 'block' | 'reserve_to_user' | 'reserve_to_vm',
+                                        value as
+                                            | 'block'
+                                            | 'reserve_to_user'
+                                            | 'reserve_to_vm',
                                     )
                                 }
                             >
@@ -623,10 +655,12 @@ function BlockDialog({
                                         Block Device (unavailable for all)
                                     </SelectItem>
                                     <SelectItem value="reserve_to_user">
-                                        Reserve for User (only specified user can use)
+                                        Reserve for User (only specified user
+                                        can use)
                                     </SelectItem>
                                     <SelectItem value="reserve_to_vm">
-                                        Reserve for VM (only specified VM can use)
+                                        Reserve for VM (only specified VM can
+                                        use)
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -635,7 +669,8 @@ function BlockDialog({
                         {mode === 'reserve_to_user' && (
                             <div className="space-y-2">
                                 <Label htmlFor="block-target-user">
-                                    Target User <span className="text-red-500">*</span>
+                                    Target User{' '}
+                                    <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={targetUserId}
@@ -661,7 +696,8 @@ function BlockDialog({
                         {mode === 'reserve_to_vm' && (
                             <div className="space-y-2">
                                 <Label htmlFor="block-target-vm">
-                                    Target VM <span className="text-red-500">*</span>
+                                    Target VM{' '}
+                                    <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={targetVmId}
@@ -749,7 +785,9 @@ function BlockDialog({
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             <Lock className="mr-1 h-4 w-4" />
-                            {mode === 'block' ? 'Block Device' : 'Create Reservation'}
+                            {mode === 'block'
+                                ? 'Block Device'
+                                : 'Create Reservation'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -787,7 +825,9 @@ function CameraBlockDialog({
     loading,
 }: CameraBlockDialogProps) {
     const [cameraId, setCameraId] = useState<string>('');
-    const [mode, setMode] = useState<'block' | 'reserve_to_user' | 'reserve_to_vm'>('block');
+    const [mode, setMode] = useState<
+        'block' | 'reserve_to_user' | 'reserve_to_vm'
+    >('block');
     const [targetUserId, setTargetUserId] = useState<string>('');
     const [targetVmId, setTargetVmId] = useState<string>('');
     const [start, setStart] = useState('');
@@ -826,7 +866,8 @@ function CameraBlockDialog({
                 <DialogHeader>
                     <DialogTitle>Block Camera</DialogTitle>
                     <DialogDescription>
-                        Create an admin block or reservation for a camera during a time period.
+                        Create an admin block or reservation for a camera during
+                        a time period.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
@@ -854,12 +895,17 @@ function CameraBlockDialog({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="camera-block-mode">Reservation Mode</Label>
+                            <Label htmlFor="camera-block-mode">
+                                Reservation Mode
+                            </Label>
                             <Select
                                 value={mode}
                                 onValueChange={(value) =>
                                     setMode(
-                                        value as 'block' | 'reserve_to_user' | 'reserve_to_vm',
+                                        value as
+                                            | 'block'
+                                            | 'reserve_to_user'
+                                            | 'reserve_to_vm',
                                     )
                                 }
                             >
@@ -871,10 +917,12 @@ function CameraBlockDialog({
                                         Block Camera (unavailable for all)
                                     </SelectItem>
                                     <SelectItem value="reserve_to_user">
-                                        Reserve for User (only specified user can use)
+                                        Reserve for User (only specified user
+                                        can use)
                                     </SelectItem>
                                     <SelectItem value="reserve_to_vm">
-                                        Reserve for VM (only specified VM can use)
+                                        Reserve for VM (only specified VM can
+                                        use)
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -883,7 +931,8 @@ function CameraBlockDialog({
                         {mode === 'reserve_to_user' && (
                             <div className="space-y-2">
                                 <Label htmlFor="camera-block-target-user">
-                                    Target User <span className="text-red-500">*</span>
+                                    Target User{' '}
+                                    <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={targetUserId}
@@ -909,7 +958,8 @@ function CameraBlockDialog({
                         {mode === 'reserve_to_vm' && (
                             <div className="space-y-2">
                                 <Label htmlFor="camera-block-target-vm">
-                                    Target VM <span className="text-red-500">*</span>
+                                    Target VM{' '}
+                                    <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={targetVmId}
@@ -934,7 +984,9 @@ function CameraBlockDialog({
 
                         {mode !== 'block' && (
                             <div className="space-y-2">
-                                <Label htmlFor="camera-block-purpose">Purpose</Label>
+                                <Label htmlFor="camera-block-purpose">
+                                    Purpose
+                                </Label>
                                 <Input
                                     id="camera-block-purpose"
                                     placeholder="Why is this reserved? (e.g., Class, Maintenance)..."
@@ -945,7 +997,9 @@ function CameraBlockDialog({
                         )}
 
                         <div className="space-y-2">
-                            <Label htmlFor="camera-block-start">Start Time</Label>
+                            <Label htmlFor="camera-block-start">
+                                Start Time
+                            </Label>
                             <Input
                                 id="camera-block-start"
                                 type="datetime-local"
@@ -997,7 +1051,9 @@ function CameraBlockDialog({
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             <Lock className="mr-1 h-4 w-4" />
-                            {mode === 'block' ? 'Block Camera' : 'Create Reservation'}
+                            {mode === 'block'
+                                ? 'Block Camera'
+                                : 'Create Reservation'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1035,10 +1091,15 @@ export default function AdminReservationsPage() {
     const [reservations, setReservations] = useState<UsbDeviceReservation[]>(
         [],
     );
-    const [cameraReservations, setCameraReservations] = useState<CameraReservation[]>([]);
-    const [cameraApprovedReservations, setCameraApprovedReservations] = useState<CameraReservation[]>([]);
+    const [cameraReservations, setCameraReservations] = useState<
+        CameraReservation[]
+    >([]);
+    const [cameraApprovedReservations, setCameraApprovedReservations] =
+        useState<CameraReservation[]>([]);
     const [vmReservations, setVmReservations] = useState<VMReservation[]>([]);
-    const [vmApprovedReservations, setVmApprovedReservations] = useState<VMReservation[]>([]);
+    const [vmApprovedReservations, setVmApprovedReservations] = useState<
+        VMReservation[]
+    >([]);
     const [devices, setDevices] = useState<UsbDevice[]>([]);
     const [cameras, setCameras] = useState<Camera[]>([]);
     const [users, setUsers] = useState<ReservationUser[]>([]);
@@ -1153,7 +1214,9 @@ export default function AdminReservationsPage() {
             await adminCameraApi.reject(id);
             await fetchData();
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Camera rejection failed');
+            setError(
+                e instanceof Error ? e.message : 'Camera rejection failed',
+            );
         } finally {
             setActionLoading(false);
         }
@@ -1286,7 +1349,8 @@ export default function AdminReservationsPage() {
                                     Reservations
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Manage USB reservations, camera reservations, and device blocking
+                                    Manage USB reservations, camera
+                                    reservations, and device blocking
                                 </p>
                             </div>
                         </div>
@@ -1365,7 +1429,10 @@ export default function AdminReservationsPage() {
                                     </Badge>
                                 )}
                             </TabsTrigger>
-                            <TabsTrigger value="camera-approved" className="gap-2">
+                            <TabsTrigger
+                                value="camera-approved"
+                                className="gap-2"
+                            >
                                 <Video className="h-4 w-4" />
                                 Camera Approved
                                 {cameraApprovedCount > 0 && (
@@ -1411,15 +1478,23 @@ export default function AdminReservationsPage() {
                                     </Card>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        {cameraReservations.map((reservation) => (
-                                            <CameraReservationCard
-                                                key={reservation.id}
-                                                reservation={reservation}
-                                                onApprove={handleApproveCameraReservation}
-                                                onReject={handleRejectCameraReservation}
-                                                actionLoading={actionLoading}
-                                            />
-                                        ))}
+                                        {cameraReservations.map(
+                                            (reservation) => (
+                                                <CameraReservationCard
+                                                    key={reservation.id}
+                                                    reservation={reservation}
+                                                    onApprove={
+                                                        handleApproveCameraReservation
+                                                    }
+                                                    onReject={
+                                                        handleRejectCameraReservation
+                                                    }
+                                                    actionLoading={
+                                                        actionLoading
+                                                    }
+                                                />
+                                            ),
+                                        )}
                                     </div>
                                 )
                             ) : activeTab === 'camera-approved' ? (
@@ -1435,16 +1510,24 @@ export default function AdminReservationsPage() {
                                     </Card>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        {cameraApprovedReservations.map((reservation) => (
-                                            <CameraReservationCard
-                                                key={reservation.id}
-                                                reservation={reservation}
-                                                onApprove={handleApproveCameraReservation}
-                                                onReject={handleRejectCameraReservation}
-                                                actionLoading={actionLoading}
-                                                showActions={false}
-                                            />
-                                        ))}
+                                        {cameraApprovedReservations.map(
+                                            (reservation) => (
+                                                <CameraReservationCard
+                                                    key={reservation.id}
+                                                    reservation={reservation}
+                                                    onApprove={
+                                                        handleApproveCameraReservation
+                                                    }
+                                                    onReject={
+                                                        handleRejectCameraReservation
+                                                    }
+                                                    actionLoading={
+                                                        actionLoading
+                                                    }
+                                                    showActions={false}
+                                                />
+                                            ),
+                                        )}
                                     </div>
                                 )
                             ) : activeTab === 'vm' ? (
@@ -1464,8 +1547,12 @@ export default function AdminReservationsPage() {
                                             <VMReservationCard
                                                 key={reservation.id}
                                                 reservation={reservation}
-                                                onApprove={handleApproveVmReservation}
-                                                onReject={handleRejectVmReservation}
+                                                onApprove={
+                                                    handleApproveVmReservation
+                                                }
+                                                onReject={
+                                                    handleRejectVmReservation
+                                                }
                                                 actionLoading={actionLoading}
                                             />
                                         ))}
@@ -1484,16 +1571,24 @@ export default function AdminReservationsPage() {
                                     </Card>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        {vmApprovedReservations.map((reservation) => (
-                                            <VMReservationCard
-                                                key={reservation.id}
-                                                reservation={reservation}
-                                                onApprove={handleApproveVmReservation}
-                                                onReject={handleRejectVmReservation}
-                                                actionLoading={actionLoading}
-                                                showActions={false}
-                                            />
-                                        ))}
+                                        {vmApprovedReservations.map(
+                                            (reservation) => (
+                                                <VMReservationCard
+                                                    key={reservation.id}
+                                                    reservation={reservation}
+                                                    onApprove={
+                                                        handleApproveVmReservation
+                                                    }
+                                                    onReject={
+                                                        handleRejectVmReservation
+                                                    }
+                                                    actionLoading={
+                                                        actionLoading
+                                                    }
+                                                    showActions={false}
+                                                />
+                                            ),
+                                        )}
                                     </div>
                                 )
                             ) : loading ? (
@@ -1568,4 +1663,3 @@ export default function AdminReservationsPage() {
         </AppLayout>
     );
 }
-

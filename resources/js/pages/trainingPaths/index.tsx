@@ -32,7 +32,9 @@ interface PageProps {
     trainingPaths: TrainingPath[];
     categories: string[];
 }
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'TrainingPaths', href: '/trainingPaths' }];
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'TrainingPaths', href: '/trainingPaths' },
+];
 const levelFilters = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 export default function TrainingPathsPage() {
     const { trainingPaths, categories } = usePage<{ props: PageProps }>()
@@ -99,7 +101,8 @@ export default function TrainingPathsPage() {
                             <div className="mb-4 flex items-center gap-2">
                                 <Sparkles className="h-5 w-5 text-primary" />
                                 <span className="text-sm font-medium text-white/80">
-                                    {trainingPaths.length} training paths available
+                                    {trainingPaths.length} training paths
+                                    available
                                 </span>
                             </div>
                             <h1 className="mb-4 font-heading text-4xl font-bold md:text-5xl">
@@ -111,8 +114,8 @@ export default function TrainingPathsPage() {
                             <p className="max-w-xl text-lg text-white/70">
                                 Explore hands-on training paths with virtual
                                 labs, real equipment access, and
-                                industry-relevant projects designed for
-                                Industry 4.0.
+                                industry-relevant projects designed for Industry
+                                4.0.
                             </p>
                         </motion.div>
                         {/* Search in hero */}
@@ -156,7 +159,9 @@ export default function TrainingPathsPage() {
                                 <div className="rounded-lg bg-primary/10 p-2">
                                     <SlidersHorizontal className="h-5 w-5 text-primary" />
                                 </div>
-                                <h3 className="font-semibold text-foreground">Filters</h3>
+                                <h3 className="font-semibold text-foreground">
+                                    Filters
+                                </h3>
                             </div>
                             {hasActiveFilters && (
                                 <Button
@@ -173,13 +178,13 @@ export default function TrainingPathsPage() {
 
                         {/* Category Pills */}
                         <div className="mb-6">
-                            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Domains
                             </p>
-                            <div className="grid grid-flow-col auto-cols-max gap-2.5 overflow-x-auto pb-2 sm:grid-rows-2 scroll-smooth">
+                            <div className="grid auto-cols-max grid-flow-col gap-2.5 overflow-x-auto scroll-smooth pb-2 sm:grid-rows-2">
                                 <button
                                     onClick={() => setSelectedCategory(null)}
-                                    className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
+                                    className={`inline-flex min-w-max cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                                         selectedCategory === null
                                             ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                                             : 'border border-border/60 bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'
@@ -192,7 +197,7 @@ export default function TrainingPathsPage() {
                                     <button
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
-                                        className={`inline-flex min-w-max items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
+                                        className={`inline-flex min-w-max cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                                             selectedCategory === cat
                                                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                                                 : 'border border-border/60 bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'
@@ -206,8 +211,8 @@ export default function TrainingPathsPage() {
 
                         {/* Level and Sort Controls */}
                         <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex-1 min-w-[200px]">
-                                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <div className="min-w-[200px] flex-1">
+                                <p className="mb-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     Level
                                 </p>
                                 <Select
@@ -220,27 +225,41 @@ export default function TrainingPathsPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {levelFilters.map((level) => (
-                                            <SelectItem key={level} value={level}>
+                                            <SelectItem
+                                                key={level}
+                                                value={level}
+                                            >
                                                 {level}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="flex-1 min-w-[200px]">
-                                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <div className="min-w-[200px] flex-1">
+                                <p className="mb-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     Sort by
                                 </p>
-                                <Select value={sortBy} onValueChange={setSortBy}>
+                                <Select
+                                    value={sortBy}
+                                    onValueChange={setSortBy}
+                                >
                                     <SelectTrigger className="h-10 rounded-lg border-border/60 bg-background">
                                         <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
                                         <SelectValue placeholder="Popular" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="popular">Popular</SelectItem>
-                                        <SelectItem value="rating">Top Rated</SelectItem>
-                                        <SelectItem value="students">Most Students</SelectItem>
-                                        <SelectItem value="newest">Newest</SelectItem>
+                                        <SelectItem value="popular">
+                                            Popular
+                                        </SelectItem>
+                                        <SelectItem value="rating">
+                                            Top Rated
+                                        </SelectItem>
+                                        <SelectItem value="students">
+                                            Most Students
+                                        </SelectItem>
+                                        <SelectItem value="newest">
+                                            Newest
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -250,9 +269,12 @@ export default function TrainingPathsPage() {
                     {/* Results count */}
                     <div className="mb-8 flex items-center justify-between">
                         <p className="text-sm font-medium text-muted-foreground">
-                            <span className="text-foreground">{filtered.length}</span>
-                            {' '}
-                            {filtered.length === 1 ? 'training path' : 'training paths'}
+                            <span className="text-foreground">
+                                {filtered.length}
+                            </span>{' '}
+                            {filtered.length === 1
+                                ? 'training path'
+                                : 'training paths'}
                             {hasActiveFilters && ' matching your filters'}
                         </p>
                     </div>
@@ -307,4 +329,3 @@ export default function TrainingPathsPage() {
         </AppLayout>
     );
 }
-

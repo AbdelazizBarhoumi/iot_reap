@@ -32,7 +32,9 @@ interface ModerationPagination {
 }
 
 export default function ForumModerationPage() {
-    const [flaggedThreads, setFlaggedThreads] = useState<DiscussionThread[]>([]);
+    const [flaggedThreads, setFlaggedThreads] = useState<DiscussionThread[]>(
+        [],
+    );
     const [flaggedReplies, setFlaggedReplies] = useState<ThreadReply[]>([]);
     const [threadMeta, setThreadMeta] = useState<ModerationPagination>({
         current_page: 1,
@@ -66,7 +68,10 @@ export default function ForumModerationPage() {
             setReplyMeta(repliesResponse.pagination);
         } catch (error) {
             toast.error(
-                getHttpErrorMessage(error, 'Failed to load forum moderation data'),
+                getHttpErrorMessage(
+                    error,
+                    'Failed to load forum moderation data',
+                ),
             );
         } finally {
             setLoading(false);
@@ -145,13 +150,18 @@ export default function ForumModerationPage() {
                                     <TableHead>Author</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Created</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="text-right">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {flaggedThreads.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={5}
+                                            className="py-8 text-center text-muted-foreground"
+                                        >
                                             No flagged threads.
                                         </TableCell>
                                     </TableRow>
@@ -160,27 +170,41 @@ export default function ForumModerationPage() {
                                         <TableRow key={thread.id}>
                                             <TableCell>
                                                 <div className="max-w-[340px]">
-                                                    <p className="truncate font-medium">{thread.title}</p>
+                                                    <p className="truncate font-medium">
+                                                        {thread.title}
+                                                    </p>
                                                     <p className="truncate text-xs text-muted-foreground">
                                                         {thread.content}
                                                     </p>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{thread.author?.name ?? 'Unknown'}</TableCell>
                                             <TableCell>
-                                                <Badge variant="outline">{thread.status}</Badge>
+                                                {thread.author?.name ??
+                                                    'Unknown'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    {thread.status}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {new Date(thread.createdAt).toLocaleString()}
+                                                {new Date(
+                                                    thread.createdAt,
+                                                ).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => {
-                                                        void handleUnflagThread(thread.id);
+                                                        void handleUnflagThread(
+                                                            thread.id,
+                                                        );
                                                     }}
-                                                    disabled={actionKey === `thread-${thread.id}`}
+                                                    disabled={
+                                                        actionKey ===
+                                                        `thread-${thread.id}`
+                                                    }
                                                 >
                                                     Unflag Thread
                                                 </Button>
@@ -194,14 +218,17 @@ export default function ForumModerationPage() {
                         {threadMeta.last_page > 1 && (
                             <div className="mt-4 flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">
-                                    Page {threadMeta.current_page} of {threadMeta.last_page}
+                                    Page {threadMeta.current_page} of{' '}
+                                    {threadMeta.last_page}
                                 </span>
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                            setThreadPage((prev) => Math.max(prev - 1, 1))
+                                            setThreadPage((prev) =>
+                                                Math.max(prev - 1, 1),
+                                            )
                                         }
                                         disabled={loading || threadPage <= 1}
                                     >
@@ -212,10 +239,16 @@ export default function ForumModerationPage() {
                                         size="sm"
                                         onClick={() =>
                                             setThreadPage((prev) =>
-                                                Math.min(prev + 1, threadMeta.last_page),
+                                                Math.min(
+                                                    prev + 1,
+                                                    threadMeta.last_page,
+                                                ),
                                             )
                                         }
-                                        disabled={loading || threadPage >= threadMeta.last_page}
+                                        disabled={
+                                            loading ||
+                                            threadPage >= threadMeta.last_page
+                                        }
                                     >
                                         Next
                                     </Button>
@@ -239,13 +272,18 @@ export default function ForumModerationPage() {
                                     <TableHead>Author</TableHead>
                                     <TableHead>Thread ID</TableHead>
                                     <TableHead>Created</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="text-right">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {flaggedReplies.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={5}
+                                            className="py-8 text-center text-muted-foreground"
+                                        >
                                             No flagged replies.
                                         </TableCell>
                                     </TableRow>
@@ -257,21 +295,31 @@ export default function ForumModerationPage() {
                                                     {reply.content}
                                                 </p>
                                             </TableCell>
-                                            <TableCell>{reply.author?.name ?? 'Unknown'}</TableCell>
+                                            <TableCell>
+                                                {reply.author?.name ??
+                                                    'Unknown'}
+                                            </TableCell>
                                             <TableCell className="font-mono text-xs text-muted-foreground">
                                                 {reply.threadId}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {new Date(reply.createdAt).toLocaleString()}
+                                                {new Date(
+                                                    reply.createdAt,
+                                                ).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => {
-                                                        void handleUnflagReply(reply.id);
+                                                        void handleUnflagReply(
+                                                            reply.id,
+                                                        );
                                                     }}
-                                                    disabled={actionKey === `reply-${reply.id}`}
+                                                    disabled={
+                                                        actionKey ===
+                                                        `reply-${reply.id}`
+                                                    }
                                                 >
                                                     Unflag Reply
                                                 </Button>
@@ -285,14 +333,17 @@ export default function ForumModerationPage() {
                         {replyMeta.last_page > 1 && (
                             <div className="mt-4 flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">
-                                    Page {replyMeta.current_page} of {replyMeta.last_page}
+                                    Page {replyMeta.current_page} of{' '}
+                                    {replyMeta.last_page}
                                 </span>
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                            setReplyPage((prev) => Math.max(prev - 1, 1))
+                                            setReplyPage((prev) =>
+                                                Math.max(prev - 1, 1),
+                                            )
                                         }
                                         disabled={loading || replyPage <= 1}
                                     >
@@ -303,10 +354,16 @@ export default function ForumModerationPage() {
                                         size="sm"
                                         onClick={() =>
                                             setReplyPage((prev) =>
-                                                Math.min(prev + 1, replyMeta.last_page),
+                                                Math.min(
+                                                    prev + 1,
+                                                    replyMeta.last_page,
+                                                ),
                                             )
                                         }
-                                        disabled={loading || replyPage >= replyMeta.last_page}
+                                        disabled={
+                                            loading ||
+                                            replyPage >= replyMeta.last_page
+                                        }
                                     >
                                         Next
                                     </Button>

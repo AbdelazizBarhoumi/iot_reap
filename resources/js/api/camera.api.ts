@@ -243,7 +243,9 @@ export const adminCameraApi = {
     /**
      * Activate a camera.
      */
-    async activate(cameraId: number): Promise<ActionResponse & { data: Camera }> {
+    async activate(
+        cameraId: number,
+    ): Promise<ActionResponse & { data: Camera }> {
         const response = await client.put<ActionResponse & { data: Camera }>(
             `/admin/cameras/${cameraId}/activate`,
         );
@@ -345,4 +347,3 @@ export const adminCameraApi = {
         return response.data;
     },
 };
-

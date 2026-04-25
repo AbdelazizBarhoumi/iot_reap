@@ -97,4 +97,3 @@ export const notificationApi = {
         await client.delete(`/notifications/${id}`);
     },
 };
-

@@ -839,12 +839,8 @@ export default function Dashboard() {
                                     <SelectItem value="rdp">
                                         RDP (Remote Desktop)
                                     </SelectItem>
-                                    <SelectItem value="vnc">
-                                        VNC
-                                    </SelectItem>
-                                    <SelectItem value="ssh">
-                                        SSH
-                                    </SelectItem>
+                                    <SelectItem value="vnc">VNC</SelectItem>
+                                    <SelectItem value="ssh">SSH</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -882,7 +878,9 @@ export default function Dashboard() {
                                     <SelectValue placeholder="Use protocol default" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
+                                    <SelectItem
+                                        value={NO_PROFILE_SELECTED_VALUE}
+                                    >
                                         {defaultLaunchProfile
                                             ? perVmDefaultProfile.isAdmin
                                                 ? `Use Admin Default (${defaultLaunchProfile.profile_name}) ★`
@@ -902,8 +900,8 @@ export default function Dashboard() {
                             </Select>
 
                             <p className="text-xs text-muted-foreground">
-                                If you don&apos;t choose one, the starred default
-                                profile is used automatically.
+                                If you don&apos;t choose one, the starred
+                                default profile is used automatically.
                             </p>
                         </div>
                         {/* Credentials */}
@@ -1067,4 +1065,3 @@ export default function Dashboard() {
         </AppLayout>
     );
 }
-

@@ -62,4 +62,3 @@ export function withCsrf(headers: HeadersInit = {}): HeadersInit {
     }
     return { ...headers, ...csrfHeaders };
 }
-

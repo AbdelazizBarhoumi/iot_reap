@@ -115,4 +115,3 @@ export function useVMSession(sessionId?: string) {
 
     return { session, loading, error };
 }
-

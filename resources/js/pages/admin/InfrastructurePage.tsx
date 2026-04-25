@@ -1667,7 +1667,9 @@ export default function InfrastructurePage({
                     isAdmin: !!data.is_admin_defined,
                 });
                 // If a default is found and it belongs to this user (the admin), check the box
-                setSaveAsVmDefault(!!data.preferred_profile_name && !data.is_admin_defined);
+                setSaveAsVmDefault(
+                    !!data.preferred_profile_name && !data.is_admin_defined,
+                );
             })
             .catch(() => {
                 setPerVmDefaultProfile({ name: null, isAdmin: false });
@@ -3467,7 +3469,9 @@ export default function InfrastructurePage({
                                     <SelectValue placeholder="Use protocol default" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={NO_PROFILE_SELECTED_VALUE}>
+                                    <SelectItem
+                                        value={NO_PROFILE_SELECTED_VALUE}
+                                    >
                                         {defaultLaunchProfile
                                             ? perVmDefaultProfile.isAdmin
                                                 ? `Use Admin Default (${defaultLaunchProfile.profile_name}) ★`
@@ -3484,31 +3488,30 @@ export default function InfrastructurePage({
                                             {profile.is_default ? ' ★' : ''}
                                         </SelectItem>
                                     ))}
-                                    </SelectContent>
-                                    </Select>
+                                </SelectContent>
+                            </Select>
 
-                                    <div className="flex items-center space-x-2">
-                                    <Checkbox
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
                                     id="save-as-vm-default"
                                     checked={saveAsVmDefault}
                                     onCheckedChange={(checked) =>
                                         setSaveAsVmDefault(checked === true)
                                     }
-                                    />
-                                    <Label
+                                />
+                                <Label
                                     htmlFor="save-as-vm-default"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
                                     Set as default for this VM
-                                    </Label>
-                                    </div>
+                                </Label>
+                            </div>
 
-                                    <p className="text-xs text-muted-foreground">
-                                    If you don&apos;t choose one, the starred default
-                                    profile is used automatically.
-                                    </p>
-                                    </div>
-
+                            <p className="text-xs text-muted-foreground">
+                                If you don&apos;t choose one, the starred
+                                default profile is used automatically.
+                            </p>
+                        </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="launch-username">
