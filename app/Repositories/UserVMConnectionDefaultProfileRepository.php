@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\UserVMConnectionDefaultProfile;
 use Illuminate\Database\Eloquent\Collection;
@@ -17,7 +18,7 @@ class UserVMConnectionDefaultProfileRepository
      * Fallback to any admin-defined default for this VM if the user hasn't set one.
      * Returns null when no per-VM default is set by user or admin.
      */
-    public function findPerVMDefault(\App\Models\User $user, int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
+    public function findPerVMDefault(User $user, int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
     {
         // 1. Try user's own preferred profile for this VM
         $userDefault = UserVMConnectionDefaultProfile::where('user_id', $user->id)
@@ -38,7 +39,7 @@ class UserVMConnectionDefaultProfileRepository
     public function findGlobalDefault(int $vmId, string $protocol): ?UserVMConnectionDefaultProfile
     {
         return UserVMConnectionDefaultProfile::whereHas('user', function ($query) {
-            $query->where('role', \App\Enums\UserRole::ADMIN->value);
+            $query->where('role', UserRole::ADMIN->value);
         })
             ->where('vm_id', $vmId)
             ->where('vm_session_protocol', $protocol)

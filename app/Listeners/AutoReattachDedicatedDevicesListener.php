@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\UsbDeviceStatus;
 use App\Enums\UsbReservationStatus;
 use App\Events\VMSessionActivated;
 use App\Models\Reservation;
@@ -76,6 +77,12 @@ class AutoReattachDedicatedDevicesListener
         // 3. Handle pending attachments (devices waiting for this VM)
         if ($session->vm_id && $session->proxmoxServer) {
             $this->attachPendingDevices($session, $stats);
+        }
+
+        // 4. Reattach devices owned by this VM, even if they were originally
+        // attached from another session on the same VM.
+        if ($session->vm_id && $session->proxmoxServer && $session->node) {
+            $this->attachVmOwnedDevices($session, $stats);
         }
 
         Log::info('AutoReattachDedicatedDevicesListener: Completed', [
@@ -235,6 +242,82 @@ class AutoReattachDedicatedDevicesListener
             } catch (Throwable $e) {
                 Log::warning('Failed to auto-attach pending device', [
                     'device_id' => $device->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $stats['failed']++;
+            }
+        }
+    }
+
+    /**
+     * Sync or reattach devices that belong to this VM context.
+     */
+    private function attachVmOwnedDevices($session, array &$stats): void
+    {
+        $vmOwnedDevices = UsbDevice::where('attached_vmid', $session->vm_id)
+            ->where('attached_node', $session->node->name)
+            ->where('attached_server_id', $session->proxmoxServer->id)
+            ->with('gatewayNode')
+            ->get();
+
+        foreach ($vmOwnedDevices as $device) {
+            if (! $device->gatewayNode?->is_verified) {
+                $stats['skipped']++;
+
+                continue;
+            }
+
+            try {
+                if ($device->isAttached()) {
+                    $verification = $this->gatewayService->verifySessionAttachmentState($device, $session);
+
+                    if ($verification['verified']) {
+                        $device->update([
+                            'attached_session_id' => $session->id,
+                            'attached_to' => "session-{$session->id}",
+                            'attached_vm_ip' => $session->ip_address,
+                            'usbip_port' => $verification['port'] ?? $device->usbip_port,
+                        ]);
+
+                        $stats['pending_attached']++;
+
+                        continue;
+                    }
+
+                    if ($verification['can_verify']) {
+                        $device->update([
+                            'status' => UsbDeviceStatus::BOUND,
+                            'attached_session_id' => null,
+                            'attached_to' => null,
+                            'attached_vm_ip' => null,
+                            'usbip_port' => null,
+                        ]);
+
+                        $device->refresh();
+                    }
+                }
+
+                if ($device->isAvailable()) {
+                    $this->gatewayService->bindDevice($device);
+                    $device->refresh();
+                }
+
+                if ($device->isBound()) {
+                    $this->gatewayService->attachToSession($device, $session);
+
+                    Log::info('Auto-reattached VM-owned device', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'vm_id' => $session->vm_id,
+                    ]);
+
+                    $stats['pending_attached']++;
+                }
+            } catch (Throwable $e) {
+                Log::warning('Failed to auto-reattach VM-owned device', [
+                    'device_id' => $device->id,
+                    'session_id' => $session->id,
+                    'vm_id' => $session->vm_id,
                     'error' => $e->getMessage(),
                 ]);
                 $stats['failed']++;

@@ -34,6 +34,7 @@ class VideoResource extends JsonResource
 
                 return sprintf('%d:%02d', $minutes, $seconds);
             }),
+            'available_qualities' => $this->available_qualities ?? [],
             'resolution_height' => $this->resolution_height,
             'resolution_width' => $this->resolution_width,
             'file_size_bytes' => $this->file_size_bytes,

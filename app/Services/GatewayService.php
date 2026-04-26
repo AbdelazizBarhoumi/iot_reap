@@ -38,6 +38,14 @@ class GatewayService
      */
     private const WINDOWS_USBIP_PATH = 'C:\PROGRA~1\USBIP-~1\usbip.exe';
 
+    /**
+     * Shared batch path for Windows `usbip port` queries.
+     *
+     * Keeping a stable file avoids guest-agent file-write churn every time the UI
+     * re-verifies an attached device.
+     */
+    private const WINDOWS_USBIP_PORT_BATCH_PATH = 'C:\usbip-port-query.bat';
+
     public function __construct(
         private readonly GatewayNodeRepository $nodeRepository,
         private readonly UsbDeviceRepository $deviceRepository,
@@ -56,7 +64,28 @@ class GatewayService
      */
     private function extractErrorMessage(Response $response, string $key = 'detail', string $default = 'Operation failed'): string
     {
-        $value = $response->json($key, $default);
+        $keysToTry = array_values(array_unique(array_filter([
+            $key,
+            'detail',
+            'error',
+            'message',
+            'msg',
+        ], 'is_string')));
+
+        $value = null;
+
+        foreach ($keysToTry as $candidateKey) {
+            $candidate = $response->json($candidateKey);
+
+            if ($candidate !== null && $candidate !== '') {
+                $value = $candidate;
+                break;
+            }
+        }
+
+        if ($value === null || $value === '') {
+            $value = $default;
+        }
 
         if (is_string($value)) {
             return $value;
@@ -529,7 +558,7 @@ class GatewayService
 
                 // Handle idempotent case: device is already bound on the gateway
                 // This can happen when gateway state and database state are out of sync
-                if (str_contains($errorMessage, 'already bound to usbip-host')) {
+                if (str_contains(strtolower($errorMessage), 'already bound')) {
                     Log::warning('USB device already bound on gateway, syncing database state', [
                         'device_id' => $device->id,
                         'busid' => $device->busid,
@@ -736,7 +765,16 @@ class GatewayService
 
                 if ($alreadyAttachedPort !== null) {
                     $vmName = "session-{$session->id}";
-                    $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $alreadyAttachedPort);
+                    $this->deviceRepository->markAttached(
+                        $device,
+                        $vmName,
+                        $session->id,
+                        $session->ip_address,
+                        $alreadyAttachedPort,
+                        $session->vm_id,
+                        $proxmoxNode->name,
+                        $session->proxmox_server_id,
+                    );
 
                     Log::info('USB device already attached in VM before attach command; synced DB state', [
                         'device_id' => $device->id,
@@ -817,7 +855,16 @@ class GatewayService
                 if ($port !== null) {
                     // Device IS actually attached - mark success despite command reporting failure
                     $vmName = "session-{$session->id}";
-                    $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
+                    $this->deviceRepository->markAttached(
+                        $device,
+                        $vmName,
+                        $session->id,
+                        $session->ip_address,
+                        $port,
+                        $session->vm_id,
+                        $proxmoxNode->name,
+                        $session->proxmox_server_id,
+                    );
                     Log::info('USB device verified attached after command failure (port found)', [
                         'device_id' => $device->id,
                         'session_id' => $session->id,
@@ -905,7 +952,16 @@ class GatewayService
             }
 
             $vmName = "session-{$session->id}";
-            $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
+            $this->deviceRepository->markAttached(
+                $device,
+                $vmName,
+                $session->id,
+                $session->ip_address,
+                $port,
+                $session->vm_id,
+                $proxmoxNode->name,
+                $session->proxmox_server_id,
+            );
 
             Log::info('USB device attached to VM via guest agent', [
                 'device_id' => $device->id,
@@ -936,7 +992,16 @@ class GatewayService
                     if ($port !== null) {
                         // Device IS attached - mark success despite exception
                         $vmName = "session-{$session->id}";
-                        $this->deviceRepository->markAttached($device, $vmName, $session->id, $session->ip_address, $port);
+                        $this->deviceRepository->markAttached(
+                            $device,
+                            $vmName,
+                            $session->id,
+                            $session->ip_address,
+                            $port,
+                            $session->vm_id,
+                            $proxmoxNode->name,
+                            $session->proxmox_server_id,
+                        );
                         Log::info('USB device verified attached after ProxmoxApiException (port found)', [
                             'device_id' => $device->id,
                             'session_id' => $session->id,
@@ -1018,6 +1083,15 @@ class GatewayService
             );
         }
 
+        if ($isWindows && trim($command) === 'port') {
+            return $this->executeWindowsUsbipPortCommand(
+                proxmoxClient: $proxmoxClient,
+                nodeName: $nodeName,
+                vmid: $vmid,
+                timeoutSeconds: $timeoutSeconds
+            );
+        }
+
         // For non-attach commands (port, detach, list) and Linux, use the standard
         // approach: try direct invocation first, then batch file fallback on Windows.
         $direct = null;
@@ -1070,6 +1144,58 @@ class GatewayService
             command: $command,
             timeoutSeconds: $timeoutSeconds,
             wait: true
+        );
+    }
+
+    /**
+     * Execute `usbip port` inside a Windows guest using a reusable batch file.
+     *
+     * Direct `cmd.exe /c ...` invocations are unreliable under the guest agent on
+     * Windows, and writing a fresh batch on every verification adds pressure to the
+     * agent. Reuse one stable batch path and only rewrite it when missing/stale.
+     *
+     * @return array{exitcode: int, out-data?: string, err-data?: string, success: bool}
+     */
+    private function executeWindowsUsbipPortCommand(
+        ProxmoxClientInterface $proxmoxClient,
+        string $nodeName,
+        int $vmid,
+        int $timeoutSeconds = 10
+    ): array {
+        $batchPath = self::WINDOWS_USBIP_PORT_BATCH_PATH;
+
+        try {
+            $result = $proxmoxClient->execInVmAndWait(
+                nodeName: $nodeName,
+                vmid: $vmid,
+                command: $batchPath,
+                timeoutSeconds: $timeoutSeconds
+            );
+
+            if ($result['success']) {
+                return $result;
+            }
+        } catch (ProxmoxApiException $e) {
+            Log::debug('Reusable Windows usbip port batch unavailable, recreating', [
+                'node' => $nodeName,
+                'vmid' => $vmid,
+                'batch_path' => $batchPath,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $proxmoxClient->writeFileInVm(
+            nodeName: $nodeName,
+            vmid: $vmid,
+            filePath: $batchPath,
+            content: self::WINDOWS_USBIP_PATH.' port'
+        );
+
+        return $proxmoxClient->execInVmAndWait(
+            nodeName: $nodeName,
+            vmid: $vmid,
+            command: $batchPath,
+            timeoutSeconds: $timeoutSeconds
         );
     }
 
@@ -1540,22 +1666,7 @@ class GatewayService
     ): void {
         $cleanupScript = implode(PHP_EOL, [
             '@echo off',
-            'for /f "delims=" %%F in (\'dir /b C:\\usbip-*.bat 2^>nul\') do (',
-            '  attrib -r -s -h "C:\\%%F" >nul 2>&1',
-            '  del /f /q "C:\\%%F" >nul 2>&1',
-            ')',
-            // If files remain locked, stop stale workers and retry once.
-            'dir /b C:\\usbip-attach-*.bat C:\\usbip-query-*.bat C:\\usbip-cmd-*.bat >nul 2>&1',
-            'if %errorlevel%==0 (',
-            '  powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Process cmd,usbip -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue" >nul 2>&1',
-            '  ping -n 2 127.0.0.1 >nul',
-            '  for /f "delims=" %%F in (\'dir /b C:\\usbip-*.bat 2^>nul\') do (',
-            '    attrib -r -s -h "C:\\%%F" >nul 2>&1',
-            '    del /f /q "C:\\%%F" >nul 2>&1',
-            '  )',
-            ')',
-            'dir /b C:\\usbip-attach-*.bat C:\\usbip-query-*.bat >nul 2>&1',
-            'if %errorlevel%==0 exit /b 1',
+            'del /f /q C:\\usbip-attach-*.bat C:\\usbip-query-*.bat C:\\usbip-cmd-*.bat >nul 2>&1',
             'exit /b 0',
         ]);
 
@@ -1613,7 +1724,7 @@ class GatewayService
         int $vmid
     ): ?string {
         try {
-            $batchPath = $this->buildWindowsBatchPath(false);
+            $batchPath = self::WINDOWS_USBIP_PORT_BATCH_PATH;
 
             $proxmoxClient->writeFileInVm(
                 nodeName: $nodeName,
@@ -1809,14 +1920,6 @@ class GatewayService
      */
     public function verifySessionAttachmentState(UsbDevice $device, VMSession $session): array
     {
-        if ((string) $device->attached_session_id !== (string) $session->id) {
-            return [
-                'verified' => false,
-                'can_verify' => true,
-                'reason' => 'device-not-attached-to-session',
-            ];
-        }
-
         if (! $session->vm_id || ! $session->node_id) {
             return [
                 'verified' => false,
@@ -1828,6 +1931,15 @@ class GatewayService
         $session->loadMissing(['node', 'proxmoxServer']);
         $proxmoxNode = $session->node;
         $proxmoxServer = $session->proxmoxServer;
+
+        if ((string) $device->attached_session_id !== (string) $session->id
+            && ! $device->isAttachedToSessionVm($session)) {
+            return [
+                'verified' => false,
+                'can_verify' => true,
+                'reason' => 'device-not-attached-to-session-or-vm',
+            ];
+        }
 
         if (! $proxmoxNode || ! $proxmoxServer) {
             return [
@@ -2164,7 +2276,16 @@ class GatewayService
                 );
 
                 if ($alreadyAttachedPort !== null) {
-                    $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $alreadyAttachedPort);
+                    $this->deviceRepository->markAttached(
+                        $device,
+                        $vmName,
+                        null,
+                        $vmIp,
+                        $alreadyAttachedPort,
+                        $vmid,
+                        $nodeName,
+                        $server->id,
+                    );
                     $device->clearPendingAttachment();
 
                     Log::info('USB device already attached in VM before direct attach command; synced DB state', [
@@ -2220,7 +2341,16 @@ class GatewayService
 
                 if ($port !== null) {
                     // Device IS attached - mark success
-                    $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                    $this->deviceRepository->markAttached(
+                        $device,
+                        $vmName,
+                        null,
+                        $vmIp,
+                        $port,
+                        $vmid,
+                        $nodeName,
+                        $server->id,
+                    );
                     // Clear any pending attachment data
                     $device->clearPendingAttachment();
                     Log::info('USB device verified attached after command failure (direct)', [
@@ -2279,7 +2409,16 @@ class GatewayService
                 );
             }
 
-            $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+            $this->deviceRepository->markAttached(
+                $device,
+                $vmName,
+                null,
+                $vmIp,
+                $port,
+                $vmid,
+                $nodeName,
+                $server->id,
+            );
             // Clear any pending attachment data
             $device->clearPendingAttachment();
 
@@ -2314,7 +2453,16 @@ class GatewayService
                     );
 
                     if ($port !== null) {
-                        $this->deviceRepository->markAttached($device, $vmName, null, $vmIp, $port);
+                        $this->deviceRepository->markAttached(
+                            $device,
+                            $vmName,
+                            null,
+                            $vmIp,
+                            $port,
+                            $vmid,
+                            $nodeName,
+                            $server->id,
+                        );
                         // Clear any pending attachment data
                         $device->clearPendingAttachment();
                         Log::info('USB device verified attached after ProxmoxApiException (direct)', [
@@ -2783,13 +2931,22 @@ class GatewayService
     /**
      * Create a new gateway node.
      */
-    public function createNode(string $name, string $ip, int $port = 8000): GatewayNode
-    {
+    public function createNode(
+        string $name,
+        string $ip,
+        int $port = 8000,
+        ?string $proxmoxHost = null,
+        ?string $proxmoxNode = null,
+        ?string $proxmoxVmid = null,
+    ): GatewayNode {
         $node = $this->nodeRepository->create([
             'name' => $name,
             'ip' => $ip,
             'port' => $port,
             'online' => false,
+            'proxmox_host' => $proxmoxHost,
+            'proxmox_node' => $proxmoxNode,
+            'proxmox_vmid' => $proxmoxVmid,
         ]);
 
         // Try to check if it's online
@@ -3099,7 +3256,7 @@ class GatewayService
             'width' => $options['width'] ?? 640,
             'height' => $options['height'] ?? 480,
             'framerate' => $options['framerate'] ?? 15,
-            'input_format' => $options['input_format'] ?? 'mjpeg',
+            'input_format' => $options['input_format'] ?? 'auto',
         ];
 
         if (! empty($options['usb_busid'])) {
@@ -3471,7 +3628,12 @@ class GatewayService
      */
     private function checkMediaMTXPath(GatewayNode $node, string $streamKey): array
     {
-        $mediamtxHost = $node->ip ?: config('gateway.mediamtx_url', '192.168.50.6');
+        $mediamtxHost = (string) config('gateway.mediamtx_url', '192.168.50.6');
+
+        if ($mediamtxHost === '') {
+            $mediamtxHost = $node->ip;
+        }
+
         $apiPort = config('gateway.mediamtx_api_port', 9997);
         $apiUrl = "http://{$mediamtxHost}:{$apiPort}/v3/paths/get/{$streamKey}";
 

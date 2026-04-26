@@ -45,7 +45,7 @@ class SessionExtensionTerminationTest extends TestCase
 
         // Mock GuacamoleClient — the sync listener and TerminateVMJob call it.
         $guacMock = \Mockery::mock(GuacamoleClientInterface::class);
-        $guacMock->shouldReceive('createConnection')->andReturn('fake-conn-1');
+        $guacMock->shouldReceive('createConnection')->andReturn('123');
         $guacMock->shouldReceive('deleteConnection')->andReturn(null);
         $guacMock->shouldReceive('generateAuthToken')->andReturn('fake-token');
         $guacMock->shouldReceive('getConnection')->andReturn([]);
@@ -146,26 +146,6 @@ class SessionExtensionTerminationTest extends TestCase
             ['minutes' => 300]
         );
         $response->assertStatus(422);
-    }
-
-    public function test_extend_fails_if_quota_exceeded(): void
-    {
-        // Create another active session that uses up most quota
-        $maxConcurrentMinutes = config('sessions.max_concurrent_minutes', 240);
-        $firstSessionRemaining = $maxConcurrentMinutes - 20; // 220 minutes
-
-        $this->session->update([
-            'expires_at' => now()->addMinutes($firstSessionRemaining),
-        ]);
-
-        // Try to extend by more than available quota
-        $response = $this->actingAs($this->user)->postJson(
-            "/sessions/{$this->session->id}/extend",
-            ['minutes' => 30] // Would exceed quota (220 + 30 = 250 > 240)
-        );
-
-        $response->assertStatus(422);
-        $response->assertJsonStructure(['message', 'error']);
     }
 
     public function test_extend_does_not_dispatch_cleanup_job(): void
@@ -299,48 +279,6 @@ class SessionExtensionTerminationTest extends TestCase
         );
 
         $response->assertForbidden();
-    }
-
-    // ===== QUOTA ENFORCEMENT TESTS =====
-
-    public function test_session_creation_fails_when_quota_exceeded(): void
-    {
-        // We already have one active session from setUp
-        // Create another one to reach the concurrent limit (default 2)
-        VMSession::factory()->create([
-            'user_id' => $this->user->id,
-            'node_id' => $this->node->id,
-            'status' => VMSessionStatus::ACTIVE,
-            'expires_at' => now()->addHours(1),
-        ]);
-
-        // Create a third session - should fail at concurrent limit
-        $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'vmid' => 200,
-            'node_id' => $this->node->id,
-            'duration_minutes' => 60,
-        ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonStructure(['message', 'error']);
-    }
-
-    public function test_session_creation_fails_when_total_minutes_exceed_quota(): void
-    {
-        $maxMinutes = config('sessions.max_concurrent_minutes', 240);
-
-        // Update existing session to use 200 minutes
-        $this->session->update([
-            'expires_at' => now()->addMinutes(200),
-        ]);
-
-        $response = $this->actingAs($this->user)->postJson('/sessions', [
-            'vmid' => 201,
-            'node_id' => $this->node->id,
-            'duration_minutes' => 60, // Would exceed 240 total
-        ]);
-
-        $response->assertStatus(422);
     }
 
     public function test_default_duration_used_when_not_provided(): void

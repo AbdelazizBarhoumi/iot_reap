@@ -50,7 +50,7 @@ class Certificate extends Model
      */
     public function getVerificationUrlAttribute(): string
     {
-        return url("/certificates/verify/{$this->hash}");
+        return url("/certificates/{$this->hash}/verify");
     }
 
     /**

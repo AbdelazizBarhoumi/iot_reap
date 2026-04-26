@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Repositories\TrainingPathModuleRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitRepository;
+use App\Repositories\TrainingUnitVMAssignmentRepository;
 use App\Services\TrainingPathCacheService;
 use App\Services\TrainingPathService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +29,7 @@ class TrainingPathServiceTest extends TestCase
         $this->trainingPathRepository = app(TrainingPathRepository::class);
         $moduleRepository = app(TrainingPathModuleRepository::class);
         $trainingUnitRepository = app(TrainingUnitRepository::class);
-        $vmAssignmentRepository = app(\App\Repositories\TrainingUnitVMAssignmentRepository::class);
+        $vmAssignmentRepository = app(TrainingUnitVMAssignmentRepository::class);
         $cacheService = app(TrainingPathCacheService::class);
         $this->trainingPathService = new TrainingPathService(
             $this->trainingPathRepository,

@@ -135,6 +135,8 @@ class GatewayDiscoveryService
                 name: $container['name'],
                 ip: $ip,
                 port: $this->defaultPort(),
+                proxmoxNode: $nodeName,
+                proxmoxVmid: (string) $container['vmid'],
             );
 
             // Check if the gateway is online
@@ -169,12 +171,33 @@ class GatewayDiscoveryService
     /**
      * Register a gateway node (create or update).
      */
-    private function registerGateway(string $name, string $ip, int $port): GatewayNode
-    {
-        return $this->gatewayNodeRepository->firstOrCreate(
+    private function registerGateway(
+        string $name,
+        string $ip,
+        int $port,
+        ?string $proxmoxNode = null,
+        ?string $proxmoxVmid = null,
+    ): GatewayNode {
+        $gateway = $this->gatewayNodeRepository->firstOrCreate(
             attributes: ['ip' => $ip, 'port' => $port],
-            values: ['name' => $name],
+            values: [
+                'name' => $name,
+                'proxmox_node' => $proxmoxNode,
+                'proxmox_vmid' => $proxmoxVmid,
+            ],
         );
+
+        $updates = array_filter([
+            'name' => $name,
+            'proxmox_node' => $proxmoxNode,
+            'proxmox_vmid' => $proxmoxVmid,
+        ], static fn (?string $value): bool => $value !== null && $value !== '');
+
+        if ($updates !== []) {
+            $this->gatewayNodeRepository->update($gateway, $updates);
+        }
+
+        return $gateway->fresh();
     }
 
     /**

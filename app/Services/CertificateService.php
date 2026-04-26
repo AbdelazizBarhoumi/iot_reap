@@ -90,10 +90,13 @@ class CertificateService
         // Execute PDF generation synchronously
         GenerateCertificatePdfJob::dispatchSync($certificate);
 
+        // Refresh the certificate instance to get the updated pdf_path from the database
+        $certificate->refresh();
+
         // Dispatch event
         CertificateIssued::dispatch($certificate);
 
-        return $certificate->load(['user:id,name', 'trainingPath:id,title']);
+        return $certificate->load(['user:id,name', 'trainingPath:id,title,thumbnail']);
     }
 
     /**

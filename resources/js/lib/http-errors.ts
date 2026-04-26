@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 
 interface ErrorResponseBody {
+    error?: string;
     message?: string;
     errors?: Record<string, string[] | string>;
 }
@@ -16,6 +17,10 @@ export function getHttpErrorMessage(error: unknown, fallback: string): string {
     }
 
     const payload = error.response?.data as ErrorResponseBody | undefined;
+
+    if (isNonEmptyString(payload?.error)) {
+        return payload.error;
+    }
 
     if (isNonEmptyString(payload?.message)) {
         return payload.message;

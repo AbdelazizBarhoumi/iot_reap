@@ -545,7 +545,7 @@ class CameraService
                 'width' => $width,
                 'height' => $height,
                 'framerate' => $framerate,
-                'input_format' => $camera->stream_input_format ?? 'mjpeg',
+                'input_format' => $camera->stream_input_format ?? 'auto',
             ]);
             $streamResult['skipped'] = false;
 
@@ -644,7 +644,7 @@ class CameraService
                         'width' => $camera->stream_width ?? 640,
                         'height' => $camera->stream_height ?? 480,
                         'framerate' => $camera->stream_framerate ?? 15,
-                        'input_format' => $camera->stream_input_format ?? 'mjpeg',
+                        'input_format' => $camera->stream_input_format ?? 'auto',
                     ])
                 );
 
@@ -714,7 +714,7 @@ class CameraService
             'width' => $camera->stream_width ?? 640,
             'height' => $camera->stream_height ?? 480,
             'framerate' => $camera->stream_framerate ?? 15,
-            'input_format' => $camera->stream_input_format ?? 'mjpeg',
+            'input_format' => $camera->stream_input_format ?? 'auto',
         ], $overrides);
 
         if ($camera->usbDevice) {

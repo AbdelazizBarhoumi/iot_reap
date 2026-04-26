@@ -189,7 +189,7 @@ class TrainingPathReviewService
         return $this->enrollmentRepository->isEnrolled($user->id, $trainingPathId) && ! $this->reviewRepository->hasUserReviewed(
             $trainingPathId,
             $user
-        );;
+        );
     }
 
     /**

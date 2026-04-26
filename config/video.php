@@ -24,6 +24,27 @@ return [
 
     'ffmpeg_path' => env('FFMPEG_PATH', 'ffmpeg'),
     'ffprobe_path' => env('FFPROBE_PATH', 'ffprobe'),
+    'gateway' => [
+        'ffmpeg_path' => env('GATEWAY_FFMPEG_PATH', 'ffmpeg'),
+        'ffprobe_path' => env('GATEWAY_FFPROBE_PATH', 'ffprobe'),
+    ],
+
+    'ffmpeg_execution' => [
+        // auto: use gateway when available, local otherwise
+        // gateway: force gateway execution
+        // local: force local execution
+        'mode' => env('VIDEO_FFMPEG_EXECUTION_MODE', 'auto'),
+
+        // If gateway execution fails, fallback to local ffmpeg/ffprobe.
+        'gateway_fallback_local' => (bool) env('VIDEO_GATEWAY_FALLBACK_LOCAL', true),
+
+        'gateway_ssh' => [
+            'username' => env('VIDEO_GATEWAY_SSH_USERNAME', ''),
+            'password' => env('VIDEO_GATEWAY_SSH_PASSWORD', ''),
+            'port' => (int) env('VIDEO_GATEWAY_SSH_PORT', 22),
+            'timeout_seconds' => (int) env('VIDEO_GATEWAY_SSH_TIMEOUT', 30),
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -19,6 +19,7 @@ class VideoService
 {
     public function __construct(
         private readonly VideoRepository $videoRepository,
+        private readonly TrainingPathCacheService $trainingPathCacheService,
     ) {}
 
     /**
@@ -36,8 +37,8 @@ class VideoService
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
         $storagePath = "videos/raw/{$trainingUnit->id}/{$filename}";
 
-        // Store the raw file
-        $disk = config('filesystems.default', 'local');
+        // Store uploaded files on the app host disk; gateways only process them.
+        $disk = $this->resolveStorageDisk();
         Storage::disk($disk)->putFileAs(
             dirname($storagePath),
             $file,
@@ -55,13 +56,24 @@ class VideoService
             'status' => VideoStatus::PENDING,
         ]);
 
-        // Execute transcoding synchronously
-        TranscodeVideoJob::dispatchSync($video);
+        // Execute transcoding asynchronously
+        try {
+            TranscodeVideoJob::dispatch($video);
+        } catch (\Throwable $e) {
+            Log::error('Immediate transcoding failed', [
+                'video_id' => $video->id,
+                'error' => $e->getMessage(),
+            ]);
+            $video->markAsFailed('Transcoding failed: '.$e->getMessage());
+        }
 
         Log::info('Video uploaded and queued for transcoding', [
             'video_id' => $video->id,
             'training_unit_id' => $trainingUnit->id,
         ]);
+
+        $trainingUnit->loadMissing('module.trainingPath');
+        $this->trainingPathCacheService->invalidateTrainingPath($trainingUnit->module->trainingPath);
 
         return $video;
     }
@@ -98,6 +110,7 @@ class VideoService
     public function delete(Video $video): bool
     {
         Log::info('Deleting video', ['video_id' => $video->id]);
+        $video->loadMissing('trainingUnit.module.trainingPath');
 
         $disk = $video->storage_disk;
 
@@ -126,7 +139,13 @@ class VideoService
             }
         }
 
-        return $this->videoRepository->delete($video);
+        $deleted = $this->videoRepository->delete($video);
+
+        if ($deleted) {
+            $this->trainingPathCacheService->invalidateTrainingPath($video->trainingUnit->module->trainingPath);
+        }
+
+        return $deleted;
     }
 
     /**
@@ -145,9 +164,35 @@ class VideoService
             'error_message' => null,
         ]);
 
-        TranscodeVideoJob::dispatchSync($video);
+        try {
+            TranscodeVideoJob::dispatch($video);
+        } catch (\Throwable $e) {
+            Log::error('Retry transcoding failed', [
+                'video_id' => $video->id,
+                'error' => $e->getMessage(),
+            ]);
+            $video->markAsFailed('Retry failed: '.$e->getMessage());
+        }
 
         return $video->fresh();
+    }
+
+    private function resolveStorageDisk(): string
+    {
+        $configuredDisk = (string) config('video.storage_disk', config('filesystems.default', 'local'));
+
+        if (config("filesystems.disks.{$configuredDisk}") !== null) {
+            return $configuredDisk;
+        }
+
+        $fallbackDisk = (string) config('filesystems.default', 'local');
+
+        Log::warning('Configured video storage disk was not found; falling back to default disk.', [
+            'configured_disk' => $configuredDisk,
+            'fallback_disk' => $fallbackDisk,
+        ]);
+
+        return $fallbackDisk;
     }
 
     /**

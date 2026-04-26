@@ -52,17 +52,24 @@ return new class extends Migration
 
             // Target VM reference for future direct VM booking
             $table->unsignedInteger('target_vm_id')->nullable();
+            $table->string('vm_name')->nullable();
             $table->foreignUlid('target_user_id')
                 ->nullable()
                 ->constrained('users')
-                ->nullOnDelete()
-                ->after('target_vm_id');
+                ->nullOnDelete();
+            $table->foreignId('training_path_id')
+                ->nullable()
+                ->constrained('training_paths')
+                ->nullOnDelete();
+            $table->boolean('is_backup_for_training_path')
+                ->default(false);
 
             $table->timestamps();
 
             // Indexes for finding reservations by time range and VM
             $table->index(['reservable_type', 'reservable_id', 'status', 'approved_start_at', 'approved_end_at'], 'idx_reservations_schedule');
             $table->index(['target_vm_id', 'status'], 'idx_reservations_target_vm_status');
+            $table->index(['training_path_id', 'status'], 'idx_reservations_training_path_status');
         });
     }
 

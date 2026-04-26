@@ -17,10 +17,14 @@ return new class extends Migration
             $table->string('busid');                       // "1-1.2"
             $table->string('vendor_id');                   // "04a9"
             $table->string('product_id');                  // "2228"
+            $table->string('serial')->nullable();
             $table->string('name');                        // "Canon Printer"
             $table->string('status')->default('available'); // available, bound, attached
             $table->string('attached_to')->nullable();     // VM name or session ID
             $table->foreignUlid('attached_session_id')->nullable()->constrained('vm_sessions')->nullOnDelete();
+            $table->unsignedInteger('attached_vmid')->nullable();
+            $table->string('attached_node')->nullable();
+            $table->foreignId('attached_server_id')->nullable()->constrained('proxmox_servers')->nullOnDelete();
             $table->string('attached_vm_ip')->nullable();  // VM IP for detach operations
             $table->string('usbip_port')->nullable();      // Port number when attached
             $table->integer('pending_vmid')->nullable();
@@ -43,6 +47,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['gateway_node_id', 'busid']);
+            $table->index(['gateway_node_id', 'serial'], 'idx_usb_device_serial');
+            $table->index(['attached_server_id', 'attached_node', 'attached_vmid'], 'usb_devices_attached_vm_context_idx');
             $table->index(['dedicated_vmid', 'dedicated_server_id'], 'idx_usb_dedicated_vm');
         });
     }

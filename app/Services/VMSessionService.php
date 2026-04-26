@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\VMSession;
-use App\Repositories\VMSessionRepository;
+use App\Repositories\UserConnectionPreferenceRepository;
+use App\Repositories\UserVMConnectionDefaultProfileRepository;
 use App\Repositories\VMReservationRepository;
+use App\Repositories\VMSessionRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -21,6 +23,9 @@ class VMSessionService
         private readonly VMReservationRepository $vmReservationRepository,
         private readonly GuacamoleClientInterface $guacamoleClient,
         private readonly ProxmoxClientInterface $proxmoxClient,
+        private readonly TrainingUnitVMAssignmentService $trainingUnitVMAssignmentService,
+        private readonly UserVMConnectionDefaultProfileRepository $vmDefaultRepository,
+        private readonly UserConnectionPreferenceRepository $preferenceRepository,
     ) {}
 
     /**
@@ -256,5 +261,63 @@ class VMSessionService
     public function getFailedSessions(): Collection
     {
         return $this->vmSessionRepository->findFailed();
+    }
+
+    /**
+     * Resolve admin-defined per-VM launch overrides for a lesson training unit launch.
+     *
+     * Ensures the user is launching the exact approved/access-granted VM for the
+     * training unit and, when configured, forces the admin per-VM default profile
+     * credentials for this protocol.
+     *
+     * @return array{connection_profile_name: string|null, credentials: array{username?: string, password?: string}}
+     */
+    public function resolveTrainingUnitLaunchOverrides(
+        User $user,
+        int $trainingUnitId,
+        int $nodeId,
+        int $vmId,
+        string $protocol,
+    ): array {
+        $accessibleVm = $this->trainingUnitVMAssignmentService->getAccessibleVMForTrainingUnit($trainingUnitId, $user);
+
+        if (! $accessibleVm) {
+            throw new \DomainException('You cannot launch a VM for this training unit.');
+        }
+
+        if ((int) ($accessibleVm['vm_id'] ?? 0) !== $vmId || (int) ($accessibleVm['node_id'] ?? 0) !== $nodeId) {
+            throw new \DomainException('Requested VM does not match the approved training unit assignment.');
+        }
+
+        $adminVmDefault = $this->vmDefaultRepository->findGlobalDefault($vmId, $protocol);
+
+        if (! $adminVmDefault) {
+            return [
+                'connection_profile_name' => null,
+                'credentials' => [],
+            ];
+        }
+
+        $credentials = [];
+
+        $adminPreference = $this->preferenceRepository->findByProfile(
+            $adminVmDefault->user,
+            $protocol,
+            $adminVmDefault->preferred_profile_name,
+        );
+
+        if ($adminPreference && is_array($adminPreference->parameters)) {
+            if (! empty($adminPreference->parameters['username']) && is_string($adminPreference->parameters['username'])) {
+                $credentials['username'] = $adminPreference->parameters['username'];
+            }
+            if (! empty($adminPreference->parameters['password']) && is_string($adminPreference->parameters['password'])) {
+                $credentials['password'] = $adminPreference->parameters['password'];
+            }
+        }
+
+        return [
+            'connection_profile_name' => $adminVmDefault->preferred_profile_name,
+            'credentials' => $credentials,
+        ];
     }
 }

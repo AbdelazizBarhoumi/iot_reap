@@ -457,6 +457,56 @@ class GatewayServiceTest extends TestCase
     }
 
     #[Test]
+    public function it_reuses_the_shared_windows_usbip_port_batch_for_repeated_verification(): void
+    {
+        $server = ProxmoxServer::factory()->create();
+        $node = ProxmoxNode::factory()->create(['name' => 'pve-1']);
+        $session = VMSession::factory()
+            ->for(User::factory()->create())
+            ->active()
+            ->create([
+                'proxmox_server_id' => $server->id,
+                'node_id' => $node->id,
+                'vm_id' => 200,
+            ]);
+
+        $gateway = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()
+            ->for($gateway)
+            ->attached()
+            ->create([
+                'attached_session_id' => $session->id,
+                'busid' => '1-1',
+                'vendor_id' => '0000',
+                'product_id' => '0000',
+            ]);
+
+        $this->fakeProxmoxClient->clearExecHistory();
+        $this->fakeProxmoxClient->setGuestOsType('pve-1', 200, 'windows');
+
+        $first = $this->service->verifySessionAttachmentState($device, $session);
+        $second = $this->service->verifySessionAttachmentState($device, $session);
+
+        $this->assertTrue($first['verified']);
+        $this->assertTrue($second['verified']);
+        $this->assertEquals(1, $this->fakeProxmoxClient->countWrittenFilesMatching('C:\\usbip-port-query.bat'));
+    }
+
+    #[Test]
+    public function it_uses_non_destructive_windows_cleanup_batches(): void
+    {
+        $this->fakeProxmoxClient->clearExecHistory();
+
+        $method = new \ReflectionMethod($this->service, 'cleanupWindowsUsbipBatchFiles');
+        $method->setAccessible(true);
+        $method->invoke($this->service, $this->fakeProxmoxClient, 'pve-1', 200);
+
+        $this->assertGreaterThan(0, $this->fakeProxmoxClient->countWrittenFilesMatching('usbip-clean-'));
+        $this->fakeProxmoxClient->assertCommandNotExecuted('Stop-Process -Force');
+        $this->fakeProxmoxClient->assertCommandNotExecuted('Get-Process cmd,usbip');
+    }
+
+    #[Test]
     public function it_throws_exception_when_session_missing_vm_id(): void
     {
         $server = ProxmoxServer::factory()->create();

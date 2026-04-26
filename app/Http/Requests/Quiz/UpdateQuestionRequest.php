@@ -27,7 +27,20 @@ class UpdateQuestionRequest extends FormRequest
             'explanation' => ['nullable', 'string', 'max:1000'],
             'points' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'correct_answer' => ['nullable', 'boolean'],
-            'options' => ['nullable', 'array', 'min:2', 'max:10'],
+            'options' => [
+                'nullable',
+                'array',
+                function ($attribute, $value, $fail) {
+                    $type = $this->input('type') ?? $this->route('question')->type->value;
+                    if ($type === QuizQuestionType::MULTIPLE_CHOICE->value && count($value) < 2) {
+                        $fail('Multiple choice questions require at least 2 options.');
+                    }
+                    if ($type === QuizQuestionType::SHORT_ANSWER->value && count($value) < 1) {
+                        $fail('Short answer questions require at least 1 correct answer option.');
+                    }
+                },
+                'max:10',
+            ],
             'options.*.option_text' => ['required_with:options', 'string', 'max:500'],
             'options.*.is_correct' => ['required_with:options', 'boolean'],
         ];

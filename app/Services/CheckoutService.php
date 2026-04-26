@@ -7,14 +7,17 @@ use App\Models\Payment;
 use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Stripe\Checkout\Session as StripeSession;
 use Stripe\Stripe;
 
 class CheckoutService
 {
     public function __construct(
-        protected PaymentRepository $paymentRepository
+        protected PaymentRepository $paymentRepository,
+        protected EnrollmentService $enrollmentService
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -24,8 +27,12 @@ class CheckoutService
      */
     public function createCheckoutSession(User $user, TrainingPath $trainingPath): array
     {
+        if (! $trainingPath->isPublished()) {
+            throw new \DomainException('This training path is not available for enrollment.');
+        }
+
         // Check if user already enrolled (either paid or free)
-        if ($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists()) {
+        if ($this->enrollmentService->isEnrolled($user, $trainingPath->id)) {
             throw new \DomainException('You are already enrolled in this trainingPath.');
         }
 
@@ -35,16 +42,22 @@ class CheckoutService
         }
 
         // Create Stripe checkout session
+        $productData = [
+            'name' => $trainingPath->title,
+            'description' => $trainingPath->description ? substr($trainingPath->description, 0, 500) : 'TrainingPath enrollment',
+        ];
+
+        $stripeImageUrl = $this->resolveStripeImageUrl($trainingPath->thumbnail_url);
+        if ($stripeImageUrl !== null) {
+            $productData['images'] = [$stripeImageUrl];
+        }
+
         $session = StripeSession::create([
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
                     'currency' => strtolower($trainingPath->currency),
-                    'product_data' => [
-                        'name' => $trainingPath->title,
-                        'description' => $trainingPath->description ? substr($trainingPath->description, 0, 500) : 'TrainingPath enrollment',
-                        'images' => $trainingPath->thumbnail_url ? [$trainingPath->thumbnail_url] : [],
-                    ],
+                    'product_data' => $productData,
                     'unit_amount' => $trainingPath->price_cents,
                 ],
                 'quantity' => 1,
@@ -92,25 +105,25 @@ class CheckoutService
      */
     protected function enrollFree(User $user, TrainingPath $trainingPath): array
     {
-        // Create a payment record for tracking (zero amount)
-        $this->paymentRepository->create([
-            'user_id' => $user->id,
-            'training_path_id' => $trainingPath->id,
-            'stripe_session_id' => 'free_'.uniqid(),
-            'status' => PaymentStatus::COMPLETED,
-            'amount_cents' => 0,
-            'currency' => $trainingPath->currency,
-            'paid_at' => now(),
-            'metadata' => [
-                'training_path_title' => $trainingPath->title,
-                'enrollment_type' => 'free',
-            ],
-        ]);
+        DB::transaction(function () use ($user, $trainingPath): void {
+            // Create a payment record for tracking (zero amount)
+            $this->paymentRepository->create([
+                'user_id' => $user->id,
+                'training_path_id' => $trainingPath->id,
+                'stripe_session_id' => 'free_'.uniqid(),
+                'status' => PaymentStatus::COMPLETED,
+                'amount_cents' => 0,
+                'currency' => $trainingPath->currency,
+                'paid_at' => now(),
+                'metadata' => [
+                    'training_path_title' => $trainingPath->title,
+                    'enrollment_type' => 'free',
+                ],
+            ]);
 
-        // Enroll the user
-        $user->enrolledTrainingPaths()->attach($trainingPath->id, [
-            'enrolled_at' => now(),
-        ]);
+            // Enroll the user via EnrollmentService to ensure cache invalidation
+            $this->enrollmentService->enroll($user, $trainingPath->id);
+        });
 
         Log::info('Free trainingPath enrollment', [
             'user_id' => $user->id,
@@ -138,5 +151,37 @@ class CheckoutService
     {
         return $this->paymentRepository
             ->findCompletedByUserAndTrainingPath($user->id, $trainingPath->id) !== null;
+    }
+
+    /**
+     * Stripe requires absolute product image URLs.
+     */
+    protected function resolveStripeImageUrl(?string $thumbnailUrl): ?string
+    {
+        if (! is_string($thumbnailUrl) || trim($thumbnailUrl) === '') {
+            return null;
+        }
+
+        $thumbnailUrl = trim($thumbnailUrl);
+
+        if (Str::startsWith($thumbnailUrl, '//')) {
+            $thumbnailUrl = request()?->getScheme().':'.$thumbnailUrl;
+        } elseif (Str::startsWith($thumbnailUrl, '/')) {
+            $thumbnailUrl = url($thumbnailUrl);
+        }
+
+        $isValidAbsoluteUrl = filter_var($thumbnailUrl, FILTER_VALIDATE_URL) !== false
+            && in_array(parse_url($thumbnailUrl, PHP_URL_SCHEME), ['http', 'https'], true);
+
+        if (! $isValidAbsoluteUrl) {
+            Log::warning('Skipping invalid Stripe product image URL', [
+                'thumbnail_url' => $thumbnailUrl,
+                'training_path_id' => request()?->route('trainingPath')?->id,
+            ]);
+
+            return null;
+        }
+
+        return $thumbnailUrl;
     }
 }

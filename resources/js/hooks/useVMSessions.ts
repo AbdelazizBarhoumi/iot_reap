@@ -2,7 +2,7 @@
  * Hook for managing VM sessions.
  * Sprint 2 - Phase 2
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { vmSessionApi } from '../api/vm.api';
 import type { CreateVMSessionRequest, VMSession } from '../types/vm.types';
 interface UseVMSessionsResult {
@@ -20,11 +20,17 @@ export function useVMSessions(
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const paramsString = JSON.stringify(params);
+    const memoParams = useMemo(
+        () => (paramsString ? JSON.parse(paramsString) : undefined),
+        [paramsString],
+    );
+
     const fetchSessions = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await vmSessionApi.list(params);
+            const data = await vmSessionApi.list(memoParams);
             setSessions(data);
         } catch (e) {
             const message =
@@ -33,7 +39,7 @@ export function useVMSessions(
         } finally {
             setLoading(false);
         }
-    }, [params]);
+    }, [memoParams]);
     const createSession = useCallback(
         async (data: CreateVMSessionRequest): Promise<VMSession> => {
             const session = await vmSessionApi.create(data);

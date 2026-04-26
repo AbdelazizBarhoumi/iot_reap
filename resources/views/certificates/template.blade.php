@@ -229,6 +229,8 @@
                 </div>
                 
                 <div class="verification">
+                    <div class="verification-label">Certificate ID</div>
+                    <div class="verification-code" style="margin-bottom: 5px;">{{ substr($certificate->hash, 0, 16) }}...</div>
                     <div class="verification-label">Verify at</div>
                     <div class="verification-code">{{ $verificationUrl }}</div>
                 </div>

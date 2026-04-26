@@ -137,6 +137,20 @@ export interface VMAssignment {
 export const getPendingVMAssignments = () =>
     client.get<VMAssignment[]>(`/admin/vm-assignments`);
 
+/**
+ * Approve VM assignment
+ */
+export const approveVMAssignment = (assignmentId: number) =>
+    client.post(`/admin/trainingUnit-assignments/${assignmentId}/approve`, {});
+
+/**
+ * Reject VM assignment
+ */
+export const rejectVMAssignment = (assignmentId: number, notes: string) =>
+    client.post(`/admin/trainingUnit-assignments/${assignmentId}/reject`, {
+        admin_notes: notes,
+    });
+
 // ==================== PROXMOX SERVERS ====================
 
 export interface ProxmoxServer {

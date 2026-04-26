@@ -8,7 +8,6 @@ use App\Repositories\UserConnectionPreferenceRepository;
 use App\Repositories\UserVMConnectionDefaultProfileRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 

@@ -28,6 +28,9 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @property UsbDeviceStatus $status
  * @property string|null $attached_to
  * @property string|null $attached_session_id
+ * @property int|null $attached_vmid
+ * @property string|null $attached_node
+ * @property int|null $attached_server_id
  * @property string|null $attached_vm_ip
  * @property string|null $usbip_port
  * @property int|null $pending_vmid
@@ -64,6 +67,9 @@ class UsbDevice extends Model
         'status',
         'attached_to',
         'attached_session_id',
+        'attached_vmid',
+        'attached_node',
+        'attached_server_id',
         'attached_vm_ip',
         'usbip_port',
         'is_verified_attached',
@@ -87,6 +93,8 @@ class UsbDevice extends Model
         'maintenance_mode' => 'boolean',
         'maintenance_until' => 'datetime',
         'status' => UsbDeviceStatus::class,
+        'attached_vmid' => 'integer',
+        'attached_server_id' => 'integer',
         'pending_vmid' => 'integer',
         'pending_server_id' => 'integer',
         'pending_since' => 'datetime',
@@ -325,6 +333,14 @@ class UsbDevice extends Model
     }
 
     /**
+     * Get the Proxmox server this device is attached to.
+     */
+    public function attachedServer(): BelongsTo
+    {
+        return $this->belongsTo(ProxmoxServer::class, 'attached_server_id');
+    }
+
+    /**
      * Check if device has a pending attachment.
      */
     public function hasPendingAttachment(): bool
@@ -390,6 +406,34 @@ class UsbDevice extends Model
     {
         return $this->dedicated_vmid === $vmid
             && $this->dedicated_server_id === $serverId;
+    }
+
+    /**
+     * Check if the device belongs to a specific VM context.
+     */
+    public function isAttachedToVmContext(?int $vmid, ?string $nodeName, ?int $serverId): bool
+    {
+        if ($vmid === null || $nodeName === null || $serverId === null) {
+            return false;
+        }
+
+        return (int) $this->attached_vmid === (int) $vmid
+            && (string) $this->attached_node === (string) $nodeName
+            && (int) $this->attached_server_id === (int) $serverId;
+    }
+
+    /**
+     * Check if the device belongs to the session's VM context.
+     */
+    public function isAttachedToSessionVm(VMSession $session): bool
+    {
+        $session->loadMissing('node');
+
+        return $this->isAttachedToVmContext(
+            vmid: $session->vm_id,
+            nodeName: $session->node?->name,
+            serverId: $session->proxmox_server_id,
+        );
     }
 
     /**

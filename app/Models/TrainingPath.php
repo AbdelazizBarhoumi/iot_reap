@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TrainingPathLevel;
 use App\Enums\TrainingPathStatus;
+use App\Support\CurrencyFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -91,10 +92,10 @@ class TrainingPath extends Model
     {
         return $this->hasMany(TrainingPathEnrollment::class);
     }
+
     public function reviews(): HasMany
     {
-        return
-            $this->hasMany(TrainingPathReview::class);
+        return $this->hasMany(TrainingPathReview::class);
     }
 
     public function students(): BelongsToMany
@@ -168,7 +169,7 @@ class TrainingPath extends Model
             return 'Free';
         }
 
-        return '$' . number_format($this->price, 2);
+        return CurrencyFormatter::format($this->price, $this->currency);
     }
 
     public function getThumbnailUrlAttribute(): ?string

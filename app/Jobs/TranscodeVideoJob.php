@@ -5,13 +5,14 @@ namespace App\Jobs;
 use App\Events\VideoTranscodingCompleted;
 use App\Events\VideoTranscodingFailed;
 use App\Models\Video;
+use App\Services\GatewayFfmpegService;
+use App\Services\TrainingPathCacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -84,8 +85,10 @@ class TranscodeVideoJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
-    {
+    public function handle(
+        GatewayFfmpegService $gatewayFfmpegService,
+        TrainingPathCacheService $trainingPathCacheService,
+    ): void {
         Log::info('Starting TranscodeVideoJob', [
             'video_id' => $this->video->id,
             'attempt' => $this->attempts(),
@@ -100,13 +103,14 @@ class TranscodeVideoJob implements ShouldQueue
             // Get source file path
             $disk = $video->storage_disk;
             $sourcePath = Storage::disk($disk)->path($video->storage_path);
+            $gatewayNode = $gatewayFfmpegService->selectGatewayForProcessing();
 
             if (! file_exists($sourcePath)) {
                 throw new \RuntimeException("Source video file not found: {$sourcePath}");
             }
 
             // Get video duration
-            $duration = $this->getVideoDuration($sourcePath);
+            $duration = $gatewayFfmpegService->probeDuration($sourcePath, $gatewayNode);
 
             // Create output directory
             $outputDir = "videos/hls/{$video->id}";
@@ -114,12 +118,17 @@ class TranscodeVideoJob implements ShouldQueue
             $outputPath = Storage::disk($disk)->path($outputDir);
 
             // Determine available qualities based on source resolution
-            $sourceResolution = $this->getVideoResolution($sourcePath);
+            $sourceResolution = $gatewayFfmpegService->probeResolution($sourcePath, $gatewayNode);
             $availableQualities = $this->determineAvailableQualities($sourceResolution);
+            $video->update([
+                'resolution_width' => $sourceResolution['width'] ?? null,
+                'resolution_height' => $sourceResolution['height'] ?? null,
+            ]);
 
             // Transcode each quality
             foreach ($availableQualities as $quality => $preset) {
-                $this->transcodeToQuality($sourcePath, $outputPath, $quality, $preset);
+                Log::info("Transcoding to {$quality}", ['video_id' => $this->video->id]);
+                $gatewayFfmpegService->transcodeQuality($sourcePath, $outputPath, $quality, $preset, $this->timeout, $gatewayNode);
             }
 
             // Generate master playlist
@@ -138,6 +147,9 @@ class TranscodeVideoJob implements ShouldQueue
             // Fire event
             event(new VideoTranscodingCompleted($video->fresh()));
 
+            $video->loadMissing('trainingUnit.module.trainingPath');
+            $trainingPathCacheService->invalidateTrainingPath($video->trainingUnit->module->trainingPath);
+
             Log::info('Video transcoding completed', [
                 'video_id' => $video->id,
                 'qualities' => array_keys($availableQualities),
@@ -151,58 +163,6 @@ class TranscodeVideoJob implements ShouldQueue
 
             throw $e;
         }
-    }
-
-    /**
-     * Get video duration using FFprobe.
-     */
-    private function getVideoDuration(string $path): int
-    {
-        $result = Process::run([
-            'ffprobe',
-            '-v', 'error',
-            '-show_entries', 'format=duration',
-            '-of', 'default=noprint_wrappers=1:nokey=1',
-            $path,
-        ]);
-
-        if ($result->failed()) {
-            Log::warning('Failed to get video duration', ['output' => $result->errorOutput()]);
-
-            return 0;
-        }
-
-        return (int) floor((float) trim($result->output()));
-    }
-
-    /**
-     * Get video resolution using FFprobe.
-     *
-     * @return array{width: int, height: int}
-     */
-    private function getVideoResolution(string $path): array
-    {
-        $result = Process::run([
-            'ffprobe',
-            '-v', 'error',
-            '-select_streams', 'v:0',
-            '-show_entries', 'stream=width,height',
-            '-of', 'csv=s=x:p=0',
-            $path,
-        ]);
-
-        if ($result->failed()) {
-            Log::warning('Failed to get video resolution', ['output' => $result->errorOutput()]);
-
-            return ['width' => 1920, 'height' => 1080]; // Default to 1080p
-        }
-
-        $parts = explode('x', trim($result->output()));
-
-        return [
-            'width' => (int) ($parts[0] ?? 1920),
-            'height' => (int) ($parts[1] ?? 1080),
-        ];
     }
 
     /**
@@ -232,40 +192,6 @@ class TranscodeVideoJob implements ShouldQueue
     }
 
     /**
-     * Transcode video to a specific quality.
-     */
-    private function transcodeToQuality(string $sourcePath, string $outputPath, string $quality, array $preset): void
-    {
-        Log::info("Transcoding to {$quality}", ['video_id' => $this->video->id]);
-
-        $playlistPath = "{$outputPath}/{$quality}.m3u8";
-        $segmentPath = "{$outputPath}/{$quality}_%03d.ts";
-
-        $result = Process::timeout($this->timeout)->run([
-            'ffmpeg',
-            '-i', $sourcePath,
-            '-vf', "scale={$preset['resolution']}:force_original_aspect_ratio=decrease,pad={$preset['resolution']}:(ow-iw)/2:(oh-ih)/2",
-            '-c:v', 'libx264',
-            '-preset', 'medium',
-            '-b:v', $preset['bitrate'],
-            '-maxrate', $preset['maxrate'],
-            '-bufsize', $preset['bufsize'],
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-ar', '44100',
-            '-hls_time', '10',
-            '-hls_playlist_type', 'vod',
-            '-hls_segment_filename', $segmentPath,
-            '-y',
-            $playlistPath,
-        ]);
-
-        if ($result->failed()) {
-            throw new \RuntimeException("FFmpeg transcoding failed for {$quality}: ".$result->errorOutput());
-        }
-    }
-
-    /**
      * Generate master HLS playlist.
      */
     private function generateMasterPlaylist(string $outputPath, array $qualities): void
@@ -289,7 +215,7 @@ class TranscodeVideoJob implements ShouldQueue
             $resolution = $resolutions[$quality] ?? '640x360';
 
             $content .= "#EXT-X-STREAM-INF:BANDWIDTH={$bandwidth},RESOLUTION={$resolution},NAME=\"{$quality}\"\n";
-            $content .= "{$quality}.m3u8\n\n";
+            $content .= "stream/{$quality}/stream.m3u8\n\n";
         }
 
         file_put_contents("{$outputPath}/master.m3u8", $content);

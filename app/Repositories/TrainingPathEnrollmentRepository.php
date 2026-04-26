@@ -58,7 +58,7 @@ class TrainingPathEnrollmentRepository
     public function findByUser(User $user): Collection
     {
         return TrainingPathEnrollment::where('user_id', $user->id)
-            ->with(['trainingPath.instructor', 'trainingPath.modules.trainingUnits'])
+            ->with(['trainingPath.instructor', 'trainingPath.modules.trainingUnits.video'])
             ->orderByDesc('enrolled_at')
             ->get();
     }

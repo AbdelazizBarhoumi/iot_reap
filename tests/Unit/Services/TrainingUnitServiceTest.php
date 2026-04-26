@@ -122,9 +122,9 @@ class TrainingUnitServiceTest extends TestCase
 
         // Reorder: move module3 to first position
         $newOrder = [
-            $module3->id => 0,
-            $module1->id => 1,
-            $module2->id => 2,
+            $module3->id,
+            $module1->id,
+            $module2->id,
         ];
 
         $this->trainingUnitService->reorderModules($trainingPath->id, $newOrder);
@@ -143,9 +143,9 @@ class TrainingUnitServiceTest extends TestCase
 
         // Reorder: move trainingUnit3 to first position
         $newOrder = [
-            $trainingUnit3->id => 0,
-            $trainingUnit1->id => 1,
-            $trainingUnit2->id => 2,
+            $trainingUnit3->id,
+            $trainingUnit1->id,
+            $trainingUnit2->id,
         ];
 
         $this->trainingUnitService->reorderTrainingUnits($module->id, $newOrder);

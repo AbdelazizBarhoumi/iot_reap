@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatus;
+use App\Support\CurrencyFormatter;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -84,7 +85,7 @@ class Payment extends Model
 
     public function getFormattedAmountAttribute(): string
     {
-        return '$'.number_format($this->amount, 2);
+        return CurrencyFormatter::format($this->amount, $this->currency);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

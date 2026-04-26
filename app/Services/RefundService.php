@@ -22,7 +22,8 @@ class RefundService
 {
     public function __construct(
         protected PaymentRepository $paymentRepository,
-        protected RefundRepository $refundRepository
+        protected RefundRepository $refundRepository,
+        protected EnrollmentService $enrollmentService
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -127,8 +128,8 @@ class RefundService
             // Update payment status
             $payment->update(['status' => PaymentStatus::REFUNDED]);
 
-            // Remove enrollment
-            $payment->user->enrolledTrainingPaths()->detach($payment->training_path_id);
+            // Remove enrollment via EnrollmentService to ensure cache invalidation
+            $this->enrollmentService->unenroll($payment->user, $payment->training_path_id);
 
             Log::info('Refund processed successfully', [
                 'refund_request_id' => $refundRequest->id,

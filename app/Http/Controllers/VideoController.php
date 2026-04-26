@@ -59,12 +59,9 @@ class VideoController extends Controller
         // Verify user owns the trainingPath
         $this->authorizeTrainingUnitOwnership($trainingUnit);
 
-        // Check if trainingUnit already has a video
         $existingVideo = $this->videoService->getVideoForTrainingUnit($trainingUnitId);
         if ($existingVideo) {
-            return response()->json([
-                'message' => 'TrainingUnit already has a video. Delete it first to upload a new one.',
-            ], 422);
+            $this->videoService->delete($existingVideo);
         }
 
         $video = $this->videoService->uploadAndQueue(
@@ -74,7 +71,9 @@ class VideoController extends Controller
 
         return response()->json([
             'data' => new VideoResource($video),
-            'message' => 'Video uploaded successfully. Transcoding has started.',
+            'message' => $existingVideo
+                ? 'Video replaced successfully. Transcoding has started.'
+                : 'Video uploaded successfully. Transcoding has started.',
         ], 201);
     }
 
@@ -156,6 +155,11 @@ class VideoController extends Controller
             'has_failed' => $video->hasFailed(),
             'error_message' => $video->error_message,
             'duration_seconds' => $video->duration_seconds,
+            'available_qualities' => $video->available_qualities ?? [],
+            'resolution_width' => $video->resolution_width,
+            'resolution_height' => $video->resolution_height,
+            'original_filename' => $video->original_filename,
+            'file_size_bytes' => $video->file_size_bytes,
             'hls_url' => $video->isReady() ? $video->hls_url : null,
             'thumbnail_url' => $video->thumbnail_url,
         ]);

@@ -69,7 +69,7 @@ export async function checkCertificate(
  */
 export async function verifyCertificate(hash: string): Promise<VerifyResponse> {
     const response = await client.get<VerifyResponse>(
-        `/certificates/verify/${hash}`,
+        `/certificates/${hash}/verify`,
     );
     return response.data;
 }

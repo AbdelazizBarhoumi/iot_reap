@@ -17,7 +17,7 @@ class CspHeadersTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeaderContains(
             'Content-Security-Policy',
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com"
+            "frame-src 'self' https://*.youtube.com https://*.youtube-nocookie.com"
         );
     }
 }

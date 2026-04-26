@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class StoreVideoRequest extends FormRequest
 {
@@ -26,7 +28,7 @@ class StoreVideoRequest extends FormRequest
             'video' => [
                 'required',
                 'file',
-                'mimetypes:video/mp4,video/webm,video/quicktime,video/x-msvideo',
+                'extensions:mp4,webm,mov,avi,m4v',
                 'max:'.(int) (config('video.max_upload_size_mb', 500) * 1024), // Convert MB to KB
             ],
         ];
@@ -41,8 +43,30 @@ class StoreVideoRequest extends FormRequest
 
         return [
             'video.required' => 'Please select a video file to upload.',
-            'video.mimetypes' => 'The video must be in MP4, WebM, MOV, or AVI format.',
+            'video.extensions' => 'The video must be in MP4, WebM, MOV, AVI, or M4V format.',
             'video.max' => "The video may not be larger than {$maxSize}MB.",
         ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        $file = $this->file('video');
+
+        Log::warning('Video upload validation failed', [
+            'user_id' => $this->user()?->id,
+            'path' => $this->path(),
+            'training_unit_id' => $this->route('trainingUnitId'),
+            'errors' => $validator->errors()->toArray(),
+            'file' => $file ? [
+                'original_name' => $file->getClientOriginalName(),
+                'client_mime_type' => $file->getClientMimeType(),
+                'detected_mime_type' => $file->getMimeType(),
+                'client_extension' => $file->getClientOriginalExtension(),
+                'detected_extension' => $file->extension(),
+                'size' => $file->getSize(),
+            ] : null,
+        ]);
+
+        parent::failedValidation($validator);
     }
 }

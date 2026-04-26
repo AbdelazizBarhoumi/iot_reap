@@ -25,10 +25,11 @@ import type {
     QuizAttempt,
     QuizAnswerInput,
     QuizSubmitResponse,
+    QuizResult,
 } from '@/types/quiz.types';
 interface QuizTakerProps {
     quiz: Quiz;
-    onComplete?: (attempt: QuizAttempt) => void;
+    onComplete?: (attempt: QuizAttempt, results?: QuizResult[]) => void;
     onCancel?: () => void;
 }
 export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
@@ -121,7 +122,7 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
             }
             const data: QuizSubmitResponse = await response.json();
             setResults(data);
-            onComplete?.(data.attempt);
+            onComplete?.(data.attempt, data.results);
         } catch (error: unknown) {
             const message =
                 error instanceof Error

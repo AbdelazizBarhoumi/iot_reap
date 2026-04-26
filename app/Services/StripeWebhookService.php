@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\Event;
 use Stripe\Stripe;
@@ -13,7 +14,8 @@ use Stripe\Webhook;
 class StripeWebhookService
 {
     public function __construct(
-        protected PaymentRepository $paymentRepository
+        protected PaymentRepository $paymentRepository,
+        protected EnrollmentService $enrollmentService
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -61,19 +63,31 @@ class StripeWebhookService
             return;
         }
 
-        if ($payment->status === PaymentStatus::COMPLETED) {
-            Log::info('Payment already completed, skipping', [
-                'payment_id' => $payment->id,
-            ]);
+        $processed = DB::transaction(function () use ($payment, $session): bool {
+            /** @var Payment $lockedPayment */
+            $lockedPayment = Payment::query()
+                ->whereKey($payment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
+            if ($lockedPayment->status === PaymentStatus::COMPLETED) {
+                Log::info('Payment already completed, skipping', [
+                    'payment_id' => $lockedPayment->id,
+                ]);
+
+                return false;
+            }
+
+            // Only persist completion if enrollment succeeds too.
+            $lockedPayment->markAsCompleted($session->payment_intent);
+            $this->enrollUser($lockedPayment->fresh('user'));
+            
+            return true;
+        });
+
+        if (! $processed) {
             return;
         }
-
-        // Mark payment as completed
-        $payment->markAsCompleted($session->payment_intent);
-
-        // Enroll the user in the trainingPath
-        $this->enrollUser($payment);
 
         Log::info('Checkout completed and user enrolled', [
             'payment_id' => $payment->id,
@@ -160,14 +174,7 @@ class StripeWebhookService
      */
     protected function enrollUser(Payment $payment): void
     {
-        $user = $payment->user;
-        $trainingPath = $payment->trainingPath;
-
-        if (! $user->enrolledTrainingPaths()->where('training_path_id', $trainingPath->id)->exists()) {
-            $user->enrolledTrainingPaths()->attach($trainingPath->id, [
-                'enrolled_at' => now(),
-            ]);
-        }
+        $this->enrollmentService->enroll($payment->user, $payment->training_path_id);
     }
 
     /**
@@ -175,6 +182,6 @@ class StripeWebhookService
      */
     protected function unenrollUser(Payment $payment): void
     {
-        $payment->user->enrolledTrainingPaths()->detach($payment->training_path_id);
+        $this->enrollmentService->unenroll($payment->user, $payment->training_path_id);
     }
 }

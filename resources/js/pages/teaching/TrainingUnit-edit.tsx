@@ -31,7 +31,7 @@ import {
     XCircle,
     Zap,
 } from 'lucide-react';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { getOrCreateQuiz } from '@/api/quiz.api';
 import * as teachingApi from '@/api/teaching.api';
@@ -73,6 +73,8 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { TrainingUnit, TrainingPath } from '@/types/TrainingPath.types';
+import type { TrainingUnitVMAssignment } from '@/types/vm.types';
+
 // TrainingUnit type configuration
 const trainingUnitTypeConfig = {
     video: {
@@ -118,25 +120,57 @@ interface Resource {
     url: string;
     type: 'link' | 'file' | 'download';
 }
-// VM Assignment from backend
-interface VMAssignment {
-    id: number;
-    training_unit_id: number;
-    status: 'pending' | 'approved' | 'rejected';
-    vm_id: number;
-    node_id: number;
-    vm_name: string | null;
-    teacher_notes?: string;
-    admin_feedback?: string;
-    node?: { id: number; name: string } | null;
+
+function normalizeQualityList(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value.filter((item): item is string => typeof item === 'string');
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+
+        if (!trimmed) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(
+                    (item): item is string => typeof item === 'string',
+                );
+            }
+        } catch {
+            return trimmed
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean);
+        }
+    }
+
+    return [];
 }
+
+function normalizeVideoStatus(
+    status: videoApi.VideoStatus | null,
+): videoApi.VideoStatus | null {
+    if (!status) {
+        return null;
+    }
+
+    return {
+        ...status,
+        available_qualities: normalizeQualityList(status.available_qualities),
+    };
+}
+// VM Assignment from backend
 interface EditTrainingUnitPageProps {
     trainingPathId: string;
     moduleId: string;
     trainingUnitId: string;
     trainingUnit: TrainingUnit;
     trainingPath: TrainingPath;
-    vmAssignment?: VMAssignment | null;
+    vmAssignment?: TrainingUnitVMAssignment | null;
 }
 export default function EditTrainingUnitPage({
     trainingPathId,
@@ -164,7 +198,9 @@ export default function EditTrainingUnitPage({
     );
     const [freePreview, setFreePreview] = useState(false);
     const [downloadable, setDownloadable] = useState(false);
-    const [videoUrl, setVideoUrl] = useState(trainingUnit?.videoUrl || '');
+    const [videoUrl, setVideoUrl] = useState(
+        trainingUnit?.externalVideoUrl || '',
+    );
     const [activeTab, setActiveTab] = useState('content');
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -185,6 +221,9 @@ export default function EditTrainingUnitPage({
     const [videoStatus, setVideoStatus] = useState<videoApi.VideoStatus | null>(
         null,
     );
+    const [uploadedVideo, setUploadedVideo] = useState<videoApi.Video | null>(
+        null,
+    );
     const [teacherQuiz, setTeacherQuiz] = useState<{
         id: string;
         title: string;
@@ -192,6 +231,8 @@ export default function EditTrainingUnitPage({
     const [isQuizLookupLoading, setIsQuizLookupLoading] = useState(false);
     const [isQuizStatsOpen, setIsQuizStatsOpen] = useState(false);
     // VM Assignment dialog state
+    const [currentVmAssignment, setCurrentVmAssignment] =
+        useState<TrainingUnitVMAssignment | null>(vmAssignment || null);
     const [showVMDialog, setShowVMDialog] = useState(false);
     const [availableVMs, setAvailableVMs] = useState<
         Array<{
@@ -210,15 +251,40 @@ export default function EditTrainingUnitPage({
     } | null>(null);
     const [vmNotes, setVmNotes] = useState('');
     const [submittingVM, setSubmittingVM] = useState(false);
-    // Fetch video status on mount
-    useEffect(() => {
-        if (trainingUnit?.type === 'video') {
-            videoApi
-                .getVideoStatus(parseInt(trainingUnitId))
-                .then(setVideoStatus)
-                .catch(() => {});
+    const editorTabsRef = useRef<HTMLDivElement | null>(null);
+    const resolvedVideoPreviewUrl =
+        videoStatus?.hls_url || uploadedVideo?.hls_url || videoUrl || '';
+    const uploadedStreamUrl =
+        videoStatus?.hls_url ||
+        uploadedVideo?.hls_url ||
+        trainingUnit?.uploadedVideoUrl ||
+        '';
+    const refreshVideoData = useCallback(async () => {
+        if (trainingUnit?.type !== 'video') {
+            setVideoStatus(null);
+            setUploadedVideo(null);
+
+            return;
+        }
+
+        try {
+            const [status, video] = await Promise.all([
+                videoApi.getVideoStatus(parseInt(trainingUnitId)),
+                videoApi.getVideoForTrainingUnit(parseInt(trainingUnitId)),
+            ]);
+
+            setVideoStatus(normalizeVideoStatus(status));
+            setUploadedVideo(video);
+        } catch {
+            setVideoStatus(null);
+            setUploadedVideo(null);
         }
     }, [trainingUnitId, trainingUnit?.type]);
+
+    // Fetch video status on mount
+    useEffect(() => {
+        void refreshVideoData();
+    }, [refreshVideoData]);
     useEffect(() => {
         if (trainingUnitType !== 'practice') {
             setTeacherQuiz(null);
@@ -259,6 +325,16 @@ export default function EditTrainingUnitPage({
             cancelled = true;
         };
     }, [trainingUnitId, trainingUnitType]);
+
+    const openMediaTab = useCallback(() => {
+        setActiveTab('media');
+        requestAnimationFrame(() => {
+            editorTabsRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        });
+    }, []);
     // Calculate completion
     const completionItems = [
         { done: content.length > 50, label: 'Content added' },
@@ -314,58 +390,237 @@ export default function EditTrainingUnitPage({
     const handleVideoUpload = useCallback(
         async (file: File) => {
             if (!file) return;
-            try {
-                await videoApi.uploadVideo(
-                    parseInt(trainingUnitId),
-                    file,
-                    () => {},
+
+            const unitId = parseInt(trainingUnitId);
+            const syncExistingVideoState = async (): Promise<boolean> => {
+                const latestStatus = normalizeVideoStatus(
+                    await videoApi.getVideoStatus(unitId),
                 );
+
+                setVideoStatus(latestStatus);
+
+                if (!latestStatus?.has_video) {
+                    setUploadedVideo(null);
+                    return false;
+                }
+
+                return true;
+            };
+
+            const runUpload = async () =>
+                videoApi.uploadVideo(unitId, file, () => {});
+
+            try {
+                if (
+                    (await syncExistingVideoState()) ||
+                    videoStatus?.has_video
+                ) {
+                    await videoApi.deleteVideo(unitId);
+                    setVideoStatus({ has_video: false });
+                    setUploadedVideo(null);
+                }
+
+                const uploaded = await runUpload();
+                setUploadedVideo(uploaded);
+                setVideoStatus({
+                    has_video: true,
+                    status: uploaded.status,
+                    is_ready: uploaded.is_ready,
+                    is_processing: uploaded.is_processing,
+                    has_failed: uploaded.has_failed,
+                    error_message: uploaded.error_message ?? null,
+                    duration_seconds: uploaded.duration_seconds,
+                    available_qualities: uploaded.available_qualities,
+                    resolution_width: uploaded.resolution_width,
+                    resolution_height: uploaded.resolution_height,
+                    original_filename: uploaded.original_filename,
+                    file_size_bytes: uploaded.file_size_bytes,
+                    hls_url: uploaded.hls_url ?? null,
+                    thumbnail_url: uploaded.thumbnail_url,
+                });
                 toast.success('Video uploaded!', {
                     description:
                         'Transcoding started. This may take a few minutes.',
                 });
                 // Poll for status updates
                 videoApi
-                    .pollUntilReady(
-                        parseInt(trainingUnitId),
-                        3000,
-                        60,
-                        (status) => setVideoStatus(status),
+                    .pollUntilReady(unitId, 3000, 60, (status) =>
+                        setVideoStatus(normalizeVideoStatus(status)),
                     )
+                    .then(() => refreshVideoData())
                     .catch(() => {});
             } catch (error: unknown) {
+                const duplicateVideoMessage =
+                    typeof error === 'object' &&
+                    error !== null &&
+                    'response' in error &&
+                    (
+                        error as {
+                            response?: {
+                                status?: number;
+                                data?: { message?: string };
+                            };
+                        }
+                    ).response?.status === 422 &&
+                    (
+                        (
+                            error as {
+                                response?: {
+                                    data?: { message?: string };
+                                };
+                            }
+                        ).response?.data?.message || ''
+                    )
+                        .toLowerCase()
+                        .includes('already has a video');
+
+                if (duplicateVideoMessage) {
+                    try {
+                        if (await syncExistingVideoState()) {
+                            await videoApi.deleteVideo(unitId);
+                            setVideoStatus({ has_video: false });
+                            setUploadedVideo(null);
+                        }
+
+                        const uploaded = await runUpload();
+                        setUploadedVideo(uploaded);
+                        setVideoStatus({
+                            has_video: true,
+                            status: uploaded.status,
+                            is_ready: uploaded.is_ready,
+                            is_processing: uploaded.is_processing,
+                            has_failed: uploaded.has_failed,
+                            error_message: uploaded.error_message ?? null,
+                            duration_seconds: uploaded.duration_seconds,
+                            available_qualities: uploaded.available_qualities,
+                            resolution_width: uploaded.resolution_width,
+                            resolution_height: uploaded.resolution_height,
+                            original_filename: uploaded.original_filename,
+                            file_size_bytes: uploaded.file_size_bytes,
+                            hls_url: uploaded.hls_url ?? null,
+                            thumbnail_url: uploaded.thumbnail_url,
+                        });
+                        toast.success('Video replaced!', {
+                            description:
+                                'The existing video was replaced and transcoding restarted.',
+                        });
+
+                        videoApi
+                            .pollUntilReady(unitId, 3000, 60, (status) =>
+                                setVideoStatus(normalizeVideoStatus(status)),
+                            )
+                            .then(() => refreshVideoData())
+                            .catch(() => {});
+
+                        return;
+                    } catch {
+                        // Fall through to the normal error handling below.
+                    }
+                }
+
                 const message =
-                    error instanceof Error ? error.message : 'Upload failed';
+                    typeof error === 'object' &&
+                    error !== null &&
+                    'response' in error
+                        ? (() => {
+                              const response = (
+                                  error as {
+                                      response?: {
+                                          data?: {
+                                              message?: string;
+                                              errors?: Record<string, string[]>;
+                                          };
+                                      };
+                                  }
+                              ).response;
+                              const fieldErrors = response?.data?.errors
+                                  ? Object.values(response.data.errors)
+                                        .flat()
+                                        .join(' ')
+                                  : '';
+
+                              return (
+                                  response?.data?.message ||
+                                  fieldErrors ||
+                                  'Upload failed'
+                              );
+                          })()
+                        : error instanceof Error
+                          ? error.message
+                          : 'Upload failed';
                 toast.error('Upload failed', { description: message });
+                await refreshVideoData();
             }
         },
-        [trainingUnitId],
+        [trainingUnitId, videoStatus?.has_video, refreshVideoData],
     );
 
     // Handle video upload for VideoUpload component (returns URL)
     const handleVideoUploadForComponent = useCallback(
         async (file: File): Promise<string> => {
             await handleVideoUpload(file);
-            return file.name; // Return filename as URL placeholder
+            return ''; // Return empty string to keep using the blob URL for preview
         },
         [handleVideoUpload],
     );
 
-    // Map component type to API type
-    const mapTypeToApiType = (
-        type: 'video' | 'reading' | 'practice' | 'vm-lab',
-    ): 'video' | 'article' | 'quiz' | 'interactive' => {
-        const typeMap: Record<
-            'video' | 'reading' | 'practice' | 'vm-lab',
-            'video' | 'article' | 'quiz' | 'interactive'
-        > = {
-            video: 'video',
-            reading: 'article',
-            practice: 'quiz',
-            'vm-lab': 'interactive',
-        };
-        return typeMap[type];
-    };
+    const handleVideoRemove = useCallback(async () => {
+        if (!videoStatus?.has_video) {
+            return;
+        }
+
+        try {
+            await videoApi.deleteVideo(parseInt(trainingUnitId));
+            setVideoStatus({ has_video: false });
+            setUploadedVideo(null);
+            toast.success('Video removed');
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to remove video';
+            toast.error('Failed to remove video', { description: message });
+        }
+    }, [trainingUnitId, videoStatus?.has_video]);
+
+    const handleRetryVideo = useCallback(async () => {
+        try {
+            const retried = await videoApi.retryTranscoding(
+                parseInt(trainingUnitId),
+            );
+            setUploadedVideo(retried);
+            setVideoStatus({
+                has_video: true,
+                status: retried.status,
+                is_ready: retried.is_ready,
+                is_processing: retried.is_processing,
+                has_failed: retried.has_failed,
+                error_message: retried.error_message ?? null,
+                duration_seconds: retried.duration_seconds,
+                available_qualities: retried.available_qualities,
+                resolution_width: retried.resolution_width,
+                resolution_height: retried.resolution_height,
+                original_filename: retried.original_filename,
+                file_size_bytes: retried.file_size_bytes,
+                hls_url: retried.hls_url ?? null,
+                thumbnail_url: retried.thumbnail_url,
+            });
+            toast.success('Transcoding restarted');
+
+            videoApi
+                .pollUntilReady(parseInt(trainingUnitId), 3000, 60, (status) =>
+                    setVideoStatus(normalizeVideoStatus(status)),
+                )
+                .then(() => refreshVideoData())
+                .catch(() => {});
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error ? error.message : 'Retry failed';
+            toast.error('Failed to retry transcoding', {
+                description: message,
+            });
+        }
+    }, [trainingUnitId, refreshVideoData]);
 
     // Handle trainingUnit save - ACTUAL API CALL
     const handleSave = useCallback(async () => {
@@ -377,7 +632,7 @@ export default function EditTrainingUnitPage({
                 String(trainingUnitId),
                 {
                     title,
-                    type: mapTypeToApiType(trainingUnitType),
+                    type: trainingUnitType,
                     duration: duration || undefined,
                     content,
                     objectives: objectives.split('\n').filter(Boolean),
@@ -509,7 +764,10 @@ export default function EditTrainingUnitPage({
                     {/* Main content area */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Left: Editor */}
-                        <div className="space-y-6 lg:col-span-2">
+                        <div
+                            ref={editorTabsRef}
+                            className="space-y-6 lg:col-span-2"
+                        >
                             <Tabs
                                 value={activeTab}
                                 onValueChange={setActiveTab}
@@ -523,19 +781,22 @@ export default function EditTrainingUnitPage({
                                         <FileText className="h-4 w-4" />
                                         Content
                                     </TabsTrigger>
-                                    {(trainingUnit.type === 'video' ||
-                                        trainingUnit.type === 'vm-lab') && (
+                                    {(trainingUnitType === 'video' ||
+                                        trainingUnitType === 'vm-lab' ||
+                                        vmEnabled) && (
                                         <TabsTrigger
                                             value="media"
                                             className="gap-2"
                                         >
-                                            {trainingUnit.type === 'video' ? (
+                                            {trainingUnitType === 'video' ? (
                                                 <Video className="h-4 w-4" />
                                             ) : (
                                                 <Terminal className="h-4 w-4" />
                                             )}
-                                            {trainingUnit.type === 'video'
-                                                ? 'Video'
+                                            {trainingUnitType === 'video'
+                                                ? vmEnabled
+                                                    ? 'Video & Lab'
+                                                    : 'Video'
                                                 : 'VM Setup'}
                                         </TabsTrigger>
                                     )}
@@ -637,11 +898,16 @@ export default function EditTrainingUnitPage({
                                                             | 'reading'
                                                             | 'practice'
                                                             | 'vm-lab',
-                                                    ) =>
+                                                    ) => {
                                                         setTrainingUnitType(
                                                             value,
-                                                        )
-                                                    }
+                                                        );
+                                                        if (
+                                                            value === 'vm-lab'
+                                                        ) {
+                                                            setVmEnabled(true);
+                                                        }
+                                                    }}
                                                 >
                                                     <SelectTrigger
                                                         id="trainingUnit-type"
@@ -762,11 +1028,13 @@ Recap the important points."
                                     <Card className="shadow-card">
                                         <CardHeader className="pb-4">
                                             <CardTitle className="flex items-center gap-2 font-heading text-lg">
-                                                {trainingUnit.type ===
+                                                {trainingUnitType ===
                                                 'video' ? (
                                                     <>
                                                         <Video className="h-5 w-5 text-blue-500" />
-                                                        Video Content
+                                                        {vmEnabled
+                                                            ? 'Video & Lab Content'
+                                                            : 'Video Content'}
                                                     </>
                                                 ) : (
                                                     <>
@@ -776,13 +1044,15 @@ Recap the important points."
                                                 )}
                                             </CardTitle>
                                             <CardDescription>
-                                                {trainingUnit.type === 'video'
-                                                    ? 'Add a video for students to watch'
+                                                {trainingUnitType === 'video'
+                                                    ? vmEnabled
+                                                        ? 'Configure both video and VM environment'
+                                                        : 'Add a video for students to watch'
                                                     : 'Configure the VM environment for this lab'}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-6">
-                                            {trainingUnit.type === 'video' ? (
+                                            {trainingUnitType === 'video' && (
                                                 <>
                                                     {/* Video Status Display */}
                                                     {videoStatus?.has_video && (
@@ -810,6 +1080,18 @@ Recap the important points."
                                                                                     ? `${Math.floor(videoStatus.duration_seconds / 60)}m ${videoStatus.duration_seconds % 60}s`
                                                                                     : 'Unknown'}
                                                                             </p>
+                                                                            {(videoStatus.resolution_width ||
+                                                                                videoStatus.resolution_height) && (
+                                                                                <p className="text-xs text-muted-foreground">
+                                                                                    Source:{' '}
+                                                                                    {videoStatus.resolution_width ??
+                                                                                        '?'}
+
+                                                                                    x
+                                                                                    {videoStatus.resolution_height ??
+                                                                                        '?'}
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                     </>
                                                                 )}
@@ -848,17 +1130,69 @@ Recap the important points."
                                                                     </>
                                                                 )}
                                                             </div>
+                                                            {!!normalizeQualityList(
+                                                                videoStatus.available_qualities,
+                                                            ).length && (
+                                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                                    {normalizeQualityList(
+                                                                        videoStatus.available_qualities,
+                                                                    ).map(
+                                                                        (
+                                                                            quality,
+                                                                        ) => (
+                                                                            <Badge
+                                                                                key={
+                                                                                    quality
+                                                                                }
+                                                                                variant="secondary"
+                                                                            >
+                                                                                {
+                                                                                    quality
+                                                                                }
+                                                                            </Badge>
+                                                                        ),
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                                {videoStatus.has_failed && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() =>
+                                                                            void handleRetryVideo()
+                                                                        }
+                                                                    >
+                                                                        Retry
+                                                                        Processing
+                                                                    </Button>
+                                                                )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() =>
+                                                                        void handleVideoRemove()
+                                                                    }
+                                                                    className="text-muted-foreground hover:text-destructive"
+                                                                >
+                                                                    Delete
+                                                                    Upload
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     )}
-                                                    {/* Video URL input */}
+                                                    {/* External Video URL input */}
                                                     <div>
                                                         <Label className="text-sm font-medium">
-                                                            Video URL
+                                                            External Video URL
                                                         </Label>
                                                         <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
                                                             Paste a YouTube,
                                                             Vimeo, or direct
-                                                            video URL
+                                                            video URL. Uploaded
+                                                            platform videos are
+                                                            shown separately
+                                                            below.
                                                         </p>
                                                         <div className="flex gap-2">
                                                             <Input
@@ -891,6 +1225,44 @@ Recap the important points."
                                                             )}
                                                         </div>
                                                     </div>
+                                                    {uploadedStreamUrl && (
+                                                        <div>
+                                                            <Label className="text-sm font-medium">
+                                                                Uploaded Stream
+                                                            </Label>
+                                                            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                                                                This is the
+                                                                generated
+                                                                platform stream
+                                                                URL used for
+                                                                uploaded videos.
+                                                            </p>
+                                                            <div className="flex gap-2">
+                                                                <Input
+                                                                    value={
+                                                                        uploadedStreamUrl
+                                                                    }
+                                                                    readOnly
+                                                                    className="flex-1 font-mono text-xs"
+                                                                />
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    asChild
+                                                                >
+                                                                    <a
+                                                                        href={
+                                                                            uploadedStreamUrl
+                                                                        }
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                    >
+                                                                        <ExternalLink className="h-4 w-4" />
+                                                                    </a>
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     {/* Video preview placeholder */}
                                                     <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted/30">
                                                         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -899,17 +1271,31 @@ Recap the important points."
                                                         <p className="text-sm text-muted-foreground">
                                                             {videoStatus?.is_ready
                                                                 ? 'Video ready for playback'
-                                                                : videoUrl
-                                                                  ? 'External video linked'
-                                                                  : 'No video added yet'}
+                                                                : videoStatus?.is_processing
+                                                                  ? 'Video uploaded and processing'
+                                                                  : resolvedVideoPreviewUrl
+                                                                    ? 'Video linked and available'
+                                                                    : uploadedVideo
+                                                                      ? 'Uploaded video saved'
+                                                                      : 'No video added yet'}
                                                         </p>
                                                     </div>
                                                     {/* Upload option */}
                                                     <div className="border-t border-border pt-4">
                                                         <VideoUpload
-                                                            value={videoUrl}
+                                                            key={`${trainingUnitId}-${resolvedVideoPreviewUrl || 'empty'}-${videoStatus?.status || 'idle'}`}
+                                                            value={
+                                                                resolvedVideoPreviewUrl ||
+                                                                undefined
+                                                            }
                                                             onUpload={
                                                                 handleVideoUploadForComponent
+                                                            }
+                                                            onRemove={
+                                                                videoStatus?.has_video
+                                                                    ? () =>
+                                                                          void handleVideoRemove()
+                                                                    : undefined
                                                             }
                                                             maxSizeMB={500}
                                                             acceptedFormats={[
@@ -917,27 +1303,40 @@ Recap the important points."
                                                                 'video/webm',
                                                                 'video/quicktime',
                                                                 'video/x-msvideo',
+                                                                'video/x-m4v',
+                                                                '.mp4',
+                                                                '.webm',
+                                                                '.mov',
+                                                                '.avi',
+                                                                '.m4v',
                                                             ]}
                                                         />
                                                     </div>
                                                 </>
-                                            ) : (
+                                            )}
+
+                                            {(trainingUnitType === 'vm-lab' ||
+                                                vmEnabled) && (
                                                 <>
+                                                    {trainingUnitType ===
+                                                        'video' && (
+                                                        <Separator className="my-2" />
+                                                    )}
                                                     {/* Current Assignment Status */}
-                                                    {vmAssignment && (
+                                                    {currentVmAssignment && (
                                                         <div
                                                             className={`rounded-lg border p-4 ${
-                                                                vmAssignment.status ===
+                                                                currentVmAssignment.status ===
                                                                 'approved'
                                                                     ? 'border-green-500/30 bg-green-500/5'
-                                                                    : vmAssignment.status ===
+                                                                    : currentVmAssignment.status ===
                                                                         'rejected'
                                                                       ? 'border-destructive/30 bg-destructive/5'
                                                                       : 'border-warning/30 bg-warning/5'
                                                             }`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                {vmAssignment.status ===
+                                                                {currentVmAssignment.status ===
                                                                     'approved' && (
                                                                     <>
                                                                         <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -948,16 +1347,16 @@ Recap the important points."
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
                                                                                 VM:{' '}
-                                                                                {vmAssignment.vm_name ??
-                                                                                    `VM ${vmAssignment.vm_id}`}
-                                                                                {vmAssignment
+                                                                                {currentVmAssignment.vm_name ??
+                                                                                    `VM ${currentVmAssignment.vm_id}`}
+                                                                                {currentVmAssignment
                                                                                     .node
                                                                                     ?.name && (
                                                                                     <>
                                                                                         {' '}
                                                                                         ·{' '}
                                                                                         {
-                                                                                            vmAssignment
+                                                                                            currentVmAssignment
                                                                                                 .node
                                                                                                 .name
                                                                                         }
@@ -967,7 +1366,7 @@ Recap the important points."
                                                                         </div>
                                                                     </>
                                                                 )}
-                                                                {vmAssignment.status ===
+                                                                {currentVmAssignment.status ===
                                                                     'pending' && (
                                                                     <>
                                                                         <Clock className="h-5 w-5 text-warning" />
@@ -978,13 +1377,13 @@ Recap the important points."
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
                                                                                 VM:{' '}
-                                                                                {vmAssignment.vm_name ??
-                                                                                    `VM ${vmAssignment.vm_id}`}
+                                                                                {currentVmAssignment.vm_name ??
+                                                                                    `VM ${currentVmAssignment.vm_id}`}
                                                                             </p>
                                                                         </div>
                                                                     </>
                                                                 )}
-                                                                {vmAssignment.status ===
+                                                                {currentVmAssignment.status ===
                                                                     'rejected' && (
                                                                     <>
                                                                         <XCircle className="h-5 w-5 text-destructive" />
@@ -993,11 +1392,11 @@ Recap the important points."
                                                                                 Request
                                                                                 Rejected
                                                                             </p>
-                                                                            {vmAssignment.admin_feedback && (
+                                                                            {currentVmAssignment.admin_feedback && (
                                                                                 <p className="text-xs text-muted-foreground">
                                                                                     Feedback:{' '}
                                                                                     {
-                                                                                        vmAssignment.admin_feedback
+                                                                                        currentVmAssignment.admin_feedback
                                                                                     }
                                                                                 </p>
                                                                             )}
@@ -1053,7 +1452,7 @@ Recap the important points."
                                                             }}
                                                         >
                                                             <Monitor className="mr-2 h-4 w-4" />
-                                                            {vmAssignment
+                                                            {currentVmAssignment
                                                                 ? 'Change VM Assignment'
                                                                 : 'Select VM for TrainingUnit'}
                                                         </Button>
@@ -1324,13 +1723,31 @@ Recap the important points."
                                                         className="space-y-4 overflow-hidden"
                                                     >
                                                         <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
-                                                            <p className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
-                                                                <Check className="h-4 w-4" />
-                                                                Students will
-                                                                have access to a
-                                                                VM during this
-                                                                trainingUnit
-                                                            </p>
+                                                            <div className="flex flex-col gap-2">
+                                                                <p className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
+                                                                    <Check className="h-4 w-4" />
+                                                                    Students
+                                                                    will have
+                                                                    access to a
+                                                                    VM during
+                                                                    this
+                                                                    trainingUnit
+                                                                </p>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="w-fit gap-2 border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-300"
+                                                                    onClick={() =>
+                                                                        setActiveTab(
+                                                                            'media',
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Terminal className="h-4 w-4" />
+                                                                    Configure VM
+                                                                    Setup
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     </motion.div>
                                                 )}
@@ -1385,9 +1802,9 @@ Recap the important points."
                             </Tabs>
                         </div>
                         {/* Right: Sidebar */}
-                        <div className="space-y-6">
+                        <div className="space-y-6 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
                             {/* Completion card */}
-                            <Card className="sticky top-6 shadow-card">
+                            <Card className="shadow-card">
                                 <CardHeader className="pb-4">
                                     <CardTitle className="flex items-center justify-between font-heading text-lg">
                                         <span>Completion</span>
@@ -1540,9 +1957,7 @@ Recap the important points."
                                             <Button
                                                 className="w-full justify-start"
                                                 variant="outline"
-                                                onClick={() =>
-                                                    setActiveTab('media')
-                                                }
+                                                onClick={openMediaTab}
                                             >
                                                 <Video className="mr-2 h-4 w-4" />
                                                 Manage Video
@@ -1559,9 +1974,7 @@ Recap the important points."
                                             <Button
                                                 className="w-full justify-start"
                                                 variant="outline"
-                                                onClick={() =>
-                                                    setActiveTab('media')
-                                                }
+                                                onClick={openMediaTab}
                                             >
                                                 <Terminal className="mr-2 h-4 w-4" />
                                                 Manage VM Request
@@ -1747,22 +2160,26 @@ Recap the important points."
                                 if (!selectedVM) return;
                                 setSubmittingVM(true);
                                 try {
-                                    await trainingUnitVMAssignmentApi.assign({
-                                        training_unit_id:
-                                            parseInt(trainingUnitId),
-                                        vm_id: selectedVM.vmid,
-                                        node_id: selectedVM.node_id,
-                                        vm_name: selectedVM.name,
-                                        teacher_notes: vmNotes || undefined,
-                                    });
+                                    const newAssignment =
+                                        await trainingUnitVMAssignmentApi.assign(
+                                            {
+                                                training_unit_id:
+                                                    parseInt(trainingUnitId),
+                                                vm_id: selectedVM.vmid,
+                                                node_id: selectedVM.node_id,
+                                                vm_name: selectedVM.name,
+                                                teacher_notes:
+                                                    vmNotes || undefined,
+                                            },
+                                        );
                                     toast.success(
                                         'VM assignment submitted for approval',
                                     );
                                     setShowVMDialog(false);
                                     setSelectedVM(null);
                                     setVmNotes('');
-                                    // Reload page to get updated assignment
-                                    window.location.reload();
+                                    // Update local state instead of reloading
+                                    setCurrentVmAssignment(newAssignment);
                                 } catch (e) {
                                     console.error(
                                         'Failed to submit VM assignment:',

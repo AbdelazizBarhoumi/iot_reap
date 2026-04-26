@@ -88,10 +88,7 @@ describe('TrainingPathCard Component', () => {
 
         expect(
             screen.getByAltText('Introduction to React thumbnail'),
-        ).toHaveAttribute(
-            'src',
-            'https://example.com/path-thumbnail.png',
-        );
+        ).toHaveAttribute('src', 'https://example.com/path-thumbnail.png');
     });
     it('renders duration when provided', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\GatewayNode;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Repository for Gateway node database access.
@@ -24,6 +25,54 @@ class GatewayNodeRepository
     public function allOnline(): Collection
     {
         return GatewayNode::online()->with('usbDevices')->get();
+    }
+
+    /**
+     * Check if at least one active gateway is ready for pct-based video processing.
+     */
+    public function hasGatewayForVideoProcessing(): bool
+    {
+        return GatewayNode::query()
+            ->where('online', true)
+            ->where('is_verified', true)
+            ->whereNotNull('proxmox_host')
+            ->whereNotNull('proxmox_node')
+            ->whereNotNull('proxmox_vmid')
+            ->exists();
+    }
+
+    /**
+     * Get the next active gateway node for video processing using round-robin.
+     */
+    public function findPreferredForVideoProcessing(): ?GatewayNode
+    {
+        $nodes = GatewayNode::query()
+            ->where('online', true)
+            ->where('is_verified', true)
+            ->whereNotNull('proxmox_host')
+            ->whereNotNull('proxmox_node')
+            ->whereNotNull('proxmox_vmid')
+            ->orderBy('id')
+            ->get();
+
+        if ($nodes->isEmpty()) {
+            return null;
+        }
+
+        if ($nodes->count() === 1) {
+            return $nodes->first();
+        }
+
+        return Cache::lock('video_processing_gateway_round_robin_lock', 5)
+            ->block(2, function () use ($nodes): GatewayNode {
+                $cacheKey = 'video_processing_gateway_round_robin_index';
+                $index = (int) Cache::get($cacheKey, 0);
+                $node = $nodes[$index % $nodes->count()];
+
+                Cache::forever($cacheKey, $index + 1);
+
+                return $node;
+            });
     }
 
     /**

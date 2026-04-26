@@ -20,6 +20,7 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->string('proxmox_vmid')->nullable();
             $table->string('proxmox_node')->nullable();
+            $table->string('proxmox_host')->nullable();
             $table->text('description')->nullable();
             $table->string('proxmox_camera_api_url')->nullable();
             $table->timestamp('last_seen_at')->nullable();

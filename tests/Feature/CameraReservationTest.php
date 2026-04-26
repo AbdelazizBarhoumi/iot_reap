@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Enums\CameraReservationStatus;
 use App\Enums\CameraStatus;
-use App\Enums\UsbDeviceStatus;
 use App\Models\Camera;
 use App\Models\CameraReservation;
 use App\Models\GatewayNode;

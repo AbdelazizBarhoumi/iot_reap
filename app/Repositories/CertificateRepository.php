@@ -25,7 +25,7 @@ class CertificateRepository
     public function findByHash(string $hash): ?Certificate
     {
         return Certificate::byHash($hash)
-            ->with(['user:id,name', 'trainingPath:id,title,instructor_id'])
+            ->with(['user:id,name', 'trainingPath:id,title,thumbnail,instructor_id'])
             ->first();
     }
 

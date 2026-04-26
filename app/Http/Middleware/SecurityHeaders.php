@@ -30,7 +30,7 @@ class SecurityHeaders
         'Referrer-Policy' => 'strict-origin-when-cross-origin',
 
         // Restrict browser features
-        'Permissions-Policy' => 'camera=(self), microphone=(self), geolocation=(), payment=()',
+        'Permissions-Policy' => 'camera=(self), microphone=(self), geolocation=(), payment=(), autoplay=(self "https://www.youtube.com" "https://www.youtube-nocookie.com"), encrypted-media=(self "https://www.youtube.com" "https://www.youtube-nocookie.com"), fullscreen=(self "https://www.youtube.com" "https://www.youtube-nocookie.com")',
     ];
 
     /**
@@ -69,14 +69,14 @@ class SecurityHeaders
      */
     protected function buildCsp(): string
     {
-        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com"; // Required for Vite/React + Google OAuth
-        $styleSrc = "'self' 'unsafe-inline' https://accounts.google.com"; // Required for inline styles + Google OAuth
-        $connectSrc = "'self' wss: https: ws:"; // Allow ws: for Guacamole WebSocket
-        $imgSrc = "'self' data: https: blob:";
-        $fontSrc = "'self' data:";
+        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.youtube.com https://s.ytimg.com"; // Required for Vite/React + Google OAuth + YouTube
+        $styleSrc = "'self' 'unsafe-inline' https://accounts.google.com https://www.youtube.com"; // Required for inline styles + Google OAuth + YouTube
+        $connectSrc = "'self' wss: https: ws: https://*.google.com https://*.youtube.com"; // Allow ws: for Guacamole WebSocket + YouTube APIs
+        $imgSrc = "'self' data: https: blob: https://*.ytimg.com https://*.youtube.com";
+        $fontSrc = "'self' data: https://fonts.gstatic.com";
 
         // Build worker-src separately to avoid using development values in production.
-        $workerSrc = "'self' blob:";
+        $workerSrc = "'self' blob: https://www.youtube.com";
 
         // In development, allow Vite dev server on any local interface
         if (! app()->isProduction()) {
@@ -112,9 +112,9 @@ class SecurityHeaders
             "img-src $imgSrc",
             "font-src $fontSrc",
             "connect-src $connectSrc",
-            "media-src 'self' blob:",
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com",
-            "child-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com",
+            "media-src 'self' blob: https://*.youtube.com https://*.youtube-nocookie.com https://*.googlevideo.com",
+            "frame-src 'self' https://*.youtube.com https://*.youtube-nocookie.com https://*.google.com https://accounts.google.com",
+            "child-src 'self' blob: https://*.youtube.com https://*.youtube-nocookie.com https://*.google.com",
             "worker-src $workerSrc",
             "object-src 'none'",
             "frame-ancestors 'self'",

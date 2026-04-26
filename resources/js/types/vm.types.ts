@@ -136,6 +136,7 @@ export interface ProxmoxVMInfo {
 export interface CreateVMSessionRequest {
     vmid: number;
     node_id: number;
+    training_unit_id?: number;
     // optional descriptive name; backend allows it to be null
     vm_name?: string;
     os_type?: string;

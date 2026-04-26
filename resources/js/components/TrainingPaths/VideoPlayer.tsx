@@ -4,6 +4,7 @@
  * quality selection, speed controls, and caption support.
  */
 import { motion, AnimatePresence } from 'framer-motion';
+import Hls from 'hls.js';
 import {
     AlertCircle,
     Captions,
@@ -15,12 +16,10 @@ import {
     Pause,
     Play,
     Settings,
-    SkipBack,
-    SkipForward,
     Volume2,
     VolumeX,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -31,11 +30,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
+
 interface Caption {
     label: string;
     srclang: string;
     src: string;
 }
+
 interface VideoPlayerProps {
     src: string;
     poster?: string;
@@ -47,13 +48,79 @@ interface VideoPlayerProps {
     initialTime?: number;
     className?: string;
 }
+
 const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+interface QualityOption {
+    bitrate: number;
+    height: number;
+    label: string;
+    levelIndex: number;
+    width: number;
+}
+
 function formatTime(seconds: number): string {
     if (isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
+
+function formatQualityLabel(height?: number, width?: number): string {
+    if (height && height > 0) {
+        return `${height}p`;
+    }
+
+    if (width && width > 0) {
+        return `${width}w`;
+    }
+
+    return 'Unknown';
+}
+
+function buildQualityOptions(
+    levels: Array<{
+        bitrate?: number;
+        height?: number;
+        width?: number;
+    }>,
+): QualityOption[] {
+    return levels
+        .map((level, index) => ({
+            bitrate: level.bitrate ?? 0,
+            height: level.height ?? 0,
+            label: formatQualityLabel(level.height, level.width),
+            levelIndex: index,
+            width: level.width ?? 0,
+        }))
+        .sort(
+            (a, b) =>
+                b.height - a.height ||
+                b.width - a.width ||
+                b.bitrate - a.bitrate,
+        );
+}
+
+const getYouTubeId = (url: string) => {
+    const trimmedUrl = url.trim();
+    // Support:
+    // - https://www.youtube.com/watch?v=ID
+    // - https://youtu.be/ID
+    // - https://www.youtube.com/embed/ID
+    // - https://www.youtube-nocookie.com/embed/ID
+    // - https://m.youtube.com/watch?v=ID
+    const regExp =
+        /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|e\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|[&]v(?:i)?=))([^#&?]*).*/;
+    const match = trimmedUrl.match(regExp);
+    const id = match && match[1].length === 11 ? match[1] : null;
+    console.log('[VideoPlayer] YouTube ID extraction:', {
+        url: trimmedUrl,
+        id,
+        match: !!match,
+    });
+    return id;
+};
+
 export default function VideoPlayer({
     src,
     poster,
@@ -65,10 +132,16 @@ export default function VideoPlayer({
     initialTime = 0,
     className = '',
 }: VideoPlayerProps) {
+    useEffect(() => {
+        console.log('[VideoPlayer] Rendering with src:', src);
+    }, [src]);
+
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLDivElement>(null);
     const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
+    const hlsRef = useRef<Hls | null>(null);
+
     // State
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -78,13 +151,40 @@ export default function VideoPlayer({
     const [isMuted, setIsMuted] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const isYouTube = /youtube\.com|youtu\.be|youtube-nocookie\.com/.test(src);
     const [showControls, setShowControls] = useState(true);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(!isYouTube);
     const [error, setError] = useState<string | null>(null);
     const [activeCaption, setActiveCaption] = useState<string | null>(null);
     const [showCaptions, setShowCaptions] = useState(false);
+    const [qualityOptions, setQualityOptions] = useState<QualityOption[]>([]);
+    const [selectedQualityLevel, setSelectedQualityLevel] = useState(-1);
+    const [prevSrc, setPrevSrc] = useState(src);
+
+    if (src !== prevSrc) {
+        setPrevSrc(src);
+        setIsLoading(!isYouTube);
+        setQualityOptions([]);
+        setSelectedQualityLevel(-1);
+    }
+
+    const youtubeId = isYouTube ? getYouTubeId(src) : null;
+    const isHLS = src.toLowerCase().includes('.m3u8');
+    const selectedQualityLabel = useMemo(() => {
+        if (selectedQualityLevel < 0) {
+            return 'Auto';
+        }
+
+        return (
+            qualityOptions.find(
+                (option) => option.levelIndex === selectedQualityLevel,
+            )?.label ?? 'Auto'
+        );
+    }, [qualityOptions, selectedQualityLevel]);
+
     // Reset controls hide timer
     const resetHideTimer = useCallback(() => {
+        if (isYouTube) return;
         setShowControls(true);
         if (hideControlsTimeout.current) {
             clearTimeout(hideControlsTimeout.current);
@@ -94,9 +194,11 @@ export default function VideoPlayer({
                 setShowControls(false);
             }, 3000);
         }
-    }, [isPlaying]);
+    }, [isPlaying, isYouTube]);
+
     // Play/Pause toggle
     const togglePlay = useCallback(() => {
+        if (isYouTube) return;
         const video = videoRef.current;
         if (!video) return;
         if (isPlaying) {
@@ -106,28 +208,37 @@ export default function VideoPlayer({
                 console.error('Play failed:', e);
             });
         }
-    }, [isPlaying]);
+    }, [isPlaying, isYouTube]);
+
     // Seek
     const handleSeek = useCallback(
         (value: number[]) => {
+            if (isYouTube) return;
             const video = videoRef.current;
             if (!video || duration === 0) return;
             const newTime = (value[0] / 100) * duration;
             video.currentTime = newTime;
             setCurrentTime(newTime);
         },
-        [duration],
+        [duration, isYouTube],
     );
+
     // Volume control
-    const handleVolumeChange = useCallback((value: number[]) => {
-        const video = videoRef.current;
-        if (!video) return;
-        const newVolume = value[0] / 100;
-        video.volume = newVolume;
-        setVolume(newVolume);
-        setIsMuted(newVolume === 0);
-    }, []);
+    const handleVolumeChange = useCallback(
+        (value: number[]) => {
+            if (isYouTube) return;
+            const video = videoRef.current;
+            if (!video) return;
+            const newVolume = value[0] / 100;
+            video.volume = newVolume;
+            setVolume(newVolume);
+            setIsMuted(newVolume === 0);
+        },
+        [isYouTube],
+    );
+
     const toggleMute = useCallback(() => {
+        if (isYouTube) return;
         const video = videoRef.current;
         if (!video) return;
         if (isMuted) {
@@ -137,26 +248,32 @@ export default function VideoPlayer({
             video.muted = true;
             setIsMuted(true);
         }
-    }, [isMuted]);
+    }, [isMuted, isYouTube]);
+
     // Speed control
-    const changeSpeed = useCallback((speed: number) => {
-        const video = videoRef.current;
-        if (!video) return;
-        video.playbackRate = speed;
-        setPlaybackSpeed(speed);
-    }, []);
-    // Skip forward/back
-    const skip = useCallback(
-        (seconds: number) => {
+    const changeSpeed = useCallback(
+        (speed: number) => {
+            if (isYouTube) return;
             const video = videoRef.current;
             if (!video) return;
-            video.currentTime = Math.max(
-                0,
-                Math.min(duration, video.currentTime + seconds),
-            );
+            video.playbackRate = speed;
+            setPlaybackSpeed(speed);
         },
-        [duration],
+        [isYouTube],
     );
+
+    const changeQuality = useCallback((levelIndex: number) => {
+        const hls = hlsRef.current;
+
+        if (!hls) {
+            return;
+        }
+
+        hls.currentLevel = levelIndex;
+        hls.nextLevel = levelIndex;
+        setSelectedQualityLevel(levelIndex);
+    }, []);
+
     // Fullscreen toggle
     const toggleFullscreen = useCallback(() => {
         const container = containerRef.current;
@@ -171,9 +288,10 @@ export default function VideoPlayer({
             }
         }
     }, [isFullscreen]);
+
     // Caption toggle
     const toggleCaptions = useCallback(() => {
-        if (captions.length === 0) return;
+        if (isYouTube || captions.length === 0) return;
         if (showCaptions) {
             setShowCaptions(false);
             setActiveCaption(null);
@@ -181,11 +299,71 @@ export default function VideoPlayer({
             setShowCaptions(true);
             setActiveCaption(captions[0]?.srclang || null);
         }
-    }, [captions, showCaptions]);
+    }, [captions, showCaptions, isYouTube]);
+
+    // HLS initialization
+    useEffect(() => {
+        if (isYouTube || !isHLS || !videoRef.current) return;
+
+        const video = videoRef.current;
+
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+            });
+            hlsRef.current = hls;
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                setQualityOptions(buildQualityOptions(hls.levels));
+                setSelectedQualityLevel(-1);
+                if (autoPlay) {
+                    video.play().catch(console.error);
+                }
+            });
+            hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
+                setSelectedQualityLevel(hls.autoLevelEnabled ? -1 : data.level);
+            });
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+                if (data.fatal) {
+                    setError('Failed to load HLS stream.');
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = src;
+        }
+
+        return () => {
+            if (hlsRef.current) {
+                hlsRef.current.destroy();
+                hlsRef.current = null;
+            }
+        };
+    }, [src, isHLS, isYouTube, autoPlay]);
+
+    useEffect(() => {
+        if (isYouTube) {
+            return;
+        }
+
+        const video = videoRef.current;
+        if (!video) {
+            return;
+        }
+
+        video.playbackRate = playbackSpeed;
+    }, [isYouTube, playbackSpeed, src]);
+
     // Video event handlers
     useEffect(() => {
+        if (isYouTube) {
+            return;
+        }
+
         const video = videoRef.current;
         if (!video) return;
+
         const handlePlay = () => setIsPlaying(true);
         const handlePause = () => setIsPlaying(false);
         const handleTimeUpdate = () => {
@@ -203,8 +381,10 @@ export default function VideoPlayer({
         const handleWaiting = () => setIsLoading(true);
         const handlePlaying = () => setIsLoading(false);
         const handleError = () => {
-            setError('Failed to load video. Please try again.');
-            setIsLoading(false);
+            if (!isHLS) {
+                setError('Failed to load video. Please try again.');
+                setIsLoading(false);
+            }
         };
         const handleEnded = () => {
             setIsPlaying(false);
@@ -218,6 +398,7 @@ export default function VideoPlayer({
                 setBuffered((bufferedEnd / video.duration) * 100);
             }
         };
+
         video.addEventListener('play', handlePlay);
         video.addEventListener('pause', handlePause);
         video.addEventListener('timeupdate', handleTimeUpdate);
@@ -228,6 +409,7 @@ export default function VideoPlayer({
         video.addEventListener('error', handleError);
         video.addEventListener('ended', handleEnded);
         video.addEventListener('progress', handleProgress);
+
         return () => {
             video.removeEventListener('play', handlePlay);
             video.removeEventListener('pause', handlePause);
@@ -240,7 +422,8 @@ export default function VideoPlayer({
             video.removeEventListener('ended', handleEnded);
             video.removeEventListener('progress', handleProgress);
         };
-    }, [initialTime, onProgress, onComplete]);
+    }, [initialTime, onProgress, onComplete, isYouTube, isHLS]);
+
     // Fullscreen change handler
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -254,8 +437,10 @@ export default function VideoPlayer({
             );
         };
     }, []);
+
     // Keyboard shortcuts
     useEffect(() => {
+        if (isYouTube) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (
                 e.target instanceof HTMLInputElement ||
@@ -267,14 +452,6 @@ export default function VideoPlayer({
                 case 'k':
                     e.preventDefault();
                     togglePlay();
-                    break;
-                case 'arrowleft':
-                    e.preventDefault();
-                    skip(-10);
-                    break;
-                case 'arrowright':
-                    e.preventDefault();
-                    skip(10);
                     break;
                 case 'arrowup':
                     e.preventDefault();
@@ -302,42 +479,56 @@ export default function VideoPlayer({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [
         togglePlay,
-        skip,
         handleVolumeChange,
         volume,
         toggleMute,
         toggleFullscreen,
         toggleCaptions,
+        isYouTube,
     ]);
+
     const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
     return (
         <div
             ref={containerRef}
-            className={`group relative overflow-hidden rounded-xl bg-black ${className}`}
+            className={`group relative aspect-video w-full overflow-hidden rounded-xl bg-black ${className}`}
             onMouseMove={resetHideTimer}
             onMouseLeave={() => isPlaying && setShowControls(false)}
         >
-            {/* Video element */}
-            <video
-                ref={videoRef}
-                src={src}
-                poster={poster}
-                autoPlay={autoPlay}
-                className="h-full w-full object-contain"
-                onClick={togglePlay}
-                playsInline
-            >
-                {captions.map((caption) => (
-                    <track
-                        key={caption.srclang}
-                        kind="captions"
-                        label={caption.label}
-                        srcLang={caption.srclang}
-                        src={caption.src}
-                        default={activeCaption === caption.srclang}
-                    />
-                ))}
-            </video>
+            {/* Video element or YouTube iframe */}
+            {isYouTube && youtubeId ? (
+                <iframe
+                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&rel=0&modestbranding=1&origin=${window.location.origin}&enablejsapi=1`}
+                    className="h-full w-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                    onLoad={() => setIsLoading(false)}
+                />
+            ) : (
+                <video
+                    ref={videoRef}
+                    src={isHLS ? undefined : src}
+                    poster={poster}
+                    autoPlay={autoPlay}
+                    className="h-full w-full object-contain"
+                    onClick={togglePlay}
+                    playsInline
+                >
+                    {captions.map((caption) => (
+                        <track
+                            key={caption.srclang}
+                            kind="captions"
+                            label={caption.label}
+                            srcLang={caption.srclang}
+                            src={caption.src}
+                            default={activeCaption === caption.srclang}
+                        />
+                    ))}
+                </video>
+            )}
+
             {/* Loading overlay */}
             <AnimatePresence>
                 {isLoading && (
@@ -351,8 +542,9 @@ export default function VideoPlayer({
                     </motion.div>
                 )}
             </AnimatePresence>
+
             {/* Error overlay */}
-            {error && (
+            {error && !isYouTube && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
                     <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
                     <p className="text-lg font-medium">{error}</p>
@@ -361,16 +553,21 @@ export default function VideoPlayer({
                         className="mt-4"
                         onClick={() => {
                             setError(null);
-                            videoRef.current?.load();
+                            if (isHLS && hlsRef.current) {
+                                hlsRef.current.loadSource(src);
+                            } else {
+                                videoRef.current?.load();
+                            }
                         }}
                     >
                         Retry
                     </Button>
                 </div>
             )}
-            {/* Center play button (shown when paused) */}
+
+            {/* Center play button (shown when paused) - Hidden for YouTube */}
             <AnimatePresence>
-                {!isPlaying && !isLoading && !error && (
+                {!isYouTube && !isPlaying && !isLoading && !error && (
                     <motion.button
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -387,9 +584,10 @@ export default function VideoPlayer({
                     </motion.button>
                 )}
             </AnimatePresence>
-            {/* Controls overlay */}
+
+            {/* Controls overlay - Hidden for YouTube */}
             <AnimatePresence>
-                {showControls && (
+                {!isYouTube && showControls && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -402,6 +600,7 @@ export default function VideoPlayer({
                                 {title}
                             </p>
                         )}
+
                         {/* Progress bar */}
                         <div
                             ref={progressRef}
@@ -433,6 +632,7 @@ export default function VideoPlayer({
                                 }}
                             />
                         </div>
+
                         {/* Controls row */}
                         <div className="flex items-center gap-2">
                             {/* Play/Pause */}
@@ -452,28 +652,15 @@ export default function VideoPlayer({
                                     />
                                 )}
                             </button>
-                            {/* Skip back */}
-                            <button
-                                onClick={() => skip(-10)}
-                                aria-label="Skip backward 10 seconds"
-                                className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
-                            >
-                                <SkipBack className="h-4 w-4" />
-                            </button>
-                            {/* Skip forward */}
-                            <button
-                                onClick={() => skip(10)}
-                                aria-label="Skip forward 10 seconds"
-                                className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/20"
-                            >
-                                <SkipForward className="h-4 w-4" />
-                            </button>
+
                             {/* Time */}
                             <span className="ml-2 font-mono text-sm text-white">
                                 {formatTime(currentTime)} /{' '}
                                 {formatTime(duration)}
                             </span>
+
                             <div className="flex-1" />
+
                             {/* Volume */}
                             <div className="group/volume flex items-center gap-2">
                                 <button
@@ -501,6 +688,7 @@ export default function VideoPlayer({
                                     />
                                 </div>
                             </div>
+
                             {/* Captions */}
                             {captions.length > 0 && (
                                 <button
@@ -523,6 +711,63 @@ export default function VideoPlayer({
                                     )}
                                 </button>
                             )}
+
+                            {/* Settings */}
+                            {isHLS && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            aria-label="Video quality"
+                                            className="rounded-full px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-white/20"
+                                        >
+                                            Resolution: {selectedQualityLabel}
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-40"
+                                    >
+                                        <DropdownMenuLabel>
+                                            Resolution
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => changeQuality(-1)}
+                                            className="flex items-center justify-between"
+                                        >
+                                            <span>Auto</span>
+                                            {selectedQualityLevel === -1 && (
+                                                <Check className="h-4 w-4 text-primary" />
+                                            )}
+                                        </DropdownMenuItem>
+                                        {qualityOptions.length === 0 && (
+                                            <DropdownMenuItem disabled>
+                                                {Hls.isSupported()
+                                                    ? 'Loading stream qualities...'
+                                                    : 'Manual selection unavailable'}
+                                            </DropdownMenuItem>
+                                        )}
+                                        {qualityOptions.map((option) => (
+                                            <DropdownMenuItem
+                                                key={option.levelIndex}
+                                                onClick={() =>
+                                                    changeQuality(
+                                                        option.levelIndex,
+                                                    )
+                                                }
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span>{option.label}</span>
+                                                {selectedQualityLevel ===
+                                                    option.levelIndex && (
+                                                    <Check className="h-4 w-4 text-primary" />
+                                                )}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+
                             {/* Settings */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -559,6 +804,7 @@ export default function VideoPlayer({
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+
                             {/* Fullscreen */}
                             <button
                                 onClick={toggleFullscreen}

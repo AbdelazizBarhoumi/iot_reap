@@ -349,7 +349,7 @@ class TeachingController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'trainingUnit' => new TrainingUnitResource($trainingUnit),
-                'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
+                'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits.video')),
                 'vmAssignment' => $vmAssignment ? new TrainingUnitVMAssignmentResource($vmAssignment) : null,
             ]);
         }
@@ -359,7 +359,7 @@ class TeachingController extends Controller
             'moduleId' => (string) $moduleId,
             'trainingUnitId' => (string) $trainingUnitId,
             'trainingUnit' => new TrainingUnitResource($trainingUnit),
-            'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits')),
+            'trainingPath' => new TrainingPathResource($trainingPath->load('modules.trainingUnits.video')),
             'vmAssignment' => $vmAssignment ? new TrainingUnitVMAssignmentResource($vmAssignment) : null,
         ]);
     }

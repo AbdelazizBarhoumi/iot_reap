@@ -72,7 +72,19 @@ export default [
         },
     },
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js', 'vite.config.ts', 'files/**/*.js', 'storage/**', 'tmp/**', 'resources/js/actions/**/index.ts', 'resources/js/routes/**/index.ts'],
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'tailwind.config.js',
+            'vite.config.ts',
+            'files/**/*.js',
+            'storage/**',
+            'tmp/**',
+            'resources/js/actions/**',
+            'resources/js/routes/**',
+        ],
     },
     prettier, // Turn off all rules that might conflict with Prettier
 ];

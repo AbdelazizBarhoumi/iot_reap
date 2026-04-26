@@ -64,9 +64,11 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->co
     Route::delete('/{id}', 'destroy')->name('destroy');
 });
 
-// Public certificate verification
+// Public certificate verification (guest access)
+Route::get('/certificates/{hash}/verify', [CertificateController::class, 'verify'])->name('certificates.verify');
+
+// Public certificate actions
 Route::controller(CertificateController::class)->group(function () {
-    Route::get('/certificates/verify/{hash}', 'verify')->name('certificates.verify');
     Route::get('/certificates/{hash}/download', 'download')->name('certificates.download');
 });
 

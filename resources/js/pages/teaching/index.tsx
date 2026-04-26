@@ -611,8 +611,8 @@ export default function TeachingPage() {
                                                             {/* TrainingPath thumbnail */}
                                                             <div className="h-48 shrink-0 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 lg:h-auto lg:w-44 lg:border-r lg:border-border/50">
                                                                 {(trainingPath.thumbnail ??
-                                                                    trainingPath.thumbnail_url ??
-                                                                    trainingPath.image_url) ? (
+                                                                trainingPath.thumbnail_url ??
+                                                                trainingPath.image_url) ? (
                                                                     <img
                                                                         src={
                                                                             trainingPath.thumbnail ??

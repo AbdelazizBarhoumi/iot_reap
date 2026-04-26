@@ -42,7 +42,7 @@ class AdminCameraActivationTest extends TestCase
             'stream_key' => 'usb-gateway-51',
         ]);
 
-        $this->mock(GatewayService::class, function ($mock) {
+        $this->mock(GatewayService::class, function ($mock) use ($usbDevice) {
             $mock->shouldReceive('getCameraStreamStatus')
                 ->twice()
                 ->andReturn(
@@ -58,12 +58,14 @@ class AdminCameraActivationTest extends TestCase
 
             $mock->shouldReceive('startCameraStream')
                 ->once()
-                ->withArgs(function ($gatewayNode, $streamKey, $devicePath, $options): bool {
+                ->withArgs(function ($gatewayNode, $streamKey, $devicePath, $options) use ($usbDevice): bool {
                     return $streamKey === 'usb-gateway-51'
                         && $devicePath === '/dev/video0'
                         && ($options['usb_busid'] ?? null) === '5-1'
                         && ($options['vendor_id'] ?? null) === '0c45'
-                        && ($options['product_id'] ?? null) === '6536';
+                        && ($options['product_id'] ?? null) === '6536'
+                        && ($options['serial'] ?? null) === $usbDevice->serial
+                        && ($options['input_format'] ?? null) === 'mjpeg';
                 })
                 ->andReturn([
                     'success' => true,

@@ -16,9 +16,8 @@ use App\Repositories\VMSessionRepository;
 use App\Services\ExtendSessionService;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClient;
-use App\Services\QuotaService;
-use App\Services\VMSessionService;
 use App\Services\VMSessionCleanupService;
+use App\Services\VMSessionService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,7 +39,6 @@ class VMSessionController extends Controller
         private readonly VMSessionRepository $sessionRepository,
         private readonly VMSessionCleanupService $cleanupService,
         private readonly ExtendSessionService $extendSessionService,
-        private readonly QuotaService $quotaService,
         private readonly VMSessionService $vmSessionService,
     ) {}
 
@@ -91,8 +89,6 @@ class VMSessionController extends Controller
                 'duration_minutes' => $durationMinutes,
             ]);
 
-            $this->quotaService->assertAllowedToCreate($request->user(), $durationMinutes);
-
             $startAt = now();
             $endAt = now()->addMinutes($durationMinutes);
             $this->vmSessionService->assertSessionWindowAvailable(
@@ -109,6 +105,30 @@ class VMSessionController extends Controller
                 ?? $request->validated('connection_preference_protocol')
                 ?? 'rdp';
 
+            $connectionProfileName = $request->validated('connection_preference_profile');
+            $credentials = array_filter([
+                'username' => $request->validated('username'),
+                'password' => $request->validated('password'),
+            ]);
+
+            $trainingUnitId = $request->validated('training_unit_id');
+            if ($trainingUnitId !== null) {
+                $lessonLaunchOverrides = $this->vmSessionService->resolveTrainingUnitLaunchOverrides(
+                    user: $request->user(),
+                    trainingUnitId: (int) $trainingUnitId,
+                    nodeId: (int) $node->id,
+                    vmId: (int) $request->validated('vmid'),
+                    protocol: $protocol,
+                );
+
+                // For lesson launches, enforce admin-defined default profile and credentials.
+                if (! empty($lessonLaunchOverrides['connection_profile_name'])) {
+                    $connectionProfileName = $lessonLaunchOverrides['connection_profile_name'];
+                }
+
+                $credentials = $lessonLaunchOverrides['credentials'];
+            }
+
             $sessionData = [
                 'user_id' => $request->user()->id,
                 'proxmox_server_id' => $serverId,
@@ -116,12 +136,9 @@ class VMSessionController extends Controller
                 'vm_id' => $request->validated('vmid'),
                 'status' => VMSessionStatus::PENDING,
                 'protocol' => $protocol,
-                'connection_profile_name' => $request->validated('connection_preference_profile'),
+                'connection_profile_name' => $connectionProfileName,
                 'expires_at' => $endAt,
-                'credentials' => array_filter([
-                    'username' => $request->validated('username'),
-                    'password' => $request->validated('password'),
-                ]),
+                'credentials' => $credentials,
                 'return_snapshot' => $request->validated('return_snapshot'),
             ];
 
@@ -341,8 +358,6 @@ class VMSessionController extends Controller
      *
      * Adds the specified number of minutes (or default increment) to the session's
      * expiration time. Validates that the extension won't exceed user's quota.
-     *
-     * @throws \Exception if extension would exceed quota
      */
     public function extend(
         ExtendVMSessionRequest $request,

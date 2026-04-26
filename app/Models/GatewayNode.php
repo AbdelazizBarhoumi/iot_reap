@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $is_verified
  * @property string|null $proxmox_vmid
  * @property string|null $proxmox_node
+ * @property string|null $proxmox_host
  * @property string|null $proxmox_camera_api_url
  * @property string|null $description
  * @property \DateTime|null $last_seen_at
@@ -35,6 +36,7 @@ class GatewayNode extends Model
         'is_verified',
         'proxmox_vmid',
         'proxmox_node',
+        'proxmox_host',
         'proxmox_camera_api_url',
         'description',
         'last_seen_at',

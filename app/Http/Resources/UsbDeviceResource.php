@@ -35,6 +35,9 @@ class UsbDeviceResource extends JsonResource
             'status_label' => $this->status->label(),
             'attached_to' => $this->attached_to,
             'attached_session_id' => $this->attached_session_id,
+            'attached_vmid' => $this->attached_vmid,
+            'attached_node' => $this->attached_node,
+            'attached_server_id' => $this->attached_server_id,
             'attached_vm_ip' => $this->attached_vm_ip,
             // Pending attachment fields
             'pending_vmid' => $this->pending_vmid,

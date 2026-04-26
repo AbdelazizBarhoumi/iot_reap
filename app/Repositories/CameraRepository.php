@@ -2,10 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Enums\CameraReservationStatus;
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\UsbDevice;
-use App\Enums\CameraReservationStatus;
 use Illuminate\Database\Eloquent\Collection;
 
 /**

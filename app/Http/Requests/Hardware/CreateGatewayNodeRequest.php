@@ -30,6 +30,9 @@ class CreateGatewayNodeRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'ip' => ['required', 'ip'],
             'port' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'proxmox_host' => ['nullable', 'ip'],
+            'proxmox_node' => ['nullable', 'string', 'max:255'],
+            'proxmox_vmid' => ['nullable', 'string', 'max:255'],
         ];
     }
 

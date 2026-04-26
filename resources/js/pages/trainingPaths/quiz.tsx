@@ -9,7 +9,7 @@ import { QuizResults, QuizTaker } from '@/components/quiz';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import type { Quiz, QuizAttempt } from '@/types/quiz.types';
+import type { Quiz, QuizAttempt, QuizResult } from '@/types/quiz.types';
 
 interface QuizPageProps {
     trainingUnitId: string;
@@ -27,7 +27,10 @@ export default function QuizPage({
     maxAttempts,
 }: QuizPageProps) {
     const [completedAttempt, setCompletedAttempt] =
-        useState<QuizAttempt | null>(null);
+        useState<QuizAttempt | null>(quiz.best_attempt || null);
+    const [submissionResults, setSubmissionResults] = useState<
+        QuizResult[] | null
+    >(null);
 
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
@@ -37,8 +40,11 @@ export default function QuizPage({
         [trainingUnitId],
     );
 
-    const handleComplete = (attempt: QuizAttempt) => {
+    const handleComplete = (attempt: QuizAttempt, results?: QuizResult[]) => {
         setCompletedAttempt(attempt);
+        if (results) {
+            setSubmissionResults(results);
+        }
     };
 
     const handleCancel = () => {
@@ -47,6 +53,7 @@ export default function QuizPage({
 
     const handleRetake = () => {
         setCompletedAttempt(null);
+        setSubmissionResults(null);
     };
 
     // Show results if quiz is completed
@@ -69,7 +76,11 @@ export default function QuizPage({
                             </h1>
                         </div>
                     </div>
-                    <QuizResults quiz={quiz} attempt={completedAttempt} />
+                    <QuizResults
+                        quiz={quiz}
+                        attempt={completedAttempt}
+                        results={submissionResults || undefined}
+                    />
                     <div className="flex justify-center gap-4">
                         {canAttempt &&
                             (maxAttempts === null ||

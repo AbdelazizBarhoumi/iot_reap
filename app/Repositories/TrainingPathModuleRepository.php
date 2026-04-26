@@ -70,14 +70,14 @@ class TrainingPathModuleRepository
     /**
      * Reorder modules for a trainingPath.
      *
-     * @param  array<int, int>  $order  Map of module_id => sort_order
+     * @param  array<int>  $order  List of module_ids in order
      */
     public function reorder(int $trainingPathId, array $order): void
     {
-        foreach ($order as $moduleId => $sortOrder) {
+        foreach ($order as $index => $moduleId) {
             TrainingPathModule::where('id', $moduleId)
                 ->where('training_path_id', $trainingPathId)
-                ->update(['sort_order' => $sortOrder]);
+                ->update(['sort_order' => $index]);
         }
     }
 }

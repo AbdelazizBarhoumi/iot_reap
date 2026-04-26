@@ -28,6 +28,9 @@ class GatewayNodeFactory extends Factory
             'ip' => '192.168.50.'.(5 + $nodeNumber),
             'port' => 8000,
             'online' => true,
+            'proxmox_host' => null,
+            'proxmox_node' => null,
+            'proxmox_vmid' => null,
             'last_seen_at' => now(),
         ];
     }
@@ -91,6 +94,18 @@ class GatewayNodeFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'proxmox_camera_api_url' => $url,
+        ]);
+    }
+
+    /**
+     * Configure node for pct-based video processing.
+     */
+    public function forVideoProcessing(string $host, string $node, int|string $vmid): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'proxmox_host' => $host,
+            'proxmox_node' => $node,
+            'proxmox_vmid' => (string) $vmid,
         ]);
     }
 }

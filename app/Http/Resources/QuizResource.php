@@ -43,7 +43,7 @@ class QuizResource extends JsonResource
             'attempt_count' => $user ? $this->resource->getAttemptCount($user) : null,
             'has_passed' => $user ? $this->resource->hasPassed($user) : null,
             'best_attempt' => $user && $this->resource->hasPassed($user)
-                ? new QuizAttemptResource($this->resource->getBestAttempt($user))
+                ? new QuizAttemptResource($this->resource->getBestAttempt($user)?->load('answers'))
                 : null,
 
             'created_at' => $this->resource->created_at?->toIso8601String(),

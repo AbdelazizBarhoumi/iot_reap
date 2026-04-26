@@ -40,6 +40,11 @@ class CreateVMSessionRequest extends FormRequest
                 'integer',
                 'exists:proxmox_nodes,id',
             ],
+            'training_unit_id' => [
+                'nullable',
+                'integer',
+                'exists:training_units,id',
+            ],
             'vm_name' => ['nullable', 'string', 'max:255'],
             'os_type' => ['nullable', 'string', Rule::in(['windows', 'linux', 'kali'])],
             'protocol' => ['nullable', 'string', Rule::in(['rdp', 'vnc', 'ssh'])],

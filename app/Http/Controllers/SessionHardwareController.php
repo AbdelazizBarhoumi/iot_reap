@@ -42,9 +42,22 @@ class SessionHardwareController extends Controller
             abort(403, 'Unauthorized access to session');
         }
 
-        // Get devices attached to this session and reconcile their real runtime state
-        // so the UI only shows "Detach" for genuinely attached devices.
-        $attachedDevices = $session->attachedDevices()
+        $session->loadMissing(['node']);
+
+        // Get devices attached to this session or VM context and reconcile their
+        // real runtime state so the UI reflects the VM, not only one session row.
+        $attachedDevices = UsbDevice::where('status', 'attached')
+            ->where(function ($query) use ($session) {
+                $query->where('attached_session_id', $session->id);
+
+                if ($session->vm_id !== null && $session->proxmox_server_id !== null && $session->node?->name !== null) {
+                    $query->orWhere(function ($vmQuery) use ($session) {
+                        $vmQuery->where('attached_vmid', $session->vm_id)
+                            ->where('attached_node', $session->node->name)
+                            ->where('attached_server_id', $session->proxmox_server_id);
+                    });
+                }
+            })
             ->with('gatewayNode')
             ->get();
 
@@ -71,7 +84,11 @@ class SessionHardwareController extends Controller
                     'detected_port' => $verification['port'] ?? null,
                 ]);
 
-                $this->deviceRepository->markDetached($attachedDevice);
+                if ($attachedDevice->isAttachedToSessionVm($session)) {
+                    $this->deviceRepository->markBoundForVm($attachedDevice);
+                } else {
+                    $this->deviceRepository->markDetached($attachedDevice);
+                }
 
                 continue;
             }
@@ -156,49 +173,94 @@ class SessionHardwareController extends Controller
             // session, auto-heal it to detached/bound and continue.
             if (! $lockedDevice->isBound() && ! $lockedDevice->isAvailable()) {
                 if ($lockedDevice->isAttached()) {
-                    $attachedSession = $lockedDevice->attachedSession;
-                    $attachedStatus = $attachedSession?->status?->value;
-                    $attachedSessionIsActive = in_array($attachedStatus, ['active', 'expiring'], true);
+                    if ($lockedDevice->isAttachedToSessionVm($session)) {
+                        $verification = $this->gatewayService->verifySessionAttachmentState($lockedDevice, $session);
 
-                    // Only auto-heal non-active states when the attached session exists.
-                    // If session cannot be resolved, keep conservative behavior and do not
-                    // silently convert an in-use device into attachable state.
-                    $staleAttachedState = $attachedSession !== null && ! $attachedSessionIsActive;
+                        if ($verification['verified']) {
+                            $this->deviceRepository->markAttached(
+                                $lockedDevice,
+                                "session-{$session->id}",
+                                $session->id,
+                                $session->ip_address,
+                                $verification['port'] ?? $lockedDevice->usbip_port,
+                                $session->vm_id,
+                                $session->node?->name,
+                                $session->proxmox_server_id,
+                            );
 
-                    // Even if session looks active in DB, verify runtime truth in VM.
-                    // If verification says it's not really attached, treat as stale.
-                    if (! $staleAttachedState && $attachedSession) {
-                        // For safety, only auto-heal active-session runtime mismatches
-                        // when both sessions belong to the same user.
-                        $sameUserSession = (string) $attachedSession->user_id === (string) $session->user_id;
+                            $responseDevice = $lockedDevice->fresh()->load('gatewayNode');
+                            $responseDevice->setAttribute('is_verified_attached', true);
+                            $responseDevice->setAttribute('attachment_verification_state', 'verified');
+                            $responseDevice->setAttribute('attachment_verification_reason', 'verified-existing-vm-attach');
 
-                        if ($sameUserSession) {
-                            $verification = $this->gatewayService->verifySessionAttachmentState($lockedDevice, $attachedSession);
+                            return response()->json([
+                                'success' => true,
+                                'async' => false,
+                                'message' => 'Device is already attached to this VM',
+                                'device' => new UsbDeviceResource($responseDevice),
+                            ]);
+                        }
 
-                            if ($verification['can_verify'] && ! $verification['verified']) {
-                                $staleAttachedState = true;
+                        if ($verification['can_verify']) {
+                            Log::warning('Detected stale USB attached state for same VM; converting to bound for reattach', [
+                                'device_id' => $lockedDevice->id,
+                                'attached_session_id' => $lockedDevice->attached_session_id,
+                                'target_session_id' => $session->id,
+                                'verification_reason' => $verification['reason'],
+                            ]);
 
-                                Log::warning('Detected stale USB attached state during session attach (active same-user session runtime mismatch)', [
-                                    'device_id' => $lockedDevice->id,
-                                    'stale_attached_session_id' => $lockedDevice->attached_session_id,
-                                    'stale_attached_session_status' => $attachedStatus,
-                                    'verification_reason' => $verification['reason'],
-                                    'target_session_id' => $session->id,
-                                ]);
-                            }
+                            $this->deviceRepository->markBoundForVm($lockedDevice);
+                            $lockedDevice = $lockedDevice->fresh();
                         }
                     }
 
-                    if ($staleAttachedState) {
-                        Log::warning('Detected stale USB attached state during session attach; auto-healing record', [
-                            'device_id' => $lockedDevice->id,
-                            'stale_attached_session_id' => $lockedDevice->attached_session_id,
-                            'stale_attached_session_status' => $attachedStatus,
-                            'target_session_id' => $session->id,
-                        ]);
+                    if ($lockedDevice->isBound() || $lockedDevice->isAvailable()) {
+                        // Same-VM stale state was healed above.
+                    } else {
+                        $attachedSession = $lockedDevice->attachedSession;
+                        $attachedStatus = $attachedSession?->status?->value;
+                        $attachedSessionIsActive = in_array($attachedStatus, ['active', 'expiring'], true);
 
-                        $this->deviceRepository->markDetached($lockedDevice);
-                        $lockedDevice = $lockedDevice->fresh();
+                        // Only auto-heal non-active states when the attached session exists.
+                        // If session cannot be resolved, keep conservative behavior and do not
+                        // silently convert an in-use device into attachable state.
+                        $staleAttachedState = $attachedSession !== null && ! $attachedSessionIsActive;
+
+                        // Even if session looks active in DB, verify runtime truth in VM.
+                        // If verification says it's not really attached, treat as stale.
+                        if (! $staleAttachedState && $attachedSession) {
+                            // For safety, only auto-heal active-session runtime mismatches
+                            // when both sessions belong to the same user.
+                            $sameUserSession = (string) $attachedSession->user_id === (string) $session->user_id;
+
+                            if ($sameUserSession) {
+                                $verification = $this->gatewayService->verifySessionAttachmentState($lockedDevice, $attachedSession);
+
+                                if ($verification['can_verify'] && ! $verification['verified']) {
+                                    $staleAttachedState = true;
+
+                                    Log::warning('Detected stale USB attached state during session attach (active same-user session runtime mismatch)', [
+                                        'device_id' => $lockedDevice->id,
+                                        'stale_attached_session_id' => $lockedDevice->attached_session_id,
+                                        'stale_attached_session_status' => $attachedStatus,
+                                        'verification_reason' => $verification['reason'],
+                                        'target_session_id' => $session->id,
+                                    ]);
+                                }
+                            }
+                        }
+
+                        if ($staleAttachedState) {
+                            Log::warning('Detected stale USB attached state during session attach; auto-healing record', [
+                                'device_id' => $lockedDevice->id,
+                                'stale_attached_session_id' => $lockedDevice->attached_session_id,
+                                'stale_attached_session_status' => $attachedStatus,
+                                'target_session_id' => $session->id,
+                            ]);
+
+                            $this->deviceRepository->markDetached($lockedDevice);
+                            $lockedDevice = $lockedDevice->fresh();
+                        }
                     }
                 }
 

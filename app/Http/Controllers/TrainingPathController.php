@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TrainingPath\UpdateVideoProgressRequest;
+use App\Http\Resources\CertificateResource;
 use App\Http\Resources\TrainingPathResource;
 use App\Http\Resources\TrainingUnitResource;
+use App\Models\Certificate;
 use App\Models\TrainingPath;
 use App\Services\EnrollmentService;
 use App\Services\TrainingPathService;
@@ -106,7 +108,10 @@ class TrainingPathController extends Controller
             abort(404);
         }
 
-        $trainingUnit = $trainingPath->trainingUnits()->where('training_units.id', $trainingUnitId)->first();
+        $trainingUnit = $trainingPath->trainingUnits()
+            ->with('video')
+            ->where('training_units.id', $trainingUnitId)
+            ->first();
 
         if (! $trainingUnit) {
             if ($request->wantsJson()) {
@@ -273,14 +278,25 @@ class TrainingPathController extends Controller
         $user = $request->user();
         $enrollments = $this->enrollmentService->getEnrolledTrainingPaths($user);
 
-        // Attach progress to each enrollment
+        // Attach progress and certificate to each enrollment
         $trainingPathsWithProgress = $enrollments->map(function ($enrollment) use ($user) {
             $trainingPath = $enrollment->trainingPath;
+            $certificate = null;
+
             if ($trainingPath) {
                 // Load modules and trainingUnits for the trainingPath
-                $trainingPath->load(['modules.trainingUnits']);
+                $trainingPath->load(['modules.trainingUnits.video']);
                 $progress = $this->enrollmentService->getTrainingPathProgress($user, $trainingPath);
                 $completedTrainingUnitIds = $this->enrollmentService->getCompletedTrainingUnitIds($user, $trainingPath->id);
+
+                // Try to find certificate
+                $certificateModel = Certificate::where('user_id', $user->id)
+                    ->where('training_path_id', $trainingPath->id)
+                    ->first();
+
+                if ($certificateModel) {
+                    $certificate = new CertificateResource($certificateModel);
+                }
             } else {
                 $progress = ['completed' => 0, 'total' => 0, 'percentage' => 0];
                 $completedTrainingUnitIds = [];
@@ -291,6 +307,7 @@ class TrainingPathController extends Controller
                 'trainingPath' => $trainingPath ? new TrainingPathResource($trainingPath) : null,
                 'progress' => $progress,
                 'completedTrainingUnitIds' => $completedTrainingUnitIds,
+                'certificate' => $certificate,
             ];
         })->filter(fn ($item) => $item['trainingPath'] !== null);
 

@@ -12,8 +12,8 @@ use App\Repositories\TrainingPathModuleRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitRepository;
 use App\Repositories\TrainingUnitVMAssignmentRepository;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -173,7 +173,7 @@ class TrainingPathService
             $trainingPath->update(['has_virtual_machine' => true]);
         }
 
-        return $trainingPath->fresh(['modules.trainingUnits']);
+        return $trainingPath->fresh(['modules.trainingUnits.video']);
     }
 
     /**
@@ -210,7 +210,7 @@ class TrainingPathService
 
         Log::info('TrainingPath updated', ['training_path_id' => $trainingPath->id]);
 
-        return $trainingPath->fresh(['modules.trainingUnits']);
+        return $trainingPath->fresh(['modules.trainingUnits.video']);
     }
 
     /**

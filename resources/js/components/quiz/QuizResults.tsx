@@ -3,6 +3,7 @@
  * Displays detailed quiz attempt results.
  */
 import { CheckCircle2, Clock, Target, Trophy, XCircle } from 'lucide-react';
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -13,7 +14,34 @@ interface QuizResultsProps {
     results?: QuizResult[];
 }
 export function QuizResults({ quiz, attempt, results }: QuizResultsProps) {
-    const questions = quiz.questions || [];
+    const questions = useMemo(() => quiz.questions || [], [quiz.questions]);
+
+    // Use either the provided results array or reconstruct from attempt answers
+    const displayResults = useMemo(() => {
+        if (results && results.length > 0) return results;
+
+        if (attempt.answers && attempt.answers.length > 0) {
+            return attempt.answers.map((answer) => {
+                const question = questions.find(
+                    (q) => q.id === answer.question_id,
+                );
+                const correctOption = question?.options?.find(
+                    (o) => o.is_correct,
+                );
+
+                return {
+                    question_id: answer.question_id,
+                    is_correct: answer.is_correct,
+                    points_earned: answer.points_earned,
+                    correct_option_id: correctOption?.id || null,
+                    explanation: question?.explanation || null,
+                } as QuizResult;
+            });
+        }
+
+        return [];
+    }, [results, attempt.answers, questions]);
+
     return (
         <div className="space-y-6">
             {/* Score Card */}
@@ -79,100 +107,147 @@ export function QuizResults({ quiz, attempt, results }: QuizResultsProps) {
                 </CardContent>
             </Card>
             {/* Detailed Results */}
-            {quiz.show_correct_answers && results && results.length > 0 && (
-                <Card className="shadow-card">
-                    <CardHeader>
-                        <CardTitle className="font-heading text-lg">
-                            Question Review
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {results.map((result, index) => {
-                            const question = questions.find(
-                                (q) => q.id === result.question_id,
-                            );
-                            if (!question) return null;
-                            const selectedOption = question.options?.find(
-                                (o) =>
-                                    o.id ===
-                                    attempt.answers?.find(
-                                        (a) => a.question_id === question.id,
-                                    )?.selected_option_id,
-                            );
-                            const correctOption = question.options?.find(
-                                (o) => o.id === result.correct_option_id,
-                            );
-                            return (
-                                <div
-                                    key={result.question_id}
-                                    className={`rounded-lg border p-4 ${
-                                        result.is_correct
-                                            ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                                            : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                                    }`}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        {result.is_correct ? (
-                                            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-                                        ) : (
-                                            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-                                        )}
-                                        <div className="min-w-0 flex-1">
-                                            <div className="mb-1 flex items-center gap-2">
-                                                <span className="text-sm font-medium">
-                                                    Q{index + 1}
-                                                </span>
-                                                <Badge
-                                                    variant="outline"
-                                                    className="text-xs"
-                                                >
-                                                    {result.points_earned} /{' '}
-                                                    {question.points} pts
-                                                </Badge>
-                                            </div>
-                                            <p className="mb-2 text-sm font-medium">
-                                                {question.question}
-                                            </p>
-                                            {/* Show answer details for multiple choice */}
-                                            {question.type !==
-                                                'short_answer' && (
+            {quiz.show_correct_answers &&
+                displayResults &&
+                displayResults.length > 0 && (
+                    <Card className="shadow-card">
+                        <CardHeader>
+                            <CardTitle className="font-heading text-lg">
+                                Question Review
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {displayResults.map((result, index) => {
+                                const question = questions.find(
+                                    (q) => q.id === result.question_id,
+                                );
+                                if (!question) return null;
+                                const selectedOption = question.options?.find(
+                                    (o) =>
+                                        o.id ===
+                                        attempt.answers?.find(
+                                            (a) =>
+                                                a.question_id === question.id,
+                                        )?.selected_option_id,
+                                );
+                                const correctOption = question.options?.find(
+                                    (o) => o.id === result.correct_option_id,
+                                );
+                                return (
+                                    <div
+                                        key={result.question_id}
+                                        className={`rounded-lg border p-4 ${
+                                            result.is_correct
+                                                ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                                                : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            {result.is_correct ? (
+                                                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                                            ) : (
+                                                <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="mb-1 flex items-center gap-2">
+                                                    <span className="text-sm font-medium">
+                                                        Q{index + 1}
+                                                    </span>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-xs"
+                                                    >
+                                                        {result.points_earned} /{' '}
+                                                        {question.points} pts
+                                                    </Badge>
+                                                </div>
+                                                <p className="mb-2 text-sm font-medium">
+                                                    {question.question}
+                                                </p>
+                                                {/* Show answer details */}
                                                 <div className="space-y-1 text-sm">
-                                                    {selectedOption &&
-                                                        !result.is_correct && (
-                                                            <p className="text-red-600 dark:text-red-400">
-                                                                Your answer:{' '}
-                                                                {
-                                                                    selectedOption.option_text
-                                                                }
-                                                            </p>
-                                                        )}
-                                                    {correctOption && (
-                                                        <p className="text-green-600 dark:text-green-400">
-                                                            Correct answer:{' '}
-                                                            {
-                                                                correctOption.option_text
-                                                            }
-                                                        </p>
+                                                    {question.type ===
+                                                    'short_answer' ? (
+                                                        <>
+                                                            {attempt.answers?.find(
+                                                                (a) =>
+                                                                    a.question_id ===
+                                                                    question.id,
+                                                            )?.text_answer &&
+                                                                !result.is_correct && (
+                                                                    <p className="text-red-600 dark:text-red-400">
+                                                                        Your
+                                                                        answer:{' '}
+                                                                        {
+                                                                            attempt.answers?.find(
+                                                                                (
+                                                                                    a,
+                                                                                ) =>
+                                                                                    a.question_id ===
+                                                                                    question.id,
+                                                                            )
+                                                                                ?.text_answer
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            {result.correct_option_id && (
+                                                                <p className="text-green-600 dark:text-green-400">
+                                                                    Correct
+                                                                    answer:{' '}
+                                                                    {
+                                                                        question.options?.find(
+                                                                            (
+                                                                                o,
+                                                                            ) =>
+                                                                                o.id ===
+                                                                                result.correct_option_id,
+                                                                        )
+                                                                            ?.option_text
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {selectedOption &&
+                                                                !result.is_correct && (
+                                                                    <p className="text-red-600 dark:text-red-400">
+                                                                        Your
+                                                                        answer:{' '}
+                                                                        {
+                                                                            selectedOption.option_text
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            {correctOption && (
+                                                                <p className="text-green-600 dark:text-green-400">
+                                                                    Correct
+                                                                    answer:{' '}
+                                                                    {
+                                                                        correctOption.option_text
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
-                                            )}
-                                            {/* Explanation */}
-                                            {result.explanation && (
-                                                <div className="mt-2 rounded bg-muted/50 p-2 text-sm text-muted-foreground">
-                                                    <strong>
-                                                        Explanation:
-                                                    </strong>{' '}
-                                                    {result.explanation}
-                                                </div>
-                                            )}
+                                                {/* Explanation */}
+                                                {result.explanation && (
+                                                    <div className="mt-2 rounded bg-muted/50 p-2 text-sm text-muted-foreground">
+                                                        <strong>
+                                                            Explanation:
+                                                        </strong>{' '}
+                                                        {result.explanation}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </CardContent>
-                </Card>
-            )}
+                                );
+                            })}
+                        </CardContent>
+                    </Card>
+                )}
         </div>
     );
 }

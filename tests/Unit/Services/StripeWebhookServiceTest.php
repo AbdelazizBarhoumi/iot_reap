@@ -7,9 +7,11 @@ use App\Models\Payment;
 use App\Models\TrainingPath;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
+use App\Services\EnrollmentService;
 use App\Services\StripeWebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
+use Mockery;
 use Stripe\Checkout\Session;
 use Stripe\Event;
 use Stripe\Stripe;
@@ -42,7 +44,7 @@ class StripeWebhookServiceTest extends TestCase
         parent::setUp();
 
         $this->paymentRepository = app(PaymentRepository::class);
-        $this->service = new StripeWebhookService($this->paymentRepository);
+        $this->service = app(StripeWebhookService::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -355,6 +357,10 @@ class StripeWebhookServiceTest extends TestCase
     public function test_logs_refund_details(): void
     {
         Log::shouldReceive('info')
+            ->withArgs(fn ($message) => str_contains($message, 'User unenrolled'))
+            ->zeroOrMoreTimes();
+
+        Log::shouldReceive('info')
             ->once()
             ->withArgs(function ($message, $context) {
                 return str_contains($message, 'Payment refunded')
@@ -491,6 +497,47 @@ class StripeWebhookServiceTest extends TestCase
         $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath1->id)->exists());
         $this->assertTrue($user->enrolledTrainingPaths()->where('training_path_id', $trainingPath2->id)->exists());
         $this->assertEquals(2, $user->enrolledTrainingPaths()->count());
+    }
+
+    public function test_does_not_mark_payment_completed_if_enrollment_fails(): void
+    {
+        $user = User::factory()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
+
+        $payment = Payment::factory()
+            ->forUser($user)
+            ->forTrainingPath($trainingPath)
+            ->create([
+                'stripe_session_id' => 'cs_test_enrollment_failure',
+                'status' => PaymentStatus::PENDING,
+                'stripe_payment_intent_id' => null,
+            ]);
+
+        $event = $this->createStripeEvent('checkout.session.completed', [
+            'id' => 'cs_test_enrollment_failure',
+            'payment_intent' => 'pi_test_enrollment_failure',
+        ]);
+
+        $enrollmentService = Mockery::mock(EnrollmentService::class);
+        $enrollmentService
+            ->shouldReceive('enroll')
+            ->once()
+            ->andThrow(new \DomainException('Enrollment failed'));
+
+        $this->app->instance(EnrollmentService::class, $enrollmentService);
+        $service = app(StripeWebhookService::class);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Enrollment failed');
+
+        try {
+            $service->handleEvent($event);
+        } finally {
+            $payment->refresh();
+            $this->assertEquals(PaymentStatus::PENDING, $payment->status);
+            $this->assertNull($payment->paid_at);
+            $this->assertNull($payment->stripe_payment_intent_id);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

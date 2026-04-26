@@ -122,7 +122,16 @@ class UsbDeviceRepository
      */
     public function markBound(UsbDevice $device): bool
     {
-        return $device->update(['status' => UsbDeviceStatus::BOUND]);
+        return $device->update([
+            'status' => UsbDeviceStatus::BOUND,
+            'attached_to' => null,
+            'attached_session_id' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
+            'attached_vm_ip' => null,
+            'usbip_port' => null,
+        ]);
     }
 
     /**
@@ -134,6 +143,9 @@ class UsbDeviceRepository
             'status' => UsbDeviceStatus::AVAILABLE,
             'attached_to' => null,
             'attached_session_id' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
             'attached_vm_ip' => null,
             'usbip_port' => null,
         ]);
@@ -142,12 +154,23 @@ class UsbDeviceRepository
     /**
      * Mark device as attached to a VM.
      */
-    public function markAttached(UsbDevice $device, string $vmName, ?string $sessionId = null, ?string $vmIp = null, ?string $port = null): bool
-    {
+    public function markAttached(
+        UsbDevice $device,
+        string $vmName,
+        ?string $sessionId = null,
+        ?string $vmIp = null,
+        ?string $port = null,
+        ?int $vmid = null,
+        ?string $nodeName = null,
+        ?int $serverId = null
+    ): bool {
         return $device->update([
             'status' => UsbDeviceStatus::ATTACHED,
             'attached_to' => $vmName,
             'attached_session_id' => $sessionId,
+            'attached_vmid' => $vmid,
+            'attached_node' => $nodeName,
+            'attached_server_id' => $serverId,
             'attached_vm_ip' => $vmIp,
             'usbip_port' => $port,
         ]);
@@ -162,8 +185,38 @@ class UsbDeviceRepository
             'status' => UsbDeviceStatus::BOUND,
             'attached_to' => null,
             'attached_session_id' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
             'attached_vm_ip' => null,
             'usbip_port' => null,
+        ]);
+    }
+
+    /**
+     * Mark device as VM-owned but not currently confirmed in-guest.
+     *
+     * This preserves the VM ownership context so the device can be reattached
+     * automatically after a reboot or when a new session opens on the same VM.
+     */
+    public function markBoundForVm(UsbDevice $device): bool
+    {
+        return $device->update([
+            'status' => UsbDeviceStatus::BOUND,
+            'attached_to' => null,
+            'attached_session_id' => null,
+            'attached_vm_ip' => null,
+            'usbip_port' => null,
+        ]);
+    }
+
+    /**
+     * Clear only the session association while keeping VM ownership context.
+     */
+    public function clearSessionAttachment(UsbDevice $device): bool
+    {
+        return $device->update([
+            'attached_session_id' => null,
         ]);
     }
 

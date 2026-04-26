@@ -358,11 +358,13 @@ class UsbDeviceQueueService
             ->where(function ($query) {
                 // Include all bound devices (ready for attach)
                 $query->where('status', 'bound')
-                    // Include attached devices ONLY if they have a session_id
-                    // (excludes infra-attached devices which have status=attached but session_id=null)
+                    // Include attached devices when they belong to a session or VM.
                     ->orWhere(function ($q) {
                         $q->where('status', 'attached')
-                            ->whereNotNull('attached_session_id');
+                            ->where(function ($attached) {
+                                $attached->whereNotNull('attached_session_id')
+                                    ->orWhereNotNull('attached_vmid');
+                            });
                     });
             })
             ->get()
@@ -378,7 +380,8 @@ class UsbDeviceQueueService
                 return [
                     'device' => $device,
                     'can_attach' => $device->isBound() && $canAttach['can_attach'],
-                    'is_attached_to_me' => $device->attached_session_id === $session->id,
+                    'is_attached_to_me' => $device->attached_session_id === $session->id
+                        || $device->isAttachedToSessionVm($session),
                     'queue_position' => $queuePosition,
                     'queue_length' => $device->queueEntries->count(),
                     'attachment_reason' => $canAttach['reason'] ?? null,

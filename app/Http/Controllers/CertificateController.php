@@ -19,12 +19,18 @@ class CertificateController extends Controller
     /**
      * Get user's certificates.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|InertiaResponse
     {
         $certificates = $this->certificateService->getUserCertificates($request->user());
 
-        return response()->json([
-            'data' => CertificateResource::collection($certificates),
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => CertificateResource::collection($certificates),
+            ]);
+        }
+
+        return Inertia::render('certificates/index', [
+            'certificates' => CertificateResource::collection($certificates),
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TrainingPath;
 use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingUnit;
 use App\Models\TrainingUnitProgress;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -24,6 +25,7 @@ class EnrollmentService
         private readonly TrainingPathRepository $trainingPathRepository,
         private readonly TrainingUnitProgressRepository $progressRepository,
         private readonly PaymentRepository $paymentRepository,
+        private readonly CertificateService $certificateService,
     ) {}
 
     /**
@@ -117,6 +119,8 @@ class EnrollmentService
             'training_unit_id' => $trainingUnitId,
         ]);
 
+        $this->checkCompletionAndIssueCertificate($user, $trainingUnitId);
+
         return $progress;
     }
 
@@ -152,6 +156,10 @@ class EnrollmentService
             'completed' => $progress->completed,
         ]);
 
+        if ($progress->completed) {
+            $this->checkCompletionAndIssueCertificate($user, $trainingUnitId);
+        }
+
         return $progress;
     }
 
@@ -167,6 +175,10 @@ class EnrollmentService
             'training_unit_id' => $trainingUnitId,
             'completed' => $progress->completed,
         ]);
+
+        if ($progress->completed) {
+            $this->checkCompletionAndIssueCertificate($user, $trainingUnitId);
+        }
 
         return $progress;
     }
@@ -185,7 +197,39 @@ class EnrollmentService
             'completed' => $progress->completed,
         ]);
 
+        if ($progress->completed) {
+            $this->checkCompletionAndIssueCertificate($user, $trainingUnitId);
+        }
+
         return $progress;
+    }
+
+    /**
+     * Check if entire training path is completed to issue certificate.
+     */
+    private function checkCompletionAndIssueCertificate(User $user, int $trainingUnitId): void
+    {
+        $trainingUnit = TrainingUnit::with('module')->find($trainingUnitId);
+        if ($trainingUnit && $trainingUnit->module) {
+            $trainingPathId = $trainingUnit->module->training_path_id;
+            $trainingPath = $this->trainingPathRepository->findById($trainingPathId);
+
+            if ($trainingPath && $this->certificateService->canIssueCertificate($user, $trainingPath)) {
+                try {
+                    $this->certificateService->issueCertificate($user, $trainingPathId);
+                    Log::info('Certificate automatically issued upon training path completion', [
+                        'user_id' => $user->id,
+                        'training_path_id' => $trainingPathId,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to automatically issue certificate', [
+                        'user_id' => $user->id,
+                        'training_path_id' => $trainingPathId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
     }
 
     /**

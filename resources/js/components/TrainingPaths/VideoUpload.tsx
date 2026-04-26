@@ -15,7 +15,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -46,6 +46,26 @@ const formatDuration = (seconds: number): string => {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
+
+const getAcceptedExtensions = (formats: string[]): string[] =>
+    formats
+        .map((format) => {
+            if (format.startsWith('.')) {
+                return format.toLowerCase();
+            }
+
+            const subtypeMap: Record<string, string> = {
+                'video/mp4': '.mp4',
+                'video/webm': '.webm',
+                'video/quicktime': '.mov',
+                'video/x-msvideo': '.avi',
+                'video/x-m4v': '.m4v',
+            };
+
+            return subtypeMap[format.toLowerCase()] || '';
+        })
+        .filter(Boolean);
+
 export default function VideoUpload({
     onUpload,
     onRemove,
@@ -56,6 +76,12 @@ export default function VideoUpload({
         'video/webm',
         'video/quicktime',
         'video/x-msvideo',
+        'video/x-m4v',
+        '.mp4',
+        '.webm',
+        '.mov',
+        '.avi',
+        '.m4v',
     ],
     className = '',
 }: VideoUploadProps) {
@@ -68,10 +94,74 @@ export default function VideoUpload({
         previewUrl: value,
     });
     const [videoDuration, setVideoDuration] = useState<number | null>(null);
+    const [prevValue, setPrevValue] = useState(value);
+    const currentPreviewUrlRef = useRef<string | undefined>(
+        uploadState.previewUrl,
+    );
+
+    // Track current preview URL for cleanup
+    useEffect(() => {
+        currentPreviewUrlRef.current = uploadState.previewUrl;
+    }, [uploadState.previewUrl]);
+
+    if (value !== prevValue) {
+        setPrevValue(value);
+        setUploadState((previous) => {
+            const nextPreviewUrl = value || undefined;
+
+            if (nextPreviewUrl) {
+                if (
+                    previous.status === 'complete' &&
+                    previous.previewUrl === nextPreviewUrl
+                ) {
+                    return previous;
+                }
+
+                return {
+                    status: 'complete',
+                    progress: 100,
+                    previewUrl: nextPreviewUrl,
+                    file: previous.file,
+                };
+            }
+
+            return {
+                status: 'idle',
+                progress: 0,
+            };
+        });
+    }
+
+    useEffect(() => {
+        if (!value && fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
+        // Cleanup blob URLs if they were created locally but the value changed/was cleared
+        const currentUrl = currentPreviewUrlRef.current;
+        if (
+            currentUrl &&
+            currentUrl.startsWith('blob:') &&
+            currentUrl !== value
+        ) {
+            URL.revokeObjectURL(currentUrl);
+        }
+    }, [value]);
+
     const validateFile = useCallback(
         (file: File): string | null => {
-            if (!acceptedFormats.includes(file.type)) {
-                return `Invalid file type. Accepted formats: ${acceptedFormats.map((f) => f.split('/')[1]).join(', ')}`;
+            const acceptedExtensions = getAcceptedExtensions(acceptedFormats);
+            const fileExtension = file.name.includes('.')
+                ? `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`
+                : '';
+            const matchesMime =
+                file.type !== '' && acceptedFormats.includes(file.type);
+            const matchesExtension =
+                fileExtension !== '' &&
+                acceptedExtensions.includes(fileExtension);
+
+            if (!matchesMime && !matchesExtension) {
+                return 'Invalid file type. Accepted formats: mp4, webm, mov, avi, m4v';
             }
             const maxSizeBytes = maxSizeMB * 1024 * 1024;
             if (file.size > maxSizeBytes) {

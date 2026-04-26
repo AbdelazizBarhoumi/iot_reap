@@ -72,6 +72,41 @@ device_has_video_capture() {
     printf '%s\n' "$device_info" | grep -q "Video Capture"
 }
 
+detect_camera_format() {
+    local device="$1"
+    local width="$2"
+    local height="$3"
+    local framerate="$4"
+
+    local formats=("h264" "mjpeg" "yuyv422" "jpeg" "yuv420p" "rgb24")
+
+    for fmt in "${formats[@]}"; do
+        if timeout 3 ffmpeg -f v4l2 -input_format "$fmt" \
+            -framerate "$framerate" \
+            -video_size "${width}x${height}" \
+            -i "$device" \
+            -t 1 \
+            -f null - \
+            &>/dev/null 2>&1; then
+            echo "$fmt"
+            return 0
+        fi
+    done
+
+    if timeout 3 ffmpeg -f v4l2 \
+        -framerate "$framerate" \
+        -video_size "${width}x${height}" \
+        -i "$device" \
+        -t 1 \
+        -f null - \
+        &>/dev/null 2>&1; then
+        echo ""
+        return 0
+    fi
+
+    return 1
+}
+
 if [ -d /etc/pve ] && [ -z "${ALLOW_PROXMOX_HOST_CAMERA_STREAMING:-}" ]; then
     error "Run this script inside the gateway container, not on the Proxmox host. Use bash/complete-camera-setup.sh from the host."
 fi
@@ -156,6 +191,63 @@ list_cameras() {
     done
 }
 
+device_usb_busid() {
+    local device_path="$1"
+    local sysfs_interface="/sys/class/video4linux/$(basename "$device_path")/device"
+
+    if [ ! -e "$sysfs_interface" ]; then
+        return 1
+    fi
+
+    local interface_path
+    interface_path="$(readlink -f "$sysfs_interface" 2>/dev/null || true)"
+
+    if [ -z "$interface_path" ]; then
+        return 1
+    fi
+
+    local interface_name
+    interface_name="$(basename "$interface_path")"
+
+    if [ -z "$interface_name" ]; then
+        return 1
+    fi
+
+    printf '%s\n' "${interface_name%%:*}"
+}
+
+extract_service_device_path() {
+    local service_file="$1"
+
+    awk '
+        / -i / {
+            for (i = 1; i <= NF; i++) {
+                if ($i == "-i" && (i + 1) <= NF) {
+                    print $(i + 1)
+                    exit
+                }
+            }
+        }
+    ' "$service_file" 2>/dev/null
+}
+
+device_is_usable_capture() {
+    local device_path="$1"
+
+    if [ ! -e "$device_path" ]; then
+        return 1
+    fi
+
+    local device_info
+    device_info="$(v4l2-ctl --device="$device_path" --info 2>/dev/null || true)"
+
+    if [ -z "$device_info" ]; then
+        return 1
+    fi
+
+    device_has_video_capture "$device_info"
+}
+
 # Find the /dev/video device for a given VID:PID
 find_device_by_vidpid() {
     local vid="$1"
@@ -188,6 +280,77 @@ find_device_by_vidpid() {
     return 1
 }
 
+stop_conflicting_streams() {
+    local stream_key="$1"
+    local device_path="$2"
+    local target_busid=""
+
+    target_busid="$(device_usb_busid "$device_path" 2>/dev/null || true)"
+
+    for service_file in /etc/systemd/system/${SERVICE_PREFIX}-*.service; do
+        if [ ! -f "$service_file" ]; then
+            continue
+        fi
+
+        local service_name
+        service_name="$(basename "$service_file" .service)"
+        local other_stream_key="${service_name#${SERVICE_PREFIX}-}"
+
+        if [ "$other_stream_key" = "api" ] || [ "$other_stream_key" = "$stream_key" ]; then
+            continue
+        fi
+
+        local other_device_path=""
+        other_device_path="$(extract_service_device_path "$service_file")"
+
+        if [ -z "$other_device_path" ]; then
+            continue
+        fi
+
+        local should_stop=0
+
+        if [ "$other_device_path" = "$device_path" ]; then
+            should_stop=1
+        elif [ -n "$target_busid" ]; then
+            local other_busid=""
+            other_busid="$(device_usb_busid "$other_device_path" 2>/dev/null || true)"
+
+            if [ -n "$other_busid" ] && [ "$other_busid" = "$target_busid" ]; then
+                should_stop=1
+            fi
+        fi
+
+        if [ "$should_stop" -eq 1 ]; then
+            log "Stopping conflicting stream ${other_stream_key} (${other_device_path}) before starting ${stream_key}"
+            stop_stream "$other_stream_key"
+        fi
+    done
+}
+
+cleanup_invalid_stream_services() {
+    for service_file in /etc/systemd/system/${SERVICE_PREFIX}-*.service; do
+        if [ ! -f "$service_file" ]; then
+            continue
+        fi
+
+        local service_name
+        service_name="$(basename "$service_file" .service)"
+        local other_stream_key="${service_name#${SERVICE_PREFIX}-}"
+
+        if [ "$other_stream_key" = "api" ]; then
+            continue
+        fi
+
+        local other_device_path=""
+        other_device_path="$(extract_service_device_path "$service_file")"
+
+        if [ -z "$other_device_path" ] || ! device_is_usable_capture "$other_device_path"; then
+            log "Removing stale or broken stream ${other_stream_key} (${other_device_path:-unknown device})"
+            stop_stream "$other_stream_key"
+        fi
+    done
+}
+
 # ─── Stream Management ─────────────────────────────────────────────────────────
 
 # Generate systemd service for a camera stream
@@ -197,10 +360,16 @@ generate_service() {
     local width="$3"
     local height="$4"
     local framerate="$5"
+    local input_format="${6:-}"
     
     local service_name="${SERVICE_PREFIX}-${stream_key}"
     local service_file="/etc/systemd/system/${service_name}.service"
     local rtsp_url="rtsp://${MEDIAMTX_HOST}:${MEDIAMTX_RTSP_PORT}/${stream_key}"
+
+    local input_format_flag=""
+    if [ -n "$input_format" ]; then
+        input_format_flag="-input_format ${input_format}"
+    fi
     
     # Calculate bitrate based on resolution (kbps) — balances quality vs USB/IP bandwidth
     local bitrate="1000k"
@@ -221,6 +390,34 @@ generate_service() {
     # Keyframe interval = framerate (1 keyframe per second for low-latency seeking)
     local gop_size=${framerate}
 
+    local input_format_normalized="${input_format,,}"
+
+    if [ "$input_format_normalized" = "h264" ]; then
+    cat > "$service_file" << EOF
+[Unit]
+Description=IoT-REAP Camera Stream: ${stream_key}
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ffmpeg \
+  -fflags nobuffer -flags low_delay \
+  -f v4l2 -input_format h264 \
+  -framerate ${framerate} -video_size ${width}x${height} \
+  -i ${device_path} \
+  -c:v copy \
+  -f rtsp -rtsp_transport tcp \
+  ${rtsp_url}
+Restart=always
+RestartSec=5
+StandardOutput=append:${LOG_DIR}/${stream_key}.log
+StandardError=append:${LOG_DIR}/${stream_key}.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    else
     cat > "$service_file" << EOF
 [Unit]
 Description=IoT-REAP Camera Stream: ${stream_key}
@@ -231,7 +428,7 @@ Wants=network.target
 Type=simple
 ExecStart=/usr/bin/ffmpeg \\
   -fflags nobuffer -flags low_delay \\
-  -f v4l2 -input_format mjpeg \\
+    -f v4l2 ${input_format_flag} \
   -framerate ${framerate} -video_size ${width}x${height} \\
   -i ${device_path} \\
   -c:v libx264 -preset ultrafast -tune zerolatency \\
@@ -248,6 +445,7 @@ StandardError=append:${LOG_DIR}/${stream_key}.log
 [Install]
 WantedBy=multi-user.target
 EOF
+    fi
 
     log "Generated service: ${service_name}"
 }
@@ -259,6 +457,7 @@ start_stream() {
     local width="${3:-$DEFAULT_WIDTH}"
     local height="${4:-$DEFAULT_HEIGHT}"
     local framerate="${5:-$DEFAULT_FRAMERATE}"
+    local input_format="${6:-auto}"
     
     local service_name="${SERVICE_PREFIX}-${stream_key}"
 
@@ -272,9 +471,16 @@ start_stream() {
     if [ ! -e "$device_path" ]; then
         error "Device not found: $device_path"
     fi
+
+    if [ -z "$input_format" ] || [ "$input_format" = "auto" ]; then
+        input_format="$(detect_camera_format "$device_path" "$width" "$height" "$framerate" || true)"
+    fi
+
+    cleanup_invalid_stream_services
+    stop_conflicting_streams "$stream_key" "$device_path"
     
     # Generate and start service
-    generate_service "$stream_key" "$device_path" "$width" "$height" "$framerate"
+    generate_service "$stream_key" "$device_path" "$width" "$height" "$framerate" "$input_format"
     
     systemctl daemon-reload
     systemctl reset-failed "${service_name}.service" 2>/dev/null || true
@@ -447,35 +653,260 @@ def collect_camera_devices() -> list[dict]:
 
     return devices
 
+def device_index(device_path: str | None) -> int | None:
+    if not device_path:
+        return None
+
+    match = re.search(r'/dev/video(\d+)$', str(device_path))
+    if match is None:
+        return None
+
+    return int(match.group(1))
+
+def device_supports_format(device: dict, format_name: str) -> bool:
+    formats = (device.get('formats') or '').upper()
+    return format_name.upper() in formats
+
+def supported_formats(device: dict) -> list[str]:
+    known_formats = ['MJPG', 'H264', 'YUYV', 'JPEG', 'YUV420', 'RGB3']
+    return [format_name for format_name in known_formats if device_supports_format(device, format_name)]
+
+def shell_input_format(format_name: str | None) -> str | None:
+    if format_name is None:
+        return None
+
+    aliases = {
+        'MJPG': 'mjpeg',
+        'JPEG': 'jpeg',
+        'H264': 'h264',
+        'YUYV': 'yuyv422',
+        'YUV420': 'yuv420p',
+        'RGB3': 'rgb24',
+    }
+
+    return aliases.get(format_name)
+
+def normalize_input_format(format_name: str | None) -> str | None:
+    if format_name is None:
+        return None
+
+    normalized = str(format_name).strip().lower()
+
+    if normalized in ('', 'auto'):
+        return None
+
+    aliases = {
+        'mjpg': 'MJPG',
+        'mjpeg': 'MJPG',
+        'jpeg': 'JPEG',
+        'h264': 'H264',
+        'yuyv': 'YUYV',
+        'yuyv422': 'YUYV',
+        'yuv420p': 'YUV420',
+        'rgb24': 'RGB3',
+    }
+
+    return aliases.get(normalized, normalized.upper())
+
+def choose_fallback_input_format(device: dict) -> str | None:
+    for format_name in ['MJPG', 'H264', 'YUYV', 'JPEG', 'YUV420', 'RGB3']:
+        if device_supports_format(device, format_name):
+            return shell_input_format(format_name)
+
+    return None
+
+def candidate_input_formats(device: dict, requested_format: str | None) -> list[str | None]:
+    candidates: list[str | None] = []
+
+    if requested_format and device_supports_format(device, requested_format):
+        candidates.append(shell_input_format(requested_format))
+
+    fallback = choose_fallback_input_format(device)
+    if fallback not in candidates:
+        candidates.append(fallback)
+
+    if None not in candidates:
+        candidates.append(None)
+
+    return candidates
+
+def probe_device_stream(
+    device_path: str,
+    width: int,
+    height: int,
+    framerate: int,
+    input_format: str | None,
+) -> bool:
+    command = [
+        'timeout', '4', 'ffmpeg',
+        '-f', 'v4l2',
+    ]
+
+    if input_format:
+        command.extend(['-input_format', input_format])
+
+    command.extend([
+        '-framerate', str(framerate),
+        '-video_size', f'{width}x{height}',
+        '-i', device_path,
+        '-t', '1',
+        '-f', 'null',
+        '-',
+    ])
+
+    result = subprocess.run(command, capture_output=True, text=True)
+    return result.returncode == 0
+
+def nearest_free_video_alias_path(
+    requested_device_path: str | None,
+    devices: list[dict],
+) -> str | None:
+    requested_index = device_index(requested_device_path)
+    if requested_index is None:
+        return None
+
+    used_indices = {
+        index
+        for index in (
+            device_index(device.get('device_path') or device.get('device'))
+            for device in devices
+        )
+        if index is not None
+    }
+
+    max_index = max(used_indices | {requested_index}) + 1
+    search_order = []
+    for distance in range(0, max_index + 2):
+        lower = requested_index - distance
+        upper = requested_index + distance
+        if lower >= 0:
+            search_order.append(lower)
+        if upper != lower:
+            search_order.append(upper)
+
+    seen = set()
+    for index in search_order:
+        if index in seen:
+            continue
+        seen.add(index)
+
+        candidate_path = f'/dev/video{index}'
+        if os.path.lexists(candidate_path):
+            if os.path.islink(candidate_path):
+                target = os.path.realpath(candidate_path)
+                if not os.path.exists(target):
+                    os.unlink(candidate_path)
+                    return candidate_path
+            continue
+
+        return candidate_path
+
+    return None
+
+def ensure_recovered_video_alias(
+    requested_device_path: str | None,
+    actual_device_path: str,
+    devices: list[dict],
+) -> str:
+    if not requested_device_path or requested_device_path == actual_device_path:
+        return actual_device_path
+
+    alias_path = nearest_free_video_alias_path(requested_device_path, devices)
+    if alias_path is None:
+        return actual_device_path
+
+    if os.path.lexists(alias_path):
+        if os.path.islink(alias_path):
+            target = os.path.realpath(alias_path)
+            if target != actual_device_path:
+                os.unlink(alias_path)
+            else:
+                return alias_path
+        else:
+            return actual_device_path
+
+    os.symlink(actual_device_path, alias_path)
+    return alias_path
+
+def choose_matching_device(
+    devices: list[dict],
+    requested_device_path: str | None,
+    requested_format: str | None,
+    width: int,
+    height: int,
+    framerate: int,
+) -> dict | None:
+    if len(devices) == 0:
+        return None
+
+    requested_index = device_index(requested_device_path)
+
+    def sort_key(device: dict) -> tuple[int, int, int, int, str]:
+        candidate_index = device_index(device.get('device_path'))
+        supports_requested = 0 if requested_format and device_supports_format(device, requested_format) else 1
+        has_known_formats = 0 if supported_formats(device) else 1
+        distance = (
+            abs(candidate_index - requested_index)
+            if requested_index is not None and candidate_index is not None
+            else 10_000
+        )
+        numeric_index = candidate_index if candidate_index is not None else 10_000
+        path = str(device.get('device_path') or device.get('device') or '')
+
+        return (supports_requested, has_known_formats, distance, numeric_index, path)
+
+    for candidate in sorted(devices, key=sort_key):
+        selected = candidate.copy()
+        device_path = str(selected.get('device_path') or selected.get('device') or '')
+
+        for input_format in candidate_input_formats(selected, requested_format):
+            if probe_device_stream(device_path, width, height, framerate, input_format):
+                selected['resolved_input_format'] = input_format
+                selected['actual_device_path'] = device_path
+                selected['device_path'] = ensure_recovered_video_alias(
+                    requested_device_path,
+                    device_path,
+                    devices,
+                )
+                return selected
+
+    return None
+
 def resolve_camera_device(body: dict) -> tuple[dict | None, str | None]:
     requested_device_path = body.get('device_path')
     usb_busid = body.get('usb_busid')
     vendor_id = str(body.get('vendor_id', '')).lower() or None
     product_id = str(body.get('product_id', '')).lower() or None
+    requested_format = normalize_input_format(body.get('input_format'))
+    width = int(body.get('width', 640) or 640)
+    height = int(body.get('height', 480) or 480)
+    framerate = int(body.get('framerate', 15) or 15)
     devices = collect_camera_devices()
-
-    if requested_device_path:
-        requested_match = next((device for device in devices if device['device_path'] == requested_device_path), None)
-        if requested_match is not None:
-            matches_bus = usb_busid is None or requested_match.get('usb_busid') == usb_busid
-            matches_vid_pid = (
-                vendor_id is None
-                or product_id is None
-                or (
-                    requested_match.get('vendor_id') == vendor_id
-                    and requested_match.get('product_id') == product_id
-                )
-            )
-
-            if matches_bus and matches_vid_pid:
-                return requested_match, None
 
     if usb_busid:
         bus_matches = [device for device in devices if device.get('usb_busid') == usb_busid]
-        if len(bus_matches) == 1:
-            return bus_matches[0], None
         if len(bus_matches) > 1:
-            return None, f"multiple capture devices matched usb busid '{usb_busid}'"
+            selected = choose_matching_device(
+                bus_matches,
+                requested_device_path,
+                requested_format,
+                width,
+                height,
+                framerate,
+            )
+            if selected is not None:
+                return selected, None
+        if len(bus_matches) == 1:
+            selected = choose_matching_device(
+                bus_matches,
+                requested_device_path,
+                requested_format,
+                width,
+                height,
+                framerate,
+            )
+            if selected is not None:
+                return selected, None
 
     if vendor_id and product_id:
         vid_pid_matches = [
@@ -484,20 +915,79 @@ def resolve_camera_device(body: dict) -> tuple[dict | None, str | None]:
             if device.get('vendor_id') == vendor_id and device.get('product_id') == product_id
         ]
 
-        if len(vid_pid_matches) == 1:
-            return vid_pid_matches[0], None
-
         if len(vid_pid_matches) > 1:
-            return None, f"multiple capture devices matched vendor/product '{vendor_id}:{product_id}'"
+            selected = choose_matching_device(
+                vid_pid_matches,
+                requested_device_path,
+                requested_format,
+                width,
+                height,
+                framerate,
+            )
+            if selected is not None:
+                return selected, None
+        if len(vid_pid_matches) == 1:
+            selected = choose_matching_device(
+                vid_pid_matches,
+                requested_device_path,
+                requested_format,
+                width,
+                height,
+                framerate,
+            )
+            if selected is not None:
+                return selected, None
+
+    if requested_device_path:
+        requested_match = next((device for device in devices if device['device_path'] == requested_device_path), None)
+        if requested_match is not None:
+            selected = choose_matching_device(
+                [requested_match],
+                requested_device_path,
+                requested_format,
+                width,
+                height,
+                framerate,
+            )
+            if selected is not None:
+                return selected, None
 
     if requested_device_path and os.path.exists(requested_device_path):
-        return {
+        fallback = {
             'device': requested_device_path,
             'device_path': requested_device_path,
-        }, None
+            'resolved_input_format': None,
+        }
+
+        for input_format in candidate_input_formats(fallback, requested_format):
+            if probe_device_stream(requested_device_path, width, height, framerate, input_format):
+                fallback['resolved_input_format'] = input_format
+                fallback['actual_device_path'] = requested_device_path
+                return fallback, None
 
     if len(devices) == 1:
-        return devices[0], None
+        selected = choose_matching_device(
+            devices,
+            requested_device_path,
+            requested_format,
+            width,
+            height,
+            framerate,
+        )
+        if selected is not None:
+            return selected, None
+
+    if requested_device_path:
+        selected = choose_matching_device(
+            devices,
+            requested_device_path,
+            requested_format,
+            width,
+            height,
+            framerate,
+        )
+        if selected is not None:
+            return selected, None
 
     identifiers = []
     if requested_device_path:
@@ -510,7 +1000,12 @@ def resolve_camera_device(body: dict) -> tuple[dict | None, str | None]:
 
     details = ', '.join(identifiers) if identifiers else 'no identifiers were provided'
 
-    return None, f'no matching capture device found ({details})'
+    available_paths = ', '.join(
+        str(device.get('device_path') or device.get('device'))
+        for device in sorted(devices, key=lambda device: device_index(device.get('device_path')) or 10_000)
+    ) or 'none'
+
+    return None, f'no working capture device found ({details}); available capture nodes: {available_paths}'
 
 class ReusableTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
@@ -589,6 +1084,7 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
             width = body.get('width', 640)
             height = body.get('height', 480)
             framerate = body.get('framerate', 15)
+            input_format = body.get('input_format', 'auto')
             
             if not stream_key:
                 self._send_json({'error': 'stream_key required'}, 400)
@@ -603,11 +1099,14 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             device_path = resolved_device['device_path']
+            resolved_input_format = resolved_device.get('resolved_input_format')
+            if resolved_input_format:
+                input_format = resolved_input_format
             
             # Start stream using the bash script
             result = subprocess.run(
                 [f'{CONFIG_DIR}/setup-proxmox-camera-streaming.sh', 'start', 
-                 stream_key, device_path, str(width), str(height), str(framerate)],
+                 stream_key, device_path, str(width), str(height), str(framerate), str(input_format)],
                 capture_output=True, text=True
             )
             
@@ -616,6 +1115,7 @@ class CameraAPIHandler(http.server.BaseHTTPRequestHandler):
                     'status': 'started',
                     'stream_key': stream_key,
                     'device_path': device_path,
+                    'input_format': input_format,
                     'rtsp_url': f'rtsp://{gateway_host()}:{MEDIAMTX_RTSP_PORT}/{stream_key}'
                 })
             else:
@@ -707,12 +1207,13 @@ main() {
             local width="${4:-$DEFAULT_WIDTH}"
             local height="${5:-$DEFAULT_HEIGHT}"
             local framerate="${6:-$DEFAULT_FRAMERATE}"
+            local input_format="${7:-auto}"
             
             if [ -z "$stream_key" ]; then
                 error "Usage: $0 start <stream_key> [device_path] [width] [height] [framerate]"
             fi
             
-            start_stream "$stream_key" "$device_path" "$width" "$height" "$framerate"
+            start_stream "$stream_key" "$device_path" "$width" "$height" "$framerate" "$input_format"
             ;;
         
         stop)

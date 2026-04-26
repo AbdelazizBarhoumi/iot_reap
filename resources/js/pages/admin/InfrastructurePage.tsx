@@ -102,6 +102,7 @@ import { VMListCard } from '@/components/VMListCard';
 import { useHardwareGateway } from '@/hooks/useHardwareGateway';
 import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
+import { getHttpErrorMessage } from '@/lib/http-errors';
 import type { BreadcrumbItem } from '@/types';
 import type { Camera as CameraType } from '@/types/camera.types';
 import type { GatewayNode, RunningVm, UsbDevice } from '@/types/hardware.types';
@@ -1574,7 +1575,7 @@ export default function InfrastructurePage({
         loading: sessionsLoading,
         refetch: refetchSessions,
         terminateSession,
-    } = useVMSessions({ all: true });
+    } = useVMSessions();
     const [selectedLaunchVm, setSelectedLaunchVm] =
         useState<LaunchableVM | null>(null);
     const [isLaunchDialogOpen, setIsLaunchDialogOpen] = useState(false);
@@ -1919,15 +1920,23 @@ export default function InfrastructurePage({
         setLaunchError(null);
 
         try {
-            // Save as per-VM default if requested
-            if (
-                saveAsVmDefault &&
+            const effectiveProfileForVmDefault =
                 selectedConnectionProfile !== NO_PROFILE_SELECTED_VALUE
-            ) {
+                    ? selectedConnectionProfile
+                    : (defaultLaunchProfile?.profile_name ?? null);
+
+            // Save as per-VM default if requested
+            if (saveAsVmDefault) {
+                if (!effectiveProfileForVmDefault) {
+                    throw new Error(
+                        'No connection profile is available to save as VM default. Create one in Connection Preferences first.',
+                    );
+                }
+
                 await connectionPreferencesApi.setPerVMDefault(
                     selectedLaunchVm.vmid,
                     launchProtocol,
-                    selectedConnectionProfile,
+                    effectiveProfileForVmDefault,
                 );
             }
 
@@ -1975,6 +1984,7 @@ export default function InfrastructurePage({
         launchPassword,
         launchProtocol,
         selectedConnectionProfile,
+        defaultLaunchProfile,
         launchReturnSnapshot,
         useExisting,
         saveAsVmDefault,
@@ -2198,11 +2208,7 @@ export default function InfrastructurePage({
             toast.success('Camera activated successfully');
         } catch (err) {
             console.error('Failed to activate camera:', err);
-            toast.error(
-                err instanceof Error
-                    ? err.message
-                    : 'Failed to activate camera',
-            );
+            toast.error(getHttpErrorMessage(err, 'Failed to activate camera'));
         } finally {
             setCameraActionLoading(false);
         }

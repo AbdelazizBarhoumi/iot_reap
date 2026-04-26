@@ -24,6 +24,8 @@ export interface TrainingUnit {
     objectives: string[] | null;
     vmEnabled: boolean;
     videoUrl: string | null;
+    externalVideoUrl?: string | null;
+    uploadedVideoUrl?: string | null;
     resources: string[] | null;
     sort_order: number;
     completed?: boolean;

@@ -141,7 +141,8 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                                     Amount:{' '}
                                                 </span>
                                                 <span className="font-medium">
-                                                    {refund.amount ?? '—'}
+                                                    {refund.formattedAmount ??
+                                                        '—'}
                                                 </span>
                                             </div>
                                             {refund.processedAt && (
@@ -153,6 +154,18 @@ export default function RefundsPage({ refunds }: RefundsPageProps) {
                                                 </div>
                                             )}
                                         </div>
+                                        {refund.formattedRefundAmount && (
+                                            <p className="mt-3 text-sm">
+                                                <span className="text-muted-foreground">
+                                                    Refunded:{' '}
+                                                </span>
+                                                <span className="font-medium text-foreground">
+                                                    {
+                                                        refund.formattedRefundAmount
+                                                    }
+                                                </span>
+                                            </p>
+                                        )}
                                         {refund.reason && (
                                             <p className="mt-3 border-t pt-3 text-sm text-muted-foreground">
                                                 <span className="font-medium text-foreground">

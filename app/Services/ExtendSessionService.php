@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\VMSessionStatus;
-use App\Exceptions\QuotaExceededException;
 use App\Models\VMSession;
 use Illuminate\Support\Facades\Log;
 
@@ -16,17 +15,13 @@ class ExtendSessionService
     /**
      * Create a new ExtendSessionService instance.
      */
-    public function __construct(
-        private readonly QuotaService $quotaService,
-    ) {}
+    public function __construct() {}
 
     /**
      * Extend a VM session by the specified number of minutes.
      *
-     * Validates user quota before extending. Updates expires_at and reschedules
+     * Updates expires_at and reschedules
      * the CleanupVMJob with the new expiration time.
-     *
-     * @throws QuotaExceededException if extension would exceed quota
      */
     public function extend(VMSession $session, int $minutes): VMSession
     {
@@ -50,13 +45,6 @@ class ExtendSessionService
                 'Cannot extend session that has already expired. Please start a new session.'
             );
         }
-
-        // Validate that extension won't exceed quota
-        // The quota check needs to account for all active sessions + this extension
-        $this->quotaService->assertExtensionNotExceeded(
-            user: $session->user,
-            additionalMinutes: $minutes,
-        );
 
         // Calculate new expiration
         $newExpiresAt = $session->expires_at->addMinutes($minutes);

@@ -29,23 +29,42 @@ vi.mock('framer-motion', () => ({
     ),
 }));
 // Mock HLS.js
-const mockHls = {
-    isSupported: vi.fn(() => true),
-    loadSource: vi.fn(),
-    attachMedia: vi.fn(),
-    destroy: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn(),
-    levels: [
-        { height: 720, width: 1280, bitrate: 2500000 },
-        { height: 480, width: 854, bitrate: 1000000 },
-        { height: 360, width: 640, bitrate: 500000 },
-    ],
-    currentLevel: -1,
-};
+const { mockHls, MockHlsConstructor } = vi.hoisted(() => {
+    const mockHls = {
+        isSupported: vi.fn(() => true),
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        destroy: vi.fn(),
+        on: vi.fn((event, callback) => {
+            if (event === 'hlsManifestParsed') {
+                callback();
+            }
+        }),
+        off: vi.fn(),
+        levels: [
+            { height: 720, width: 1280, bitrate: 2500000 },
+            { height: 480, width: 854, bitrate: 1000000 },
+            { height: 360, width: 640, bitrate: 500000 },
+        ],
+        currentLevel: -1,
+        nextLevel: -1,
+    };
+    const MockHlsConstructor = vi.fn(function MockHls() {
+        return mockHls;
+    });
+
+    return { mockHls, MockHlsConstructor };
+});
+
 vi.mock('hls.js', () => ({
-    default: vi.fn(() => mockHls),
-    isSupported: () => mockHls.isSupported(),
+    default: Object.assign(MockHlsConstructor, {
+        isSupported: () => mockHls.isSupported(),
+        Events: {
+            MANIFEST_PARSED: 'hlsManifestParsed',
+            LEVEL_SWITCHED: 'hlsLevelSwitched',
+            ERROR: 'hlsError',
+        },
+    }),
 }));
 // Mock HTMLMediaElement methods
 Object.defineProperty(HTMLMediaElement.prototype, 'play', {
@@ -75,6 +94,8 @@ describe('VideoPlayer Component', () => {
     };
     beforeEach(() => {
         vi.clearAllMocks();
+        mockHls.currentLevel = -1;
+        mockHls.nextLevel = -1;
         // Reset video element properties
         Object.defineProperty(HTMLVideoElement.prototype, 'duration', {
             writable: true,
@@ -101,7 +122,8 @@ describe('VideoPlayer Component', () => {
         render(<VideoPlayer {...mockProps} />);
         const video = document.querySelector('video');
         expect(video).toBeInTheDocument();
-        expect(video).toHaveAttribute('src', mockProps.src);
+        expect(mockHls.loadSource).toHaveBeenCalledWith(mockProps.src);
+        expect(mockHls.attachMedia).toHaveBeenCalled();
     });
     it('renders video with poster image when provided', () => {
         render(<VideoPlayer {...mockProps} />);
@@ -183,9 +205,8 @@ describe('VideoPlayer Component', () => {
     it('renders settings button for quality selection', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
-            expect(
-                screen.getByLabelText(/settings|quality/i),
-            ).toBeInTheDocument();
+            expect(screen.getByLabelText(/settings/i)).toBeInTheDocument();
+            expect(screen.getByLabelText(/video quality/i)).toBeInTheDocument();
         });
     });
     it('shows loading state initially', () => {
@@ -196,9 +217,8 @@ describe('VideoPlayer Component', () => {
     });
     it('handles HLS source correctly', () => {
         render(<VideoPlayer {...mockProps} />);
-        // Component should handle .m3u8 sources via native video player
-        const video = document.querySelector('video');
-        expect(video).toHaveAttribute('src', mockProps.src);
+        expect(mockHls.loadSource).toHaveBeenCalledWith(mockProps.src);
+        expect(mockHls.attachMedia).toHaveBeenCalled();
     });
     it('falls back to native video for non-HLS sources', () => {
         const mp4Props = { ...mockProps, src: 'https://example.com/video.mp4' };
@@ -226,40 +246,52 @@ describe('VideoPlayer Component', () => {
         render(<VideoPlayer {...mockProps} />);
         expect(screen.getByText('Test Video')).toBeInTheDocument();
     });
-    it('renders skip forward and backward buttons', async () => {
+    it('does not render skip forward and backward buttons', async () => {
         render(<VideoPlayer {...mockProps} />);
         await waitFor(() => {
             expect(
-                screen.getByLabelText(/skip forward|forward 10/i),
-            ).toBeInTheDocument();
+                screen.queryByLabelText(/skip forward|forward 10/i),
+            ).not.toBeInTheDocument();
             expect(
-                screen.getByLabelText(/skip backward|rewind 10|back 10/i),
-            ).toBeInTheDocument();
+                screen.queryByLabelText(/skip backward|rewind 10|back 10/i),
+            ).not.toBeInTheDocument();
         });
     });
-    it('handles skip forward button click', async () => {
-        const user = userEvent.setup();
-        render(<VideoPlayer {...mockProps} />);
-        const skipButton = await screen.findByLabelText(
-            /skip forward|forward 10/i,
-        );
-        await user.click(skipButton);
-        // Should advance currentTime by 10 seconds
-        const video = document.querySelector('video');
-        expect(video).toBeInTheDocument();
-    });
     it('handles error states gracefully', async () => {
-        // Mock video error
-        render(<VideoPlayer {...mockProps} />);
+        const mp4Props = { ...mockProps, src: 'https://example.com/video.mp4' };
+        render(<VideoPlayer {...mp4Props} />);
         const video = document.querySelector('video');
         if (video) {
             fireEvent(video, new Event('error'));
         }
         await waitFor(() => {
-            expect(
-                screen.getByText(/error|failed to load/i) ||
-                    screen.getByLabelText(/error/i),
-            ).toBeInTheDocument();
+            expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
         });
+    });
+
+    it('shows quality options for HLS streams', async () => {
+        const user = userEvent.setup();
+        render(<VideoPlayer {...mockProps} />);
+
+        const qualityButton = await screen.findByLabelText(/video quality/i);
+        await user.click(qualityButton);
+
+        expect(screen.getByText('Resolution')).toBeInTheDocument();
+        expect(screen.getAllByText('Auto').length).toBeGreaterThan(0);
+        expect(screen.getByText('720p')).toBeInTheDocument();
+        expect(screen.getByText('480p')).toBeInTheDocument();
+        expect(screen.getByText('360p')).toBeInTheDocument();
+    });
+
+    it('changes quality when a resolution is selected', async () => {
+        const user = userEvent.setup();
+        render(<VideoPlayer {...mockProps} />);
+
+        const qualityButton = await screen.findByLabelText(/video quality/i);
+        await user.click(qualityButton);
+        await user.click(screen.getByText('720p'));
+
+        expect(mockHls.currentLevel).toBe(0);
+        expect(mockHls.nextLevel).toBe(0);
     });
 });

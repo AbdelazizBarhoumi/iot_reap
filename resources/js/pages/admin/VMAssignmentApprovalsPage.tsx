@@ -2,7 +2,7 @@
  * Admin VM Assignment Approvals Page
  * Approve/reject teacher requests to assign VMs to trainingUnits.
  */
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock,
@@ -12,6 +12,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import * as adminApi from '@/api/admin.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,11 +62,14 @@ const statusConfig = {
 };
 
 export default function VMAssignmentApprovalsPage({
-    assignments = [],
-    stats,
+    assignments: initialAssignments = [],
+    stats: initialStats,
 }: Props) {
     const [search, setSearch] = useState('');
     const [processing, setProcessing] = useState<number | null>(null);
+    const [assignments, setAssignments] =
+        useState<TrainingUnitVMAssignment[]>(initialAssignments);
+    const [stats, setStats] = useState(initialStats);
 
     const filtered = assignments.filter(
         (a) =>
@@ -79,29 +83,78 @@ export default function VMAssignmentApprovalsPage({
             a.vm_name?.toLowerCase().includes(search.toLowerCase()),
     );
 
-    const handleApprove = (id: number) => {
-        setProcessing(id);
-        router.post(
-            `/admin/trainingUnit-assignments/${id}/approve`,
-            {},
-            {
-                onFinish: () => setProcessing(null),
-            },
-        );
+    const handleApprove = async (id: number) => {
+        try {
+            setProcessing(id);
+            await adminApi.approveVMAssignment(id);
+
+            // Update local state
+            setAssignments((prev) =>
+                prev.map((a) =>
+                    a.id === id
+                        ? {
+                              ...a,
+                              status: 'approved',
+                              is_pending: false,
+                              is_approved: true,
+                          }
+                        : a,
+                ),
+            );
+
+            // Update stats
+            if (stats) {
+                setStats({
+                    ...stats,
+                    pending: Math.max(0, stats.pending - 1),
+                    approved: stats.approved + 1,
+                });
+            }
+        } catch (err) {
+            console.error('Failed to approve assignment:', err);
+            alert('Failed to approve assignment. Please try again.');
+        } finally {
+            setProcessing(null);
+        }
     };
 
-    const handleReject = (id: number) => {
+    const handleReject = async (id: number) => {
         const notes = prompt('Please provide a reason for rejection:');
         if (!notes) return;
 
-        setProcessing(id);
-        router.post(
-            `/admin/trainingUnit-assignments/${id}/reject`,
-            { admin_notes: notes },
-            {
-                onFinish: () => setProcessing(null),
-            },
-        );
+        try {
+            setProcessing(id);
+            await adminApi.rejectVMAssignment(id, notes);
+
+            // Update local state
+            setAssignments((prev) =>
+                prev.map((a) =>
+                    a.id === id
+                        ? {
+                              ...a,
+                              status: 'rejected',
+                              is_pending: false,
+                              is_rejected: true,
+                              admin_feedback: notes,
+                          }
+                        : a,
+                ),
+            );
+
+            // Update stats
+            if (stats) {
+                setStats({
+                    ...stats,
+                    pending: Math.max(0, stats.pending - 1),
+                    rejected: stats.rejected + 1,
+                });
+            }
+        } catch (err) {
+            console.error('Failed to reject assignment:', err);
+            alert('Failed to reject assignment. Please try again.');
+        } finally {
+            setProcessing(null);
+        }
     };
 
     return (

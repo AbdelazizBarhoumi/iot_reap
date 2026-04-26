@@ -219,4 +219,58 @@ class UserVMConnectionDefaultProfileRepositoryTest extends TestCase
         $this->assertEquals('VNC Profile', $vncDefault->preferred_profile_name);
         $this->assertEquals('SSH Profile', $sshDefault->preferred_profile_name);
     }
+
+    public function test_find_per_vm_default_falls_back_to_admin_global_default(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $engineer = User::factory()->engineer()->create();
+
+        // Admin defines global per-VM default
+        $this->repository->setPerVMDefault(
+            user: $admin,
+            vmId: 301,
+            protocol: 'rdp',
+            profileName: 'Admin Lab Default',
+        );
+
+        $result = $this->repository->findPerVMDefault(
+            user: $engineer,
+            vmId: 301,
+            protocol: 'rdp',
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals('Admin Lab Default', $result->preferred_profile_name);
+        $this->assertEquals($admin->id, $result->user_id);
+    }
+
+    public function test_find_per_vm_default_prefers_user_default_over_admin_global(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $engineer = User::factory()->engineer()->create();
+
+        $this->repository->setPerVMDefault(
+            user: $admin,
+            vmId: 302,
+            protocol: 'rdp',
+            profileName: 'Admin Lab Default',
+        );
+
+        $this->repository->setPerVMDefault(
+            user: $engineer,
+            vmId: 302,
+            protocol: 'rdp',
+            profileName: 'Engineer Preferred',
+        );
+
+        $result = $this->repository->findPerVMDefault(
+            user: $engineer,
+            vmId: 302,
+            protocol: 'rdp',
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals('Engineer Preferred', $result->preferred_profile_name);
+        $this->assertEquals($engineer->id, $result->user_id);
+    }
 }

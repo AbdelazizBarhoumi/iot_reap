@@ -26,7 +26,7 @@ class QuizAttemptResource extends JsonResource
             'user_id' => $this->resource->user_id,
             'score' => $this->resource->score,
             'total_points' => $this->resource->total_points,
-            'percentage' => $this->resource->percentage,
+            'percentage' => (float) $this->resource->percentage,
             'passed' => $this->resource->passed,
             'is_completed' => $this->resource->is_completed,
             'duration_seconds' => $this->resource->duration_seconds,

@@ -3,11 +3,19 @@
 namespace Tests\Feature;
 
 use App\Enums\ProxmoxNodeStatus;
+use App\Enums\TrainingUnitVMAssignmentStatus;
 use App\Enums\VMSessionStatus;
+use App\Models\GuacamoleConnectionPreference;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
 use App\Models\Reservation;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathEnrollment;
+use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
+use App\Models\TrainingUnitVMAssignment;
 use App\Models\User;
+use App\Models\UserVMConnectionDefaultProfile;
 use App\Models\VMSession;
 use App\Services\GuacamoleClientInterface;
 use App\Services\ProxmoxClientFake;
@@ -202,6 +210,122 @@ class VMSessionControllerTest extends TestCase
             'vm_id' => 202,
             'connection_profile_name' => 'Lab High Res',
         ]);
+    }
+
+    public function test_training_unit_launch_uses_admin_vm_default_profile_credentials(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'instructor_id' => $admin->id,
+        ]);
+        $module = TrainingPathModule::factory()->create([
+            'training_path_id' => $trainingPath->id,
+        ]);
+        $trainingUnit = TrainingUnit::factory()->vmLab()->create([
+            'module_id' => $module->id,
+            'vm_enabled' => true,
+        ]);
+
+        TrainingPathEnrollment::factory()->create([
+            'user_id' => $this->user->id,
+            'training_path_id' => $trainingPath->id,
+        ]);
+
+        TrainingUnitVMAssignment::create([
+            'training_unit_id' => $trainingUnit->id,
+            'status' => TrainingUnitVMAssignmentStatus::APPROVED,
+            'vm_id' => 204,
+            'node_id' => $this->node->id,
+            'vm_name' => 'Lesson VM',
+            'assigned_by' => $admin->id,
+            'approved_by' => $admin->id,
+        ]);
+
+        GuacamoleConnectionPreference::create([
+            'user_id' => $admin->id,
+            'vm_session_type' => 'rdp',
+            'profile_name' => 'Admin Lesson Default',
+            'is_default' => true,
+            'parameters' => [
+                'username' => 'admin_lab_user',
+                'password' => 'admin_lab_pass',
+            ],
+        ]);
+
+        UserVMConnectionDefaultProfile::create([
+            'user_id' => $admin->id,
+            'vm_id' => 204,
+            'vm_session_protocol' => 'rdp',
+            'preferred_profile_name' => 'Admin Lesson Default',
+        ]);
+
+        // Engineer also has their own per-VM default, but training unit launch
+        // should still use the admin-defined one.
+        GuacamoleConnectionPreference::create([
+            'user_id' => $this->user->id,
+            'vm_session_type' => 'rdp',
+            'profile_name' => 'Engineer Override',
+            'is_default' => true,
+            'parameters' => [
+                'username' => 'engineer_user',
+                'password' => 'engineer_pass',
+            ],
+        ]);
+
+        UserVMConnectionDefaultProfile::create([
+            'user_id' => $this->user->id,
+            'vm_id' => 204,
+            'vm_session_protocol' => 'rdp',
+            'preferred_profile_name' => 'Engineer Override',
+        ]);
+
+        $capturedGuacPayload = null;
+        $guacMock = \Mockery::mock(GuacamoleClientInterface::class);
+        $guacMock->shouldReceive('createConnection')
+            ->once()
+            ->with(\Mockery::on(function ($payload) use (&$capturedGuacPayload) {
+                $capturedGuacPayload = $payload;
+
+                return is_array($payload);
+            }))
+            ->andReturn('fake-conn-lesson-1');
+        $guacMock->shouldReceive('deleteConnection')->andReturn(null);
+        $guacMock->shouldReceive('generateAuthToken')->andReturn('fake-token');
+        $guacMock->shouldReceive('getConnection')->andReturn([]);
+        $guacMock->shouldReceive('getDataSource')->andReturn('mysql');
+        $guacMock->shouldReceive('clearAuthToken')->andReturn(null);
+        $this->app->instance(GuacamoleClientInterface::class, $guacMock);
+
+        $this->proxmoxFake->registerVM($this->node->name, 204, 'running', '10.0.0.104');
+
+        $response = $this->actingAs($this->user)->postJson('/sessions', [
+            'vmid' => 204,
+            'node_id' => $this->node->id,
+            'training_unit_id' => $trainingUnit->id,
+            'duration_minutes' => 60,
+            'username' => 'request_user_should_not_win',
+            'password' => 'request_pass_should_not_win',
+        ]);
+
+        if ($response->status() !== 201) {
+            $this->fail('Training unit VM launch failed with '.$response->status()
+                .' body: '.json_encode($response->json()));
+        }
+
+        $session = VMSession::query()
+            ->where('user_id', $this->user->id)
+            ->where('vm_id', 204)
+            ->latest('created_at')
+            ->firstOrFail();
+
+        $this->assertSame('Admin Lesson Default', $session->connection_profile_name);
+        $this->assertSame('admin_lab_user', $session->credentials['username'] ?? null);
+        $this->assertSame('admin_lab_pass', $session->credentials['password'] ?? null);
+
+        $this->assertIsArray($capturedGuacPayload);
+        $this->assertSame('admin_lab_user', $capturedGuacPayload['parameters']['username'] ?? null);
+        $this->assertSame('admin_lab_pass', $capturedGuacPayload['parameters']['password'] ?? null);
     }
 
     public function test_user_cannot_create_session_during_another_users_approved_vm_reservation(): void

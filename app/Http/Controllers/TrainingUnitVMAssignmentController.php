@@ -10,6 +10,7 @@ use App\Models\TrainingUnit;
 use App\Models\TrainingUnitVMAssignment;
 use App\Services\TrainingUnitVMAssignmentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -102,7 +103,7 @@ class TrainingUnitVMAssignmentController extends Controller
     /**
      * Approve an assignment (admin action).
      */
-    public function approve(ApproveVMAssignmentRequest $request, TrainingUnitVMAssignment $assignment): JsonResponse
+    public function approve(ApproveVMAssignmentRequest $request, TrainingUnitVMAssignment $assignment): JsonResponse|RedirectResponse
     {
         try {
             $assignment = $this->assignmentService->approveAssignment(
@@ -111,19 +112,27 @@ class TrainingUnitVMAssignmentController extends Controller
                 $request->validated('admin_notes')
             );
 
-            return response()->json([
-                'data' => new TrainingUnitVMAssignmentResource($assignment),
-                'message' => 'Assignment approved. VM is now available for this trainingUnit.',
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'data' => new TrainingUnitVMAssignmentResource($assignment),
+                    'message' => 'Assignment approved. VM is now available for this trainingUnit.',
+                ]);
+            }
+
+            return back()->with('message', 'Assignment approved.');
         } catch (\RuntimeException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
      * Reject an assignment (admin action).
      */
-    public function reject(RejectVMAssignmentRequest $request, TrainingUnitVMAssignment $assignment): JsonResponse
+    public function reject(RejectVMAssignmentRequest $request, TrainingUnitVMAssignment $assignment): JsonResponse|RedirectResponse
     {
         try {
             $assignment = $this->assignmentService->rejectAssignment(
@@ -132,26 +141,42 @@ class TrainingUnitVMAssignmentController extends Controller
                 $request->validated('admin_notes')
             );
 
-            return response()->json([
-                'data' => new TrainingUnitVMAssignmentResource($assignment),
-                'message' => 'Assignment rejected.',
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'data' => new TrainingUnitVMAssignmentResource($assignment),
+                    'message' => 'Assignment rejected.',
+                ]);
+            }
+
+            return back()->with('message', 'Assignment rejected.');
         } catch (\RuntimeException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
      * Remove an assignment.
      */
-    public function destroy(Request $request, TrainingUnitVMAssignment $assignment): JsonResponse
+    public function destroy(Request $request, TrainingUnitVMAssignment $assignment): JsonResponse|RedirectResponse
     {
         try {
             $this->assignmentService->removeAssignment($assignment, $request->user());
 
-            return response()->json(['message' => 'Assignment removed successfully.']);
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Assignment removed successfully.']);
+            }
+
+            return back()->with('message', 'Assignment removed.');
         } catch (\RuntimeException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 

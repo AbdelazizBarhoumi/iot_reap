@@ -88,10 +88,49 @@ class TrainingUnitResource extends JsonResource
             'vmEnabled' => $this->vm_enabled,
             'hasApprovedVM' => $this->when($this->vm_enabled, fn () => $this->resource->hasApprovedVM()),
             'hasPendingVMAssignment' => $this->when($this->vm_enabled, fn () => $this->resource->hasPendingVMAssignment()),
-            'videoUrl' => $this->video_url,
+            'videoUrl' => $this->resolveVideoUrl(),
+            'externalVideoUrl' => $this->resolveExternalVideoUrl(),
+            'uploadedVideoUrl' => $this->resolveUploadedVideoUrl(),
             'resources' => $this->normalizeStringList($this->resources),
             'sort_order' => $this->sort_order,
             'completed' => $completed,
         ];
+    }
+
+    private function resolveVideoUrl(): ?string
+    {
+        if (is_string($this->video_url) && trim($this->video_url) !== '') {
+            return $this->video_url;
+        }
+
+        if (! $this->resource->relationLoaded('video')) {
+            return null;
+        }
+
+        $video = $this->resource->video;
+
+        return $video?->isReady() ? $video->hls_url : null;
+    }
+
+    private function resolveExternalVideoUrl(): ?string
+    {
+        if (! is_string($this->video_url)) {
+            return null;
+        }
+
+        $trimmed = trim($this->video_url);
+
+        return $trimmed !== '' ? $trimmed : null;
+    }
+
+    private function resolveUploadedVideoUrl(): ?string
+    {
+        if (! $this->resource->relationLoaded('video')) {
+            return null;
+        }
+
+        $video = $this->resource->video;
+
+        return $video?->isReady() ? $video->hls_url : null;
     }
 }

@@ -27,7 +27,22 @@ class CreateQuestionRequest extends FormRequest
             'explanation' => ['nullable', 'string', 'max:1000'],
             'points' => ['nullable', 'integer', 'min:1', 'max:100'],
             'correct_answer' => ['required_if:type,true_false', 'nullable', 'boolean'],
-            'options' => ['required_if:type,multiple_choice', 'nullable', 'array', 'min:2', 'max:10'],
+            'options' => [
+                'required_if:type,multiple_choice',
+                'required_if:type,short_answer',
+                'nullable',
+                'array',
+                function ($attribute, $value, $fail) {
+                    $type = $this->input('type');
+                    if ($type === QuizQuestionType::MULTIPLE_CHOICE->value && count($value) < 2) {
+                        $fail('Multiple choice questions require at least 2 options.');
+                    }
+                    if ($type === QuizQuestionType::SHORT_ANSWER->value && count($value) < 1) {
+                        $fail('Short answer questions require at least 1 correct answer option.');
+                    }
+                },
+                'max:10',
+            ],
             'options.*.option_text' => ['required_with:options', 'string', 'max:500'],
             'options.*.is_correct' => ['required_with:options', 'boolean'],
         ];

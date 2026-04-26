@@ -26,18 +26,18 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
 
         // Module management
         Route::post('/{trainingPath}/modules', 'storeModule')->name('modules.store');
+        Route::patch('/{trainingPath}/modules/reorder', 'reorderModules')->name('modules.reorder');
         Route::patch('/{trainingPath}/modules/{module}', 'updateModule')->name('modules.update');
         Route::delete('/{trainingPath}/modules/{module}', 'destroyModule')->name('modules.destroy');
-        Route::patch('/{trainingPath}/modules/reorder', 'reorderModules')->name('modules.reorder');
 
         // TrainingUnit management
         Route::get('/{trainingPathId}/module/{moduleId}/trainingUnit/{trainingUnitId}', 'editTrainingUnit')
             ->name('trainingUnit.edit')
             ->whereNumber(['trainingPathId', 'moduleId', 'trainingUnitId']);
         Route::post('/{trainingPath}/modules/{module}/trainingUnits', 'storeTrainingUnit')->name('trainingUnits.store');
+        Route::patch('/{trainingPath}/modules/{module}/trainingUnits/reorder', 'reorderTrainingUnits')->name('trainingUnits.reorder');
         Route::patch('/{trainingPath}/modules/{module}/trainingUnits/{trainingUnit}', 'updateTrainingUnit')->name('trainingUnits.update');
         Route::delete('/{trainingPath}/modules/{module}/trainingUnits/{trainingUnit}', 'destroyTrainingUnit')->name('trainingUnits.destroy');
-        Route::patch('/{trainingPath}/modules/{module}/trainingUnits/reorder', 'reorderTrainingUnits')->name('trainingUnits.reorder');
     });
 
     // Quiz management (teacher)

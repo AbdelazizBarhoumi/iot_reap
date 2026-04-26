@@ -18,17 +18,20 @@ import {
     FileText,
     FileQuestion,
     Loader2,
+    Maximize2,
     Menu,
     Play,
     Terminal,
     Clock,
     Users,
+    X,
 } from 'lucide-react';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { trainingPathApi } from '@/api/TrainingPath.api';
 import { vmSessionApi } from '@/api/vm.api';
 import { ArticleReader } from '@/components/articles/ArticleReader';
 import { ThreadList } from '@/components/forum/ThreadList';
+import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import VideoPlayer from '@/components/TrainingPaths/VideoPlayer';
 import VirtualMachinePanel from '@/components/TrainingPaths/VirtualMachinePanel';
@@ -352,25 +355,33 @@ function TrainingUnitSidebar({
 }
 interface VMLabPanelProps {
     vmInfo: TrainingUnitVMDisplayInfo | null;
+    trainingUnitId: number;
+    onOpenSessionInSplit: (sessionId: string) => void;
 }
-function VMLabPanel({ vmInfo }: VMLabPanelProps) {
+function VMLabPanel({
+    vmInfo,
+    trainingUnitId,
+    onOpenSessionInSplit,
+}: VMLabPanelProps) {
     const { sessions, loading: sessionsLoading } = useVMSessions();
     const [launching, setLaunching] = useState(false);
     const activeSessions = sessions.filter((s) => s?.status === 'active');
     const hasActiveSession = activeSessions.length > 0;
     const handleLaunchVM = useCallback(async () => {
         if (!vmInfo) return;
+        const vm = vmInfo.vm ?? (vmInfo as unknown as TrainingUnitVMInfo);
         setLaunching(true);
         try {
             const session = await vmSessionApi.create({
-                vmid: vmInfo.vm.vm_id,
-                node_id: vmInfo.vm.node_id,
-                vm_name: vmInfo.vm.vm_name ?? `VM ${vmInfo.vm.vm_id}`,
+                vmid: vm.vm_id,
+                node_id: vm.node_id,
+                training_unit_id: trainingUnitId,
+                vm_name: vm.vm_name ?? `VM ${vm.vm_id}`,
                 duration_minutes: 60,
                 use_existing: true, // Use the existing VM (no cloning)
             });
             if (session?.id) {
-                router.visit(`/sessions/${session.id}`);
+                onOpenSessionInSplit(session.id);
             }
         } catch (e) {
             console.error('Failed to launch VM:', e);
@@ -378,7 +389,7 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
         } finally {
             setLaunching(false);
         }
-    }, [vmInfo]);
+    }, [vmInfo, onOpenSessionInSplit, trainingUnitId]);
     if (sessionsLoading) {
         return (
             <Card>
@@ -413,12 +424,12 @@ function VMLabPanel({ vmInfo }: VMLabPanelProps) {
                         </div>
                         <Button
                             className="bg-primary text-primary-foreground hover:bg-primary/90"
-                            asChild
+                            onClick={() => onOpenSessionInSplit(session.id)}
                         >
-                            <Link href={`/sessions/${session.id}`}>
+                            <span className="inline-flex items-center">
                                 Open Session{' '}
                                 <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
+                            </span>
                         </Button>
                     </div>
                 </CardContent>
@@ -546,6 +557,10 @@ interface PageProps {
     vmInfo: TrainingUnitVMDisplayInfo | null;
     article?: Article | null;
 }
+
+const LESSON_SPLIT_MIN_PERCENT = 30;
+const LESSON_SPLIT_MAX_PERCENT = 70;
+
 export default function TrainingUnitPage() {
     const pageProps = usePage<{ props: PageProps }>()
         .props as unknown as PageProps;
@@ -565,6 +580,10 @@ export default function TrainingUnitPage() {
     const [newDiscussionTitle, setNewDiscussionTitle] = useState('');
     const [newDiscussionContent, setNewDiscussionContent] = useState('');
     const [isCreatingDiscussion, setIsCreatingDiscussion] = useState(false);
+    const [splitSessionId, setSplitSessionId] = useState<string | null>(null);
+    const [splitLeftWidth, setSplitLeftWidth] = useState<number>(50);
+    const [isResizingSplit, setIsResizingSplit] = useState(false);
+    const splitContainerRef = useRef<HTMLDivElement | null>(null);
     const normalizedObjectives = useMemo(
         () => normalizeStringList(trainingUnit?.objectives),
         [trainingUnit?.objectives],
@@ -710,6 +729,50 @@ export default function TrainingUnitPage() {
             setMarkingComplete(false);
         }
     }, [trainingPath?.id, trainingUnit?.id]);
+
+    const handleOpenSessionInSplit = useCallback((sessionId: string) => {
+        setSplitSessionId(sessionId);
+    }, []);
+
+    const handleCloseSplitSession = useCallback(() => {
+        setIsResizingSplit(false);
+        setSplitSessionId(null);
+    }, []);
+
+    useEffect(() => {
+        if (!splitSessionId || !isResizingSplit) {
+            return;
+        }
+
+        const handlePointerMove = (event: PointerEvent) => {
+            const container = splitContainerRef.current;
+            if (!container) {
+                return;
+            }
+
+            const rect = container.getBoundingClientRect();
+            const relativeX = event.clientX - rect.left;
+            const ratio = (relativeX / rect.width) * 100;
+            const clampedRatio = Math.min(
+                LESSON_SPLIT_MAX_PERCENT,
+                Math.max(LESSON_SPLIT_MIN_PERCENT, ratio),
+            );
+
+            setSplitLeftWidth(clampedRatio);
+        };
+
+        const stopResize = () => {
+            setIsResizingSplit(false);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', stopResize);
+
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', stopResize);
+        };
+    }, [splitSessionId, isResizingSplit]);
     if (!trainingPath || !trainingUnit) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
@@ -733,9 +796,15 @@ export default function TrainingUnitPage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${trainingUnit.title} - ${trainingPath.title}`} />
-            <div className="flex h-full flex-1">
+            <div ref={splitContainerRef} className="flex h-full flex-1">
                 {/* Desktop Sidebar - Sticky */}
-                <div className="sticky top-0 hidden h-screen w-80 shrink-0 overflow-y-auto lg:block">
+                <div
+                    className={
+                        splitSessionId
+                            ? 'hidden'
+                            : 'sticky top-0 hidden h-screen w-80 shrink-0 overflow-y-auto lg:block'
+                    }
+                >
                     <TrainingUnitSidebar
                         modules={trainingPath.modules}
                         currentTrainingUnitId={trainingUnit.id}
@@ -746,7 +815,17 @@ export default function TrainingUnitPage() {
                     />
                 </div>
                 {/* Main Content */}
-                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+                <div
+                    className={cn(
+                        'flex min-w-0 flex-1 flex-col overflow-y-auto',
+                        splitSessionId && 'shrink-0 border-r border-border',
+                    )}
+                    style={
+                        splitSessionId
+                            ? { width: `${splitLeftWidth}%` }
+                            : undefined
+                    }
+                >
                     {/* Top bar with progress and mobile menu - Sticky */}
                     <div className="sticky top-0 z-40 flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-6 py-3 backdrop-blur-lg">
                         <div className="flex items-center gap-3">
@@ -975,7 +1054,15 @@ export default function TrainingUnitPage() {
                                             <Terminal className="h-5 w-5 text-primary" />
                                             Virtual Machine Lab
                                         </h3>
-                                        <VMLabPanel vmInfo={vmInfo ?? null} />
+                                        <VMLabPanel
+                                            vmInfo={vmInfo ?? null}
+                                            trainingUnitId={Number(
+                                                trainingUnit.id,
+                                            )}
+                                            onOpenSessionInSplit={
+                                                handleOpenSessionInSplit
+                                            }
+                                        />
                                         {/* Additional VM Template Selection */}
                                         <div className="mt-6">
                                             <VirtualMachinePanel />
@@ -1118,9 +1205,82 @@ export default function TrainingUnitPage() {
                         </div>
                     </div>
                 </div>
+
+                {splitSessionId && (
+                    <>
+                        <div
+                            role="separator"
+                            aria-orientation="vertical"
+                            aria-label="Resize lesson and VM split"
+                            className="relative w-3 shrink-0 cursor-col-resize self-stretch"
+                            onPointerDown={(event) => {
+                                event.preventDefault();
+                                setIsResizingSplit(true);
+                            }}
+                        >
+                            <div
+                                className={`absolute inset-y-0 left-1/2 w-px -translate-x-1/2 ${
+                                    isResizingSplit ? 'bg-primary' : 'bg-border'
+                                }`}
+                            />
+                            <div
+                                className={`absolute top-1/2 left-1/2 h-10 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border ${
+                                    isResizingSplit
+                                        ? 'border-primary/40 bg-primary/10'
+                                        : 'border-border bg-background'
+                                }`}
+                            />
+                        </div>
+
+                        <div
+                            className="flex min-w-0 shrink-0 flex-col bg-background"
+                            style={{ width: `${100 - splitLeftWidth}%` }}
+                        >
+                            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                        VM Workspace
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Split view from this lesson page
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button size="sm" variant="outline" asChild>
+                                        <Link
+                                            href={`/sessions/${splitSessionId}`}
+                                        >
+                                            <Maximize2 className="mr-2 h-4 w-4" />
+                                            Full Page VM
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={handleCloseSplitSession}
+                                    >
+                                        <X className="mr-2 h-4 w-4" />
+                                        Close
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="min-h-0 flex-1 p-4">
+                                <div className="h-full overflow-hidden rounded-lg border border-border/40 bg-background">
+                                    <GuacamoleViewer
+                                        sessionId={splitSessionId}
+                                        isActive={true}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
             {/* Notes Panel - Fixed sidebar */}
-            <NotesPanel trainingUnitId={Number(trainingUnit.id)} />
+            {!splitSessionId && (
+                <NotesPanel trainingUnitId={Number(trainingUnit.id)} />
+            )}
         </AppLayout>
     );
 }

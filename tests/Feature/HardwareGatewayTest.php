@@ -296,6 +296,28 @@ class HardwareGatewayTest extends TestCase
         $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
     }
 
+    public function test_bind_is_idempotent_when_gateway_returns_generic_already_bound_error(): void
+    {
+        $node = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()->for($node)->available()->create(['busid' => '1-1']);
+
+        // Some gateway builds return a shorter error string without usbip-host wording.
+        Http::fake([
+            'http://192.168.50.6:8000/bind' => Http::response([
+                'detail' => 'Device already bound',
+            ], 400),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/hardware/devices/{$device->id}/bind");
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
+    }
+
     /**
      * When the discovery service itself throws an exception the controller
      * should catch it, log it, and return a 500 JSON response so the

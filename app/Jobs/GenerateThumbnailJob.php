@@ -3,13 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Video;
+use App\Services\GatewayFfmpegService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -55,7 +55,7 @@ class GenerateThumbnailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(GatewayFfmpegService $gatewayFfmpegService): void
     {
         Log::info('Starting GenerateThumbnailJob', [
             'video_id' => $this->video->id,
@@ -75,6 +75,7 @@ class GenerateThumbnailJob implements ShouldQueue
         try {
             $disk = $video->storage_disk;
             $sourcePath = Storage::disk($disk)->path($video->storage_path);
+            $gatewayNode = $gatewayFfmpegService->selectGatewayForProcessing();
 
             if (! file_exists($sourcePath)) {
                 throw new \RuntimeException("Source video file not found: {$sourcePath}");
@@ -92,20 +93,7 @@ class GenerateThumbnailJob implements ShouldQueue
             $thumbnailPath = "{$thumbnailDir}/{$thumbnailFilename}";
             $outputPath = Storage::disk($disk)->path($thumbnailPath);
 
-            $result = Process::timeout($this->timeout)->run([
-                'ffmpeg',
-                '-ss', (string) $timestamp,
-                '-i', $sourcePath,
-                '-vframes', '1',
-                '-vf', 'scale=640:-1',
-                '-q:v', '2',
-                '-y',
-                $outputPath,
-            ]);
-
-            if ($result->failed()) {
-                throw new \RuntimeException('FFmpeg thumbnail generation failed: '.$result->errorOutput());
-            }
+            $gatewayFfmpegService->generateThumbnail($sourcePath, $outputPath, $timestamp, $this->timeout, $gatewayNode);
 
             // Update video with thumbnail path
             $video->update(['thumbnail_path' => $thumbnailPath]);

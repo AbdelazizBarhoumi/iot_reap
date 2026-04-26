@@ -519,7 +519,7 @@ class ProxmoxClientFake extends ProxmoxClient
             'vmid' => $vmid,
             'command' => $command,
             'timeout' => $timeout,
-            'result' => $this->determineExecResult($command),
+            'result' => $this->determineExecResult($nodeName, $vmid, $command),
         ];
 
         return ['pid' => $pid];
@@ -670,13 +670,23 @@ class ProxmoxClientFake extends ProxmoxClient
      *
      * @return array{exitcode: int, out-data: string, err-data: string}
      */
-    private function determineExecResult(string $command): array
+    private function determineExecResult(string $nodeName, int $vmid, string $command, array $visitedBatchKeys = []): array
     {
         // Check for explicit overrides
         foreach ($this->execResultOverrides as $pattern => $result) {
             if (str_contains($command, $pattern)) {
                 return $result;
             }
+        }
+
+        $batchKey = "{$nodeName}:{$vmid}:{$command}";
+        if (! in_array($batchKey, $visitedBatchKeys, true) && isset($this->writtenFiles[$batchKey])) {
+            return $this->determineExecResult(
+                $nodeName,
+                $vmid,
+                $this->writtenFiles[$batchKey],
+                [...$visitedBatchKeys, $batchKey]
+            );
         }
 
         // Default: simulate success for usbip commands
@@ -800,6 +810,44 @@ class ProxmoxClientFake extends ProxmoxClient
             'Executed commands: '.json_encode(array_column($this->execHistory, 'command')).
             ' Written files: '.json_encode(array_column($this->writtenFilesHistory, 'content'))
         );
+    }
+
+    /**
+     * Assert that a command or batch content substring was not executed/written.
+     */
+    public function assertCommandNotExecuted(string $unexpectedCommandSubstring): void
+    {
+        foreach ($this->execHistory as $entry) {
+            if (str_contains($entry['command'], $unexpectedCommandSubstring)) {
+                throw new ExpectationFailedException(
+                    "Unexpected command containing '{$unexpectedCommandSubstring}' was executed: {$entry['command']}"
+                );
+            }
+        }
+
+        foreach ($this->writtenFilesHistory as $entry) {
+            if (str_contains($entry['content'], $unexpectedCommandSubstring)) {
+                throw new ExpectationFailedException(
+                    "Unexpected batch content containing '{$unexpectedCommandSubstring}' was written: {$entry['content']}"
+                );
+            }
+        }
+    }
+
+    /**
+     * Count file writes whose key or content contains the given substring.
+     */
+    public function countWrittenFilesMatching(string $needle): int
+    {
+        $count = 0;
+
+        foreach ($this->writtenFilesHistory as $entry) {
+            if (str_contains($entry['key'], $needle) || str_contains($entry['content'], $needle)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

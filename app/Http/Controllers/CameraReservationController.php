@@ -91,7 +91,7 @@ class CameraReservationController extends Controller
                 'message' => 'Camera reservation request submitted for approval',
                 'data' => new CameraReservationResource($reservation->load(['reservable', 'user'])),
             ], 201);
-        } catch (\InvalidArgumentException | \DomainException $e) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

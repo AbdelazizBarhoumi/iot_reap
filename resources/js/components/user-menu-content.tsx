@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import {
+    Award,
     CreditCard,
     LogOut,
     RotateCcw,
@@ -59,6 +60,16 @@ export function UserMenuContent({ user }: Props) {
                         </Link>
                     </DropdownMenuItem>
                 )}
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/certificates"
+                        onClick={cleanup}
+                    >
+                        <Award className="mr-2" />
+                        My Certificates
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

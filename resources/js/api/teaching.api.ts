@@ -19,7 +19,7 @@ export interface TrainingUnit {
     id: string;
     module_id: string;
     title: string;
-    type: 'video' | 'article' | 'quiz' | 'interactive';
+    type: 'video' | 'reading' | 'practice' | 'vm-lab' | 'quiz';
     order: number;
     duration_minutes?: number | null;
     duration?: string;

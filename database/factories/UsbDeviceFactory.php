@@ -40,6 +40,9 @@ class UsbDeviceFactory extends Factory
             ])." #{$deviceNumber}",
             'status' => UsbDeviceStatus::AVAILABLE,
             'attached_to' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
             'attached_vm_ip' => null,
             'usbip_port' => null,
         ];
@@ -53,6 +56,9 @@ class UsbDeviceFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => UsbDeviceStatus::AVAILABLE,
             'attached_to' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
             'attached_vm_ip' => null,
             'usbip_port' => null,
         ]);
@@ -66,6 +72,9 @@ class UsbDeviceFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => UsbDeviceStatus::BOUND,
             'attached_to' => null,
+            'attached_vmid' => null,
+            'attached_node' => null,
+            'attached_server_id' => null,
             'attached_vm_ip' => null,
             'usbip_port' => null,
         ]);

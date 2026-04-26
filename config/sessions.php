@@ -18,16 +18,4 @@ return [
     'extension_increment_minutes' => env('SESSION_EXTENSION_INCREMENT_MINUTES', 30),
     'max_extensions_per_session' => env('SESSION_MAX_EXTENSIONS_PER_SESSION', 10),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Quota Settings
-    |--------------------------------------------------------------------------
-    |
-    | Per-user concurrent session quota and time quota limits.
-    |
-    */
-
-    'max_concurrent_sessions' => env('SESSION_MAX_CONCURRENT_SESSIONS', 100),
-    'max_concurrent_minutes' => env('SESSION_MAX_CONCURRENT_MINUTES', 10000),
-
 ];

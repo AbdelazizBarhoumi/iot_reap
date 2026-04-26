@@ -9,6 +9,27 @@ const client = axios.create({
         'X-Requested-With': 'XMLHttpRequest',
     },
 });
+
+client.interceptors.request.use((config) => {
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        const headers = config.headers as
+            | {
+                  delete?: (name: string) => void;
+                  [key: string]: unknown;
+              }
+            | undefined;
+
+        if (headers?.delete) {
+            headers.delete('Content-Type');
+        } else if (headers) {
+            delete headers['Content-Type'];
+            delete headers['content-type'];
+        }
+    }
+
+    return config;
+});
+
 // Response interceptor: handle auth errors intelligently
 client.interceptors.response.use(
     (res) => res,

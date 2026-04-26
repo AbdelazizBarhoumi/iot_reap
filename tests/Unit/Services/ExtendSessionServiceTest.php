@@ -8,7 +8,6 @@ use App\Models\ProxmoxServer;
 use App\Models\User;
 use App\Models\VMSession;
 use App\Services\ExtendSessionService;
-use App\Services\QuotaService;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -18,8 +17,6 @@ use Tests\TestCase;
 class ExtendSessionServiceTest extends TestCase
 {
     private ExtendSessionService $service;
-
-    private QuotaService $quotaService;
 
     private User $user;
 
@@ -31,8 +28,7 @@ class ExtendSessionServiceTest extends TestCase
 
         Queue::fake();
 
-        $this->quotaService = new QuotaService;
-        $this->service = new ExtendSessionService($this->quotaService);
+        $this->service = new ExtendSessionService();
 
         $this->user = User::factory()->create();
 
@@ -74,22 +70,6 @@ class ExtendSessionServiceTest extends TestCase
         );
     }
 
-    public function test_extend_fails_if_quota_exceeded(): void
-    {
-        $maxMinutes = config('sessions.max_concurrent_minutes', 240);
-
-        // Set session to have almost all quota
-        $this->session->update([
-            'expires_at' => now()->addMinutes($maxMinutes - 10),
-        ]);
-
-        // Try to extend beyond quota
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Cannot extend by');
-
-        $this->service->extend($this->session, 30);
-    }
-
     public function test_extend_fails_for_non_active_sessions(): void
     {
         $this->session->update(['status' => VMSessionStatus::EXPIRED]);
@@ -124,22 +104,5 @@ class ExtendSessionServiceTest extends TestCase
 
         $expectedExpiry = $originalExpiry->addMinutes(60);
         $this->assertTrue($secondExpiry->equalTo($expectedExpiry));
-    }
-
-    public function test_extend_respects_maximum_total_duration(): void
-    {
-        $maxMinutes = config('sessions.max_concurrent_minutes', 240);
-        $minutesAlreadyUsed = max(1, $maxMinutes - 5);
-        $minutesToExtend = 10;
-
-        // Put session close to quota ceiling, then request an extension that crosses it.
-        $this->session->update([
-            'expires_at' => now()->addMinutes($minutesAlreadyUsed),
-        ]);
-
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Cannot extend by');
-
-        $this->service->extend($this->session, $minutesToExtend);
     }
 }

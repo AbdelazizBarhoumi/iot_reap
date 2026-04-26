@@ -307,7 +307,7 @@ export default function EditTrainingPathPage({
     >(null);
     const [trainingUnitTitle, setTrainingUnitTitle] = useState('');
     const [trainingUnitType, setTrainingUnitType] = useState<
-        'video' | 'article' | 'quiz' | 'interactive'
+        'video' | 'reading' | 'practice' | 'vm-lab'
     >('video');
     const [isTrainingUnitSaving, setIsTrainingUnitSaving] = useState(false);
     // Form state for details tab
@@ -1710,9 +1710,9 @@ export default function EditTrainingPathPage({
                                     setTrainingUnitType(
                                         value as
                                             | 'video'
-                                            | 'article'
-                                            | 'quiz'
-                                            | 'interactive',
+                                            | 'reading'
+                                            | 'practice'
+                                            | 'vm-lab',
                                     )
                                 }
                             >

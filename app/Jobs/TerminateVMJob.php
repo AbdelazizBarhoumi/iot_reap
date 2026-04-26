@@ -251,7 +251,21 @@ class TerminateVMJob implements ShouldQueue
 
         foreach ($attachedDevices as $device) {
             try {
-                // Attempt graceful detach via gateway service
+                if ($session->vm_id !== null && $device->isAttachedToSessionVm($session)) {
+                    $device->update([
+                        'attached_session_id' => null,
+                    ]);
+
+                    Log::info('Preserved USB device attachment on VM during session cleanup', [
+                        'device_id' => $device->id,
+                        'session_id' => $session->id,
+                        'vm_id' => $session->vm_id,
+                    ]);
+
+                    continue;
+                }
+
+                // Fallback: attempt graceful detach via gateway service
                 $gatewayService->detachFromVm($device);
 
                 Log::info('USB device detached during session cleanup', [
@@ -270,13 +284,26 @@ class TerminateVMJob implements ShouldQueue
                     'error' => $e->getMessage(),
                 ]);
 
-                $device->update([
-                    'status' => UsbDeviceStatus::BOUND,
-                    'attached_session_id' => null,
-                    'attached_to' => null,
-                    'attached_vm_ip' => null,
-                    'usbip_port' => null,
-                ]);
+                if ($session->vm_id !== null && $device->isAttachedToSessionVm($session)) {
+                    $device->update([
+                        'status' => UsbDeviceStatus::BOUND,
+                        'attached_session_id' => null,
+                        'attached_to' => null,
+                        'attached_vm_ip' => null,
+                        'usbip_port' => null,
+                    ]);
+                } else {
+                    $device->update([
+                        'status' => UsbDeviceStatus::BOUND,
+                        'attached_session_id' => null,
+                        'attached_to' => null,
+                        'attached_vmid' => null,
+                        'attached_node' => null,
+                        'attached_server_id' => null,
+                        'attached_vm_ip' => null,
+                        'usbip_port' => null,
+                    ]);
+                }
 
                 // Still process the queue even on force-release
                 $queueService->processQueueOnDetach($device);

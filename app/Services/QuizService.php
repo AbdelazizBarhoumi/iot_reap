@@ -191,10 +191,16 @@ class QuizService
                     }
                 }
             } elseif ($question->type === QuizQuestionType::SHORT_ANSWER) {
-                // Short answers need manual grading or exact match
-                // For now, mark as pending (0 points, will need teacher review)
-                $isCorrect = false;
-                $pointsEarned = 0;
+                // For short answers, check against any option marked as correct (exact match)
+                if ($textAnswer) {
+                    $correctOption = $question->getCorrectOption();
+                    if ($correctOption &&
+                        strtolower(trim($textAnswer)) === strtolower(trim($correctOption->option_text))) {
+                        $isCorrect = true;
+                        $pointsEarned = $question->points;
+                        $totalScore += $pointsEarned;
+                    }
+                }
             }
 
             // Store answer

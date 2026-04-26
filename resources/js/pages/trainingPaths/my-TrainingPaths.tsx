@@ -10,6 +10,7 @@ import {
     BookOpen,
     CheckCircle2,
     Clock,
+    Download,
     GraduationCap,
     Image,
     Play,
@@ -18,6 +19,7 @@ import {
     TrendingUp,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import type { Certificate } from '@/api/certificates.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -37,7 +39,9 @@ interface EnrollmentData {
     trainingPath: TrainingPath;
     progress: TrainingPathProgress;
     completedTrainingUnitIds: number[];
+    certificate: Certificate | null;
 }
+
 interface PageProps {
     enrollments: EnrollmentData[];
 }
@@ -56,7 +60,8 @@ function EnrolledTrainingPathCard({
     data: EnrollmentData;
     index: number;
 }) {
-    const { trainingPath, progress, completedTrainingUnitIds } = data;
+    const { trainingPath, progress, completedTrainingUnitIds, certificate } =
+        data;
     // Find the next trainingUnit to continue
     const nextTrainingUnit = useMemo(() => {
         if (!trainingPath.modules) return null;
@@ -81,6 +86,13 @@ function EnrolledTrainingPathCard({
         );
     }, [trainingPath.modules, completedTrainingUnitIds]);
     const isCompleted = progress.percentage >= 100;
+
+    const handleDownloadCertificate = () => {
+        if (certificate?.hash) {
+            window.open(`/certificates/${certificate.hash}/download`, '_blank');
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -91,7 +103,7 @@ function EnrolledTrainingPathCard({
                 {/* Header with category gradient */}
                 <div className="h-3 bg-gradient-to-r from-primary/60 to-primary/30" />
                 <div className="h-40 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10">
-                    {trainingPath.thumbnail ?? trainingPath.thumbnail_url ? (
+                    {(trainingPath.thumbnail ?? trainingPath.thumbnail_url) ? (
                         <img
                             src={
                                 trainingPath.thumbnail ??
@@ -211,6 +223,16 @@ function EnrolledTrainingPathCard({
                                 View Path{' '}
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
+                        </Button>
+                    )}
+                    {isCompleted && certificate?.has_pdf && (
+                        <Button
+                            variant="outline"
+                            className="w-full border-primary/50 text-primary hover:bg-primary/10 hover:text-primary"
+                            onClick={handleDownloadCertificate}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Certificate
                         </Button>
                     )}
                     {isCompleted && (

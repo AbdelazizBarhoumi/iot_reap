@@ -33,7 +33,7 @@ class TrainingUnitRepository
      */
     public function findByIdWithContext(int $id): ?TrainingUnit
     {
-        return TrainingUnit::with(['module.trainingPath.instructor'])->find($id);
+        return TrainingUnit::with(['module.trainingPath.instructor', 'video'])->find($id);
     }
 
     /**
@@ -69,14 +69,14 @@ class TrainingUnitRepository
     /**
      * Reorder trainingUnits within a module.
      *
-     * @param  array<int, int>  $order  Map of training_unit_id => sort_order
+     * @param  array<int>  $order  List of training_unit_ids in order
      */
     public function reorder(int $moduleId, array $order): void
     {
-        foreach ($order as $trainingUnitId => $sortOrder) {
+        foreach ($order as $index => $trainingUnitId) {
             TrainingUnit::where('id', $trainingUnitId)
                 ->where('module_id', $moduleId)
-                ->update(['sort_order' => $sortOrder]);
+                ->update(['sort_order' => $index]);
         }
     }
 }

@@ -11,6 +11,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\TrainingPathEnrollmentRepository;
 use App\Repositories\TrainingPathRepository;
 use App\Repositories\TrainingUnitProgressRepository;
+use App\Services\CertificateService;
 use App\Services\EnrollmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,8 @@ class EnrollmentServiceTest extends TestCase
 
     private EnrollmentService $enrollmentService;
 
+    private $certificateService;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,11 +31,14 @@ class EnrollmentServiceTest extends TestCase
         $trainingPathRepo = app(TrainingPathRepository::class);
         $progressRepo = app(TrainingUnitProgressRepository::class);
         $paymentRepo = app(PaymentRepository::class);
+        $this->certificateService = $this->createMock(CertificateService::class);
+
         $this->enrollmentService = new EnrollmentService(
             $enrollmentRepo,
             $trainingPathRepo,
             $progressRepo,
             $paymentRepo,
+            $this->certificateService
         );
     }
 
@@ -101,7 +107,8 @@ class EnrollmentServiceTest extends TestCase
     public function test_mark_training_unit_as_complete(): void
     {
         $user = User::factory()->create();
-        $module = TrainingPathModule::factory()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
         $progress = $this->enrollmentService->markTrainingUnitComplete($user, $trainingUnit->id);
@@ -118,7 +125,8 @@ class EnrollmentServiceTest extends TestCase
     public function test_cannot_mark_completed_training_unit_twice(): void
     {
         $user = User::factory()->create();
-        $module = TrainingPathModule::factory()->create();
+        $trainingPath = TrainingPath::factory()->approved()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         $trainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
 
         $progress1 = $this->enrollmentService->markTrainingUnitComplete($user, $trainingUnit->id);

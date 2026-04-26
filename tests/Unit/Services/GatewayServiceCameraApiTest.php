@@ -55,7 +55,8 @@ class GatewayServiceCameraApiTest extends TestCase
             return $request->url() === 'http://192.168.50.10:8001/streams/start'
                 && ($payload['usb_busid'] ?? null) === '5-1'
                 && ($payload['vendor_id'] ?? null) === '0c45'
-                && ($payload['product_id'] ?? null) === '6536';
+                && ($payload['product_id'] ?? null) === '6536'
+                && ($payload['input_format'] ?? null) === 'auto';
         });
         Http::assertNotSent(fn ($request) => $request->url() === 'http://192.168.50.10:8000/camera/start');
     }
@@ -135,7 +136,7 @@ class GatewayServiceCameraApiTest extends TestCase
         Http::fake([
             'http://192.168.50.13:8001/streams' => Http::response(['detail' => 'Not Found'], 404),
             'http://192.168.50.13:8000/camera/status' => Http::response(['detail' => 'Not Found'], 404),
-            'http://192.168.50.13:9997/v3/paths/get/usb-gateway-54' => Http::response([
+            'http://192.168.50.99:9997/v3/paths/get/usb-gateway-54' => Http::response([
                 'name' => 'usb-gateway-54',
                 'source' => ['type' => 'rtspSession'],
             ], 200),
@@ -149,7 +150,7 @@ class GatewayServiceCameraApiTest extends TestCase
         $this->assertTrue($result['mediamtx_status']['publishing']);
         $this->assertSame(200, $result['mediamtx_status']['status']);
 
-        Http::assertSent(fn ($request) => $request->url() === 'http://192.168.50.13:9997/v3/paths/get/usb-gateway-54');
+        Http::assertSent(fn ($request) => $request->url() === 'http://192.168.50.99:9997/v3/paths/get/usb-gateway-54');
     }
 
     public function test_it_can_list_capture_devices_from_the_camera_api(): void

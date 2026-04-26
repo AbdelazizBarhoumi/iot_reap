@@ -10,8 +10,10 @@ import {
     RotateCcw,
     Search,
     XCircle,
+    type LucideProps,
 } from 'lucide-react';
 import { useState } from 'react';
+import { type ComponentType } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,9 +39,16 @@ interface RefundRequest {
         id: number;
         title: string;
     };
-    amount: number;
+    amount: number | null;
+    formattedAmount: string | null;
     reason: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status:
+        | 'pending'
+        | 'approved'
+        | 'rejected'
+        | 'processing'
+        | 'completed'
+        | 'failed';
     requestedAt: string;
     processedAt: string | null;
 }
@@ -60,7 +69,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Admin', href: '/admin/infrastructure' },
     { title: 'Refunds', href: '/admin/refunds' },
 ];
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; icon: ComponentType<LucideProps> }> = {
     pending: {
         label: 'Pending',
         color: 'bg-warning/10 text-warning',
@@ -75,6 +84,21 @@ const statusConfig = {
         label: 'Rejected',
         color: 'bg-destructive/10 text-destructive',
         icon: XCircle,
+    },
+    completed: {
+        label: 'Completed',
+        color: 'bg-success/10 text-success',
+        icon: CheckCircle2,
+    },
+    failed: {
+        label: 'Failed',
+        color: 'bg-destructive/10 text-destructive',
+        icon: XCircle,
+    },
+    processing: {
+        label: 'Processing',
+        color: 'bg-warning/10 text-warning',
+        icon: Clock,
     },
 };
 
@@ -238,8 +262,7 @@ export default function RefundsPage({ refunds = [], stats }: Props) {
                                                 {refund.trainingPath.title}
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                $
-                                                {refund.amount.toLocaleString()}
+                                                {refund.formattedAmount ?? '—'}
                                             </TableCell>
                                             <TableCell className="max-w-[200px] truncate text-muted-foreground">
                                                 {refund.reason}

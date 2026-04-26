@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\TrainingUnitVMAssignmentStatus;
+use App\Http\Resources\TrainingUnitVMAssignmentResource;
 use App\Models\TrainingUnitVMAssignment;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -16,7 +17,8 @@ class AdminVMAssignmentController
     public function index(): Response|JsonResponse
     {
         $assignments = TrainingUnitVMAssignment::with([
-            'trainingUnit.module.trainingPath',
+            'trainingUnit.module.trainingPath.instructor',
+            'node',
             'assignedByUser',
             'approvedByUser',
         ])
@@ -32,13 +34,13 @@ class AdminVMAssignmentController
 
         if (request()->wantsJson()) {
             return response()->json([
-                'data' => $assignments,
+                'data' => TrainingUnitVMAssignmentResource::collection($assignments),
                 'stats' => $stats,
             ]);
         }
 
         return Inertia::render('admin/VMAssignmentApprovalsPage', [
-            'assignments' => $assignments,
+            'assignments' => TrainingUnitVMAssignmentResource::collection($assignments),
             'stats' => $stats,
         ]);
     }

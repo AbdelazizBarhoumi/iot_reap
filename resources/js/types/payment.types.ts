@@ -41,8 +41,11 @@ export interface RefundRequest {
     status_label: string;
     reason: string;
     admin_notes?: string;
-    amount?: string | null;
+    amount?: number | null;
+    formattedAmount?: string | null;
+    currency?: string | null;
     refund_amount: number | null;
+    formattedRefundAmount?: string | null;
     requestedAt: string;
     processedAt: string | null;
 }

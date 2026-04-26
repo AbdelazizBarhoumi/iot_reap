@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\GatewayNode;
-use App\Models\Reservation;
 use App\Models\ProxmoxNode;
 use App\Models\ProxmoxServer;
+use App\Models\Reservation;
 use App\Models\UsbDevice;
 use App\Models\UsbDeviceQueue;
 use App\Models\User;
@@ -195,9 +195,83 @@ class SessionHardwareTest extends TestCase
 
         $device->refresh();
         $this->assertEquals($this->session->id, $device->attached_session_id);
+        $this->assertEquals($this->session->vm_id, $device->attached_vmid);
+        $this->assertEquals($this->proxmoxNode->name, $device->attached_node);
+        $this->assertEquals($this->proxmoxServer->id, $device->attached_server_id);
 
         // Verify the command was executed via guest agent
         $this->fakeProxmoxClient->assertCommandExecuted('usbip attach');
+    }
+
+    public function test_same_vm_new_session_sees_vm_owned_attached_device_as_theirs(): void
+    {
+        $otherSessionSameVm = VMSession::factory()
+            ->for($this->user)
+            ->active()
+            ->create([
+                'proxmox_server_id' => $this->proxmoxServer->id,
+                'node_id' => $this->proxmoxNode->id,
+                'vm_id' => $this->session->vm_id,
+            ]);
+
+        $device = UsbDevice::factory()
+            ->for($this->gateway)
+            ->attached()
+            ->create([
+                'busid' => '1-1',
+                'attached_session_id' => $otherSessionSameVm->id,
+                'attached_vmid' => $this->session->vm_id,
+                'attached_node' => $this->proxmoxNode->name,
+                'attached_server_id' => $this->proxmoxServer->id,
+                'vendor_id' => '0000',
+                'product_id' => '0000',
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+
+        $response->assertOk();
+        $attachedIds = collect($response->json('data.attached_devices'))->pluck('id')->all();
+        $available = collect($response->json('data.available_devices'))
+            ->firstWhere('device.id', $device->id);
+
+        $this->assertContains($device->id, $attachedIds);
+        $this->assertTrue($available['is_attached_to_me']);
+    }
+
+    public function test_same_vm_new_session_attach_syncs_existing_vm_owned_attachment(): void
+    {
+        $otherSessionSameVm = VMSession::factory()
+            ->for($this->user)
+            ->active()
+            ->create([
+                'proxmox_server_id' => $this->proxmoxServer->id,
+                'node_id' => $this->proxmoxNode->id,
+                'vm_id' => $this->session->vm_id,
+            ]);
+
+        $device = UsbDevice::factory()
+            ->for($this->gateway)
+            ->attached()
+            ->create([
+                'busid' => '1-1',
+                'attached_session_id' => $otherSessionSameVm->id,
+                'attached_vmid' => $this->session->vm_id,
+                'attached_node' => $this->proxmoxNode->name,
+                'attached_server_id' => $this->proxmoxServer->id,
+                'vendor_id' => '0000',
+                'product_id' => '0000',
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/sessions/{$this->session->id}/hardware/devices/{$device->id}/attach");
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $device->refresh();
+        $this->assertEquals($this->session->id, $device->attached_session_id);
+        $this->assertEquals($this->session->vm_id, $device->attached_vmid);
     }
 
     public function test_user_cannot_attach_device_in_use_by_another(): void

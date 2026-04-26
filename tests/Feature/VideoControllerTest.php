@@ -112,9 +112,13 @@ class VideoControllerTest extends TestCase
         ]);
     }
 
-    public function test_cannot_upload_video_when_one_already_exists(): void
+    public function test_upload_replaces_existing_video_when_one_already_exists(): void
     {
-        Video::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
+        $existingVideo = Video::factory()->create([
+            'training_unit_id' => $this->trainingUnit->id,
+            'storage_path' => 'videos/raw/test/existing.mp4',
+            'storage_disk' => config('filesystems.default', 'local'),
+        ]);
 
         $videoFile = UploadedFile::fake()->create('another_video.mp4', 10000, 'video/mp4');
 
@@ -123,10 +127,19 @@ class VideoControllerTest extends TestCase
                 'video' => $videoFile,
             ]);
 
-        $response->assertStatus(422)
+        $response->assertStatus(201)
             ->assertJson([
-                'message' => 'TrainingUnit already has a video. Delete it first to upload a new one.',
+                'message' => 'Video replaced successfully. Transcoding has started.',
             ]);
+
+        $this->assertDatabaseMissing('videos', [
+            'id' => $existingVideo->id,
+        ]);
+        $this->assertDatabaseHas('videos', [
+            'training_unit_id' => $this->trainingUnit->id,
+            'original_filename' => 'another_video.mp4',
+            'mime_type' => 'video/mp4',
+        ]);
     }
 
     public function test_upload_video_validates_file_is_required(): void
@@ -707,5 +720,20 @@ class VideoControllerTest extends TestCase
             // Clean up for next iteration
             Video::where('training_unit_id', $this->trainingUnit->id)->delete();
         }
+    }
+
+    public function test_video_upload_accepts_avi_when_browser_sends_generic_mime_type(): void
+    {
+        $videoFile = UploadedFile::fake()->create('camera-capture.avi', 10000, 'application/octet-stream');
+
+        $response = $this->actingAs($this->teacher)
+            ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/video", [
+                'video' => $videoFile,
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'message' => 'Video uploaded successfully. Transcoding has started.',
+            ]);
     }
 }

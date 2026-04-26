@@ -10,7 +10,7 @@
  */
 import { Head, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { SessionCameraPanel } from '@/components/SessionCameraPanel';
@@ -85,8 +85,9 @@ export default function SessionShowPage({
     const loading = fetchingSession;
     const [isCameraSplitActive, setIsCameraSplitActive] = useState(false);
     const [isCameraFeedFocused, setIsCameraFeedFocused] = useState(false);
-    const [splitLeftWidth, setSplitLeftWidth] = useState<number>(58);
+    const [splitLeftWidth, setSplitLeftWidth] = useState<number>(50);
     const [isResizingSplit, setIsResizingSplit] = useState(false);
+    const [isWorkspaceFullscreen, setIsWorkspaceFullscreen] = useState(false);
     const [splitBounds, setSplitBounds] = useState<{
         minPercent: number;
         maxPercent: number;
@@ -127,7 +128,7 @@ export default function SessionShowPage({
     }, []);
 
     useEffect(() => {
-        if (!isCameraSplitActive || !isResizingSplit) {
+        if (isWorkspaceFullscreen || !isResizingSplit) {
             return;
         }
 
@@ -156,10 +157,10 @@ export default function SessionShowPage({
             window.removeEventListener('pointermove', handlePointerMove);
             window.removeEventListener('pointerup', stopResize);
         };
-    }, [isCameraSplitActive, isResizingSplit]);
+    }, [isResizingSplit, isWorkspaceFullscreen]);
 
     useEffect(() => {
-        if (!isCameraSplitActive) {
+        if (isWorkspaceFullscreen) {
             return;
         }
 
@@ -181,7 +182,7 @@ export default function SessionShowPage({
         return () => {
             window.removeEventListener('resize', syncSplitBounds);
         };
-    }, [isCameraSplitActive]);
+    }, [isWorkspaceFullscreen]);
 
     const handleMakeCameraWider = useCallback(() => {
         const width =
@@ -228,6 +229,10 @@ export default function SessionShowPage({
     const handleSessionTerminated = () => {
         // Session will be removed from list automatically
     };
+
+    const handleToggleWorkspaceFullscreen = useCallback(() => {
+        setIsWorkspaceFullscreen((previous) => !previous);
+    }, []);
 
     if (loading) {
         return (
@@ -297,6 +302,23 @@ export default function SessionShowPage({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleToggleWorkspaceFullscreen}
+                            >
+                                {isWorkspaceFullscreen ? (
+                                    <>
+                                        <Minimize2 className="mr-2 h-4 w-4" />
+                                        Split View
+                                    </>
+                                ) : (
+                                    <>
+                                        <Maximize2 className="mr-2 h-4 w-4" />
+                                        Full Page VM
+                                    </>
+                                )}
+                            </Button>
                             <SessionCountdown expiresAt={session.expires_at} />
                             <SessionExtendButton
                                 sessionId={session.id}
@@ -313,26 +335,16 @@ export default function SessionShowPage({
                 {/* Main Content Area */}
                 <div
                     ref={splitContainerRef}
-                    className={
-                        isCameraSplitActive
-                            ? 'relative flex flex-1 items-stretch overflow-hidden p-4'
-                            : 'flex flex-1 gap-4 overflow-hidden p-4'
-                    }
+                    className="relative flex flex-1 items-stretch overflow-hidden p-4"
                 >
                     {/* Guacamole Viewer */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className={`min-w-0 overflow-hidden rounded-lg border border-border/40 bg-background ${
-                            isCameraSplitActive
-                                ? 'shrink-0 pr-2 transition-[width] duration-150'
-                                : 'flex-1'
-                        }`}
-                        style={
-                            isCameraSplitActive
-                                ? { width: `${splitLeftWidth}%` }
-                                : undefined
-                        }
+                        className="min-w-0 shrink-0 overflow-hidden rounded-lg border border-border/40 bg-background pr-2 transition-[width] duration-150"
+                        style={{
+                            width: `${isWorkspaceFullscreen ? 100 : splitLeftWidth}%`,
+                        }}
                     >
                         {session.guacamole_url ? (
                             <GuacamoleViewer
@@ -350,7 +362,7 @@ export default function SessionShowPage({
                         )}
                     </motion.div>
 
-                    {isCameraSplitActive && (
+                    {!isWorkspaceFullscreen && (
                         <div
                             role="separator"
                             aria-orientation="vertical"
@@ -381,9 +393,9 @@ export default function SessionShowPage({
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className={
-                            isCameraSplitActive
-                                ? 'flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto pl-2'
-                                : 'flex w-96 flex-col gap-4 overflow-y-auto'
+                            isWorkspaceFullscreen
+                                ? 'hidden'
+                                : 'flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto pl-2'
                         }
                     >
                         {isCameraSplitActive && !isCameraFeedFocused && (
@@ -421,15 +433,11 @@ export default function SessionShowPage({
                             onFeedFocusChange={handleCameraFeedFocusChange}
                         />
 
-                        {!isCameraSplitActive && (
-                            <>
-                                {/* Hardware */}
-                                <SessionHardwarePanel
-                                    sessionId={session.id}
-                                    isActive={session.status === 'active'}
-                                />
-                            </>
-                        )}
+                        {/* Hardware */}
+                        <SessionHardwarePanel
+                            sessionId={session.id}
+                            isActive={session.status === 'active'}
+                        />
                     </motion.div>
                 </div>
             </div>

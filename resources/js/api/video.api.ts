@@ -20,6 +20,7 @@ export interface Video {
     error_message?: string;
     duration_seconds: number | null;
     duration_formatted?: string;
+    available_qualities: string[];
     resolution_height: number | null;
     resolution_width: number | null;
     file_size_bytes: number | null;
@@ -47,6 +48,11 @@ export interface VideoStatus {
     has_failed?: boolean;
     error_message?: string | null;
     duration_seconds?: number | null;
+    available_qualities?: string[];
+    resolution_height?: number | null;
+    resolution_width?: number | null;
+    original_filename?: string | null;
+    file_size_bytes?: number | null;
     hls_url?: string | null;
     thumbnail_url?: string | null;
 }
@@ -99,9 +105,6 @@ export async function uploadVideo(
         `/teaching/trainingUnits/${trainingUnitId}/video`,
         formData,
         {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
             onUploadProgress: (progressEvent: AxiosProgressEvent) => {
                 if (onProgress && progressEvent.total) {
                     const percent = Math.round(
@@ -159,11 +162,6 @@ export async function uploadCaption(
     const response = await client.post<{ data: Caption; message: string }>(
         `/teaching/trainingUnits/${trainingUnitId}/video/captions`,
         formData,
-        {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        },
     );
     return response.data.data;
 }

@@ -105,6 +105,73 @@ class CheckoutServiceTest extends TestCase
         $this->assertArrayHasKey('checkout_created_at', $payment->metadata);
     }
 
+    public function test_converts_relative_thumbnail_to_absolute_url_for_stripe(): void
+    {
+        $user = User::factory()->create(['email' => 'test@example.com']);
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Thumbnail TrainingPath',
+            'price_cents' => 9900,
+            'currency' => 'USD',
+            'is_free' => false,
+            'thumbnail' => '/storage/training_path_thumbnails/test.png',
+        ]);
+
+        $mockSession = Mockery::mock('alias:'.StripeSession::class);
+        $mockSession->shouldReceive('create')
+            ->once()
+            ->with(Mockery::on(function (array $payload): bool {
+                $image = $payload['line_items'][0]['price_data']['product_data']['images'][0] ?? null;
+
+                return is_string($image)
+                    && str_starts_with($image, 'http')
+                    && str_ends_with($image, '/storage/training_path_thumbnails/test.png');
+            }))
+            ->andReturn((object) [
+                'id' => 'cs_test_thumbnail',
+                'url' => 'https://checkout.stripe.com/pay/cs_test_thumbnail',
+            ]);
+
+        $this->service->createCheckoutSession($user, $trainingPath);
+        $this->assertDatabaseHas('payments', [
+            'user_id' => $user->id,
+            'training_path_id' => $trainingPath->id,
+            'stripe_session_id' => 'cs_test_thumbnail',
+        ]);
+    }
+
+    public function test_omits_invalid_thumbnail_url_from_stripe_payload(): void
+    {
+        $user = User::factory()->create(['email' => 'test@example.com']);
+        $trainingPath = TrainingPath::factory()->approved()->create([
+            'title' => 'Invalid Thumbnail TrainingPath',
+            'price_cents' => 9900,
+            'currency' => 'USD',
+            'is_free' => false,
+            'thumbnail' => 'not-a-valid-url',
+        ]);
+
+        $mockSession = Mockery::mock('alias:'.StripeSession::class);
+        $mockSession->shouldReceive('create')
+            ->once()
+            ->with(Mockery::on(function (array $payload): bool {
+                return ! array_key_exists(
+                    'images',
+                    $payload['line_items'][0]['price_data']['product_data']
+                );
+            }))
+            ->andReturn((object) [
+                'id' => 'cs_test_no_image',
+                'url' => 'https://checkout.stripe.com/pay/cs_test_no_image',
+            ]);
+
+        $this->service->createCheckoutSession($user, $trainingPath);
+        $this->assertDatabaseHas('payments', [
+            'user_id' => $user->id,
+            'training_path_id' => $trainingPath->id,
+            'stripe_session_id' => 'cs_test_no_image',
+        ]);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Free TrainingPath Enrollment Tests
     // ─────────────────────────────────────────────────────────────────────────
@@ -206,6 +273,21 @@ class CheckoutServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('You are already enrolled in this trainingPath.');
+
+        $this->service->createCheckoutSession($user, $trainingPath);
+    }
+
+    public function test_rejects_checkout_for_unpublished_training_path(): void
+    {
+        $user = User::factory()->create();
+        $trainingPath = TrainingPath::factory()->create([
+            'is_free' => false,
+            'price_cents' => 9900,
+            'currency' => 'EUR',
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('This training path is not available for enrollment.');
 
         $this->service->createCheckoutSession($user, $trainingPath);
     }

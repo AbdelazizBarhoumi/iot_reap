@@ -25,6 +25,7 @@ return new class extends Migration
             // TrainingUnit type tracking
             $table->boolean('completed')->default(false);
             $table->boolean('quiz_passed')->default(false);
+            $table->unsignedBigInteger('quiz_attempt_id')->nullable();
             $table->boolean('article_read')->default(false);
             $table->timestamp('article_read_at')->nullable();
 

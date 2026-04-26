@@ -261,6 +261,10 @@ class TrainingUnitVMAssignmentService
             'available' => $availability['available'],
             'unavailable_reason' => $availability['reason'],
             'reserved_training_path' => $availability['reserved_training_path'],
+            'node' => $assignment->node ? [
+                'id' => $assignment->node->id,
+                'name' => $assignment->node->name,
+            ] : null,
         ];
     }
 }
