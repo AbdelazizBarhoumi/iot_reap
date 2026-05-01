@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { forumApi } from '@/api/forum.api';
 import type { TrainingPathEditing } from '@/api/teaching.api';
 import { TeacherInbox } from '@/components/forum/TeacherInbox';
+import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +52,7 @@ import type { BreadcrumbItem } from '@/types';
 import type { DiscussionThread } from '@/types/forum.types';
 import type { TrainingPath } from '@/types/TrainingPath.types';
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Teaching', href: '/teaching' },
+    { title: 'Teaching', href: '/teaching/training-paths' },
 ];
 type TeachingPathStatus = TrainingPathEditing['status'];
 
@@ -132,19 +133,34 @@ export default function TeachingPage() {
         setForumLoading(true);
         try {
             const [flaggedRes, unansweredRes, recentRes] = await Promise.all([
-                forumApi.getTeacherInbox('flagged').catch(() => ({ data: [] })),
+                forumApi.getTeacherInbox('flagged').catch((err) => {
+                    console.error('Failed to load flagged threads:', err);
+                    return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
+                }),
                 forumApi
                     .getTeacherInbox('unanswered')
-                    .catch(() => ({ data: [] })),
-                forumApi.getTeacherInbox('recent').catch(() => ({ data: [] })),
+                    .catch((err) => {
+                        console.error('Failed to load unanswered threads:', err);
+                        return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
+                    }),
+                forumApi.getTeacherInbox('recent').catch((err) => {
+                    console.error('Failed to load recent threads:', err);
+                    return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
+                }),
             ]);
             setForumInbox({
-                flagged: flaggedRes.data,
-                unanswered: unansweredRes.data,
-                recent: recentRes.data,
+                flagged: flaggedRes.data || [],
+                unanswered: unansweredRes.data || [],
+                recent: recentRes.data || [],
             });
         } catch (err) {
             console.error('Failed to load forum inbox:', err);
+            // Reset to empty state on critical error
+            setForumInbox({
+                flagged: [],
+                unanswered: [],
+                recent: [],
+            });
         } finally {
             setForumLoading(false);
         }
@@ -334,6 +350,7 @@ export default function TeachingPage() {
                             </Link>
                         </Button>
                     </motion.div>
+                    <TeachingWorkspaceTabs activeTab="training-paths" />
                     {/* Stats Grid */}
                     <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {statCards.map((stat, i) => (
@@ -441,7 +458,7 @@ export default function TeachingPage() {
                                         await forumApi.resolveThreadFlag(
                                             threadId,
                                         );
-                                        fetchForumInbox();
+                                        await fetchForumInbox();
                                         toast.success('Thread flag resolved');
                                     } catch {
                                         toast.error('Failed to resolve flag');
@@ -450,7 +467,7 @@ export default function TeachingPage() {
                                 onPinThread={async (threadId) => {
                                     try {
                                         await forumApi.pinThread(threadId);
-                                        fetchForumInbox();
+                                        await fetchForumInbox();
                                         toast.success('Thread pinned');
                                     } catch {
                                         toast.error('Failed to pin thread');
@@ -459,7 +476,7 @@ export default function TeachingPage() {
                                 onUnpinThread={async (threadId) => {
                                     try {
                                         await forumApi.unpinThread(threadId);
-                                        fetchForumInbox();
+                                        await fetchForumInbox();
                                         toast.success('Thread unpinned');
                                     } catch {
                                         toast.error('Failed to unpin thread');
@@ -468,7 +485,7 @@ export default function TeachingPage() {
                                 onLockThread={async (threadId) => {
                                     try {
                                         await forumApi.lockThread(threadId);
-                                        fetchForumInbox();
+                                        await fetchForumInbox();
                                         toast.success('Thread locked');
                                     } catch {
                                         toast.error('Failed to lock thread');
@@ -477,7 +494,7 @@ export default function TeachingPage() {
                                 onUnlockThread={async (threadId) => {
                                     try {
                                         await forumApi.unlockThread(threadId);
-                                        fetchForumInbox();
+                                        await fetchForumInbox();
                                         toast.success('Thread unlocked');
                                     } catch {
                                         toast.error('Failed to unlock thread');

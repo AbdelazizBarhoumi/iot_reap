@@ -17,6 +17,14 @@ class CertificateController extends Controller
     ) {}
 
     /**
+     * Show the public certificate lookup page.
+     */
+    public function lookup(): InertiaResponse
+    {
+        return Inertia::render('certificates/lookup');
+    }
+
+    /**
      * Get user's certificates.
      */
     public function index(Request $request): JsonResponse|InertiaResponse
@@ -46,8 +54,10 @@ class CertificateController extends Controller
 
         return response()->json([
             'data' => new CertificateResource($certificate),
-            'message' => 'Certificate issued successfully. PDF is being generated.',
-        ], 201);
+            'message' => $certificate->pdf_path
+                ? 'Certificate is ready.'
+                : 'Certificate was created. PDF generation is still in progress.',
+        ], $certificate->wasRecentlyCreated ? 201 : 200);
     }
 
     /**
@@ -61,6 +71,8 @@ class CertificateController extends Controller
         );
 
         if ($certificate) {
+            $certificate = $this->certificateService->ensureCertificatePdf($certificate);
+
             return response()->json([
                 'has_certificate' => true,
                 'data' => new CertificateResource($certificate->load('trainingPath')),
@@ -119,6 +131,7 @@ class CertificateController extends Controller
             ], 404);
         }
 
+        $certificate = $this->certificateService->ensureCertificatePdf($certificate);
         $pdfPath = $this->certificateService->getCertificatePdfPath($certificate);
 
         if (! $pdfPath || ! file_exists($pdfPath)) {

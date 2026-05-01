@@ -8,6 +8,8 @@ import {
     Download,
     Loader2,
     CheckCircle,
+    ExternalLink,
+    Copy,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -84,6 +86,38 @@ export function CertificateClaimPrompt({
         };
     }, [open, trainingPathId]);
 
+    useEffect(() => {
+        if (!open || status !== 'issued' || !certificate) {
+            return;
+        }
+
+        let cancelled = false;
+
+        const timer = window.setInterval(async () => {
+            try {
+                const res =
+                    await certificatesApi.checkCertificate(trainingPathId);
+
+                if (cancelled || !res.has_certificate || !res.data) {
+                    return;
+                }
+
+                setCertificate(res.data);
+
+                if (res.data.has_pdf) {
+                    setStatus('ready');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }, 4000);
+
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [certificate, open, status, trainingPathId]);
+
     const handleClaim = async () => {
         setStatus('issuing');
 
@@ -115,7 +149,10 @@ export function CertificateClaimPrompt({
         );
     };
 
+
     const isBusy = status === 'checking' || status === 'issuing';
+    const verificationUrl = certificate?.verification_url ?? null;
+    const certificateHash = certificate?.hash ?? null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,14 +181,14 @@ export function CertificateClaimPrompt({
                         {status === 'can_claim'
                             ? `You've completed "${trainingPathTitle}"`
                             : status === 'checking'
-                              ? 'Checking certificate...'
-                              : 'Your certificate status'}
+                                ? 'Checking certificate...'
+                                : 'Your certificate status'}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-6 text-center">
                     {(status === 'issued' || status === 'ready') &&
-                    certificate ? (
+                        certificate ? (
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -164,10 +201,10 @@ export function CertificateClaimPrompt({
                             <p className="text-sm text-muted-foreground">
                                 {status === 'ready'
                                     ? 'Your certificate is ready to download.'
-                                    : 'Your certificate is being generated.'}
+                                    : 'Your certificate exists, but the PDF is still being prepared. We will keep checking automatically.'}
                             </p>
 
-                            <div className="flex justify-center gap-2">
+                            <div className="flex flex-wrap justify-center gap-2">
                                 <Button
                                     onClick={handleDownload}
                                     disabled={!certificate?.has_pdf}
@@ -190,6 +227,49 @@ export function CertificateClaimPrompt({
                                     onClick={() => onOpenChange(false)}
                                 >
                                     Close
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (!certificateHash) {
+                                            return;
+                                        }
+
+                                        try {
+                                            await navigator.clipboard.writeText(
+                                                certificateHash,
+                                            );
+                                            toast.success(
+                                                'Certificate hash copied to clipboard',
+                                            );
+                                        } catch (error) {
+                                            console.error(error);
+                                            toast.error(
+                                                'Failed to copy certificate hash',
+                                            );
+                                        }
+                                    }}
+                                >
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy Hash
+                                </Button>
+                                {verificationUrl && (
+                                    <Button variant="outline" asChild>
+                                        <a
+                                            href={verificationUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            Verify
+                                        </a>
+                                    </Button>
+                                )}
+                                <Button variant="outline" asChild>
+                                    <a href="/certificates">
+                                        <Award className="mr-2 h-4 w-4" />
+                                        My Certificates
+                                    </a>
                                 </Button>
                             </div>
                         </motion.div>
@@ -235,8 +315,8 @@ export function CertificateClaimPrompt({
                                 {status === 'checking'
                                     ? 'Checking...'
                                     : status === 'issuing'
-                                      ? 'Issuing...'
-                                      : 'Claim Certificate'}
+                                        ? 'Issuing...'
+                                        : 'Claim Certificate'}
                             </Button>
                         </div>
                     )}

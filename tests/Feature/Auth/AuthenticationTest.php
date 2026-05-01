@@ -108,13 +108,14 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('verification.notice'));
     }
 
-    public function test_authenticated_admin_home_redirects_to_admin_dashboard(): void
+    public function test_authenticated_admin_can_view_home_page(): void
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
         $response = $this->actingAs($admin)->get(route('home'));
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('welcome'));
     }
 
     public function test_unapproved_teacher_cannot_pass_teach_gate(): void

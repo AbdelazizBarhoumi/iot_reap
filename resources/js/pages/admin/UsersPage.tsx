@@ -60,7 +60,7 @@ import type {
     UserStats,
 } from '@/types/user.types';
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/infrastructure' },
+    { title: 'Admin', href: '/admin/dashboard' },
     { title: 'User Management', href: '/admin/users' },
 ];
 interface UsersPageProps extends PageProps {

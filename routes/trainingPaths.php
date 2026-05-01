@@ -26,9 +26,9 @@ Route::controller(TrainingPathController::class)->group(function () {
     Route::get('/trainingPaths/{id}', 'show')->name('trainingPaths.show');
 });
 
-// Public forum read operations (rate limited)
+// Public forum read operations (no rate limit - read-only)
 // Guests can view threads but cannot create/modify
-Route::prefix('forum')->middleware(['throttle:forum'])->name('forum.')->controller(ForumController::class)->group(function () {
+Route::prefix('forum')->name('forum.')->controller(ForumController::class)->group(function () {
     Route::get('/trainingUnits/{trainingUnitId}/threads', 'index')->name('trainingUnit.threads');
     Route::get('/trainingPaths/{trainingPathId}/threads', 'trainingPathThreads')->name('trainingPath.threads');
     Route::get('/threads/{threadId}', 'show')->name('threads.show');
@@ -65,6 +65,7 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->co
 });
 
 // Public certificate verification (guest access)
+Route::get('/certificates/verify', [CertificateController::class, 'lookup'])->name('certificates.lookup');
 Route::get('/certificates/{hash}/verify', [CertificateController::class, 'verify'])->name('certificates.verify');
 
 // Public certificate actions
@@ -72,8 +73,8 @@ Route::controller(CertificateController::class)->group(function () {
     Route::get('/certificates/{hash}/download', 'download')->name('certificates.download');
 });
 
-// Public checkout routes (success/cancelled after Stripe redirect - no auth needed)
-Route::prefix('checkout')->name('checkout.')->controller(CheckoutController::class)->group(function () {
+// Checkout result pages (auth only)
+Route::middleware(['auth'])->prefix('checkout')->name('checkout.')->controller(CheckoutController::class)->group(function () {
     Route::get('/success', 'success')->name('success');
     Route::get('/cancelled', 'cancelled')->name('cancelled');
 });
@@ -126,8 +127,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/trainingPaths/{trainingPathId}/check', 'check')->name('check');
     });
 
-    // Discussion Forum Routes (authenticated - write operations only)
-    Route::prefix('forum')->middleware(['throttle:forum'])->name('forum.')->controller(ForumController::class)->group(function () {
+    // Discussion Forum Routes (authenticated - write operations only with rate limiting)
+    Route::prefix('forum')->middleware(['throttle:forum-write'])->name('forum.')->controller(ForumController::class)->group(function () {
         // Thread creation & modification
         Route::post('/trainingUnits/{trainingUnitId}/threads', 'store')->name('threads.store');
         Route::post('/trainingPaths/{trainingPathId}/threads', 'store')->name('trainingPath.threads.store');
@@ -152,6 +153,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::get('/trainingUnits/{trainingUnitId}/article/read', [ArticleController::class, 'read'])->name('article.read');
+
+    // Checkout result pages (authenticated only)
+    Route::prefix('checkout')->name('checkout.')->controller(CheckoutController::class)->group(function () {
+        Route::get('/success', 'success')->name('success');
+        Route::get('/cancelled', 'cancelled')->name('cancelled');
+    });
 
     // Checkout & Payments (authenticated routes only)
     Route::prefix('checkout')->name('checkout.')->controller(CheckoutController::class)->group(function () {

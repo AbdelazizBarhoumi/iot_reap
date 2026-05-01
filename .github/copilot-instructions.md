@@ -1,6 +1,6 @@
  # IoT-REAP — GitHub Copilot Master Instructions
  > Place this file at `.github/copilot-instructions.md` so Copilot reads it automatically in every file.
- > Last updated: February 2026 | Project: IoT-REAP | Stack: Laravel 11 + React 18 + TypeScript + Proxmox + Guacamole
+ > Last updated: February 2026 | Project: IoT-REAP | Stack: Laravel 12 + React 18 + TypeScript + Proxmox + Guacamole
 
  ---
 

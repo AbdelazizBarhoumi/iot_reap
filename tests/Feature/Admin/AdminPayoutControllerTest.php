@@ -274,12 +274,37 @@ class AdminPayoutControllerTest extends TestCase
 
     public function test_admin_can_export_payouts_csv(): void
     {
+        $this->payoutRequest->update([
+            'status' => \App\Enums\PayoutStatus::APPROVED,
+        ]);
+
         $response = $this->actingAs($this->admin)
             ->get('/admin/payouts/export');
 
         $response->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=utf-8')
             ->assertHeaderMissing('Content-Length'); // StreamedResponse doesn't set this
+
+        $csv = $response->streamedContent();
+        $lines = preg_split('/\r\n|\r|\n/', trim($csv));
+
+        $this->assertNotFalse($lines);
+        $this->assertSame([
+            'ID',
+            'Teacher Name',
+            'Teacher Email',
+            'Amount',
+            'Currency',
+            'Status',
+            'Payout Method',
+            'Stripe Account ID',
+            'Transaction ID',
+            'Requested At',
+            'Processed At',
+            'Admin Notes',
+        ], str_getcsv($lines[0]));
+
+        $this->assertSame('approved', str_getcsv($lines[1])[5]);
     }
 
     public function test_admin_can_export_payouts_csv_with_filters(): void

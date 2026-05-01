@@ -252,6 +252,25 @@ export const hardwareApi = {
         );
         return response.data.data;
     },
+    /**
+     * Dedicate a USB device to a specific VM (admin only).
+     */
+    async dedicateDevice(deviceId: number, data: { vmid: number; node: string; server_id: number; vm_ip?: string; vm_name?: string; }): Promise<ActionResponse> {
+        const response = await client.post<ActionResponse>(
+            `/admin/hardware/devices/${deviceId}/dedicate`,
+            data,
+        );
+        return response.data;
+    },
+    /**
+     * Remove dedicated assignment from a USB device (admin only).
+     */
+    async removeDedication(deviceId: number): Promise<ActionResponse> {
+        const response = await client.delete<ActionResponse>(
+            `/admin/hardware/devices/${deviceId}/dedicate`,
+        );
+        return response.data;
+    },
 };
 /**
  * Session Hardware API - for session-scoped device management

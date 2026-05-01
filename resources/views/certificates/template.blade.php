@@ -225,7 +225,7 @@
             <div class="footer">
                 <div class="signature-block">
                     <div class="signature-line">TrainingPath Instructor</div>
-                    <div class="instructor-name">{{ $instructor->name }}</div>
+                    <div class="instructor-name">{{ $instructor?->name ?? 'IoT-REAP Instructor' }}</div>
                 </div>
                 
                 <div class="verification">

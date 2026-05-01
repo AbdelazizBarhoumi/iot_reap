@@ -31,13 +31,14 @@ import type { TrainingPath } from '@/types/TrainingPath.types';
 interface PageProps {
     trainingPaths: TrainingPath[];
     categories: string[];
+    featuredTrainingPaths?: TrainingPath[];
 }
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'TrainingPaths', href: '/trainingPaths' },
 ];
 const levelFilters = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 export default function TrainingPathsPage() {
-    const { trainingPaths, categories } = usePage<{ props: PageProps }>()
+    const { trainingPaths, categories, featuredTrainingPaths = [] } = usePage<{ props: PageProps }>()
         .props as unknown as PageProps;
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(
@@ -146,6 +147,46 @@ export default function TrainingPathsPage() {
                     </div>
                 </div>
                 <div className="container py-8">
+                    {/* Featured Section */}
+                    {featuredTrainingPaths.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="mb-12"
+                        >
+                            <div className="mb-6 flex items-center gap-3">
+                                <div className="rounded-lg bg-warning/10 p-2">
+                                    <Sparkles className="h-5 w-5 text-warning" />
+                                </div>
+                                <div>
+                                    <h2 className="font-heading text-2xl font-bold text-foreground">
+                                        Featured Paths
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Curated paths recommended by instructors
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                <AnimatePresence>
+                                    {featuredTrainingPaths.slice(0, 3).map((path, i) => (
+                                        <motion.div
+                                            key={path.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                        >
+                                            <TrainingPathCard
+                                                trainingPath={path}
+                                            />
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* Enhanced Filters Panel */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}

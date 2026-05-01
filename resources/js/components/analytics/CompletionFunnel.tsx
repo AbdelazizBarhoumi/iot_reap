@@ -17,7 +17,7 @@ interface CompletionFunnelProps {
     title?: string;
 }
 const COLORS = [
-    'hsl(var(--primary))',
+    'var(--primary)',
     'hsl(262 83% 58%)', // Purple
     'hsl(200 98% 39%)', // Blue
     'hsl(174 72% 40%)', // Teal
@@ -34,8 +34,12 @@ export function CompletionFunnel({
                 <CardTitle className="text-lg">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[300px] w-full min-w-0">
+                    <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                        minWidth={0}
+                    >
                         <BarChart
                             layout="vertical"
                             data={data}

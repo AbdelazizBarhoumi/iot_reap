@@ -507,45 +507,6 @@ class VideoControllerTest extends TestCase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Admin Processing Stats Tests
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function test_admin_can_view_processing_stats(): void
-    {
-        $response = $this->actingAs($this->admin)
-            ->getJson('/admin/videos/processing-stats');
-
-        $response->assertOk()
-            ->assertJsonStructure(['data']);
-    }
-
-    public function test_non_admin_cannot_view_processing_stats(): void
-    {
-        $response = $this->actingAs($this->teacher)
-            ->getJson('/admin/videos/processing-stats');
-
-        $response->assertForbidden();
-    }
-
-    public function test_admin_can_view_video_processing_page(): void
-    {
-        $response = $this->actingAs($this->admin)
-            ->get('/admin/videos');
-
-        $response->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('admin/VideoProcessingPage'));
-    }
-
-    public function test_non_admin_cannot_view_video_processing_page(): void
-    {
-        $response = $this->actingAs($this->teacher)
-            ->get('/admin/videos');
-
-        $response->assertForbidden();
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
     // Authorization Tests
     // ─────────────────────────────────────────────────────────────────────────
 

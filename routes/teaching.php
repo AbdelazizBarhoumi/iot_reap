@@ -12,9 +12,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('teaching.')->group(function () {
 
+    // Teacher workspace landing should always open a fresh analytics view.
+    Route::get('/', function () {
+        return redirect()->route('teaching.analytics.index');
+    })->name('index');
+
     // Dashboard and trainingPath management
     Route::controller(TeachingController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
+        Route::get('/training-paths', 'index')->name('training-paths');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->middleware('throttle:trainingPath-creation')->name('store');
         Route::get('/{id}/edit', 'edit')->name('edit');
@@ -84,13 +89,18 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
 
     // Teacher Forum Inbox
     Route::prefix('forum')->name('forum.')->controller(ForumController::class)->group(function () {
+        // Read-only inbox (no rate limit)
         Route::get('/inbox', 'teacherInbox')->name('inbox');
-        Route::post('/threads/{threadId}/pin', 'pin')->name('threads.pin');
-        Route::post('/threads/{threadId}/unpin', 'unpin')->name('threads.unpin');
-        Route::post('/threads/{threadId}/resolve-flag', 'resolveFlag')->name('threads.resolve-flag');
-        Route::post('/threads/{threadId}/lock', 'lock')->name('threads.lock');
-        Route::post('/threads/{threadId}/unlock', 'unlock')->name('threads.unlock');
-        Route::post('/replies/{replyId}/answer', 'markAnswer')->name('replies.answer');
+        
+        // Write operations (rate limited to prevent spam)
+        Route::middleware('throttle:forum-write')->group(function () {
+            Route::post('/threads/{threadId}/pin', 'pin')->name('threads.pin');
+            Route::post('/threads/{threadId}/unpin', 'unpin')->name('threads.unpin');
+            Route::post('/threads/{threadId}/resolve-flag', 'resolveFlag')->name('threads.resolve-flag');
+            Route::post('/threads/{threadId}/lock', 'lock')->name('threads.lock');
+            Route::post('/threads/{threadId}/unlock', 'unlock')->name('threads.unlock');
+            Route::post('/replies/{replyId}/answer', 'markAnswer')->name('replies.answer');
+        });
     });
 
     // Teacher Analytics Dashboard (Sprint 6)

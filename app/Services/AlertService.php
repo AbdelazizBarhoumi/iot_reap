@@ -38,6 +38,7 @@ class AlertService
     {
         return SystemAlert::unacknowledged()
             ->unresolved()
+            ->with('acknowledgedByUser')
             ->orderBy('severity', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -48,7 +49,7 @@ class AlertService
      */
     public function getPaginated(int $perPage = 15, array $filters = [])
     {
-        $query = SystemAlert::query();
+        $query = SystemAlert::query()->with('acknowledgedByUser');
 
         if ($filters['severity'] ?? null) {
             $query->where('severity', $filters['severity']);

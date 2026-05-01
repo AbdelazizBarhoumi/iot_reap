@@ -30,6 +30,12 @@ export function AppFooter() {
                     >
                         Training Paths
                     </Link>
+                    <Link
+                        href="/certificates/verify"
+                        className="transition-colors hover:text-foreground"
+                    >
+                        Verify Certificate
+                    </Link>
                     {isAuthenticated && (
                         <Link
                             href={trainingPaths.my.url()}

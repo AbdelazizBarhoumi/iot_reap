@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', function (TrainingPathService $trainingPathService) {
-    // grab a small selection of approved trainingPaths for the landing page
-    $featured = $trainingPathService->getApprovedTrainingPaths()->take(3);
+Route::get('/', function (TrainingPathService $trainingPathService, \App\Services\FeaturedTrainingPathsService $featuredService) {
+    // grab featured trainingPaths for the landing page (ordered)
+    $featured = $featuredService->getFeaturedTrainingPaths(3);
 
     return Inertia::render('welcome', [
         'canRegister' => Features::enabled(Features::registration()),

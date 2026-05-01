@@ -31,9 +31,10 @@ class RedirectBasedOnRole
             return $next($request);
         }
 
-        // If already on a dashboard/home page after login, redirect based on role
+        // Only enforce role redirects for authenticated dashboard entry points.
+        // The public landing page (/) must stay accessible for all roles.
         $path = $request->path();
-        if ($path === 'dashboard' || $path === 'vmdashboard' || $path === '/') {
+        if ($path === 'dashboard' || $path === 'vmdashboard') {
             if ($user->role === UserRole::TEACHER) {
                 if ($user->isTeacherApproved()) {
                     return redirect()->route('teaching.index');
@@ -44,10 +45,6 @@ class RedirectBasedOnRole
 
             if ($user->role === UserRole::ADMIN) {
                 return redirect()->route('admin.dashboard');
-            }
-
-            if ($path === '/' && $user->role === UserRole::ENGINEER) {
-                return redirect()->route('trainingPaths.index');
             }
 
             return $next($request);

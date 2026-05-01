@@ -3,6 +3,24 @@
  * Admin view for reviewing and approving/rejecting TrainingPath submissions.
  * Uses unified AppLayout.
  */
+import type {
+    DragEndEvent} from '@dnd-kit/core';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -14,8 +32,9 @@ import {
     Star,
     Users,
     XCircle,
+    GripVertical,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,7 +81,7 @@ interface ManagedTrainingPath {
     adminFeedback?: string | null;
 }
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/infrastructure' },
+    { title: 'Admin', href: '/admin/dashboard' },
     { title: 'Training Path Approvals', href: '/admin/trainingPaths' },
 ];
 const statusConfig: Record<
@@ -95,11 +114,81 @@ const statusConfig: Record<
         icon: XCircle,
     },
 };
+// Sortable item component for drag and drop
+interface DragItemProps {
+    id: string;
+    title: string;
+}
+
+function DragItem({ id, title }: DragItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`flex items-center gap-3 rounded border p-3 ${isDragging ? 'bg-muted/50' : 'bg-background'}`}
+        >
+            <button
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+            >
+                <GripVertical className="h-5 w-5" />
+            </button>
+            <div className="flex-1 text-sm font-medium">{title}</div>
+        </div>
+    );
+}
+
 function AdminTrainingPathsContent() {
-    const { trainingPaths, approve, reject } = usePendingTrainingPaths();
+    const {
+        trainingPaths,
+        featuredTrainingPaths,
+        approve,
+        reject,
+        feature,
+        unfeature,
+        updateFeaturedOrder,
+    } = usePendingTrainingPaths();
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [feedback, setFeedback] = useState('');
     const [previewId, setPreviewId] = useState<string | null>(null);
+
+    // Featured reorder dialog state
+    const [reorderOpen, setReorderOpen] = useState(false);
+    const [reorderIds, setReorderIds] = useState<string[]>([]);
+
+    // Drag and drop sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = reorderIds.indexOf(active.id as string);
+            const newIndex = reorderIds.indexOf(over.id as string);
+            setReorderIds((prev) => arrayMove(prev, oldIndex, newIndex));
+        }
+    };
 
     const pendingTrainingPaths = trainingPaths.filter(
         (c) => c.status === 'pending_review',
@@ -109,6 +198,11 @@ function AdminTrainingPathsContent() {
     );
     const rejectedTrainingPaths = trainingPaths.filter(
         (c) => c.status === 'rejected',
+    );
+
+    const featuredIds = useMemo(
+        () => featuredTrainingPaths.map((p) => p.id),
+        [featuredTrainingPaths],
     );
 
     const handleApprove = async (id: string) => {
@@ -131,12 +225,27 @@ function AdminTrainingPathsContent() {
         }
     };
     const previewTrainingPath = trainingPaths.find((c) => c.id === previewId);
+
+    const openReorderDialog = () => {
+        setReorderIds(featuredTrainingPaths.map((p) => p.id));
+        setReorderOpen(true);
+    };
+
+    const saveReorder = async () => {
+        try {
+            await updateFeaturedOrder(reorderIds);
+            setReorderOpen(false);
+        } catch (err) {
+            console.error('Failed to save featured order', err);
+        }
+    };
     const TrainingPathRow = ({
         TrainingPath,
     }: {
         TrainingPath: ManagedTrainingPath;
     }) => {
-        const status = statusConfig[TrainingPath.status];
+        const status =
+            statusConfig[TrainingPath.status] ?? statusConfig.draft;
         const StatusIcon = status.icon;
         const totalTrainingUnits = (TrainingPath.modules ?? []).reduce(
             (a, m) => a + (m.trainingUnits?.length ?? 0),
@@ -144,6 +253,21 @@ function AdminTrainingPathsContent() {
         );
         const thumbnailSrc =
             TrainingPath.thumbnail ?? TrainingPath.thumbnail_url ?? null;
+
+        const isFeatured = featuredIds.includes(TrainingPath.id);
+
+        const handleFeatureToggle = async () => {
+            try {
+                if (isFeatured) {
+                    await unfeature(TrainingPath.id);
+                } else {
+                    await feature(TrainingPath.id);
+                }
+            } catch (err) {
+                console.error('Failed to toggle feature state', err);
+            }
+        };
+
         return (
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -200,9 +324,7 @@ function AdminTrainingPathsContent() {
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Users className="h-3 w-3" />{' '}
-                                        {(
-                                            TrainingPath.students ?? 0
-                                        ).toLocaleString()}
+                                        {(TrainingPath.students ?? 0).toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Star className="h-3 w-3 fill-warning text-warning" />{' '}
@@ -265,6 +387,18 @@ function AdminTrainingPathsContent() {
                                     >
                                         <CheckCircle2 className="mr-1 h-3.5 w-3.5" />{' '}
                                         Approve
+                                    </Button>
+                                )}
+                                {/* Feature / Unfeature button */}
+                                {TrainingPath.status === 'approved' && (
+                                    <Button
+                                        size="sm"
+                                        variant={isFeatured ? 'default' : 'outline'}
+                                        className={isFeatured ? 'bg-warning text-warning-foreground' : ''}
+                                        onClick={handleFeatureToggle}
+                                    >
+                                        <Star className="mr-1 h-3.5 w-3.5" />
+                                        {isFeatured ? 'Unfeature' : 'Feature'}
                                     </Button>
                                 )}
                             </div>
@@ -352,6 +486,7 @@ function AdminTrainingPathsContent() {
                                 )}
                             </TabsTrigger>
                             <TabsTrigger value="approved">Approved</TabsTrigger>
+                            <TabsTrigger value="featured">Featured</TabsTrigger>
                             <TabsTrigger value="rejected">Rejected</TabsTrigger>
                             <TabsTrigger value="all">All Paths</TabsTrigger>
                         </TabsList>
@@ -381,6 +516,22 @@ function AdminTrainingPathsContent() {
                                 <TrainingPathRow key={c.id} TrainingPath={c} />
                             ))}
                         </TabsContent>
+                        <TabsContent value="featured" className="mt-6 space-y-4">
+                            <div className="mb-4 flex items-center justify-end">
+                                <Button size="sm" onClick={openReorderDialog}>
+                                    Reorder Featured
+                                </Button>
+                            </div>
+                            {featuredTrainingPaths.length === 0 ? (
+                                <div className="py-12 text-center">
+                                    <p className="text-muted-foreground">No featured training paths.</p>
+                                </div>
+                            ) : (
+                                featuredTrainingPaths.map((c) => (
+                                    <TrainingPathRow key={c.id} TrainingPath={c} />
+                                ))
+                            )}
+                        </TabsContent>
                         <TabsContent
                             value="rejected"
                             className="mt-6 space-y-4"
@@ -406,6 +557,58 @@ function AdminTrainingPathsContent() {
                             ))}
                         </TabsContent>
                     </Tabs>
+
+                    {/* Reorder Dialog */}
+                    <Dialog open={reorderOpen} onOpenChange={(open) => !open && setReorderOpen(false)}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Reorder Featured Training Paths</DialogTitle>
+                                <DialogDescription>
+                                    Drag items to reorder them. They will appear in this order on the homepage.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4">
+                                {reorderIds.length === 0 ? (
+                                    <p className="py-8 text-center text-sm text-muted-foreground">
+                                        No featured items to reorder.
+                                    </p>
+                                ) : (
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={reorderIds}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="space-y-2">
+                                                {reorderIds.map((id) => {
+                                                    const item = featuredTrainingPaths.find(
+                                                        (p) => p.id === id,
+                                                    );
+                                                    return (
+                                                        <DragItem
+                                                            key={id}
+                                                            id={id}
+                                                            title={item?.title ?? id}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setReorderOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={saveReorder}>Save Order</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     {/* Reject Dialog */}
                     <Dialog
                         open={!!rejectingId}

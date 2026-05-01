@@ -336,10 +336,17 @@ class ForumControllerTest extends TestCase
             ->postJson("/teaching/forum/threads/{$thread->id}/lock");
 
         $response->assertOk()
+            ->assertJsonPath('data.isLocked', true)
+            ->assertJsonPath('data.status', 'locked')
             ->assertJsonStructure([
                 'data' => ['id'],
                 'message',
             ]);
+
+        $this->assertDatabaseHas('discussion_threads', [
+            'id' => $thread->id,
+            'is_locked' => true,
+        ]);
     }
 
     public function test_teacher_can_unlock_thread_in_their_training_path(): void
@@ -354,7 +361,13 @@ class ForumControllerTest extends TestCase
             ->postJson("/teaching/forum/threads/{$thread->id}/unlock");
 
         $response->assertOk()
-            ->assertJsonPath('data.isLocked', false);
+            ->assertJsonPath('data.isLocked', false)
+            ->assertJsonPath('data.status', 'open');
+
+        $this->assertDatabaseHas('discussion_threads', [
+            'id' => $thread->id,
+            'is_locked' => false,
+        ]);
     }
 
     public function test_teacher_can_unpin_thread_in_their_training_path(): void

@@ -14,6 +14,19 @@ class CertificateVerificationTest extends TestCase
     use RefreshDatabase;
 
     /**
+     * Test that guests can access the certificate lookup page.
+     */
+    public function test_guests_can_access_certificate_lookup_page()
+    {
+        $response = $this->get('/certificates/verify');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('certificates/lookup')
+        );
+    }
+
+    /**
      * Test that a certificate can be verified using the public URL.
      */
     public function test_can_verify_certificate_with_public_url()

@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { forumApi } from '@/api/forum.api';
+import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -215,6 +216,20 @@ export default function TeacherForumInboxPage({
         }
     }, []);
 
+    const handleFilterChange = useCallback(
+        (filter: TeacherInboxFilter) => {
+            setActiveFilter(filter);
+
+            const nextThread = threadsByFilter[filter][0];
+            setSelectedThreadId(nextThread?.id ?? null);
+
+            if (!nextThread) {
+                setSelectedThread(null);
+            }
+        },
+        [threadsByFilter],
+    );
+
     useEffect(() => {
         if (initialThreads === undefined) {
             void refreshThreads();
@@ -229,19 +244,6 @@ export default function TeacherForumInboxPage({
             } else {
                 setSelectedThread(null);
             }
-            return;
-        }
-
-        const matchingFilter = (
-            ['flagged', 'unanswered', 'recent'] as TeacherInboxFilter[]
-        ).find((filter) =>
-            threadsByFilter[filter].some(
-                (thread) => thread.id === selectedThreadId,
-            ),
-        );
-
-        if (matchingFilter && matchingFilter !== activeFilter) {
-            setActiveFilter(matchingFilter);
         }
     }, [activeFilter, selectedThreadId, threadsByFilter]);
 
@@ -309,36 +311,41 @@ export default function TeacherForumInboxPage({
             <Head title="Teacher Forum Inbox" />
             <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
                 <div className="container py-8">
-                    <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link href={teaching.index.url()}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Back to Teaching
-                                </Link>
-                            </Button>
-                            <div>
-                                <h1 className="font-heading text-3xl font-bold">
-                                    Forum Inbox
-                                </h1>
-                                <p className="text-muted-foreground">
-                                    Moderate discussion threads, lock noisy
-                                    conversations, and mark the best reply as
-                                    the answer.
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="outline"
-                            onClick={() => void refreshThreads()}
-                            disabled={isLoadingThreads}
-                        >
-                            <RefreshCw
-                                className={`mr-2 h-4 w-4 ${isLoadingThreads ? 'animate-spin' : ''}`}
-                            />
-                            Refresh
-                        </Button>
-                    </div>
+                    <TeachingWorkspaceTabs
+                        activeTab="inbox"
+                        header={(
+                            <>
+                                <div className="space-y-2">
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={teaching.index.url()}>
+                                            <ArrowLeft className="mr-2 h-4 w-4" />
+                                            Back to Teaching
+                                        </Link>
+                                    </Button>
+                                    <div>
+                                        <h1 className="font-heading text-3xl font-bold">
+                                            Forum Inbox
+                                        </h1>
+                                        <p className="text-muted-foreground">
+                                            Moderate discussion threads, lock noisy
+                                            conversations, and mark the best reply as
+                                            the answer.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => void refreshThreads()}
+                                    disabled={isLoadingThreads}
+                                >
+                                    <RefreshCw
+                                        className={`mr-2 h-4 w-4 ${isLoadingThreads ? 'animate-spin' : ''}`}
+                                    />
+                                    Refresh
+                                </Button>
+                            </>
+                        )}
+                    />
 
                     <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
                         <Card className="h-fit">
@@ -389,7 +396,7 @@ export default function TeacherForumInboxPage({
                                             }
                                             className="justify-between"
                                             onClick={() =>
-                                                setActiveFilter(tab.key)
+                                                handleFilterChange(tab.key)
                                             }
                                         >
                                             <span>{tab.label}</span>

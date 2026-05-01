@@ -25,8 +25,12 @@ export function RevenueChart({ data, title = 'Revenue' }: RevenueChartProps) {
                 <CardTitle className="text-lg">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[300px] w-full min-w-0">
+                    <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                        minWidth={0}
+                    >
                         <BarChart
                             data={data}
                             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -87,7 +91,7 @@ export function RevenueChart({ data, title = 'Revenue' }: RevenueChartProps) {
                             />
                             <Bar
                                 dataKey="revenue"
-                                fill="hsl(var(--primary))"
+                                fill="var(--primary)"
                                 radius={[4, 4, 0, 0]}
                             />
                         </BarChart>

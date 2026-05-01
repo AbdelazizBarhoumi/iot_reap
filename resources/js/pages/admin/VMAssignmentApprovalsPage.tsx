@@ -39,7 +39,7 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/infrastructure' },
+    { title: 'Admin', href: '/admin/dashboard' },
     { title: 'VM Assignments', href: '/admin/vm-assignments' },
 ];
 

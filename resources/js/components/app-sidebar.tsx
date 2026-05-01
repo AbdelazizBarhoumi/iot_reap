@@ -2,17 +2,16 @@ import { Link } from '@inertiajs/react';
 import {
     BanknoteIcon,
     Bell,
+    BookOpen,
     CalendarCheck,
     CheckCircle,
-    Clapperboard,
     ClipboardList,
+    Home,
     LayoutGrid,
     MessageSquareWarning,
     Monitor,
     Network,
-    RotateCcw,
     Users,
-    Video,
     Wrench,
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
@@ -54,11 +53,6 @@ const operationsNavItems: NavItem[] = [
         icon: Network,
     },
     {
-        title: 'Cameras',
-        href: '/admin/cameras',
-        icon: Video,
-    },
-    {
         title: 'Maintenance',
         href: admin.maintenance.index.url(),
         icon: Wrench,
@@ -80,11 +74,6 @@ const monitoringNavItems: NavItem[] = [
         href: admin.forum.flagged.url(),
         icon: MessageSquareWarning,
     },
-    {
-        title: 'Video Processing',
-        href: '/admin/videos',
-        icon: Clapperboard,
-    },
 ];
 const contentNavItems: NavItem[] = [
     {
@@ -103,14 +92,21 @@ const contentNavItems: NavItem[] = [
         icon: CalendarCheck,
     },
     {
-        title: 'Payouts',
-        href: admin.payouts.index.url(),
+        title: 'Payouts & Refunds',
+        href: '/admin/finance',
         icon: BanknoteIcon,
     },
+];
+const publicAccessNavItems: NavItem[] = [
     {
-        title: 'Refunds',
-        href: admin.refunds.index.url(),
-        icon: RotateCcw,
+        title: 'Landing Page',
+        href: '/',
+        icon: Home,
+    },
+    {
+        title: 'Training Paths',
+        href: '/trainingPaths',
+        icon: BookOpen,
     },
 ];
 export function AppSidebar() {
@@ -132,6 +128,7 @@ export function AppSidebar() {
                 <NavMain items={operationsNavItems} label="Operations" />
                 <NavMain items={monitoringNavItems} label="Monitoring" />
                 <NavMain items={contentNavItems} label="Content Management" />
+                <NavMain items={publicAccessNavItems} label="Public Access" />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />

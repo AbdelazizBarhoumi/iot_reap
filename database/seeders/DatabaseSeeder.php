@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ReservationSeeder::class);
 
         // Payments & Finance
-        $this->call(PaymentSeeder::class);
+        $this->call(FinanceSeeder::class);
 
         // Notifications & Alerts
         $this->call(NotificationSeeder::class);

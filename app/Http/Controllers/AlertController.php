@@ -86,7 +86,9 @@ class AlertController extends Controller
 
         return response()->json([
             'message' => 'Alert acknowledged successfully',
-            'data' => new SystemAlertResource($alert->refresh()),
+            'data' => new SystemAlertResource(
+                $alert->refresh()->load('acknowledgedByUser')
+            ),
         ]);
     }
 
@@ -117,7 +119,9 @@ class AlertController extends Controller
 
         return response()->json([
             'message' => 'Alert resolved successfully',
-            'data' => new SystemAlertResource($alert->refresh()),
+            'data' => new SystemAlertResource(
+                $alert->refresh()->load('acknowledgedByUser')
+            ),
         ]);
     }
 

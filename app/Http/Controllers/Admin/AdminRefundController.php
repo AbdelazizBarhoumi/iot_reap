@@ -8,41 +8,12 @@ use App\Models\RefundRequest;
 use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 
 class AdminRefundController extends Controller
 {
     public function __construct(
         private readonly RefundService $refundService,
     ) {}
-
-    /**
-     * Show pending refund requests for admin review.
-     */
-    public function index(Request $request): InertiaResponse|JsonResponse
-    {
-        $perPage = $request->integer('per_page', 20);
-        $refunds = $this->refundService->getPendingRefunds($perPage);
-        $stats = $this->refundService->getRefundStats();
-
-        $data = [
-            'refunds' => RefundRequestResource::collection($refunds),
-            'stats' => $stats,
-            'pagination' => [
-                'current_page' => $refunds->currentPage(),
-                'last_page' => $refunds->lastPage(),
-                'per_page' => $refunds->perPage(),
-                'total' => $refunds->total(),
-            ],
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json($data);
-        }
-
-        return Inertia::render('admin/RefundsPage', $data);
-    }
 
     /**
      * Approve a refund request.

@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
 import { KPICard, RevenueChart, PeriodSelector } from '@/components/analytics';
+import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -147,32 +148,38 @@ export default function EarningsPage({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Earnings" />
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-                {/* Header */}
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href="/teaching/analytics">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div className="flex-1">
-                        <h1 className="font-heading text-2xl font-semibold text-foreground">
-                            Earnings
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Track your revenue and download reports
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <PeriodSelector
-                            value={period}
-                            onPeriodChange={handlePeriodChange}
-                        />
-                        <Button onClick={handleExport}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Export CSV
-                        </Button>
-                    </div>
-                </div>
+                <TeachingWorkspaceTabs
+                    activeTab="payouts"
+                    header={(
+                        <>
+                            <div className="flex items-center gap-3">
+                                <Button variant="ghost" size="sm" asChild>
+                                    <Link href="/teaching/analytics">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                                <div className="flex-1">
+                                    <h1 className="font-heading text-2xl font-semibold text-foreground">
+                                        Earnings
+                                    </h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        Track your revenue and download reports
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <PeriodSelector
+                                    value={period}
+                                    onPeriodChange={handlePeriodChange}
+                                />
+                                <Button onClick={handleExport}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Export CSV
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                />
                 {/* KPI Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <KPICard

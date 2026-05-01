@@ -25,13 +25,26 @@ class FeaturedTrainingPathsService
     public function getFeaturedTrainingPaths(int $limit = 6): Collection
     {
         return $this->cacheService->rememberFeaturedTrainingPaths(function () use ($limit) {
-            return TrainingPath::where('is_featured', true)
+            $featured = TrainingPath::where('is_featured', true)
                 ->where('status', TrainingPathStatus::APPROVED)
                 ->orderBy('featured_order')
                 ->orderByDesc('featured_at')
                 ->limit($limit)
                 ->with(['instructor:id,name'])
                 ->get();
+
+            // If no explicit featured training paths exist, fall back to the
+            // top approved training paths so the homepage is never empty.
+            if ($featured->isEmpty()) {
+                return TrainingPath::where('status', TrainingPathStatus::APPROVED)
+                    ->orderByDesc('rating')
+                    ->orderByDesc('updated_at')
+                    ->limit($limit)
+                    ->with(['instructor:id,name'])
+                    ->get();
+            }
+
+            return $featured;
         });
     }
 
@@ -64,6 +77,8 @@ class FeaturedTrainingPathsService
 
         // Invalidate caches
         $this->cacheService->invalidateTrainingPath($trainingPath);
+        // Also invalidate the featured list cache so the newly featured item appears immediately
+        $this->cacheService->invalidateFeatured();
 
         Log::info('TrainingPath featured', [
             'training_path_id' => $trainingPath->id,
@@ -94,6 +109,8 @@ class FeaturedTrainingPathsService
 
         // Invalidate caches
         $this->cacheService->invalidateTrainingPath($trainingPath);
+        // Ensure featured list cache is invalidated so UI reflects removal immediately
+        $this->cacheService->invalidateFeatured();
 
         Log::info('TrainingPath unfeatured', [
             'training_path_id' => $trainingPath->id,
@@ -106,14 +123,28 @@ class FeaturedTrainingPathsService
     /**
      * Update featured trainingPaths order (admin action).
      *
-     * @param  array<int, int>  $trainingPathOrderMap  [training_path_id => new_order]
+     * @param  array<int, int>|int[]  $trainingPathOrderMap  Either a map [training_path_id => new_order]
+     *                                                         or an ordered list of training_path_ids ([id1, id2, ...]).
      */
     public function updateFeaturedOrder(array $trainingPathOrderMap, User $admin): void
     {
-        foreach ($trainingPathOrderMap as $trainingPathId => $order) {
-            TrainingPath::where('id', $trainingPathId)
-                ->where('is_featured', true)
-                ->update(['featured_order' => $order]);
+        // If the array is an indexed list (0,1,2...) we treat the values as ordered IDs
+        $isIndexedList = array_values($trainingPathOrderMap) === $trainingPathOrderMap;
+
+        if ($isIndexedList) {
+            foreach ($trainingPathOrderMap as $index => $trainingPathId) {
+                $order = $index + 1;
+                TrainingPath::where('id', $trainingPathId)
+                    ->where('is_featured', true)
+                    ->update(['featured_order' => $order]);
+            }
+        } else {
+            // associative map: training_path_id => order
+            foreach ($trainingPathOrderMap as $trainingPathId => $order) {
+                TrainingPath::where('id', $trainingPathId)
+                    ->where('is_featured', true)
+                    ->update(['featured_order' => $order]);
+            }
         }
 
         // Invalidate featured trainingPaths cache

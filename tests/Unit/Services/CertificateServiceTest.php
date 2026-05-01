@@ -369,7 +369,7 @@ class CertificateServiceTest extends TestCase
         $this->service->issueCertificate($user, $trainingPath->id);
     }
 
-    public function test_issue_certificate_throws_exception_when_certificate_already_exists(): void
+    public function test_issue_certificate_returns_existing_certificate_when_one_already_exists(): void
     {
         $user = User::factory()->create();
         $trainingPath = TrainingPath::factory()->create();
@@ -383,15 +383,14 @@ class CertificateServiceTest extends TestCase
             'completed_at' => now(),
         ]);
 
-        // Already has certificate
-        Certificate::factory()->create([
+        $existingCertificate = Certificate::factory()->create([
             'user_id' => $user->id,
             'training_path_id' => $trainingPath->id,
         ]);
 
-        $this->expectException(AuthorizationException::class);
+        $result = $this->service->issueCertificate($user, $trainingPath->id);
 
-        $this->service->issueCertificate($user, $trainingPath->id);
+        $this->assertEquals($existingCertificate->id, $result->id);
     }
 
     // =========================================================================
@@ -439,7 +438,7 @@ class CertificateServiceTest extends TestCase
 
         $result = $this->service->getCertificatePdfPath($certificate);
 
-        $expectedPath = storage_path("app/{$pdfPath}");
+        $expectedPath = Storage::disk(config('filesystems.default'))->path($pdfPath);
         $this->assertEquals($expectedPath, $result);
     }
 

@@ -31,7 +31,7 @@ import {
     XCircle,
     Zap,
 } from 'lucide-react';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, type ElementType } from 'react';
 import { toast } from 'sonner';
 import { getOrCreateQuiz } from '@/api/quiz.api';
 import * as teachingApi from '@/api/teaching.api';
@@ -692,6 +692,64 @@ export default function EditTrainingUnitPage({
             trainingUnitType as keyof typeof trainingUnitTypeConfig
         ] || trainingUnitTypeConfig.video;
     const TypeIcon = typeConfig.icon;
+    const contentActions: Array<{
+        key: string;
+        label: string;
+        href?: string;
+        icon: ElementType;
+        active: boolean;
+        description: string;
+        tone: 'default' | 'outline' | 'ghost';
+    }> = [
+        {
+            key: 'quiz',
+            label: teacherQuiz ? 'Edit Quiz' : 'Create Quiz',
+            href: `/teaching/trainingUnits/${trainingUnitId}/quiz`,
+            icon: Sparkles,
+            active: trainingUnitType === 'practice',
+            description:
+                trainingUnitType === 'practice'
+                    ? teacherQuiz
+                        ? 'Open the quiz builder and manage questions.'
+                        : 'Create the first quiz for this practice unit.'
+                    : 'Set the unit type to practice to enable quiz authoring.',
+            tone: trainingUnitType === 'practice' ? 'default' : 'outline',
+        },
+        {
+            key: 'article',
+            label: 'Edit Article',
+            href: `/teaching/trainingUnits/${trainingUnitId}/article`,
+            icon: FileText,
+            active: trainingUnitType === 'reading',
+            description:
+                trainingUnitType === 'reading'
+                    ? 'Open the long-form reading editor for this unit.'
+                    : 'Set the unit type to reading to enable article authoring.',
+            tone: trainingUnitType === 'reading' ? 'default' : 'outline',
+        },
+        {
+            key: 'video',
+            label: 'Manage Video',
+            icon: Video,
+            active: trainingUnitType === 'video',
+            description:
+                trainingUnitType === 'video'
+                    ? 'Upload, monitor, retry, and review video processing.'
+                    : 'Set the unit type to video to unlock video controls.',
+            tone: trainingUnitType === 'video' ? 'default' : 'outline',
+        },
+        {
+            key: 'vm-lab',
+            label: 'Manage VM Request',
+            icon: Terminal,
+            active: trainingUnitType === 'vm-lab',
+            description:
+                trainingUnitType === 'vm-lab'
+                    ? 'Configure VM lab requests and assignment details.'
+                    : 'Set the unit type to vm-lab to enable VM requests.',
+            tone: trainingUnitType === 'vm-lab' ? 'default' : 'outline',
+        },
+    ];
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit: ${trainingUnit.title}`} />
@@ -1887,114 +1945,97 @@ Recap the important points."
                             <Card className="shadow-card">
                                 <CardHeader className="pb-4">
                                     <CardTitle className="font-heading text-lg">
-                                        Content Actions
+                                        Content Authoring
                                     </CardTitle>
                                     <CardDescription>
-                                        Open the dedicated tools for this
-                                        unit&apos;s content type.
+                                        Quiz, article, video, and VM tools are
+                                        shown here. If a tool is disabled, set
+                                        the unit type in the Content tab to
+                                        unlock it.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
+                                    {contentActions.map((action) => {
+                                        const ActionIcon = action.icon;
+
+                                        return (
+                                            <div
+                                                key={action.key}
+                                                className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-3"
+                                            >
+                                                {action.href ? (
+                                                    <Button
+                                                        className="w-full justify-start"
+                                                        variant={action.tone}
+                                                        asChild
+                                                        disabled={!action.active}
+                                                    >
+                                                        <Link href={action.href}>
+                                                            <ActionIcon className="mr-2 h-4 w-4" />
+                                                            {action.label}
+                                                        </Link>
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        className="w-full justify-start"
+                                                        variant={action.tone}
+                                                        onClick={openMediaTab}
+                                                        disabled={!action.active}
+                                                    >
+                                                        <ActionIcon className="mr-2 h-4 w-4" />
+                                                        {action.label}
+                                                    </Button>
+                                                )}
+                                                <p className="text-xs text-muted-foreground">
+                                                    {action.description}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-3">
+                                        <Button
+                                            className="w-full justify-start"
+                                            variant="ghost"
+                                            asChild
+                                        >
+                                            <Link href="/teaching/trainingUnit-assignments/my-assignments">
+                                                <Monitor className="mr-2 h-4 w-4" />
+                                                Open My VM Assignments
+                                            </Link>
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground">
+                                            Track request status and jump back
+                                            into the assignment workflow from
+                                            here.
+                                        </p>
+                                    </div>
+
                                     {trainingUnitType === 'practice' && (
-                                        <>
-                                            <Button
-                                                className="w-full justify-start"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/teaching/trainingUnits/${trainingUnitId}/quiz`}
-                                                >
-                                                    <Sparkles className="mr-2 h-4 w-4" />
-                                                    {teacherQuiz
-                                                        ? 'Edit Quiz'
-                                                        : 'Create Quiz'}
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full justify-start"
-                                                onClick={() =>
-                                                    setIsQuizStatsOpen(true)
-                                                }
-                                                disabled={
-                                                    !teacherQuiz ||
-                                                    isQuizLookupLoading
-                                                }
-                                            >
-                                                <BarChart3 className="mr-2 h-4 w-4" />
-                                                View Quiz Stats
-                                            </Button>
-                                            <p className="text-xs text-muted-foreground">
-                                                {isQuizLookupLoading
-                                                    ? 'Checking for an existing quiz...'
-                                                    : teacherQuiz
-                                                      ? 'Review attempt performance without leaving the unit flow.'
-                                                      : 'Create the quiz first, then attempt stats will appear here.'}
-                                            </p>
-                                        </>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start"
+                                            onClick={() =>
+                                                setIsQuizStatsOpen(true)
+                                            }
+                                            disabled={
+                                                !teacherQuiz ||
+                                                isQuizLookupLoading
+                                            }
+                                        >
+                                            <BarChart3 className="mr-2 h-4 w-4" />
+                                            View Quiz Stats
+                                        </Button>
                                     )}
-                                    {trainingUnitType === 'reading' && (
-                                        <>
-                                            <Button
-                                                className="w-full justify-start"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/teaching/trainingUnits/${trainingUnitId}/article`}
-                                                >
-                                                    <FileText className="mr-2 h-4 w-4" />
-                                                    Edit Article
-                                                </Link>
-                                            </Button>
-                                            <p className="text-xs text-muted-foreground">
-                                                Open the focused article editor
-                                                for long-form reading content.
-                                            </p>
-                                        </>
-                                    )}
-                                    {trainingUnitType === 'video' && (
-                                        <>
-                                            <Button
-                                                className="w-full justify-start"
-                                                variant="outline"
-                                                onClick={openMediaTab}
-                                            >
-                                                <Video className="mr-2 h-4 w-4" />
-                                                Manage Video
-                                            </Button>
-                                            <p className="text-xs text-muted-foreground">
-                                                Upload, monitor, retry, and
-                                                review processing status from
-                                                the media tab.
-                                            </p>
-                                        </>
-                                    )}
-                                    {trainingUnitType === 'vm-lab' && (
-                                        <>
-                                            <Button
-                                                className="w-full justify-start"
-                                                variant="outline"
-                                                onClick={openMediaTab}
-                                            >
-                                                <Terminal className="mr-2 h-4 w-4" />
-                                                Manage VM Request
-                                            </Button>
-                                            <Button
-                                                className="w-full justify-start"
-                                                variant="ghost"
-                                                asChild
-                                            >
-                                                <Link href="/teaching/trainingUnit-assignments/my-assignments">
-                                                    <Monitor className="mr-2 h-4 w-4" />
-                                                    Open My VM Assignments
-                                                </Link>
-                                            </Button>
-                                            <p className="text-xs text-muted-foreground">
-                                                Track request status and jump
-                                                back into the assignment
-                                                workflow from here.
-                                            </p>
-                                        </>
+
+                                    {trainingUnitType === 'practice' && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {isQuizLookupLoading
+                                                ? 'Checking for an existing quiz...'
+                                                : teacherQuiz
+                                                  ? 'Review attempt performance without leaving the unit flow.'
+                                                  : 'Create the quiz first, then attempt stats will appear here.'}
+                                        </p>
                                     )}
                                 </CardContent>
                             </Card>

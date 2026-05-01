@@ -14,6 +14,10 @@ class SystemAlertResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $acknowledgedBy = $this->relationLoaded('acknowledgedByUser')
+            ? $this->acknowledgedByUser?->name
+            : null;
+
         return [
             'id' => $this->id,
             'severity' => $this->severity,
@@ -22,7 +26,7 @@ class SystemAlertResource extends JsonResource
             'source' => $this->source,
             'acknowledged' => $this->acknowledged,
             'acknowledged_at' => $this->acknowledged_at?->toIso8601String(),
-            'acknowledged_by' => $this->acknowledgedByUser?->name,
+            'acknowledged_by' => $acknowledgedBy,
             'resolved' => $this->resolved,
             'resolved_at' => $this->resolved_at?->toIso8601String(),
             'metadata' => $this->metadata,

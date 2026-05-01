@@ -195,13 +195,4 @@ class VideoService
         return $fallbackDisk;
     }
 
-    /**
-     * Get processing statistics.
-     *
-     * @return array{pending: int, processing: int, ready: int, failed: int}
-     */
-    public function getProcessingStats(): array
-    {
-        return $this->videoRepository->getProcessingStats();
-    }
 }

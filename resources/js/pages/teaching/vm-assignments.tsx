@@ -11,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { trainingUnitVMAssignmentApi } from '@/api/vm.api';
+import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -132,42 +133,47 @@ export default function TeacherVMAssignmentsPage({
             <Head title="My VM Assignments" />
             <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
                 <div className="container py-8">
-                    <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link href={teaching.index.url()}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Back to Teaching
-                                </Link>
-                            </Button>
-                            <div>
-                                <h1 className="font-heading text-3xl font-bold">
-                                    My VM Assignments
-                                </h1>
-                                <p className="text-muted-foreground">
-                                    Track every unit VM request from submission
-                                    through approval, and clean up pending
-                                    requests when plans change.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <Button
-                                variant="outline"
-                                onClick={() => void refreshAssignments()}
-                            >
-                                <RefreshCw
-                                    className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-                                />
-                                Refresh
-                            </Button>
-                            <Button asChild>
-                                <Link href={teaching.index.url()}>
-                                    Open Studio
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
+                    <TeachingWorkspaceTabs
+                        activeTab="vm-assignments"
+                        header={(
+                            <>
+                                <div className="space-y-2">
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={teaching.index.url()}>
+                                            <ArrowLeft className="mr-2 h-4 w-4" />
+                                            Back to Teaching
+                                        </Link>
+                                    </Button>
+                                    <div>
+                                        <h1 className="font-heading text-3xl font-bold">
+                                            My VM Assignments
+                                        </h1>
+                                        <p className="text-muted-foreground">
+                                            Track every unit VM request from submission
+                                            through approval, and clean up pending
+                                            requests when plans change.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => void refreshAssignments()}
+                                    >
+                                        <RefreshCw
+                                            className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                                        />
+                                        Refresh
+                                    </Button>
+                                    <Button asChild>
+                                        <Link href={teaching.index.url()}>
+                                            Open Studio
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    />
 
                     <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         {summaryCards.map((card) => (

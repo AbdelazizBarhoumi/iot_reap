@@ -89,37 +89,48 @@ export function usePendingTrainingPaths() {
     const [trainingPaths, setTrainingPaths] = useState<
         adminApi.TrainingPathApproval[]
     >([]);
+    const [featuredTrainingPaths, setFeaturedTrainingPaths] = useState<
+        adminApi.TrainingPathApproval[]
+    >([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchTrainingPaths = async () => {
-            try {
-                setLoading(true);
-                const response = await adminApi.getPendingTrainingPaths();
-                setTrainingPaths(
-                    Array.isArray(response.data.data) ? response.data.data : [],
-                );
-                setError(null);
-            } catch (err) {
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'Failed to load pending trainingPaths',
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchTrainingPaths = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await adminApi.getPendingTrainingPaths();
 
-        fetchTrainingPaths();
+            // response.data expected shape: { data: TrainingPathApproval[], featured: TrainingPathApproval[] }
+            const all = Array.isArray(response.data.data)
+                ? response.data.data
+                : [];
+            const featured = Array.isArray(response.data.featured)
+                ? response.data.featured
+                : [];
+
+            setTrainingPaths(all);
+            setFeaturedTrainingPaths(featured);
+            setError(null);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to load pending trainingPaths',
+            );
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchTrainingPaths();
+    }, [fetchTrainingPaths]);
 
     const approve = async (trainingPathId: string) => {
         try {
             await adminApi.approveTrainingPath(trainingPathId);
-            setTrainingPaths(
-                trainingPaths.map((c) =>
+            setTrainingPaths((prev) =>
+                prev.map((c) =>
                     c.id === trainingPathId ? { ...c, status: 'approved' } : c,
                 ),
             );
@@ -137,8 +148,8 @@ export function usePendingTrainingPaths() {
     const reject = async (trainingPathId: string, reason: string) => {
         try {
             await adminApi.rejectTrainingPath(trainingPathId, reason);
-            setTrainingPaths(
-                trainingPaths.map((c) =>
+            setTrainingPaths((prev) =>
+                prev.map((c) =>
                     c.id === trainingPathId ? { ...c, status: 'rejected' } : c,
                 ),
             );
@@ -156,6 +167,8 @@ export function usePendingTrainingPaths() {
     const feature = async (trainingPathId: string) => {
         try {
             await adminApi.featureTrainingPath(trainingPathId);
+            // refresh lists from server to keep authoritative state
+            await fetchTrainingPaths();
             setError(null);
         } catch (err) {
             const message =
@@ -170,6 +183,8 @@ export function usePendingTrainingPaths() {
     const unfeature = async (trainingPathId: string) => {
         try {
             await adminApi.unfeatureTrainingPath(trainingPathId);
+            // refresh lists from server to keep authoritative state
+            await fetchTrainingPaths();
             setError(null);
         } catch (err) {
             const message =
@@ -181,14 +196,36 @@ export function usePendingTrainingPaths() {
         }
     };
 
+    const updateFeaturedOrder = async (order: string[]) => {
+        try {
+            await adminApi.updateFeaturedTrainingPathOrder(order);
+            // optimistic local update: reorder featuredTrainingPaths according to order
+            setFeaturedTrainingPaths((prev) => {
+                const byId = new Map(prev.map((p) => [p.id, p]));
+                return order.map((id) => byId.get(id)).filter(Boolean) as adminApi.TrainingPathApproval[];
+            });
+            setError(null);
+        } catch (err) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to update featured training path order';
+            setError(message);
+            throw err;
+        }
+    };
+
     return {
         trainingPaths,
+        featuredTrainingPaths,
         loading,
         error,
+        refetch: fetchTrainingPaths,
         approve,
         reject,
         feature,
         unfeature,
+        updateFeaturedOrder,
     };
 }
 

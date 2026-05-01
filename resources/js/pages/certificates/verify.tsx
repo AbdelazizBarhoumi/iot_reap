@@ -196,7 +196,7 @@ export default function VerifyPage({ valid, certificate }: VerifyPageProps) {
                                 <CardContent className="p-6">
                                     <p className="text-center text-muted-foreground">
                                         The certificate you're looking for
-                                        doesn't exist or has been revoked.
+                                        doesn't exist or could not be verified.
                                         Please check the URL and try again.
                                     </p>
                                     <div className="mt-6 flex justify-center">

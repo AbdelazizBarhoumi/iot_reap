@@ -106,21 +106,6 @@ class VideoRepository
     }
 
     /**
-     * Get video processing statistics.
-     *
-     * @return array{pending: int, processing: int, ready: int, failed: int}
-     */
-    public function getProcessingStats(): array
-    {
-        return [
-            'pending' => Video::where('status', VideoStatus::PENDING)->count(),
-            'processing' => Video::where('status', VideoStatus::PROCESSING)->count(),
-            'ready' => Video::where('status', VideoStatus::READY)->count(),
-            'failed' => Video::where('status', VideoStatus::FAILED)->count(),
-        ];
-    }
-
-    /**
      * Get videos for a trainingPath (via trainingUnits).
      */
     public function getForTrainingPath(int $trainingPathId): Collection

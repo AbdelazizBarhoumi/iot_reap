@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
+use App\Http\Controllers\Admin\AdminFinanceController;
 use App\Http\Controllers\Admin\AdminCameraController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
@@ -17,7 +18,6 @@ use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\HardwareController;
 use App\Http\Controllers\TrainingUnitVMAssignmentController;
-use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -138,9 +138,12 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::delete('/{user}/gdpr', 'gdprDelete')->name('gdpr-delete');
     });
 
+    // Unified finance workspace for payouts and refunds
+    Route::get('/finance', [AdminFinanceController::class, 'index'])->name('finance.index');
+
     // Refund Management
     Route::prefix('refunds')->name('refunds.')->controller(AdminRefundController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
+        Route::get('/', [AdminFinanceController::class, 'index'])->name('index');
         Route::get('/all', 'all')->name('all');
         Route::post('/{refundRequest}/approve', 'approve')->name('approve');
         Route::post('/{refundRequest}/reject', 'reject')->name('reject');
@@ -148,18 +151,12 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
 
     // Payout Management
     Route::prefix('payouts')->name('payouts.')->controller(AdminPayoutController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
+        Route::get('/', [AdminFinanceController::class, 'index'])->name('index');
         Route::get('/export', 'export')->name('export');
         Route::post('/{payoutRequest}/approve', 'approve')->name('approve');
         Route::post('/{payoutRequest}/reject', 'reject')->name('reject');
         Route::post('/{payoutRequest}/process', 'process')->name('process');
     });
-
-    // Video Processing Monitor
-    Route::get('/videos', [VideoController::class, 'processingStats'])->name('videos.index');
-
-    // Video Processing Stats API
-    Route::get('/videos/processing-stats', [VideoController::class, 'processingStats'])->name('videos.processing-stats');
 
     // Maintenance Management (USB devices, cameras)
     Route::prefix('maintenance')->name('maintenance.')->controller(MaintenanceController::class)->group(function () {

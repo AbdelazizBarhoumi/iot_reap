@@ -77,7 +77,7 @@ export interface TrainingPathEditing {
  * Get all trainingPaths for the authenticated teacher
  */
 export const getMyTrainingPaths = () =>
-    client.get<TrainingPathEditing[]>(`/teaching`);
+    client.get<TrainingPathEditing[]>(`/teaching/training-paths`);
 
 /**
  * Create a new trainingPath

@@ -87,7 +87,7 @@ class CheckoutControllerTest extends TestCase
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
             ->once()
-            ->andReturn([
+            ->andReturnUsing(fn () => [
                 'session_id' => 'cs_test_123',
                 'checkout_url' => 'https://checkout.stripe.com/pay/cs_test_123',
             ]);
@@ -111,7 +111,7 @@ class CheckoutControllerTest extends TestCase
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('createCheckoutSession')
             ->once()
-            ->andReturn([
+            ->andReturnUsing(fn () => [
                 'enrolled' => true,
                 'training_path_url' => "/trainingPaths/{$this->freeTrainingPath->id}",
             ]);
@@ -274,7 +274,7 @@ class CheckoutControllerTest extends TestCase
     // Success Page Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_checkout_success_page_renders_with_session_id(): void
+    public function test_authenticated_user_can_view_checkout_success_page_with_session_id(): void
     {
         $payment = Payment::factory()->create([
             'user_id' => $this->user->id,
@@ -289,7 +289,8 @@ class CheckoutControllerTest extends TestCase
 
         $this->app->instance(CheckoutService::class, $mockCheckoutService);
 
-        $response = $this->get('/checkout/success?session_id=cs_test_123');
+        $response = $this->actingAs($this->user)
+            ->get('/checkout/success?session_id=cs_test_123');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -299,7 +300,14 @@ class CheckoutControllerTest extends TestCase
             );
     }
 
-    public function test_checkout_success_page_renders_without_session_id(): void
+    public function test_guest_cannot_view_checkout_success_page(): void
+    {
+        $response = $this->get('/checkout/success');
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_authenticated_user_can_view_checkout_success_page_without_session_id(): void
     {
         $mockCheckoutService = \Mockery::mock(CheckoutService::class);
         $mockCheckoutService->shouldReceive('getPaymentBySessionId')
@@ -307,7 +315,8 @@ class CheckoutControllerTest extends TestCase
 
         $this->app->instance(CheckoutService::class, $mockCheckoutService);
 
-        $response = $this->get('/checkout/success');
+        $response = $this->actingAs($this->user)
+            ->get('/checkout/success');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -320,9 +329,10 @@ class CheckoutControllerTest extends TestCase
     // Cancelled Page Tests
     // ────────────────────────────────────────────────────────────────────────
 
-    public function test_checkout_cancelled_page_renders_with_training_path(): void
+    public function test_authenticated_user_can_view_checkout_cancelled_page_with_training_path(): void
     {
-        $response = $this->get("/checkout/cancelled?trainingPath={$this->paidTrainingPath->id}");
+        $response = $this->actingAs($this->user)
+            ->get("/checkout/cancelled?trainingPath={$this->paidTrainingPath->id}");
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -333,9 +343,17 @@ class CheckoutControllerTest extends TestCase
             );
     }
 
-    public function test_checkout_cancelled_page_renders_without_training_path(): void
+    public function test_guest_cannot_view_checkout_cancelled_page(): void
     {
         $response = $this->get('/checkout/cancelled');
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_authenticated_user_can_view_checkout_cancelled_page_without_training_path(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->get('/checkout/cancelled');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -467,7 +485,7 @@ class CheckoutControllerTest extends TestCase
                 \Mockery::on(fn ($user) => $user->id === $this->user->id),
                 \Mockery::on(fn ($trainingPath) => $trainingPath->id === $this->paidTrainingPath->id)
             )
-            ->andReturn([
+            ->andReturnUsing(fn () => [
                 'session_id' => 'cs_test_123',
                 'checkout_url' => 'https://checkout.stripe.com/test',
             ]);
@@ -533,7 +551,8 @@ class CheckoutControllerTest extends TestCase
 
         $this->app->instance(CheckoutService::class, $mockCheckoutService);
 
-        $response = $this->get('/checkout/success?session_id=invalid_session_id');
+        $response = $this->actingAs($this->user)
+            ->get('/checkout/success?session_id=invalid_session_id');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -544,7 +563,8 @@ class CheckoutControllerTest extends TestCase
 
     public function test_cancelled_page_handles_invalid_training_path_id(): void
     {
-        $response = $this->get('/checkout/cancelled?trainingPath=999999');
+        $response = $this->actingAs($this->user)
+            ->get('/checkout/cancelled?trainingPath=999999');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page

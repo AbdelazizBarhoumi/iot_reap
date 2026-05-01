@@ -56,12 +56,6 @@ export interface VideoStatus {
     hls_url?: string | null;
     thumbnail_url?: string | null;
 }
-export interface ProcessingStats {
-    pending: number;
-    processing: number;
-    ready: number;
-    failed: number;
-}
 // ─────────────────────────────────────────────────────────────────────────────
 // Video API
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,18 +169,6 @@ export async function deleteCaption(
     await client.delete(
         `/teaching/trainingUnits/${trainingUnitId}/video/captions/${captionId}`,
     );
-}
-// ─────────────────────────────────────────────────────────────────────────────
-// Admin API
-// ─────────────────────────────────────────────────────────────────────────────
-/**
- * Get video processing statistics (admin only).
- */
-export async function getProcessingStats(): Promise<ProcessingStats> {
-    const response = await client.get<{ data: ProcessingStats }>(
-        '/admin/videos/processing-stats',
-    );
-    return response.data.data;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // Streaming Helpers

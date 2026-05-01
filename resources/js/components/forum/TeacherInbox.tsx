@@ -21,7 +21,6 @@ import {
     ArrowRight,
     RefreshCw,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,6 +77,7 @@ interface ThreadItemProps {
     secondaryActionLabel?: string;
     secondaryActionIcon?: typeof Lock;
     showFlag?: boolean;
+    isLoading?: boolean;
 }
 function ThreadItem({
     thread,
@@ -89,6 +89,7 @@ function ThreadItem({
     secondaryActionLabel,
     secondaryActionIcon: SecondaryActionIcon,
     showFlag = false,
+    isLoading = false,
 }: ThreadItemProps) {
     return (
         <motion.div
@@ -122,6 +123,15 @@ function ThreadItem({
                             Flagged
                         </Badge>
                     )}
+                    {thread.isLocked && (
+                        <Badge
+                            variant="outline"
+                            className="shrink-0 border-muted-foreground/30 px-1.5 py-0 text-[10px] text-muted-foreground"
+                        >
+                            <Lock className="mr-1 h-2.5 w-2.5" />
+                            Locked
+                        </Badge>
+                    )}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{thread.author.name}</span>
@@ -143,6 +153,7 @@ function ThreadItem({
                         variant="ghost"
                         size="sm"
                         onClick={onAction}
+                        disabled={isLoading}
                         className="h-7 px-2 text-xs"
                     >
                         <ActionIcon className="mr-1 h-3.5 w-3.5" />
@@ -154,6 +165,7 @@ function ThreadItem({
                         variant="ghost"
                         size="sm"
                         onClick={onSecondaryAction}
+                        disabled={isLoading}
                         className="h-7 px-2 text-xs"
                     >
                         <SecondaryActionIcon className="mr-1 h-3.5 w-3.5" />
@@ -164,6 +176,7 @@ function ThreadItem({
                     variant="ghost"
                     size="sm"
                     onClick={onView}
+                    disabled={isLoading}
                     className="h-7 w-7 p-0"
                 >
                     <ArrowRight className="h-4 w-4" />
@@ -185,7 +198,6 @@ export function TeacherInbox({
     onRefresh,
     isLoading = false,
 }: TeacherInboxProps) {
-    const [activeTab, setActiveTab] = useState('flagged');
     const totalItems = flaggedThreads.length + unansweredThreads.length;
     return (
         <Card>
@@ -223,7 +235,7 @@ export function TeacherInbox({
                 </div>
             </CardHeader>
             <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs defaultValue="flagged">
                     <TabsList className="mb-4 grid w-full grid-cols-3">
                         <TabsTrigger
                             value="flagged"
@@ -258,6 +270,14 @@ export function TeacherInbox({
                         <TabsTrigger value="recent" className="gap-1.5 text-xs">
                             <Clock className="h-3.5 w-3.5" />
                             Recent
+                            {recentThreads.length > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1 h-4 px-1 text-[10px]"
+                                >
+                                    {recentThreads.length}
+                                </Badge>
+                            )}
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="flagged" className="mt-0">
@@ -291,6 +311,7 @@ export function TeacherInbox({
                                             thread.isLocked ? Unlock : Lock
                                         }
                                         showFlag
+                                        isLoading={isLoading}
                                     />
                                 ))}
                             </div>
@@ -337,6 +358,7 @@ export function TeacherInbox({
                                         secondaryActionIcon={
                                             thread.isLocked ? Unlock : Lock
                                         }
+                                        isLoading={isLoading}
                                     />
                                 ))}
                             </div>
@@ -383,6 +405,7 @@ export function TeacherInbox({
                                         secondaryActionIcon={
                                             thread.isLocked ? Unlock : Lock
                                         }
+                                        isLoading={isLoading}
                                     />
                                 ))}
                             </div>

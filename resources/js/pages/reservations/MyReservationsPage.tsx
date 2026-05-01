@@ -969,9 +969,17 @@ export default function MyReservationsPage() {
             return 'usb';
         }
 
-        return window.location.search.includes('tab=cameras')
-            ? 'camera'
-            : 'usb';
+        const tab = new URLSearchParams(window.location.search).get('tab');
+
+        if (tab === 'camera' || tab === 'cameras') {
+            return 'camera';
+        }
+
+        if (tab === 'vm') {
+            return 'vm';
+        }
+
+        return 'usb';
     });
     const [statusTab, setStatusTab] = useState('active');
 
@@ -1070,7 +1078,9 @@ export default function MyReservationsPage() {
         const nextUrl =
             resourceTab === 'camera'
                 ? '/reservations?tab=cameras'
-                : '/reservations';
+                : resourceTab === 'vm'
+                  ? '/reservations?tab=vm'
+                  : '/reservations';
         window.history.replaceState({}, '', nextUrl);
     }, [resourceTab]);
 

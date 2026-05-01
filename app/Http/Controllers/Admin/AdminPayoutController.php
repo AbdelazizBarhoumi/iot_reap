@@ -7,8 +7,6 @@ use App\Models\PayoutRequest;
 use App\Services\PayoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminPayoutController extends Controller
@@ -16,58 +14,6 @@ class AdminPayoutController extends Controller
     public function __construct(
         private readonly PayoutService $payoutService,
     ) {}
-
-    /**
-     * Show pending payout requests for admin review.
-     */
-    public function index(Request $request): InertiaResponse|JsonResponse
-    {
-        $perPage = $request->integer('per_page', 20);
-        $paginatedPayouts = $this->payoutService->getPendingPayouts($perPage);
-
-        // Transform payouts to match React component structure
-        $payouts = $paginatedPayouts->map(function (PayoutRequest $payout) {
-            return [
-                'id' => (string) $payout->id,
-                'teacher' => [
-                    'id' => $payout->user->id,
-                    'name' => $payout->user->name,
-                    'email' => $payout->user->email,
-                ],
-                'amount' => $payout->amount_cents / 100, // Convert cents to dollars
-                'status' => match ($payout->status->value) {
-                    'pending' => 'pending',
-                    'approved' => 'approved',
-                    'processing' => 'approved', // Treat processing as approved in UI
-                    'completed' => 'paid',
-                    'rejected' => 'rejected',
-                    'failed' => 'rejected',
-                    default => 'pending',
-                },
-                'requestedAt' => $payout->created_at->toIso8601String(),
-                'processedAt' => $payout->processed_at?->toIso8601String() ?? null,
-            ];
-        })->toArray();
-
-        $stats = $this->payoutService->getAdminStats();
-
-        $data = [
-            'payouts' => $payouts,
-            'stats' => $stats,
-            'pagination' => [
-                'current_page' => $paginatedPayouts->currentPage(),
-                'last_page' => $paginatedPayouts->lastPage(),
-                'per_page' => $paginatedPayouts->perPage(),
-                'total' => $paginatedPayouts->total(),
-            ],
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json($data);
-        }
-
-        return Inertia::render('admin/PayoutsPage', $data);
-    }
 
     /**
      * Approve a payout request.
@@ -81,7 +27,7 @@ class AdminPayoutController extends Controller
         try {
             $payout = $this->payoutService->approvePayout(
                 $payoutRequest,
-                auth()->user(),
+                $request->user(),
                 $validated['notes'] ?? null
             );
 
@@ -108,7 +54,7 @@ class AdminPayoutController extends Controller
         try {
             $payout = $this->payoutService->rejectPayout(
                 $payoutRequest,
-                auth()->user(),
+                $request->user(),
                 $validated['reason']
             );
 
@@ -199,7 +145,7 @@ class AdminPayoutController extends Controller
                     $payout->user->email ?? 'N/A',
                     number_format($payout->amount_cents / 100, 2),
                     $payout->currency ?? 'USD',
-                    $payout->status,
+                    $payout->status->value,
                     $payout->payout_method ?? 'stripe',
                     $payout->stripe_account_id ?? '',
                     $payout->transaction_id ?? '',

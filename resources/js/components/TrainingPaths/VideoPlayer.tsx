@@ -113,11 +113,6 @@ const getYouTubeId = (url: string) => {
         /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|e\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|[&]v(?:i)?=))([^#&?]*).*/;
     const match = trimmedUrl.match(regExp);
     const id = match && match[1].length === 11 ? match[1] : null;
-    console.log('[VideoPlayer] YouTube ID extraction:', {
-        url: trimmedUrl,
-        id,
-        match: !!match,
-    });
     return id;
 };
 
@@ -132,9 +127,6 @@ export default function VideoPlayer({
     initialTime = 0,
     className = '',
 }: VideoPlayerProps) {
-    useEffect(() => {
-        console.log('[VideoPlayer] Rendering with src:', src);
-    }, [src]);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);

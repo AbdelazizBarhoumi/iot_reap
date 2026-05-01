@@ -19,6 +19,7 @@ import {
     PeriodSelector,
 } from '@/components/analytics';
 import { CompletionFunnel } from '@/components/analytics/CompletionFunnel';
+import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
@@ -56,33 +57,38 @@ export default function AnalyticsPage({
 
     // Calculate completion funnel stages
     const funnelData = useMemo(() => {
-        const totalStudents = kpis.total_students || 1;
+        const totalEnrollments = Math.max(kpis.total_enrollments || 0, 0);
+        const completedCount = Math.min(
+            kpis.total_completions || 0,
+            totalEnrollments,
+        );
+        const completionPercentage =
+            totalEnrollments > 0
+                ? Math.min(
+                      100,
+                      Math.round((completedCount / totalEnrollments) * 100),
+                  )
+                : 0;
         return [
             {
                 stage: 'Enrolled',
-                count: kpis.total_students || 0,
-                percentage: 100,
+                count: totalEnrollments,
+                percentage: totalEnrollments > 0 ? 100 : 0,
             },
             {
                 stage: 'Active',
-                count: Math.round(totalStudents * 0.85), // Estimate 85% active
-                percentage: 85,
+                count: Math.round(totalEnrollments * 0.85), // Estimate 85% active
+                percentage: totalEnrollments > 0 ? 85 : 0,
             },
             {
                 stage: 'In Progress',
-                count: Math.round(totalStudents * 0.65), // Estimate 65% started trainingPaths
-                percentage: 65,
+                count: Math.round(totalEnrollments * 0.65), // Estimate 65% started trainingPaths
+                percentage: totalEnrollments > 0 ? 65 : 0,
             },
             {
                 stage: 'Completed',
-                count: kpis.total_completions || 0,
-                percentage:
-                    totalStudents > 0
-                        ? Math.round(
-                              ((kpis.total_completions || 0) / totalStudents) *
-                                  100,
-                          )
-                        : 0,
+                count: completedCount,
+                percentage: completionPercentage,
             },
         ];
     }, [kpis]);
@@ -97,29 +103,33 @@ export default function AnalyticsPage({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Analytics Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="font-heading text-2xl font-semibold text-foreground">
-                            Analytics Dashboard
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Track your trainingPath performance and revenue
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <PeriodSelector
-                            value={period}
-                            onPeriodChange={handlePeriodChange}
-                        />
-                        <Button variant="outline" asChild>
-                            <Link href={teaching.analytics.earnings.url()}>
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                View Earnings
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
+                <TeachingWorkspaceTabs
+                    activeTab="analytics"
+                    header={(
+                        <>
+                            <div>
+                                <h1 className="font-heading text-2xl font-semibold text-foreground">
+                                    Analytics Dashboard
+                                </h1>
+                                <p className="text-sm text-muted-foreground">
+                                    Track your trainingPath performance and revenue
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <PeriodSelector
+                                    value={period}
+                                    onPeriodChange={handlePeriodChange}
+                                />
+                                <Button variant="outline" asChild>
+                                    <Link href={teaching.analytics.earnings.url()}>
+                                        <DollarSign className="mr-2 h-4 w-4" />
+                                        View Earnings
+                                    </Link>
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                />
                 {/* KPI Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     <KPICard

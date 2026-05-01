@@ -5,9 +5,12 @@ namespace Tests\Unit\Services;
 use App\Enums\VideoStatus;
 use App\Jobs\TranscodeVideoJob;
 use App\Models\TrainingUnit;
+use App\Models\TrainingPath;
+use App\Models\TrainingPathModule;
 use App\Models\Video;
 use App\Repositories\VideoRepository;
 use App\Services\VideoService;
+use App\Services\TrainingPathCacheService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -22,6 +25,8 @@ class VideoServiceTest extends TestCase
 
     private VideoRepository $repository;
 
+    private TrainingPathCacheService $trainingPathCacheService;
+
     private TrainingUnit $trainingUnit;
 
     protected function setUp(): void
@@ -29,7 +34,8 @@ class VideoServiceTest extends TestCase
         parent::setUp();
 
         $this->repository = $this->createMock(VideoRepository::class);
-        $this->service = new VideoService($this->repository);
+        $this->trainingPathCacheService = $this->createMock(TrainingPathCacheService::class);
+        $this->service = new VideoService($this->repository, $this->trainingPathCacheService);
         $this->trainingUnit = TrainingUnit::factory()->create();
     }
 
@@ -170,6 +176,10 @@ class VideoServiceTest extends TestCase
             (object) ['file_path' => $captionPath],
         ]);
 
+        $trainingPath = TrainingPath::factory()->create();
+        $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
+        $videoTrainingUnit = TrainingUnit::factory()->create(['module_id' => $module->id]);
+
         $video = $this->createMock(Video::class);
 
         // Configure mock to return values for properties accessed with __get
@@ -180,6 +190,7 @@ class VideoServiceTest extends TestCase
             ['thumbnail_path', $thumbnailPath],
             ['captions', $captions],
             ['id', 1],
+            ['trainingUnit', $videoTrainingUnit],
         ]);
 
         $this->repository
@@ -239,22 +250,4 @@ class VideoServiceTest extends TestCase
         $this->service->retryTranscoding($video);
     }
 
-    public function test_get_processing_stats_returns_stats_from_repository(): void
-    {
-        $expectedStats = [
-            'pending' => 5,
-            'processing' => 2,
-            'ready' => 15,
-            'failed' => 1,
-        ];
-
-        $this->repository
-            ->expects($this->once())
-            ->method('getProcessingStats')
-            ->willReturn($expectedStats);
-
-        $result = $this->service->getProcessingStats();
-
-        $this->assertEquals($expectedStats, $result);
-    }
 }

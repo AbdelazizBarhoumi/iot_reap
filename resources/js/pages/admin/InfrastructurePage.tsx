@@ -41,6 +41,8 @@ import {
     Wifi,
     WifiOff,
     Settings2,
+    Lock,
+    Unlock,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -118,7 +120,7 @@ import type {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/infrastructure' },
+    { title: 'Admin', href: '/admin/dashboard' },
     { title: 'Infrastructure', href: '/admin/infrastructure' },
 ];
 
@@ -680,6 +682,8 @@ interface AttachDialogProps {
         serverId: number,
     ) => Promise<void>;
     loading: boolean;
+    dialogTitle?: string;
+    actionLabel?: string;
 }
 
 function AttachDialog({
@@ -688,6 +692,8 @@ function AttachDialog({
     onClose,
     onAttach,
     loading,
+    dialogTitle = 'Attach USB Device',
+    actionLabel = 'Attach Device',
 }: AttachDialogProps) {
     const [selectedVmKey, setSelectedVmKey] = useState<string>('');
     const [runningVms, setRunningVms] = useState<RunningVm[]>([]);
@@ -784,9 +790,9 @@ function AttachDialog({
         >
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Attach USB Device</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                     <DialogDescription>
-                        Select a running VM to attach{' '}
+                        Select a running VM to {actionLabel.toLowerCase()} {' '}
                         <strong>{device?.name}</strong>.
                     </DialogDescription>
                 </DialogHeader>
@@ -849,7 +855,7 @@ function AttachDialog({
                         Cancel
                     </Button>
                     <Button onClick={handleAttach} disabled={!canAttach}>
-                        {loading ? 'Attaching...' : 'Attach Device'}
+                        {loading ? `${actionLabel}...` : actionLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -867,6 +873,8 @@ interface UsbDeviceRowProps {
     onCancelPending: () => void;
     onMarkAsCamera: () => void;
     onRemoveCamera: () => void;
+    onDedicate?: () => void;
+    onRemoveDedication?: () => void;
 }
 
 function UsbDeviceRow({
@@ -879,8 +887,11 @@ function UsbDeviceRow({
     onCancelPending,
     onMarkAsCamera,
     onRemoveCamera,
+    onDedicate,
+    onRemoveDedication,
 }: UsbDeviceRowProps) {
     const hasCameraRegistration = device.has_camera_registration;
+    const isDedicated = device.dedicated_vmid !== null;
 
     return (
         <div className="rounded-md border p-3">
@@ -1015,6 +1026,29 @@ function UsbDeviceRow({
                                 Cancel Pending
                             </Button>
                         )}
+
+                        {isDedicated ? (
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={onRemoveDedication}
+                                disabled={loading}
+                                className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                            >
+                                <Lock className="mr-1 h-3 w-3" />
+                                Remove Dedication
+                            </Button>
+                        ) : (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={onDedicate}
+                                disabled={loading}
+                            >
+                                <Unlock className="mr-1 h-3 w-3" />
+                                Dedicate
+                            </Button>
+                        )}
                     </>
                 )}
             </div>
@@ -1034,6 +1068,8 @@ interface GatewayNodeCardProps {
     onCancelPending: (deviceId: number) => void;
     onMarkAsCamera: (deviceId: number) => void;
     onRemoveCamera: (deviceId: number) => void;
+    onDedicateDevice?: (device: UsbDevice) => void;
+    onRemoveDedication?: (deviceId: number) => void;
 }
 
 function GatewayNodeCard({
@@ -1048,6 +1084,8 @@ function GatewayNodeCard({
     onCancelPending,
     onMarkAsCamera,
     onRemoveCamera,
+    onDedicateDevice,
+    onRemoveDedication,
 }: GatewayNodeCardProps) {
     const [expanded, setExpanded] = useState(false);
     const isOnline = node.online;
@@ -1185,6 +1223,8 @@ function GatewayNodeCard({
                                         onRemoveCamera={() =>
                                             onRemoveCamera(device.id)
                                         }
+                                        onDedicate={() => onDedicateDevice?.(device)}
+                                        onRemoveDedication={() => onRemoveDedication?.(device.id)}
                                     />
                                 ))}
                             </div>
@@ -1554,6 +1594,7 @@ export default function InfrastructurePage({
 
     const [attachDialogDevice, setAttachDialogDevice] =
         useState<UsbDevice | null>(null);
+    const [dedicateLoading, setDedicateLoading] = useState<boolean>(false);
 
     // ── Camera state ──
     const [cameras, setCameras] = useState<CameraType[]>([]);
@@ -2128,6 +2169,8 @@ export default function InfrastructurePage({
         }
     };
 
+    const [dedicateDialogDevice, setDedicateDialogDevice] = useState<UsbDevice | null>(null);
+
     const handleAttachHardwareDevice = async (
         deviceId: number,
         vmIp: string,
@@ -2143,6 +2186,54 @@ export default function InfrastructurePage({
             node,
             server_id: serverId,
         });
+    };
+
+    const handleDedicateDevice = async (
+        deviceId: number,
+        vmIp: string,
+        vmName: string,
+        vmid: number,
+        node: string,
+        serverId: number,
+    ) => {
+        setDedicateLoading(true);
+        try {
+            await hardwareApi.dedicateDevice(deviceId, {
+                vmid,
+                node,
+                server_id: serverId,
+                vm_ip: vmIp,
+                vm_name: vmName,
+            });
+
+            // refresh data
+            await fetchNodes();
+            await fetchCameras();
+            toast.success('Device dedicated to VM successfully');
+        } catch (err) {
+            console.error('Failed to dedicate device:', err);
+            toast.error(err instanceof Error ? err.message : 'Failed to dedicate device');
+            throw err;
+        } finally {
+            setDedicateLoading(false);
+            setDedicateDialogDevice(null);
+        }
+    };
+
+    const handleRemoveDedication = async (deviceId: number) => {
+        setDedicateLoading(true);
+        try {
+            await hardwareApi.removeDedication(deviceId);
+            await fetchNodes();
+            await fetchCameras();
+            toast.success('Removed device dedication');
+        } catch (err) {
+            console.error('Failed to remove dedication:', err);
+            toast.error(err instanceof Error ? err.message : 'Failed to remove dedication');
+            throw err;
+        } finally {
+            setDedicateLoading(false);
+        }
     };
 
     const handleAttachCamera = async (
@@ -2808,6 +2899,8 @@ export default function InfrastructurePage({
                                                     onRemoveCamera={
                                                         handleRemoveCamera
                                                     }
+                                                    onDedicateDevice={setDedicateDialogDevice}
+                                                    onRemoveDedication={handleRemoveDedication}
                                                 />
                                             </motion.div>
                                         ))}
@@ -3979,6 +4072,17 @@ export default function InfrastructurePage({
                 onClose={() => setAttachDialogDevice(null)}
                 onAttach={handleAttachHardwareDevice}
                 loading={hardwareActionLoading}
+            />
+
+            {/* ── USB Dedicate Dialog ── */}
+            <AttachDialog
+                device={dedicateDialogDevice}
+                open={!!dedicateDialogDevice}
+                onClose={() => setDedicateDialogDevice(null)}
+                onAttach={handleDedicateDevice}
+                loading={dedicateLoading}
+                dialogTitle="Dedicate USB Device to VM"
+                actionLabel="Dedicate Device"
             />
 
             {/* ── Camera Attach Dialog ── */}

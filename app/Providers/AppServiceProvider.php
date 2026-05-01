@@ -192,8 +192,8 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
 
-        // Forum posting: 10 threads/replies per minute per user
-        RateLimiter::for('forum', function (Request $request) {
+        // Forum write operations: 10 threads/replies per minute per user (prevents spam)
+        RateLimiter::for('forum-write', function (Request $request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
 

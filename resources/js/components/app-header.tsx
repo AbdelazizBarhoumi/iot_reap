@@ -92,7 +92,7 @@ function useNavItems(): NavItem[] {
     if (isTeacher) {
         items.push({
             title: 'Content Studio',
-            href: teaching.index.url(),
+            href: teaching.analytics.index.url(),
             icon: PenTool,
         });
     }

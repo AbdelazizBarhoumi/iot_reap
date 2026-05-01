@@ -28,8 +28,12 @@ export function EnrollmentChart({
                 <CardTitle className="text-lg">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[300px] w-full min-w-0">
+                    <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                        minWidth={0}
+                    >
                         <AreaChart
                             data={data}
                             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -44,12 +48,12 @@ export function EnrollmentChart({
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="hsl(var(--primary))"
+                                        stopColor="var(--primary)"
                                         stopOpacity={0.3}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="hsl(var(--primary))"
+                                        stopColor="var(--primary)"
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -132,7 +136,7 @@ export function EnrollmentChart({
                             <Area
                                 type="monotone"
                                 dataKey="enrollments"
-                                stroke="hsl(var(--primary))"
+                                stroke="var(--primary)"
                                 strokeWidth={2}
                                 fill="url(#enrollmentGradient)"
                             />

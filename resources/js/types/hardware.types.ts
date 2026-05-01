@@ -63,6 +63,9 @@ export interface UsbDevice {
     pending_since: string | null;
     queue_count: number;
     has_active_reservation: boolean;
+    // Dedicated VM assignment (survives reboots)
+    dedicated_vmid: number | null;
+    dedicated_server_id?: number | null;
     // Runtime attach verification hints (session-scoped responses)
     is_verified_attached?: boolean | null;
     attachment_verification_state?:

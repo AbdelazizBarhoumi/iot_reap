@@ -13,12 +13,9 @@ use App\Services\VideoService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -317,22 +314,6 @@ class VideoController extends Controller
 
         return response()->json([
             'message' => 'Caption deleted successfully.',
-        ]);
-    }
-
-    /**
-     * Get processing stats (admin).
-     */
-    public function processingStats(Request $request): JsonResponse|InertiaResponse
-    {
-        Gate::authorize('admin-only');
-
-        if (! $request->wantsJson()) {
-            return Inertia::render('admin/VideoProcessingPage');
-        }
-
-        return response()->json([
-            'data' => $this->videoService->getProcessingStats(),
         ]);
     }
 

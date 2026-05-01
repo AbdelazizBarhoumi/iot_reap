@@ -92,6 +92,12 @@ export default function Welcome({
                             >
                                 Training Paths
                             </Link>
+                            <Link
+                                href="/certificates/verify"
+                                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                            >
+                                Verify Certificate
+                            </Link>
                             {auth.user && (
                                 <Button asChild>
                                     <Link href={operationsDashboardUrl}>
@@ -166,6 +172,13 @@ export default function Welcome({
                                         onClick={() => setMobileOpen(false)}
                                     >
                                         Training Paths
+                                    </Link>
+                                    <Link
+                                        href="/certificates/verify"
+                                        className="text-sm font-medium text-muted-foreground hover:text-primary"
+                                        onClick={() => setMobileOpen(false)}
+                                    >
+                                        Verify Certificate
                                     </Link>
                                     {auth.user && (
                                         <Link
@@ -459,6 +472,12 @@ export default function Welcome({
                                 className="transition-colors hover:text-foreground"
                             >
                                 Training Paths
+                            </Link>
+                            <Link
+                                href="/certificates/verify"
+                                className="transition-colors hover:text-foreground"
+                            >
+                                Verify Certificate
                             </Link>
                             <Link
                                 href={teaching.index.url()}

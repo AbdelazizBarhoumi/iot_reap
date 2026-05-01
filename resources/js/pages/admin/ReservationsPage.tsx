@@ -64,7 +64,7 @@ import type {
 } from '@/types/hardware.types';
 import type { VMReservation } from '@/types/vm.types';
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin/reservations' },
+    { title: 'Admin', href: '/admin/dashboard' },
     { title: 'Device Reservations', href: '/admin/reservations' },
 ];
 const STATUS_COLORS: Record<UsbReservationStatus, string> = {

@@ -9,6 +9,7 @@ use App\Http\Resources\TrainingUnitResource;
 use App\Models\Certificate;
 use App\Models\TrainingPath;
 use App\Services\EnrollmentService;
+use App\Services\FeaturedTrainingPathsService;
 use App\Services\TrainingPathService;
 use App\Services\TrainingUnitVMAssignmentService;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class TrainingPathController extends Controller
         private readonly TrainingPathService $trainingPathService,
         private readonly EnrollmentService $enrollmentService,
         private readonly TrainingUnitVMAssignmentService $assignmentService,
+        private readonly FeaturedTrainingPathsService $featuredTrainingPathsService,
     ) {}
 
     /**
@@ -35,19 +37,30 @@ class TrainingPathController extends Controller
         $category = $request->query('category');
         $search = $request->query('search');
 
+        // Get featured trainingPaths (ordered) and then the rest
+        $featured = $this->featuredTrainingPathsService->getFeaturedTrainingPaths(6);
+
         $trainingPaths = $this->trainingPathService->getApprovedTrainingPaths($category, $search);
+        // Exclude featured ids from the main list to avoid duplicates
+        $featuredIds = $featured->pluck('id')->map(fn($id) => (int) $id)->toArray();
+        $other = $trainingPaths->filter(fn($tp) => ! in_array((int) $tp->id, $featuredIds))->values();
+        // Combine featured (ordered) then others
+        $combined = $featured->concat($other);
+
         $categories = $this->trainingPathService->getCategories();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => TrainingPathResource::collection($trainingPaths),
+                'data' => TrainingPathResource::collection($combined),
                 'categories' => $categories,
+                'featured' => TrainingPathResource::collection($featured),
             ]);
         }
 
         return Inertia::render('trainingPaths/index', [
-            'trainingPaths' => TrainingPathResource::collection($trainingPaths),
+            'trainingPaths' => TrainingPathResource::collection($combined),
             'categories' => $categories,
+            'featuredTrainingPaths' => TrainingPathResource::collection($featured),
         ]);
     }
 

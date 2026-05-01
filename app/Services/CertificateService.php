@@ -12,6 +12,7 @@ use App\Repositories\TrainingUnitProgressRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CertificateService
 {
@@ -47,6 +48,26 @@ class CertificateService
     }
 
     /**
+     * Ensure a certificate has a generated PDF when possible.
+     */
+    public function ensureCertificatePdf(Certificate $certificate): Certificate
+    {
+        $pdfPath = $this->getCertificatePdfPath($certificate);
+
+        if ($pdfPath && file_exists($pdfPath)) {
+            return $certificate->fresh(['user:id,name', 'trainingPath:id,title,thumbnail,instructor_id']) ?? $certificate;
+        }
+
+        try {
+            GenerateCertificatePdfJob::dispatchSync($certificate);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return $certificate->fresh(['user:id,name', 'trainingPath:id,title,thumbnail,instructor_id']) ?? $certificate;
+    }
+
+    /**
      * Check if user has completed a trainingPath and can receive a certificate.
      */
     public function canIssueCertificate(User $user, TrainingPath $trainingPath): bool
@@ -71,6 +92,12 @@ class CertificateService
     {
         $trainingPath = TrainingPath::findOrFail($trainingPathId);
 
+        $existingCertificate = $this->certificateRepository->getUserCertificateForTrainingPath($user, $trainingPathId);
+
+        if ($existingCertificate) {
+            return $this->ensureCertificatePdf($existingCertificate);
+        }
+
         // Verify completion
         if (! $this->canIssueCertificate($user, $trainingPath)) {
             throw new AuthorizationException('Cannot issue certificate. TrainingPath not completed or already issued.');
@@ -87,11 +114,7 @@ class CertificateService
             'issued_at' => now(),
         ]);
 
-        // Execute PDF generation synchronously
-        GenerateCertificatePdfJob::dispatchSync($certificate);
-
-        // Refresh the certificate instance to get the updated pdf_path from the database
-        $certificate->refresh();
+        $certificate = $this->ensureCertificatePdf($certificate);
 
         // Dispatch event
         CertificateIssued::dispatch($certificate);
@@ -116,7 +139,7 @@ class CertificateService
             return null;
         }
 
-        return storage_path("app/{$certificate->pdf_path}");
+        return Storage::disk(config('filesystems.default'))->path($certificate->pdf_path);
     }
 
     /**
