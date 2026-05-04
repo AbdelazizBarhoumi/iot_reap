@@ -45,12 +45,12 @@ class TrainingPathAnalyticsServiceTest extends TestCase
                 'quiz_attempts' => 20,
                 'quiz_passes' => 15,
                 'video_minutes_watched' => 1200,
-                'active_students' => 8,
+                'active_engineers' => 8,
             ]);
 
         $kpis = $this->service->getTeacherKPIs($teacher, '30d');
 
-        $this->assertArrayHasKey('total_students', $kpis);
+        $this->assertArrayHasKey('total_engineers', $kpis);
         $this->assertArrayHasKey('total_enrollments', $kpis);
         $this->assertArrayHasKey('enrollments_change', $kpis);
         $this->assertArrayHasKey('total_completions', $kpis);
@@ -140,7 +140,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
             ->create([
                 'training_path_id' => $trainingPath->id,
                 'video_minutes_watched' => 600,
-                'active_students' => 10, // 60 min avg
+                'active_engineers' => 10, // 60 min avg
             ]);
 
         $kpis = $this->service->getTeacherKPIs($teacher, '30d');
@@ -183,24 +183,24 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         $this->assertEquals(100, $kpis['enrollments_change']); // 100% when previous is zero
     }
 
-    public function test_counts_total_unique_students(): void
+    public function test_counts_total_unique_engineers(): void
     {
         $teacher = User::factory()->create();
         $trainingPath1 = TrainingPath::factory()->approved()->create(['instructor_id' => $teacher->id]);
         $trainingPath2 = TrainingPath::factory()->approved()->create(['instructor_id' => $teacher->id]);
 
         // Student enrolled in both trainingPaths (should count once)
-        $student1 = User::factory()->create();
-        TrainingPathEnrollment::factory()->create(['user_id' => $student1->id, 'training_path_id' => $trainingPath1->id]);
-        TrainingPathEnrollment::factory()->create(['user_id' => $student1->id, 'training_path_id' => $trainingPath2->id]);
+        $engineer1 = User::factory()->create();
+        TrainingPathEnrollment::factory()->create(['user_id' => $engineer1->id, 'training_path_id' => $trainingPath1->id]);
+        TrainingPathEnrollment::factory()->create(['user_id' => $engineer1->id, 'training_path_id' => $trainingPath2->id]);
 
-        // Another student in first trainingPath only
-        $student2 = User::factory()->create();
-        TrainingPathEnrollment::factory()->create(['user_id' => $student2->id, 'training_path_id' => $trainingPath1->id]);
+        // Another engineer in first trainingPath only
+        $engineer2 = User::factory()->create();
+        TrainingPathEnrollment::factory()->create(['user_id' => $engineer2->id, 'training_path_id' => $trainingPath1->id]);
 
         $kpis = $this->service->getTeacherKPIs($teacher, '30d');
 
-        $this->assertEquals(2, $kpis['total_students']); // 2 unique students
+        $this->assertEquals(2, $kpis['total_engineers']); // 2 unique engineers
     }
 
     public function test_respects_different_period_options(): void
@@ -299,11 +299,11 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         TrainingUnit::factory()->count(4)->create(['module_id' => $module->id]);
 
-        // Enroll some students
-        $students = User::factory()->count(3)->create();
-        foreach ($students as $student) {
+        // Enroll some engineers
+        $engineers = User::factory()->count(3)->create();
+        foreach ($engineers as $engineer) {
             TrainingPathEnrollment::factory()->create([
-                'user_id' => $student->id,
+                'user_id' => $engineer->id,
                 'training_path_id' => $trainingPath->id,
             ]);
         }
@@ -325,19 +325,19 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         $trainingUnits = TrainingUnit::factory()->count(4)->create(['module_id' => $module->id]);
 
-        // Create 10 students with varying progress
-        $students = User::factory()->count(10)->create();
-        foreach ($students as $index => $student) {
+        // Create 10 engineers with varying progress
+        $engineers = User::factory()->count(10)->create();
+        foreach ($engineers as $index => $engineer) {
             TrainingPathEnrollment::factory()->create([
-                'user_id' => $student->id,
+                'user_id' => $engineer->id,
                 'training_path_id' => $trainingPath->id,
             ]);
 
-            // Graduated completion: first students complete more trainingUnits
+            // Graduated completion: first engineers complete more trainingUnits
             $trainingUnitsToComplete = max(0, 4 - (int) ($index / 2));
             foreach ($trainingUnits->take($trainingUnitsToComplete) as $trainingUnit) {
                 TrainingUnitProgress::factory()->create([
-                    'user_id' => $student->id,
+                    'user_id' => $engineer->id,
                     'training_unit_id' => $trainingUnit->id,
                     'completed' => true,
                     'completed_at' => now(),
@@ -376,10 +376,10 @@ class TrainingPathAnalyticsServiceTest extends TestCase
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
-        // Enroll students but no trainingUnits exist
-        $student = User::factory()->create();
+        // Enroll engineers but no trainingUnits exist
+        $engineer = User::factory()->create();
         TrainingPathEnrollment::factory()->create([
-            'user_id' => $student->id,
+            'user_id' => $engineer->id,
             'training_path_id' => $trainingPath->id,
         ]);
 
@@ -490,103 +490,103 @@ class TrainingPathAnalyticsServiceTest extends TestCase
     // getStudentRoster Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_returns_student_roster_with_correct_structure(): void
+    public function test_returns_engineer_roster_with_correct_structure(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
-        $student = User::factory()->create(['name' => 'Test Student']);
+        $engineer = User::factory()->create(['name' => 'Test Student']);
 
         TrainingPathEnrollment::factory()->create([
-            'user_id' => $student->id,
+            'user_id' => $engineer->id,
             'training_path_id' => $trainingPath->id,
         ]);
 
-        $roster = $this->service->getStudentRoster($trainingPath);
+        $roster = $this->service->getEngineerRoster($trainingPath);
 
         $this->assertArrayHasKey('data', $roster);
         $this->assertArrayHasKey('meta', $roster);
         $this->assertCount(1, $roster['data']);
 
-        $studentData = $roster['data'][0];
-        $this->assertArrayHasKey('id', $studentData);
-        $this->assertArrayHasKey('name', $studentData);
-        $this->assertArrayHasKey('email', $studentData);
-        $this->assertArrayHasKey('enrolled_at', $studentData);
-        $this->assertArrayHasKey('progress', $studentData);
-        $this->assertArrayHasKey('is_completed', $studentData);
+        $engineerData = $roster['data'][0];
+        $this->assertArrayHasKey('id', $engineerData);
+        $this->assertArrayHasKey('name', $engineerData);
+        $this->assertArrayHasKey('email', $engineerData);
+        $this->assertArrayHasKey('enrolled_at', $engineerData);
+        $this->assertArrayHasKey('progress', $engineerData);
+        $this->assertArrayHasKey('is_completed', $engineerData);
     }
 
-    public function test_calculates_student_progress_correctly(): void
+    public function test_calculates_engineer_progress_correctly(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
         $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         $trainingUnits = TrainingUnit::factory()->count(4)->create(['module_id' => $module->id]);
 
-        $student = User::factory()->create();
+        $engineer = User::factory()->create();
         TrainingPathEnrollment::factory()->create([
-            'user_id' => $student->id,
+            'user_id' => $engineer->id,
             'training_path_id' => $trainingPath->id,
         ]);
 
         // Complete 2 of 4 trainingUnits = 50%
         foreach ($trainingUnits->take(2) as $trainingUnit) {
             TrainingUnitProgress::factory()->create([
-                'user_id' => $student->id,
+                'user_id' => $engineer->id,
                 'training_unit_id' => $trainingUnit->id,
                 'completed' => true,
                 'completed_at' => now(),
             ]);
         }
 
-        $roster = $this->service->getStudentRoster($trainingPath);
+        $roster = $this->service->getEngineerRoster($trainingPath);
 
         $this->assertEquals(50.0, $roster['data'][0]['progress']);
         $this->assertFalse($roster['data'][0]['is_completed']);
     }
 
-    public function test_marks_student_as_completed_when_all_training_units_done(): void
+    public function test_marks_engineer_as_completed_when_all_training_units_done(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
         $module = TrainingPathModule::factory()->create(['training_path_id' => $trainingPath->id]);
         $trainingUnits = TrainingUnit::factory()->count(2)->create(['module_id' => $module->id]);
 
-        $student = User::factory()->create();
+        $engineer = User::factory()->create();
         TrainingPathEnrollment::factory()->create([
-            'user_id' => $student->id,
+            'user_id' => $engineer->id,
             'training_path_id' => $trainingPath->id,
         ]);
 
         // Complete all trainingUnits
         foreach ($trainingUnits as $trainingUnit) {
             TrainingUnitProgress::factory()->create([
-                'user_id' => $student->id,
+                'user_id' => $engineer->id,
                 'training_unit_id' => $trainingUnit->id,
                 'completed' => true,
                 'completed_at' => now(),
             ]);
         }
 
-        $roster = $this->service->getStudentRoster($trainingPath);
+        $roster = $this->service->getEngineerRoster($trainingPath);
 
         $this->assertEquals(100.0, $roster['data'][0]['progress']);
         $this->assertTrue($roster['data'][0]['is_completed']);
         $this->assertNotNull($roster['data'][0]['completed_at']);
     }
 
-    public function test_paginates_student_roster(): void
+    public function test_paginates_engineer_roster(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
-        // Create 25 students
-        $students = User::factory()->count(25)->create();
-        foreach ($students as $student) {
+        // Create 25 engineers
+        $engineers = User::factory()->count(25)->create();
+        foreach ($engineers as $engineer) {
             TrainingPathEnrollment::factory()->create([
-                'user_id' => $student->id,
+                'user_id' => $engineer->id,
                 'training_path_id' => $trainingPath->id,
             ]);
         }
 
-        $page1 = $this->service->getStudentRoster($trainingPath, page: 1, perPage: 10);
-        $page2 = $this->service->getStudentRoster($trainingPath, page: 2, perPage: 10);
+        $page1 = $this->service->getEngineerRoster($trainingPath, page: 1, perPage: 10);
+        $page2 = $this->service->getEngineerRoster($trainingPath, page: 2, perPage: 10);
 
         $this->assertCount(10, $page1['data']);
         $this->assertCount(10, $page2['data']);
@@ -594,11 +594,11 @@ class TrainingPathAnalyticsServiceTest extends TestCase
         $this->assertEquals(3, $page1['meta']['last_page']);
     }
 
-    public function test_handles_training_path_with_no_students(): void
+    public function test_handles_training_path_with_no_engineers(): void
     {
         $trainingPath = TrainingPath::factory()->approved()->create();
 
-        $roster = $this->service->getStudentRoster($trainingPath);
+        $roster = $this->service->getEngineerRoster($trainingPath);
 
         $this->assertEmpty($roster['data']);
         $this->assertEquals(0, $roster['meta']['total']);
@@ -656,7 +656,7 @@ class TrainingPathAnalyticsServiceTest extends TestCase
 
         $kpis = $this->service->getTeacherKPIs($teacher, '30d');
 
-        $this->assertEquals(0, $kpis['total_students']);
+        $this->assertEquals(0, $kpis['total_engineers']);
         $this->assertEquals(0, $kpis['total_enrollments']);
         $this->assertEquals(0, $kpis['total_completions']);
         $this->assertEquals(0, $kpis['total_revenue']);

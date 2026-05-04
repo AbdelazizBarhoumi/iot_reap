@@ -38,7 +38,7 @@ describe('TrainingPathCard Component', () => {
         level: 'Beginner' as const,
         duration: '4 weeks',
         rating: 4.5,
-        students: 1250,
+        engineers: 1250,
         hasVirtualMachine: true,
         thumbnail: null,
         modules: [{ trainingUnits: [1, 2, 3] }, { trainingUnits: [4, 5] }],
@@ -61,12 +61,12 @@ describe('TrainingPathCard Component', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
         expect(screen.getByText('4.5')).toBeInTheDocument();
     });
-    it('displays student count correctly for numbers over 1000', () => {
+    it('displays engineer count correctly for numbers over 1000', () => {
         render(<TrainingPathCard trainingPath={mockTrainingPath} />);
         expect(screen.getByText('1.3k')).toBeInTheDocument();
     });
-    it('displays student count correctly for numbers under 1000', () => {
-        const trainingPathUnder1k = { ...mockTrainingPath, students: 850 };
+    it('displays engineer count correctly for numbers under 1000', () => {
+        const trainingPathUnder1k = { ...mockTrainingPath, engineers: 850 };
         render(<TrainingPathCard trainingPath={trainingPathUnder1k} />);
         expect(screen.getByText('850')).toBeInTheDocument();
     });

@@ -23,7 +23,7 @@ class DailyTrainingPathStatsFactory extends Factory
             'date' => $this->faker->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
             'enrollments' => $this->faker->numberBetween(0, 20),
             'completions' => $this->faker->numberBetween(0, 10),
-            'active_students' => $this->faker->numberBetween(0, 50),
+            'active_engineers' => $this->faker->numberBetween(0, 50),
             'training_units_viewed' => $this->faker->numberBetween(0, 200),
             'video_minutes_watched' => $this->faker->numberBetween(0, 5000),
             'quiz_attempts' => $this->faker->numberBetween(0, 30),
@@ -60,7 +60,7 @@ class DailyTrainingPathStatsFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'enrollments' => 0,
             'completions' => 0,
-            'active_students' => 0,
+            'active_engineers' => 0,
             'revenue_cents' => 0,
         ]);
     }

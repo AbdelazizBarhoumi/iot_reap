@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
 use App\Repositories\TrainingPathModuleRepository;
@@ -16,6 +17,7 @@ class TrainingUnitService
     public function __construct(
         private readonly TrainingPathModuleRepository $moduleRepository,
         private readonly TrainingUnitRepository $trainingUnitRepository,
+        private readonly TrainingPathCacheService $cacheService,
     ) {}
 
     /**
@@ -39,6 +41,9 @@ class TrainingUnitService
             'training_path_id' => $trainingPathId,
         ]);
 
+        // Invalidate the training path cache so edit endpoint returns fresh data
+        $this->invalidateTrainingPathCacheById($trainingPathId);
+
         return $module;
     }
 
@@ -49,7 +54,12 @@ class TrainingUnitService
      */
     public function updateModule(TrainingPathModule $module, array $data): TrainingPathModule
     {
-        return $this->moduleRepository->update($module, $data);
+        $updatedModule = $this->moduleRepository->update($module, $data);
+
+        // Invalidate the training path cache so edit endpoint returns fresh data
+        $this->invalidateTrainingPathCacheById($module->training_path_id);
+
+        return $updatedModule;
     }
 
     /**
@@ -59,7 +69,12 @@ class TrainingUnitService
     {
         Log::info('Module deleted', ['module_id' => $module->id]);
 
-        return $this->moduleRepository->delete($module);
+        $result = $this->moduleRepository->delete($module);
+
+        // Invalidate the training path cache so edit endpoint returns fresh data
+        $this->invalidateTrainingPathCacheById($module->training_path_id);
+
+        return $result;
     }
 
     /**
@@ -95,6 +110,8 @@ class TrainingUnitService
             $trainingUnit->module->trainingPath->update(['has_virtual_machine' => true]);
         }
 
+        $this->invalidateTrainingPathCacheById($moduleId);
+
         return $trainingUnit;
     }
 
@@ -110,6 +127,8 @@ class TrainingUnitService
         // Refresh trainingPath's has_virtual_machine flag
         $updated->module->trainingPath->refreshHasVirtualMachine();
 
+        $this->invalidateTrainingPathCacheById($updated->module->training_path_id);
+
         return $updated;
     }
 
@@ -123,6 +142,8 @@ class TrainingUnitService
 
         // Refresh trainingPath's has_virtual_machine flag
         $trainingPath->refreshHasVirtualMachine();
+
+        $this->invalidateTrainingPathCacheById($trainingPath->id);
 
         Log::info('TrainingUnit deleted', ['training_unit_id' => $trainingUnit->id]);
 
@@ -145,6 +166,7 @@ class TrainingUnitService
     public function reorderModules(int $trainingPathId, array $order): void
     {
         $this->moduleRepository->reorder($trainingPathId, $order);
+        $this->invalidateTrainingPathCacheById($trainingPathId);
     }
 
     /**
@@ -155,5 +177,22 @@ class TrainingUnitService
     public function reorderTrainingUnits(int $moduleId, array $order): void
     {
         $this->trainingUnitRepository->reorder($moduleId, $order);
+
+        $module = $this->moduleRepository->findById($moduleId);
+        if ($module) {
+            $this->invalidateTrainingPathCacheById($module->training_path_id);
+        }
+    }
+
+    /**
+     * Invalidate cached trainingPath content if the trainingPath still exists.
+     */
+    private function invalidateTrainingPathCacheById(int $trainingPathId): void
+    {
+        $trainingPath = TrainingPath::find($trainingPathId);
+
+        if ($trainingPath) {
+            $this->cacheService->invalidateTrainingPath($trainingPath);
+        }
     }
 }

@@ -51,7 +51,7 @@ class TeachingController extends Controller
         // Calculate stats
         $stats = [
             'totalTrainingPaths' => $trainingPaths->count(),
-            'totalStudents' => $trainingPaths->sum('student_count'),
+            'totalEngineers' => $trainingPaths->sum('engineer_count'),
             'avgRating' => $trainingPaths->avg('rating') ? round($trainingPaths->avg('rating'), 1) : 0,
             'completionRate' => $this->trainingPathService->getInstructorCompletionRate($request->user()),
         ];

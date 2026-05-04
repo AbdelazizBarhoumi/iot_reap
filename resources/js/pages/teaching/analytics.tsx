@@ -105,14 +105,15 @@ export default function AnalyticsPage({
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 <TeachingWorkspaceTabs
                     activeTab="analytics"
-                    header={(
+                    header={
                         <>
                             <div>
                                 <h1 className="font-heading text-2xl font-semibold text-foreground">
                                     Analytics Dashboard
                                 </h1>
                                 <p className="text-sm text-muted-foreground">
-                                    Track your trainingPath performance and revenue
+                                    Track your trainingPath performance and
+                                    revenue
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -121,20 +122,22 @@ export default function AnalyticsPage({
                                     onPeriodChange={handlePeriodChange}
                                 />
                                 <Button variant="outline" asChild>
-                                    <Link href={teaching.analytics.earnings.url()}>
+                                    <Link
+                                        href={teaching.analytics.earnings.url()}
+                                    >
                                         <DollarSign className="mr-2 h-4 w-4" />
                                         View Earnings
                                     </Link>
                                 </Button>
                             </div>
                         </>
-                    )}
+                    }
                 />
                 {/* KPI Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     <KPICard
                         title="Total Students"
-                        value={kpis.total_students}
+                        value={kpis.total_engineers}
                         icon={<Users className="h-4 w-4" />}
                     />
                     <KPICard
@@ -212,7 +215,7 @@ export default function AnalyticsPage({
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <Link
-                                                href={`/teaching/analytics/trainingPaths/${trainingPath.id}/students`}
+                                                href={`/teaching/analytics/trainingPaths/${trainingPath.id}/engineers`}
                                                 className="block truncate text-sm font-medium hover:underline"
                                             >
                                                 {trainingPath.title}

@@ -377,6 +377,7 @@ export default function EditTrainingPathPage({
         () => trainingPath.modules ?? [],
         [trainingPath.modules],
     );
+
     const totalTrainingUnits = modules.reduce(
         (acc, m) => acc + m.trainingUnits.length,
         0,
@@ -385,10 +386,11 @@ export default function EditTrainingPathPage({
         (acc, m) => acc + m.trainingUnits.filter((l) => l.content).length,
         0,
     );
-    const completionPercent =
-        totalTrainingUnits > 0
-            ? Math.round((completedTrainingUnits / totalTrainingUnits) * 100)
-            : 0;
+    // Calculate completion same way as list page: assume 10 trainingUnits = 100%
+    const completionPercent = Math.min(
+        100,
+        Math.round((totalTrainingUnits / 10) * 100),
+    );
     const statusInfo = statusConfig[trainingPath.status] ?? statusConfig.draft;
     const toggleModule = useCallback((moduleId: string) => {
         setExpandedModules((prev) => {
@@ -589,10 +591,15 @@ export default function EditTrainingPathPage({
                         String(trainingPath.id),
                         String(moduleId),
                     );
-                    setTrainingPath((prev) => ({
-                        ...prev,
-                        modules: prev.modules?.filter((m) => m.id !== moduleId),
-                    }));
+                    setTrainingPath((prev) => {
+                        return {
+                            ...prev,
+                            modules: prev.modules?.filter(
+                                (m) => m.id !== moduleId,
+                            ),
+                        };
+                    });
+                    setConfirmDialog((prev) => ({ ...prev, open: false }));
                     toast.success('Module deleted');
                 } catch {
                     toast.error('Failed to delete module');
@@ -697,6 +704,7 @@ export default function EditTrainingPathPage({
                                 : m,
                         ),
                     }));
+                    setConfirmDialog((prev) => ({ ...prev, open: false }));
                     toast.success('TrainingUnit deleted', {
                         description: `"${trainingUnitTitle}" has been removed.`,
                     });
@@ -776,6 +784,12 @@ export default function EditTrainingPathPage({
             );
 
             if (oldIndex < 0 || newIndex < 0) {
+                console.warn('[WARN] Drag indices invalid:', {
+                    oldIndex,
+                    newIndex,
+                    activeId: active.id,
+                    overId: over.id,
+                });
                 return;
             }
 
@@ -787,9 +801,10 @@ export default function EditTrainingPathPage({
             }));
 
             try {
+                const orderIds = newOrder.map((module) => String(module.id));
                 await teachingApi.reorderModules(
                     String(trainingPath.id),
-                    newOrder.map((module) => String(module.id)),
+                    orderIds,
                 );
                 toast.success('Module order updated');
             } catch {
@@ -837,9 +852,9 @@ export default function EditTrainingPathPage({
                                     </Badge>
                                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                         <Users className="h-3.5 w-3.5" />
-                                        {trainingPath.students?.toLocaleString() ??
+                                        {trainingPath.engineers?.toLocaleString() ??
                                             0}{' '}
-                                        students
+                                        engineers
                                     </span>
                                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                         <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
@@ -950,7 +965,7 @@ export default function EditTrainingPathPage({
                                     {trainingPath.status === 'draft' && (
                                         <Button
                                             variant="outline"
-                                            className="w-full justify-start border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/10"
+                                            className="w-full justify-start border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-500/90"
                                             size="sm"
                                             onClick={handleSubmitForReview}
                                         >
@@ -1320,7 +1335,7 @@ export default function EditTrainingPathPage({
                                                                                             <Button
                                                                                                 variant="ghost"
                                                                                                 size="sm"
-                                                                                                className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
+                                                                                                className="mt-2 w-full justify-center border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 hover:text-primary/90"
                                                                                                 onClick={() =>
                                                                                                     openAddTrainingUnitDialog(
                                                                                                         module.id,
@@ -1349,7 +1364,7 @@ export default function EditTrainingPathPage({
                                     {modules.length > 0 && (
                                         <Button
                                             variant="outline"
-                                            className="h-14 w-full border-2 border-dashed hover:border-primary/50 hover:bg-primary/5"
+                                            className="h-14 w-full border-2 border-dashed hover:border-primary/50 hover:bg-primary/5 hover:text-primary/90"
                                             onClick={openAddModuleDialog}
                                         >
                                             <Plus className="mr-2 h-5 w-5" />{' '}

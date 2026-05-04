@@ -32,7 +32,7 @@ class AdminTrainingPathController extends Controller
         $status = $request->string('status')->toString();
         $trainingPathsQuery = TrainingPath::query()
             ->with(['instructor', 'modules.trainingUnits.video'])
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderByDesc('created_at');
 
         if ($status !== '') {

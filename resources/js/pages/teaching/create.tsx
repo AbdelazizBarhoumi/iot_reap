@@ -350,7 +350,7 @@ function SortableTrainingUnit({
                                     Lab Instructions
                                 </Label>
                                 <Textarea
-                                    placeholder="Describe what students should do in this VM lab...&#10;&#10;- What software is needed?&#10;- What configuration is required?&#10;- What should students accomplish?"
+                                    placeholder="Describe what engineers should do in this VM lab...&#10;&#10;- What software is needed?&#10;- What configuration is required?&#10;- What should engineers accomplish?"
                                     value={trainingUnit.teacherNotes}
                                     onChange={(e) =>
                                         onUpdate(
@@ -1398,8 +1398,8 @@ function CreateTrainingPathContent({ categories }: { categories: string[] }) {
                                                     Prerequisites
                                                 </Label>
                                                 <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                                                    What should students already
-                                                    know?
+                                                    What should engineers
+                                                    already know?
                                                 </p>
                                                 <Textarea
                                                     placeholder="• Basic Python programming&#10;• Understanding of electronics&#10;• Computer with admin access"

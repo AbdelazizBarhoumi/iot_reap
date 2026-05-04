@@ -135,7 +135,7 @@ export default function TeacherVMAssignmentsPage({
                 <div className="container py-8">
                     <TeachingWorkspaceTabs
                         activeTab="vm-assignments"
-                        header={(
+                        header={
                             <>
                                 <div className="space-y-2">
                                     <Button variant="ghost" size="sm" asChild>
@@ -149,16 +149,19 @@ export default function TeacherVMAssignmentsPage({
                                             My VM Assignments
                                         </h1>
                                         <p className="text-muted-foreground">
-                                            Track every unit VM request from submission
-                                            through approval, and clean up pending
-                                            requests when plans change.
+                                            Track every unit VM request from
+                                            submission through approval, and
+                                            clean up pending requests when plans
+                                            change.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     <Button
                                         variant="outline"
-                                        onClick={() => void refreshAssignments()}
+                                        onClick={() =>
+                                            void refreshAssignments()
+                                        }
                                     >
                                         <RefreshCw
                                             className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
@@ -172,7 +175,7 @@ export default function TeacherVMAssignmentsPage({
                                     </Button>
                                 </div>
                             </>
-                        )}
+                        }
                     />
 
                     <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

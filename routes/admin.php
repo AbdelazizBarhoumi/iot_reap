@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
-use App\Http\Controllers\Admin\AdminFinanceController;
 use App\Http\Controllers\Admin\AdminCameraController;
+use App\Http\Controllers\Admin\AdminFinanceController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\Admin\AdminReservationController;

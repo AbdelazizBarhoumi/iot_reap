@@ -23,13 +23,13 @@ class FinanceSeeder extends Seeder
             ['email' => 'finance.teacher1@example.com', 'name' => 'Finance Teacher 1'],
             ['email' => 'finance.teacher2@example.com', 'name' => 'Finance Teacher 2'],
         ]);
-        $students = $this->ensureUsers(UserRole::ENGINEER->value, [
+        $engineers = $this->ensureUsers(UserRole::ENGINEER->value, [
             ['email' => 'finance.engineer1@example.com', 'name' => 'Finance Engineer 1'],
             ['email' => 'finance.engineer2@example.com', 'name' => 'Finance Engineer 2'],
         ]);
 
         $trainingPaths = $this->ensureTrainingPaths($teachers);
-        $completedPayments = $this->seedPayments($students, $trainingPaths);
+        $completedPayments = $this->seedPayments($engineers, $trainingPaths);
 
         $this->seedRefundRequests($completedPayments);
         $this->seedPayoutRequests($admin, $teachers);
@@ -117,11 +117,11 @@ class FinanceSeeder extends Seeder
     }
 
     /**
-     * @param  Collection<int, User>  $students
+     * @param  Collection<int, User>  $engineers
      * @param  Collection<int, TrainingPath>  $trainingPaths
      * @return Collection<int, Payment>
      */
-    private function seedPayments(Collection $students, Collection $trainingPaths): Collection
+    private function seedPayments(Collection $engineers, Collection $trainingPaths): Collection
     {
         $completedPayments = collect();
         $paymentStatuses = [
@@ -132,12 +132,12 @@ class FinanceSeeder extends Seeder
             PaymentStatus::PARTIALLY_REFUNDED,
         ];
 
-        foreach ($students as $studentIndex => $student) {
+        foreach ($engineers as $engineerIndex => $engineer) {
             foreach ($paymentStatuses as $statusIndex => $status) {
-                $trainingPath = $trainingPaths[($studentIndex + $statusIndex) % $trainingPaths->count()];
+                $trainingPath = $trainingPaths[($engineerIndex + $statusIndex) % $trainingPaths->count()];
 
                 $payment = Payment::factory()
-                    ->forUser($student)
+                    ->forUser($engineer)
                     ->forTrainingPath($trainingPath)
                     ->state([
                         'status' => $status,
@@ -162,7 +162,7 @@ class FinanceSeeder extends Seeder
         if ($completedPayments->isEmpty()) {
             $completedPayments->push(
                 Payment::factory()
-                    ->forUser($students->first())
+                    ->forUser($engineers->first())
                     ->forTrainingPath($trainingPaths->first())
                     ->completed()
                     ->create()

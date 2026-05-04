@@ -43,13 +43,13 @@ export const deleteArticle = (trainingUnitId: string) =>
     client.delete(`/teaching/trainingUnits/${trainingUnitId}/article`);
 
 /**
- * Get article for reading (student view)
+ * Get article for reading (engineer view)
  */
 export const readArticle = (trainingPathId: string, trainingUnitId: string) =>
     client.get<Article>(`/trainingUnits/${trainingUnitId}/article/read`);
 
 /**
- * Mark article as read (track student progress)
+ * Mark article as read (track engineer progress)
  */
 export const markArticleRead = (
     trainingPathId: string,

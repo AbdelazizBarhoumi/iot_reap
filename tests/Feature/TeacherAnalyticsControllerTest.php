@@ -48,7 +48,7 @@ class TeacherAnalyticsControllerTest extends TestCase
         $kpis = [
             'total_enrollments' => 150,
             'total_revenue' => 3500.00,
-            'active_students' => 85,
+            'active_engineers' => 85,
             'training_path_count' => 3,
         ];
 
@@ -163,7 +163,7 @@ class TeacherAnalyticsControllerTest extends TestCase
             ]);
     }
 
-    public function test_teacher_can_view_student_roster_for_owned_training_path(): void
+    public function test_teacher_can_view_engineer_roster_for_owned_training_path(): void
     {
         $roster = [
             'data' => [
@@ -178,20 +178,20 @@ class TeacherAnalyticsControllerTest extends TestCase
         ];
 
         $this->analyticsServiceMock
-            ->shouldReceive('getStudentRoster')
+            ->shouldReceive('getEngineerRoster')
             ->once()
             ->andReturn($roster);
 
         $response = $this->actingAs($this->teacher)
-            ->get("/teaching/analytics/trainingPaths/{$this->trainingPath->id}/students");
+            ->get("/teaching/analytics/trainingPaths/{$this->trainingPath->id}/engineers");
 
         $response->assertOk();
     }
 
-    public function test_teacher_cannot_view_student_roster_for_unowned_training_path(): void
+    public function test_teacher_cannot_view_engineer_roster_for_unowned_training_path(): void
     {
         $response = $this->actingAs($this->teacher)
-            ->get("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/students");
+            ->get("/teaching/analytics/trainingPaths/{$this->otherTrainingPath->id}/engineers");
 
         $response->assertForbidden();
     }

@@ -22,12 +22,12 @@ interface StudentsPageProps {
         id: number;
         title: string;
     };
-    students: StudentRosterItem[];
+    engineers: StudentRosterItem[];
     pagination: PaginationMeta;
 }
 export default function StudentsPage({
     trainingPath,
-    students,
+    engineers,
     pagination,
 }: StudentsPageProps) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -37,23 +37,23 @@ export default function StudentsPage({
             { title: 'Analytics', href: '/teaching/analytics' },
             {
                 title: trainingPath.title,
-                href: `/teaching/analytics/trainingPaths/${trainingPath.id}/students`,
+                href: `/teaching/analytics/trainingPaths/${trainingPath.id}/engineers`,
             },
         ],
         [trainingPath],
     );
     const filteredStudents = useMemo(() => {
-        if (!searchQuery) return students;
+        if (!searchQuery) return engineers;
         const query = searchQuery.toLowerCase();
-        return students.filter(
+        return engineers.filter(
             (s) =>
                 s.name.toLowerCase().includes(query) ||
                 s.email.toLowerCase().includes(query),
         );
-    }, [students, searchQuery]);
+    }, [engineers, searchQuery]);
     const handlePageChange = (page: number) => {
         router.get(
-            `/teaching/analytics/trainingPaths/${trainingPath.id}/students`,
+            `/teaching/analytics/trainingPaths/${trainingPath.id}/engineers`,
             { page },
             { preserveState: true },
         );
@@ -90,7 +90,7 @@ export default function StudentsPage({
                             {trainingPath.title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {pagination.total} students enrolled
+                            {pagination.total} engineers enrolled
                         </p>
                     </div>
                 </div>
@@ -99,7 +99,7 @@ export default function StudentsPage({
                     <div className="relative max-w-sm flex-1">
                         <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            placeholder="Search students..."
+                            placeholder="Search engineers..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9"
@@ -119,35 +119,35 @@ export default function StudentsPage({
                                 <User className="mb-4 h-12 w-12 text-muted-foreground" />
                                 <p className="text-muted-foreground">
                                     {searchQuery
-                                        ? 'No students match your search.'
-                                        : 'No students enrolled yet.'}
+                                        ? 'No engineers match your search.'
+                                        : 'No engineers enrolled yet.'}
                                 </p>
                             </div>
                         ) : (
                             <div className="divide-y">
-                                {filteredStudents.map((student) => (
+                                {filteredStudents.map((engineer) => (
                                     <div
-                                        key={student.id}
+                                        key={engineer.id}
                                         className="flex items-center gap-4 py-4"
                                     >
                                         <Avatar>
                                             <AvatarImage
                                                 src={
-                                                    student.avatar_url ??
+                                                    engineer.avatar_url ??
                                                     undefined
                                                 }
-                                                alt={student.name}
+                                                alt={engineer.name}
                                             />
                                             <AvatarFallback>
-                                                {getInitials(student.name)}
+                                                {getInitials(engineer.name)}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate font-medium">
-                                                {student.name}
+                                                {engineer.name}
                                             </p>
                                             <p className="truncate text-sm text-muted-foreground">
-                                                {student.email}
+                                                {engineer.email}
                                             </p>
                                         </div>
                                         <div className="hidden w-32 sm:block">
@@ -156,11 +156,11 @@ export default function StudentsPage({
                                             </p>
                                             <div className="flex items-center gap-2">
                                                 <Progress
-                                                    value={student.progress}
+                                                    value={engineer.progress}
                                                     className="flex-1"
                                                 />
                                                 <span className="w-8 text-xs font-medium">
-                                                    {student.progress}%
+                                                    {engineer.progress}%
                                                 </span>
                                             </div>
                                         </div>
@@ -170,12 +170,12 @@ export default function StudentsPage({
                                             </p>
                                             <p className="text-sm">
                                                 {formatDate(
-                                                    student.enrolled_at,
+                                                    engineer.enrolled_at,
                                                 )}
                                             </p>
                                         </div>
                                         <div className="w-24 text-right">
-                                            {student.is_completed ? (
+                                            {engineer.is_completed ? (
                                                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
                                                     <CheckCircle className="mr-1 h-3 w-3" />
                                                     Completed

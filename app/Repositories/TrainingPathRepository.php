@@ -46,7 +46,7 @@ class TrainingPathRepository
     {
         return TrainingPath::approved()
             ->with('instructor')
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderByDesc('created_at')
             ->get();
     }
@@ -59,7 +59,7 @@ class TrainingPathRepository
         return TrainingPath::approved()
             ->byCategory($category)
             ->with('instructor')
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderByDesc('created_at')
             ->get();
     }
@@ -71,7 +71,7 @@ class TrainingPathRepository
     {
         return TrainingPath::byInstructor($user->id)
             ->with(['instructor', 'modules.trainingUnits.video'])
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderByDesc('created_at')
             ->get();
     }
@@ -107,7 +107,7 @@ class TrainingPathRepository
     {
         return TrainingPath::pendingReview()
             ->with(['instructor', 'modules.trainingUnits.video'])
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderBy('created_at')
             ->get();
     }
@@ -125,7 +125,7 @@ class TrainingPathRepository
                     ->orWhere('description', 'like', "%{$query}%");
             })
             ->with('instructor')
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->get();
     }
 
@@ -282,7 +282,7 @@ class TrainingPathRepository
         return TrainingPath::approved()
             ->where(DB::raw('LOWER(category)'), 'LIKE', strtolower($categoryName))
             ->with('instructor')
-            ->withCount('enrollments as student_count')
+            ->withCount('enrollments as engineer_count')
             ->orderByDesc('rating')
             ->get();
     }

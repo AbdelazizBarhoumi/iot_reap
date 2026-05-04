@@ -28,7 +28,7 @@ class ExtendSessionServiceTest extends TestCase
 
         Queue::fake();
 
-        $this->service = new ExtendSessionService();
+        $this->service = new ExtendSessionService;
 
         $this->user = User::factory()->create();
 

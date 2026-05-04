@@ -6,13 +6,14 @@ use App\Http\Controllers\BrowserLogController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Resources\TrainingPathResource;
 use App\Models\User;
+use App\Services\FeaturedTrainingPathsService;
 use App\Services\TrainingPathService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', function (TrainingPathService $trainingPathService, \App\Services\FeaturedTrainingPathsService $featuredService) {
+Route::get('/', function (TrainingPathService $trainingPathService, FeaturedTrainingPathsService $featuredService) {
     // grab featured trainingPaths for the landing page (ordered)
     $featured = $featuredService->getFeaturedTrainingPaths(3);
 

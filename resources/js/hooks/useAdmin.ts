@@ -202,7 +202,9 @@ export function usePendingTrainingPaths() {
             // optimistic local update: reorder featuredTrainingPaths according to order
             setFeaturedTrainingPaths((prev) => {
                 const byId = new Map(prev.map((p) => [p.id, p]));
-                return order.map((id) => byId.get(id)).filter(Boolean) as adminApi.TrainingPathApproval[];
+                return order
+                    .map((id) => byId.get(id))
+                    .filter(Boolean) as adminApi.TrainingPathApproval[];
             });
             setError(null);
         } catch (err) {

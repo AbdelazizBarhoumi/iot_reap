@@ -255,7 +255,16 @@ export const hardwareApi = {
     /**
      * Dedicate a USB device to a specific VM (admin only).
      */
-    async dedicateDevice(deviceId: number, data: { vmid: number; node: string; server_id: number; vm_ip?: string; vm_name?: string; }): Promise<ActionResponse> {
+    async dedicateDevice(
+        deviceId: number,
+        data: {
+            vmid: number;
+            node: string;
+            server_id: number;
+            vm_ip?: string;
+            vm_name?: string;
+        },
+    ): Promise<ActionResponse> {
         const response = await client.post<ActionResponse>(
             `/admin/hardware/devices/${deviceId}/dedicate`,
             data,

@@ -131,8 +131,8 @@ class RevenueService
             ->select([
                 'payments.id',
                 'training_paths.title as training_path_title',
-                'users.name as student_name',
-                'users.email as student_email',
+                'users.name as engineer_name',
+                'users.email as engineer_email',
                 'payments.amount_cents',
                 'payments.currency',
                 'payments.paid_at',
@@ -145,15 +145,15 @@ class RevenueService
             ->orderBy('payments.paid_at', 'desc')
             ->get();
 
-        $csv = "Transaction ID,TrainingPath,Student Name,Student Email,Amount,Currency,Date\n";
+        $csv = "Transaction ID,TrainingPath,Engineer Name,Engineer Email,Amount,Currency,Date\n";
 
         foreach ($payments as $payment) {
             $csv .= sprintf(
                 "%d,\"%s\",\"%s\",%s,%.2f,%s,%s\n",
                 $payment->id,
                 str_replace('"', '""', $payment->training_path_title),
-                str_replace('"', '""', $payment->student_name),
-                $payment->student_email,
+                str_replace('"', '""', $payment->engineer_name),
+                $payment->engineer_email,
                 $payment->amount_cents / 100,
                 $payment->currency,
                 Carbon::parse($payment->paid_at)->toDateTimeString()

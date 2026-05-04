@@ -268,9 +268,9 @@ class ArticleIdorTest extends TestCase
 
     public function test_non_teacher_cannot_modify_article(): void
     {
-        $student = User::factory()->engineer()->create();
+        $engineer = User::factory()->engineer()->create();
 
-        $response = $this->actingAs($student)
+        $response = $this->actingAs($engineer)
             ->postJson("/teaching/trainingUnits/{$this->ownTrainingUnit->id}/article", [
                 'content' => [
                     'type' => 'doc',

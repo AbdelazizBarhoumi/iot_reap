@@ -77,7 +77,7 @@ class ArticleController extends Controller
     }
 
     /**
-     * Get article for reading (student view).
+     * Get article for reading (engineer view).
      */
     public function read(Request $request, int $trainingUnitId): JsonResponse
     {

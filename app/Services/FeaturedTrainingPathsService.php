@@ -124,7 +124,7 @@ class FeaturedTrainingPathsService
      * Update featured trainingPaths order (admin action).
      *
      * @param  array<int, int>|int[]  $trainingPathOrderMap  Either a map [training_path_id => new_order]
-     *                                                         or an ordered list of training_path_ids ([id1, id2, ...]).
+     *                                                       or an ordered list of training_path_ids ([id1, id2, ...]).
      */
     public function updateFeaturedOrder(array $trainingPathOrderMap, User $admin): void
     {

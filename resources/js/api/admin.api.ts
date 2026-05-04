@@ -72,7 +72,7 @@ export interface TrainingPathApproval {
             content?: string;
         }>;
     }>;
-    students?: number;
+    engineers?: number;
     rating: number;
     instructor?: { name: string } | string;
     adminFeedback?: string | null;

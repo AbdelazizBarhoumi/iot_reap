@@ -127,7 +127,6 @@ export default function VideoPlayer({
     initialTime = 0,
     className = '',
 }: VideoPlayerProps) {
-
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLDivElement>(null);

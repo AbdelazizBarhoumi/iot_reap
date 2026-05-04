@@ -40,7 +40,7 @@ export const searchApi = {
         q: string;
         category?: string;
         level?: string;
-        sort?: 'relevance' | 'rating' | 'students' | 'newest';
+        sort?: 'relevance' | 'rating' | 'engineers' | 'newest';
         page?: number;
         per_page?: number;
     }): Promise<SearchResponse> {

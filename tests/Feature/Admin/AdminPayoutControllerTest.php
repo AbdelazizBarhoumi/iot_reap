@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\PayoutStatus;
 use App\Models\PayoutRequest;
 use App\Models\User;
 use App\Services\PayoutService;
@@ -275,7 +276,7 @@ class AdminPayoutControllerTest extends TestCase
     public function test_admin_can_export_payouts_csv(): void
     {
         $this->payoutRequest->update([
-            'status' => \App\Enums\PayoutStatus::APPROVED,
+            'status' => PayoutStatus::APPROVED,
         ]);
 
         $response = $this->actingAs($this->admin)

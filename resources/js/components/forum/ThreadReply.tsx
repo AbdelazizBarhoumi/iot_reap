@@ -91,7 +91,7 @@ export function ThreadReply({
     const roleBadgeStyles: Record<string, string> = {
         teacher: 'bg-primary/10 text-primary border-primary/20',
         admin: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
-        student: '',
+        engineer: '',
     };
     return (
         <motion.div
@@ -138,7 +138,7 @@ export function ThreadReply({
                                 <span className="text-sm font-medium">
                                     {reply.author.name}
                                 </span>
-                                {reply.author.role !== 'student' && (
+                                {reply.author.role !== 'engineer' && (
                                     <Badge
                                         variant="outline"
                                         className={cn(

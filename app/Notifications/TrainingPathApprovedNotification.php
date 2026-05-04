@@ -42,7 +42,7 @@ class TrainingPathApprovedNotification extends Notification implements ShouldQue
             ->line("**TrainingPath:** {$this->trainingPath->title}")
             ->line("**Approved on:** {$this->trainingPath->updated_at->format('F j, Y')}")
             ->action('View Your TrainingPath', $trainingPathUrl)
-            ->line('Students can now enroll in your trainingPath. Good luck!')
+            ->line('Engineers can now enroll in your trainingPath. Good luck!')
             ->salutation('— IoT-REAP');
     }
 

@@ -17,7 +17,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VideoControllerTest extends TestCase
@@ -26,7 +25,7 @@ class VideoControllerTest extends TestCase
 
     private User $teacher;
 
-    private User $student;
+    private User $engineer;
 
     private User $admin;
 
@@ -39,7 +38,7 @@ class VideoControllerTest extends TestCase
         parent::setUp();
 
         $this->teacher = User::factory()->teacher()->create();
-        $this->student = User::factory()->create();
+        $this->engineer = User::factory()->create();
         $this->admin = User::factory()->admin()->create();
 
         $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
@@ -349,7 +348,7 @@ class VideoControllerTest extends TestCase
         Storage::fake($video->storage_disk);
         Storage::disk($video->storage_disk)->put($video->hls_path, 'mock hls content');
 
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream");
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/vnd.apple.mpegurl');
@@ -359,7 +358,7 @@ class VideoControllerTest extends TestCase
     {
         $video = Video::factory()->processing()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream");
 
         $response->assertNotFound()
             ->assertJson([
@@ -372,7 +371,7 @@ class VideoControllerTest extends TestCase
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
         // Don't create the file, so it's missing
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream");
 
         $response->assertNotFound()
             ->assertJson([
@@ -389,7 +388,7 @@ class VideoControllerTest extends TestCase
         $segmentPath = "videos/hls/{$video->id}/720p/stream_001.ts";
         Storage::disk($video->storage_disk)->put($segmentPath, 'mock segment content');
 
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream/720p/stream_001.ts");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream/720p/stream_001.ts");
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'video/mp2t');
@@ -399,7 +398,7 @@ class VideoControllerTest extends TestCase
     {
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream/invalid_quality/stream_001.ts");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream/invalid_quality/stream_001.ts");
 
         $response->assertBadRequest()
             ->assertJson([
@@ -411,7 +410,7 @@ class VideoControllerTest extends TestCase
     {
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream/720p/../../etc/passwd");
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream/720p/../../etc/passwd");
 
         // Laravel rejects paths with .. in routing, so 404 is expected, not 400
         $response->assertNotFound();
@@ -565,17 +564,17 @@ class VideoControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_student_can_view_video_status(): void
+    public function test_engineer_can_view_video_status(): void
     {
-        // Create enrollment for student
+        // Create enrollment for engineer
         TrainingPathEnrollment::factory()->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'training_path_id' => $this->trainingPath->id,
         ]);
 
         $video = Video::factory()->ready()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/trainingPaths/{$this->trainingPath->id}/trainingUnits/{$this->trainingUnit->id}/video/status");
 
         $response->assertOk()
@@ -609,8 +608,8 @@ class VideoControllerTest extends TestCase
         Storage::disk($video->storage_disk)->put($video->hls_path, 'mock hls content');
 
         // Guest user (unauthenticated) - this should work if public routes allow it
-        // However, if auth is required, this will be 401. Using student for now.
-        $response = $this->actingAs($this->student)->getJson("/videos/{$video->id}/stream");
+        // However, if auth is required, this will be 401. Using engineer for now.
+        $response = $this->actingAs($this->engineer)->getJson("/videos/{$video->id}/stream");
 
         $response->assertOk();
     }

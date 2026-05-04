@@ -18,7 +18,7 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 /**
- * Controller for trainingPath browsing (student-facing).
+ * Controller for trainingPath browsing (engineer-facing).
  */
 class TrainingPathController extends Controller
 {
@@ -42,8 +42,8 @@ class TrainingPathController extends Controller
 
         $trainingPaths = $this->trainingPathService->getApprovedTrainingPaths($category, $search);
         // Exclude featured ids from the main list to avoid duplicates
-        $featuredIds = $featured->pluck('id')->map(fn($id) => (int) $id)->toArray();
-        $other = $trainingPaths->filter(fn($tp) => ! in_array((int) $tp->id, $featuredIds))->values();
+        $featuredIds = $featured->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        $other = $trainingPaths->filter(fn ($tp) => ! in_array((int) $tp->id, $featuredIds))->values();
         // Combine featured (ordered) then others
         $combined = $featured->concat($other);
 

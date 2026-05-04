@@ -516,7 +516,7 @@ class RevenueServiceTest extends TestCase
         $csv = $this->service->generateEarningsCSV($teacher, '2024-01-01', '2024-01-31');
 
         $this->assertStringContainsString(
-            'Transaction ID,TrainingPath,Student Name,Student Email,Amount,Currency,Date',
+            'Transaction ID,TrainingPath,Engineer Name,Engineer Email,Amount,Currency,Date',
             $csv
         );
     }
@@ -524,7 +524,7 @@ class RevenueServiceTest extends TestCase
     public function test_generates_csv_with_payment_data(): void
     {
         $teacher = User::factory()->teacher()->create();
-        $student = User::factory()->create(['name' => 'John Doe', 'email' => 'john@example.com']);
+        $engineer = User::factory()->create(['name' => 'John Doe', 'email' => 'john@example.com']);
         $trainingPath = TrainingPath::factory()->create([
             'instructor_id' => $teacher->id,
             'title' => 'Test TrainingPath',
@@ -534,7 +534,7 @@ class RevenueServiceTest extends TestCase
             ->completedAt('2024-01-15 10:30:00')
             ->amountCents(9900)
             ->forTrainingPath($trainingPath)
-            ->forUser($student)
+            ->forUser($engineer)
             ->create();
 
         $csv = $this->service->generateEarningsCSV($teacher, '2024-01-01', '2024-01-31');

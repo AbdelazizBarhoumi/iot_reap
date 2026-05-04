@@ -207,11 +207,11 @@ class QuizController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Student: Quiz Taking
+    // Engineer: Quiz Taking
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Get quiz for taking (student view).
+     * Get quiz for taking (engineer view).
      */
     public function take(Request $request, int $trainingUnitId): JsonResponse|InertiaResponse
     {

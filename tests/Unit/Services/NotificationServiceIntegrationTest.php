@@ -486,7 +486,7 @@ class NotificationServiceIntegrationTest extends TestCase
 
         $this->assertEquals(NotificationType::NEW_ENROLLMENT, $notification->type);
         $this->assertStringContainsString('John Doe', $notification->message);
-        $this->assertEquals('John Doe', $notification->data['student_name']);
+        $this->assertEquals('John Doe', $notification->data['engineer_name']);
     }
 
     public function test_notify_forum_reply(): void

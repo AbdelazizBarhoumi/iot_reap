@@ -28,7 +28,7 @@ class TrainingPathResource extends JsonResource
             'level' => $this->level->value,
             'duration' => $this->duration,
             'rating' => (float) $this->rating,
-            'students' => $this->student_count ?? $this->enrollments()->count(),
+            'engineers' => $this->engineer_count ?? $this->enrollments()->count(),
             'hasVirtualMachine' => $this->has_virtual_machine,
             'price' => $this->is_free ? 0 : ($this->price_cents ?? 0) / 100,
             'formattedPrice' => $this->formatted_price,

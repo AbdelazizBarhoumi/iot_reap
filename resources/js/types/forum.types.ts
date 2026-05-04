@@ -6,7 +6,7 @@ export interface ThreadAuthor {
     id: number;
     name: string;
     avatar?: string;
-    role: 'student' | 'teacher' | 'admin';
+    role: 'engineer' | 'teacher' | 'admin';
     badge?: string;
 }
 export interface ThreadReply {

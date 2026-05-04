@@ -5,6 +5,13 @@
 
 import client from './client';
 
+export interface ResourceObject {
+    title: string;
+    url: string;
+    type: 'link' | 'file' | 'download';
+    order: number;
+}
+
 export interface Module {
     id: string;
     training_path_id: string;
@@ -25,7 +32,7 @@ export interface TrainingUnit {
     duration?: string;
     content?: string;
     objectives?: string[];
-    resources?: string[];
+    resources?: string[] | ResourceObject[];
     vmEnabled?: boolean;
     vm_enabled?: boolean;
     videoUrl?: string;
@@ -41,7 +48,7 @@ export interface ManagedTrainingPath {
     instructor?: { name: string } | string;
     category: string;
     modules?: Array<{ trainingUnits?: Array<Record<string, unknown>> }>;
-    students?: number;
+    engineers?: number;
     rating: number;
 }
 
@@ -66,7 +73,7 @@ export interface TrainingPathEditing {
     image_url?: string | null;
     modules: Module[];
     hasVirtualMachine?: boolean;
-    students?: number;
+    engineers?: number;
     rating?: number;
     adminFeedback?: string | null;
     created_at: string;
@@ -136,7 +143,10 @@ export const restoreTrainingPath = (trainingPathId: string) =>
 export const createModule = (
     trainingPathId: string,
     moduleData: Partial<Module>,
-) => client.post<Module>(`/teaching/${trainingPathId}/modules`, moduleData);
+) => {
+    const url = `/teaching/${trainingPathId}/modules`;
+    return client.post<Module>(url, moduleData);
+};
 
 /**
  * Update module
@@ -154,8 +164,10 @@ export const updateModule = (
 /**
  * Delete module
  */
-export const deleteModule = (trainingPathId: string, moduleId: string) =>
-    client.delete(`/teaching/${trainingPathId}/modules/${moduleId}`);
+export const deleteModule = (trainingPathId: string, moduleId: string) => {
+    const url = `/teaching/${trainingPathId}/modules/${moduleId}`;
+    return client.delete(url);
+};
 
 /**
  * Reorder modules

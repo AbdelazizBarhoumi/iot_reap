@@ -39,15 +39,19 @@ export function ConfirmDialog({
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    {variant === 'destructive' && (
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                    <div className="flex items-start gap-3">
+                        {variant === 'destructive' && (
+                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-destructive/10">
                                 <AlertTriangle className="h-5 w-5 text-destructive" />
                             </div>
+                        )}
+                        <div className="min-w-0">
+                            <AlertDialogTitle>{title}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {description}
+                            </AlertDialogDescription>
                         </div>
-                    )}
-                    <AlertDialogTitle>{title}</AlertDialogTitle>
-                    <AlertDialogDescription>{description}</AlertDialogDescription>
+                    </div>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={loading}>
@@ -60,7 +64,7 @@ export function ConfirmDialog({
                         }}
                         className={
                             variant === 'destructive'
-                                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                                ? 'bg-destructive text-white hover:bg-destructive/90'
                                 : ''
                         }
                         disabled={loading}

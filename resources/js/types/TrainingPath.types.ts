@@ -53,7 +53,7 @@ export interface TrainingPath {
     formattedPrice?: string;
     currency: string;
     rating: number;
-    students: number;
+    engineers: number;
     hasVirtualMachine: boolean;
     isFree: boolean;
     status: TrainingPathStatus;

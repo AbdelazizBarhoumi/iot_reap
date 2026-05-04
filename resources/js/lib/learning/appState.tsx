@@ -42,7 +42,7 @@ export interface ManagedTrainingPath {
     category?: string;
     level?: string;
     duration?: string;
-    students?: number;
+    engineers?: number;
     adminFeedback?: string;
 }
 // Context for backward compatibility (passthrough)

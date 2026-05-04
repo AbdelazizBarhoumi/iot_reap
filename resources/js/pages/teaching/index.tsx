@@ -135,17 +135,39 @@ export default function TeachingPage() {
             const [flaggedRes, unansweredRes, recentRes] = await Promise.all([
                 forumApi.getTeacherInbox('flagged').catch((err) => {
                     console.error('Failed to load flagged threads:', err);
-                    return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
+                    return {
+                        data: [],
+                        pagination: {
+                            current_page: 1,
+                            last_page: 1,
+                            per_page: 10,
+                            total: 0,
+                        },
+                    };
                 }),
-                forumApi
-                    .getTeacherInbox('unanswered')
-                    .catch((err) => {
-                        console.error('Failed to load unanswered threads:', err);
-                        return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
-                    }),
+                forumApi.getTeacherInbox('unanswered').catch((err) => {
+                    console.error('Failed to load unanswered threads:', err);
+                    return {
+                        data: [],
+                        pagination: {
+                            current_page: 1,
+                            last_page: 1,
+                            per_page: 10,
+                            total: 0,
+                        },
+                    };
+                }),
                 forumApi.getTeacherInbox('recent').catch((err) => {
                     console.error('Failed to load recent threads:', err);
-                    return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
+                    return {
+                        data: [],
+                        pagination: {
+                            current_page: 1,
+                            last_page: 1,
+                            per_page: 10,
+                            total: 0,
+                        },
+                    };
                 }),
             ]);
             setForumInbox({
@@ -701,10 +723,10 @@ export default function TeachingPage() {
                                                                             <span className="flex items-center gap-1">
                                                                                 <Users className="h-3.5 w-3.5" />
                                                                                 {(
-                                                                                    trainingPath.students ??
+                                                                                    trainingPath.engineers ??
                                                                                     0
                                                                                 ).toLocaleString()}{' '}
-                                                                                students
+                                                                                engineers
                                                                             </span>
                                                                             <span className="flex items-center gap-1">
                                                                                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -849,7 +871,7 @@ export default function TeachingPage() {
                                                                                     asChild
                                                                                 >
                                                                                     <Link
-                                                                                        href={`/teaching/analytics/trainingPaths/${trainingPath.id}/students`}
+                                                                                        href={`/teaching/analytics/trainingPaths/${trainingPath.id}/engineers`}
                                                                                     >
                                                                                         <BarChart3 className="mr-2 h-4 w-4" />
                                                                                         View

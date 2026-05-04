@@ -342,7 +342,7 @@ export default function TrainingPathDetailPage() {
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <Users className="h-4 w-4" />
-                                        {trainingPath.students.toLocaleString()}{' '}
+                                        {trainingPath.engineers.toLocaleString()}{' '}
                                         enrolled
                                     </span>
                                     <span className="flex items-center gap-1.5">
@@ -915,7 +915,7 @@ export default function TrainingPathDetailPage() {
                                         </h2>
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             Ask questions and discuss topics
-                                            with other students
+                                            with other engineers
                                         </p>
                                     </div>
                                     <Card>

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RefundRequestResource;
 use App\Models\PayoutRequest;
-use App\Models\RefundRequest;
 use App\Services\PayoutService;
 use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;

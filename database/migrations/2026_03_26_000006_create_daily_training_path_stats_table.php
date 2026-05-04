@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->unsignedInteger('enrollments')->default(0);
             $table->unsignedInteger('completions')->default(0);
-            $table->unsignedInteger('active_students')->default(0);
+            $table->unsignedInteger('active_engineers')->default(0);
             $table->unsignedInteger('training_units_viewed')->default(0);
             $table->unsignedInteger('video_minutes_watched')->default(0);
             $table->unsignedInteger('quiz_attempts')->default(0);

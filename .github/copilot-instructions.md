@@ -6,7 +6,7 @@
 
  ## 0. WHO YOU ARE HELPING
 
- You are assisting a **final-year engineering student** building IoT-REAP:
+ You are assisting a **final-year engineering engineer** building IoT-REAP:
  a secure industrial remote operations platform for Industry 4.0.
 
  The developer is:

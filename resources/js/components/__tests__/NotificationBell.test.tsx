@@ -61,7 +61,7 @@ describe('NotificationBell Component', () => {
             type: 'new_enrollment',
             title: 'New Student Enrolled',
             message: 'John Doe enrolled in your trainingPath',
-            link: '/trainingPaths/1/students',
+            link: '/trainingPaths/1/engineers',
             read: false,
             created_at: '2024-01-15T09:00:00Z',
         },

@@ -34,7 +34,7 @@ class SearchResultResource extends JsonResource
             'level' => $this->level->value,
             'duration' => $this->duration,
             'rating' => (float) $this->rating,
-            'students' => $this->student_count ?? $this->enrollments_count ?? 0,
+            'engineers' => $this->engineer_count ?? $this->enrollments_count ?? 0,
             'hasVirtualMachine' => $this->has_virtual_machine,
             'price' => $this->is_free ? 0 : ($this->price_cents ?? 0) / 100,
             'isFree' => $this->is_free ?? false,

@@ -17,7 +17,7 @@ class ForumControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $student;
+    private User $engineer;
 
     private User $teacher;
 
@@ -31,7 +31,7 @@ class ForumControllerTest extends TestCase
     {
         parent::setUp();
 
-        $this->student = User::factory()->create();
+        $this->engineer = User::factory()->create();
         $this->teacher = User::factory()->teacher()->create();
         $this->admin = User::factory()->admin()->create();
 
@@ -49,7 +49,7 @@ class ForumControllerTest extends TestCase
 
     public function test_authenticated_user_can_create_thread(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", [
                 'title' => 'Need help with assignment',
                 'content' => 'I am struggling with the IoT sensor setup.',
@@ -64,7 +64,7 @@ class ForumControllerTest extends TestCase
         $this->assertDatabaseHas('discussion_threads', [
             'title' => 'Need help with assignment',
             'content' => 'I am struggling with the IoT sensor setup.',
-            'author_id' => $this->student->id,
+            'author_id' => $this->engineer->id,
             'training_unit_id' => $this->trainingUnit->id,
         ]);
     }
@@ -81,7 +81,7 @@ class ForumControllerTest extends TestCase
 
     public function test_thread_creation_validates_required_fields(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", []);
 
         $response->assertUnprocessable()
@@ -99,7 +99,7 @@ class ForumControllerTest extends TestCase
             'training_path_id' => $this->trainingPath->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/reply", [
                 'content' => 'Here is my answer to your question.',
             ]);
@@ -112,7 +112,7 @@ class ForumControllerTest extends TestCase
 
         $this->assertDatabaseHas('thread_replies', [
             'thread_id' => $thread->id,
-            'author_id' => $this->student->id,
+            'author_id' => $this->engineer->id,
             'content' => 'Here is my answer to your question.',
         ]);
     }
@@ -128,7 +128,7 @@ class ForumControllerTest extends TestCase
             'thread_id' => $thread->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/reply", [
                 'content' => 'This is a nested reply.',
                 'parent_id' => $parentReply->id,
@@ -149,7 +149,7 @@ class ForumControllerTest extends TestCase
             'training_unit_id' => $this->trainingUnit->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/reply", []);
 
         $response->assertUnprocessable()
@@ -167,7 +167,7 @@ class ForumControllerTest extends TestCase
             'upvote_count' => 0,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/upvote");
 
         $response->assertOk()
@@ -185,13 +185,13 @@ class ForumControllerTest extends TestCase
         ]);
 
         // First upvote
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/upvote");
 
         $response->assertJson(['upvoted' => true]);
 
         // Remove upvote
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/upvote");
 
         $response->assertJson(['upvoted' => false]);
@@ -208,7 +208,7 @@ class ForumControllerTest extends TestCase
             'upvote_count' => 0,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/replies/{$reply->id}/upvote");
 
         $response->assertOk()
@@ -229,7 +229,7 @@ class ForumControllerTest extends TestCase
             'training_path_id' => $this->trainingPath->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads");
 
         $response->assertOk()
@@ -248,7 +248,7 @@ class ForumControllerTest extends TestCase
             'training_path_id' => $this->trainingPath->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/forum/trainingPaths/{$this->trainingPath->id}/threads");
 
         $response->assertOk()
@@ -271,7 +271,7 @@ class ForumControllerTest extends TestCase
             'thread_id' => $thread->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/forum/threads/{$thread->id}");
 
         $response->assertOk()
@@ -423,14 +423,14 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
-    public function test_student_cannot_perform_teacher_actions(): void
+    public function test_engineer_cannot_perform_teacher_actions(): void
     {
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,
             'training_path_id' => $this->trainingPath->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/teaching/forum/threads/{$thread->id}/pin");
 
         $response->assertForbidden();
@@ -542,9 +542,9 @@ class ForumControllerTest extends TestCase
             ]);
     }
 
-    public function test_student_cannot_access_admin_endpoints(): void
+    public function test_engineer_cannot_access_admin_endpoints(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson('/admin/forum/flagged');
 
         $response->assertForbidden();
@@ -560,7 +560,7 @@ class ForumControllerTest extends TestCase
             'training_unit_id' => $this->trainingUnit->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/threads/{$thread->id}/flag");
 
         $response->assertOk()
@@ -577,7 +577,7 @@ class ForumControllerTest extends TestCase
             'thread_id' => $thread->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/forum/replies/{$reply->id}/flag");
 
         $response->assertOk()
@@ -592,10 +592,10 @@ class ForumControllerTest extends TestCase
     {
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,
-            'author_id' => $this->student->id,
+            'author_id' => $this->engineer->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->deleteJson("/forum/threads/{$thread->id}");
 
         $response->assertOk()
@@ -610,10 +610,10 @@ class ForumControllerTest extends TestCase
 
         $reply = ThreadReply::factory()->create([
             'thread_id' => $thread->id,
-            'author_id' => $this->student->id,
+            'author_id' => $this->engineer->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->deleteJson("/forum/replies/{$reply->id}");
 
         $response->assertOk()
@@ -628,7 +628,7 @@ class ForumControllerTest extends TestCase
             'author_id' => $otherUser->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->deleteJson("/forum/threads/{$thread->id}");
 
         $response->assertForbidden();
@@ -639,7 +639,7 @@ class ForumControllerTest extends TestCase
         $thread = DiscussionThread::factory()->create([
             'training_unit_id' => $this->trainingUnit->id,
             'training_path_id' => $this->trainingPath->id,
-            'author_id' => $this->student->id,
+            'author_id' => $this->engineer->id,
         ]);
 
         $response = $this->actingAs($this->teacher)
@@ -655,7 +655,7 @@ class ForumControllerTest extends TestCase
 
     public function test_returns_404_for_nonexistent_thread(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson('/forum/threads/999999');
 
         $response->assertNotFound();
@@ -663,7 +663,7 @@ class ForumControllerTest extends TestCase
 
     public function test_returns_404_for_nonexistent_training_unit_threads(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson('/forum/trainingUnits/999999/threads');
 
         $response->assertNotFound();
@@ -685,7 +685,7 @@ class ForumControllerTest extends TestCase
 
         $this->app->instance(ForumService::class, $mockForumService);
 
-        $this->actingAs($this->student)
+        $this->actingAs($this->engineer)
             ->postJson("/forum/trainingUnits/{$this->trainingUnit->id}/threads", [
                 'title' => 'Test Thread',
                 'content' => 'Test Content',

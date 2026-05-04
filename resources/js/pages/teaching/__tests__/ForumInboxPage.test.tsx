@@ -63,7 +63,7 @@ describe('TeacherForumInboxPage', () => {
         author: {
             id: 1,
             name: 'Alex Engineer',
-            role: 'student' as const,
+            role: 'engineer' as const,
         },
         status: 'open' as const,
         upvotes: 0,

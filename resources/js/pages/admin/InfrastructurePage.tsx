@@ -792,7 +792,7 @@ function AttachDialog({
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                     <DialogDescription>
-                        Select a running VM to {actionLabel.toLowerCase()} {' '}
+                        Select a running VM to {actionLabel.toLowerCase()}{' '}
                         <strong>{device?.name}</strong>.
                     </DialogDescription>
                 </DialogHeader>
@@ -1223,8 +1223,12 @@ function GatewayNodeCard({
                                         onRemoveCamera={() =>
                                             onRemoveCamera(device.id)
                                         }
-                                        onDedicate={() => onDedicateDevice?.(device)}
-                                        onRemoveDedication={() => onRemoveDedication?.(device.id)}
+                                        onDedicate={() =>
+                                            onDedicateDevice?.(device)
+                                        }
+                                        onRemoveDedication={() =>
+                                            onRemoveDedication?.(device.id)
+                                        }
                                     />
                                 ))}
                             </div>
@@ -2169,7 +2173,8 @@ export default function InfrastructurePage({
         }
     };
 
-    const [dedicateDialogDevice, setDedicateDialogDevice] = useState<UsbDevice | null>(null);
+    const [dedicateDialogDevice, setDedicateDialogDevice] =
+        useState<UsbDevice | null>(null);
 
     const handleAttachHardwareDevice = async (
         deviceId: number,
@@ -2212,7 +2217,11 @@ export default function InfrastructurePage({
             toast.success('Device dedicated to VM successfully');
         } catch (err) {
             console.error('Failed to dedicate device:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to dedicate device');
+            toast.error(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to dedicate device',
+            );
             throw err;
         } finally {
             setDedicateLoading(false);
@@ -2229,7 +2238,11 @@ export default function InfrastructurePage({
             toast.success('Removed device dedication');
         } catch (err) {
             console.error('Failed to remove dedication:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to remove dedication');
+            toast.error(
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to remove dedication',
+            );
             throw err;
         } finally {
             setDedicateLoading(false);
@@ -2899,8 +2912,12 @@ export default function InfrastructurePage({
                                                     onRemoveCamera={
                                                         handleRemoveCamera
                                                     }
-                                                    onDedicateDevice={setDedicateDialogDevice}
-                                                    onRemoveDedication={handleRemoveDedication}
+                                                    onDedicateDevice={
+                                                        setDedicateDialogDevice
+                                                    }
+                                                    onRemoveDedication={
+                                                        handleRemoveDedication
+                                                    }
                                                 />
                                             </motion.div>
                                         ))}

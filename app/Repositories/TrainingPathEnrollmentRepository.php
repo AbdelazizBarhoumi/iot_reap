@@ -64,9 +64,9 @@ class TrainingPathEnrollmentRepository
     }
 
     /**
-     * Get enrolled student count for a trainingPath.
+     * Get enrolled engineer count for a trainingPath.
      */
-    public function getStudentCount(int $trainingPathId): int
+    public function getEngineerCount(int $trainingPathId): int
     {
         return TrainingPathEnrollment::where('training_path_id', $trainingPathId)->count();
     }

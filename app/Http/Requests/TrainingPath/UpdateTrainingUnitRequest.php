@@ -53,7 +53,12 @@ class UpdateTrainingUnitRequest extends FormRequest
             'vm_enabled' => ['nullable', 'boolean'],
             'video_url' => ['nullable', 'string', 'url', 'max:500'],
             'resources' => ['nullable', 'array', 'max:20'],
-            'resources.*' => ['string', 'max:500'],
+            // Support both legacy string format and new object format
+            'resources.*' => ['nullable', 'array'],
+            'resources.*.title' => ['nullable', 'string', 'max:255'],
+            'resources.*.url' => ['required', 'string', 'url', 'max:500'],
+            'resources.*.type' => ['required', Rule::in(['link', 'file', 'download'])],
+            'resources.*.order' => ['required', 'integer', 'min:0'],
         ];
     }
 }

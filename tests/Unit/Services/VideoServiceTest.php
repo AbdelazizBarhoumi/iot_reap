@@ -4,13 +4,13 @@ namespace Tests\Unit\Services;
 
 use App\Enums\VideoStatus;
 use App\Jobs\TranscodeVideoJob;
-use App\Models\TrainingUnit;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
+use App\Models\TrainingUnit;
 use App\Models\Video;
 use App\Repositories\VideoRepository;
-use App\Services\VideoService;
 use App\Services\TrainingPathCacheService;
+use App\Services\VideoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -249,5 +249,4 @@ class VideoServiceTest extends TestCase
 
         $this->service->retryTranscoding($video);
     }
-
 }

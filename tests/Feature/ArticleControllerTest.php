@@ -17,7 +17,7 @@ class ArticleControllerTest extends TestCase
 
     private User $teacher;
 
-    private User $student;
+    private User $engineer;
 
     private User $admin;
 
@@ -30,7 +30,7 @@ class ArticleControllerTest extends TestCase
         parent::setUp();
 
         $this->teacher = User::factory()->teacher()->create();
-        $this->student = User::factory()->create();
+        $this->engineer = User::factory()->create();
         $this->admin = User::factory()->admin()->create();
 
         $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
@@ -239,11 +239,11 @@ class ArticleControllerTest extends TestCase
     // Read Article Tests (Student View)
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_student_can_read_article(): void
+    public function test_engineer_can_read_article(): void
     {
         $article = Article::factory()->create(['training_unit_id' => $this->trainingUnit->id]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/trainingUnits/{$this->trainingUnit->id}/article/read");
 
         $response->assertOk()
@@ -254,7 +254,7 @@ class ArticleControllerTest extends TestCase
 
     public function test_read_article_returns_404_when_no_article_exists(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/trainingUnits/{$this->trainingUnit->id}/article/read");
 
         $response->assertNotFound()
@@ -280,7 +280,7 @@ class ArticleControllerTest extends TestCase
     {
         $content = ['type' => 'doc', 'content' => []];
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/teaching/trainingUnits/{$this->trainingUnit->id}/article", ['content' => $content]);
 
         $response->assertForbidden();

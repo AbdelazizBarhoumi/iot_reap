@@ -19,7 +19,7 @@ class QuizControllerTest extends TestCase
 
     private User $teacher;
 
-    private User $student;
+    private User $engineer;
 
     private User $admin;
 
@@ -32,7 +32,7 @@ class QuizControllerTest extends TestCase
         parent::setUp();
 
         $this->teacher = User::factory()->teacher()->create();
-        $this->student = User::factory()->create();
+        $this->engineer = User::factory()->create();
         $this->admin = User::factory()->admin()->create();
 
         $this->trainingPath = TrainingPath::factory()->approved()->create(['instructor_id' => $this->teacher->id]);
@@ -312,12 +312,12 @@ class QuizControllerTest extends TestCase
     // Student: Quiz Taking Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function test_student_can_view_published_quiz(): void
+    public function test_engineer_can_view_published_quiz(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $quiz->update(['is_published' => true]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertOk()
@@ -329,23 +329,23 @@ class QuizControllerTest extends TestCase
             ]);
     }
 
-    public function test_student_cannot_view_unpublished_quiz(): void
+    public function test_engineer_cannot_view_unpublished_quiz(): void
     {
         $quiz = $this->createQuizWithQuestions();
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/trainingUnits/{$this->trainingUnit->id}/quiz");
 
         $response->assertNotFound()
             ->assertJson(['error' => 'Quiz not found']);
     }
 
-    public function test_student_can_start_quiz_attempt(): void
+    public function test_engineer_can_start_quiz_attempt(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $quiz->update(['is_published' => true]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/quizzes/{$quiz->id}/start");
 
         $response->assertOk()
@@ -358,12 +358,12 @@ class QuizControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('quiz_attempts', [
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'quiz_id' => $quiz->id,
         ]);
     }
 
-    public function test_student_can_submit_quiz_attempt(): void
+    public function test_engineer_can_submit_quiz_attempt(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $quiz->update(['is_published' => true]);
@@ -373,7 +373,7 @@ class QuizControllerTest extends TestCase
 
         // Must set total_points from quiz questions sum
         $attempt = QuizAttempt::factory()->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'quiz_id' => $quiz->id,
             'total_points' => $quiz->total_points,
         ]);
@@ -388,7 +388,7 @@ class QuizControllerTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/quiz-attempts/{$attempt->id}/submit", ['answers' => $answers]);
 
         $response->assertOk()
@@ -403,19 +403,19 @@ class QuizControllerTest extends TestCase
         $this->assertGreaterThan(0, $attempt->score);
     }
 
-    public function test_student_can_view_attempt_history(): void
+    public function test_engineer_can_view_attempt_history(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $quiz->update(['is_published' => true]);
 
         // Create completed attempts
         QuizAttempt::factory()->count(2)->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'quiz_id' => $quiz->id,
             'completed_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/quizzes/{$quiz->id}/history");
 
         $response->assertOk()
@@ -426,16 +426,16 @@ class QuizControllerTest extends TestCase
             ]);
     }
 
-    public function test_student_can_view_specific_attempt_results(): void
+    public function test_engineer_can_view_specific_attempt_results(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $attempt = QuizAttempt::factory()->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'quiz_id' => $quiz->id,
             'completed_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/quiz-attempts/{$attempt->id}");
 
         $response->assertOk()
@@ -444,7 +444,7 @@ class QuizControllerTest extends TestCase
             ]);
     }
 
-    public function test_student_cannot_view_other_users_attempts(): void
+    public function test_engineer_cannot_view_other_users_attempts(): void
     {
         $otherUser = User::factory()->create();
         $quiz = $this->createQuizWithQuestions();
@@ -453,26 +453,26 @@ class QuizControllerTest extends TestCase
             'quiz_id' => $quiz->id,
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson("/quiz-attempts/{$attempt->id}");
 
         $response->assertForbidden()
             ->assertJson(['error' => 'Unauthorized']);
     }
 
-    public function test_student_cannot_exceed_max_attempts(): void
+    public function test_engineer_cannot_exceed_max_attempts(): void
     {
         $quiz = $this->createQuizWithQuestions();
         $quiz->update(['is_published' => true, 'max_attempts' => 1]);
 
         // Create a completed attempt
         QuizAttempt::factory()->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
             'quiz_id' => $quiz->id,
             'completed_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/quizzes/{$quiz->id}/start");
 
         $response->assertStatus(422)

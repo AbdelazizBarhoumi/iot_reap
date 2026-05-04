@@ -1,6 +1,6 @@
 /**
  * Completion Funnel Component
- * Horizontal bar chart showing student progression stages.
+ * Horizontal bar chart showing engineer progression stages.
  */
 import {
     Bar,

@@ -304,7 +304,7 @@ Slides structure (40+ slides):
 
 ## Scene 1: Normal User Journey (3 min)
 1. Open browser to https://iot-reap-demo.example.com
-2. Login as student@demo.com (password: [demo])
+2. Login as engineer@demo.com (password: [demo])
 3. Click "Launch Ubuntu 22.04" template
 4. Set duration: 60 minutes
 5. Click Launch → Show loading → VM appears

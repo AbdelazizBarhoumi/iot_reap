@@ -12,7 +12,14 @@ const { completionFunnelMock, routerMock } = vi.hoisted(() => ({
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
-    Link: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
+    Link: ({
+        href,
+        children,
+        ...props
+    }: {
+        href: string;
+        children: ReactNode;
+    }) => (
         <a href={href} {...props}>
             {children}
         </a>
@@ -36,7 +43,10 @@ vi.mock('@/components/analytics', () => ({
 }));
 
 vi.mock('@/components/analytics/CompletionFunnel', () => ({
-    CompletionFunnel: (props: { title: string; data: Array<{ stage: string; count: number; percentage: number }> }) => {
+    CompletionFunnel: (props: {
+        title: string;
+        data: Array<{ stage: string; count: number; percentage: number }>;
+    }) => {
         completionFunnelMock(props);
         return <div>{props.title}</div>;
     },
@@ -61,7 +71,7 @@ describe('AnalyticsPage', () => {
         render(
             <AnalyticsPage
                 kpis={{
-                    total_students: 12,
+                    total_engineers: 12,
                     total_enrollments: 1,
                     enrollments_change: 0,
                     total_completions: 152,
@@ -97,7 +107,7 @@ describe('AnalyticsPage', () => {
         render(
             <AnalyticsPage
                 kpis={{
-                    total_students: 0,
+                    total_engineers: 0,
                     total_enrollments: 0,
                     enrollments_change: 0,
                     total_completions: 152,

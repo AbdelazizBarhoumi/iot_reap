@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * TrainingUnit note model for student notes during trainingUnits.
+ * TrainingUnit note model for engineer notes during trainingUnits.
  *
  * @property int $id
  * @property int $user_id

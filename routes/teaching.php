@@ -91,7 +91,7 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
     Route::prefix('forum')->name('forum.')->controller(ForumController::class)->group(function () {
         // Read-only inbox (no rate limit)
         Route::get('/inbox', 'teacherInbox')->name('inbox');
-        
+
         // Write operations (rate limited to prevent spam)
         Route::middleware('throttle:forum-write')->group(function () {
             Route::post('/threads/{threadId}/pin', 'pin')->name('threads.pin');
@@ -109,7 +109,7 @@ Route::middleware(['auth', 'verified', 'can:teach'])->prefix('teaching')->name('
         Route::get('/kpis', 'kpis')->name('kpis');
         Route::get('/enrollment-chart', 'enrollmentChart')->name('enrollment-chart');
         Route::get('/revenue-chart', 'revenueChart')->name('revenue-chart');
-        Route::get('/trainingPaths/{trainingPath}/students', 'students')->name('students');
+        Route::get('/trainingPaths/{trainingPath}/engineers', 'engineers')->name('engineers');
         Route::get('/trainingPaths/{trainingPath}/funnel', 'funnel')->name('funnel');
         Route::get('/earnings', 'earnings')->name('earnings');
         Route::get('/earnings/export', 'exportEarnings')->name('earnings.export');

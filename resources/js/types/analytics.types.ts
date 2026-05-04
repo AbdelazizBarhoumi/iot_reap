@@ -2,7 +2,7 @@
  * Analytics TypeScript types for Sprint 6.
  */
 export interface KPIs {
-    total_students: number;
+    total_engineers: number;
     total_enrollments: number;
     enrollments_change: number;
     total_completions: number;

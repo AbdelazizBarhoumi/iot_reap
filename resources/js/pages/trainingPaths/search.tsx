@@ -22,7 +22,7 @@ interface SearchTrainingPathResult {
     level: 'Beginner' | 'Intermediate' | 'Advanced';
     duration: string | null;
     rating: number;
-    students: number;
+    engineers: number;
     hasVirtualMachine?: boolean;
     thumbnail?: string | null;
     price?: number;

@@ -28,7 +28,7 @@ interface TrainingPathCardData {
     level: 'Beginner' | 'Intermediate' | 'Advanced';
     duration: string | null;
     rating: number;
-    students: number;
+    engineers: number;
     hasVirtualMachine?: boolean;
     thumbnail?: string | null;
     thumbnail_url?: string | null;
@@ -204,9 +204,9 @@ const TrainingPathCard = ({
                                 {/* Students */}
                                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Users className="h-3.5 w-3.5" />
-                                    {trainingPath.students >= 1000
-                                        ? `${(trainingPath.students / 1000).toFixed(1)}k`
-                                        : trainingPath.students.toLocaleString()}
+                                    {trainingPath.engineers >= 1000
+                                        ? `${(trainingPath.engineers / 1000).toFixed(1)}k`
+                                        : trainingPath.engineers.toLocaleString()}
                                 </span>
                             </div>
                         </div>

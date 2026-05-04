@@ -38,8 +38,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 const levelFilters = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 export default function TrainingPathsPage() {
-    const { trainingPaths, categories, featuredTrainingPaths = [] } = usePage<{ props: PageProps }>()
-        .props as unknown as PageProps;
+    const {
+        trainingPaths,
+        categories,
+        featuredTrainingPaths = [],
+    } = usePage<{ props: PageProps }>().props as unknown as PageProps;
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(
         null,
@@ -65,8 +68,8 @@ export default function TrainingPathsPage() {
             case 'rating':
                 result = [...result].sort((a, b) => b.rating - a.rating);
                 break;
-            case 'students':
-                result = [...result].sort((a, b) => b.students - a.students);
+            case 'engineers':
+                result = [...result].sort((a, b) => b.engineers - a.engineers);
                 break;
             case 'newest':
                 result = [...result].reverse();
@@ -74,7 +77,7 @@ export default function TrainingPathsPage() {
             case 'popular':
             default:
                 result = [...result].sort(
-                    (a, b) => b.students * b.rating - a.students * a.rating,
+                    (a, b) => b.engineers * b.rating - a.engineers * a.rating,
                 );
         }
         return result;
@@ -170,18 +173,20 @@ export default function TrainingPathsPage() {
                             </div>
                             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                 <AnimatePresence>
-                                    {featuredTrainingPaths.slice(0, 3).map((path, i) => (
-                                        <motion.div
-                                            key={path.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: i * 0.1 }}
-                                        >
-                                            <TrainingPathCard
-                                                trainingPath={path}
-                                            />
-                                        </motion.div>
-                                    ))}
+                                    {featuredTrainingPaths
+                                        .slice(0, 3)
+                                        .map((path, i) => (
+                                            <motion.div
+                                                key={path.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.1 }}
+                                            >
+                                                <TrainingPathCard
+                                                    trainingPath={path}
+                                                />
+                                            </motion.div>
+                                        ))}
                                 </AnimatePresence>
                             </div>
                         </motion.div>
@@ -295,7 +300,7 @@ export default function TrainingPathsPage() {
                                         <SelectItem value="rating">
                                             Top Rated
                                         </SelectItem>
-                                        <SelectItem value="students">
+                                        <SelectItem value="engineers">
                                             Most Students
                                         </SelectItem>
                                         <SelectItem value="newest">

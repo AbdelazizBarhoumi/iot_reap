@@ -53,7 +53,7 @@ class TrainingPathStatsRepository
         return [
             'total_enrollments' => (int) ($base()->sum('daily_training_path_stats.enrollments') ?? 0),
             'total_completions' => (int) ($base()->sum('daily_training_path_stats.completions') ?? 0),
-            'total_active' => (int) ($base()->sum('daily_training_path_stats.active_students') ?? 0),
+            'total_active' => (int) ($base()->sum('daily_training_path_stats.active_engineers') ?? 0),
             'total_training_units_viewed' => (int) ($base()->sum('daily_training_path_stats.training_units_viewed') ?? 0),
             'total_video_minutes' => (int) ($base()->sum('daily_training_path_stats.video_minutes_watched') ?? 0),
             'total_quiz_attempts' => (int) ($base()->sum('daily_training_path_stats.quiz_attempts') ?? 0),
@@ -69,7 +69,7 @@ class TrainingPathStatsRepository
                 daily_training_path_stats.date,
                 SUM(daily_training_path_stats.enrollments) as enrollments,
                 SUM(daily_training_path_stats.completions) as completions,
-                SUM(daily_training_path_stats.active_students) as active_students,
+                SUM(daily_training_path_stats.active_engineers) as active_engineers,
                 SUM(daily_training_path_stats.revenue_cents) as revenue_cents
             ')
             ->join('training_paths', 'daily_training_path_stats.training_path_id', '=', 'training_paths.id')

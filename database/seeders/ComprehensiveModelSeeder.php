@@ -179,7 +179,7 @@ class ComprehensiveModelSeeder extends Seeder
                     'date' => now()->subDays($i)->toDateString(),
                     'enrollments' => rand(10, 100),
                     'completions' => rand(1, 50),
-                    'active_students' => rand(5, 80),
+                    'active_engineers' => rand(5, 80),
                     'training_units_viewed' => rand(10, 100),
                     'video_minutes_watched' => rand(100, 1000),
                     'quiz_attempts' => rand(5, 50),

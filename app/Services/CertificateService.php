@@ -11,8 +11,8 @@ use App\Repositories\CertificateRepository;
 use App\Repositories\TrainingUnitProgressRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CertificateService
 {

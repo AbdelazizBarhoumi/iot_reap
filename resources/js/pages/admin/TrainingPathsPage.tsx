@@ -3,15 +3,14 @@
  * Admin view for reviewing and approving/rejecting TrainingPath submissions.
  * Uses unified AppLayout.
  */
-import type {
-    DragEndEvent} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
     DndContext,
     closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
-    useSensors
+    useSensors,
 } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -76,7 +75,7 @@ interface ManagedTrainingPath {
         title?: string;
         trainingUnits?: Array<Record<string, unknown>>;
     }>;
-    students?: number;
+    engineers?: number;
     rating: number;
     adminFeedback?: string | null;
 }
@@ -145,7 +144,7 @@ function DragItem({ id, title }: DragItemProps) {
             <button
                 {...attributes}
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+                className="cursor-grab text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing"
                 type="button"
             >
                 <GripVertical className="h-5 w-5" />
@@ -244,8 +243,7 @@ function AdminTrainingPathsContent() {
     }: {
         TrainingPath: ManagedTrainingPath;
     }) => {
-        const status =
-            statusConfig[TrainingPath.status] ?? statusConfig.draft;
+        const status = statusConfig[TrainingPath.status] ?? statusConfig.draft;
         const StatusIcon = status.icon;
         const totalTrainingUnits = (TrainingPath.modules ?? []).reduce(
             (a, m) => a + (m.trainingUnits?.length ?? 0),
@@ -324,7 +322,9 @@ function AdminTrainingPathsContent() {
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Users className="h-3 w-3" />{' '}
-                                        {(TrainingPath.students ?? 0).toLocaleString()}
+                                        {(
+                                            TrainingPath.engineers ?? 0
+                                        ).toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Star className="h-3 w-3 fill-warning text-warning" />{' '}
@@ -393,8 +393,14 @@ function AdminTrainingPathsContent() {
                                 {TrainingPath.status === 'approved' && (
                                     <Button
                                         size="sm"
-                                        variant={isFeatured ? 'default' : 'outline'}
-                                        className={isFeatured ? 'bg-warning text-warning-foreground' : ''}
+                                        variant={
+                                            isFeatured ? 'default' : 'outline'
+                                        }
+                                        className={
+                                            isFeatured
+                                                ? 'bg-warning text-warning-foreground'
+                                                : ''
+                                        }
                                         onClick={handleFeatureToggle}
                                     >
                                         <Star className="mr-1 h-3.5 w-3.5" />
@@ -516,7 +522,10 @@ function AdminTrainingPathsContent() {
                                 <TrainingPathRow key={c.id} TrainingPath={c} />
                             ))}
                         </TabsContent>
-                        <TabsContent value="featured" className="mt-6 space-y-4">
+                        <TabsContent
+                            value="featured"
+                            className="mt-6 space-y-4"
+                        >
                             <div className="mb-4 flex items-center justify-end">
                                 <Button size="sm" onClick={openReorderDialog}>
                                     Reorder Featured
@@ -524,11 +533,16 @@ function AdminTrainingPathsContent() {
                             </div>
                             {featuredTrainingPaths.length === 0 ? (
                                 <div className="py-12 text-center">
-                                    <p className="text-muted-foreground">No featured training paths.</p>
+                                    <p className="text-muted-foreground">
+                                        No featured training paths.
+                                    </p>
                                 </div>
                             ) : (
                                 featuredTrainingPaths.map((c) => (
-                                    <TrainingPathRow key={c.id} TrainingPath={c} />
+                                    <TrainingPathRow
+                                        key={c.id}
+                                        TrainingPath={c}
+                                    />
                                 ))
                             )}
                         </TabsContent>
@@ -559,12 +573,18 @@ function AdminTrainingPathsContent() {
                     </Tabs>
 
                     {/* Reorder Dialog */}
-                    <Dialog open={reorderOpen} onOpenChange={(open) => !open && setReorderOpen(false)}>
+                    <Dialog
+                        open={reorderOpen}
+                        onOpenChange={(open) => !open && setReorderOpen(false)}
+                    >
                         <DialogContent className="max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Reorder Featured Training Paths</DialogTitle>
+                                <DialogTitle>
+                                    Reorder Featured Training Paths
+                                </DialogTitle>
                                 <DialogDescription>
-                                    Drag items to reorder them. They will appear in this order on the homepage.
+                                    Drag items to reorder them. They will appear
+                                    in this order on the homepage.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="mt-4">
@@ -580,18 +600,24 @@ function AdminTrainingPathsContent() {
                                     >
                                         <SortableContext
                                             items={reorderIds}
-                                            strategy={verticalListSortingStrategy}
+                                            strategy={
+                                                verticalListSortingStrategy
+                                            }
                                         >
                                             <div className="space-y-2">
                                                 {reorderIds.map((id) => {
-                                                    const item = featuredTrainingPaths.find(
-                                                        (p) => p.id === id,
-                                                    );
+                                                    const item =
+                                                        featuredTrainingPaths.find(
+                                                            (p) => p.id === id,
+                                                        );
                                                     return (
                                                         <DragItem
                                                             key={id}
                                                             id={id}
-                                                            title={item?.title ?? id}
+                                                            title={
+                                                                item?.title ??
+                                                                id
+                                                            }
                                                         />
                                                     );
                                                 })}
@@ -601,10 +627,15 @@ function AdminTrainingPathsContent() {
                                 )}
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setReorderOpen(false)}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setReorderOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button onClick={saveReorder}>Save Order</Button>
+                                <Button onClick={saveReorder}>
+                                    Save Order
+                                </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>

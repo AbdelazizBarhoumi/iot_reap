@@ -11,7 +11,7 @@ export interface TrainingPath {
     category: string;
     level: 'Beginner' | 'Intermediate' | 'Advanced';
     duration: string;
-    students: number;
+    engineers: number;
     rating: number;
     modules: Module[];
     hasVirtualMachine?: boolean;

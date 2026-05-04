@@ -55,7 +55,7 @@ export function TrainingPathStatusBanner({
             variant: 'default' as const,
             title: 'Archived',
             description:
-                'This trainingPath is archived and hidden from students. You can restore it at any time.',
+                'This trainingPath is archived and hidden from engineers. You can restore it at any time.',
             bgClass:
                 'bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800',
             iconClass: 'text-gray-600 dark:text-gray-400',

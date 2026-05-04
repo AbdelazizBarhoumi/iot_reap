@@ -6,7 +6,14 @@ import FinancePage from '../FinancePage';
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
-    Link: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
+    Link: ({
+        href,
+        children,
+        ...props
+    }: {
+        href: string;
+        children: ReactNode;
+    }) => (
         <a href={href} {...props}>
             {children}
         </a>
@@ -91,11 +98,15 @@ describe('FinancePage', () => {
             screen.getByRole('heading', { name: /payouts & refunds/i }),
         ).toBeInTheDocument();
         expect(screen.getByText('Amina Teacher')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /export payouts/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: /export payouts/i }),
+        ).toBeInTheDocument();
 
         await user.click(screen.getByRole('tab', { name: /refunds/i }));
 
         expect(screen.getByText('Omar Student')).toBeInTheDocument();
-        expect(screen.getByText('Industrial Safety Basics')).toBeInTheDocument();
+        expect(
+            screen.getByText('Industrial Safety Basics'),
+        ).toBeInTheDocument();
     });
 });

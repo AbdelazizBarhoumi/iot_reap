@@ -125,13 +125,20 @@ class TrainingUnitVMAssignmentRepository
     }
 
     /**
-     * Get assignments by teacher (assigned_by).
+     * Get assignments for training paths owned by the teacher.
      */
     public function findByTeacher(string $teacherId): Collection
     {
-        return TrainingUnitVMAssignment::where('assigned_by', $teacherId)
-            ->with(['trainingUnit.module.trainingPath', 'node'])
-            ->orderBy('created_at', 'desc')
+        return TrainingUnitVMAssignment::whereHas('trainingUnit.module.trainingPath', function ($query) use ($teacherId) {
+            $query->where('instructor_id', $teacherId);
+        })
+            ->with([
+                'trainingUnit.module.trainingPath.instructor',
+                'node',
+                'assignedByUser',
+                'approvedByUser',
+            ])
+            ->orderByDesc('created_at')
             ->get();
     }
 }

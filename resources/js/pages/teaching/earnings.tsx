@@ -150,7 +150,7 @@ export default function EarningsPage({
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 <TeachingWorkspaceTabs
                     activeTab="payouts"
-                    header={(
+                    header={
                         <>
                             <div className="flex items-center gap-3">
                                 <Button variant="ghost" size="sm" asChild>
@@ -178,7 +178,7 @@ export default function EarningsPage({
                                 </Button>
                             </div>
                         </>
-                    )}
+                    }
                 />
                 {/* KPI Cards */}
                 <div className="grid gap-4 md:grid-cols-3">

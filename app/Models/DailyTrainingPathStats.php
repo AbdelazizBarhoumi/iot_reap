@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Carbon $date
  * @property int $enrollments
  * @property int $completions
- * @property int $active_students
+ * @property int $active_engineers
  * @property int $training_units_viewed
  * @property int $video_minutes_watched
  * @property int $quiz_attempts
@@ -33,7 +33,7 @@ class DailyTrainingPathStats extends Model
         'date',
         'enrollments',
         'completions',
-        'active_students',
+        'active_engineers',
         'training_units_viewed',
         'video_minutes_watched',
         'quiz_attempts',
@@ -45,7 +45,7 @@ class DailyTrainingPathStats extends Model
         'date' => 'date',
         'enrollments' => 'integer',
         'completions' => 'integer',
-        'active_students' => 'integer',
+        'active_engineers' => 'integer',
         'training_units_viewed' => 'integer',
         'video_minutes_watched' => 'integer',
         'quiz_attempts' => 'integer',

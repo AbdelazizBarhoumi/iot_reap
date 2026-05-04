@@ -80,21 +80,21 @@ class TeacherAnalyticsController extends Controller
     }
 
     /**
-     * Student roster for a trainingPath.
+     * Engineer roster for a trainingPath.
      */
-    public function students(Request $request, TrainingPath $trainingPath): Response
+    public function engineers(Request $request, TrainingPath $trainingPath): Response
     {
         $this->authorizeTeacher($trainingPath);
 
         $page = $request->get('page', 1);
-        $roster = $this->analyticsService->getStudentRoster($trainingPath, $page);
+        $roster = $this->analyticsService->getEngineerRoster($trainingPath, $page);
 
-        return Inertia::render('teaching/students', [
+        return Inertia::render('teaching/engineers', [
             'trainingPath' => [
                 'id' => $trainingPath->id,
                 'title' => $trainingPath->title,
             ],
-            'students' => $roster['data'],
+            'engineers' => $roster['data'],
             'pagination' => $roster['meta'],
         ]);
     }

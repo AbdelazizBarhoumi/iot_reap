@@ -512,7 +512,7 @@ class ForumServiceTest extends TestCase
     public function test_gets_teacher_threads_across_training_paths(): void
     {
         $teacher = User::factory()->teacher()->create();
-        $student = User::factory()->create();
+        $engineer = User::factory()->create();
 
         // Create two trainingPaths for the teacher
         $trainingPath1 = TrainingPath::factory()->create(['instructor_id' => $teacher->id]);
@@ -528,7 +528,7 @@ class ForumServiceTest extends TestCase
         DiscussionThread::create([
             'training_unit_id' => $trainingUnit1->id,
             'training_path_id' => $trainingPath1->id,
-            'author_id' => $student->id,
+            'author_id' => $engineer->id,
             'title' => 'TrainingPath 1 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
@@ -538,7 +538,7 @@ class ForumServiceTest extends TestCase
         DiscussionThread::create([
             'training_unit_id' => $trainingUnit2->id,
             'training_path_id' => $trainingPath2->id,
-            'author_id' => $student->id,
+            'author_id' => $engineer->id,
             'title' => 'TrainingPath 2 Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,
@@ -553,7 +553,7 @@ class ForumServiceTest extends TestCase
         DiscussionThread::create([
             'training_unit_id' => $otherTrainingUnit->id,
             'training_path_id' => $otherTrainingPath->id,
-            'author_id' => $student->id,
+            'author_id' => $engineer->id,
             'title' => 'Other Teacher Thread',
             'content' => 'Content',
             'status' => ThreadStatus::OPEN,

@@ -149,7 +149,6 @@ export function CertificateClaimPrompt({
         );
     };
 
-
     const isBusy = status === 'checking' || status === 'issuing';
     const verificationUrl = certificate?.verification_url ?? null;
     const certificateHash = certificate?.hash ?? null;
@@ -181,14 +180,14 @@ export function CertificateClaimPrompt({
                         {status === 'can_claim'
                             ? `You've completed "${trainingPathTitle}"`
                             : status === 'checking'
-                                ? 'Checking certificate...'
-                                : 'Your certificate status'}
+                              ? 'Checking certificate...'
+                              : 'Your certificate status'}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-6 text-center">
                     {(status === 'issued' || status === 'ready') &&
-                        certificate ? (
+                    certificate ? (
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -315,8 +314,8 @@ export function CertificateClaimPrompt({
                                 {status === 'checking'
                                     ? 'Checking...'
                                     : status === 'issuing'
-                                        ? 'Issuing...'
-                                        : 'Claim Certificate'}
+                                      ? 'Issuing...'
+                                      : 'Claim Certificate'}
                             </Button>
                         </div>
                     )}

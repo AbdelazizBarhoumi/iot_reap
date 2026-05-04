@@ -5,7 +5,14 @@ import EditTrainingUnitPage from '../trainingUnit-edit';
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
-    Link: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
+    Link: ({
+        href,
+        children,
+        ...props
+    }: {
+        href: string;
+        children: ReactNode;
+    }) => (
         <a href={href} {...props}>
             {children}
         </a>
@@ -94,14 +101,21 @@ describe('EditTrainingUnitPage', () => {
                     price: 0,
                     currency: 'USD',
                     rating: 4.5,
-                    students: 10,
+                    engineers: 10,
                     hasVirtualMachine: false,
                     isFree: true,
                     status: 'approved',
                     adminFeedback: null,
                     created_at: '2024-01-01',
                     updated_at: '2024-01-01',
-                    modules: [{ id: '20', title: 'Module 1', trainingUnits: [], sort_order: 1 }],
+                    modules: [
+                        {
+                            id: '20',
+                            title: 'Module 1',
+                            trainingUnits: [],
+                            sort_order: 1,
+                        },
+                    ],
                 }}
                 trainingUnit={{
                     id: '30',

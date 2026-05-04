@@ -1,6 +1,6 @@
 /**
  * Quiz API Module
- * Handles all quiz-related API calls for both students and teachers
+ * Handles all quiz-related API calls for both engineers and teachers
  */
 
 import client from './client';

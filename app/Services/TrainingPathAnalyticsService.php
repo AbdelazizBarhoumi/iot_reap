@@ -38,7 +38,7 @@ class TrainingPathAnalyticsService
         );
 
         return [
-            'total_students' => $this->getTotalStudents($teacher),
+            'total_engineers' => $this->getTotalEngineers($teacher),
             'total_enrollments' => $stats['total_enrollments'],
             'enrollments_change' => $this->calculateChange($stats['total_enrollments'], $previousStats['total_enrollments']),
             'total_completions' => $stats['total_completions'],
@@ -126,7 +126,7 @@ class TrainingPathAnalyticsService
      */
     public function getCompletionFunnel(TrainingPath $trainingPath): array
     {
-        $totalEnrolled = $trainingPath->students()->count();
+        $totalEnrolled = $trainingPath->engineers()->count();
 
         if ($totalEnrolled === 0) {
             return [
@@ -236,11 +236,11 @@ class TrainingPathAnalyticsService
     }
 
     /**
-     * Get student roster for a trainingPath.
+     * Get engineer roster for a trainingPath.
      */
-    public function getStudentRoster(TrainingPath $trainingPath, int $page = 1, int $perPage = 20): array
+    public function getEngineerRoster(TrainingPath $trainingPath, int $page = 1, int $perPage = 20): array
     {
-        $students = $trainingPath->students()
+        $engineers = $trainingPath->engineers()
             ->withPivot(['enrolled_at'])
             ->orderBy('training_path_enrollments.enrolled_at', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -249,13 +249,13 @@ class TrainingPathAnalyticsService
         $trainingPathId = $trainingPath->id;
 
         return [
-            'data' => $students->map(function ($student) use ($totalTrainingUnits, $trainingPathId) {
-                // Calculate trainingUnit progress for student
+            'data' => $engineers->map(function ($engineer) use ($totalTrainingUnits, $trainingPathId) {
+                // Calculate trainingUnit progress for engineer
                 $completedTrainingUnits = DB::table('training_unit_progress')
                     ->join('training_units', 'training_unit_progress.training_unit_id', '=', 'training_units.id')
                     ->join('training_path_modules', 'training_units.module_id', '=', 'training_path_modules.id')
                     ->where('training_path_modules.training_path_id', $trainingPathId)
-                    ->where('training_unit_progress.user_id', $student->id)
+                    ->where('training_unit_progress.user_id', $engineer->id)
                     ->where('training_unit_progress.completed', true)
                     ->count();
 
@@ -272,35 +272,35 @@ class TrainingPathAnalyticsService
                         ->join('training_units', 'training_unit_progress.training_unit_id', '=', 'training_units.id')
                         ->join('training_path_modules', 'training_units.module_id', '=', 'training_path_modules.id')
                         ->where('training_path_modules.training_path_id', $trainingPathId)
-                        ->where('training_unit_progress.user_id', $student->id)
+                        ->where('training_unit_progress.user_id', $engineer->id)
                         ->where('training_unit_progress.completed', true)
                         ->max('training_unit_progress.updated_at');
                 }
 
                 return [
-                    'id' => $student->id,
-                    'name' => $student->name,
-                    'email' => $student->email,
-                    'avatar_url' => $student->avatar_url ?? null,
-                    'enrolled_at' => $student->pivot->enrolled_at,
+                    'id' => $engineer->id,
+                    'name' => $engineer->name,
+                    'email' => $engineer->email,
+                    'avatar_url' => $engineer->avatar_url ?? null,
+                    'enrolled_at' => $engineer->pivot->enrolled_at,
                     'completed_at' => $completedAt,
                     'progress' => $progress,
                     'is_completed' => $isCompleted,
                 ];
             })->toArray(),
             'meta' => [
-                'current_page' => $students->currentPage(),
-                'last_page' => $students->lastPage(),
-                'per_page' => $students->perPage(),
-                'total' => $students->total(),
+                'current_page' => $engineers->currentPage(),
+                'last_page' => $engineers->lastPage(),
+                'per_page' => $engineers->perPage(),
+                'total' => $engineers->total(),
             ],
         ];
     }
 
     /**
-     * Get total unique students across all teacher's trainingPaths.
+     * Get total unique engineers across all teacher's trainingPaths.
      */
-    protected function getTotalStudents(User $teacher): int
+    protected function getTotalEngineers(User $teacher): int
     {
         return DB::table('training_path_enrollments')
             ->join('training_paths', 'training_path_enrollments.training_path_id', '=', 'training_paths.id')

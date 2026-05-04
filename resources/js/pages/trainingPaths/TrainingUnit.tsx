@@ -32,6 +32,7 @@ import { vmSessionApi } from '@/api/vm.api';
 import { ArticleReader } from '@/components/articles/ArticleReader';
 import { ThreadList } from '@/components/forum/ThreadList';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
+import { MarkdownContent } from '@/components/markdown';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import VideoPlayer from '@/components/TrainingPaths/VideoPlayer';
 import VirtualMachinePanel from '@/components/TrainingPaths/VirtualMachinePanel';
@@ -989,9 +990,9 @@ export default function TrainingUnitPage() {
                                 <Card className="mb-8">
                                     <CardContent className="py-6">
                                         {trainingUnit.content ? (
-                                            <p className="leading-relaxed whitespace-pre-line text-foreground">
-                                                {trainingUnit.content}
-                                            </p>
+                                            <MarkdownContent
+                                                content={trainingUnit.content}
+                                            />
                                         ) : (
                                             <p className="text-muted-foreground italic">
                                                 No content has been added for

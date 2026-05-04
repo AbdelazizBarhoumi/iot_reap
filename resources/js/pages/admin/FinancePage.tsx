@@ -199,26 +199,32 @@ export default function FinancePage({
     );
 
     const filteredRefunds = useMemo(() => {
-        const refundList = Array.isArray(refunds) ? refunds : (refunds?.data ?? []);
+        const refundList = Array.isArray(refunds)
+            ? refunds
+            : (refunds?.data ?? []);
         return refundList.filter(
-                (refund) =>
-                    refund.user.name
-                        .toLowerCase()
-                        .includes(searchRefunds.toLowerCase()) ||
-                    refund.user.email
-                        .toLowerCase()
-                        .includes(searchRefunds.toLowerCase()) ||
-                    refund.trainingPath.title
-                        .toLowerCase()
-                        .includes(searchRefunds.toLowerCase()),
-            );
+            (refund) =>
+                refund.user.name
+                    .toLowerCase()
+                    .includes(searchRefunds.toLowerCase()) ||
+                refund.user.email
+                    .toLowerCase()
+                    .includes(searchRefunds.toLowerCase()) ||
+                refund.trainingPath.title
+                    .toLowerCase()
+                    .includes(searchRefunds.toLowerCase()),
+        );
     }, [refunds, searchRefunds]);
 
     const handlePayoutApprove = (id: string) => {
         setProcessing(id);
-        router.post(`/admin/payouts/${id}/approve`, {}, {
-            onFinish: () => setProcessing(null),
-        });
+        router.post(
+            `/admin/payouts/${id}/approve`,
+            {},
+            {
+                onFinish: () => setProcessing(null),
+            },
+        );
     };
 
     const handlePayoutReject = (id: string) => {
@@ -239,16 +245,24 @@ export default function FinancePage({
 
     const handlePayoutProcess = (id: string) => {
         setProcessing(id);
-        router.post(`/admin/payouts/${id}/process`, {}, {
-            onFinish: () => setProcessing(null),
-        });
+        router.post(
+            `/admin/payouts/${id}/process`,
+            {},
+            {
+                onFinish: () => setProcessing(null),
+            },
+        );
     };
 
     const handleRefundApprove = (id: string) => {
         setProcessing(id);
-        router.post(`/admin/refunds/${id}/approve`, {}, {
-            onFinish: () => setProcessing(null),
-        });
+        router.post(
+            `/admin/refunds/${id}/approve`,
+            {},
+            {
+                onFinish: () => setProcessing(null),
+            },
+        );
     };
 
     const handleRefundReject = (id: string) => {
@@ -284,7 +298,11 @@ export default function FinancePage({
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" asChild>
-                            <a href="/admin/payouts/export" target="_blank" rel="noopener noreferrer">
+                            <a
+                                href="/admin/payouts/export"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
                                 <Download className="mr-2 h-4 w-4" />
                                 Export payouts
                             </a>
@@ -320,7 +338,9 @@ export default function FinancePage({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">
-                                        {formatCurrency(payoutStats.totalPending)}
+                                        {formatCurrency(
+                                            payoutStats.totalPending,
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -332,7 +352,9 @@ export default function FinancePage({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold text-success">
-                                        {formatCurrency(payoutStats.paidThisMonth)}
+                                        {formatCurrency(
+                                            payoutStats.paidThisMonth,
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -343,7 +365,9 @@ export default function FinancePage({
                             <Input
                                 placeholder="Search teachers..."
                                 value={searchPayouts}
-                                onChange={(e) => setSearchPayouts(e.target.value)}
+                                onChange={(e) =>
+                                    setSearchPayouts(e.target.value)
+                                }
                                 className="pl-10"
                             />
                         </div>
@@ -373,9 +397,10 @@ export default function FinancePage({
                                         </TableRow>
                                     ) : (
                                         filteredPayouts.map((payout) => {
-                                            const status = payoutStatusConfig[
-                                                payout.status
-                                            ];
+                                            const status =
+                                                payoutStatusConfig[
+                                                    payout.status
+                                                ];
                                             const StatusIcon = status.icon;
 
                                             return (
@@ -383,30 +408,45 @@ export default function FinancePage({
                                                     <TableCell>
                                                         <div>
                                                             <div className="font-medium">
-                                                                {payout.teacher.name}
+                                                                {
+                                                                    payout
+                                                                        .teacher
+                                                                        .name
+                                                                }
                                                             </div>
                                                             <div className="text-sm text-muted-foreground">
-                                                                {payout.teacher.email}
+                                                                {
+                                                                    payout
+                                                                        .teacher
+                                                                        .email
+                                                                }
                                                             </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="font-medium">
-                                                        {formatCurrency(payout.amount)}
+                                                        {formatCurrency(
+                                                            payout.amount,
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge
                                                             variant="outline"
-                                                            className={status.color}
+                                                            className={
+                                                                status.color
+                                                            }
                                                         >
                                                             <StatusIcon className="mr-1 h-3 w-3" />
                                                             {status.label}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground">
-                                                        {formatDate(payout.requestedAt)}
+                                                        {formatDate(
+                                                            payout.requestedAt,
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        {payout.status === 'pending' && (
+                                                        {payout.status ===
+                                                            'pending' && (
                                                             <div className="flex justify-end gap-2">
                                                                 <Button
                                                                     size="sm"
@@ -440,7 +480,8 @@ export default function FinancePage({
                                                             </div>
                                                         )}
 
-                                                        {payout.status === 'approved' && (
+                                                        {payout.status ===
+                                                            'approved' && (
                                                             <div className="flex justify-end gap-2">
                                                                 <Button
                                                                     size="sm"
@@ -514,7 +555,9 @@ export default function FinancePage({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">
-                                        {formatCurrency(refundStats.totalRefunded)}
+                                        {formatCurrency(
+                                            refundStats.totalRefunded,
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -525,7 +568,9 @@ export default function FinancePage({
                             <Input
                                 placeholder="Search by user or training path..."
                                 value={searchRefunds}
-                                onChange={(e) => setSearchRefunds(e.target.value)}
+                                onChange={(e) =>
+                                    setSearchRefunds(e.target.value)
+                                }
                                 className="pl-10"
                             />
                         </div>
@@ -557,9 +602,10 @@ export default function FinancePage({
                                         </TableRow>
                                     ) : (
                                         filteredRefunds.map((refund) => {
-                                            const status = refundStatusConfig[
-                                                refund.status
-                                            ];
+                                            const status =
+                                                refundStatusConfig[
+                                                    refund.status
+                                                ];
                                             const StatusIcon = status.icon;
 
                                             return (
@@ -567,18 +613,28 @@ export default function FinancePage({
                                                     <TableCell>
                                                         <div>
                                                             <div className="font-medium">
-                                                                {refund.user.name}
+                                                                {
+                                                                    refund.user
+                                                                        .name
+                                                                }
                                                             </div>
                                                             <div className="text-sm text-muted-foreground">
-                                                                {refund.user.email}
+                                                                {
+                                                                    refund.user
+                                                                        .email
+                                                                }
                                                             </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="max-w-[200px] truncate">
-                                                        {refund.trainingPath.title}
+                                                        {
+                                                            refund.trainingPath
+                                                                .title
+                                                        }
                                                     </TableCell>
                                                     <TableCell className="font-medium">
-                                                        {refund.formattedAmount ?? '—'}
+                                                        {refund.formattedAmount ??
+                                                            '—'}
                                                     </TableCell>
                                                     <TableCell className="max-w-[200px] truncate text-muted-foreground">
                                                         {refund.reason}
@@ -586,17 +642,22 @@ export default function FinancePage({
                                                     <TableCell>
                                                         <Badge
                                                             variant="outline"
-                                                            className={status.color}
+                                                            className={
+                                                                status.color
+                                                            }
                                                         >
                                                             <StatusIcon className="mr-1 h-3 w-3" />
                                                             {status.label}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground">
-                                                        {formatDate(refund.requestedAt)}
+                                                        {formatDate(
+                                                            refund.requestedAt,
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        {refund.status === 'pending' && (
+                                                        {refund.status ===
+                                                            'pending' && (
                                                             <div className="flex justify-end gap-2">
                                                                 <Button
                                                                     size="sm"

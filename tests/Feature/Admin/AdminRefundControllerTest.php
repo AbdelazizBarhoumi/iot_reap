@@ -17,7 +17,7 @@ class AdminRefundControllerTest extends TestCase
 
     private User $admin;
 
-    private User $student;
+    private User $engineer;
 
     private Payment $payment;
 
@@ -30,8 +30,8 @@ class AdminRefundControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->admin()->create();
-        $this->student = User::factory()->engineer()->create();
-        $this->payment = Payment::factory()->completed()->create(['user_id' => $this->student->id]);
+        $this->engineer = User::factory()->engineer()->create();
+        $this->payment = Payment::factory()->completed()->create(['user_id' => $this->engineer->id]);
         $this->refundRequest = RefundRequest::factory()->pending()->forPayment($this->payment)->create();
 
         // Mock RefundService
@@ -102,7 +102,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_non_admin_cannot_list_refunds(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson('/admin/refunds');
 
         $response->assertForbidden();
@@ -284,7 +284,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_non_admin_cannot_approve_refund(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/admin/refunds/{$this->refundRequest->id}/approve");
 
         $response->assertForbidden();
@@ -292,7 +292,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_non_admin_cannot_reject_refund(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->postJson("/admin/refunds/{$this->refundRequest->id}/reject", [
                 'reason' => 'Should not work',
             ]);
@@ -302,7 +302,7 @@ class AdminRefundControllerTest extends TestCase
 
     public function test_non_admin_cannot_get_all_refunds(): void
     {
-        $response = $this->actingAs($this->student)
+        $response = $this->actingAs($this->engineer)
             ->getJson('/admin/refunds/all');
 
         $response->assertForbidden();

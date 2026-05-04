@@ -71,7 +71,7 @@ export function ThreadCard({
     const roleBadgeStyles: Record<string, string> = {
         teacher: 'bg-primary/10 text-primary border-primary/20',
         admin: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
-        student: 'bg-muted text-muted-foreground',
+        engineer: 'bg-muted text-muted-foreground',
     };
     return (
         <motion.div
@@ -195,7 +195,7 @@ export function ThreadCard({
                             <span className="font-medium text-foreground">
                                 {thread.author.name}
                             </span>
-                            {thread.author.role !== 'student' && (
+                            {thread.author.role !== 'engineer' && (
                                 <Badge
                                     variant="outline"
                                     className={cn(

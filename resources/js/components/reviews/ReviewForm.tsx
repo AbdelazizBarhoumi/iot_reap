@@ -124,7 +124,7 @@ export function ReviewForm({
                                 : 'Write a Review'}
                         </DialogTitle>
                         <DialogDescription>
-                            Share your experience to help other students
+                            Share your experience to help other engineers
                         </DialogDescription>
                     </DialogHeader>
                     {formContent}

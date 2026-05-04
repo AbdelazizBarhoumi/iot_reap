@@ -5,8 +5,6 @@ namespace Tests\Unit\Services;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
-use App\Repositories\TrainingPathModuleRepository;
-use App\Repositories\TrainingUnitRepository;
 use App\Services\TrainingUnitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,9 +18,7 @@ class TrainingUnitServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $moduleRepo = app(TrainingPathModuleRepository::class);
-        $trainingUnitRepo = app(TrainingUnitRepository::class);
-        $this->trainingUnitService = new TrainingUnitService($moduleRepo, $trainingUnitRepo);
+        $this->trainingUnitService = app(TrainingUnitService::class);
     }
 
     public function test_create_module(): void

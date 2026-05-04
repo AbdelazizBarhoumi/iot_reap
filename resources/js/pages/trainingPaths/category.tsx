@@ -29,7 +29,7 @@ interface SearchTrainingPathResult {
     level: 'Beginner' | 'Intermediate' | 'Advanced';
     duration: string | null;
     rating: number;
-    students: number;
+    engineers: number;
     hasVirtualMachine?: boolean;
     thumbnail?: string | null;
     price?: number;
@@ -84,7 +84,7 @@ export default function CategoryPage({
                 case 'price-high':
                     return 0; // Price sorting not available
                 default:
-                    return (b.students || 0) - (a.students || 0);
+                    return (b.engineers || 0) - (a.engineers || 0);
             }
         });
     return (

@@ -385,10 +385,10 @@ class NotificationServiceTest extends TestCase
         $expectedData = [
             'user_id' => $teacher->id,
             'type' => NotificationType::NEW_ENROLLMENT,
-            'title' => 'New Student Enrolled',
+            'title' => 'New Engineer Enrolled',
             'message' => 'John Doe enrolled in "React Fundamentals".',
             'action_url' => '/teaching/456/edit',
-            'data' => ['training_path_id' => 456, 'student_name' => 'John Doe'],
+            'data' => ['training_path_id' => 456, 'engineer_name' => 'John Doe'],
         ];
 
         $this->mockRepository

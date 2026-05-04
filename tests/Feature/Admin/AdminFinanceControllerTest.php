@@ -21,7 +21,7 @@ class AdminFinanceControllerTest extends TestCase
 
     private User $teacher;
 
-    private User $student;
+    private User $engineer;
 
     private PayoutRequest $payoutRequest;
 
@@ -33,10 +33,10 @@ class AdminFinanceControllerTest extends TestCase
 
         $this->admin = User::factory()->admin()->create();
         $this->teacher = User::factory()->teacher()->create();
-        $this->student = User::factory()->engineer()->create();
+        $this->engineer = User::factory()->engineer()->create();
 
         $payment = Payment::factory()->completed()->create([
-            'user_id' => $this->student->id,
+            'user_id' => $this->engineer->id,
         ]);
 
         $this->payoutRequest = PayoutRequest::factory()

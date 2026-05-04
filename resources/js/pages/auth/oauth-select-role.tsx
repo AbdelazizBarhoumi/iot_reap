@@ -117,7 +117,7 @@ export default function OAuthSelectRole({
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
                                                     Create and manage training
-                                                    courses for your students
+                                                    courses for your engineers
                                                 </p>
                                             </div>
                                         </div>

@@ -313,7 +313,7 @@ export default function TeacherForumInboxPage({
                 <div className="container py-8">
                     <TeachingWorkspaceTabs
                         activeTab="inbox"
-                        header={(
+                        header={
                             <>
                                 <div className="space-y-2">
                                     <Button variant="ghost" size="sm" asChild>
@@ -327,9 +327,9 @@ export default function TeacherForumInboxPage({
                                             Forum Inbox
                                         </h1>
                                         <p className="text-muted-foreground">
-                                            Moderate discussion threads, lock noisy
-                                            conversations, and mark the best reply as
-                                            the answer.
+                                            Moderate discussion threads, lock
+                                            noisy conversations, and mark the
+                                            best reply as the answer.
                                         </p>
                                     </div>
                                 </div>
@@ -344,7 +344,7 @@ export default function TeacherForumInboxPage({
                                     Refresh
                                 </Button>
                             </>
-                        )}
+                        }
                     />
 
                     <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">

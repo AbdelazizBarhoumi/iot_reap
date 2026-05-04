@@ -13,7 +13,7 @@ use App\Http\Controllers\TrainingUnitNoteController;
 use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 
-// Video Streaming Routes (authenticated, for enrolled students)
+// Video Streaming Routes (authenticated, for enrolled engineers)
 Route::middleware(['auth'])->prefix('videos')->name('videos.')->controller(VideoController::class)->group(function () {
     Route::get('/{videoId}/stream', 'stream')->name('stream');
     Route::get('/{videoId}/stream/{quality}/{segment}', 'segment')->name('segment');
@@ -79,7 +79,7 @@ Route::middleware(['auth'])->prefix('checkout')->name('checkout.')->controller(C
     Route::get('/cancelled', 'cancelled')->name('cancelled');
 });
 
-// Authenticated trainingPath / student routes
+// Authenticated trainingPath / engineer routes
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // TrainingPath enrollment & tracking
@@ -99,7 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/video-progress', 'updateVideoProgress')->name('trainingPaths.trainingUnits.video-progress');
         Route::post('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/article-read', 'markArticleRead')->name('trainingPaths.trainingUnits.article-read');
 
-        // Video status for students
+        // Video status for engineers
         Route::get('/trainingPaths/{trainingPathId}/trainingUnits/{trainingUnitId}/video/status', [VideoController::class, 'status'])->name('trainingPaths.trainingUnits.video.status');
     });
 
@@ -143,7 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/replies/{replyId}', 'destroyReply')->name('replies.destroy');
     });
 
-    // Quiz taking routes (students)
+    // Quiz taking routes (engineers)
     Route::controller(QuizController::class)->group(function () {
         Route::get('/trainingUnits/{trainingUnitId}/quiz', 'take')->name('quiz.take');
         Route::post('/quizzes/{quiz}/start', 'startAttempt')->name('quiz.start');

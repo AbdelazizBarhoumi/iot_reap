@@ -198,15 +198,15 @@ class NotificationService
      *
      * @planned Not yet integrated - will be called from EnrollmentService::enroll event listener
      */
-    public function notifyNewEnrollment(User $teacher, string $studentName, string $trainingPathTitle, int $trainingPathId): Notification
+    public function notifyNewEnrollment(User $teacher, string $engineerName, string $trainingPathTitle, int $trainingPathId): Notification
     {
         return $this->notify(
             user: $teacher,
             type: NotificationType::NEW_ENROLLMENT,
-            title: 'New Student Enrolled',
-            message: "{$studentName} enrolled in \"{$trainingPathTitle}\".",
+            title: 'New Engineer Enrolled',
+            message: "{$engineerName} enrolled in \"{$trainingPathTitle}\".",
             actionUrl: "/teaching/{$trainingPathId}/edit",
-            data: ['training_path_id' => $trainingPathId, 'student_name' => $studentName],
+            data: ['training_path_id' => $trainingPathId, 'engineer_name' => $engineerName],
         );
     }
 

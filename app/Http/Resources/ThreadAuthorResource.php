@@ -34,7 +34,7 @@ class ThreadAuthorResource extends JsonResource
             return 'teacher';
         }
 
-        return 'student';
+        return 'engineer';
     }
 
     private function getBadge(): ?string

@@ -98,7 +98,7 @@ class TrainingPath extends Model
         return $this->hasMany(TrainingPathReview::class);
     }
 
-    public function students(): BelongsToMany
+    public function engineers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'training_path_enrollments')
             ->withPivot('enrolled_at')
@@ -148,7 +148,7 @@ class TrainingPath extends Model
     // Accessors
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function getStudentCountAttribute(): int
+    public function getEngineerCountAttribute(): int
     {
         return $this->enrollments()->count();
     }

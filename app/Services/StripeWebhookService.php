@@ -81,7 +81,7 @@ class StripeWebhookService
             // Only persist completion if enrollment succeeds too.
             $lockedPayment->markAsCompleted($session->payment_intent);
             $this->enrollUser($lockedPayment->fresh('user'));
-            
+
             return true;
         });
 

@@ -42,7 +42,9 @@ export default function CertificateLookupPage() {
             return;
         }
 
-        router.visit(`/certificates/${encodeURIComponent(extractedHash)}/verify`);
+        router.visit(
+            `/certificates/${encodeURIComponent(extractedHash)}/verify`,
+        );
     };
 
     return (
@@ -57,21 +59,27 @@ export default function CertificateLookupPage() {
                                 <ShieldCheck className="h-8 w-8 text-primary" />
                             </div>
                             <div className="space-y-2">
-                                <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
+                                <p className="text-sm font-medium tracking-[0.2em] text-primary uppercase">
                                     Public Verification
                                 </p>
                                 <h1 className="text-4xl font-bold text-foreground">
                                     Verify a certificate
                                 </h1>
                                 <p className="mx-auto max-w-2xl text-muted-foreground">
-                                    Guests can confirm whether an IoT-REAP certificate is authentic by pasting the verification link or the full certificate hash.
+                                    Guests can confirm whether an IoT-REAP
+                                    certificate is authentic by pasting the
+                                    verification link or the full certificate
+                                    hash.
                                 </p>
                             </div>
                         </div>
 
                         <Card className="border-border/70 shadow-lg">
                             <CardContent className="p-6 sm:p-8">
-                                <form onSubmit={handleSubmit} className="space-y-4">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="space-y-4"
+                                >
                                     <label
                                         htmlFor="certificate-verification-query"
                                         className="block text-sm font-medium text-foreground"
@@ -92,11 +100,17 @@ export default function CertificateLookupPage() {
                                             />
                                             {showError && (
                                                 <p className="mt-2 text-sm text-destructive">
-                                                    Enter a valid verification link or the full certificate hash.
+                                                    Enter a valid verification
+                                                    link or the full certificate
+                                                    hash.
                                                 </p>
                                             )}
                                         </div>
-                                        <Button type="submit" size="lg" className="h-12 px-6">
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            className="h-12 px-6"
+                                        >
                                             <Search className="mr-2 h-4 w-4" />
                                             Verify
                                         </Button>
@@ -110,7 +124,9 @@ export default function CertificateLookupPage() {
                                             Accepted input
                                         </div>
                                         <p>
-                                            Paste the public verification URL from a certificate or enter the complete verification hash directly.
+                                            Paste the public verification URL
+                                            from a certificate or enter the
+                                            complete verification hash directly.
                                         </p>
                                     </div>
                                     <div className="rounded-xl bg-muted/50 p-4">
@@ -119,7 +135,10 @@ export default function CertificateLookupPage() {
                                             What you will see
                                         </div>
                                         <p>
-                                            The result page shows whether the certificate is valid and, if so, who earned it and which training path it covers.
+                                            The result page shows whether the
+                                            certificate is valid and, if so, who
+                                            earned it and which training path it
+                                            covers.
                                         </p>
                                     </div>
                                 </div>

@@ -194,5 +194,4 @@ class VideoService
 
         return $fallbackDisk;
     }
-
 }
