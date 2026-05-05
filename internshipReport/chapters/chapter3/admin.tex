@@ -426,15 +426,156 @@ the following sub-use cases:
 \fi
 
 \subsubsubsection[Manage Users \& Roles]{Refinement of the Use Case Manage Users \& Roles} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-manage-users-and-roles-use-case} presents the refinement of the
 Use Case Manage Users \& Roles for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-manage-users-and-roles-use-case}
     \caption{Use Case Manage Users \& Roles}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-manage-users-and-roles-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Browse and Inspect Users}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Browse and Inspect Users}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Browse and Inspect Users \\
+        \hline
+        \textbf{Summary}        & Administrator browses the full list of registered users with filtering and sorting options, and inspects the detailed profile, activity history, and account status of any individual user \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & Administrator has viewed the user list and the comprehensive details of a selected user, and may proceed to perform account management actions \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the User Management section; system displays a paginated list of all registered users with name, email, role, status, and registration date; administrator may filter by role or status, search by name or email, and sort by registration date, name, or activity
+                \item Administrator selects a user; system displays the full detail view with sections covering profile, account status, activity history, training path enrollments and progress, and payment history and refund requests
+                \item Administrator may proceed to perform account actions directly from the detail view
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no users exist or the user service is unavailable, system displays an appropriate empty state or error notification
+                \item If the selected user does not exist, system displays a not-found error and returns to the list
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-browse-users}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Account Status and Role}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Account Status and Role}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Account Status and Role \\
+        \hline
+        \textbf{Summary}        & Administrator suspends or unsuspends a user account and changes a user's role, updating their platform access and permissions accordingly \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and has opened the target user's detail page \\
+        \hline
+        \textbf{Post-condition} & The user's account status or role is updated, all active sessions are terminated where applicable, and the user is notified of the change \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator selects an account action from the user detail page
+                \item For \textbf{Suspend}: administrator provides a reason and confirms; system updates the user's status to suspended, terminates all active sessions, and notifies the user; the user can no longer log in or access the platform
+                \item For \textbf{Unsuspend}: administrator confirms the restoration; system updates the user's status to active and notifies the user; the user can log in and access the platform again
+                \item For \textbf{Change Role}: administrator selects a new role (engineer, teacher, or admin) and confirms; system validates the change, updates the user's role and permissions, and notifies the user
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the user is already in the target status, system displays an explanatory notice
+                \item A role change that would leave no administrators is blocked with an explanatory error
+                \item Persistence failures for any action preserve the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-account-status}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Teacher Approval}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Teacher Approval}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Teacher Approval \\
+        \hline
+        \textbf{Summary}        & Administrator reviews and approves pending teacher registration applications, and revokes teacher privileges from approved accounts when required \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges; at least one teacher account is pending approval or an approved teacher account exists for revocation \\
+        \hline
+        \textbf{Post-condition} & The teacher account status is updated to approved or revoked and the user is notified; their ability to create and submit training paths is granted or removed accordingly \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item For \textbf{Approve}: administrator opens the pending teacher accounts list; system displays each applicant's profile, credentials, and submitted documents; administrator reviews qualifications and approves the account; system grants teacher-level privileges and notifies the teacher, who can now create and submit training paths
+                \item For \textbf{Revoke}: administrator navigates to the teacher's user detail page and selects the revoke action; system requires a reason; administrator provides the reason and confirms; system downgrades the user's role, notifies the user, and prevents them from creating or submitting new training paths; existing published content remains accessible
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the teacher's documents are incomplete during approval, administrator requests additional information
+                \item If the target user is not a teacher, revocation is blocked with an explanatory error
+                \item Persistence failures for either action preserve the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-teacher-approval}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Impersonate User and GDPR Data Deletion}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Impersonate User and GDPR Data Deletion}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Impersonate User and GDPR Data Deletion \\
+        \hline
+        \textbf{Summary}        & Administrator either impersonates a user account to debug issues or view the platform from their perspective, or permanently deletes a user account and all associated data in compliance with GDPR requirements \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and the target user account exists \\
+        \hline
+        \textbf{Post-condition} & An impersonation session is created and logged for audit purposes, or the user account and all associated data are permanently and irreversibly deleted and the deletion is logged \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the target user's detail page and selects a privileged action
+                \item For \textbf{Impersonate}: administrator confirms the impersonation; system creates an impersonation session, logs the action for audit purposes, and places the administrator in the target user's context; the administrator can now interact with the platform as that user
+                \item For \textbf{GDPR Deletion}: system displays a warning listing all data to be permanently removed (profile, enrollments, payments, activity logs); administrator confirms the deletion; system permanently removes the user account and all associated data and logs the action for audit purposes
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the target user does not exist, system displays a not-found error for either action
+                \item If impersonation fails, system retains the current administrator session and surfaces an error
+                \item If the deletion fails, system preserves all user data and surfaces a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-privileged-actions}
+\end{table}
+
+\iffalse
 \dotsection{\textbf{List All Users}}
 \begin{table}[H]
     \centering
@@ -771,17 +912,286 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-gdpr-delete}
 \end{table}
+\fi
 
 \subsubsubsection[Manage Infrastructure and Hardware]{Refinement of the Use Case Manage Infrastructure and Hardware} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-manage-infrastructure-and-hardware-use-case} presents the refinement of the
 Use Case Manage Infrastructure and Hardware for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-manage-infrastructure-and-hardware-use-case}
     \caption{Use Case Manage Infrastructure and Hardware}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-manage-infrastructure-and-hardware-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Manage Proxmox Servers}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Proxmox Servers}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Proxmox Servers \\
+        \hline
+        \textbf{Summary}        & Administrator registers, configures, tests, inactivates, deletes, and synchronizes Proxmox servers that provide the VM provisioning infrastructure \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & The Proxmox server registry is updated to reflect the registered, edited, inactivated, deleted, or synchronized server according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Proxmox Servers section; system displays all registered servers with name, host, status, and node count
+                \item For \textbf{Register}: administrator fills in server name, host, port, username, and password; system validates the connection to the Proxmox API, stores credentials securely, and adds the server to the infrastructure list
+                \item For \textbf{Edit Credentials}: administrator selects a server and updates connection details; system validates the new credentials by testing the connection before persisting the changes
+                \item For \textbf{Test Connection}: administrator clicks Test Connection on a selected server; system attempts to reach the Proxmox API and displays the result including server version and node information on success
+                \item For \textbf{Inactivate}: administrator confirms the action; system marks the server as inactive, preventing new VM provisioning while existing sessions continue normally
+                \item For \textbf{Delete}: system checks for active VMs; administrator confirms permanent deletion; system removes the server and all associated data and logs the action for audit purposes
+                \item For \textbf{Sync Nodes}: administrator clicks Sync Nodes on an active server; system connects to the Proxmox API, updates local node records with added or changed nodes, removes nodes that no longer exist, and displays a sync result summary
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the server list cannot be retrieved, system shows an error notification
+                \item Connection test failures (timeout, authentication error, unreachable host) surface a specific error and prevent registration or credential updates from proceeding
+                \item A duplicate server name prompts for a unique name
+                \item Deletion is blocked if active VMs exist on the server
+                \item If the server is already inactive, system displays a notice
+                \item Sync failures preserve the previous node list and surface a recoverable error
+                \item Persistence failures for any action retain the current state and log the error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-manage-proxmox}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Browse Infrastructure: Nodes and VMs}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Browse Infrastructure: Nodes and VMs}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Browse Infrastructure: Nodes and VMs \\
+        \hline
+        \textbf{Summary}        & Administrator views all nodes across registered Proxmox servers, inspects the VMs running on a selected node, and monitors all currently running VMs platform-wide \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and at least one Proxmox server is registered \\
+        \hline
+        \textbf{Post-condition} & The administrator has viewed the node list, the VMs on a selected node, or the platform-wide list of running VMs with resource utilization details \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Nodes section; system displays all nodes from registered Proxmox servers with name, server, status, CPU, memory, and storage metrics; administrator may filter by server or status
+                \item Administrator selects a node; system retrieves and displays all VMs on that node with name, status, CPU, memory, and disk allocation; administrator may filter by status or resource type and view detailed VM configuration
+                \item Administrator navigates to the Running VMs section; system retrieves all VMs with running status across all nodes and displays them with name, node, owner, CPU, memory, and uptime; administrator may filter by node or owner
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no nodes or VMs are available, system displays an appropriate empty state
+                \item If any list cannot be retrieved, system shows an error notification with a retry option
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-browse-infra}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Control VM Power State}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Control VM Power State}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Control VM Power State \\
+        \hline
+        \textbf{Summary}        & Administrator starts, stops, or reboots a virtual machine on a Proxmox node by sending the corresponding command to the Proxmox API \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated and has selected a VM on a Proxmox node; the VM must be in the appropriate state for the requested action \\
+        \hline
+        \textbf{Post-condition} & The VM power state is updated and reflected in the infrastructure view \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator selects a VM from the node VM list and chooses a power action
+                \item For \textbf{Start}: system sends a start command to the Proxmox API; Proxmox starts the VM and system displays the updated status as running
+                \item For \textbf{Stop}: system sends a stop command to the Proxmox API; Proxmox stops the VM and system displays the updated status as stopped
+                \item For \textbf{Reboot}: system sends a reboot command to the Proxmox API; Proxmox reboots the VM and system displays the updated status as running after reboot
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the VM is already in the target state, system displays an explanatory notice
+                \item If the VM is not running, reboot is blocked with an explanatory error
+                \item If any command fails, system displays an error and retains the current VM state
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-vm-power}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Gateway Nodes}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Gateway Nodes}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Gateway Nodes \\
+        \hline
+        \textbf{Summary}        & Administrator registers, edits, verifies, and deletes gateway nodes that handle hardware device management and USB forwarding \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & The gateway node registry is updated to reflect the registered, edited, verified, or deleted gateway according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Gateway Nodes section; system displays all registered gateways with name, host, status, and connected device count
+                \item For \textbf{Add}: administrator enters gateway name, host, port, and authentication details; system validates the connection, stores the configuration, and adds the gateway to the list
+                \item For \textbf{Edit}: administrator selects a gateway and updates its configuration; system validates the new settings by testing the connection before persisting the changes
+                \item For \textbf{Verify}: administrator clicks Verify on a selected gateway; system connects to the node, retrieves status and connected device count, and displays the verification result
+                \item For \textbf{Delete}: system checks for active devices; administrator confirms permanent deletion; system removes the gateway and all associated data and logs the action for audit purposes
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the connection test fails during registration or edit, system displays an error and prevents the action from proceeding
+                \item A duplicate gateway name prompts for a unique name
+                \item If the gateway is unreachable during verification, system displays a connection error with diagnostic information
+                \item Deletion is blocked if active devices exist on the gateway
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-manage-gateways}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Hardware Devices}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Hardware Devices}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Hardware Devices \\
+        \hline
+        \textbf{Summary}        & Administrator discovers, monitors, assigns, and configures USB devices and cameras connected through gateway nodes, including VM assignment and device dedication settings \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and at least one active gateway node is registered \\
+        \hline
+        \textbf{Post-condition} & Hardware devices are discovered and registered, assigned to or unassigned from VMs, or configured as dedicated according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Hardware Devices section; system displays all registered devices (USB and cameras) with type, model, status, and gateway information; administrator may filter by type, status, or gateway
+                \item For \textbf{Discover}: administrator clicks Discover Devices; system queries all active gateways, retrieves device information (type, model, serial number, status), registers new devices, updates existing ones, and displays the discovery result
+                \item For \textbf{Assign USB to VM}: administrator selects a USB device and a target VM; system validates compatibility and updates the device configuration; the device becomes accessible from within the VM session
+                \item For \textbf{Unassign USB}: administrator selects an assigned USB device and confirms; system removes the assignment and releases the device for other VMs
+                \item For \textbf{Dedicated Device}: administrator selects a device, chooses dedication type (user or training path), and selects the target; system updates the dedication settings and confirms the configuration
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no gateway nodes are available, discovery is blocked with an explanatory error
+                \item If discovery fails, system shows an error with diagnostic information
+                \item If a device is already assigned, system prompts to reassign or displays the current assignment
+                \item If the target VM is unavailable, assignment is blocked
+                \item If a device is in active use, dedication changes are prevented
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-hardware-devices}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Cameras}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Cameras}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Cameras \\
+        \hline
+        \textbf{Summary}        & Administrator browses registered cameras, activates or deactivates them, and assigns or unassigns them to virtual machines individually or in bulk \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and at least one camera is registered \\
+        \hline
+        \textbf{Post-condition} & Camera status and VM assignment are updated according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Cameras section; system displays all registered cameras with name, status, PTZ support, and VM assignment; administrator may filter by status or PTZ capability
+                \item For \textbf{Activate / Deactivate}: administrator selects a camera and confirms the toggle; system updates the camera status and displays it as available or unavailable accordingly
+                \item For \textbf{Assign to VM}: administrator selects one or more cameras and a target VM; system validates all assignments, updates camera configurations, and confirms the result; assigned cameras become accessible from within the VM session
+                \item For \textbf{Unassign}: administrator selects an assigned camera and confirms; system removes the assignment and marks the camera as available
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no cameras are registered, system displays an empty state
+                \item If a camera is already in the target activation state, system displays a notice
+                \item If a camera is already assigned, system prompts to reassign
+                \item If the target VM is unavailable, assignment is blocked
+                \item If a camera is not assigned, unassignment displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-manage-cameras}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Connection Preferences}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Connection Preferences}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Connection Preferences \\
+        \hline
+        \textbf{Summary}        & Administrator configures preferred remote desktop connection settings such as protocol, resolution, color depth, and keyboard layout, which are applied to future Guacamole connection tokens \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & The connection preference profile is created or updated and will be applied to subsequent VM sessions \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator opens the connection preferences settings; system displays available protocols (RDP, VNC, SSH) and configurable parameters
+                \item Administrator selects a default protocol and configures resolution, color depth, and keyboard layout
+                \item Administrator saves the profile; system persists it and applies it to future Guacamole connection tokens
+                \item Administrator may create multiple profiles for different session types
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the selected protocol is not supported, system rejects the configuration with an explanatory error
+                \item A duplicate profile name prompts for a unique name
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-connection-prefs}
+\end{table}
+
+\iffalse
 \dotsection{\textbf{Specification of the Use Case List Proxmox Servers}}
 \begin{table}[H]
     \centering
@@ -1870,17 +2280,93 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-connection-prefs}
 \end{table}
+\fi
 
 \subsubsubsection[Set Maintenance Mode]{Refinement of the Use Case Set Maintenance Mode} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-set-maintenance-mode-use-case} presents the refinement of the
 Use Case Set Maintenance Mode for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-set-maintenance-mode-use-case}
     \caption{Use Case Set Maintenance Mode}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-set-maintenance-mode-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Manage USB Device Maintenance}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage USB Device Maintenance}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage USB Device Maintenance \\
+        \hline
+        \textbf{Summary}        & Administrator views all USB devices in maintenance, places available devices into maintenance mode with a reason and description, updates maintenance descriptions, and removes devices from maintenance to restore their availability \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges; the target device must be in the appropriate state for the requested action \\
+        \hline
+        \textbf{Post-condition} & The USB device maintenance status and description are updated accordingly; devices in maintenance cannot accept new reservations and devices removed from maintenance become available again \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Maintenance section; system displays all devices currently in maintenance with type, model, maintenance reason, and start date; administrator may filter by device type or reason
+                \item For \textbf{Enable}: administrator selects an available USB device and clicks Enable Maintenance; system displays a form for the maintenance reason and description; administrator submits; system updates the device status to maintenance, prevents new reservations, and confirms the activation
+                \item For \textbf{Update Description}: administrator selects a device already in maintenance and clicks Edit Maintenance Description; administrator enters or updates the description; system saves the update and confirms
+                \item For \textbf{Disable}: administrator selects a device in maintenance and clicks Disable Maintenance; system confirms the action, updates the device status to available, clears the maintenance description, and confirms the deactivation
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no devices are in maintenance, system displays an empty state
+                \item If the device list cannot be retrieved, system shows an error notification
+                \item If the device is already in the target maintenance state, system displays an explanatory notice
+                \item If a description update is attempted on a device not in maintenance, system displays an error
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-usb-maintenance}
+\end{table}
+
+\dotsection{\textbf{Specification of the Use Case Manage Camera Maintenance}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Camera Maintenance}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Camera Maintenance \\
+        \hline
+        \textbf{Summary}        & Administrator places cameras into maintenance mode to prevent streaming and assignment, and removes them from maintenance to restore availability \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges; the target camera must be in the appropriate state for the requested action \\
+        \hline
+        \textbf{Post-condition} & The camera maintenance status is updated; cameras in maintenance cannot be streamed or assigned, and cameras removed from maintenance become available again \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator selects a camera from the device list and chooses a maintenance action
+                \item For \textbf{Enable}: administrator clicks Enable Maintenance; system displays a form for the maintenance reason and description; administrator submits; system updates the camera status to maintenance, prevents streaming and assignment, and confirms the activation
+                \item For \textbf{Disable}: administrator selects a camera in maintenance and clicks Disable Maintenance; system confirms the action, updates the camera status to available, clears the maintenance description, and confirms the deactivation
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the camera is already in the target maintenance state, system displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-camera-maintenance}
+\end{table}
+
+\iffalse
 \dotsection{\textbf{Specification of the Use Case View All Devices in Maintenance}}
 \begin{table}[H]
     \centering
@@ -2109,7 +2595,46 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-disable-camera-maintenance}
 \end{table}
+\fi
 
+\dotsection{\textbf{Specification of the Use Case Moderate Forum Threads}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Moderate Forum Threads}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Moderate Forum Threads \\
+        \hline
+        \textbf{Summary}        & Administrator reviews flagged forum threads and replies reported by users, and dismisses flags on content that does not warrant removal, restoring it to normal status \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & Reviewed content is either unflagged and removed from the moderation queue, or retained pending further action; all moderation decisions are logged for audit purposes \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Forum Moderation section; system displays a prioritized list of flagged threads and replies with flag reason, reporter, and post content; administrator may filter by severity, type, or time range
+                \item Administrator selects a flagged item and reviews its full thread context and flag reason
+                \item If the content does not warrant action, administrator selects Unflag; system removes the flag from the thread or reply, clears it from the moderation queue, and logs the decision for audit purposes
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no flagged posts exist, system displays an empty state
+                \item If the forum service is unavailable, system displays an error notification
+                \item If the selected item has already been unflagged, system displays an explanatory notice
+                \item If the unflag action fails, system retains the current flag state and surfaces a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-moderate-forum}
+\end{table}
+
+\iffalse
 \subsubsubsection[Moderate Forum Threads]{Refinement of the Use Case Moderate Forum Threads} Figure
 \ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
 Use Case Moderate Forum Threads for the Administrator actor. This use case includes
@@ -2212,17 +2737,133 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-unflag-reply}
 \end{table}
+\fi
 
 \subsubsubsection[Manage Training Paths]{Refinement of the Use Case Manage Training Paths} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-manage-training-paths-use-case} presents the refinement of the
 Use Case Manage Training Paths for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-manage-training-paths-use-case}
     \caption{Use Case Manage Training Paths}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-manage-training-paths-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Review and Approve Training Paths}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Review and Approve Training Paths}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Review and Approve Training Paths \\
+        \hline
+        \textbf{Summary}        & Administrator browses all training paths, reviews submitted ones pending approval, and approves or rejects them with feedback to control what is published on the platform \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated and authorized through the admin-only policy; at least one training path exists or is pending review \\
+        \hline
+        \textbf{Post-condition} & The training path status is updated to approved or rejected; approved paths become available in public listings and the author is notified in either case \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Training Paths section; system displays all training paths with title, author, status, and approval state; administrator may filter by status or approval state
+                \item Administrator selects a path pending review and inspects its pedagogical and operational information
+                \item For \textbf{Approve}: administrator confirms the approval; system updates the training path status to approved, makes it available within public listings, and notifies the author
+                \item For \textbf{Reject}: administrator clicks Reject and enters feedback explaining the reasons; system updates the status to rejected, sends the feedback to the author as a notification, and retains the path for revision
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no training paths exist or the list cannot be retrieved, system displays an appropriate empty state or error notification
+                \item If the training path no longer satisfies review conditions, approval is refused
+                \item If the path is already approved or rejected, system displays an explanatory notice
+                \item If the administrator lacks permission, the action is denied
+                \item Persistence failures for any action retain the previous state and log the failure
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-review-training-paths}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Curate Featured Training Paths}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Curate Featured Training Paths}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Curate Featured Training Paths \\
+        \hline
+        \textbf{Summary}        & Administrator marks approved training paths as featured or removes their featured status, and reorders featured paths to control their display sequence on the landing page \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges and the target training path is approved \\
+        \hline
+        \textbf{Post-condition} & The training path featured status is updated and the landing page reflects the new selection and order \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item For \textbf{Feature / Unfeature}: administrator selects an approved training path and clicks Feature or Unfeature; system updates the featured status and confirms; the path appears in or disappears from featured listings accordingly
+                \item For \textbf{Reorder}: administrator navigates to the Featured Paths section; system displays all featured paths with their current display order; administrator drags and drops paths to the desired sequence; system updates order values for all featured paths and confirms
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If the training path is not approved, featuring is blocked with an explanatory error
+                \item If fewer than two featured paths exist, reordering displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-curate-featured}
+\end{table}
+\iffalse
+\dotsection{\textbf{Specification of the Use Case Manage VM Assignment Queue}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage VM Assignment Queue}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage VM Assignment Queue \\
+        \hline
+        \textbf{Summary}        & Administrator browses pending VM assignment requests submitted by teachers, inspects their details and resource requirements, and approves or rejects them with feedback \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & The VM assignment request status is updated to approved or rejected; the VM template is linked to the training unit on approval, and the teacher is notified in either case \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the VM Assignment Queue; system displays all pending requests with teacher, training path, unit, and requested template; administrator may filter by teacher or training path
+                \item Administrator selects a request; system displays the full detail view including teacher name, training path, unit, requested template, resource requirements, and current infrastructure capacity
+                \item For \textbf{Approve}: administrator confirms the approval; system validates infrastructure capacity, links the VM template to the training unit, updates the request status to approved, and notifies the teacher
+                \item For \textbf{Reject}: administrator enters feedback explaining the reasons and confirms; system updates the request status to rejected and sends the feedback to the teacher as a notification
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no pending requests exist or the list cannot be retrieved, system displays an appropriate empty state or error notification
+                \item If the selected request no longer exists, system displays a not-found error and returns to the queue
+                \item If the requested VM template no longer exists, system flags the request as invalid
+                \item If infrastructure capacity is insufficient for approval, system suggests an alternative template
+                \item If the request is already approved or rejected, system displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-vm-assignment-queue}
+\end{table}
+\fi
+
+\iffalse
 \dotsection{\textbf{Specification of the Use Case List All Training Paths}}
 \begin{table}[H]
     \centering
@@ -2565,7 +3206,50 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-reject-vm-assignment}
 \end{table}
+\fi
 
+
+\dotsection{\textbf{Specification of the Use Case Manage VM Assignments}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage VM Assignments}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage VM Assignments \\
+        \hline
+        \textbf{Summary}        & Administrator views all VM template assignments across all statuses, filters to pending requests awaiting decision, and approves or rejects them with feedback to link or withhold VM templates from training units \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & VM assignment statuses are updated to approved or rejected; approved templates are linked to their training units and teachers are notified in either case \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the VM Assignments section; system displays all assignments with template, training path, unit, and status; administrator may filter by status or training path
+                \item Administrator applies the pending filter to focus on requests awaiting decision; system displays pending assignments with teacher, training path, unit, and requested template; administrator may further filter by teacher or training path
+                \item Administrator selects one or more pending requests and reviews their resource requirements
+                \item For \textbf{Approve}: administrator confirms the approval; system validates infrastructure capacity for each request, links the VM templates to the training units, updates statuses to approved, and notifies the teachers
+                \item For \textbf{Reject}: administrator enters feedback explaining the reasons and confirms; system updates statuses to rejected and sends the feedback to each teacher as a notification
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no assignments exist or the list cannot be retrieved, system displays an appropriate empty state or error notification
+                \item If any requested VM template no longer exists, system flags that request as invalid
+                \item If infrastructure capacity is insufficient for an approval, system suggests alternative templates
+                \item If any request is already approved or rejected, system displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-manage-vm-assignments}
+\end{table}
+
+\iffalse
 \subsubsubsection[Approve VM Assignments]{Refinement of the Use Case Approve VM Assignments} Figure
 \ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
 Use Case Approve VM Assignments for the Administrator actor. This use case includes
@@ -2729,17 +3413,101 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-reject-vm-assignments}
 \end{table}
+\fi
 
 \subsubsubsection[Manage Reservations]{Refinement of the Use Case Manage Reservations} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-manage-reservations-use-case} presents the refinement of the
 Use Case Manage Reservations for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-manage-reservations-use-case}
     \caption{Use Case Manage Reservations}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-manage-reservations-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Manage USB Device Reservations}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage USB Device Reservations}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage USB Device Reservations \\
+        \hline
+        \textbf{Summary}        & Administrator views all USB device reservations across all statuses, filters to pending or upcoming requests, approves or rejects pending reservations with feedback, and blocks device time slots to prevent reservations during maintenance periods \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & USB reservation statuses are updated to approved or rejected and engineers are notified, or a time slot is blocked and the device becomes unavailable for that period \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the USB Reservations section; system displays all reservations with device, user, status, and time slot; administrator may filter by status or device
+                \item Administrator applies the \textbf{Pending} filter to focus on requests awaiting decision; system displays pending reservations with device, user, and requested time slot; administrator may filter by device or user
+                \item Administrator applies the \textbf{Upcoming} filter to monitor approved future reservations; system displays approved future reservations with device, user, and scheduled time slot; administrator may filter by date range or device
+                \item For \textbf{Approve}: administrator selects a pending request and confirms approval; system validates device availability for the requested time slot, updates the reservation status to approved, and notifies the engineer
+                \item For \textbf{Reject}: administrator selects a pending request, enters feedback, and confirms; system updates the status to rejected and sends the feedback to the engineer as a notification
+                \item For \textbf{Block Time Slot}: administrator selects a USB device, specifies a date range and reason, and confirms; system creates a blocked time slot for the device and displays the blocked periods
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no reservations exist for the active filter, system displays an appropriate empty state
+                \item If any list cannot be retrieved, system shows an error notification
+                \item If the device is already reserved for the requested time slot, system suggests an alternative time
+                \item If the block time slot conflicts with existing reservations, system displays a conflict warning
+                \item If the reservation is already approved or rejected, system displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-usb-reservations}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Camera Reservations}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Camera Reservations}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Camera Reservations \\
+        \hline
+        \textbf{Summary}        & Administrator views all camera reservations, filters to pending requests, approves or rejects them with feedback, and blocks camera time slots to prevent reservations during maintenance periods \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & Camera reservation statuses are updated to approved or rejected and engineers are notified, or a time slot is blocked and the camera becomes unavailable for that period \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Camera Reservations section; system displays all reservations with camera, user, status, and time slot; administrator may filter by status or camera
+                \item Administrator applies the \textbf{Pending} filter; system displays pending reservations with camera, user, and requested time slot; administrator may filter by camera or user
+                \item For \textbf{Approve}: administrator selects a pending request and confirms approval; system validates camera availability for the requested time slot, updates the reservation status to approved, and notifies the engineer
+                \item For \textbf{Reject}: administrator selects a pending request, enters feedback, and confirms; system updates the status to rejected and sends the feedback to the engineer as a notification
+                \item For \textbf{Block Time Slot}: administrator selects a camera, specifies a date range and reason, and confirms; system creates a blocked time slot for the camera and displays the blocked periods
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no reservations exist for the active filter, system displays an appropriate empty state
+                \item If any list cannot be retrieved, system shows an error notification
+                \item If the camera is already reserved for the requested time slot, system suggests an alternative time
+                \item If the block time slot conflicts with existing reservations, system displays a conflict warning
+                \item If the reservation is already approved or rejected, system displays an explanatory notice
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-camera-reservations}
+\end{table}
+
+\iffalse
 \dotsection{\textbf{Specification of the Use Case List All USB Reservations}}
 \begin{table}[H]
     \centering
@@ -3161,17 +3929,99 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-block-camera-time-slot}
 \end{table}
+\fi
 
 \subsubsubsection[Manage Payout \& Refunds]{Refinement of the Use Case Manage Payout \& Refunds} Figure
-\ref{fig:admin-consult-dashboard-and-platform-analytics-use-case} presents the refinement of the
+\ref{fig:admin-manage-payout-and-refunds-use-case} presents the refinement of the
 Use Case Manage Payout \& Refunds for the Administrator actor. This use case includes
 the following sub-use cases:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/admin-consult-dashboard-and-platform-analytics-use-case}
+    \includegraphics[width=\textwidth]{assets/chapter3/admin-manage-payout-and-refunds-use-case}
     \caption{Use Case Manage Payout \& Refunds}
-    \label{fig:admin-consult-dashboard-and-platform-analytics-use-case}
+    \label{fig:admin-manage-payout-and-refunds-use-case}
 \end{figure}
+\dotsection{\textbf{Specification of the Use Case Manage Payout Requests}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Payout Requests}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Payout Requests \\
+        \hline
+        \textbf{Summary}        & Administrator views all teacher payout requests, approves or rejects pending ones with feedback, processes approved transfers through the payment processor, and exports payout data for accounting purposes \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & Payout statuses are updated to approved, rejected, or processing; fund transfers are initiated for approved payouts; teachers are notified of all decisions; and payout reports are available for download \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Payout Requests section; system displays all requests with teacher, amount, status, and request date; administrator may filter by status or teacher
+                \item For \textbf{Approve}: administrator selects a pending request, reviews payout details and teacher earnings history, and confirms approval; system validates the payout amount and teacher account, updates the status to approved, and notifies the teacher
+                \item For \textbf{Reject}: administrator selects a pending request, enters feedback, and confirms; system updates the status to rejected and sends the feedback to the teacher as a notification
+                \item For \textbf{Process / Transfer}: administrator selects an approved request and confirms the transfer; system initiates the transfer through the payment processor, updates the status to processing, and logs the action for audit purposes
+                \item For \textbf{Export Report}: administrator applies filters (date range, status, teacher) and clicks Export; system generates and offers the report for download in CSV, PDF, or Excel format
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no payout requests exist or the list cannot be retrieved, system displays an appropriate empty state or error notification
+                \item If a request is already approved or rejected, system displays an explanatory notice
+                \item Processing is blocked if the payout is not in approved status
+                \item If the transfer fails, system displays an error and marks the payout for manual review
+                \item If no data matches the export filters, system displays an empty state; if report generation fails, system shows an error notification
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-payout-requests}
+\end{table}
+\dotsection{\textbf{Specification of the Use Case Manage Refund Requests}}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Refund Requests}
+    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Refund Requests \\
+        \hline
+        \textbf{Summary}        & Administrator views pending refund requests and the full refund history, approves or rejects pending ones, and executes Stripe refunds manually when automatic processing has failed \\
+        \hline
+        \textbf{Actor}          & Administrator \\
+        \hline
+        \textbf{Precondition}   & The administrator is authenticated with admin privileges \\
+        \hline
+        \textbf{Post-condition} & Refund statuses are updated to approved, rejected, or completed; Stripe refunds are initiated or executed manually; engineers are notified of all decisions \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Administrator navigates to the Refund Requests section; system displays all pending requests with engineer, amount, status, and request date; administrator may filter by status or engineer
+                \item Administrator navigates to the Refunds History section to review the complete transaction history; system displays all processed refunds with engineer, amount, status, and processing date; administrator may filter by status, date range, or engineer
+                \item For \textbf{Approve}: administrator selects a pending request, reviews the refund details and payment information, and confirms approval; system validates eligibility and amount, updates the status to approved, initiates the Stripe refund through the API, and notifies the engineer
+                \item For \textbf{Reject}: administrator selects a pending request, enters feedback, and confirms; system updates the status to rejected and sends the feedback to the engineer as a notification
+                \item For \textbf{Execute Stripe Refund} (manual fallback): administrator selects an approved request marked for manual processing and confirms execution; system calls the Stripe API, updates the refund status based on the result, and logs the action for audit purposes
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no refund requests or history entries exist, or lists cannot be retrieved, system displays an appropriate empty state or error notification
+                \item If a request is already approved or rejected, system displays an explanatory notice
+                \item If the Stripe refund API call fails during approval, system logs the error and marks the refund for manual processing
+                \item If the Stripe API call fails during manual execution, system displays an error and marks the refund for retry
+                \item If the original payment cannot be refunded, system displays an error with details
+                \item Persistence failures for any action retain the current state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:admin-refund-requests}
+\end{table}
+\iffalse
 \dotsection{\textbf{Specification of the Use Case List Payout Requests}}
 \begin{table}[H]
     \centering
@@ -3554,7 +4404,7 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:admin-execute-stripe-refund}
 \end{table}
-
+\fi
 
 
 
