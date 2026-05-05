@@ -260,14 +260,14 @@ h6 {
 /* Focus states for all interactive elements */
 a,
 button {
-    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:outline-none;
 }
 
 /* Ensure inputs have consistent focus behavior */
 input:not([type='checkbox']):not([type='radio']),
 textarea,
 select {
-    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:outline-none;
 }
 
 /* Custom focus style for icon buttons and toggles */
