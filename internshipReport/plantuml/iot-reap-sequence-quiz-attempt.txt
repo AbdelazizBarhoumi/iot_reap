@@ -1,0 +1,74 @@
+@startuml iotreap-quiz-attempt
+title IoT-REAP - Quiz Attempt Submission Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "Quiz\nController" as Controller
+participant "Quiz\nService" as QuizService
+participant "QuizAttempt\nRepository" as AttemptRepo
+participant "TrainingUnit\nProgress Repo" as ProgressRepo
+database "Database" as DB
+
+== Open Quiz ==
+
+Engineer -> Browser: Navigate to quiz in training unit
+Browser -> Controller: GET /trainingPaths/{pathId}/trainingUnit/{unitId}
+Controller -> QuizService: getQuizForUnit(unitId)
+QuizService -> DB: SELECT quizzes WHERE training_unit_id = ?
+DB --> QuizService: Quiz with questions and options
+QuizService --> Controller: Quiz data
+Controller --> Browser: Render quiz view
+Browser --> Engineer: Display quiz questions
+
+== Start Attempt ==
+
+Engineer -> Browser: Click "Start Quiz"
+Browser -> Controller: POST /trainingPaths/{pathId}/quizzes/{quizId}/attempt
+Controller -> QuizService: startAttempt(user, quiz)
+
+QuizService -> QuizService: checkEligibility(user, quiz)
+note right: Verify: enrolled in path,\nnot exceeded max attempts
+
+QuizService -> AttemptRepo: create(user, quiz)
+AttemptRepo -> DB: INSERT quiz_attempts (status: 'in_progress')
+DB --> AttemptRepo: QuizAttempt record
+AttemptRepo --> QuizService: Quiz attempt
+QuizService --> Controller: Attempt created
+Controller --> Browser: 201 Created {attempt_id}
+Browser --> Engineer: Display quiz form with timer
+
+== Submit Answers ==
+
+Engineer -> Browser: Fill answers and click "Submit"
+Browser -> Controller: POST /quizzes/attempts/{attemptId}/submit {answers[]}
+Controller -> QuizService: submitAttempt(attempt, answers)
+
+QuizService -> QuizService: validateAnswers(attempt, answers)
+note right: Check: attempt belongs to user,\nattempt is in_progress,\nwithin time limit
+
+loop For each answer
+    QuizService -> AttemptRepo: saveAnswer(attempt, questionId, selectedOptionIds)
+    AttemptRepo -> DB: INSERT quiz_attempt_answers
+    DB --> AttemptRepo: Answer record
+end
+
+== Score and Complete ==
+
+QuizService -> QuizService: calculateScore(attempt)
+note right: Compare selected options\nagainst correct answers,\ncompute percentage score
+
+QuizService -> AttemptRepo: completeAttempt(attempt, score, passed)
+AttemptRepo -> DB: UPDATE quiz_attempts SET score = ?, passed = ?, status = 'completed'
+DB --> AttemptRepo: Updated attempt
+AttemptRepo --> QuizService: Completed attempt
+
+QuizService -> ProgressRepo: updateUnitProgress(user, unitId)
+ProgressRepo -> DB: UPSERT training_unit_progress (quiz_completed = true)
+DB --> ProgressRepo: Updated progress
+ProgressRepo --> QuizService: Progress updated
+
+QuizService --> Controller: Attempt result {score, passed, total}
+Controller --> Browser: 200 OK {score, passed}
+Browser --> Engineer: Display quiz results
+
+@enduml

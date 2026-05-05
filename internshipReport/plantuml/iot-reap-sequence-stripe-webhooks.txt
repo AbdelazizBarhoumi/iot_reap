@@ -1,0 +1,159 @@
+@startuml iot-reap-sequence-stripe-webhooks
+title IoT-REAP - Stripe Webhooks Sequence Diagram
+participant "Stripe\nAPI" as stripe_api
+participant "Stripe\nWebhook Controller" as webhook
+participant "Laravel\nRoutes" as routes
+participant "Webhook\nService" as webhook_service
+participant "Database" as db
+participant "Payment\nModel" as payment
+participant "Enrollment\nModel" as enrollment
+participant "Refund\nModel" as refund
+participant "Notification\nService" as notify
+
+== Webhook Reception ==
+
+stripe_api -> routes : POST /stripe/webhook
+note right of stripe_api
+  Webhook events:
+  - checkout.session.completed
+  - payment_intent.succeeded
+  - payment_intent.payment_failed
+  - charge.refunded
+  - transfer.created
+  - transfer.paid
+  - transfer.failed
+end note
+routes -> webhook : handle(request)
+webhook -> webhook_service : verifySignature(request)
+webhook_service -> stripe_api : Verify webhook signature
+stripe_api --> webhook_service : Return verification result
+
+alt Signature valid
+    webhook_service -> webhook_service : parseEventType(request)
+    webhook_service -> webhook_service : extractEventData(request)
+
+    alt checkout.session.completed
+        webhook_service -> db : Find enrollment by session ID
+        webhook_service -> db : Update enrollment status to active
+        webhook_service -> db : Set enrolled_at timestamp
+        webhook_service -> db : Save enrollment
+        webhook_service -> db : Create payment record
+        webhook_service -> db : Set payment status to completed
+        webhook_service -> db : Save payment
+        webhook_service -> notify : Notify user of successful enrollment
+        notify -> db : Create notification
+        webhook_service -> notify : Notify teacher of new enrollment
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else payment_intent.succeeded
+        webhook_service -> db : Find payment by intent ID
+        webhook_service -> db : Update payment status to completed
+        webhook_service -> db : Save payment
+        webhook_service -> db : Update enrollment status if linked
+        webhook_service -> db : Save enrollment
+        webhook_service -> notify : Notify user of payment success
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else payment_intent.payment_failed
+        webhook_service -> db : Find payment by intent ID
+        webhook_service -> db : Update payment status to failed
+        webhook_service -> db : Set failure reason
+        webhook_service -> db : Save payment
+        webhook_service -> db : Update enrollment status to cancelled
+        webhook_service -> db : Save enrollment
+        webhook_service -> notify : Notify user of payment failure
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else charge.refunded
+        webhook_service -> db : Find refund by charge ID
+        webhook_service -> db : Update refund status to completed
+        webhook_service -> db : Set completed_at timestamp
+        webhook_service -> db : Save refund
+        webhook_service -> db : Update payment status to refunded
+        webhook_service -> db : Save payment
+        webhook_service -> db : Revoke enrollment
+        webhook_service -> db : Update enrollment status to refunded
+        webhook_service -> db : Save enrollment
+        webhook_service -> notify : Notify user of refund completion
+        notify -> db : Create notification
+        webhook_service -> notify : Notify teacher of refund
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else transfer.created
+        webhook_service -> db : Find payout by transfer ID
+        webhook_service -> db : Update payout status to processing
+        webhook_service -> db : Save payout
+        webhook_service -> webhook : Return success
+    else transfer.paid
+        webhook_service -> db : Find payout by transfer ID
+        webhook_service -> db : Update payout status to paid
+        webhook_service -> db : Set paid_at timestamp
+        webhook_service -> db : Save payout
+        webhook_service -> notify : Notify teacher of payout completion
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else transfer.failed
+        webhook_service -> db : Find payout by transfer ID
+        webhook_service -> db : Update payout status to failed
+        webhook_service -> db : Set error message
+        webhook_service -> db : Save payout
+        webhook_service -> db : Return funds to pending
+        webhook_service -> db : Update teacher earnings
+        webhook_service -> db : Save changes
+        webhook_service -> notify : Notify admins of transfer failure
+        notify -> db : Create notification
+        webhook_service -> webhook : Return success
+    else Unknown event type
+        webhook_service -> webhook_service : Log unknown event
+        webhook_service -> db : Log webhook event for review
+        webhook_service -> webhook : Return success
+    end
+
+    webhook -> routes : Return 200 OK
+    routes --> stripe_api : Confirm webhook processed
+else Signature invalid
+    webhook_service -> webhook : Return 401 Unauthorized
+    webhook -> routes : Return 401 Unauthorized
+    routes --> stripe_api : Reject webhook (invalid signature)
+end
+
+== Webhook Error Handling ==
+
+stripe_api -> routes : POST /stripe/webhook (retry)
+routes -> webhook : handle(request)
+webhook -> webhook_service : verifySignature(request)
+webhook_service -> stripe_api : Verify webhook signature
+stripe_api --> webhook_service : Return verification result
+
+alt Signature valid but processing fails
+    webhook_service -> webhook_service : Log processing error
+    webhook_service -> db : Log webhook failure
+    webhook_service -> webhook : Return 500 Internal Server Error
+    webhook -> routes : Return 500 Internal Server Error
+    routes --> stripe_api : Return error (Stripe will retry)
+end
+
+note right of stripe_api
+  Webhook features:
+  - Signature verification for security
+  - Multiple event type handling
+  - Idempotent processing
+  - Automatic retry on failure
+  - Database transaction safety
+  - User notifications
+  - Admin error notifications
+  - Event logging for audit
+end note
+
+note right of webhook_service
+  Supported webhook events:
+  - checkout.session.completed
+  - payment_intent.succeeded
+  - payment_intent.payment_failed
+  - charge.refunded
+  - transfer.created
+  - transfer.paid
+  - transfer.failed
+end note
+
+@enduml

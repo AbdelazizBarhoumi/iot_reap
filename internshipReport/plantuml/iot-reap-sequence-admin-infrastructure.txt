@@ -1,0 +1,258 @@
+@startuml iot-reap-sequence-admin-infrastructure
+title IoT-REAP - Admin Infrastructure Management Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Proxmox Server\nController" as server
+participant "Proxmox Node\nController" as node
+participant "Hardware\nController" as hardware
+participant "Database" as db
+participant "Proxmox\nAPI" as proxmox
+participant "Gateway\nNodes" as gateways
+
+== Proxmox Server Management ==
+
+admin -> frontend : Navigate to infrastructure
+frontend -> routes : GET /admin/infrastructure
+routes -> frontend : Render infrastructure page
+frontend --> admin : Show infrastructure overview
+
+admin -> frontend : View Proxmox servers
+frontend -> routes : GET /admin/proxmox-servers
+routes -> server : index()
+server -> db : Load all Proxmox servers
+server -> proxmox : Test server connections
+proxmox --> server : Return connection status
+server --> routes : Return server list
+routes --> frontend : Display servers
+frontend --> admin : Show servers with status
+
+admin -> frontend : Test server connection
+frontend -> routes : POST /admin/proxmox-servers/test
+routes -> server : test(serverData)
+server -> proxmox : Test API connection
+proxmox --> server : Return connection result
+server --> routes : Return test result
+routes --> frontend : Display test result
+frontend --> admin : Show connection status
+
+admin -> frontend : Register new server
+frontend -> routes : POST /admin/proxmox-servers
+routes -> server : store(serverData)
+server -> db : Create server record
+server -> proxmox : Verify connection
+proxmox --> server : Confirm connection
+server -> db : Save server credentials
+server --> routes : Return created server
+routes --> frontend : Add server to list
+frontend --> admin : Show new server
+
+admin -> frontend : Edit server credentials
+frontend -> routes : PATCH /admin/proxmox-servers/{server}
+routes -> server : update(serverId, serverData)
+server -> db : Load server record
+server -> db : Update server credentials
+server -> proxmox : Verify new connection
+proxmox --> server : Confirm connection
+server -> db : Save changes
+server --> routes : Return updated server
+routes --> frontend : Update server display
+frontend --> admin : Show updated server
+
+admin -> frontend : Inactivate server
+frontend -> routes : POST /admin/proxmox-servers/{server}/inactivate
+routes -> server : inactivate(serverId)
+server -> db : Load server record
+server -> db : Update status to inactive
+server -> db : Save changes
+server --> routes : Return success
+routes --> frontend : Update server status
+frontend --> admin : Show server as inactive
+
+admin -> frontend : Delete server
+frontend -> routes : DELETE /admin/proxmox-servers/{server}
+routes -> server : destroy(serverId)
+server -> db : Load server record
+server -> db : Check for active VMs
+server -> db : Delete server record
+server -> db : Save changes
+server --> routes : Return success
+routes --> frontend : Remove server from list
+frontend --> admin : Show server deleted
+
+admin -> frontend : Sync nodes from server
+frontend -> routes : POST /admin/proxmox-servers/{server}/sync-nodes
+routes -> server : syncNodes(serverId)
+server -> db : Load server record
+server -> proxmox : Get node list
+proxmox --> server : Return nodes
+server -> db : Create or update node records
+server -> db : Save changes
+server --> routes : Return synced nodes
+routes --> frontend : Update node list
+frontend --> admin : Show synced nodes
+
+== Proxmox Node Management ==
+
+admin -> frontend : View nodes
+frontend -> routes : GET /admin/nodes
+routes -> node : index()
+node -> db : Load all nodes
+node -> proxmox : Get node status
+proxmox --> node : Return node status
+node --> routes : Return node list
+routes --> frontend : Display nodes
+frontend --> admin : Show nodes with status
+
+admin -> frontend : View VMs on node
+frontend -> routes : GET /admin/nodes/{node}/vms
+routes -> node : getVMs(nodeId)
+node -> db : Load node record
+node -> proxmox : Get VM list for node
+proxmox --> node : Return VM list
+node --> routes : Return VMs
+routes --> frontend : Display VMs
+frontend --> admin : Show VMs on selected node
+
+admin -> frontend : Start VM
+frontend -> routes : POST /admin/nodes/{node}/vms/{vmid}/start
+routes -> node : startVM(nodeId, vmid)
+node -> db : Load node record
+node -> proxmox : Start VM
+proxmox --> node : Confirm start
+node -> db : Update VM status
+node --> routes : Return success
+routes --> frontend : Update VM status
+frontend --> admin : Show VM as running
+
+admin -> frontend : Stop VM
+frontend -> routes : POST /admin/nodes/{node}/vms/{vmid}/stop
+routes -> node : stopVM(nodeId, vmid)
+node -> db : Load node record
+node -> proxmox : Stop VM
+proxmox --> node : Confirm stop
+node -> db : Update VM status
+node --> routes : Return success
+routes --> frontend : Update VM status
+frontend --> admin : Show VM as stopped
+
+admin -> frontend : Reboot VM
+frontend -> routes : POST /admin/nodes/{node}/vms/{vmid}/reboot
+routes -> node : rebootVM(nodeId, vmid)
+node -> db : Load node record
+node -> proxmox : Reboot VM
+proxmox --> node : Confirm reboot
+node -> db : Update VM status
+node --> routes : Return success
+routes --> frontend : Update VM status
+frontend --> admin : Show VM rebooting
+
+== Hardware Gateway Management ==
+
+admin -> frontend : View hardware gateways
+frontend -> routes : GET /admin/hardware
+routes -> hardware : index()
+hardware -> db : Load gateway nodes
+hardware -> gateways : Get device status
+gateways --> hardware : Return device status
+hardware --> routes : Return hardware data
+routes --> frontend : Display hardware
+frontend --> admin : Show gateways and devices
+
+admin -> frontend : Add gateway node
+frontend -> routes : POST /admin/hardware/nodes
+routes -> hardware : storeNode(nodeData)
+hardware -> db : Create gateway node record
+hardware -> gateways : Verify connection
+gateways --> hardware : Confirm connection
+hardware -> db : Save node
+hardware --> routes : Return created node
+routes --> frontend : Add node to list
+frontend --> admin : Show new gateway
+
+admin -> frontend : Edit gateway node
+frontend -> routes : PATCH /admin/hardware/nodes/{node}
+routes -> hardware : updateNode(nodeId, nodeData)
+hardware -> db : Load node record
+hardware -> db : Update node details
+hardware -> db : Save changes
+hardware --> routes : Return updated node
+routes --> frontend : Update node display
+frontend --> admin : Show updated gateway
+
+admin -> frontend : Verify gateway node
+frontend -> routes : POST /admin/hardware/nodes/{node}/verify
+routes -> hardware : verifyNode(nodeId)
+hardware -> db : Load node record
+hardware -> gateways : Test connection
+gateways --> hardware : Return connection status
+hardware -> db : Update node status
+hardware --> routes : Return verification result
+routes --> frontend : Display verification
+frontend --> admin : Show node connection status
+
+admin -> frontend : Delete gateway node
+frontend -> routes : DELETE /admin/hardware/nodes/{node}
+routes -> hardware : destroyNode(nodeId)
+hardware -> db : Load node record
+hardware -> db : Check for connected devices
+hardware -> db : Delete node record
+hardware -> db : Save changes
+hardware --> routes : Return success
+routes --> frontend : Remove node from list
+frontend --> admin : Show gateway deleted
+
+admin -> frontend : Discover hardware devices
+frontend -> routes : POST /admin/hardware/discover
+routes -> hardware : discoverGateways()
+hardware -> gateways : Scan for devices
+gateways --> hardware : Return discovered devices
+hardware -> db : Create device records
+hardware -> db : Save changes
+hardware --> routes : Return discovered devices
+routes --> frontend : Display discovered devices
+frontend --> admin : Show new devices found
+
+admin -> frontend : Refresh gateway status
+frontend -> routes : POST /admin/hardware/status
+routes -> hardware : refreshGatewayStatus()
+hardware -> gateways : Get all gateway status
+gateways --> hardware : Return status updates
+hardware -> db : Update device status
+hardware -> db : Save changes
+hardware --> routes : Return updated status
+routes --> frontend : Update hardware display
+frontend --> admin : Show refreshed device status
+
+admin -> frontend : View running VMs
+frontend -> routes : GET /admin/hardware/running-vms
+routes -> hardware : runningVms()
+hardware -> db : Load all sessions
+hardware -> proxmox : Get running VM status
+proxmox --> hardware : Return VM status
+hardware --> routes : Return running VMs
+routes --> frontend : Display running VMs
+frontend --> admin : Show active VM sessions
+
+admin -> frontend : View dedicated devices
+frontend -> routes : GET /admin/hardware/dedicated-devices
+routes -> hardware : dedicatedDevices()
+hardware -> db : Load dedicated devices
+hardware -> db : Load device assignments
+db --> hardware : Return dedicated devices
+hardware --> routes : Return devices
+routes --> frontend : Display dedicated devices
+frontend --> admin : Show devices with dedicated status
+
+note right of admin
+  Infrastructure management features:
+  - Proxmox server CRUD operations
+  - Node management and VM control
+  - Hardware gateway management
+  - Device discovery and status monitoring
+  - Running VM tracking
+  - Dedicated device management
+  - Connection verification and testing
+end note
+
+@enduml

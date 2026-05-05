@@ -1,0 +1,306 @@
+<mxGraphModel dx="2943" dy="1811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="pkg_dash" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Consult Dashboard &amp;amp; Platform Analytics&lt;/span&gt;" vertex="1">
+      <mxGeometry height="400" width="800" x="200" y="50" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_dashboard" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Admin Dashboard (KPI Cards, Health Summary)" vertex="1">
+      <mxGeometry height="72" width="210" x="210" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_kpis" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Platform KPIs (Users, Revenue, Sessions)" vertex="1">
+      <mxGeometry height="72" width="210" x="400" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_health" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Check Platform Health" vertex="1">
+      <mxGeometry height="72" width="210" x="590" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_alerts" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View System Alerts" vertex="1">
+      <mxGeometry height="72" width="210" x="780" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_ack_alert" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Acknowledge / Resolve Alert" vertex="1">
+      <mxGeometry height="72" width="210" x="210" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_act_logs" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Activity Logs" vertex="1">
+      <mxGeometry height="72" width="210" x="400" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_act_recent" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Recent Activity" vertex="1">
+      <mxGeometry height="72" width="210" x="590" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_act_user" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Filter Logs" vertex="1">
+      <mxGeometry height="72" width="210" x="780" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_users" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Manage Users &amp;amp; Roles&lt;/span&gt;" vertex="1">
+      <mxGeometry height="400" width="760" x="1060" y="50" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_users" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List All Users" vertex="1">
+      <mxGeometry height="62" width="215" x="1070" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_view_user" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View User Details" vertex="1">
+      <mxGeometry height="62" width="215" x="1310" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_teach" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve Teacher Account" vertex="1">
+      <mxGeometry height="62" width="215" x="1550" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_revoke_teach" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Revoke Teacher Approval" vertex="1">
+      <mxGeometry height="62" width="215" x="1070" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_suspend" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Suspend User Account" vertex="1">
+      <mxGeometry height="62" width="215" x="1310" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_unsuspend" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unsuspend User Account" vertex="1">
+      <mxGeometry height="62" width="215" x="1550" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_role_change" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Change User Role" vertex="1">
+      <mxGeometry height="62" width="215" x="1070" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_impersonate" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Impersonate User (Debug)" vertex="1">
+      <mxGeometry height="62" width="215" x="1310" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_gdpr_delete" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="GDPR User Data Deletion" vertex="1">
+      <mxGeometry height="62" width="215" x="1550" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_infra" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Manage Infrastructure and Hardware&lt;/span&gt;" vertex="1">
+      <mxGeometry height="670" width="1080" x="1880" y="50" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Proxmox Servers" vertex="1">
+      <mxGeometry height="62" width="215" x="1890" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_test_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Test Server Connection" vertex="1">
+      <mxGeometry height="62" width="215" x="2100" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_add_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Register Proxmox Server" vertex="1">
+      <mxGeometry height="62" width="215" x="2310" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_edit_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Server Credentials" vertex="1">
+      <mxGeometry height="62" width="215" x="2520" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_inactivate_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Inactivate Server" vertex="1">
+      <mxGeometry height="62" width="215" x="2730" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_delete_ps" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Proxmox Server" vertex="1">
+      <mxGeometry height="62" width="215" x="1890" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_sync_nodes" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Sync Nodes from Server" vertex="1">
+      <mxGeometry height="62" width="215" x="2100" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_nodes" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Nodes" vertex="1">
+      <mxGeometry height="62" width="215" x="2310" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_vms" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List VMs on Node" vertex="1">
+      <mxGeometry height="62" width="215" x="2520" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_vm_start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Start VM" vertex="1">
+      <mxGeometry height="62" width="215" x="2730" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_vm_stop" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Stop VM" vertex="1">
+      <mxGeometry height="62" width="215" x="1890" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_vm_reboot" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reboot VM" vertex="1">
+      <mxGeometry height="62" width="215" x="2100" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_add_gw" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Add Gateway Node" vertex="1">
+      <mxGeometry height="62" width="215" x="2310" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_edit_gw" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Gateway Node" vertex="1">
+      <mxGeometry height="62" width="215" x="2520" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_verify_gw" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Verify Gateway Node" vertex="1">
+      <mxGeometry height="62" width="215" x="2730" y="350" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_delete_gw" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Gateway Node" vertex="1">
+      <mxGeometry height="62" width="215" x="1890" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_discover_gw" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Discover Hardware Devices" vertex="1">
+      <mxGeometry height="62" width="215" x="2100" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_hw_status" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Check Hardware Status" vertex="1">
+      <mxGeometry height="62" width="215" x="2310" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_running_vms" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Running VMs" vertex="1">
+      <mxGeometry height="62" width="215" x="2520" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_dedicated" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Manage Dedicated Devices" vertex="1">
+      <mxGeometry height="62" width="215" x="2730" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_cams" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List All Cameras" vertex="1">
+      <mxGeometry height="62" width="245" x="2020" y="540" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_assign_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Assign Camera to VM" vertex="1">
+      <mxGeometry height="62" width="245" x="2280" y="540" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_unassign_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unassign Camera" vertex="1">
+      <mxGeometry height="62" width="245" x="2540" y="540" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_bulk_assign" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Bulk Assign Cameras" vertex="1">
+      <mxGeometry height="62" width="245" x="2020" y="645" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_activate_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Activate Camera" vertex="1">
+      <mxGeometry height="62" width="245" x="2280" y="645" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_deactivate_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Deactivate Camera" vertex="1">
+      <mxGeometry height="62" width="245" x="2540" y="645" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_content_adm" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Manage Training Paths&lt;/span&gt;" vertex="1">
+      <mxGeometry height="480" width="780" x="1060" y="500" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_paths_adm" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List All Training Paths" vertex="1">
+      <mxGeometry height="62" width="235" x="1070" y="560" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_path" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve Training Path" vertex="1">
+      <mxGeometry height="62" width="235" x="1320" y="560" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_path" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject Training Path (with feedback)" vertex="1">
+      <mxGeometry height="62" width="235" x="1570" y="560" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_feature_path" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Feature / Unfeature Path" vertex="1">
+      <mxGeometry height="62" width="235" x="1070" y="680" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reorder_feat" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reorder Featured Paths" vertex="1">
+      <mxGeometry height="62" width="235" x="1320" y="680" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_vm_assign" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List VM Assignment Queue" vertex="1">
+      <mxGeometry height="62" width="235" x="1570" y="680" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_pending_assign" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Pending VM Assignments" vertex="1">
+      <mxGeometry height="62" width="235" x="1070" y="800" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_assign" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve VM Assignment" vertex="1">
+      <mxGeometry height="62" width="235" x="1320" y="800" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_assign" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject VM Assignment" vertex="1">
+      <mxGeometry height="62" width="235" x="1570" y="800" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_res_adm" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Manage Reservations&lt;/span&gt;" vertex="1">
+      <mxGeometry height="360" width="1080" x="1880" y="730" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List All USB Reservations" vertex="1">
+      <mxGeometry height="72" width="245" x="1890" y="760" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_pending_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Pending Reservations" vertex="1">
+      <mxGeometry height="72" width="245" x="2230" y="760" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_upcoming_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Upcoming Reservations" vertex="1">
+      <mxGeometry height="72" width="245" x="2570" y="760" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve USB Reservation" vertex="1">
+      <mxGeometry height="72" width="245" x="1890" y="850" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject USB Reservation" vertex="1">
+      <mxGeometry height="72" width="245" x="2230" y="850" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_block_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Block USB Device Time Slot" vertex="1">
+      <mxGeometry height="72" width="245" x="2570" y="850" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_vm_res_adm" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Approve VM Assignments&lt;/span&gt;" vertex="1">
+      <mxGeometry height="300" width="1080" x="1880" y="1420" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_vm_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List All VM Assignments" vertex="1">
+      <mxGeometry height="72" width="245" x="1890" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_pending_vm_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Pending VM Assignments" vertex="1">
+      <mxGeometry height="72" width="245" x="2230" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_vm_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve VM Assignments" vertex="1">
+      <mxGeometry height="72" width="245" x="1890" y="1615" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_vm_res" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject VM Assignments" vertex="1">
+      <mxGeometry height="72" width="245" x="2230" y="1615" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_finance" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Manage Payout &amp;amp; Refunds&lt;/span&gt;" vertex="1">
+      <mxGeometry height="450" width="830" x="200" y="1040" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_payouts" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Payout Requests" vertex="1">
+      <mxGeometry height="62" width="245" x="210" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_export_pay" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Export Payouts Report" vertex="1">
+      <mxGeometry height="62" width="245" x="470" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_payout" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve Payout Request" vertex="1">
+      <mxGeometry height="62" width="245" x="730" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_payout" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject Payout Request" vertex="1">
+      <mxGeometry height="62" width="245" x="210" y="1220" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_process_payout" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Process / Transfer Payout" vertex="1">
+      <mxGeometry height="62" width="245" x="470" y="1220" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_refunds" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Refund Requests" vertex="1">
+      <mxGeometry height="62" width="245" x="730" y="1220" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_all_refunds" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View All Refunds History" vertex="1">
+      <mxGeometry height="62" width="245" x="210" y="1340" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_approve_refund" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve Refund Request" vertex="1">
+      <mxGeometry height="62" width="245" x="470" y="1340" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_reject_refund" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject Refund Request" vertex="1">
+      <mxGeometry height="62" width="245" x="730" y="1340" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_exec_stripe_refund" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Execute Stripe Refund" vertex="1">
+      <mxGeometry height="62" width="245" x="470" y="1410" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_maint" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Set Maintenance Mode&lt;/span&gt;" vertex="1">
+      <mxGeometry height="360" width="780" x="1060" y="1040" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_list_maint" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View All Devices in Maintenance" vertex="1">
+      <mxGeometry height="72" width="235" x="1070" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_set_usb_desc" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Set USB Device Maintenance Description" vertex="1">
+      <mxGeometry height="72" width="235" x="1320" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_start_usb" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Enable USB Device Maintenance" vertex="1">
+      <mxGeometry height="72" width="235" x="1570" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_end_usb" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Disable USB Device Maintenance" vertex="1">
+      <mxGeometry height="72" width="235" x="1070" y="1240" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_start_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Enable Camera Maintenance Mode" vertex="1">
+      <mxGeometry height="72" width="235" x="1320" y="1240" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_end_cam" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Disable Camera Maintenance Mode" vertex="1">
+      <mxGeometry height="72" width="235" x="1570" y="1240" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_forum_adm" parent="1" style="rounded=1;arcSize=3;verticalAlign=top;fontSize=12;fontStyle=1;html=1;strokeWidth=2;" value="&lt;span style=&quot;font-size: 11px; font-weight: 400; text-wrap-mode: wrap;&quot;&gt;Moderate Forum Threads&lt;/span&gt;" vertex="1">
+      <mxGeometry height="260" width="540" x="1880" y="1140" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_flagged" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Flagged Threads &amp; Replies" vertex="1">
+      <mxGeometry height="82" width="195" x="1890" y="1200" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_unflag_thread" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unflag Thread" vertex="1">
+      <mxGeometry height="82" width="195" x="2065" y="1200" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_unflag_reply" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unflag Reply" vertex="1">
+      <mxGeometry height="82" width="195" x="2240" y="1200" as="geometry" />
+    </mxCell>
+    <mxCell id="e5024" edge="1" parent="1" source="auc_approve_assign" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;fontColor=#666666;strokeWidth=1;" target="auc_pending_assign" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5034" edge="1" parent="1" source="auc_approve_refund" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;fontColor=#666666;strokeWidth=1;" target="auc_exec_stripe_refund" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_cam_res_list" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Camera Reservations" vertex="1">
+      <mxGeometry height="62" width="245" x="2000" y="950" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_cam_pending" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Pending Camera Reservations" vertex="1">
+      <mxGeometry height="62" width="245" x="2260" y="950" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_cam_approve" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Approve Camera Reservation" vertex="1">
+      <mxGeometry height="62" width="245" x="2520" y="950" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_cam_reject" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reject Camera Reservation" vertex="1">
+      <mxGeometry height="62" width="245" x="2000" y="1055" as="geometry" />
+    </mxCell>
+    <mxCell id="auc_cam_block" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Block Camera Time Slot" vertex="1">
+      <mxGeometry height="62" width="245" x="2260" y="1055" as="geometry" />
+    </mxCell>
+    <mxCell id="rM4iPgJPtCnSMP4DeITr-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Assign USB to VM" vertex="1">
+      <mxGeometry height="62" width="245" x="2280" y="590" as="geometry" />
+    </mxCell>
+    <mxCell id="rM4iPgJPtCnSMP4DeITr-4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unassign USB" vertex="1">
+      <mxGeometry height="62" width="245" x="2540" y="590" as="geometry" />
+    </mxCell>
+    <mxCell id="rM4iPgJPtCnSMP4DeITr-6" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;container=0;" value="Manage Connection Preferences" vertex="1">
+      <mxGeometry height="35" width="215" x="2045" y="298.5" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

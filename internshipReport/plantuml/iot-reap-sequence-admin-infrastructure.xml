@@ -1,0 +1,475 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="5500" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Infrastructure Management Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1400" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="45" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_frontend" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="150" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_routes" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="300" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_server" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Proxmox Server&#xa;Controller" vertex="1">
+      <mxGeometry x="450" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_node" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Proxmox Node&#xa;Controller" vertex="1">
+      <mxGeometry x="610" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_hardware" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Hardware&#xa;Controller" vertex="1">
+      <mxGeometry x="770" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="930" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_proxmox" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Proxmox&#xa;API" vertex="1">
+      <mxGeometry x="1090" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_gateways" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Gateway&#xa;Nodes" vertex="1">
+      <mxGeometry x="1250" y="50" width="100" height="5300" as="geometry" />
+    </mxCell>
+
+    <!-- ========== PART 1: Proxmox Server Management ========== -->
+    <mxCell id="part1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Proxmox Server Management" vertex="1">
+      <mxGeometry x="140" y="160" width="1180" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View Infrastructure Overview === -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Navigate to Infrastructure ==" vertex="1">
+      <mxGeometry x="140" y="210" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to infrastructure" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="260" as="sourcePoint"/><mxPoint x="200" y="260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/infrastructure" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="290" as="sourcePoint"/><mxPoint x="350" y="290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show infrastructure overview" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="320" as="sourcePoint"/><mxPoint x="80" y="320" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === View Proxmox Servers === -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Proxmox Servers ==" vertex="1">
+      <mxGeometry x="140" y="360" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View Proxmox servers" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="410" as="sourcePoint"/><mxPoint x="200" y="410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/proxmox-servers" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="440" as="sourcePoint"/><mxPoint x="350" y="440" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="470" as="sourcePoint"/><mxPoint x="500" y="470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load all Proxmox servers" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="500" as="sourcePoint"/><mxPoint x="980" y="500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Test server connections" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="530" as="sourcePoint"/><mxPoint x="1140" y="530" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return connection status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="560" as="sourcePoint"/><mxPoint x="500" y="560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show servers with status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="590" as="sourcePoint"/><mxPoint x="80" y="590" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Test Server Connection === -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Test Server Connection ==" vertex="1">
+      <mxGeometry x="140" y="630" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Test server connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="680" as="sourcePoint"/><mxPoint x="200" y="680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/proxmox-servers/test" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="710" as="sourcePoint"/><mxPoint x="350" y="710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="test(serverData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="740" as="sourcePoint"/><mxPoint x="500" y="740" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Test API connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="770" as="sourcePoint"/><mxPoint x="1140" y="770" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return connection result" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="800" as="sourcePoint"/><mxPoint x="500" y="800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show connection status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="830" as="sourcePoint"/><mxPoint x="80" y="830" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Register New Server === -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Register New Server ==" vertex="1">
+      <mxGeometry x="140" y="870" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Register new server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="920" as="sourcePoint"/><mxPoint x="200" y="920" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/proxmox-servers" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="950" as="sourcePoint"/><mxPoint x="350" y="950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="store(serverData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="980" as="sourcePoint"/><mxPoint x="500" y="980" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create server record" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1010" as="sourcePoint"/><mxPoint x="980" y="1010" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Verify connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1040" as="sourcePoint"/><mxPoint x="1140" y="1040" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="1070" as="sourcePoint"/><mxPoint x="500" y="1070" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Save server credentials" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1100" as="sourcePoint"/><mxPoint x="980" y="1100" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1130" as="sourcePoint"/><mxPoint x="80" y="1130" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Edit Server Credentials === -->
+    <mxCell id="sep5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Edit Server Credentials ==" vertex="1">
+      <mxGeometry x="140" y="1170" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Edit server credentials" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="1220" as="sourcePoint"/><mxPoint x="200" y="1220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="PATCH /admin/proxmox-servers/{server}" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="1250" as="sourcePoint"/><mxPoint x="350" y="1250" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="update(serverId, serverData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="1280" as="sourcePoint"/><mxPoint x="500" y="1280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update credentials" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1310" as="sourcePoint"/><mxPoint x="980" y="1310" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Verify new connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1340" as="sourcePoint"/><mxPoint x="1140" y="1340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="1370" as="sourcePoint"/><mxPoint x="500" y="1370" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Save changes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1400" as="sourcePoint"/><mxPoint x="980" y="1400" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1430" as="sourcePoint"/><mxPoint x="80" y="1430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Inactivate / Delete / Sync Nodes (compact) === -->
+    <mxCell id="sep6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Inactivate Server ==" vertex="1">
+      <mxGeometry x="140" y="1470" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Inactivate server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="1520" as="sourcePoint"/><mxPoint x="200" y="1520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/proxmox-servers/{server}/inactivate" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="1550" as="sourcePoint"/><mxPoint x="350" y="1550" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="inactivate(serverId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="1580" as="sourcePoint"/><mxPoint x="500" y="1580" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update to inactive / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1610" as="sourcePoint"/><mxPoint x="980" y="1610" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show server as inactive" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="1640" as="sourcePoint"/><mxPoint x="80" y="1640" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="sep7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Delete Server ==" vertex="1">
+      <mxGeometry x="140" y="1680" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m38" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="1730" as="sourcePoint"/><mxPoint x="200" y="1730" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m39" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="DELETE /admin/proxmox-servers/{server}" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="1760" as="sourcePoint"/><mxPoint x="350" y="1760" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m40" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="destroy(serverId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="1790" as="sourcePoint"/><mxPoint x="500" y="1790" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m41" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / check active VMs / delete record / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="1820" as="sourcePoint"/><mxPoint x="980" y="1820" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m42" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show server deleted" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="1850" as="sourcePoint"/><mxPoint x="80" y="1850" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Sync Nodes === -->
+    <mxCell id="sep8" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Sync Nodes from Server ==" vertex="1">
+      <mxGeometry x="140" y="1890" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m43" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Sync nodes from server" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="1940" as="sourcePoint"/><mxPoint x="200" y="1940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m44" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/proxmox-servers/{server}/sync-nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="1970" as="sourcePoint"/><mxPoint x="350" y="1970" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m45" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="syncNodes(serverId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="2000" as="sourcePoint"/><mxPoint x="500" y="2000" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m46" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load server record" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="2030" as="sourcePoint"/><mxPoint x="980" y="2030" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m47" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Get node list" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="2060" as="sourcePoint"/><mxPoint x="1140" y="2060" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m48" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="2090" as="sourcePoint"/><mxPoint x="500" y="2090" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m49" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create or update node records / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="500" y="2120" as="sourcePoint"/><mxPoint x="980" y="2120" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m50" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show synced nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="2150" as="sourcePoint"/><mxPoint x="80" y="2150" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ========== PART 2: Proxmox Node Management ========== -->
+    <mxCell id="part2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Proxmox Node Management" vertex="1">
+      <mxGeometry x="140" y="2200" width="1180" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View Nodes === -->
+    <mxCell id="sep9" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Nodes ==" vertex="1">
+      <mxGeometry x="140" y="2250" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m51" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="2300" as="sourcePoint"/><mxPoint x="200" y="2300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m52" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="2330" as="sourcePoint"/><mxPoint x="350" y="2330" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m53" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="2360" as="sourcePoint"/><mxPoint x="660" y="2360" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m54" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load all nodes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2390" as="sourcePoint"/><mxPoint x="980" y="2390" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m55" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Get node status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2420" as="sourcePoint"/><mxPoint x="1140" y="2420" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m56" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return node status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="2450" as="sourcePoint"/><mxPoint x="660" y="2450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m57" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show nodes with status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2480" as="sourcePoint"/><mxPoint x="80" y="2480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === View VMs on Node === -->
+    <mxCell id="sep10" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View VMs on Node ==" vertex="1">
+      <mxGeometry x="140" y="2520" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m58" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View VMs on node" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="2570" as="sourcePoint"/><mxPoint x="200" y="2570" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m59" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/nodes/{node}/vms" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="2600" as="sourcePoint"/><mxPoint x="350" y="2600" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m60" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getVMs(nodeId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="2630" as="sourcePoint"/><mxPoint x="660" y="2630" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m61" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load node record" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2660" as="sourcePoint"/><mxPoint x="980" y="2660" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m62" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Get VM list for node" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2690" as="sourcePoint"/><mxPoint x="1140" y="2690" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m63" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return VM list" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="2720" as="sourcePoint"/><mxPoint x="660" y="2720" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m64" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show VMs on selected node" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2750" as="sourcePoint"/><mxPoint x="80" y="2750" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Start / Stop / Reboot VM === -->
+    <mxCell id="sep11" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Start VM ==" vertex="1">
+      <mxGeometry x="140" y="2790" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m65" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Start VM" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="2840" as="sourcePoint"/><mxPoint x="200" y="2840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m66" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/nodes/{node}/vms/{vmid}/start" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="2870" as="sourcePoint"/><mxPoint x="350" y="2870" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m67" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="startVM(nodeId, vmid)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="350" y="2900" as="sourcePoint"/><mxPoint x="660" y="2900" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m68" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load node record" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2930" as="sourcePoint"/><mxPoint x="980" y="2930" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m69" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Start VM" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="2960" as="sourcePoint"/><mxPoint x="1140" y="2960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m70" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm start" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="2990" as="sourcePoint"/><mxPoint x="660" y="2990" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m71" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update VM status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="3020" as="sourcePoint"/><mxPoint x="980" y="3020" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m72" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show VM as running" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="3050" as="sourcePoint"/><mxPoint x="80" y="3050" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="sep12" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Stop VM ==" vertex="1">
+      <mxGeometry x="140" y="3090" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m73" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Stop VM  →  POST /admin/nodes/{node}/vms/{vmid}/stop  →  stopVM(nodeId, vmid)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="3140" as="sourcePoint"/><mxPoint x="660" y="3140" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m74" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load node / stop VM (Proxmox) / update VM status (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="3170" as="sourcePoint"/><mxPoint x="1140" y="3170" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m75" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show VM as stopped" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="3200" as="sourcePoint"/><mxPoint x="80" y="3200" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="sep13" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Reboot VM ==" vertex="1">
+      <mxGeometry x="140" y="3240" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m76" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reboot VM  →  POST /admin/nodes/{node}/vms/{vmid}/reboot  →  rebootVM(nodeId, vmid)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="3290" as="sourcePoint"/><mxPoint x="660" y="3290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m77" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load node / reboot VM (Proxmox) / update VM status (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="3320" as="sourcePoint"/><mxPoint x="1140" y="3320" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m78" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show VM rebooting" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="3350" as="sourcePoint"/><mxPoint x="80" y="3350" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ========== PART 3: Hardware Gateway Management ========== -->
+    <mxCell id="part3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Hardware Gateway Management" vertex="1">
+      <mxGeometry x="140" y="3400" width="1180" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View Hardware === -->
+    <mxCell id="sep14" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Hardware Gateways ==" vertex="1">
+      <mxGeometry x="140" y="3450" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m79" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View hardware gateways" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="3500" as="sourcePoint"/><mxPoint x="200" y="3500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m80" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/hardware  →  index()  →  Load gateway nodes (DB) / Get device status (Gateways)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="3530" as="sourcePoint"/><mxPoint x="1300" y="3530" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m81" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return hardware data / Show gateways and devices" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1300" y="3560" as="sourcePoint"/><mxPoint x="80" y="3560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Add Gateway Node === -->
+    <mxCell id="sep15" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Add Gateway Node ==" vertex="1">
+      <mxGeometry x="140" y="3600" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m82" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Add gateway node" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="3650" as="sourcePoint"/><mxPoint x="200" y="3650" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m83" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/hardware/nodes  →  storeNode(nodeData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="3680" as="sourcePoint"/><mxPoint x="820" y="3680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m84" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create gateway node record (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="3710" as="sourcePoint"/><mxPoint x="980" y="3710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m85" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Verify connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="3740" as="sourcePoint"/><mxPoint x="1300" y="3740" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m86" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1300" y="3770" as="sourcePoint"/><mxPoint x="820" y="3770" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m87" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Save node (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="3800" as="sourcePoint"/><mxPoint x="980" y="3800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m88" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new gateway" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="3830" as="sourcePoint"/><mxPoint x="80" y="3830" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Verify Node === -->
+    <mxCell id="sep16" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Verify Gateway Node ==" vertex="1">
+      <mxGeometry x="140" y="3870" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m89" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Verify gateway node" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="3920" as="sourcePoint"/><mxPoint x="200" y="3920" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m90" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/hardware/nodes/{node}/verify  →  verifyNode(nodeId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="200" y="3950" as="sourcePoint"/><mxPoint x="820" y="3950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m91" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load node record (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="3980" as="sourcePoint"/><mxPoint x="980" y="3980" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m92" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Test connection" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4010" as="sourcePoint"/><mxPoint x="1300" y="4010" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m93" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return connection status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1300" y="4040" as="sourcePoint"/><mxPoint x="820" y="4040" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m94" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update node status (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4070" as="sourcePoint"/><mxPoint x="980" y="4070" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m95" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show node connection status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="4100" as="sourcePoint"/><mxPoint x="80" y="4100" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Discover / Refresh / Running VMs / Dedicated (compact) === -->
+    <mxCell id="sep17" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Discover Hardware Devices ==" vertex="1">
+      <mxGeometry x="140" y="4140" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m96" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Discover hardware  →  POST /admin/hardware/discover  →  discoverGateways()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="4190" as="sourcePoint"/><mxPoint x="820" y="4190" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m97" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Scan for devices" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4220" as="sourcePoint"/><mxPoint x="1300" y="4220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m98" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return discovered devices" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1300" y="4250" as="sourcePoint"/><mxPoint x="820" y="4250" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m99" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create device records / save (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4280" as="sourcePoint"/><mxPoint x="980" y="4280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m100" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new devices found" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="4310" as="sourcePoint"/><mxPoint x="80" y="4310" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="sep18" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Refresh Gateway Status ==" vertex="1">
+      <mxGeometry x="140" y="4350" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m101" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Refresh status  →  POST /admin/hardware/status  →  refreshGatewayStatus()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="4400" as="sourcePoint"/><mxPoint x="820" y="4400" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m102" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Get all gateway status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4430" as="sourcePoint"/><mxPoint x="1300" y="4430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m103" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return status updates" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1300" y="4460" as="sourcePoint"/><mxPoint x="820" y="4460" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m104" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update device status / save (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="820" y="4490" as="sourcePoint"/><mxPoint x="980" y="4490" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m105" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show refreshed device status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="4520" as="sourcePoint"/><mxPoint x="80" y="4520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="sep19" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Running VMs / Dedicated Devices ==" vertex="1">
+      <mxGeometry x="140" y="4560" width="1180" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m106" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/hardware/running-vms  →  runningVms()  →  Load sessions (DB) / Get running VM status (Proxmox)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="4610" as="sourcePoint"/><mxPoint x="1140" y="4610" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m107" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show active VM sessions" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1140" y="4640" as="sourcePoint"/><mxPoint x="80" y="4640" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m108" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/hardware/dedicated-devices  →  dedicatedDevices()  →  Load dedicated devices + assignments (DB)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="80" y="4680" as="sourcePoint"/><mxPoint x="980" y="4680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m109" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show devices with dedicated status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="4710" as="sourcePoint"/><mxPoint x="80" y="4710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

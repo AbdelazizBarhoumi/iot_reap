@@ -1,0 +1,54 @@
+@startuml iotreap-activity-refund-processing
+title IoT-REAP - Refund Processing Activity Diagram
+
+|Engineer|
+start
+:Open payment history;
+:Select completed payment;
+:Submit refund request;
+:Provide reason for refund;
+
+|System|
+:Validate refund eligibility;
+note right: Check: payment is COMPLETED,\nwithin refund window,\nnot already refunded
+
+if (Eligible?) then (yes)
+    :Create RefundRequest (PENDING);
+    :Notify administrator;
+    
+    |Administrator|
+    :Open refund management page;
+    :Review refund request;
+    :Inspect payment and enrollment details;
+    
+    if (Approve refund?) then (yes)
+        |System|
+        :Set RefundRequest to APPROVED;
+        :Initiate Stripe refund;
+        if (Stripe refund succeeded?) then (yes)
+            :Set RefundRequest to REFUNDED;
+            :Update Payment status to REFUNDED;
+            :Revoke training path enrollment;
+            :Invalidate related certificate;
+            :Notify engineer of refund completion;
+            stop
+        else (no - Stripe failure)
+            :Set RefundRequest to FAILED;
+            :Create system alert;
+            :Notify admin of processing failure;
+            stop
+        endif
+    else (reject)
+        |System|
+        :Set RefundRequest to REJECTED;
+        :Record rejection reason;
+        :Notify engineer of rejection;
+        stop
+    endif
+else (no - not eligible)
+    |Engineer|
+    :Receive ineligibility notification;
+    stop
+endif
+
+@enduml

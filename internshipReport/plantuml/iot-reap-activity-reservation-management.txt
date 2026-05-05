@@ -1,0 +1,60 @@
+@startuml iotreap-activity-reservation-management
+title IoT-REAP - Reservation Management Activity Diagram
+
+|Engineer|
+start
+:Open reservations page;
+:Select USB device or camera;
+:Choose date and time range;
+
+|System|
+:Check for conflicting reservations;
+if (Conflicts exist?) then (yes)
+    |Engineer|
+    :Receive conflict notification;
+    :Select different time range;
+    stop
+else (no)
+    :Create reservation (PENDING);
+    :Notify administrator;
+    
+    |Administrator|
+    :Review reservation request;
+    if (Approve?) then (yes)
+        |System|
+        :Set reservation status to APPROVED;
+        :Notify engineer of approval;
+        
+        |Engineer|
+        :Wait for scheduled time;
+        
+        |System|
+        :At scheduled time:\nActivate reservation;
+        :Mark device/camera as reserved;
+        note right: Device becomes unavailable\nfor other users during this period
+        
+        |Engineer|
+        :Use reserved device/camera\nin active VM session;
+        
+        |System|
+        :At end of scheduled period:\nComplete reservation;
+        :Release device/camera;
+        :Mark reservation as COMPLETED;
+        stop
+    else (reject)
+        |System|
+        :Set reservation status to REJECTED;
+        :Record rejection reason;
+        :Notify engineer of rejection;
+        stop
+    endif
+    
+    note left
+        Administrator can also:
+        • Block time periods (maintenance)
+        • Cancel approved reservations
+        • Set device to maintenance mode
+    end note
+endif
+
+@enduml

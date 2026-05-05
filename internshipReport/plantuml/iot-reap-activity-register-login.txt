@@ -1,0 +1,62 @@
+@startuml iot-reap-activity-register-login
+title IoT-REAP — Register Account & Login Activity Diagram
+
+start
+:Guest visits platform;
+fork
+  :Register path;
+  :Fill registration form;
+  :Validate input fields;
+  if (Valid input?) then (yes)
+    if (Email already exists?) then (no)
+      :Create account (pending verification);
+      :Send verification email;
+      :Guest clicks verification link;
+      if (Link valid and not expired?) then (yes)
+        :Activate account;
+        :Redirect to login;
+      else (no)
+        :Display error;
+        :Offer resend verification;
+      endif
+    else (yes)
+      :Display "Email already registered";
+      :Offer login instead;
+    endif
+  else (no)
+    :Display validation errors;
+  endif
+
+fork again
+  :Login path;
+  :Choose authentication method;
+  if (Email/Password?) then (yes)
+    :Enter credentials;
+    if (Valid credentials?) then (yes)
+      if (Account locked?) then (no)
+        :Create authenticated session;
+        :Redirect to role dashboard;
+      else (yes)
+        :Display lockout message;
+        :Offer password reset;
+      endif
+    else (no)
+      :Increment failed attempt counter;
+      :Display error message;
+    endif
+  else (Google OAuth)
+    :Redirect to Google consent;
+    :Google returns auth code;
+    :Exchange code for profile;
+    if (Google account linked?) then (yes)
+      :Create authenticated session;
+      :Redirect to role dashboard;
+    else (no)
+      :Create account from Google profile;
+      :Create authenticated session;
+      :Redirect to role dashboard;
+    endif
+  endif
+end fork
+stop
+@enduml

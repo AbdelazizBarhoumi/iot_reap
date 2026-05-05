@@ -1,0 +1,89 @@
+@startuml iot-reap-sequence-vm-reservation
+title IoT-REAP - VM Reservation Sequence Diagram
+actor Engineer as engineer
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "VM Reservation\nController" as vm_res
+participant "Proxmox\nAPI" as proxmox
+participant "Database" as db
+participant "VM Session\nController" as session
+
+engineer -> frontend : Navigate to VM reservations
+frontend -> routes : GET /vm-reservations
+routes -> vm_res : index()
+vm_res -> db : Load user's VM reservations
+vm_res -> proxmox : Check VM availability
+proxmox --> vm_res : Return availability status
+vm_res --> routes : Return reservation list
+routes --> frontend : Display VM reservations
+frontend --> engineer : Show current and past reservations
+
+engineer -> frontend : View available VMs
+frontend -> routes : GET /vm-reservations/available-vms
+routes -> vm_res : availableVMs()
+vm_res -> db : Load active Proxmox servers
+vm_res -> proxmox : Query available VMs on each server
+proxmox --> vm_res : Return VM lists with status
+vm_res --> routes : Return available VMs
+routes --> frontend : Display VM browser
+frontend --> engineer : Show available VMs by server/node
+
+engineer -> frontend : Select VM and view calendar
+frontend -> routes : GET /vm-reservations/nodes/{nodeId}/vms/{vmId}/calendar
+routes -> vm_res : vmReservationsCalendar(nodeId, vmId)
+vm_res -> db : Load existing reservations for this VM
+vm_res --> routes : Return reservation calendar
+routes --> frontend : Display calendar view
+frontend --> engineer : Show VM availability calendar
+
+engineer -> frontend : Create new reservation
+frontend -> routes : POST /vm-reservations
+routes -> vm_res : store(vmData, startTime, endTime)
+vm_res -> db : Check for conflicting reservations
+db --> vm_res : Return conflict status
+
+alt No conflicts
+    vm_res -> db : Create VM reservation record
+    vm_res -> proxmox : Reserve VM time slot (if supported)
+    proxmox --> vm_res : Confirm reservation
+    vm_res --> routes : Return new reservation
+    routes --> frontend : Display success message
+    frontend --> engineer : Show reservation confirmation
+else Conflicts found
+    vm_res --> routes : Return conflict error
+    routes --> frontend : Display error message
+    frontend --> engineer : Show time slot conflicts
+end
+
+engineer -> frontend : View reservation details
+frontend -> routes : GET /vm-reservations/{reservation}
+routes -> vm_res : show(reservationId)
+vm_res -> db : Load reservation with VM details
+vm_res -> proxmox : Get current VM status
+proxmox --> vm_res : Return VM status
+vm_res --> routes : Return reservation details
+routes --> frontend : Display reservation page
+frontend --> engineer : Show reservation with VM info
+
+engineer -> frontend : Cancel reservation
+frontend -> routes : POST /vm-reservations/{reservation}/cancel
+routes -> vm_res : cancel(reservationId)
+vm_res -> db : Load reservation
+vm_res -> proxmox : Release VM reservation (if applicable)
+proxmox --> vm_res : Confirm release
+vm_res -> db : Update reservation status to cancelled
+vm_res --> routes : Return success
+routes --> frontend : Display confirmation
+frontend --> engineer : Show cancellation confirmation
+
+note right of engineer
+  VM reservation features:
+  - Browse available VMs by server/node
+  - View reservation calendar
+  - Create time-based reservations
+  - Conflict detection
+  - Cancel reservations
+  - Rate limited (20 requests per minute)
+end note
+
+@enduml

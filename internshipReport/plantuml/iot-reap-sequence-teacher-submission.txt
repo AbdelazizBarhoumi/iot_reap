@@ -1,0 +1,96 @@
+@startuml iotreap-teacher-submission-review
+title IoT-REAP - Teacher Submission for Review Sequence
+
+actor Teacher
+participant "Browser" as Browser
+participant "Teaching\nController" as Controller
+participant "TrainingPath\nService" as TPService
+participant "TrainingPath\nRepository" as TPRepo
+participant "Admin\nAlert Service" as AlertService
+database "Database" as DB
+
+actor Administrator
+
+== Content Authoring ==
+
+Teacher -> Browser: Open teaching dashboard
+Browser -> Controller: GET /teaching
+Controller -> TPRepo: findByInstructor(auth()->user())
+TPRepo -> DB: SELECT training_paths WHERE user_id = ?
+DB --> TPRepo: Teacher's training paths
+TPRepo --> Controller: Training path collection
+Controller --> Browser: Render teaching dashboard
+Browser --> Teacher: Display training paths
+
+Teacher -> Browser: Edit training path structure
+Browser -> Controller: PUT /teaching/trainingPaths/{id}
+Controller -> TPService: updateTrainingPath(path, data)
+TPService -> TPRepo: update(path, validatedData)
+TPRepo -> DB: UPDATE training_paths SET ...
+DB --> TPRepo: Updated record
+TPRepo --> TPService: Updated training path
+TPService --> Controller: Training path updated
+Controller --> Browser: 200 OK
+
+Teacher -> Browser: Add/edit modules and units
+Browser -> Controller: POST /teaching/trainingPaths/{id}/modules
+Controller -> TPService: createModule(path, moduleData)
+TPService -> TPRepo: createModule(...)
+TPRepo -> DB: INSERT training_path_modules
+DB --> TPRepo: Module record
+TPRepo --> TPService: Module created
+TPService --> Controller: Module created
+Controller --> Browser: 201 Created
+
+== Submit for Review ==
+
+Teacher -> Browser: Click "Submit for Review"
+Browser -> Controller: POST /teaching/trainingPaths/{id}/submit
+Controller -> TPService: submitForReview(path)
+
+TPService -> TPService: validateOwnership(teacher, path)
+TPService -> TPService: validateCompleteness(path)
+note right: Check: has modules, has units,\nhas content (article/video/quiz)
+
+TPService -> TPRepo: updateStatus(path, PENDING_REVIEW)
+TPRepo -> DB: UPDATE training_paths SET status = 'pending_review'
+DB --> TPRepo: Updated
+TPRepo --> TPService: Updated training path
+
+TPService -> AlertService: notifyAdminsNewSubmission(path)
+AlertService -> DB: INSERT system_alerts (type: training_path_submission)
+DB --> AlertService: Alert created
+
+TPService --> Controller: Training path submitted
+Controller --> Browser: 200 OK {status: 'pending_review'}
+Browser --> Teacher: "Submitted for review"
+
+== Administrative Review ==
+
+Administrator -> Browser: Open admin dashboard
+Browser -> Controller: GET /admin/training-paths?status=pending
+Controller -> TPRepo: findByStatus(PENDING_REVIEW)
+TPRepo -> DB: SELECT training_paths WHERE status = 'pending_review'
+DB --> TPRepo: Pending training paths
+TPRepo --> Controller: Collection
+Controller --> Browser: Render approval list
+Browser --> Administrator: Display pending submissions
+
+Administrator -> Browser: Review and approve
+Browser -> Controller: POST /admin/training-paths/{id}/approve
+Controller -> TPService: approveTrainingPath(path)
+
+TPService -> TPRepo: updateStatus(path, APPROVED)
+TPRepo -> DB: UPDATE training_paths SET status = 'approved'
+DB --> TPRepo: Updated
+TPRepo --> TPService: Approved training path
+
+TPService -> AlertService: notifyTeacherApproved(path)
+AlertService -> DB: INSERT notifications (for teacher)
+DB --> AlertService: Notification created
+
+TPService --> Controller: Training path approved
+Controller --> Browser: 200 OK
+Browser --> Administrator: "Training path approved"
+
+@enduml

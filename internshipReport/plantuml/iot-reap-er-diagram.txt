@@ -1,0 +1,426 @@
+@startuml iot-reap-er-diagram
+title IoT-REAP Platform - Physical Data Model (ER Diagram)
+
+skinparam linetype ortho
+skinparam monochrome true
+
+entity "users" as users {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  email : VARCHAR <<UNIQUE>>
+  email_verified_at : TIMESTAMP
+  password : VARCHAR
+  google_id : VARCHAR <<UNIQUE>>
+  avatar : VARCHAR
+  role : ENUM(<<engineer, teacher, admin>>)
+  is_suspended : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+entity "training_paths" as tp {
+  * id : BIGINT <<PK>>
+  --
+  teacher_id : BIGINT <<FK>>
+  title : VARCHAR
+  description : TEXT
+  price_cents : BIGINT
+  status : ENUM(<<draft, pending_review, approved, rejected>>)
+  is_featured : BOOLEAN
+  featured_order : INT
+}
+
+entity "training_path_modules" as tpm {
+  * id : BIGINT <<PK>>
+  --
+  training_path_id : BIGINT <<FK>>
+  title : VARCHAR
+  order : INT
+}
+
+entity "training_units" as tu {
+  * id : BIGINT <<PK>>
+  --
+  module_id : BIGINT <<FK>>
+  title : VARCHAR
+  order : INT
+  content_type : VARCHAR
+}
+
+entity "articles" as articles {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>> <<UNIQUE>>
+  content : LONGTEXT
+  word_count : INT
+  reading_time_minutes : INT
+}
+
+entity "videos" as videos {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>> <<UNIQUE>>
+  video_path : VARCHAR
+  duration_seconds : INT
+  processing_status : ENUM
+}
+
+entity "captions" as captions {
+  * id : BIGINT <<PK>>
+  --
+  video_id : BIGINT <<FK>>
+  language : VARCHAR
+  content : TEXT
+}
+
+entity "quizzes" as quizzes {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>> <<UNIQUE>>
+  title : VARCHAR
+  passing_score : INT
+  max_attempts : INT
+}
+
+entity "quiz_questions" as qq {
+  * id : BIGINT <<PK>>
+  --
+  quiz_id : BIGINT <<FK>>
+  question_text : TEXT
+  points : INT
+  order : INT
+}
+
+entity "quiz_question_options" as qqo {
+  * id : BIGINT <<PK>>
+  --
+  question_id : BIGINT <<FK>>
+  option_text : TEXT
+  is_correct : BOOLEAN
+  order : INT
+}
+
+entity "quiz_attempts" as qa {
+  * id : BIGINT <<PK>>
+  --
+  quiz_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  score : INT
+  status : ENUM(<<in_progress, completed>>)
+  started_at : TIMESTAMP
+  completed_at : TIMESTAMP
+}
+
+entity "quiz_attempt_answers" as qaa {
+  * id : BIGINT <<PK>>
+  --
+  attempt_id : BIGINT <<FK>>
+  question_id : BIGINT <<FK>>
+  selected_option_id : BIGINT <<FK>>
+  is_correct : BOOLEAN
+}
+
+entity "training_path_enrollments" as tpe {
+  * id : BIGINT <<PK>>
+  --
+  training_path_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  enrolled_at : TIMESTAMP
+  completed_at : TIMESTAMP
+}
+
+entity "training_path_reviews" as tpr {
+  * id : BIGINT <<PK>>
+  --
+  training_path_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  rating : INT
+  comment : TEXT
+}
+
+entity "training_unit_progress" as tup {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  article_completed : BOOLEAN
+  video_completed : BOOLEAN
+  quiz_completed : BOOLEAN
+  quiz_passed : BOOLEAN
+}
+
+entity "video_progress" as vp {
+  * id : BIGINT <<PK>>
+  --
+  video_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  watched_seconds : INT
+  completed : BOOLEAN
+}
+
+entity "training_unit_notes" as tun {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  content : TEXT
+}
+
+entity "certificates" as certs {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  training_path_id : BIGINT <<FK>>
+  verification_hash : VARCHAR <<UNIQUE>>
+  issued_at : TIMESTAMP
+}
+
+entity "discussion_threads" as dt {
+  * id : BIGINT <<PK>>
+  --
+  training_path_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  title : VARCHAR
+  body : TEXT
+  is_locked : BOOLEAN
+}
+
+entity "thread_replies" as tr {
+  * id : BIGINT <<PK>>
+  --
+  thread_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  body : TEXT
+}
+
+entity "thread_votes" as tv {
+  * id : BIGINT <<PK>>
+  --
+  reply_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  vote_type : ENUM(<<up, down>>)
+}
+
+entity "payments" as payments {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  training_path_id : BIGINT <<FK>>
+  amount_cents : BIGINT
+  status : ENUM(<<pending, completed, failed, refunded>>)
+  stripe_session_id : VARCHAR
+}
+
+entity "refund_requests" as refunds {
+  * id : BIGINT <<PK>>
+  --
+  payment_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  reason : TEXT
+  status : ENUM(<<pending, approved, rejected, completed, failed>>)
+  admin_id : BIGINT <<FK>>
+}
+
+entity "payout_requests" as payouts {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  amount_cents : BIGINT
+  status : ENUM(<<pending, approved, rejected, completed, failed>>)
+  admin_id : BIGINT <<FK>>
+}
+
+entity "stripe_webhooks" as sw {
+  * id : BIGINT <<PK>>
+  --
+  event_type : VARCHAR
+  payload : JSON
+  processed : BOOLEAN
+}
+
+entity "vm_sessions" as vms {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  proxmox_server_id : BIGINT <<FK>>
+  proxmox_node_id : BIGINT <<FK>>
+  vmid : INT
+  status : ENUM(<<pending, active, expired, failed>>)
+  expires_at : TIMESTAMP
+}
+
+entity "proxmox_servers" as ps {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  host : VARCHAR
+  is_active : BOOLEAN
+}
+
+entity "proxmox_nodes" as pn {
+  * id : BIGINT <<PK>>
+  --
+  server_id : BIGINT <<FK>>
+  name : VARCHAR
+  status : ENUM
+  cpu_usage : FLOAT
+  memory_usage : FLOAT
+}
+
+entity "training_unit_vm_assignments" as tuva {
+  * id : BIGINT <<PK>>
+  --
+  training_unit_id : BIGINT <<FK>>
+  template_vmid : INT
+  status : ENUM(<<pending, approved, rejected>>)
+  admin_id : BIGINT <<FK>>
+}
+
+entity "gateway_nodes" as gn {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  host : VARCHAR
+  status : ENUM(<<online, offline, maintenance>>)
+  is_active : BOOLEAN
+}
+
+entity "usb_devices" as usb {
+  * id : BIGINT <<PK>>
+  --
+  gateway_node_id : BIGINT <<FK>>
+  name : VARCHAR
+  vendor_id : VARCHAR
+  product_id : VARCHAR
+  status : ENUM(<<available, attached, dedicated, maintenance>>)
+}
+
+entity "cameras" as cameras {
+  * id : BIGINT <<PK>>
+  --
+  gateway_node_id : BIGINT <<FK>>
+  name : VARCHAR
+  stream_url : VARCHAR
+  supports_ptz : BOOLEAN
+  status : ENUM(<<available, in_use, maintenance>>)
+}
+
+entity "reservations" as reservations {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  reservable_id : BIGINT
+  reservable_type : VARCHAR
+  start_time : TIMESTAMP
+  end_time : TIMESTAMP
+  status : ENUM(<<pending, approved, active, completed, cancelled, rejected>>)
+}
+
+entity "usb_device_reservations" as udr {
+  * id : BIGINT <<PK>>
+  --
+  reservation_id : BIGINT <<FK>>
+  usb_device_id : BIGINT <<FK>>
+}
+
+entity "camera_reservations" as cr {
+  * id : BIGINT <<PK>>
+  --
+  reservation_id : BIGINT <<FK>>
+  camera_id : BIGINT <<FK>>
+}
+
+entity "camera_session_controls" as csc {
+  * id : BIGINT <<PK>>
+  --
+  camera_id : BIGINT <<FK>>
+  vm_session_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  status : ENUM(<<active, released>>)
+}
+
+entity "usb_device_queues" as udq {
+  * id : BIGINT <<PK>>
+  --
+  usb_device_id : BIGINT <<FK>>
+  vm_session_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+  position : INT
+}
+
+entity "notifications" as notif {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  type : VARCHAR
+  data : JSON
+  read_at : TIMESTAMP
+}
+
+entity "activity_logs" as al {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  action : VARCHAR
+  subject_type : VARCHAR
+  subject_id : BIGINT
+  properties : JSON
+}
+
+entity "system_alerts" as sa {
+  * id : BIGINT <<PK>>
+  --
+  type : VARCHAR
+  message : TEXT
+  severity : ENUM(<<info, warning, critical>>)
+  is_resolved : BOOLEAN
+}
+
+' User relationships
+users ||--o{ tp : "teaches"
+users ||--o{ tpe : "enrolls"
+users ||--o{ tpr : "reviews"
+users ||--o{ qa : "attempts"
+users ||--o{ payments : "pays"
+users ||--o{ refunds : "requests"
+users ||--o{ payouts : "withdraws"
+users ||--o{ vms : "provisions"
+users ||--o{ certs : "earns"
+users ||--o{ dt : "creates"
+users ||--o{ tr : "replies"
+users ||--o{ tv : "votes"
+users ||--o{ tup : "tracks"
+users ||--o{ vp : "watches"
+users ||--o{ tun : "notes"
+users ||--o{ notif : "receives"
+users ||--o{ al : "generates"
+
+' Training path hierarchy
+tp ||--o{ tpm : "contains"
+tpm ||--o{ tu : "contains"
+tu ||--o| articles : "has"
+tu ||--o| videos : "has"
+tu ||--o| quizzes : "has"
+tu ||--o| tuva : "requires"
+videos ||--o{ captions : "has"
+quizzes ||--o{ qq : "contains"
+qq ||--o{ qqo : "has"
+qa ||--o{ qaa : "contains"
+
+' Commerce
+payments ||--o{ refunds : "may generate"
+payments ||--o| sw : "references"
+
+' Infrastructure
+ps ||--o{ pn : "hosts"
+pn ||--o{ vms : "runs"
+gn ||--o{ usb : "exposes"
+gn ||--o{ cameras : "exposes"
+usb ||--o{ udr : "reserved via"
+cameras ||--o{ cr : "reserved via"
+cameras ||--o{ csc : "controlled via"
+usb ||--o{ udq : "queued via"
+reservations ||--o| udr : "usb"
+reservations ||--o| cr : "camera"
+
+@enduml

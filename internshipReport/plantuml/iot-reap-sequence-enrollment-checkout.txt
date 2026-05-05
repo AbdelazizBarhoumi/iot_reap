@@ -1,0 +1,66 @@
+@startuml iotreap-enrollment-checkout
+title IoT-REAP - Training Path Enrollment and Checkout Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "TrainingPath\nController" as Controller
+participant "Checkout\nService" as CheckoutService
+participant "Stripe\nAPI" as Stripe
+participant "Webhook\nController" as Webhook
+participant "Payment\nRepository" as PaymentRepo
+participant "Enrollment\nService" as EnrollmentService
+database "Database" as DB
+
+== Browse and Select Training Path ==
+
+Engineer -> Browser: Browse training path catalog
+Browser -> Controller: GET /trainingPaths
+Controller -> DB: Fetch approved training paths
+DB --> Controller: Training path collection
+Controller --> Browser: Render catalog page
+Browser --> Engineer: Display training paths
+
+Engineer -> Browser: Click "Enroll" on paid path
+Browser -> Controller: POST /trainingPaths/{id}/enroll
+
+== Checkout Initialization ==
+
+Controller -> CheckoutService: createCheckoutSession(user, trainingPath)
+CheckoutService -> PaymentRepo: create(payment: PENDING)
+PaymentRepo -> DB: INSERT payments
+DB --> PaymentRepo: Payment record
+CheckoutService -> Stripe: POST /v1/checkout/sessions
+Stripe --> CheckoutService: {session_url, session_id}
+CheckoutService --> Controller: Redirect URL
+Controller --> Browser: Redirect to Stripe
+
+== External Payment ==
+
+Browser -> Stripe: User completes payment
+Stripe --> Browser: Redirect to /checkout/success
+
+== Webhook Confirmation ==
+
+Stripe -> Webhook: POST /stripe/webhook {checkout.session.completed}
+Webhook -> Webhook: Verify webhook signature
+Webhook -> PaymentRepo: findByStripeId(session_id)
+PaymentRepo -> DB: SELECT payments WHERE stripe_session_id = ?
+DB --> PaymentRepo: Payment record
+Webhook -> PaymentRepo: updateStatus(COMPLETED)
+PaymentRepo -> DB: UPDATE payments SET status = 'completed'
+DB --> PaymentRepo: Updated payment
+
+Webhook -> EnrollmentService: enrollUser(user, trainingPath)
+EnrollmentService -> DB: INSERT training_path_enrollments
+DB --> EnrollmentService: Enrollment record
+
+== Access Granted ==
+
+Engineer -> Browser: View enrolled training paths
+Browser -> Controller: GET /my-trainingPaths
+Controller -> DB: Fetch enrolled paths with progress
+DB --> Controller: Enrolled paths
+Controller --> Browser: Render enrolled paths
+Browser --> Engineer: Display learning dashboard
+
+@enduml

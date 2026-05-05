@@ -1,0 +1,181 @@
+@startuml iot-reap-sequence-stripe-refund
+title IoT-REAP - Stripe Refund Sequence Diagram
+actor User as user
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Checkout\nController" as checkout
+participant "Admin Refund\nController" as refund
+participant "Stripe\nService" as stripe
+participant "Database" as db
+participant "Refund\nModel" as rm
+participant "Payment\nModel" as payment
+participant "Enrollment\nModel" as enrollment
+participant "Stripe\nAPI" as stripe_api
+
+== User Refund Request ==
+
+user -> frontend : Navigate to my courses
+frontend -> routes : GET /my-trainingPaths
+routes -> frontend : Display enrolled courses
+frontend --> user : Show courses with refund option
+
+user -> frontend : Select course and request refund
+frontend -> routes : POST /checkout/refund
+routes -> checkout : requestRefund(trainingPathId, reason)
+checkout -> db : Load enrollment
+checkout -> db : Load payment record
+checkout -> db : Check refund eligibility
+checkout -> db : Check refund time window
+db --> checkout : Return eligibility status
+
+alt Eligible for refund
+    checkout -> db : Create refund request
+    checkout -> db : Set status to pending
+    checkout -> db : Link to payment and enrollment
+    checkout -> db : Save refund reason
+    checkout -> db : Save changes
+    checkout -> db : Notify admins
+    checkout --> routes : Return refund request
+    routes --> frontend : Display confirmation
+    frontend --> user : Show "Refund request submitted"
+else Not eligible
+    checkout --> routes : Return error
+    routes --> frontend : Display error message
+    frontend --> user : Show "Refund not eligible" error
+end
+
+user -> frontend : View refund requests
+frontend -> routes : GET /checkout/refunds
+routes -> checkout : refunds()
+checkout -> db : Load user's refund requests
+checkout -> db : Load request statuses
+checkout -> db : Load payment information
+db --> checkout : Return refund data
+checkout --> routes : Return refunds
+routes --> frontend : Display refund history
+frontend --> user : Show all refund requests with status
+
+== Admin Refund Processing ==
+
+admin -> frontend : Navigate to refund management
+frontend -> routes : GET /admin/refunds
+routes -> refund : index()
+refund -> db : Load refund requests
+refund -> db : Load request statuses
+refund -> db : Load user and payment information
+db --> refund : Return refund data
+refund --> routes : Return refund list
+routes --> frontend : Display refund requests
+frontend --> admin : Show all refund requests
+
+admin -> frontend : View all refunds history
+frontend -> routes : GET /admin/refunds/all
+routes -> refund : all()
+refund -> db : Load all refund records
+refund -> db : Load refund statuses
+refund -> db : Load payment information
+db --> refund : Return refund history
+refund --> routes : Return refund history
+routes --> frontend : Display refund history
+frontend --> admin : Show complete refund history
+
+admin -> frontend : Review refund request
+frontend -> routes : GET /admin/refunds/{refund}
+routes -> refund : show(refundId)
+refund -> db : Load refund request
+refund -> db : Load enrollment details
+refund -> db : Load payment details
+refund -> db : Load user information
+db --> refund : Return refund details
+refund --> routes : Return refund data
+routes --> frontend : Display refund details
+frontend --> admin : Show comprehensive refund information
+
+admin -> frontend : Approve refund request
+frontend -> routes : POST /admin/refunds/{refund}/approve
+routes -> refund : approve(refundId)
+refund -> db : Load refund request
+refund -> db : Load payment record
+refund -> db : Update refund status to approved
+refund -> db : Set approved_at timestamp
+refund -> db : Set approved_by to admin
+refund -> db : Save changes
+refund -> db : Notify user
+refund --> routes : Return success
+routes --> frontend : Update refund status
+frontend --> admin : Show refund as approved
+
+admin -> frontend : Execute Stripe refund
+frontend -> routes : POST /admin/refunds/{refund}/execute-stripe-refund
+routes -> refund : executeStripeRefund(refundId)
+refund -> db : Load refund request
+refund -> db : Load payment record
+refund -> db : Update refund status to processing
+refund -> db : Save changes
+refund -> stripe : Create Stripe refund
+stripe -> stripe_api : POST /v1/refunds
+stripe_api --> stripe : Return refund result
+
+alt Refund successful
+    stripe -> db : Update refund status to completed
+    stripe -> db : Set completed_at timestamp
+    stripe -> db : Set stripe_refund_id
+    stripe -> db : Save changes
+    stripe -> db : Update payment status to refunded
+    stripe -> db : Save payment changes
+    stripe -> db : Revoke enrollment
+    stripe -> db : Update enrollment status to refunded
+    stripe -> db : Save enrollment changes
+    stripe -> db : Notify user
+    stripe -> db : Notify teacher
+    stripe --> refund : Return success
+    refund --> routes : Return success
+    routes --> frontend : Update refund status
+    frontend --> admin : Show refund as completed
+else Refund failed
+    stripe -> db : Update refund status to failed
+    stripe -> db : Set error message
+    stripe -> db : Save changes
+    stripe -> db : Notify admins
+    stripe --> refund : Return error
+    refund --> routes : Return error
+    routes --> frontend : Show error
+    frontend --> admin : Display refund failure
+end
+
+admin -> frontend : Reject refund request
+frontend -> routes : POST /admin/refunds/{refund}/reject
+routes -> refund : reject(refundId, reason)
+refund -> db : Load refund request
+refund -> db : Update status to rejected
+refund -> db : Set rejection reason
+refund -> db : Save changes
+refund -> db : Notify user
+refund -> db : Keep enrollment active
+refund --> routes : Return success
+routes --> frontend : Update refund status
+frontend --> admin : Show refund as rejected
+
+note right of user
+  User refund features:
+  - Request refund for enrolled courses
+  - View refund request status
+  - Automatic eligibility checking
+  - Time window validation
+  - Reason submission
+  - Rate limited (3 requests per minute)
+end note
+
+note right of admin
+  Admin refund features:
+  - View all refund requests
+  - Review refund details
+  - Approve/reject requests
+  - Execute Stripe refunds
+  - Automatic enrollment revocation
+  - User and teacher notifications
+  - Refund history tracking
+end note
+
+@enduml

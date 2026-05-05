@@ -1,0 +1,107 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="2200" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — VM Reservation Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1100" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Engineer" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="155" y="50" width="100" height="2000" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="305" y="50" width="100" height="2000" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_vm" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="VM Reservation&#xa;Controller" vertex="1">
+      <mxGeometry x="455" y="50" width="100" height="2000" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_px" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Proxmox&#xa;API" vertex="1">
+      <mxGeometry x="615" y="50" width="100" height="2000" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="775" y="50" width="100" height="2000" as="geometry" />
+    </mxCell>
+
+    <!-- == View Reservations == -->
+    <mxCell id="s1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View VM Reservations ==" vertex="1">
+      <mxGeometry x="145" y="160" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to VM reservations" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="210" as="sourcePoint"/><mxPoint x="205" y="210" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /vm-reservations  →  index()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="240" as="sourcePoint"/><mxPoint x="505" y="240" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load user's VM reservations" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="270" as="sourcePoint"/><mxPoint x="825" y="270" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Check VM availability" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="300" as="sourcePoint"/><mxPoint x="665" y="300" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return availability status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="330" as="sourcePoint"/><mxPoint x="505" y="330" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show current and past reservations" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="825" y="360" as="sourcePoint"/><mxPoint x="90" y="360" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == View Available VMs == -->
+    <mxCell id="s2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Available VMs ==" vertex="1">
+      <mxGeometry x="145" y="400" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View available VMs" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="450" as="sourcePoint"/><mxPoint x="205" y="450" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /vm-reservations/available-vms  →  availableVMs()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="480" as="sourcePoint"/><mxPoint x="505" y="480" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load active Proxmox servers" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="510" as="sourcePoint"/><mxPoint x="825" y="510" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Query available VMs on each server" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="540" as="sourcePoint"/><mxPoint x="665" y="540" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return VM lists with status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="570" as="sourcePoint"/><mxPoint x="505" y="570" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show available VMs by server/node" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="600" as="sourcePoint"/><mxPoint x="90" y="600" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == View Calendar == -->
+    <mxCell id="s3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== View VM Availability Calendar ==" vertex="1">
+      <mxGeometry x="145" y="640" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Select VM and view calendar" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="690" as="sourcePoint"/><mxPoint x="205" y="690" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /vm-reservations/nodes/{nodeId}/vms/{vmId}/calendar  →  vmReservationsCalendar()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="720" as="sourcePoint"/><mxPoint x="505" y="720" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load existing reservations for this VM" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="750" as="sourcePoint"/><mxPoint x="825" y="750" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show VM availability calendar" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="825" y="780" as="sourcePoint"/><mxPoint x="90" y="780" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Create Reservation == -->
+    <mxCell id="s4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Create New Reservation ==" vertex="1">
+      <mxGeometry x="145" y="820" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create new reservation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="870" as="sourcePoint"/><mxPoint x="205" y="870" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /vm-reservations  →  store(vmData, startTime, endTime)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="900" as="sourcePoint"/><mxPoint x="505" y="900" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Check for conflicting reservations" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="930" as="sourcePoint"/><mxPoint x="825" y="930" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return conflict status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="825" y="960" as="sourcePoint"/><mxPoint x="505" y="960" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- alt frame -->
+    <mxCell id="alt_frame" parent="1" style="swimlane;startSize=20;html=1;fontSize=10;fontStyle=1;align=left;fillColor=none;strokeColor=#666666;strokeWidth=1;rounded=0;" value="alt" vertex="1">
+      <mxGeometry x="145" y="990" width="790" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="alt_ok" parent="alt_frame" style="text;html=1;fontSize=9;fontStyle=2;fontColor=#82b366;" value="[No conflicts]" vertex="1"><mxGeometry x="8" y="22" width="100" height="16" as="geometry" /></mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create VM reservation record" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1030" as="sourcePoint"/><mxPoint x="825" y="1030" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reserve VM time slot" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1060" as="sourcePoint"/><mxPoint x="665" y="1060" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm reservation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1090" as="sourcePoint"/><mxPoint x="505" y="1090" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reservation confirmation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1120" as="sourcePoint"/><mxPoint x="90" y="1120" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="alt_div" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="145" y="1155" as="sourcePoint"/><mxPoint x="935" y="1155" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="alt_f" parent="1" style="text;html=1;fontSize=9;fontStyle=2;fontColor=#b85450;" value="[Conflicts found]" vertex="1"><mxGeometry x="153" y="1158" width="120" height="16" as="geometry" /></mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#b85450;" value="Return conflict error  →  Show time slot conflicts" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1185" as="sourcePoint"/><mxPoint x="90" y="1185" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == View Reservation Details == -->
+    <mxCell id="s5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Reservation Details ==" vertex="1">
+      <mxGeometry x="145" y="1230" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View reservation details  →  GET /vm-reservations/{reservation}  →  show(reservationId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1280" as="sourcePoint"/><mxPoint x="505" y="1280" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load reservation with VM details" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1310" as="sourcePoint"/><mxPoint x="825" y="1310" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Get current VM status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1340" as="sourcePoint"/><mxPoint x="665" y="1340" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return VM status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1370" as="sourcePoint"/><mxPoint x="505" y="1370" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reservation with VM info" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="825" y="1400" as="sourcePoint"/><mxPoint x="90" y="1400" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Cancel Reservation == -->
+    <mxCell id="s6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Cancel Reservation ==" vertex="1">
+      <mxGeometry x="145" y="1440" width="790" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Cancel reservation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1490" as="sourcePoint"/><mxPoint x="205" y="1490" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /vm-reservations/{reservation}/cancel  →  cancel(reservationId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="1520" as="sourcePoint"/><mxPoint x="505" y="1520" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load reservation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1550" as="sourcePoint"/><mxPoint x="825" y="1550" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Release VM reservation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1580" as="sourcePoint"/><mxPoint x="665" y="1580" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm release" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1610" as="sourcePoint"/><mxPoint x="505" y="1610" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update reservation status to cancelled" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1640" as="sourcePoint"/><mxPoint x="825" y="1640" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show cancellation confirmation" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="825" y="1670" as="sourcePoint"/><mxPoint x="90" y="1670" as="targetPoint"/></mxGeometry></mxCell>
+
+  </root>
+</mxGraphModel>

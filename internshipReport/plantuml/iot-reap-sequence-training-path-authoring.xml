@@ -1,0 +1,151 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="4000" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Training Path Authoring Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1100" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Teacher" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="155" y="50" width="100" height="3800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="305" y="50" width="100" height="3800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_tc" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Teaching&#xa;Controller" vertex="1">
+      <mxGeometry x="455" y="50" width="100" height="3800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="615" y="50" width="100" height="3800" as="geometry" />
+    </mxCell>
+
+    <!-- ===== Training Path CRUD ===== -->
+    <mxCell id="part1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Training Path Management" vertex="1">
+      <mxGeometry x="145" y="160" width="530" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="s1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Teaching Dashboard ==" vertex="1">
+      <mxGeometry x="145" y="210" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to teaching dashboard  →  GET /teaching  →  index()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="260" as="sourcePoint"/><mxPoint x="505" y="260" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load teacher's paths / statuses" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="290" as="sourcePoint"/><mxPoint x="665" y="290" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show teacher workspace" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="320" as="sourcePoint"/><mxPoint x="90" y="320" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Training Paths ==" vertex="1">
+      <mxGeometry x="145" y="360" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View training paths  →  GET /teaching/training-paths  →  index()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="410" as="sourcePoint"/><mxPoint x="505" y="410" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load teacher's paths / approval status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="440" as="sourcePoint"/><mxPoint x="665" y="440" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all training paths with status" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="470" as="sourcePoint"/><mxPoint x="90" y="470" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Create Training Path ==" vertex="1">
+      <mxGeometry x="145" y="510" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click 'Create New Training Path'  →  GET /teaching/create  →  Render create form" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="560" as="sourcePoint"/><mxPoint x="355" y="560" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Fill form and submit  →  POST /teaching  →  store(trainingPathData)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="600" as="sourcePoint"/><mxPoint x="505" y="600" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create record / set to draft / initialize modules / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="630" as="sourcePoint"/><mxPoint x="665" y="630" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Redirect to editor / Show training path editor" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="660" as="sourcePoint"/><mxPoint x="90" y="660" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Edit Training Path ==" vertex="1">
+      <mxGeometry x="145" y="700" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Edit  →  GET /teaching/{id}/edit  →  edit(trainingPathId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="750" as="sourcePoint"/><mxPoint x="505" y="750" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load path / modules / units" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="780" as="sourcePoint"/><mxPoint x="665" y="780" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show editor with content" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="810" as="sourcePoint"/><mxPoint x="90" y="810" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update  →  PATCH /teaching/{trainingPath}  →  update() / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="850" as="sourcePoint"/><mxPoint x="665" y="850" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated training path" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="880" as="sourcePoint"/><mxPoint x="90" y="880" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- ===== Module CRUD ===== -->
+    <mxCell id="part2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Module Management" vertex="1">
+      <mxGeometry x="145" y="920" width="530" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="s5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Add Module ==" vertex="1">
+      <mxGeometry x="145" y="970" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Add module  →  POST /teaching/{trainingPath}/modules  →  storeModule()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1020" as="sourcePoint"/><mxPoint x="505" y="1020" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create module / link to path / initialize units / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1050" as="sourcePoint"/><mxPoint x="665" y="1050" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new module in path" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1080" as="sourcePoint"/><mxPoint x="90" y="1080" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Edit Module ==" vertex="1">
+      <mxGeometry x="145" y="1120" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Edit module  →  PATCH /teaching/{trainingPath}/modules/{module}  →  updateModule() / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1170" as="sourcePoint"/><mxPoint x="665" y="1170" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated module" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1200" as="sourcePoint"/><mxPoint x="90" y="1200" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Delete Module ==" vertex="1">
+      <mxGeometry x="145" y="1240" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete module  →  DELETE /teaching/{trainingPath}/modules/{module}  →  destroyModule()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1290" as="sourcePoint"/><mxPoint x="505" y="1290" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load module / delete module and units / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1320" as="sourcePoint"/><mxPoint x="665" y="1320" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show module deleted" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1350" as="sourcePoint"/><mxPoint x="90" y="1350" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s8" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Reorder Modules ==" vertex="1">
+      <mxGeometry x="145" y="1390" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reorder  →  PATCH /teaching/{trainingPath}/modules/reorder  →  reorderModules() / update order / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1440" as="sourcePoint"/><mxPoint x="665" y="1440" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reordered modules" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1470" as="sourcePoint"/><mxPoint x="90" y="1470" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- ===== Training Unit CRUD ===== -->
+    <mxCell id="part3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Training Unit Management" vertex="1">
+      <mxGeometry x="145" y="1510" width="530" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="s9" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Add Training Unit ==" vertex="1">
+      <mxGeometry x="145" y="1560" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Add unit  →  POST /teaching/{trainingPath}/modules/{module}/trainingUnits  →  storeTrainingUnit()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1610" as="sourcePoint"/><mxPoint x="505" y="1610" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create unit / link to module / initialize content / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1640" as="sourcePoint"/><mxPoint x="665" y="1640" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new unit in module" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1670" as="sourcePoint"/><mxPoint x="90" y="1670" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s10" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Edit Training Unit ==" vertex="1">
+      <mxGeometry x="145" y="1710" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Edit unit  →  PATCH /teaching/{trainingPath}/modules/{module}/trainingUnits/{unit}  →  updateTrainingUnit() / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1760" as="sourcePoint"/><mxPoint x="665" y="1760" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated unit" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1790" as="sourcePoint"/><mxPoint x="90" y="1790" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s11" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Delete Training Unit ==" vertex="1">
+      <mxGeometry x="145" y="1830" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete unit  →  DELETE .../trainingUnits/{unit}  →  destroyTrainingUnit()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1880" as="sourcePoint"/><mxPoint x="505" y="1880" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load unit / delete unit and content / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1910" as="sourcePoint"/><mxPoint x="665" y="1910" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show unit deleted" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="1940" as="sourcePoint"/><mxPoint x="90" y="1940" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s12" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Reorder Training Units ==" vertex="1">
+      <mxGeometry x="145" y="1980" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reorder  →  PATCH .../trainingUnits/reorder  →  reorderTrainingUnits() / update order / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2030" as="sourcePoint"/><mxPoint x="665" y="2030" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reordered units" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="2060" as="sourcePoint"/><mxPoint x="90" y="2060" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- ===== Lifecycle ===== -->
+    <mxCell id="part4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Training Path Lifecycle" vertex="1">
+      <mxGeometry x="145" y="2100" width="530" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="s13" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== Submit for Review ==" vertex="1">
+      <mxGeometry x="145" y="2150" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Submit for review  →  POST /teaching/{trainingPath}/submit  →  submitForReview()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2200" as="sourcePoint"/><mxPoint x="505" y="2200" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update to pending_review / save / notify admins" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2230" as="sourcePoint"/><mxPoint x="665" y="2230" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m38" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display 'Submitted for Review'" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="2260" as="sourcePoint"/><mxPoint x="90" y="2260" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s14" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Archive / Restore / Delete ==" vertex="1">
+      <mxGeometry x="145" y="2300" width="530" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m39" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Archive  →  POST /teaching/{trainingPath}/archive  →  archive()  →  Update to archived / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2350" as="sourcePoint"/><mxPoint x="665" y="2350" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m40" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show path as archived" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="2380" as="sourcePoint"/><mxPoint x="90" y="2380" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="m41" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Restore  →  POST /teaching/{trainingPath}/restore  →  restore()  →  Update to draft / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2420" as="sourcePoint"/><mxPoint x="665" y="2420" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m42" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show path as draft" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="2450" as="sourcePoint"/><mxPoint x="90" y="2450" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="m43" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete  →  DELETE /teaching/{trainingPath}  →  destroy()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2490" as="sourcePoint"/><mxPoint x="505" y="2490" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m44" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load path / check enrollments / delete path and content / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2520" as="sourcePoint"/><mxPoint x="665" y="2520" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m45" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show path deleted" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="665" y="2550" as="sourcePoint"/><mxPoint x="90" y="2550" as="targetPoint"/></mxGeometry></mxCell>
+
+  </root>
+</mxGraphModel>

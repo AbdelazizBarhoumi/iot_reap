@@ -1,0 +1,61 @@
+@startuml iot-reap-sequence-refund-request
+title IoT-REAP -- Request Refund Sequence Diagram
+
+actor Engineer
+participant "Frontend\n(React)" as FE
+participant "PaymentController" as PC
+participant "RefundService" as RS
+participant "PaymentRepo" as PR
+participant "RefundRepo" as RR
+participant "NotificationService" as NS
+participant "Database" as DB
+
+Engineer -> FE: Navigate to payment history
+FE -> PC: GET /payments/history
+PC -> RS: getPaymentHistory(user)
+RS -> PR: findByUser(user)
+PR -> DB: SELECT payments WHERE user_id
+DB --> PR: Collection
+PR --> RS: Collection of Payment
+RS --> PC: PaymentResource collection
+PC --> FE: 200 OK
+FE --> Engineer: Display payment history
+
+== Request Refund ==
+
+Engineer -> FE: Click "Request Refund" on payment
+FE -> PC: POST /refunds with payment_id and reason
+PC -> RS: requestRefund(user, paymentId, reason)
+RS -> PR: findByIdAndUser(paymentId, user)
+PR -> DB: SELECT payments WHERE id AND user_id
+DB --> PR: Payment
+PR --> RS: Payment
+
+alt Payment not found
+    RS --> PC: PaymentNotFoundException
+    PC --> FE: 404 Not Found
+else Payment found
+    alt Refund window expired
+        RS --> PC: RefundWindowExpiredException
+        PC --> FE: 400 Bad Request
+        FE --> Engineer: "Refund period has expired"
+    else Within refund window
+        alt Refund already exists
+            RS --> PC: DuplicateRefundException
+            PC --> FE: 409 Conflict
+            FE --> Engineer: "Refund already requested"
+        else No existing refund
+            RS -> RR: create(paymentId, userId, reason, pending)
+            RR -> DB: INSERT INTO refunds
+            DB --> RR: Refund
+            RR --> RS: Refund
+            RS -> NS: notifyAdmins(refundRequest)
+            NS -> NS: Send notification to admin panel
+            RS --> PC: RefundResource
+            PC --> FE: 201 Created
+            FE --> Engineer: "Refund request submitted. Under review."
+        end
+    end
+end
+
+@enduml

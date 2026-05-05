@@ -1,0 +1,392 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1700" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — VM Reservation Approval Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="200" y="10" width="1100" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor: Admin -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="60" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_browser" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Browser" vertex="1">
+      <mxGeometry x="170" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_controller" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="AdminVMReservation&#xa;Controller" vertex="1">
+      <mxGeometry x="330" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_ressvc" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="VMReservation&#xa;Service" vertex="1">
+      <mxGeometry x="490" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_resrepo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="VMReservation&#xa;Repository" vertex="1">
+      <mxGeometry x="650" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_proxmox" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="ProxmoxClient" vertex="1">
+      <mxGeometry x="810" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="MySQL" vertex="1">
+      <mxGeometry x="970" y="50" width="100" height="1100" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SECTION 1: View Pending VM Reservations ===== -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Pending VM Reservations ==" vertex="1">
+      <mxGeometry x="150" y="160" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Admin -> Browser: Navigate to VM Reservations -->
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to VM Reservations" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="95" y="210" as="sourcePoint" />
+        <mxPoint x="220" y="210" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller: GET /admin/vm-reservations?status=pending -->
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/vm-reservations?status=pending" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="240" as="sourcePoint" />
+        <mxPoint x="380" y="240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> ResSvc: getPendingReservations(page) -->
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getPendingReservations(page)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="270" as="sourcePoint" />
+        <mxPoint x="540" y="270" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResRepo: findPending(page) -->
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findPending(page)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="300" as="sourcePoint" />
+        <mxPoint x="700" y="300" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> DB: SELECT * FROM vm_reservations WHERE status = 'pending' -->
+    <mxCell id="m5" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM vm_reservations WHERE status = 'pending' ORDER BY created_at DESC" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="330" as="sourcePoint" />
+        <mxPoint x="1020" y="330" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB -> ResRepo: Collection&lt;VMReservation&gt; -->
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Collection&lt;VMReservation&gt;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1020" y="360" as="sourcePoint" />
+        <mxPoint x="700" y="360" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> ResSvc: PaginatedResult&lt;VMReservation&gt; -->
+    <mxCell id="m7" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="PaginatedResult&lt;VMReservation&gt;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="390" as="sourcePoint" />
+        <mxPoint x="540" y="390" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> Controller: 200 OK {data, meta} -->
+    <mxCell id="m8" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {data, meta}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="420" as="sourcePoint" />
+        <mxPoint x="380" y="420" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> Browser: Display pending reservation requests -->
+    <mxCell id="m9" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display pending reservation requests" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="450" as="sourcePoint" />
+        <mxPoint x="220" y="450" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Admin -->
+    <mxCell id="m9b" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show pending reservations" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="480" as="sourcePoint" />
+        <mxPoint x="95" y="480" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 2: Approve VM Reservation ===== -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Approve VM Reservation ==" vertex="1">
+      <mxGeometry x="150" y="530" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Admin -> Browser: Click Approve on reservation -->
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click Approve on reservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="95" y="580" as="sourcePoint" />
+        <mxPoint x="220" y="580" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller: POST /admin/vm-reservations/{id}/approve -->
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/vm-reservations/{id}/approve" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="610" as="sourcePoint" />
+        <mxPoint x="380" y="610" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> ResSvc: approveReservation(reservationId, admin) -->
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="approveReservation(reservationId, admin)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="640" as="sourcePoint" />
+        <mxPoint x="540" y="640" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResRepo: findById(reservationId) -->
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findById(reservationId)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="670" as="sourcePoint" />
+        <mxPoint x="700" y="670" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> DB: SELECT * FROM vm_reservations WHERE id = ? -->
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM vm_reservations WHERE id = ?" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="700" as="sourcePoint" />
+        <mxPoint x="1020" y="700" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB -> ResRepo: VMReservation -->
+    <mxCell id="m15" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1020" y="730" as="sourcePoint" />
+        <mxPoint x="700" y="730" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> ResSvc: VMReservation -->
+    <mxCell id="m16" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="760" as="sourcePoint" />
+        <mxPoint x="540" y="760" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResSvc: checkResourceAvailability(reservation) -->
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="checkResourceAvailability(reservation)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="790" as="sourcePoint" />
+        <mxPoint x="540" y="820" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="600" y="790" />
+          <mxPoint x="600" y="820" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> Proxmox: checkNodeCapacity(node, template) -->
+    <mxCell id="m18" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="checkNodeCapacity(node, template)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="850" as="sourcePoint" />
+        <mxPoint x="860" y="850" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Proxmox -> ResSvc: capacity available -->
+    <mxCell id="m19" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="capacity available" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="860" y="880" as="sourcePoint" />
+        <mxPoint x="540" y="880" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResRepo: updateStatus(reservationId, APPROVED) -->
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="updateStatus(reservationId, APPROVED)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="910" as="sourcePoint" />
+        <mxPoint x="700" y="910" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> DB: UPDATE vm_reservations SET status = 'approved', admin_id = ? -->
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPDATE vm_reservations SET status = 'approved', admin_id = ? WHERE id = ?" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="940" as="sourcePoint" />
+        <mxPoint x="1020" y="940" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB -> ResRepo: VMReservation updated -->
+    <mxCell id="m22" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation updated" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1020" y="970" as="sourcePoint" />
+        <mxPoint x="700" y="970" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> ResSvc: VMReservation updated -->
+    <mxCell id="m23" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation updated" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="1000" as="sourcePoint" />
+        <mxPoint x="540" y="1000" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResSvc: notifyEngineer(reservation, approved) -->
+    <mxCell id="m24" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="notifyEngineer(reservation, approved)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1030" as="sourcePoint" />
+        <mxPoint x="540" y="1060" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="600" y="1030" />
+          <mxPoint x="600" y="1060" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> Controller: VMReservation -->
+    <mxCell id="m25" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1090" as="sourcePoint" />
+        <mxPoint x="380" y="1090" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> Browser: 200 OK {data} -->
+    <mxCell id="m26" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {data}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="1120" as="sourcePoint" />
+        <mxPoint x="220" y="1120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Admin: Approval confirmed -->
+    <mxCell id="m27" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Approval confirmed" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="1150" as="sourcePoint" />
+        <mxPoint x="95" y="1150" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 3: Reject VM Reservation ===== -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Reject VM Reservation ==" vertex="1">
+      <mxGeometry x="150" y="1200" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Admin -> Browser: Click Reject with reason -->
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click Reject with reason" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="95" y="1250" as="sourcePoint" />
+        <mxPoint x="220" y="1250" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller: POST /admin/vm-reservations/{id}/reject {reason} -->
+    <mxCell id="m29" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/vm-reservations/{id}/reject {reason}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="1280" as="sourcePoint" />
+        <mxPoint x="380" y="1280" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> ResSvc: rejectReservation(reservationId, admin, reason) -->
+    <mxCell id="m30" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="rejectReservation(reservationId, admin, reason)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="1310" as="sourcePoint" />
+        <mxPoint x="540" y="1310" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResRepo: findById(reservationId) -->
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findById(reservationId)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1340" as="sourcePoint" />
+        <mxPoint x="700" y="1340" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB -> ResRepo (implicit): VMReservation -->
+    <mxCell id="m32" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="1370" as="sourcePoint" />
+        <mxPoint x="540" y="1370" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResRepo: updateStatus(reservationId, REJECTED, reason) -->
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="updateStatus(reservationId, REJECTED, reason)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1400" as="sourcePoint" />
+        <mxPoint x="700" y="1400" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> DB: UPDATE vm_reservations SET status = 'rejected', rejection_reason = ? -->
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPDATE vm_reservations SET status = 'rejected', rejection_reason = ? WHERE id = ?" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="1430" as="sourcePoint" />
+        <mxPoint x="1020" y="1430" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB -> ResRepo: VMReservation updated -->
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation updated" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1020" y="1460" as="sourcePoint" />
+        <mxPoint x="700" y="1460" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResRepo -> ResSvc: VMReservation updated -->
+    <mxCell id="m36" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation updated" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="700" y="1490" as="sourcePoint" />
+        <mxPoint x="540" y="1490" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> ResSvc: notifyEngineer(reservation, rejected) -->
+    <mxCell id="m37" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="notifyEngineer(reservation, rejected)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1520" as="sourcePoint" />
+        <mxPoint x="540" y="1550" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="600" y="1520" />
+          <mxPoint x="600" y="1550" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ResSvc -> Controller: VMReservation -->
+    <mxCell id="m38" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="VMReservation" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="540" y="1580" as="sourcePoint" />
+        <mxPoint x="380" y="1580" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> Browser: 200 OK {data} -->
+    <mxCell id="m39" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {data}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="1610" as="sourcePoint" />
+        <mxPoint x="220" y="1610" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Admin: Rejection confirmed -->
+    <mxCell id="m40" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Rejection confirmed" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="1640" as="sourcePoint" />
+        <mxPoint x="95" y="1640" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

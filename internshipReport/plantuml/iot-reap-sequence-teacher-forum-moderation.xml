@@ -1,0 +1,155 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="4200" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Teacher Forum Moderation Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1100" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Teacher" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="155" y="50" width="100" height="4050" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="305" y="50" width="100" height="4050" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_fo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Forum&#xa;Controller" vertex="1">
+      <mxGeometry x="455" y="50" width="100" height="4050" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="605" y="50" width="100" height="4050" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_no" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Notification&#xa;Service" vertex="1">
+      <mxGeometry x="755" y="50" width="100" height="4050" as="geometry" />
+    </mxCell>
+
+    <!-- == View Inbox == -->
+    <mxCell id="s1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Teaching Forum Inbox ==" vertex="1">
+      <mxGeometry x="145" y="160" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to teaching forum inbox" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="210" as="sourcePoint"/><mxPoint x="205" y="210" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /teaching/forum/inbox" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="240" as="sourcePoint"/><mxPoint x="355" y="240" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="teacherInbox()" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="355" y="270" as="sourcePoint"/><mxPoint x="505" y="270" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load teacher's paths / threads / recent replies" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="300" as="sourcePoint"/><mxPoint x="655" y="300" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show threads and replies for teacher's courses" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="330" as="sourcePoint"/><mxPoint x="90" y="330" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == View Thread == -->
+    <mxCell id="s2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Thread Details ==" vertex="1">
+      <mxGeometry x="145" y="370" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View thread details" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="420" as="sourcePoint"/><mxPoint x="205" y="420" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /forum/threads/{threadId}  →  show(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="450" as="sourcePoint"/><mxPoint x="505" y="450" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load thread with replies / upvotes / flags" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="480" as="sourcePoint"/><mxPoint x="655" y="480" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread with all replies" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="510" as="sourcePoint"/><mxPoint x="90" y="510" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Pin / Unpin == -->
+    <mxCell id="s3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Pin Thread ==" vertex="1">
+      <mxGeometry x="145" y="550" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Pin thread  →  POST /forum/threads/{threadId}/pin  →  pin(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="600" as="sourcePoint"/><mxPoint x="505" y="600" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update pinned status / set pinned_at / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="630" as="sourcePoint"/><mxPoint x="655" y="630" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread as pinned" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="660" as="sourcePoint"/><mxPoint x="90" y="660" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Unpin Thread ==" vertex="1">
+      <mxGeometry x="145" y="700" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Unpin thread  →  POST /forum/threads/{threadId}/unpin  →  unpin(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="750" as="sourcePoint"/><mxPoint x="505" y="750" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update pinned status / clear pinned_at / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="780" as="sourcePoint"/><mxPoint x="655" y="780" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread as unpinned" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="810" as="sourcePoint"/><mxPoint x="90" y="810" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Lock / Unlock == -->
+    <mxCell id="s5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Lock Thread ==" vertex="1">
+      <mxGeometry x="145" y="850" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Lock thread  →  POST /forum/threads/{threadId}/lock  →  lock(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="900" as="sourcePoint"/><mxPoint x="505" y="900" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update locked status / set locked_at / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="930" as="sourcePoint"/><mxPoint x="655" y="930" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread as locked (no new replies)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="960" as="sourcePoint"/><mxPoint x="90" y="960" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Unlock Thread ==" vertex="1">
+      <mxGeometry x="145" y="1000" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Unlock thread  →  POST /forum/threads/{threadId}/unlock  →  unlock(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1050" as="sourcePoint"/><mxPoint x="505" y="1050" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update locked status / clear locked_at / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1080" as="sourcePoint"/><mxPoint x="655" y="1080" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread as unlocked" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="1110" as="sourcePoint"/><mxPoint x="90" y="1110" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Resolve Flag == -->
+    <mxCell id="s7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== Resolve Flag on Thread ==" vertex="1">
+      <mxGeometry x="145" y="1150" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Resolve flag  →  POST /forum/threads/{threadId}/resolve-flag  →  resolveFlag(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1200" as="sourcePoint"/><mxPoint x="505" y="1200" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load thread flags / clear flags / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1230" as="sourcePoint"/><mxPoint x="655" y="1230" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread flags resolved" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="1260" as="sourcePoint"/><mxPoint x="90" y="1260" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Mark Reply as Answer == -->
+    <mxCell id="s8" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Mark Reply as Answer ==" vertex="1">
+      <mxGeometry x="145" y="1300" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Mark reply as answer  →  POST /forum/replies/{replyId}/answer  →  markAnswer(replyId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1350" as="sourcePoint"/><mxPoint x="505" y="1350" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load reply and thread / mark as accepted / update thread answer ref / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1380" as="sourcePoint"/><mxPoint x="655" y="1380" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify thread author" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1410" as="sourcePoint"/><mxPoint x="805" y="1410" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create notification" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="805" y="1440" as="sourcePoint"/><mxPoint x="655" y="1440" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reply marked as answer" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="1470" as="sourcePoint"/><mxPoint x="90" y="1470" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Post Reply == -->
+    <mxCell id="s9" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Post Reply to Thread ==" vertex="1">
+      <mxGeometry x="145" y="1510" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Post reply  →  POST /forum/threads/{threadId}/reply  →  reply(threadId, replyData)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1560" as="sourcePoint"/><mxPoint x="505" y="1560" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create reply / link to thread and user / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1590" as="sourcePoint"/><mxPoint x="655" y="1590" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify thread participants" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1620" as="sourcePoint"/><mxPoint x="805" y="1620" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create notifications" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="805" y="1650" as="sourcePoint"/><mxPoint x="655" y="1650" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show new reply in thread" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="1680" as="sourcePoint"/><mxPoint x="90" y="1680" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Upvote / Flag Thread == -->
+    <mxCell id="s10" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Upvote Thread ==" vertex="1">
+      <mxGeometry x="145" y="1720" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Upvote thread  →  POST /forum/threads/{threadId}/upvote  →  upvoteThread(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1770" as="sourcePoint"/><mxPoint x="505" y="1770" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Check existing upvote / create or remove / update count / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1800" as="sourcePoint"/><mxPoint x="655" y="1800" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated upvote count" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="1830" as="sourcePoint"/><mxPoint x="90" y="1830" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s11" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Flag Thread ==" vertex="1">
+      <mxGeometry x="145" y="1870" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m38" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Flag thread  →  POST /forum/threads/{threadId}/flag  →  flagThread(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1920" as="sourcePoint"/><mxPoint x="505" y="1920" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m39" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create flag record / link to thread / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1950" as="sourcePoint"/><mxPoint x="655" y="1950" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m40" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify admins  →  Create admin notification" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="1980" as="sourcePoint"/><mxPoint x="805" y="1980" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m41" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread as flagged" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="805" y="2010" as="sourcePoint"/><mxPoint x="90" y="2010" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Upvote / Flag Reply == -->
+    <mxCell id="s12" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Upvote Reply ==" vertex="1">
+      <mxGeometry x="145" y="2050" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m42" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Upvote reply  →  POST /forum/replies/{replyId}/upvote  →  upvoteReply(replyId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2100" as="sourcePoint"/><mxPoint x="505" y="2100" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m43" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Check existing / create or remove / update count / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2130" as="sourcePoint"/><mxPoint x="655" y="2130" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m44" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated upvote count" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="2160" as="sourcePoint"/><mxPoint x="90" y="2160" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s13" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Flag Reply ==" vertex="1">
+      <mxGeometry x="145" y="2200" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m45" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Flag reply  →  POST /forum/replies/{replyId}/flag  →  flagReply(replyId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2250" as="sourcePoint"/><mxPoint x="505" y="2250" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m46" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create flag record / link to reply / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2280" as="sourcePoint"/><mxPoint x="655" y="2280" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m47" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify admins  →  Create admin notification" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2310" as="sourcePoint"/><mxPoint x="805" y="2310" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m48" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reply as flagged" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="805" y="2340" as="sourcePoint"/><mxPoint x="90" y="2340" as="targetPoint"/></mxGeometry></mxCell>
+
+    <!-- == Delete Reply / Thread == -->
+    <mxCell id="s14" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Delete Own Reply ==" vertex="1">
+      <mxGeometry x="145" y="2380" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m49" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete reply  →  DELETE /forum/replies/{replyId}  →  destroyReply(replyId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2430" as="sourcePoint"/><mxPoint x="505" y="2430" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m50" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load reply / check ownership / delete record / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2460" as="sourcePoint"/><mxPoint x="655" y="2460" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m51" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reply deleted" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="2490" as="sourcePoint"/><mxPoint x="90" y="2490" as="targetPoint"/></mxGeometry></mxCell>
+
+    <mxCell id="s15" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Delete Own Thread ==" vertex="1">
+      <mxGeometry x="145" y="2530" width="680" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m52" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete thread  →  DELETE /forum/threads/{threadId}  →  destroyThread(threadId)" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2580" as="sourcePoint"/><mxPoint x="505" y="2580" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m53" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load thread / check ownership / delete thread and replies / save" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="505" y="2610" as="sourcePoint"/><mxPoint x="655" y="2610" as="targetPoint"/></mxGeometry></mxCell>
+    <mxCell id="m54" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread deleted" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="655" y="2640" as="sourcePoint"/><mxPoint x="90" y="2640" as="targetPoint"/></mxGeometry></mxCell>
+
+  </root>
+</mxGraphModel>

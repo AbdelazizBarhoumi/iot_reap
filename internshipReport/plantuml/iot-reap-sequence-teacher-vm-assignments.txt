@@ -1,0 +1,138 @@
+@startuml iot-reap-sequence-teacher-vm-assignments
+title IoT-REAP - Teacher VM Assignment Flows Sequence Diagram
+actor Teacher as teacher
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "TrainingUnit VM\nAssignment Controller" as assignment
+participant "Database" as db
+participant "VM Reservation\nModel" as vm_res
+participant "TrainingUnit\nModel" as unit
+participant "Proxmox\nAPI" as proxmox
+
+teacher -> frontend : Navigate to VM assignments
+frontend -> routes : GET /teaching/trainingUnit-assignments/my-assignments
+routes -> assignment : myAssignments()
+assignment -> db : Load teacher's training paths
+assignment -> db : Load VM assignments for those paths
+assignment -> db : Load assignment statuses
+db --> assignment : Return assignments
+assignment --> routes : Return assignment list
+routes --> frontend : Display VM assignments
+frontend --> teacher : Show all VM assignments with status
+
+teacher -> frontend : View available VM templates
+frontend -> routes : GET /teaching/trainingUnit-assignments/available-vms
+routes -> assignment : availableVMs()
+assignment -> db : Load active Proxmox servers
+assignment -> db : Load available VM templates
+assignment -> proxmox : Query VM details
+proxmox --> assignment : Return VM information
+assignment --> routes : Return available VMs
+routes --> frontend : Display VM browser
+frontend --> teacher : Show available VM templates
+
+teacher -> frontend : Select training unit for VM assignment
+frontend -> routes : GET /teaching/{tpId}/module/{modId}/trainingUnit/{unitId}
+routes -> frontend : Display training unit editor
+frontend --> teacher : Show unit editor with VM assignment option
+
+teacher -> frontend : Check existing VM assignment
+frontend -> routes : GET /trainingUnits/{unitId}/vm-assignment
+routes -> assignment : forTrainingUnit(unitId)
+assignment -> db : Load existing assignment or null
+assignment -> db : Load VM details if assigned
+db --> assignment : Return assignment data
+assignment --> routes : Return assignment status
+routes --> frontend : Display VM assignment status
+frontend --> teacher : Show current VM assignment or option to assign
+
+teacher -> frontend : Submit VM assignment
+frontend -> routes : POST /teaching/trainingUnit-assignments
+routes -> assignment : store(assignmentData)
+assignment -> db : Validate training unit ownership
+assignment -> db : Check for existing assignment
+assignment -> db : Create VM assignment record
+assignment -> db : Set status to pending_approval
+assignment -> db : Link to training unit and VM
+assignment -> db : Save changes
+assignment -> db : Notify admins
+assignment --> routes : Return created assignment
+routes --> frontend : Show confirmation
+frontend --> teacher : Display "Assignment submitted for approval"
+
+teacher -> frontend : View assignment details
+frontend -> routes : GET /teaching/trainingUnit-assignments/my-assignments
+routes -> assignment : myAssignments()
+assignment -> db : Load assignments with full details
+assignment -> db : Load VM information
+assignment -> db : Load approval status
+db --> assignment : Return assignment details
+assignment --> routes : Return assignment data
+routes --> frontend : Display assignment details
+frontend --> teacher : Show assignment with VM info and status
+
+alt Assignment approved
+    assignment -> db : Update status to approved
+    assignment -> db : Save changes
+    assignment --> routes : Return approved status
+    routes --> frontend : Show approved status
+    frontend --> teacher : Display "VM assignment approved"
+else Assignment pending
+    assignment -> db : Keep status as pending
+    assignment --> routes : Return pending status
+    routes --> frontend : Show pending status
+    frontend --> teacher : Display "Awaiting admin approval"
+else Assignment rejected
+    assignment -> db : Update status to rejected
+    assignment -> db : Save rejection reason
+    assignment -> db : Save changes
+    assignment --> routes : Return rejected status
+    routes --> frontend : Show rejected status
+    frontend --> teacher : Display rejection with reason
+end
+
+teacher -> frontend : Delete VM assignment
+frontend -> routes : DELETE /teaching/trainingUnit-assignments/{assignment}
+routes -> assignment : destroy(assignmentId)
+assignment -> db : Load assignment
+assignment -> db : Check ownership and status
+assignment -> db : Delete assignment record
+assignment -> db : Save changes
+assignment --> routes : Return success
+routes --> frontend : Remove assignment from list
+frontend --> teacher : Show assignment deleted
+
+teacher -> frontend : Update VM assignment
+frontend -> routes : POST /teaching/trainingUnit-assignments
+routes -> assignment : store(assignmentData)
+assignment -> db : Load existing assignment
+assignment -> db : Update VM reference
+assignment -> db : Reset status to pending_approval
+assignment -> db : Save changes
+assignment -> db : Notify admins
+assignment --> routes : Return updated assignment
+routes --> frontend : Show updated assignment
+frontend --> teacher : Display "Assignment updated, awaiting approval"
+
+note right of teacher
+  VM assignment features:
+  - Browse available VM templates
+  - Assign VMs to training units
+  - Submit assignments for admin approval
+  - View assignment status (pending, approved, rejected)
+  - Update or delete assignments
+  - Track all assignments in one place
+  - Admin approval workflow required
+end note
+
+note right of teacher
+  Assignment workflow:
+  1. Teacher selects VM template
+  2. Submits assignment for unit
+  3. Status set to pending_approval
+  4. Admin reviews and approves/rejects
+  5. Approved assignments become active
+  6. Engineers can then reserve VMs
+end note
+
+@enduml

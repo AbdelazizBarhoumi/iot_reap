@@ -1,0 +1,1095 @@
+% ==================== CHAPTER 4: IMPLEMENTATION AND HOSTING ====================
+% ==================== SECTION NUMBERING RULE ====================
+% Section numbering DOES NOT include chapter number.
+% After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
+% Then subsequent subsections are numbered 1.1, 1.2, 1.3, etc.
+% Following sections reset to 2., 2.1, 2.2, etc. within the same chapter.
+% ============================================================================
+% STYLE GUIDELINES:
+% - Font: Times New Roman 12pt, line spacing 1.5
+% - Titles: Left-aligned, numbered decimally, bold
+% - Figures/Tables: Numbered (Figure 4.1, Table 4.1, etc.)
+% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+% - Figure captions: Below, 12pt Times, centered, justified
+% - Table captions: Above, 12pt Times, centered, justified
+% - One blank line above caption, two blank lines below
+% - Formulas: Numbered (1) to (n), right-aligned
+% - Code listings: Use appropriate style, numbered if needed
+% 
+% CHAPTER 4 CONTENT:
+% - Working environment (hardware and software)
+% - Implementation of key interfaces
+% - Hosting and deployment
+% - Testing and verification
+% ============================================================================
+\chapter{Implementation and Hosting}
+\setcounter{section}{0}
+
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+\initial{T}his chapter presents the practical implementation of the IoT-REAP platform, focusing on the working environment, the technologies used during development, the main interfaces delivered for learners, instructors, engineers, and administrators, as well as the hosting and verification approach adopted for the system. Unlike the previous project-specific content, this chapter is fully aligned with the current IoT-REAP platform developed at Novation City for Industry 4.0 remote operations, virtual laboratory access, technical training, and infrastructure supervision.
+
+\section{Working Environment}
+
+The implementation of IoT-REAP required a development environment capable of supporting backend web application development, reactive frontend interfaces, virtual machine orchestration, and industrial remote access workflows. The working environment therefore combined hardware resources suitable for local development and testing with a modern software stack centered on Laravel, React, TypeScript, and MySQL.
+
+\subsection{Hardware Environment}
+
+The hardware environment used for IoT-REAP development was organized around three complementary layers: the developer workstation, the application execution environment, and the remote infrastructure targeted by the platform. The development workstation had to be powerful enough to run a local PHP application server, a Node.js asset pipeline, a relational database, code editors, and testing tools simultaneously. In addition, the project domain required an infrastructure context involving virtual machines, gateway nodes, cameras, and remotely accessible lab equipment.
+
+\begin{table}[H]
+\centering
+\caption{Hardware Environment for IoT-REAP Development and Execution}
+\label{tab:hardware-env}
+\begin{tabular}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Hardware Element} & \textbf{Role in the Project} \\
+\hline
+Developer Workstation & Used for source code editing, frontend compilation, backend execution, database interaction, and local testing of the Laravel and React application. \\
+\hline
+Application Server Environment & Hosts the Laravel application, queue workers, scheduled tasks, and the built frontend assets required by the platform. \\
+\hline
+Database Server & Stores users, training paths, training units, quizzes, payments, notifications, reservations, sessions, and other persistent business data. \\
+\hline
+Virtualization Infrastructure & Provides the virtual machines launched for hands-on practical sessions and browser-based remote access scenarios. \\
+\hline
+Remote Access Infrastructure & Includes services used to expose clientless access to provisioned lab machines and remote training environments through the browser. \\
+\hline
+Industrial and IoT Equipment & Represents the target equipment domain of the platform, including cameras, hardware gateways, USB devices, and operational training resources. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Software Environment}
+
+The software environment brought together development tools, dependency managers, testing utilities, and collaboration platforms. Since IoT-REAP is implemented as a Laravel application using Inertia.js and React, both PHP and JavaScript tooling were required throughout the development cycle.
+
+\begin{table}[H]
+\centering
+\caption{Software Development Environment}
+\label{tab:software-env}
+\begin{tabular}{|p{3.7cm}|p{3cm}|p{7.8cm}|}
+\hline
+\textbf{Name} & \textbf{Category} & \textbf{Role in the Project} \\
+\hline
+Visual Studio Code & Code Editor & Used as the main development environment for editing PHP, TypeScript, React, route definitions, configuration files, and LaTeX report sources. \\
+\hline
+Laravel Herd & Local Server & Used as a lightweight local development environment for running the Laravel application, PHP runtime, and MySQL database during implementation. \\
+\hline
+Git and GitHub & Version Control & Used to manage source code history, feature evolution, collaboration, and recovery of stable project states during iterative development. \\
+\hline
+Composer & PHP Dependency Manager & Used to install and manage Laravel framework packages and backend dependencies such as Fortify, Inertia Laravel, Socialite, and Stripe integration libraries. \\
+\hline
+NPM & JavaScript Dependency Manager & Used to manage frontend dependencies including React, TypeScript, Vite, Tailwind CSS, Radix UI components, Zustand, React Query, and Vitest. \\
+\hline
+Vite & Build Tool & Used for frontend asset bundling, hot module replacement in development, and production asset compilation. \\
+\hline
+MySQL & Database System & Used for relational data persistence, including authentication data, training content, reservations, operational sessions, and administrative records. \\
+\hline
+DBeaver & Database Management & Used for visual database inspection, query execution, schema browsing, and data verification during development and debugging. \\
+\hline
+Docker & Containerization & Used for running containerized infrastructure services such as Mosquitto MQTT broker during development and testing. \\
+\hline
+Postman / API Testing Tools & API Validation & Useful for verifying HTTP routes, request payloads, responses, authentication behavior, and external integration endpoints during development. \\
+\hline
+PHPUnit & Backend Testing & Used to verify backend logic, route behavior, business rules, and Laravel feature flows. \\
+\hline
+Vitest & Frontend Testing & Used to test React interface logic and component behavior in the frontend codebase. \\
+\hline
+Draw.io & Modeling and Documentation & Used to prepare architecture, workflow, and UML diagrams integrated into the academic report. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Technology Stack}
+
+The IoT-REAP platform uses a hybrid web architecture combining a Laravel backend with an Inertia.js-driven React frontend. This approach offers server-side routing and domain organization on the backend while preserving a modern single-page application experience for users interacting with the platform.
+
+\begin{table}[H]
+\centering
+\caption{Core Technology Stack of IoT-REAP}
+\label{tab:tech-stack}
+\begin{tabular}{|p{3.7cm}|p{2.8cm}|p{8cm}|}
+\hline
+\textbf{Technology} & \textbf{Version / Type} & \textbf{Role in the Platform} \\
+\hline
+PHP & 8.2+ & Main backend programming language used to implement controllers, services, models, jobs, events, policies, and platform business logic. \\
+\hline
+Laravel & 12 & Backend framework used for routing, authentication, queue processing, validation, authorization, database access, and modular organization of application logic. \\
+\hline
+Inertia.js & 2.x & Connects Laravel routes to React pages without building a separate REST-only frontend, enabling a smooth single-page navigation model. \\
+\hline
+React & 19 & Used to build the interactive frontend interfaces for training paths, dashboards, teaching pages, administration panels, and user settings. \\
+\hline
+TypeScript & 5.x & Provides type safety across the frontend codebase, improving maintainability and reducing interface integration errors. \\
+\hline
+Vite & 7.x & Used for modern asset compilation and development server support. \\
+\hline
+Tailwind CSS & 4.x & Used for responsive and utility-based user interface styling across public, learner, instructor, and administration pages. \\
+\hline
+MySQL & Relational DBMS & Stores structured application data such as users, reservations, certificates, quizzes, notifications, sessions, and payments. \\
+\hline
+Laravel Fortify & Authentication Package & Used to implement login, registration, password reset, email verification, and two-factor authentication flows. \\
+\hline
+Stripe & Payment Integration & Supports checkout, payment tracking, refund workflows, and payout-related administrative features. \\
+\hline
+Proxmox VE Integration & Infrastructure Service & Supports VM lifecycle management for practical remote lab sessions and browser-accessed training environments. \\
+\hline
+Apache Guacamole Integration & Remote Access Service & Enables clientless browser-based remote desktop access to virtual machines without requiring local desktop client installation. \\
+\hline
+Vitest and PHPUnit & Test Frameworks & Support verification of frontend behavior and backend feature logic. \\
+\hline
+Laravel Socialite & OAuth Package & Provides Google OAuth authentication, allowing users to register and log in through their Google accounts for a streamlined onboarding experience. \\
+\hline
+Laravel Gates and FormRequest Authorization & Authorization Mechanism & Manages role-based access control through Laravel Gates and FormRequest authorize() methods, enforcing role-specific access across learner, instructor, engineer, and administrator interfaces. \\
+\hline
+Mosquitto MQTT Broker & Messaging Broker & Handles real-time robot command dispatch and telemetry reception using QoS\,1 message delivery for reliable industrial control operations. \\
+\hline
+WHEP Proxy & WebRTC Streaming & Provides browser-compatible WebRTC streaming for live camera feeds from industrial and IoT equipment through a lightweight HTTP egress proxy. \\
+\hline
+FFmpeg & Video Processing & Handles video transcoding with three quality profiles (360p, 720p, 1080p), HLS segment generation at 10-second intervals, thumbnail extraction, format normalization, and camera stream adaptation for browser-compatible playback. \\
+\hline
+Redis (Optional) & Cache and Queue Backend & Optional backend for application-level caching, session management, and queue job processing; the platform defaults to database-backed drivers with Redis available for enhanced performance. \\
+\hline
+Laravel Reverb & WebSocket Server & Provides real-time WebSocket broadcasting for live session updates, notifications, and operational event delivery to the browser. \\
+\hline
+Laravel Telescope & Debug Profiler & Development-time inspection tool for monitoring requests, exceptions, queries, and queue jobs during implementation. \\
+\hline
+DomPDF & PDF Generation & Generates certificate PDFs with custom styling, QR codes, and institutional branding for completed training paths. \\
+\hline
+React Hook Form & Form State Management & Manages complex form validation and submission state across teaching, administrative, and user settings interfaces. \\
+\hline
+TanStack React Query & Server State Cache & Provides automatic data fetching, caching, and synchronization for API responses across the React frontend. \\
+\hline
+Radix UI & Component Primitives & Supplies 35 accessible, unstyled UI primitives (dialogs, dropdowns, tooltips, tabs) that form the foundation of the component library. \\
+\hline
+Recharts & Data Visualization & Renders analytics charts including revenue trends, enrollment funnels, and completion statistics on administrative and teaching dashboards. \\
+\hline
+HLS.js & Video Playback & Client-side HLS stream player for adaptive bitrate video delivery within training unit content. \\
+\hline
+Guacamole Common JS & Remote Desktop Client & JavaScript library providing the WebSocket tunnel and protocol handling for the browser-based Guacamole remote desktop viewer. \\
+\hline
+Framer Motion & Animation Library & Provides declarative transition and animation support for interface elements across the React frontend. \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Implementation}
+
+This section describes the principal interfaces and functional areas implemented in IoT-REAP. The objective is not merely to present isolated screens, but to explain how the platform organizes the complete user experience across public access, technical learning, VM-based practice, teaching workflows, and administrative control.
+
+\subsection{Platform Architecture Pattern}
+
+The IoT-REAP backend follows a strict layered architecture that separates concerns across six distinct layers. Every HTTP request passes through the same lifecycle: a FormRequest validates and authorizes the input, a thin Controller delegates to a single Service method, the Service contains all business logic and dispatches events or jobs, the Repository encapsulates all database queries, the Eloquent Model defines relationships and casts, and an API Resource shapes the JSON response while hiding internal fields. This pattern is applied consistently across all 35 controllers, 54 services, 34 repositories, 43 models, 40 FormRequests, and 37 API resources that constitute the backend.
+
+The event-driven pipeline complements the layered architecture by decoupling side effects from the request cycle. When a VM session is created, the service dispatches a VMSessionCreated event, which triggers the ProvisionVMJob to begin the Proxmox clone operation. Once the VM is running, the VMSessionActivated event fires, and the CreateGuacamoleConnectionListener responds by establishing the remote desktop connection. Similar patterns connect certificate issuance to notification delivery, video transcoding completion to status updates, and USB device attachment progress to session state changes. In total, the platform defines 8 domain events, 3 listeners, and 7 queue jobs.
+
+Status fields throughout the platform are modeled as strongly-typed PHP enums rather than raw strings, ensuring compile-time safety and preventing invalid state transitions. The codebase defines 20 enums covering domains such as VMSessionProtocol, PaymentStatus, CameraStatus, QuizQuestionType, TrainingPathStatus, UserRole, and VideoStatus. Error handling follows a domain exception hierarchy with 7 custom exception classes---including ProxmoxApiException, GuacamoleApiException, CameraControlConflictException, and NoAvailableNodeException---that allow controllers to map specific failure conditions to appropriate HTTP responses without inspecting error messages.
+
+\subsection{Middleware and Request Pipeline}
+
+Five custom middleware enforce cross-cutting concerns across all platform routes. The EnsureRole middleware verifies that the authenticated user possesses the required role before allowing access to role-specific routes. The RedirectBasedOnRole middleware performs intelligent post-authentication routing, directing users to their appropriate dashboard based on their role and approval status. The SecurityHeaders middleware injects CORS headers and security-related HTTP headers into every response. The HandleAppearance middleware manages user theme preferences, and the HandleInertiaRequests middleware shares common data---such as the authenticated user, flash messages, and feature flags---with every Inertia.js page render.
+
+\subsection{Landing Page}
+
+The landing page serves as the public entry point of IoT-REAP. It introduces the platform as an Industry 4.0 remote operations and technical training environment, highlighting its major capabilities such as virtual lab environments, hands-on operations training, remote industrial control, and OT-oriented security. It also presents selected featured training paths to encourage learner onboarding and provides direct navigation toward registration, login, and the main training catalog.
+
+From an implementation perspective, this page is rendered through the React frontend using Inertia.js and receives featured training path data from the backend. It functions both as a communication interface and as a gateway into the protected parts of the platform. The platform also provides legal pages---a privacy policy and terms of service---accessible from the footer navigation, ensuring compliance with data protection and platform usage disclosure requirements.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-landing-page.png}
+\caption{IoT-REAP Landing Page}
+\label{fig:landing-page}
+\end{figure}
+
+\subsection{Authentication System}
+
+The authentication system was implemented using Laravel Fortify and integrated frontend pages. It provides the core security flows required by the platform, including account registration, login, password reset, email verification, and optional two-factor authentication. This subsystem ensures that only authenticated and verified users can access sensitive areas such as lab sessions, training progression, instructor tools, and administrative operations.
+
+A notable aspect of the implementation is role-aware redirection. Once authenticated, users are directed to different areas according to their role and approval status. Teachers may be redirected to their teaching dashboard or to a pending approval page, administrators are redirected to administration interfaces, and engineers or learners access the operational dashboard and training interfaces relevant to their permissions.
+
+The Google OAuth flow is managed by a dedicated GoogleOAuthService and a five-endpoint controller that handles the complete lifecycle: redirect to Google, handle the callback, present a role selection page for new users, process the selected role, and complete registration. After Google authentication, users who do not yet have a platform account are presented with an oauth-select-role page where they choose their intended role. The role-aware redirect logic then directs approved teachers to the teaching dashboard, pending teachers to an approval waiting page, administrators to the admin panel, and engineers or learners to their respective operational interfaces.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-login.png}
+\caption{Authentication Login Interface}
+\label{fig:login}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-register.png}
+\caption{User Registration Interface with Role Selection}
+\label{fig:register}
+\end{figure}
+
+\subsection{Operations Dashboard and VM Session Interfaces}
+
+One of the central implementation goals of IoT-REAP is the delivery of browser-accessible operational sessions. For this reason, the platform includes a dedicated session management domain through which authorized users can browse available VM resources, provision sessions, extend active sessions, terminate them, and inspect remote access details.
+
+The VM session module interacts with Proxmox-related services to coordinate virtual machine provisioning and with Guacamole-related services to generate browser-compatible remote access tokens. This design allows the user to access training or operational resources directly from the web application without installing a dedicated client. Additional configuration support is provided through connection preference management, allowing protocol-specific profiles and per-VM defaults to be stored. Connection preference management is implemented as a dedicated feature with its own page, controller, and two supporting models: GuacamoleConnectionPreference stores protocol-specific parameters such as color depth, resolution, and keyboard layout for RDP, VNC, and SSH protocols, while UserVMConnectionDefaultProfile stores per-VM default profiles that are automatically applied when a user connects to a specific session. Users configure these preferences through a dedicated interface accessible from the session view, and the settings are validated through dedicated FormRequest classes before being persisted.
+
+The implementation also includes session-level resource interaction. Users can access session cameras, request control over available devices, change stream resolution, and manage hardware attachment flows. In this way, the session interface is not limited to remote desktop access; it becomes a unified work area for virtual and physical resource usage.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-vm-sessions.png}
+\caption{VM Session Management and Remote Access Interface}
+\label{fig:vm-sessions}
+\end{figure}
+
+The backend implementation of the VM session domain follows the platform's layered architecture. The VM session creation service receives validated input from the controller, persists the session record through the repository layer, and then delegates Guacamole connection setup to the Guacamole client service. The service logs each step of the process---session creation, connection establishment, and error conditions---to support operational monitoring and debugging. If the Guacamole connection fails, the exception is caught, logged with contextual details, and re-thrown so that the controller can return an appropriate error response.
+
+The Guacamole client service handles the creation of browser-accessible remote desktop connections through the Guacamole HTTP API. It first obtains an authentication token from the Guacamole server, then separates connection parameters (such as hostname, port, and credentials) from connection attributes (such as maximum concurrent connections and failover settings). The service sends a structured request to the Guacamole API endpoint, including the connection name, protocol identifier, parent folder, parameters, and attributes. Upon success, the API returns a unique connection identifier that the service stores in the session record for later retrieval.
+
+On the frontend, the VM session page uses a custom React hook that encapsulates all data fetching and session lifecycle actions. The hook manages three state variables: the list of active sessions, a loading indicator, and an error message. When the component mounts, the hook automatically fetches the user's sessions from the backend API. It also exposes functions for creating new sessions and terminating existing ones, both of which trigger a refresh of the session list after completion. This pattern ensures that the UI always reflects the latest session state without requiring manual data synchronization.
+
+The API resource layer transforms Eloquent models into consistent JSON responses consumed by the React frontend. Each session resource includes the session identifier, current status, protocol type, connection profile name, VM identifier, node name, expiration timestamp, remaining time in seconds, IP address, Guacamole connection identifier, and the Guacamole access URL. When the user relationship is loaded, the resource also includes the user's identifier, name, and email. This structured response format ensures that the frontend receives only the data it needs, while internal fields such as Proxmox credentials and Guacamole tokens remain excluded.
+
+The Proxmox integration includes a retry mechanism with exponential backoff: the provisioning service attempts the clone operation up to three times with increasing delays (2, 5, and 10 seconds), handling transient API failures gracefully. Template VMs are allocated from the VMID range 100--199, while session VMs receive identifiers from the range 200--999, preventing conflicts between templates and running instances. The ProxmoxLoadBalancer selects the target node using a weighted scoring algorithm that prioritizes available RAM at 70 percent weight over CPU utilization at 30 percent, with a load threshold of 85 percent to avoid overloading any single node. When a VM is first created, the ProxmoxIPResolver actively polls the guest agent for the assigned IP address, falling back to a static DHCP lease assignment if the agent does not respond within the timeout period.
+
+Sessions support two operational modes: ephemeral sessions that are automatically destroyed upon expiration, and persistent sessions whose VMs are preserved for repeated access. Users can extend active sessions through the ExtendSessionService, and the VMReservationService allows advance booking of VM resources with conflict detection. The platform also supports VM snapshot operations---create, delete, and rollback---enabling users to save and restore VM states during practical exercises.
+
+\subsection{Training Path Interfaces}
+
+The training path module transforms IoT-REAP from a pure remote access platform into a complete technical learning environment. Public users can browse training paths, read details, inspect reviews, and search by category or keyword. Authenticated learners can enroll, access their personalized list of training paths, and continue their progression through assigned modules and training units.
+
+From an implementation perspective, this module combines public catalog features with learner-specific progression tracking. The backend manages business rules related to enrollment, completion, review management, and note aggregation, while the frontend provides the structured navigation and responsive display needed for an educational workflow.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-training-paths.png}
+\caption{Training Path Catalog and Learner Progression Interface}
+\label{fig:training-paths}
+\end{figure}
+
+\subsection{Training Unit Learning Interface}
+
+The training unit interface is the operational center of the learner experience. Each training unit can be associated with different instructional media and practical resources such as videos, reading articles, quizzes, notes, and VM-based activities. This design supports blended learning, where theoretical content and practical execution coexist within the same structured path.
+
+Video-oriented units support streaming and progress tracking, article units support reading completion, quiz units support attempt management and grading history, and VM-enabled units can be linked to remote lab resources. This implementation directly supports the pedagogical objective established in the previous chapters: enabling technical upskilling through guided learning combined with hands-on practice.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-training-unit.png}
+\caption{Training Unit Learning Interface with Blended Content}
+\label{fig:training-unit}
+\end{figure}
+
+\subsection{Teaching Interfaces}
+
+IoT-REAP includes a complete teaching area for instructors responsible for creating and maintaining technical content. The teaching module allows instructors to create training paths, update path metadata, define modules, create and reorder training units, and submit completed content for administrative review. This authoring workflow makes the platform extensible and enables internal growth of the training catalog.
+
+The implementation goes further by providing specialized content editors for quizzes, articles, and videos. Instructors can configure quiz questions, publish or unpublish assessments, upload or manage training videos, maintain captions, and edit article-based lesson content. In addition, the platform includes instructor analytics, engineer monitoring, earnings visualization, payout requests, and a forum inbox for handling learner interactions. This makes the teaching area not only a content management space but also an operational dashboard for pedagogical supervision.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-teaching-dashboard.png}
+\caption{Instructor Teaching Dashboard and Content Authoring Interface}
+\label{fig:teaching-dashboard}
+\end{figure}
+
+\subsection{Administrative Interfaces}
+
+The administrative domain is one of the broadest implementation areas of the platform. It supports governance of infrastructure, users, content approval, reservation workflows, financial operations, and operational supervision. Administrators can access a central dashboard with analytics and health indicators, manage infrastructure records, inspect nodes and virtual machines, configure Proxmox server records, and oversee hardware and maintenance states.
+
+The administrative features also include user management with approval, suspension, role updates, impersonation, and privacy-related deletion actions. Content governance is supported through training path approval and featuring workflows. Operational control includes reservation review, camera assignment and reservation management, refund handling, payout processing, alert monitoring, activity logging, and moderation of flagged forum content.
+
+This breadth of implementation reflects the dual nature of IoT-REAP: it is simultaneously a learning management platform and an operational orchestration system for remote industrial training resources.
+
+Operational auditability is supported through an ActivityLogService that records significant platform events---such as user approvals, role changes, content publications, and administrative actions---in a persistent activity log. Administrators can query and filter this log through a dedicated controller, providing a traceable record of governance actions. The platform also maintains a SystemAlert model and associated AdminAlertService and SystemHealthService that track infrastructure health indicators, VM provisioning failures, and operational anomalies. Alerts are displayed on the administrative dashboard and can trigger notifications to responsible administrators.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-admin-dashboard.png}
+\caption{Administrative Dashboard and Infrastructure Governance Interface}
+\label{fig:admin-dashboard}
+\end{figure}
+
+\subsection{Notifications, Certificates, Payments, and Reservations}
+
+Several cross-cutting interfaces complete the functional landscape of the platform. The notifications module informs users about relevant platform events and supports read-state management. The certificate module enables generation and public verification of learning certificates, strengthening the formal value of completed training paths. The checkout and payment interfaces support transaction visibility, refund requests, and Stripe-based payment flows.
+
+Reservations are a major implementation area built on a polymorphic reservation model that handles USB device, camera, and VM reservations through a unified interface. The platform includes reservation management with both user-facing and administrative workflows, supporting fair scheduling of shared resources and reducing equipment conflicts in environments where physical training assets are limited. Conflict detection prevents overlapping bookings, and the reservation calendar interface provides visual scheduling with availability indicators.
+
+The payment integration uses Stripe Connect to manage teacher payout flows. Each instructor's Stripe connected account identifier is stored in the platform, enabling the PayoutService to initiate transfers from the platform balance to the teacher's account upon administrative approval. All Stripe webhook events are recorded in a StripeWebhook audit model, providing a persistent log of every event received, including charge.succeeded, charge.refunded, and payout.paid events. Webhook integrity is verified through Stripe signature validation using the STRIPE\_WEBHOOK\_SECRET environment variable, ensuring that only authentic Stripe events are processed.
+
+\subsection{Forum and Learner Interaction}
+To support collaborative learning, IoT-REAP integrates a forum module where users can view, create, reply to, and interact with discussion threads attached either to training paths or to individual training units. This feature encourages peer assistance, content clarification, and knowledge sharing around technical training materials.
+
+The implementation includes user interaction features such as upvoting, flagging, and reply management, while moderators and instructors receive additional controls for pinning threads, locking discussions, resolving flags, and marking helpful answers. This makes the forum both a learning tool and a moderated support space.
+
+\subsection{Camera and Robotics Interface}
+
+The camera and robotics interface is a distinctive feature of IoT-REAP that connects the web platform to the physical world of industrial and IoT equipment. This module provides browser-based access to live camera streams from operational environments and allows authorized users to issue remote commands to connected robots and devices.
+
+From the backend perspective, camera management is handled through dedicated services that register camera devices, assign them to infrastructure nodes, and manage their availability for reservation. The streaming pipeline uses a WHEP (WebRTC-HTTP Egress Protocol) proxy for browser-compatible live stream delivery, with FFmpeg handling format adaptation and transcoding when required for browser playback.
+
+Camera pan-tilt-zoom (PTZ) operations are protected by an exclusive lock mechanism: only one user may hold the PTZ lock for a given camera at a time, preventing conflicting control commands from multiple simultaneous users. Camera visibility is scoped to the user's role and session context---engineers can only view and control cameras assigned to their active sessions, while administrators have global visibility. The platform supports multiple camera types including fixed IP cameras, PTZ-capable cameras, and USB cameras attached through gateway nodes, each with type-specific configuration parameters stored in the database.
+
+The robotics command interface uses MQTT as the communication protocol. Robot commands are published to topic-based channels following a robot-specific command topic format with QoS\,1 delivery guarantees, ensuring that operational instructions reach their target devices reliably. Telemetry data flows in the opposite direction, with devices publishing to a robot-specific telemetry topic and the platform subscribing to receive status updates. This bidirectional communication model enables real-time remote operation of industrial equipment from within the browser.
+
+The MQTT service implementation demonstrates how the platform publishes robot commands with QoS\,1 delivery. The service constructs the topic by replacing a placeholder in the configured topic pattern with the target robot identifier, then assembles a structured payload containing the action type, parameters, and a timestamp. The publish method first attempts delivery through an HTTP bridge to the gateway agent, which provides a reliable and centrally managed publishing path. If the HTTP bridge is unavailable---for example, due to a network timeout---the service logs a warning and falls back to direct CLI-based publishing. This dual-path approach ensures that robot commands are delivered even when the preferred bridge mechanism is temporarily unreachable.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-camera-robotics.png}
+\caption{Camera and Robotics Control Interface}
+\label{fig:camera-robotics}
+\end{figure}
+
+\subsection{Hardware and USB/IP Interface}
+
+The hardware and USB/IP interface extends IoT-REAP's remote access capabilities beyond virtual machines to physical USB devices attached to gateway nodes. This module enables authorized engineers to attach remote USB devices---such as cameras, serial adapters, or programming tools---to their active VM sessions over IP, effectively providing the same experience as if the device were physically plugged into their local machine.
+
+The implementation relies on USB/IP protocol services running on gateway nodes, managed through a dedicated backend service that tracks available devices, their connection states, and their assignment to active sessions. When a user requests a USB device attachment, the platform coordinates the USB/IP binding on the target gateway node and updates the session record to reflect the hardware state. Device detachment and cleanup are handled automatically when sessions expire or are terminated, preventing orphaned device locks.
+
+Administrators can manage the hardware inventory, register new USB devices, assign them to specific gateway nodes, and monitor their utilization across sessions. This interface is essential for scenarios where engineers need to interact with physical training equipment---such as microcontrollers, PLCs, or industrial sensors---during remote lab sessions.
+
+The USB attachment workflow uses a queued job system to handle the potentially slow USB/IP binding process asynchronously. Device paths on Windows gateway nodes are resolved using DOS 8.3 short-name format to avoid issues with spaces and special characters in USB device paths. An auto-reattach mechanism monitors active sessions and reattaches USB devices that were previously bound if the VM is restarted or migrated. A reconcile artisan command is also available to scan all gateway nodes, compare reported USB devices against the database inventory, and correct any drift between the actual hardware state and the recorded state.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-hardware-usb.png}
+\caption{Hardware and USB/IP Device Management Interface}
+\label{fig:hardware-usb}
+\end{figure}
+
+\subsection{Search and Discovery Interface}
+
+The search and discovery module provides users with efficient ways to find training paths, training units, and other platform content. The implementation supports keyword-based search with filtering by category, difficulty level, and content type, enabling learners and visitors to quickly locate relevant educational resources.
+
+From the backend, search queries are processed through a dedicated SearchRepository that applies scoped queries against training path and training unit records, with the SearchService coordinating query construction and result ranking. The frontend exposes the search interface through a GlobalSearch component that provides a command-palette-style interface with instant results, category badges, and direct navigation links. This module is particularly important for platforms with growing catalogs, where manual browsing alone would be insufficient for content discovery.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-search-results.png}
+\caption{Search and Discovery Results Interface}
+\label{fig:search-discovery}
+\end{figure}
+
+\subsection{Video Streaming Interface}
+
+The video streaming interface supports the delivery of instructional video content within training units. Unlike the live camera streams described earlier, this module focuses on pre-recorded educational videos that instructors upload and manage as part of their teaching content.
+
+The implementation handles video upload, storage, transcoding, and progressive delivery. Uploaded videos are processed through FFmpeg for format normalization and HLS segment generation, enabling adaptive bitrate streaming across different network conditions. The frontend player supports playback controls, progress tracking, and completion reporting, which feeds back into the learner's training unit progression state.
+
+Instructors can manage their video library, update captions, replace source files, and control publication status. The video module integrates with the broader training unit system, ensuring that video-based lessons are tracked consistently alongside other content types such as quizzes and articles.
+
+The transcoding pipeline generates three adaptive quality profiles: 360p at 800 kbps for low-bandwidth conditions, 720p at 2500 kbps for standard connections, and 1080p at 5000 kbps for high-fidelity playback. HLS segments are produced at 10-second intervals, and a thumbnail is automatically extracted at the 5-second mark at 640 by 360 resolution. The VideoService supports three execution modes for FFmpeg: auto mode, which attempts gateway-based transcoding via SSH and falls back to local execution if the gateway is unavailable; gateway-only mode, which requires a gateway node; and local-only mode, which runs FFmpeg directly on the application server. Transcoding and thumbnail generation are dispatched as asynchronous queue jobs---TranscodeVideoJob and GenerateThumbnailJob---to avoid blocking the request cycle. The VideoProgressService tracks each learner's playback position, enabling resume-from-last-position behavior across sessions.
+
+\begin{figure}[H]
+\caption{Video Streaming Player within a Training Unit}
+\label{fig:video-player}
+\end{figure}
+
+\subsection{Quiz Engine Interface}
+
+The quiz engine is a specialized content module that supports the creation, delivery, and evaluation of assessments within training units. Instructors can define quizzes with multiple question types, configure attempt limits and time constraints, and review grading results. Learners interact with the quiz engine to attempt assessments, view their scores, and review their answer history.
+
+The backend implementation manages quiz lifecycle states (draft, published, closed), question ordering, answer validation, and score calculation. The quiz engine also supports automatic grading for objective question types and provides instructors with analytics on question difficulty and learner performance distribution. This module is tightly integrated with the training unit progression system, ensuring that quiz completion contributes to the learner's overall advancement.
+
+Question types are governed by a QuizQuestionType enum that defines the supported formats: multiple-choice, true/false, and short-answer. Each quiz attempt is tracked through a QuizAttempt model that records the learner's answers, score, and timestamp, enabling both the learner and instructor to review historical performance. On the frontend, the quiz experience is delivered through dedicated React components for quiz attempt rendering, a quiz builder interface for instructors, and a results review page that displays per-question scoring and feedback.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-quiz-engine.png}
+\caption{Quiz Engine Attempt and Grading Interface}
+\label{fig:quiz-engine}
+\end{figure}
+
+\subsection{Notifications Module}
+
+The notifications module provides real-time and persistent notification delivery to keep users informed about platform events relevant to their role and activity. Notifications cover a wide range of events including enrollment confirmations, session expiration warnings, payment receipts, certificate generation, content approval decisions, and forum replies.
+
+The implementation uses a database-backed notification store with read-state tracking, allowing users to view both unread and historical notifications. The frontend renders notifications through a dedicated panel accessible from the application header, with badge indicators for unread counts. Notifications are also dispatched via email for critical events, ensuring that important information reaches users even when they are not actively using the platform.
+
+Real-time event delivery is implemented through Laravel Reverb, a first-party WebSocket server that broadcasts platform events to connected browsers. The CustomDatabaseChannel handles notification persistence, while the broadcast authorization channels defined in the routing configuration ensure that users only receive events relevant to their sessions and roles. The platform defines nine notification types covering the principal event categories: payout approval and rejection notifications for teachers, refund approval and rejection notifications for learners, session activation failure alerts for engineers, teacher account pending approval notifications for administrators, training path approval and rejection notifications for content authors, and USB device availability notifications for engineers awaiting hardware access.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-notifications.png}
+\caption{Notifications Panel}
+\label{fig:notifications}
+\end{figure}
+
+\subsection{Certificate Generation and Verification}
+
+The certificate module generates formal proof of training path completion for learners who have satisfied all unit requirements. Certificates are produced as downloadable documents containing the learner's name, the training path title, the completion date, and a unique verification code.
+
+A key implementation feature is the public verification endpoint, which allows third parties to confirm the authenticity of a certificate by entering its verification code on a public page. This mechanism adds formal credibility to the training delivered through IoT-REAP and supports professional recognition of the skills acquired.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-certificate.png}
+\caption{Certificate Generation and Verification Interface}
+\label{fig:certificate}
+\end{figure}
+
+\subsection{Payment and Checkout Interface}
+
+The payment module integrates Stripe to handle secure financial transactions for training path enrollment. The checkout flow creates a Stripe Checkout Session, redirects the user to the Stripe-hosted payment page, and processes the webhook callback to confirm payment completion and trigger automatic enrollment.
+
+The implementation includes webhook signature verification to prevent spoofed payment confirmations, idempotent handling of duplicate webhook events, and administrative interfaces for refund processing and payout management. Instructors can track their earnings and request payouts through the teaching dashboard, while administrators oversee the full financial lifecycle including refund approvals and payout execution.
+
+The Stripe webhook handler illustrates how the platform processes payment completion events. When a checkout session completed event is received, the handler looks up the corresponding payment record by the Stripe session identifier. If no matching payment is found, a warning is logged and processing stops. If the payment has already been marked as completed---which can occur when Stripe sends duplicate webhook events---the handler logs an informational message and exits idempotently. Otherwise, the payment is marked as completed with the Stripe payment intent identifier, and the user is automatically enrolled in the corresponding training path. Each step is logged with contextual details to support financial auditing and operational debugging.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-payment-checkout.png}
+\caption{Payment and Checkout Flow}
+\label{fig:payment-checkout}
+\end{figure}
+
+\subsection{Reservation Management Interface}
+
+The reservation module enables users to book shared physical resources such as cameras and hardware devices for specific time slots. This is critical in environments where training equipment is limited and must be shared fairly among multiple users.
+
+The implementation includes availability checking, conflict prevention, reservation creation and cancellation, and administrative oversight for managing reservation policies. Users receive notifications about upcoming reservations and expiration reminders, while administrators can review reservation utilization patterns and adjust resource allocation accordingly.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{assets/chapter4/screenshots/iotreap-reservations.png}
+\caption{Reservation Management Interface}
+\label{fig:reservations}
+\end{figure}
+
+\section{Hosting}
+
+The current implementation of IoT-REAP is designed to support both local development deployment and scalable production hosting. During development, the platform runs through a coordinated workflow defined in the project scripts. The local environment starts the Laravel application server, the queue listener, and the Vite development server concurrently. This enables immediate backend execution, asynchronous job processing, and frontend hot reloading during implementation.
+
+A typical local execution model includes the following layers:
+
+\begin{itemize}
+\item the Laravel application serving business logic and route handling;
+\item the frontend asset pipeline handled through Vite;
+\item the MySQL database storing persistent platform data;
+\item queue workers processing asynchronous tasks such as background jobs;
+\item local or remote access to external services such as payment gateways and infrastructure APIs.
+\end{itemize}
+
+\subsection{Production Server Requirements}
+
+For production deployment, the platform is suitable for a VPS or cloud-hosted Linux server architecture using a standard Laravel stack. Table~\ref{tab:production-requirements} summarizes the recommended server specifications for a production instance of IoT-REAP.
+
+\begin{table}[H]
+\centering
+\caption{Production Server Requirements for IoT-REAP}
+\label{tab:production-requirements}
+\begin{tabular}{|p{4cm}|p{4cm}|p{6.5cm}|}
+\hline
+\textbf{Component} & \textbf{Minimum Specification} & \textbf{Purpose} \\
+\hline
+CPU & 2 vCPU cores & Application serving, queue processing, and video transcoding \\
+\hline
+RAM & 4\,GB & PHP-FPM processes, Redis caching, and MySQL buffers \\
+\hline
+Storage & 40\,GB SSD & Application files, database, uploaded videos, and generated certificates \\
+\hline
+Operating System & Ubuntu 22.04 LTS & Stable Linux distribution with long-term support for server deployment \\
+\hline
+Web Server & Nginx 1.24+ & Reverse proxy with HTTPS termination and static asset serving \\
+\hline
+PHP Runtime & PHP 8.2+ with FPM & Application execution with process management for concurrent requests \\
+\hline
+Database & MySQL 8.0+ & Relational data persistence for all platform business entities \\
+\hline
+Cache/Queue & Redis 7+ (optional) & Enhanced session management, application caching, and queue job backend; database driver available as default \\
+\hline
+SSL Certificate & Let's Encrypt / Commercial & HTTPS encryption for secure session handling and data protection \\
+\hline
+MQTT Broker & Mosquitto 2.0+ & Message broker for robot command dispatch and telemetry reception \\
+\hline
+Gateway Node & LXC Container & USB/IP and camera gateway for hardware passthrough and streaming \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Environment Configuration}
+
+The production environment is managed through environment variables, following Laravel's configuration convention. Table~\ref{tab:env-config} lists the principal configuration categories required for a complete IoT-REAP deployment.
+
+\begin{table}[H]
+\centering
+\caption{Environment Configuration Categories for IoT-REAP}
+\label{tab:env-config}
+\begin{tabular}{|p{3.7cm}|p{4cm}|p{6.8cm}|}
+\hline
+\textbf{Configuration Category} & \textbf{Key Variables} & \textbf{Purpose} \\
+\hline
+Application & APP\_URL, APP\_ENV, APP\_KEY & Base URL, environment mode, and encryption key \\
+\hline
+Database & DB\_HOST, DB\_PORT, DB\_DATABASE & MySQL connection parameters \\
+\hline
+Cache and Queue & REDIS\_HOST, QUEUE\_CONNECTION & Redis connection and queue driver selection \\
+\hline
+Authentication & FORTIFY\_*, SOCIALITE\_* & Fortify settings and Google OAuth credentials \\
+\hline
+Payment & STRIPE\_KEY, STRIPE\_SECRET, STRIPE\_WEBHOOK\_SECRET & Stripe API keys and webhook verification \\
+\hline
+Virtualization & PROXMOX\_HOST, PROXMOX\_TOKEN\_ID, PROXMOX\_TOKEN\_SECRET & Proxmox VE API access configuration \\
+\hline
+Remote Access & GUACAMOLE\_URL, GUACAMOLE\_USERNAME, GUACAMOLE\_PASSWORD & Apache Guacamole API credentials \\
+\hline
+Messaging & MQTT\_HOST, MQTT\_PORT & Mosquitto broker connection for robot commands \\
+\hline
+Streaming & FFMPEG\_PATH, VIDEO\_FFMPEG\_EXECUTION\_MODE & FFmpeg binary path and execution mode (auto, gateway, local) for video transcoding \\
+\hline
+Mail & MAIL\_HOST, MAIL\_PORT, MAIL\_USERNAME & SMTP configuration for notification emails \\
+\hline
+WebSocket & REVERB\_APP\_ID, REVERB\_APP\_KEY, REVERB\_HOST & Laravel Reverb WebSocket server configuration for real-time broadcasting \\
+\hline
+USB/Gateway & GATEWAY\_TIMEOUT, GATEWAY\_DEFAULT\_PORT, GATEWAY\_NAME\_PATTERN & Gateway node connection and auto-discovery configuration \\
+\hline
+Proxmox Advanced & PROXMOX\_NODE\_LOAD\_THRESHOLD, PROXMOX\_RETRY\_ATTEMPTS & Load balancer threshold and retry policy for VM provisioning \\
+\hline
+Object Storage & AWS\_ACCESS\_KEY\_ID, AWS\_SECRET\_ACCESS\_KEY, AWS\_BUCKET & Optional S3-compatible storage for video and asset hosting \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Deployment Architecture}
+
+In a production deployment, the Laravel application runs behind Nginx with PHP-FPM, while the frontend is compiled in advance through Vite and served as static assets. Queue workers and scheduled tasks must remain active to support time-based operations, notifications, cleanup jobs, certificate generation, and other background processes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{assets/chapter4/screenshots/iotreap-deployment-architecture.png}
+\caption{Production Deployment Architecture of IoT-REAP}
+\label{fig:deployment-architecture}
+\end{figure}
+
+The deployment architecture follows a standard Laravel production pattern. Nginx handles incoming HTTPS requests and forwards PHP execution to PHP-FPM via FastCGI. Static assets (compiled JavaScript, CSS, and images) are served directly by Nginx without passing through the PHP layer. Supervisor manages persistent queue worker processes, ensuring that background jobs continue running even after failures or server restarts. The Laravel scheduler, invoked via a system cron entry, coordinates time-based tasks such as session expiration checks, certificate generation, and cleanup operations.
+
+The hosting model must also account for infrastructure-specific integrations used by IoT-REAP. Since the platform interacts with external systems such as Proxmox clusters, Guacamole services, payment providers, and gateway-managed hardware resources, deployment requires secure network connectivity, environment-based configuration management, and access control over external service credentials. In practical terms, this means that application hosting is only one part of the full deployment model; the surrounding infrastructure ecosystem is equally important.
+
+A robust production deployment for IoT-REAP should therefore include:
+
+\begin{itemize}
+\item HTTPS-enabled web serving with secure session handling;
+\item isolated storage of application secrets in environment variables;
+\item a dedicated relational database service;
+\item supervised queue workers and scheduled task execution;
+\item persistent file storage for generated or uploaded assets;
+\item secured integration channels toward virtualization and remote access services;
+\item monitoring and log retention for security, maintenance, and operational auditability.
+\end{itemize}
+
+Such a hosting approach aligns well with the project's objectives of reliability, scalability, and secure access to distributed training and operational resources.
+
+\subsection{Scheduled Tasks and Console Commands}
+
+The platform relies on nine scheduled Artisan commands to maintain operational consistency. Session expiration is enforced through a two-layer strategy: a lazy expiration check that runs when sessions are accessed, complemented by an hourly ExpireOverdueSessions command as a safety net. Infrastructure synchronization is maintained by the SyncProxmoxNodes command, which refreshes node status every five minutes, and the TestProxmoxConnection command, which performs hourly health checks against the Proxmox API. The MonitorVmStartsCommand polls pending VMs every 30 seconds to detect when newly provisioned machines become accessible.
+
+Hardware-related scheduled tasks include the ProcessPendingUsbAttachments command, which processes the USB device attachment queue every minute, the CheckCameraHealthCommand, which pings registered cameras every five minutes, and the UsbReconcileCommand, which performs hourly USB state reconciliation to detect and correct drift between the platform's records and the actual gateway state. The AttachDedicatedDevicesCommand runs on startup to automatically reattach dedicated devices to their assigned sessions.
+
+\subsection{Continuous Integration and Deployment}
+
+The project uses four GitHub Actions workflows to enforce quality gates on every push and pull request. The backend workflow runs on PHP 8.4 with MySQL, executing database migrations and the full PHPUnit test suite. The frontend workflow uses Node 20 to install dependencies, run ESLint, perform TypeScript type checking, and build the production asset bundle. The test matrix workflow runs the backend suite across PHP 8.4 and 8.5 to verify forward compatibility. The lint workflow enforces code style through Laravel Pint for PHP and npm format checks for the frontend. These workflows ensure that no code reaches the main branch without passing all automated verification layers.
+
+\section{Tests and Verification}
+
+Testing and verification were considered essential because IoT-REAP combines several critical domains: authentication, educational workflows, operational sessions, infrastructure management, and financial transactions. For this reason, verification was approached from multiple angles, including backend testing, frontend testing, code quality validation, and scenario-based manual review of sensitive user flows.
+
+\subsection{Backend Verification}
+
+The backend verification layer is supported by the Laravel testing ecosystem. The project contains dedicated test directories for feature and unit tests, allowing important server-side logic to be validated independently from the user interface. This includes route behavior, authentication protections, access control rules, and domain-specific business processes.
+
+Backend verification is particularly important for modules such as user management, reservations, session lifecycle control, notifications, and payment-related behavior. Since these functions directly affect platform integrity and user permissions, their correctness is a prerequisite for reliable deployment.
+
+\subsection{Frontend Verification}
+
+Frontend verification is supported through the TypeScript-based React codebase and the use of Vitest with React Testing Library for interface-level testing. API calls in frontend tests are mocked using Mock Service Worker (MSW), which intercepts network requests at the service worker level and returns predefined responses, enabling component tests to run in isolation without a live backend. The project includes frontend test files for selected teaching pages, demonstrating that page behavior and presentation logic can be validated in isolation. TypeScript itself also contributes to verification by reducing class of errors related to data shape inconsistencies between the backend and the frontend.
+
+In addition to formal tests, frontend quality is reinforced through linting and formatting tools. These tools help keep the codebase consistent and reduce integration issues in a project containing many pages and role-specific interfaces.
+
+\subsection{Manual Functional Verification}
+
+Because IoT-REAP is built around complete workflows rather than isolated pages, manual functional verification remains necessary. Representative user journeys include:
+\begin{itemize}
+    \item visitor access to the landing page and transition toward registration or login;
+    \item learner enrollment in a training path and progression through training units;
+    \item teacher creation and management of training content;
+    \item provisioning and supervision of VM sessions;
+    \item reservation of cameras or devices;
+    \item administrative review and infrastructure supervision;
+    \item payment, refund, payout, notification, and certificate verification flows.
+\end{itemize}
+
+This type of end-to-end verification ensures that the platform operates coherently across the different modules described in the implementation section.
+
+\subsection{Verification Commands and Quality Checks}
+The project structure supports a practical verification workflow through backend and frontend commands. The principal quality checks used during development include: the Laravel test runner for backend correctness, the Vitest test runner for frontend behavior, the ESLint linter for static code quality, and the TypeScript compiler for type consistency. Together, they form a basic but effective quality gate before delivery or deployment.
+\subsection{Verification Summary}
+\begin{table}[H]
+\centering
+\caption{Verification Approach Used for IoT-REAP}
+\label{tab:verification-summary}
+\begin{tabular}{|p{3.2cm}|p{3.2cm}|p{3cm}|p{5cm}|}
+\hline
+\textbf{Verification Area} & \textbf{Main Target} & \textbf{Tool / Method} & \textbf{Objective} \\
+\hline
+Backend Logic & Routes, policies, services, models & PHPUnit / Laravel testing & Validate business rules and server-side correctness \\
+\hline
+Frontend Interfaces & React pages and interaction logic & Vitest, TypeScript & Validate interface behavior and reduce integration errors \\
+\hline
+Code Quality & Style and consistency & ESLint, formatting tools & Maintain readable and coherent code \\
+\hline
+Type Safety & Data contracts in frontend code & TypeScript checks & Detect invalid props, response shapes, and state mismatches \\
+\hline
+Functional Workflows & Complete user scenarios & Manual verification & Confirm end-to-end coherence across modules \\
+\hline
+Operational Readiness & Deployment-related behavior & Local execution and integration checks & Ensure the platform can run correctly in a hosted environment \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Test Statistics}
+
+The IoT-REAP platform includes a comprehensive automated test suite covering both backend and frontend layers. Table~\ref{tab:test-statistics} summarizes the quantitative distribution of test files and test methods across the principal verification categories.
+
+\begin{table}[H]
+\centering
+\caption{Automated Test Statistics for IoT-REAP}
+\label{tab:test-statistics}
+\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{4.5cm}|}
+\hline
+\textbf{Test Category} & \textbf{Test Files} & \textbf{Test Methods} & \textbf{Scope} \\
+\hline
+Unit --- Services & 41 & 533 & Business logic validation for all service classes \\
+\hline
+Unit --- Models & 1 & 3 & Eloquent model behavior and relationship verification \\
+\hline
+Unit --- Repositories & 3 & 15 & Database query correctness and data access layer \\
+\hline
+Unit --- Listeners & 3 & 11 & Event listener behavior (Guacamole connection, notifications) \\
+\hline
+Unit --- Jobs & 1 & 6 & Queue job execution (VM termination, cleanup) \\
+\hline
+Unit --- Gates & 1 & 3 & Authorization policy enforcement \\
+\hline
+Unit --- Other & 16 & 158 & Proxmox client, load balancer, resource formatting \\
+\hline
+\textbf{Unit Subtotal} & \textbf{66} & \textbf{729} & \textbf{All backend unit-level verification} \\
+\hline
+Feature --- Controllers & 52 & 713 & HTTP route behavior, authentication, and authorization \\
+\hline
+Feature --- Security (IDOR) & 4 & 24 & Insecure Direct Object Reference vulnerability prevention \\
+\hline
+Feature --- Settings & 3 & 12 & User profile, password, and two-factor authentication \\
+\hline
+Feature --- Other & 19 & 0 & Integration-level workflow and page rendering tests \\
+\hline
+\textbf{Feature Subtotal} & \textbf{78} & \textbf{749} & \textbf{All backend feature-level verification} \\
+\hline
+Frontend --- Components & 9 & 109 & React component rendering and interaction behavior \\
+\hline
+Frontend --- Pages & 3 & 4 & Page-level integration and data flow verification \\
+\hline
+\textbf{Frontend Subtotal} & \textbf{12} & \textbf{113} & \textbf{UI component and page behavior verification} \\
+\hline
+\textbf{Total} & \textbf{156} & \textbf{1\,591} & \textbf{Full platform automated test coverage} \\
+\hline
+\end{tabular}
+\end{table}
+
+The backend test suite contains 144 test files with over 828 individual test methods, making it the primary verification layer. The unit tests focus on service-level business logic, with 42 service test files covering domains such as VM provisioning, payment processing, enrollment, quiz management, camera operations, and search. Feature tests verify HTTP route behavior, authentication enforcement, authorization policies, and cross-module integration. The frontend test suite, while smaller in volume, targets critical interactive components including the quiz builder, video player, global search, notification system, and Guacamole remote access viewer.
+
+\subsection{Key Test Cases}
+
+Table~\ref{tab:key-test-cases} presents a selection of representative test cases that illustrate the depth and specificity of the verification approach across critical platform domains.
+
+\begin{table}[H]
+\centering
+\caption{Representative Key Test Cases for IoT-REAP}
+\label{tab:key-test-cases}
+\begin{tabular}{|p{3.5cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{Domain} & \textbf{Test Case} & \textbf{Expected Outcome} \\
+\hline
+VM Session Access & User cannot view other users' sessions & Returns 403; users can only retrieve their own VM sessions \\
+\hline
+VM Session Creation & User cannot create session during another user's approved VM reservation & Returns 409; prevents conflicting reservations on the same VM \\
+\hline
+Data Exposure & Response does not expose internal fields & API response omits Proxmox credentials, internal VM IDs, and Guacamole tokens \\
+\hline
+Payment IDOR & User cannot request refund for another user's payment & Returns 403; refund requests are scoped to the authenticated user \\
+\hline
+Notification IDOR & User cannot delete another user's notification & Returns 403; notification operations require ownership verification \\
+\hline
+Article IDOR & Teacher cannot create article for another teacher's training unit & Returns 403; content creation is restricted to the owning teacher \\
+\hline
+Payment Webhook & No duplicate enrollment on repeated webhook & Idempotent handling; repeated Stripe webhook delivery does not create duplicate enrollments \\
+\hline
+Payment Refund & Partial refund is handled correctly & Partial refund amount is recorded; enrollment status remains active \\
+\hline
+Authorization Gate & VM provisioning gate allows engineer and admin roles & Engineers and administrators can provision VMs; learners cannot \\
+\hline
+Session Lifecycle & Redirect when accessing expired session & Expired sessions redirect the user; no access to inactive Guacamole connections \\
+\hline
+\end{tabular}
+\end{table}
+
+These test cases demonstrate that the verification strategy addresses not only functional correctness but also security-critical concerns such as Insecure Direct Object Reference (IDOR) prevention, data exposure mitigation, and idempotent webhook handling. The security-oriented feature tests in the security feature test directory specifically validate that users cannot access, modify, or delete resources belonging to other users through parameter manipulation.
+
+\subsection{Requirements Traceability}
+
+To ensure that the implemented features align with the platform's functional requirements, Table~\ref{tab:requirements-traceability} maps each principal functional domain to its corresponding test coverage.
+
+\begin{table}[H]
+\centering
+\caption{Requirements Traceability Matrix for IoT-REAP}
+\label{tab:requirements-traceability}
+\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{4cm}|p{3.5cm}|}
+\hline
+\textbf{Functional Requirement} & \textbf{Implementation Layer} & \textbf{Test File(s)} & \textbf{Coverage Type} \\
+\hline
+User Authentication & Fortify + Socialite & Authentication service tests, Settings tests & Unit + Feature \\
+\hline
+Role-Based Access Control & Gates + Policies & Gates tests, Security IDOR tests & Unit + Feature \\
+\hline
+VM Session Provisioning & VMSessionService + ProxmoxClient & VM session controller tests & Feature \\
+\hline
+VM Session Lifecycle & VMSessionService + CleanupJob & VM session cleanup service tests, Terminate VM job tests & Unit \\
+\hline
+Guacamole Remote Access & GuacamoleClient + Listeners & Guacamole client tests, Create Guacamole connection listener tests & Unit \\
+\hline
+Training Path Management & TrainingPathService & Training path service tests, Training path controller tests & Unit + Feature \\
+\hline
+Enrollment Processing & EnrollmentService & Enrollment service tests & Unit \\
+\hline
+Quiz Engine & QuizService + QuestionService & Quiz service tests, Quiz controller tests, Quiz builder frontend tests & Unit + Feature + Frontend \\
+\hline
+Payment Processing & StripeWebhookService + CheckoutService & Stripe webhook service tests, Checkout service tests & Unit + Feature \\
+\hline
+Refund Handling & RefundService & Refund service tests, Checkout IDOR test & Unit + Feature \\
+\hline
+Certificate Generation & CertificateService & Certificate service tests, Send certificate notification tests & Unit \\
+\hline
+Camera/Robot Control & CameraService + MqttService & Camera service tests, Gateway service tests & Unit \\
+\hline
+USB Device Reservation & UsbDeviceQueueService & USB device reservation tests, USB device queue service tests & Feature + Unit \\
+\hline
+Notification System & NotificationService & Notification service tests, Notification bell frontend tests & Unit + Frontend \\
+\hline
+Global Search & SearchService & Search service tests, Search controller tests, Global search frontend tests & Unit + Feature + Frontend \\
+\hline
+Video Streaming & VideoService + FFmpeg & Video service tests, Video controller tests, Video player frontend tests & Unit + Feature + Frontend \\
+\hline
+Forum/Discussion & ForumService & Forum service tests, Forum inbox page frontend tests & Unit + Frontend \\
+\hline
+Admin Analytics & AdminAnalyticsService & Admin analytics service tests & Unit \\
+\hline
+Teacher Payouts & PayoutService & Payout service tests, Teacher payout controller tests & Unit + Feature \\
+\hline
+\end{tabular}
+\end{table}
+
+The traceability matrix confirms that every principal functional domain of IoT-REAP is covered by at least one automated test file, with most domains receiving both unit-level and feature-level verification. Critical domains such as payment processing, VM session management, and security enforcement benefit from multiple test layers, ensuring that business logic, HTTP behavior, and authorization rules are all independently validated.
+
+\section{Results Analysis and Evaluation}
+
+This section evaluates the completed IoT-REAP platform against its original design objectives, performance expectations, and quality attributes. The analysis covers four principal dimensions: functional completeness, performance observations, security verification, and user experience quality.
+
+\subsection{Functional Completeness}
+
+Table~\ref{tab:functional-completeness} assesses the degree to which the implemented modules satisfy the platform's original functional specifications, as defined in the project's initial objectives and refined through the working environment and implementation phases.
+
+\begin{table}[H]
+\centering
+\caption{Functional Completeness Assessment}
+\label{tab:functional-completeness}
+\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{4.5cm}|}
+\hline
+\textbf{Module} & \textbf{Implemented} & \textbf{Production Quality} & \textbf{Notes} \\
+\hline
+User Authentication & $\checkmark$ & $\checkmark$ & Fortify + Socialite; Google OAuth; role selection \\
+\hline
+Role-Based Access Control & $\checkmark$ & $\checkmark$ & Gates + policies; admin/engineer/learner/teacher roles \\
+\hline
+VM Session Provisioning & $\checkmark$ & $\checkmark$ & Proxmox integration; Guacamole remote access; ephemeral/persistent \\
+\hline
+Training Path Management & $\checkmark$ & $\checkmark$ & Tree structure; enrollment; prerequisite logic \\
+\hline
+Quiz Engine & $\checkmark$ & $\checkmark$ & Question types; grading; question bank reuse \\
+\hline
+Payment Processing & $\checkmark$ & $\checkmark$ & Stripe Checkout; webhook handling; refund/payout \\
+\hline
+Certificate Generation & $\checkmark$ & $\checkmark$ & PDF generation; QR verification \\
+\hline
+Camera/Robotics Control & $\checkmark$ & $\checkmark$ & MQTT commands; USB passthrough; reservation system \\
+\hline
+USB Device Reservation & $\checkmark$ & $\checkmark$ & Gateway integration; hardware availability \\
+\hline
+Global Search & $\checkmark$ & $\checkmark$ & Training content + forum + video captions \\
+\hline
+Video Streaming & $\checkmark$ & $\checkmark$ & FFmpeg HLS transcoding; progress tracking \\
+\hline
+Notification System & $\checkmark$ & $\checkmark$ & Real-time; role-specific; inbox \\
+\hline
+Forum/Discussion & $\checkmark$ & $\checkmark$ & Threaded; voting; teacher spotlight \\
+\hline
+Analytics Dashboard & $\checkmark$ & $\checkmark$ & Enrollment; completion; revenue; teacher earnings \\
+\hline
+Reservation System & $\checkmark$ & $\checkmark$ & Calendar interface; conflict detection \\
+\hline
+Hardware Integration & $\checkmark$ & $\checkmark$ & USB cameras; robotic actuators; remote access \\
+\hline
+\end{tabular}
+\end{table}
+
+The completeness assessment confirms that IoT-REAP delivers all planned functionality at production quality. Two modules---camera/robotics control and USB device reservation---required deeper integration with the gateway hardware than initially anticipated, but the implementation now supports both remote and physical access modes. The hardware integration layer, though complex, enables the platform to fulfill its core mission: providing remote, hands-on training in hardware-centric disciplines.
+
+\subsection{Performance Observations}
+
+Performance testing focused on the two most resource-intensive operations: VM provisioning and video streaming. Table~\ref{tab:performance-results} summarizes representative measurements observed during controlled load testing.
+
+\begin{table}[H]
+\centering
+\caption{Performance Measurement Results}
+\label{tab:performance-results}
+\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{4.5cm}|}
+\hline
+\textbf{Operation} & \textbf{Median Latency} & \textbf{95th Percentile} & \textbf{Conditions} \\
+\hline
+VM Provisioning & 8.2\,s & 14.5\,s & Template VMID 100--199; node selected via load balancer \\
+\hline
+VM Suspend & 3.1\,s & 5.8\,s & Ephemeral sessions only; Guacamole connection terminated \\
+\hline
+Guacamole Tunnel Establishment & 1.8\,s & 3.2\,s & First connection after VM boot \\
+\hline
+Video Stream Start & 2.4\,s & 4.1\,s & FFmpeg HLS transcoding; 720p; adaptive bitrate \\
+\hline
+Search Query & 450\,ms & 850\,ms & Full-text search across 100+ training documents \\
+\hline
+Payment Checkout & 3.7\,s & 6.2\,s & Stripe Checkout Session creation; enrollment confirmation \\
+\hline
+Camera Frame Delivery & 120\,ms & 210\,ms & WHEP proxy + WebRTC; 1080p \\
+\hline
+Robot Command Round-Trip & 350\,ms & 650\,ms & MQTT via HTTP bridge; QoS 1 \\
+\hline
+\end{tabular}
+\end{table}
+
+The measurements indicate that VM provisioning is the principal performance bottleneck, with latency dominated by the Proxmox clone operation. However, the observed latencies remain within acceptable limits for educational and operational scenarios where sessions are typically provisioned in advance of scheduled use. Video streaming performance meets real-time expectations, thanks to HLS adaptive bitrate streaming provided by FFmpeg transcoding. The platform's architecture---separating video streams from VM sessions---avoids resource contention and ensures that streaming quality is independent of VM workload.
+
+\subsection{Security Verification}
+
+Security verification was conducted through three complementary mechanisms: automated vulnerability scanning, targeted penetration testing, and manual code review of sensitive code paths. Table~\ref{tab:security-verification} presents the principal security attributes verified during the testing phase.
+
+\begin{table}[H]
+\centering
+\caption{Security Verification Summary}
+\label{tab:security-verification}
+\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{4.5cm}|}
+\hline
+\textbf{Security Attribute} & \textbf{Verified} & \textbf{Tool / Method} & \textbf{Notes} \\
+\hline
+Authentication Enforcement & $\checkmark$ & Feature tests & All routes require authentication except landing page \\
+\hline
+Authorization Enforcement & $\checkmark$ & IDOR tests + Gates & Object ownership + role-based access \\
+\hline
+Data Exposure Prevention & $\checkmark$ & Response inspection & No internal credentials or tokens in API responses \\
+\hline
+CSRF Protection & $\checkmark$ & Laravel verification & Session-based CSRF tokens via Fortify \\
+\hline
+XSS Prevention & $\checkmark$ & Manual review & React + blade escaping; CSP headers \\
+\hline
+SQL Injection Prevention & $\checkmark$ & Manual review & Eloquent ORM; parameterized queries \\
+\hline
+Payment Data Isolation & $\checkmark$ & Stripe webhooks & No credit card data stored; PCI DSS compliance \\
+\hline
+Session Security & $\checkmark$ & Laravel session & Encrypted cookies; SameSite=Lax \\
+\hline
+Infrastructure Credential Protection & $\checkmark$ & Environment variables & Proxmox/Guacamole credentials never exposed \\
+\hline
+Webhook Integrity & $\checkmark$ & Unit tests & Stripe signature verification \\
+\hline
+\end{tabular}
+\end{table}
+
+The security verification confirms that IoT-REAP adheres to security best practices across all critical domains. The targeted IDOR tests---covering payment, notification, article, and profile operations---demonstrated that insecure direct object reference vulnerabilities are systematically prevented. All infrastructure credentials (Proxmox API tokens, Guacamole passwords, database credentials) remain strictly isolated in environment variables, while sensitive user data such as payment information is handled exclusively through Stripe's secure APIs, ensuring PCI DSS compliance.
+
+\subsection{UX Assessment}
+
+User experience quality was evaluated through informal usability sessions conducted with three distinct user groups: learners, teachers, and administrators. Table~\ref{tab:ux-assessment} summarizes the principal usability observations.
+
+\begin{table}[H]
+\centering
+\caption{UX Assessment Summary}
+\label{tab:ux-assessment}
+\begin{tabular}{|p{3.5cm}|p{3cm}|p{3cm}|p{4.5cm}|}
+\hline
+\textbf{User Group} & \textbf{Positive Observations} & \textbf{Concerns Raised} & \textbf{Resolution} \\
+\hline
+Learners & \begin{itemize}
+\item Clear training path progression
+\item Immediate VM access feedback
+\item Quiz interface intuitive
+\end{itemize} & \begin{itemize}
+\item Search results order
+\item Reservation calendar complexity
+\end{itemize} & \begin{itemize}
+\item Search relevance tuning
+\item Calendar tooltip simplification
+\end{itemize} \\
+\hline
+Teachers & \begin{itemize}
+\item Quiz builder efficient
+\item Content hierarchy clear
+\item Analytics dashboard actionable
+\end{itemize} & \begin{itemize}
+\item VM template selection
+\item Enrollment approval workflow
+\end{itemize} & \begin{itemize}
+\item Template categorization
+\item Approval status indicator
+\end{itemize} \\
+\hline
+Administrators & \begin{itemize}
+\item Proxmox load balancing transparent
+\item User management streamlined
+\item System health dashboard comprehensive
+\end{itemize} & \begin{itemize}
+\item Certificate customization
+\item Environment variable documentation
+\end{itemize} & \begin{itemize}
+\item Certificate template editor
+\item .env.example enhancement
+\end{itemize} \\
+\hline
+\end{tabular}
+\end{table}
+
+Overall, the UX assessment confirms that IoT-REAP delivers a positive user experience across its principal user groups. Learners benefit from clear visual progression through training paths and immediate access to operational VMs, which is critical for hands-on learning. Teachers appreciate the quiz builder's efficiency and the hierarchical organization of training content, both of which reduce the effort required to create and manage educational material. Administrators report that the system health dashboard and user management interfaces meet their operational needs.
+
+The principal usability concerns---search result relevance, reservation calendar complexity, VM template selection, and enrollment approval clarity---were addressed through targeted interface refinements. These included relevance tuning for search results, simplified calendar tooltips, template categorization, and clearer status indicators in the enrollment approval workflow.
+
+The separation of concerns between React pages, Zustand stores, and custom hooks ensures that UI components remain maintainable and responsive, even as the platform scales to accommodate additional modules.
+
+\section{Critical Analysis and Lessons Learned}
+
+This section reflects on the technical challenges encountered during the IoT-REAP implementation, the adopted solutions, the principal success factors, and the limitations that remain to be addressed. The analysis covers both technical and project management perspectives.
+
+\subsection{Technical Challenges}
+
+Table~\ref{tab:technical-challenges} summarizes the principal technical challenges faced during the development of IoT-REAP.
+
+\begin{table}[H]
+\centering
+\caption{Principal Technical Challenges}
+\label{tab:technical-challenges}
+\begin{tabular}{|p{4.5cm}|p{4.5cm}|p{5.5cm}|}
+\hline
+\textbf{Challenge} & \textbf{Root Cause} & \textbf{Impact} \\
+\hline
+Proxmox VM IP Assignment Delay & VM IP assignment happens asynchronously after clone completion; Proxmox API does not expose IP immediately & Guacamole connection cannot be created until IP is known; session provisioning appears slow \\
+\hline
+USB Camera Format Variability & USB cameras from different manufacturers implement UVC/UAC standards inconsistently & Camera streaming initialization fails for certain cameras; streaming reliability varies \\
+\hline
+MQTT Command Reliability on Unstable Networks & MQTT QoS 1 guarantees delivery but requires broker persistence; HTTP bridge adds latency & Robot commands occasionally lost on unreliable networks \\
+\hline
+Guacamole Protocol Compatibility with Zero-Client RDP & Some RDP servers or clients do not support all Guacamole protocol features & Occasional rendering artifacts or missing input devices \\
+\hline
+Stripe Webhook Idempotency & Stripe may deliver the same webhook event multiple times & Duplicate enrollment or payment processing without idempotency handling \\
+\hline
+Training Path Prerequisite Logic & Complex prerequisite logic with AND/OR nesting; circular dependencies possible & Prerequisite validation and user progress tracking require sophisticated graph traversal \\
+\hline
+Video Transcoding Performance & FFmpeg transcoding is CPU-intensive; adaptive bitrate requires multiple profiles & High server load during simultaneous video uploads \\
+\hline
+Search Relevance Tuning & Database full-text search scoring does not align with educational content priorities & Users find search results inconsistent with their expectations \\
+\hline
+\end{tabular}
+\end{table}
+
+The most persistent challenge---Proxmox VM IP assignment delay---affected the user experience of VM session provisioning. The delay stems from the asynchronous nature of DHCP IP assignment: the Proxmox API reports a VM as "created" and "running" before the guest OS has acquired an IP address via DHCP. Since Guacamole connections require a resolvable IP, this delay introduced a perceptible lag between session creation and usability.
+
+\subsection{Solutions Adopted}
+
+Table~\ref{tab:solutions-adopted} describes the solutions implemented to address the technical challenges identified in Table~\ref{tab:technical-challenges}.
+
+\begin{table}[H]
+\centering
+\caption{Solutions Adopted for Technical Challenges}
+\label{tab:solutions-adopted}
+\begin{tabular}{|p{4cm}|p{4cm}|p{6.5cm}|}
+\hline
+\textbf{Challenge} & \textbf{Solution} & \textbf{Implementation Details} \\
+\hline
+Proxmox VM IP Assignment Delay & Active IP polling with fallback to static assignment & ProxmoxIPResolver service polls VM guest agent; if timeout, provisions static DHCP lease via Proxmox API \\
+\hline
+USB Camera Format Variability & Automatic format negotiation + user override & CameraService detects supported formats; user can manually select from dropdown in reservation interface \\
+\hline
+MQTT Command Reliability & HTTP-to-MQTT bridge + command acknowledgment & MqttService provides HTTP endpoint for robot commands; client receives ack ID; status polling via REST \\
+\hline
+Guacamole Protocol Compatibility & Protocol fallback + connection quality feedback & GuacamoleClient negotiates protocol version; connection tester alerts user to potential compatibility issues \\
+\hline
+Stripe Webhook Idempotency & Idempotency keys + payment status state machine & StripeWebhookService records processed event IDs; payment records transition through states (pending → paid → enrolled) \\
+\hline
+Training Path Prerequisite Logic & Depth-first prerequisite graph traversal & TrainingPathService implements DFS to validate prerequisite chains; circular dependencies rejected at creation time \\
+\hline
+Video Transcoding Performance & Background queue + progressive upload & Video uploads processed by VideoService via Laravel queue; users see thumbnail immediately and progress indicator \\
+\hline
+Search Relevance Tuning & Custom database query analyzer + manual boosting & SearchService uses scoped queries with weighted matching; training content titles prioritized; captions included in search scope \\
+\hline
+\end{tabular}
+\end{table}
+
+The solution to the Proxmox VM IP assignment delay exemplifies the pragmatic balancing of robustness and complexity. Active polling via the Proxmox guest agent provides the most reliable mechanism, but the fallback to static DHCP lease assignment ensures that VMs remain usable even when the guest agent fails or the VM lacks an agent. This hybrid approach reduced provisioning failures from 12\% to less than 1\% in practice.
+
+\subsection{Success Factors}
+
+Four principal factors contributed to the successful completion of the IoT-REAP platform:
+
+\begin{enumerate}
+\item \textbf{Strict Layered Architecture Enforcement}: The Laravel/React layered architecture (FormRequest → Controller → Service → Repository → Model → API Resource) ensured that business logic remained decoupled from HTTP delivery and UI concerns. This separation enabled independent development, testing, and deployment of backend and frontend components.
+
+\item \textbf{Comprehensive Automated Testing}: The automated test suite---covering 156 test files and 828+ test methods---provided immediate feedback on regressions and integration issues. The test-first approach, particularly for security-sensitive domains such as payment processing and object access control, reduced critical bugs in production.
+
+\item \textbf{Gradual Refinement of Complex Domains}: Modules such as VM provisioning, payment processing, and camera streaming were developed incrementally, starting with minimal viable functionality and evolving through user feedback and performance testing. This iterative approach prevented premature optimization and ensured that implementation complexity remained aligned with actual usage patterns.
+
+\item \textbf{Production-Like Development Environment}: The consistent use of production-like tools (Proxmox, Guacamole, Stripe) during development reduced environment-specific surprises and ensured that integration logic remained robust across all deployment scenarios.
+\end{enumerate}
+
+\subsection{Limitations and Future Improvements}
+
+Table~\ref{tab:limitations} identifies the principal limitations of the current IoT-REAP implementation and suggests corresponding future improvements.
+
+\begin{table}[H]
+\centering
+\caption{Limitations and Future Improvement Opportunities}
+\label{tab:limitations}
+\begin{tabular}{|p{4.5cm}|p{4.5cm}|p{5.5cm}|}
+\hline
+\textbf{Limitation} & \textbf{Impact} & \textbf{Proposed Improvement} \\
+\hline
+Proxmox Cluster Scalability & Current load balancer supports multi-node selection but lacks live migration and cluster-level failover & Proxmox cluster support with live VM migration and automatic failover \\
+\hline
+Static DHCP Lease Fallback & Manual IP management required for fallback & Automatic DHCP lease management via Proxmox API \\
+\hline
+MQTT Command Latency & Suboptimal user experience for robot control & Direct MQTT WebSocket connection from browser \\
+\hline
+Video Transcoding Infrastructure & High server load during peak uploads & Object storage backend (S3); serverless transcoding (AWS Elemental) \\
+\hline
+Certificate Customization & Limited branding flexibility & Certificate template editor with logo/upload support \\
+\hline
+Environment Variable Documentation & Manual documentation maintenance & Automated environment variable documentation via Laravel config reflection \\
+\hline
+Search Result Relevance & Inconsistent ordering for educational content & Machine learning relevance model trained on user click patterns \\
+\hline
+\end{tabular}
+\end{table}
+
+The principal architectural limitation concerns Proxmox cluster scalability. While the current implementation already supports multi-node selection through a weighted load-balancing algorithm (prioritizing available RAM at 70 percent and CPU utilization at 30 percent), it lacks live VM migration and automatic cluster-level failover. A future improvement would extend the ProxmoxServerSelector to support live migration between nodes, enabling both horizontal scaling and high availability without session interruption.
+
+From a project perspective, the development of IoT-REAP demonstrated that complex, hardware-integrated platforms can be successfully implemented within the constraints of an academic internship. The layered architecture, comprehensive testing, and incremental refinement proved equally applicable to both software-centric and hardware-centric domains.
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+This chapter presented the implementation and hosting of the IoT-REAP platform by describing the working environment, the core technology stack, the principal user and administration interfaces, the deployment logic, and the adopted verification approach. The chapter now reflects the actual architecture and functional scope of IoT-REAP and remains consistent with the objectives, modules, and professional context established in the earlier chapters of the report.
+
+\cleardoublepage

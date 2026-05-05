@@ -1,0 +1,164 @@
+﻿@startuml general-use-case
+!theme carbon-gray
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecaseStyle rectangle
+skinparam defaultFontSize 11
+skinparam defaultFontName Arial
+
+title DTR Platform - General Use Case Diagram\nComprehensive System Overview with Role Inheritance
+
+left to right direction
+
+' ============================================================================
+' ACTORS WITH INHERITANCE
+' ============================================================================
+actor "Unauthenticated\nUser" as GU #9E9E9E
+actor "Employer" as EM #42A5F5
+actor "Department\nAdministrator" as DA #FFA726
+actor "Super\nAdministrator" as SA #FF6B6B
+
+' Inheritance relationships (Generalization)
+DA --|> EM
+SA --|> DA
+
+' ============================================================================
+' USE CASE PACKAGES
+' ============================================================================
+
+package "Assessment Workflow\n(SIRI & CoSIRI)"  {
+  usecase "Create Assessment" as ASSESSMENT_CREATE
+  usecase "Edit Assessment" as ASSESSMENT_EDIT
+  usecase "Submit Assessment" as ASSESSMENT_SUBMIT
+  usecase "Delete Assessment" as ASSESSMENT_DELETE
+  usecase "View Assessment History" as ASSESSMENT_HISTORY
+  usecase "Download HTML Report" as ASSESSMENT_DOWNLOAD
+  usecase "Auto-Save Draft" as ASSESSMENT_AUTOSAVE
+  usecase "AI Content Assistant\n(Enhance/Generate)" as AI
+}
+
+package "Department & User Management"  {
+  usecase "Manage Departments" as SA_DEPTS
+  usecase "Manage User Accounts" as SA_USERS
+  usecase "Activate User Account" as SA_ACTIVATE
+  usecase "Suspend User Account" as SA_SUSPEND
+  usecase "Delete User Account" as SA_DELETE
+}
+
+package "Appeal Management"  {
+  usecase "View Account Appeals" as SA_VIEW_APPEALS
+  usecase "Approve Appeal" as SA_APPROVE
+  usecase "Reject Appeal" as SA_REJECT
+}
+
+package "Benchmark Configuration"  {
+  usecase "Manage SIRI Benchmarks" as SA_SIRI_BENCH
+  usecase "Manage CoSIRI Benchmarks" as SA_COSIRI_BENCH
+}
+
+package "System Operations"  {
+  usecase "Perform System Backup" as SA_BACKUP
+  usecase "Restore System" as SA_RESTORE
+  usecase "Manage System Updates" as SA_UPDATES
+}
+
+package "Assessment Access"  {
+  usecase "Access All SIRI Assessments" as SA_SIRI_ACCESS
+  usecase "Access All CoSIRI Assessments" as SA_COSIRI_ACCESS
+}
+
+package "Department Management"  {
+  usecase "Manage Department Users" as DA_USERS
+  usecase "View Department SIRI Assessments" as DA_SIRI
+  usecase "View Department CoSIRI Assessments" as DA_COSIRI
+  usecase "Handle Department Appeals" as DA_APPEALS
+}
+
+package "Account Management"  {
+  usecase "Register Account" as REGISTER
+  usecase "Login to Platform" as LOGIN
+  usecase "Request Password Reset" as PASSWORD_REQUEST
+  usecase "Reset Password" as PASSWORD_RESET
+  usecase "Verify Email Address" as EMAIL_VERIFY
+}
+
+package "Account & Profile Management"  {
+  usecase "Manage Account Status\n(View Suspension/Appeal)" as ACCOUNT_STATUS
+  usecase "Manage Profile\n(Update/Photo/Delete)" as PROFILE
+  usecase "Manage Notifications\n(View/Mark Read)" as NOTIFICATIONS
+}
+
+' ============================================================================
+' EMPLOYER ASSOCIATIONS (Base Role for Authenticated Users)
+' ============================================================================
+EM --> ASSESSMENT_CREATE
+EM --> ASSESSMENT_EDIT
+EM --> ASSESSMENT_SUBMIT
+EM --> ASSESSMENT_DELETE
+EM --> ASSESSMENT_HISTORY
+EM --> ASSESSMENT_DOWNLOAD
+EM --> ASSESSMENT_AUTOSAVE
+EM --> AI
+EM --> ACCOUNT_STATUS
+EM --> PROFILE
+EM --> NOTIFICATIONS
+
+' ============================================================================
+' DEPARTMENT ADMINISTRATOR ASSOCIATIONS (Inherits from Employer + adds these)
+' ============================================================================
+DA --> DA_USERS
+DA --> DA_SIRI
+DA --> DA_COSIRI
+DA --> DA_APPEALS
+
+' ============================================================================
+' SUPER ADMINISTRATOR ASSOCIATIONS (Inherits from Dept Admin + adds these)
+' ============================================================================
+SA --> SA_DEPTS
+SA --> SA_USERS
+SA --> SA_ACTIVATE
+SA --> SA_SUSPEND
+SA --> SA_DELETE
+SA --> SA_VIEW_APPEALS
+SA --> SA_APPROVE
+SA --> SA_REJECT
+SA --> SA_SIRI_BENCH
+SA --> SA_COSIRI_BENCH
+SA --> SA_BACKUP
+SA --> SA_RESTORE
+SA --> SA_UPDATES
+SA --> SA_SIRI_ACCESS
+SA --> SA_COSIRI_ACCESS
+
+' ============================================================================
+' UNAUTHENTICATED USER ASSOCIATIONS (Separate - No Inheritance)
+' ============================================================================
+GU --> REGISTER
+GU --> LOGIN
+GU --> PASSWORD_REQUEST
+GU --> PASSWORD_RESET
+GU --> EMAIL_VERIFY
+
+' ============================================================================
+' RELATIONSHIPS
+' ============================================================================
+
+' Include relationships - Auto-save
+ASSESSMENT_CREATE ..> ASSESSMENT_AUTOSAVE : <<include>>
+ASSESSMENT_EDIT ..> ASSESSMENT_AUTOSAVE : <<include>>
+
+' Extend relationships - AI features
+ASSESSMENT_CREATE <.. AI : <<extend>>
+ASSESSMENT_EDIT <.. AI : <<extend>>
+
+' Include relationships - System Operations
+SA_RESTORE ..> SA_BACKUP : <<include>>
+
+' Include relationships - Department Appeals
+DA_APPEALS ..> DA_USERS : <<include>>
+
+' Include relationships - Authentication flow
+REGISTER ..> EMAIL_VERIFY : <<include>>
+PASSWORD_REQUEST ..> PASSWORD_RESET : <<include>>
+
+@enduml

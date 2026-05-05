@@ -1,0 +1,77 @@
+@startuml iot-reap-sequence-hardware-inventory
+title IoT-REAP - Hardware Inventory & Status Sequence Diagram
+actor Engineer as engineer
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Hardware\nController" as hardware
+participant "Gateway\nNodes" as gateways
+participant "USB/IP\nDevices" as devices
+participant "Database" as db
+
+engineer -> frontend : Navigate to hardware inventory
+frontend -> routes : GET /hardware
+routes -> hardware : index()
+hardware -> db : Load all gateway nodes
+hardware -> gateways : Query device status from each gateway
+gateways --> hardware : Return device lists and status
+hardware --> routes : Return hardware inventory
+routes --> frontend : Display hardware page
+frontend --> engineer : Show all devices with status
+
+note right of engineer
+  Hardware inventory shows:
+  - Gateway nodes and their status
+  - USB/IP devices connected to each gateway
+  - Device availability (in-use/available)
+  - Device types and capabilities
+end note
+
+engineer -> frontend : Click "Refresh Status"
+frontend -> routes : POST /hardware/refresh
+routes -> hardware : refresh()
+hardware -> gateways : Refresh all gateway connections
+gateways --> hardware : Return updated device status
+hardware -> db : Update device status in database
+hardware --> routes : Return refreshed inventory
+routes --> frontend : Update hardware display
+frontend --> engineer : Show updated device status
+
+engineer -> frontend : Select specific gateway node
+frontend -> routes : POST /hardware/nodes/{node}/refresh
+routes -> hardware : refreshNode(nodeId)
+hardware -> gateways : Refresh specific gateway
+gateways --> hardware : Return node device status
+hardware -> db : Update devices for this node
+hardware --> routes : Return node inventory
+routes --> frontend : Update node display
+frontend --> engineer : Show refreshed node devices
+
+engineer -> frontend : Click "Check Node Health"
+frontend -> routes : POST /hardware/nodes/{node}/health
+routes -> hardware : healthCheck(nodeId)
+hardware -> gateways : Perform health check on gateway
+gateways --> hardware : Return health status (CPU, memory, network)
+hardware --> routes : Return health data
+routes --> frontend : Display health metrics
+frontend --> engineer : Show node health information
+
+note right of engineer
+  Health check includes:
+  - Gateway node connectivity
+  - CPU and memory usage
+  - Network status
+  - USB/IP service status
+  - Device attachment status
+end note
+
+engineer -> frontend : View device list
+frontend -> routes : GET /hardware/devices
+routes -> hardware : devices()
+hardware -> db : Load all devices
+hardware -> gateways : Get current device status
+gateways --> hardware : Return device status
+hardware --> routes : Return device list
+routes --> frontend : Display device table
+frontend --> engineer : Show all devices with details
+
+@enduml

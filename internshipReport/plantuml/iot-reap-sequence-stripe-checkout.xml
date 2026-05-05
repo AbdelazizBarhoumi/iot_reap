@@ -1,0 +1,254 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="2800" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Stripe Checkout Payment Sequence Diagram&lt;/b&gt;" vertex="1">
+      <mxGeometry x="80" y="10" width="1720" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ACTOR -->
+    <mxCell id="actor_user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="User" vertex="1">
+      <mxGeometry x="45" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="140" y="50" width="120" height="2680" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="340" y="50" width="100" height="2680" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_co" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Checkout&#xa;Controller" vertex="1">
+      <mxGeometry x="520" y="50" width="120" height="2680" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_ss" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Stripe&#xa;Service" vertex="1">
+      <mxGeometry x="720" y="50" width="100" height="2680" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Database" vertex="1">
+      <mxGeometry x="920" y="50" width="100" height="2680" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_sa" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Stripe&#xa;API" vertex="1">
+      <mxGeometry x="1120" y="50" width="100" height="2680" as="geometry" />
+    </mxCell>
+
+    <!-- ══ View training path ══ -->
+    <mxCell id="act_fe_s0" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="100" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s0" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="118" width="10" height="85" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View training path details">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="153" as="sourcePoint"/><mxPoint x="195" y="153" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{id}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="265" y="173" as="sourcePoint"/><mxPoint x="390" y="173" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show course with price and Enroll button">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="390" y="198" as="sourcePoint"/><mxPoint x="75" y="198" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ══ Initiate checkout ══ -->
+    <mxCell id="act_fe_s1" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="238" width="10" height="125" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="256" width="10" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="act_co_s1" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="273" width="10" height="78" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="290" width="10" height="50" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m4" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click 'Enroll' / 'Purchase'">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="258" as="sourcePoint"/><mxPoint x="195" y="258" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /checkout/initiate">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="265" y="278" as="sourcePoint"/><mxPoint x="390" y="278" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="checkout(trainingPathId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="392" y="298" as="sourcePoint"/><mxPoint x="575" y="298" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load training path / Check existing enrollment">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="318" as="sourcePoint"/><mxPoint x="970" y="318" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Path and enrollment status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="970" y="343" as="sourcePoint"/><mxPoint x="580" y="343" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALT: not enrolled / already enrolled -->
+    <mxCell id="alt_enroll" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;recursiveResize=0;container=1;collapsible=0;width=50;height=30;" value="alt" vertex="1">
+      <mxGeometry x="80" y="375" width="1720" height="1990" as="geometry" />
+    </mxCell>
+    <mxCell id="alt_enroll_g1" parent="alt_enroll" style="text;html=1;" value="[Not enrolled]" vertex="1">
+      <mxGeometry width="110" height="20" relative="1" as="geometry"><mxPoint x="20" y="40" as="offset"/></mxGeometry>
+    </mxCell>
+    <mxCell id="alt_enroll_sep" parent="alt_enroll" style="line;strokeWidth=1;dashed=1;labelPosition=center;verticalLabelPosition=bottom;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;html=1;whiteSpace=wrap;" value="[Already enrolled]" vertex="1">
+      <mxGeometry width="1720" height="10" y="1880" as="geometry" />
+    </mxCell>
+
+    <!-- not enrolled: create session -->
+    <mxCell id="act_co_s2" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="413" width="10" height="300" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="430" width="10" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="act_ss_s2" parent="ll_ss" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="558" width="10" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="act_sa_s2" parent="ll_sa" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="578" width="10" height="70" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m9" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create pending enrollment / Set status=pending_payment / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="433" as="sourcePoint"/><mxPoint x="970" y="433" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create Stripe Checkout session">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="563" as="sourcePoint"/><mxPoint x="770" y="563" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /v1/checkout/sessions">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="772" y="583" as="sourcePoint"/><mxPoint x="1170" y="583" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Session URL and ID">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1170" y="608" as="sourcePoint"/><mxPoint x="772" y="608" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Save Stripe session ID / Link to enrollment / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="772" y="633" as="sourcePoint"/><mxPoint x="970" y="633" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Redirect to Stripe / Display payment form">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="772" y="693" as="sourcePoint"/><mxPoint x="75" y="693" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- User pays -->
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Enter payment details / Submit payment">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="753" as="sourcePoint"/><mxPoint x="1170" y="753" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Stripe self-calls -->
+    <mxCell id="act_sa_pay" parent="ll_sa" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="773" width="10" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;edgeStyle=orthogonalEdgeStyle;" value="Process payment / Validate payment">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1175" y="793" as="sourcePoint"/>
+        <mxPoint x="1175" y="838" as="targetPoint"/>
+        <Array as="points"><mxPoint x="1225" y="793"/><mxPoint x="1225" y="838"/></Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- inner ALT: payment success / fail -->
+    <mxCell id="alt_pay" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;recursiveResize=0;container=1;collapsible=0;width=50;height=30;" value="alt" vertex="1">
+      <mxGeometry x="80" y="875" width="1720" height="1000" as="geometry" />
+    </mxCell>
+    <mxCell id="alt_pay_g1" parent="alt_pay" style="text;html=1;" value="[Payment successful]" vertex="1">
+      <mxGeometry width="150" height="20" relative="1" as="geometry"><mxPoint x="20" y="40" as="offset"/></mxGeometry>
+    </mxCell>
+    <mxCell id="alt_pay_sep" parent="alt_pay" style="line;strokeWidth=1;dashed=1;labelPosition=center;verticalLabelPosition=bottom;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;html=1;whiteSpace=wrap;" value="[Payment failed / cancelled]" vertex="1">
+      <mxGeometry width="1720" height="10" y="500" as="geometry" />
+    </mxCell>
+
+    <!-- success -->
+    <mxCell id="act_co_succ" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="913" width="10" height="430" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_succ" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="958" width="10" height="360" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /checkout/success?session_id=xxx">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1170" y="913" as="sourcePoint"/><mxPoint x="390" y="913" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="success(sessionId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="392" y="935" as="sourcePoint"/><mxPoint x="575" y="935" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Find enrollment by session ID / Update status=active / Set enrolled_at / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="958" as="sourcePoint"/><mxPoint x="970" y="958" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create payment record / Set status=completed / Save / Notify user / Notify teacher">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="1103" as="sourcePoint"/><mxPoint x="970" y="1103" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display payment success screen">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="1333" as="sourcePoint"/><mxPoint x="75" y="1333" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- failed -->
+    <mxCell id="act_co_fail" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1408" width="10" height="430" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_fail" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1453" width="10" height="360" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /checkout/cancelled">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1170" y="1408" as="sourcePoint"/><mxPoint x="390" y="1408" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="cancelled()">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="392" y="1430" as="sourcePoint"/><mxPoint x="575" y="1430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Find enrollment by session ID / Update status=cancelled / Save / Delete pending payment / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="1453" as="sourcePoint"/><mxPoint x="970" y="1453" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display payment cancelled screen">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="1823" as="sourcePoint"/><mxPoint x="75" y="1823" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- already enrolled -->
+    <mxCell id="act_co_ex" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1908" width="10" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_ex" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1925" width="10" height="75" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load existing enrollment">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="1925" as="sourcePoint"/><mxPoint x="970" y="1925" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Redirect to course / Show 'Already enrolled' message">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="2023" as="sourcePoint"/><mxPoint x="75" y="2023" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ══ Payment history ══ -->
+    <mxCell id="sep_hist" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Payment History ==" vertex="1">
+      <mxGeometry x="80" y="2400" width="1720" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="act_fe_h" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2388" width="10" height="230" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_h" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2408" width="10" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="act_co_h" parent="ll_co" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2425" width="10" height="170" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_h" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2443" width="10" height="120" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View payment history">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="2410" as="sourcePoint"/><mxPoint x="195" y="2410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /checkout/payments">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="265" y="2430" as="sourcePoint"/><mxPoint x="390" y="2430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="payments()">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="392" y="2450" as="sourcePoint"/><mxPoint x="575" y="2450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load payments / details / linked enrollments">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="2470" as="sourcePoint"/><mxPoint x="970" y="2470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Payment history">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="970" y="2545" as="sourcePoint"/><mxPoint x="580" y="2545" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m33" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all past payments">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="580" y="2598" as="sourcePoint"/><mxPoint x="75" y="2598" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

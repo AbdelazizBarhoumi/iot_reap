@@ -1,0 +1,65 @@
+@startuml iot-reap-sequence-vm-snapshots
+title IoT-REAP - VM Snapshots Sequence Diagram
+actor Engineer as engineer
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "VM Session\nController" as session
+participant "Proxmox\nAPI" as proxmox
+participant "Proxmox VM\nBrowser" as browser
+participant "Database" as db
+
+engineer -> frontend : View session details
+frontend -> routes : GET /sessions/{session}
+routes -> session : show(sessionId)
+session -> db : Load session with VM details
+db --> session : Return session data
+session --> routes : Return session details
+routes --> frontend : Display session page
+frontend --> engineer : Show session with VM info
+
+engineer -> frontend : Click "View Snapshots"
+frontend -> routes : GET /sessions/{session}/snapshots
+routes -> session : snapshots(sessionId)
+session -> db : Load session
+session -> proxmox : GET /api2/json/nodes/{node}/qemu/{vmid}/snapshot
+proxmox --> session : Return snapshot list
+session --> routes : Return snapshots data
+routes --> frontend : Display snapshots list
+frontend --> engineer : Show available snapshots
+
+note right of engineer
+  Snapshot features:
+  - List all snapshots for VM
+  - Show snapshot names and timestamps
+  - Display snapshot descriptions
+  - Indicate current snapshot
+end note
+
+engineer -> frontend : Browse Proxmox VMs
+frontend -> routes : GET /proxmox-vms
+routes -> browser : index()
+browser -> db : Load active Proxmox servers
+browser -> proxmox : Query each server for VMs
+proxmox --> browser : Return VM lists
+browser --> routes : Return VM browser data
+routes --> frontend : Display VM browser
+frontend --> engineer : Show available VMs by server/node
+
+engineer -> frontend : Select VM and view snapshots
+frontend -> routes : GET /proxmox-vms/{server}/{node}/{vmid}/snapshots
+routes -> browser : snapshots(server, node, vmid)
+browser -> proxmox : GET /api2/json/nodes/{node}/qemu/{vmid}/snapshot
+proxmox --> browser : Return snapshot list
+browser --> routes : Return snapshots
+routes --> frontend : Display VM snapshots
+frontend --> engineer : Show snapshots for selected VM
+
+note right of engineer
+  VM Browser snapshot features:
+  - Browse snapshots across all VMs
+  - View snapshot metadata
+  - Help with VM selection for sessions
+  - Admin/engineer access only
+end note
+
+@enduml

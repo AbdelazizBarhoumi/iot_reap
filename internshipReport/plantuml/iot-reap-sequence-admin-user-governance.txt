@@ -1,0 +1,147 @@
+@startuml iot-reap-sequence-admin-user-governance
+title IoT-REAP - Admin User Governance Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Admin User\nController" as user_ctrl
+participant "Database" as db
+participant "User\nModel" as user
+participant "Notification\nService" as notify
+
+admin -> frontend : Navigate to user management
+frontend -> routes : GET /admin/users
+routes -> user_ctrl : index()
+user_ctrl -> db : Load all users
+user_ctrl -> db : Load user roles
+user_ctrl -> db : Load user statuses
+db --> user_ctrl : Return user list
+user_ctrl --> routes : Return users
+routes --> frontend : Display user list
+frontend --> admin : Show all users with roles and status
+
+admin -> frontend : View user details
+frontend -> routes : GET /admin/users/{user}
+routes -> user_ctrl : show(userId)
+user_ctrl -> db : Load user with relations
+user_ctrl -> db : Load user activity
+user_ctrl -> db : Load user enrollments
+db --> user_ctrl : Return user details
+user_ctrl --> routes : Return user data
+routes --> frontend : Display user profile
+frontend --> admin : Show comprehensive user information
+
+admin -> frontend : Approve teacher account
+frontend -> routes : POST /admin/users/{user}/approve-teacher
+routes -> user_ctrl : approveTeacher(userId)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Update teacher approval status
+user_ctrl -> db : Set teacher_approved_at timestamp
+user_ctrl -> db : Save changes
+user_ctrl -> notify : Notify user of approval
+notify -> db : Create notification
+user_ctrl --> routes : Return success
+routes --> frontend : Update user status
+frontend --> admin : Show user as approved teacher
+
+admin -> frontend : Revoke teacher approval
+frontend -> routes : POST /admin/users/{user}/revoke-teacher-approval
+routes -> user_ctrl : revokeTeacherApproval(userId)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Update teacher approval status
+user_ctrl -> db : Clear teacher_approved_at timestamp
+user_ctrl -> db : Save changes
+user_ctrl -> notify : Notify user of revocation
+notify -> db : Create notification
+user_ctrl --> routes : Return success
+routes --> frontend : Update user status
+frontend --> admin : Show teacher approval revoked
+
+admin -> frontend : Suspend user account
+frontend -> routes : POST /admin/users/{user}/suspend
+routes -> user_ctrl : suspend(userId)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Update status to suspended
+user_ctrl -> db : Set suspended_at timestamp
+user_ctrl -> db : Invalidate user sessions
+user_ctrl -> db : Save changes
+user_ctrl -> notify : Notify user of suspension
+notify -> db : Create notification
+user_ctrl --> routes : Return success
+routes --> frontend : Update user status
+frontend --> admin : Show user as suspended
+
+admin -> frontend : Unsuspend user account
+frontend -> routes : POST /admin/users/{user}/unsuspend
+routes -> user_ctrl : unsuspend(userId)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Update status to active
+user_ctrl -> db : Clear suspended_at timestamp
+user_ctrl -> db : Save changes
+user_ctrl -> notify : Notify user of unsuspension
+notify -> db : Create notification
+user_ctrl --> routes : Return success
+routes --> frontend : Update user status
+frontend --> admin : Show user as active
+
+admin -> frontend : Change user role
+frontend -> routes : PATCH /admin/users/{user}/role
+routes -> user_ctrl : updateRole(userId, newRole)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Update user role
+user_ctrl -> db : Update permissions
+user_ctrl -> db : Save changes
+user_ctrl -> notify : Notify user of role change
+notify -> db : Create notification
+user_ctrl --> routes : Return success
+routes --> frontend : Update user role
+frontend --> admin : Show user with new role
+
+admin -> frontend : Impersonate user
+frontend -> routes : POST /admin/users/{user}/impersonate
+routes -> user_ctrl : impersonate(userId)
+user_ctrl -> db : Load admin user
+user_ctrl -> db : Load target user
+user_ctrl -> db : Create impersonation session
+user_ctrl -> db : Log impersonation action
+user_ctrl -> db : Save changes
+user_ctrl --> routes : Return impersonation token
+routes --> frontend : Switch to user context
+frontend --> admin : Show "Impersonating [user]" banner
+
+admin -> frontend : Stop impersonation
+frontend -> routes : POST /stop-impersonation
+routes -> user_ctrl : stopImpersonation()
+user_ctrl -> db : Load impersonation session
+user_ctrl -> db : End impersonation
+user_ctrl -> db : Log end of impersonation
+user_ctrl -> db : Save changes
+user_ctrl --> routes : Return success
+routes --> frontend : Return to admin context
+frontend --> admin : Show admin dashboard
+
+admin -> frontend : GDPR user data deletion
+frontend -> routes : DELETE /admin/users/{user}/gdpr
+routes -> user_ctrl : gdprDelete(userId)
+user_ctrl -> db : Load user record
+user_ctrl -> db : Anonymize user data
+user_ctrl -> db : Delete personal information
+user_ctrl -> db : Retain system records
+user_ctrl -> db : Save changes
+user_ctrl -> db : Log GDPR deletion
+user_ctrl --> routes : Return success
+routes --> frontend : Show confirmation
+frontend --> admin : Display "User data deleted per GDPR"
+
+note right of admin
+  User governance features:
+  - View all users with details
+  - Approve/revoke teacher status
+  - Suspend/unsuspend accounts
+  - Change user roles
+  - Impersonate users for debugging
+  - GDPR-compliant data deletion
+  - Activity logging for all actions
+  - User notifications for changes
+end note
+
+@enduml

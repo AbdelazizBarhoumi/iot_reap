@@ -1,0 +1,39 @@
+@startuml iot-reap-activity-registration
+title IoT-REAP - User Registration Activity Diagram
+
+start
+:Guest opens registration page;
+:Guest enters name, email, password;
+if (Form validation passes?) then (yes)
+  if (Email not already registered?) then (yes)
+    if (Registration method?) then (Google OAuth)
+      :Redirect to Google consent;
+      :Google returns user info;
+      :Create account with verified email;
+      :Assign ENGINEER role;
+      :Auto-login user;
+    else (Email/Password)
+      :Hash password with bcrypt;
+      :Create user record (ENGINEER role);
+      :Send email verification link;
+      :User logs in;
+      if (Email verified?) then (yes)
+        :Full platform access;
+      else (no)
+        :Limited access until verified;
+        :User clicks verification link;
+        :Email marked as verified;
+      endif
+    endif
+  else (email exists)
+    :Return validation error;
+    :Suggest login or password reset;
+    stop
+  endif
+else (validation fails)
+  :Display form errors;
+  stop
+endif
+stop
+
+@enduml

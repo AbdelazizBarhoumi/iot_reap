@@ -1,0 +1,141 @@
+<mxGraphModel dx="4203" dy="2227" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="BsmChT_69Cv2u57n763S-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Watch Video Lesson" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="912" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Read Article Lesson" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="941" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Mark Unit Complete/Incomplete" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="972" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-6" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Post Forum Thread or Reply" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="999" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-7" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Upvote / Flag Forum Content" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="1029" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-8" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Add / Edit / Delete Notes" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="1056" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-9" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Purchase Course / Checkout" vertex="1">
+      <mxGeometry height="40" width="220" x="420" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-14" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List My VM Sessions" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="509" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-15" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Provision (Create) VM Session" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="541" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-16" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Extend Session Duration" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="574" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-17" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Terminate Session" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="606" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-18" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Attach Device to Session" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="635" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-19" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Detach Device from Session" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="667" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-20" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List Cameras for Session" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="510" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-21" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Camera Resolutions" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="540" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Camera Stream" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="571" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Acquire Camera Control" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="600" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Release Camera Control" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="630" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-25" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Send PTZ Move Command" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="662" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-26" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Set Stream Resolution" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="692" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-27" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Start WebRTC Stream (WHEP)" vertex="1">
+      <mxGeometry height="40" width="220" x="2010" y="725" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-28" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List USB/Cameras/VM Reservations" vertex="1">
+      <mxGeometry height="40" width="220" x="1160" y="440" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-29" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View USB/Cameras/VM Reservation Details" vertex="1">
+      <mxGeometry height="40" width="220" x="1160" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-30" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Join Device Queue" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="695" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-31" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View My Enrolled Training Paths" vertex="1">
+      <mxGeometry height="40" width="220" x="1310" y="933" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-32" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Enroll in Training Path" vertex="1">
+      <mxGeometry height="40" width="220" x="1310" y="961" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-33" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Unenroll from Training Path" vertex="1">
+      <mxGeometry height="40" width="220" x="1310" y="989" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Take Quiz Assessment" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="1089" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-35" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Write Course Review" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="1119" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-36" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Request Completion Certificate" vertex="1">
+      <mxGeometry height="40" width="220" x="1730" y="1149" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-37" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Profile" vertex="1">
+      <mxGeometry height="40" width="220" x="1550" y="1607" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-38" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Change Password" vertex="1">
+      <mxGeometry height="40" width="220" x="1550" y="1637" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-39" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View &amp; Manage Notifications" vertex="1">
+      <mxGeometry height="40" width="220" x="1550" y="1667" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-40" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Payment Success Result Screen" vertex="1">
+      <mxGeometry height="40" width="220" x="420" y="1532" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-41" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Payment Cancelled Result Screen" vertex="1">
+      <mxGeometry height="40" width="220" x="420" y="1563" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-42" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Create USB/Cameras/VM Reservation" vertex="1">
+      <mxGeometry height="40" width="220" x="1160" y="497" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-43" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Cancel USB/Cameras/VM Reservation" vertex="1">
+      <mxGeometry height="40" width="220" x="1160" y="526" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-44" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View USB/Cameras/VM Reservation Calendar" vertex="1">
+      <mxGeometry height="45" width="220" x="1160" y="555" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-45" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="List USB/Cameras/VM Reservations" vertex="1">
+      <mxGeometry height="40" width="220" x="2620" y="480" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-46" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View USB/Cameras/VM Reservation Details" vertex="1">
+      <mxGeometry height="40" width="220" x="2620" y="510" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-47" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Create USB/Cameras/VM Reservation" vertex="1">
+      <mxGeometry height="40" width="220" x="2620" y="537" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-48" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Cancel USB/Cameras/VM Reservation" vertex="1">
+      <mxGeometry height="40" width="220" x="2620" y="566" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-49" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View USB/Cameras/VM Reservation Calendar" vertex="1">
+      <mxGeometry height="45" width="220" x="2620" y="595" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-50" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Payment History" vertex="1">
+      <mxGeometry height="40" width="220" x="420" y="1593" as="geometry" />
+    </mxCell>
+    <mxCell id="BsmChT_69Cv2u57n763S-51" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Request Refund" vertex="1">
+      <mxGeometry height="40" width="220" x="420" y="1623" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

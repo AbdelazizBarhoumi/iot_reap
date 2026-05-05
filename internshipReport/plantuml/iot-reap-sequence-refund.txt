@@ -1,0 +1,74 @@
+@startuml iot-reap-sequence-refund
+title IoT-REAP - Refund Processing Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "RefundController" as Controller
+participant "RefundService" as RefundSvc
+participant "PaymentRepository" as PayRepo
+participant "RefundRepository" as RefundRepo
+participant "StripeService" as Stripe
+database "MySQL" as DB
+actor Administrator
+
+== Engineer Initiates Refund ==
+
+Engineer -> Browser: Click "Request Refund" on payment
+Browser -> Controller: POST /payments/{id}/refund {reason}
+Controller -> RefundSvc: createRefundRequest(user, payment, reason)
+
+RefundSvc -> PayRepo: findByUserAndId(user, payment_id)
+PayRepo -> DB: SELECT * FROM payments WHERE user_id = ? AND id = ?
+PayRepo --> RefundSvc: payment
+
+RefundSvc -> RefundSvc: assertRefundable(payment)
+
+alt Payment is refundable
+    RefundSvc -> RefundRepo: create({user_id, payment_id, reason, status: PENDING})
+    RefundRepo -> DB: INSERT INTO refund_requests
+    RefundRepo --> RefundSvc: refundRequest
+    RefundSvc --> Controller: refundRequest
+    Controller --> Browser: 201 Created {refund_id, status: 'pending'}
+    Browser -> Engineer: Refund request submitted
+else Payment not refundable
+    RefundSvc --> Controller: throw RefundNotAllowedException
+    Controller --> Browser: 422 Unprocessable {reason}
+    Browser -> Engineer: Refund not available message
+end
+
+== Administrator Review ==
+
+Administrator -> Browser: Open refund requests dashboard
+Browser -> Controller: GET /admin/refund-requests?status=pending
+Controller -> RefundSvc: getPendingRefunds()
+RefundSvc -> RefundRepo: findByStatus(PENDING)
+RefundRepo -> DB: SELECT * FROM refund_requests WHERE status = 'pending'
+RefundRepo --> RefundSvc: Collection of pending refunds
+RefundSvc --> Controller: pending refunds
+Controller --> Browser: 200 OK {refund_requests}
+Browser -> Administrator: Pending refund requests listed
+
+Administrator -> Browser: Click "Approve Refund"
+Browser -> Controller: POST /admin/refund-requests/{id}/approve
+Controller -> RefundSvc: approveRefund(admin, refundRequest)
+
+RefundSvc -> RefundRepo: update(refundRequest, {status: APPROVED, admin_id, reviewed_at})
+RefundRepo -> DB: UPDATE refund_requests SET status = 'approved'
+
+RefundSvc -> Stripe: processRefund(payment.stripe_id, amount)
+Stripe -> Stripe: POST /v1/refunds (charge_id)
+Stripe --> RefundSvc: refund_id
+
+RefundSvc -> PayRepo: update(payment, {status: REFUNDED})
+PayRepo -> DB: UPDATE payments SET status = 'refunded'
+
+RefundSvc -> RefundRepo: update(refundRequest, {status: COMPLETED, stripe_refund_id})
+RefundRepo -> DB: UPDATE refund_requests SET status = 'completed'
+
+RefundSvc --> Controller: refund processed
+Controller --> Browser: 200 OK {status: 'completed'}
+Browser -> Administrator: Refund approved and processed
+
+note right: If admin rejects:\nstatus -> REJECTED\nwith admin_notes
+
+@enduml

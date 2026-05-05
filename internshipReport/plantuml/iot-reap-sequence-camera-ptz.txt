@@ -1,0 +1,91 @@
+@startuml iot-reap-sequence-camera-ptz
+title IoT-REAP - Camera Streaming and PTZ Control Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "CameraController" as Controller
+participant "CameraService" as CamSvc
+participant "CameraSessionControlRepository" as CSCRepo
+participant "GatewayNode" as Gateway
+participant "VMSessionService" as VMSvc
+participant "ProxmoxClient" as Proxmox
+database "MySQL" as DB
+
+== Camera Reservation ==
+
+Engineer -> Browser: Reserve camera for VM session
+Browser -> Controller: POST /cameras/{id}/reserve {session_id, start, end}
+Controller -> CamSvc: reserveCamera(user, camera, session, timeRange)
+
+CamSvc -> CamSvc: checkAvailability(camera, timeRange)
+CamSvc -> CamSvc: checkConflicts(camera, timeRange)
+
+alt No conflicts
+    CamSvc -> CSCRepo: create({camera_id, session_id, user_id, status: PENDING, start, end})
+    CSCRepo -> DB: INSERT INTO camera_session_controls
+    CSCRepo --> CamSvc: control record
+    CamSvc --> Controller: reservation created
+    Controller --> Browser: 201 Created {reservation_id}
+    Browser -> Engineer: Reservation confirmed
+else Conflict exists
+    CamSvc --> Controller: throw ReservationConflictException
+    Controller --> Browser: 409 Conflict {conflicting_reservations}
+    Browser -> Engineer: Conflict message displayed
+end
+
+== Camera Stream Access ==
+
+Engineer -> Browser: Open camera stream in VM session
+Browser -> Controller: GET /vm-sessions/{id}/camera-stream
+Controller -> CamSvc: getStreamUrl(user, session, camera)
+
+CamSvc -> CSCRepo: findActiveBySessionAndCamera(session, camera)
+CSCRepo -> DB: SELECT * FROM camera_session_controls WHERE session_id = ? AND camera_id = ? AND status = 'active'
+CSCRepo --> CamSvc: active control
+
+CamSvc -> Gateway: getStreamUrl(camera)
+Gateway --> CamSvc: rtsp://gateway:port/camera/{id}/stream
+
+CamSvc -> VMSvc: attachStreamToVM(session, stream_url)
+VMSvc -> Proxmox: configureUSBPassthrough(node, vmid, camera_device)
+Proxmox --> VMSvc: stream attached to VM
+
+CamSvc --> Controller: stream_url
+Controller --> Browser: 200 OK {stream_url}
+Browser -> Engineer: Camera feed displayed in session
+
+== PTZ Control ==
+
+Engineer -> Browser: Adjust camera pan/tilt/zoom
+Browser -> Controller: POST /cameras/{id}/ptz {action: "pan", value: 30}
+Controller -> CamSvc: controlPTZ(user, camera, action, value)
+
+CamSvc -> CSCRepo: assertControl(user, session, camera)
+
+alt User has exclusive control
+    CSCRepo --> CamSvc: control verified
+    CamSvc -> Gateway: sendPTZCommand(camera, action, value)
+    Gateway -> Gateway: translate to camera-specific PTZ protocol
+    Gateway --> CamSvc: PTZ command executed
+    CamSvc --> Controller: success
+    Controller --> Browser: 200 OK
+    Browser -> Engineer: Camera position updated
+else No active control
+    CSCRepo --> CamSvc: null
+    CamSvc --> Controller: throw NoActiveControlException
+    Controller --> Browser: 403 Forbidden
+    Browser -> Engineer: "No active control" message
+end
+
+== Release Camera Control ==
+
+Engineer -> Browser: Release camera control
+Browser -> Controller: DELETE /cameras/{id}/session-control
+Controller -> CamSvc: releaseControl(user, session, camera)
+CamSvc -> CSCRepo: update(control, {status: RELEASED, released_at})
+CSCRepo -> DB: UPDATE camera_session_controls SET status = 'released'
+CamSvc -> VMSvc: detachStreamFromVM(session, camera)
+CamSvc --> Controller: control released
+Controller --> Browser: 200 OK
+
+@enduml

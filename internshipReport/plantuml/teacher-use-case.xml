@@ -1,0 +1,150 @@
+<mxGraphModel dx="4605" dy="1140" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Training Paths Dashboard" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2220" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Create Training Path" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2250" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Training Path Details" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2280" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Training Path" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2310" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Submit Path for Review" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2340" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-6" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Archive Training Path" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2370" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-7" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Restore Archived Path" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2400" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-8" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Add Module" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2430" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-9" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Module" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2460" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-10" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Module" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2490" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-11" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reorder Modules" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2520" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-12" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Add Training Unit" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2550" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-13" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Training Unit" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2580" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-14" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Training Unit" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2610" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-15" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reorder Units" vertex="1">
+      <mxGeometry height="40" width="220" x="2710" y="2640" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-16" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Create Quiz" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="2951.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-17" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Edit Quiz Settings" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="2981.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-18" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Add Questions &amp; Options" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="3011.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-19" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Reorder Questions" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="3041.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-20" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Publish / Unpublish Quiz" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="3071.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-21" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Quiz Statistics" vertex="1">
+      <mxGeometry height="40" width="220" x="2430" y="3103.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Create / Update Article Content" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="2961.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete Article" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="2991.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Upload Video" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="3021.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-25" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Monitor Transcoding Status" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="3053.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-26" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Retry Failed Processing" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="3081.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-27" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Manage Captions / Subtitles" vertex="1">
+      <mxGeometry height="40" width="220" x="2817.5" y="3111.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-28" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Open Forum Inbox" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2531.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-29" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Filter Flagged Threads" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2561.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-30" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Filter Unanswered Threads" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2591.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-31" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Filter Recent Threads" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2623.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-32" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Pin / Unpin Thread" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2651.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-33" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Lock / Unlock Thread" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2681.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Resolve Flag" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2716.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-35" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Analytics Dashboard" vertex="1">
+      <mxGeometry height="40" width="220" x="1710" y="2471.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-36" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Enrollment Chart" vertex="1">
+      <mxGeometry height="40" width="220" x="1710" y="2501.67" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-37" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Revenue Chart" vertex="1">
+      <mxGeometry height="40" width="220" x="1710" y="2531.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-38" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Engineer Roster" vertex="1">
+      <mxGeometry height="40" width="220" x="1710" y="2561.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-39" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Completion Funnel" vertex="1">
+      <mxGeometry height="40" width="220" x="1710" y="2591.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-40" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Earnings Summary" vertex="1">
+      <mxGeometry height="40" width="220" x="2170" y="2621.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-41" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Request Payout" vertex="1">
+      <mxGeometry height="40" width="220" x="2170" y="2651.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-42" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Browse Available VM Templates" vertex="1">
+      <mxGeometry height="40" width="220" x="2007.5" y="3041.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-43" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View My VM Assignments" vertex="1">
+      <mxGeometry height="40" width="220" x="2007.5" y="3071.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-44" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Mark Reply as Answer" vertex="1">
+      <mxGeometry height="40" width="220" x="3090" y="2751.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-45" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Submit VM Assignment" vertex="1">
+      <mxGeometry height="40" width="220" x="2007.5" y="3103.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-46" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="View Unit VM Assignment Status" vertex="1">
+      <mxGeometry height="40" width="220" x="2007.5" y="3131.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-47" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Delete VM Assignment" vertex="1">
+      <mxGeometry height="40" width="220" x="2007.5" y="3161.11" as="geometry" />
+    </mxCell>
+    <mxCell id="tfyUvZ5wfdVDzRxiWMr2-48" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" value="Export Earnings Report" vertex="1">
+      <mxGeometry height="40" width="220" x="2170" y="2681.11" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

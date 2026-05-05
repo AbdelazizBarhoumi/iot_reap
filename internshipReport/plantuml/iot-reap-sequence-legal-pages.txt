@@ -1,0 +1,25 @@
+@startuml iot-reap-sequence-legal-pages
+title IoT-REAP - Legal Pages Sequence Diagram
+actor Guest as guest
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+
+guest -> frontend : Navigate to Terms of Service
+frontend -> routes : GET /terms
+routes --> frontend : Render legal/TermsOfService
+frontend --> guest : Display Terms of Service page
+
+guest -> frontend : Navigate to Privacy Policy
+frontend -> routes : GET /privacy
+routes --> frontend : Render legal/PrivacyPolicy
+frontend --> guest : Display Privacy Policy page
+
+note right of guest
+  Legal pages are static content:
+  - No authentication required
+  - No database queries
+  - Direct Inertia rendering
+  - Accessible to all users
+end note
+
+@enduml

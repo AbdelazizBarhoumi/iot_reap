@@ -1,0 +1,116 @@
+@startuml iot-reap-sequence-admin-dashboard-kpis
+title IoT-REAP - Admin Dashboard & KPIs Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Admin Analytics\nController" as analytics
+participant "Database" as db
+participant "User\nModel" as user
+participant "TrainingPath\nModel" as tp
+participant "Payment\nModel" as payment
+participant "Session\nModel" as session
+
+admin -> frontend : Navigate to admin dashboard
+frontend -> routes : GET /admin/dashboard
+routes -> analytics : dashboard()
+analytics -> db : Load platform statistics
+analytics -> db : Calculate KPIs
+analytics -> db : Load recent activity
+db --> analytics : Return dashboard data
+analytics --> routes : Return dashboard
+routes --> frontend : Display admin dashboard
+frontend --> admin : Show KPI cards and health summary
+
+admin -> frontend : View platform KPIs
+frontend -> routes : GET /admin/analytics/kpis
+routes -> analytics : kpis()
+analytics -> db : Count total users
+analytics -> db : Count active sessions
+analytics -> db : Calculate total revenue
+analytics -> db : Count training paths
+analytics -> db : Calculate completion rates
+db --> analytics : Return KPI data
+analytics --> routes : Return KPIs
+routes --> frontend : Display KPI cards
+frontend --> admin : Show key metrics (users, revenue, sessions, paths)
+
+admin -> frontend : View platform health
+frontend -> routes : GET /admin/analytics/health
+routes -> analytics : health()
+analytics -> db : Check database connections
+analytics -> db : Check Proxmox server status
+analytics -> db : Check gateway node status
+analytics -> db : Check system resources
+db --> analytics : Return health data
+analytics --> routes : Return health status
+routes --> frontend : Display health indicators
+frontend --> admin : Show system health (green/yellow/red)
+
+admin -> frontend : View system alerts
+frontend -> routes : GET /admin/alerts
+routes -> analytics : alerts()
+analytics -> db : Load unacknowledged alerts
+analytics -> db : Load alert statistics
+analytics -> db : Load recent alerts
+db --> analytics : Return alert data
+analytics --> routes : Return alerts
+routes --> frontend : Display alerts panel
+frontend --> admin : Show system alerts with severity
+
+admin -> frontend : View activity logs
+frontend -> routes : GET /admin/activity-logs
+routes -> analytics : activityLogs()
+analytics -> db : Load recent activity logs
+analytics -> db : Filter by date range
+analytics -> db : Group by action type
+db --> analytics : Return log data
+analytics --> routes : Return activity logs
+routes --> frontend : Display activity log table
+frontend --> admin : Show recent system activity
+
+admin -> frontend : View recent activity
+frontend -> routes : GET /admin/activity-logs/recent
+routes -> analytics : recent()
+analytics -> db : Load last N activities
+analytics -> db : Load user information
+analytics -> db : Load action details
+db --> analytics : Return recent activity
+analytics --> routes : Return recent activity
+routes --> frontend : Display recent activity
+frontend --> admin : Show latest system events
+
+admin -> frontend : Filter logs by user
+frontend -> routes : GET /admin/activity-logs/user
+routes -> analytics : userActivity(userId)
+analytics -> db : Load user's activity logs
+analytics -> db : Filter by date range
+analytics -> db : Group by action type
+db --> analytics : Return user activity
+analytics --> routes : Return user logs
+routes --> frontend : Display user activity
+frontend --> admin : Show specific user's activity history
+
+admin -> frontend : View activity log statistics
+frontend -> routes : GET /admin/activity-logs/stats
+routes -> analytics : stats()
+analytics -> db : Count total activities
+analytics -> db : Group by action type
+analytics -> db : Group by user role
+analytics -> db : Calculate activity trends
+db --> analytics : Return statistics
+analytics --> routes : Return log stats
+routes --> frontend : Display statistics
+frontend --> admin : Show activity breakdown and trends
+
+note right of admin
+  Admin dashboard features:
+  - Platform KPIs (users, revenue, sessions, paths)
+  - System health monitoring
+  - Real-time alerts display
+  - Activity log viewing and filtering
+  - User activity tracking
+  - Statistical analysis
+  - Rate limited (throttle:admin)
+end note
+
+@enduml

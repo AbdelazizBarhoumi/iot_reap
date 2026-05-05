@@ -1,0 +1,66 @@
+@startuml iot-reap-activity-camera-reservation-approval
+title IoT-REAP - Camera Reservation Approval Activity Diagram
+start
+:Administrator navigates to
+Camera Reservations section;
+:System loads pending
+camera reservation requests;
+if (Pending reservations exist?) then (yes)
+  :Display list of pending
+  camera reservation requests;
+  repeat
+    :Administrator reviews
+    reservation details
+    (engineer, camera, time slot);
+    if (Camera available
+    for requested slot?) then (yes)
+      if (No scheduling conflicts?) then (yes)
+        if (USB forwarding
+        service operational?) then (yes)
+          :Administrator approves
+          the reservation;
+          :System updates reservation
+          status to APPROVED;
+          :System configures camera
+          access permissions;
+          :System notifies engineer
+          of approval;
+          :Log approval action;
+        else (service unavailable)
+          :Display USB forwarding
+          service warning;
+          :Administrator defers
+          or rejects request;
+          :Log deferral action;
+        endif
+      else (conflict exists)
+        :Display conflict details
+        with existing reservation;
+        :Administrator suggests
+        alternative time slot;
+        :Log conflict resolution;
+      endif
+    else (camera unavailable)
+      :Display camera
+      unavailability warning;
+      if (Alternative camera
+      available?) then (yes)
+        :Suggest alternative
+        camera device;
+      else (no alternatives)
+        :Administrator rejects
+        the reservation;
+        :System notifies engineer
+        with rejection reason;
+        :Log rejection action;
+      endif
+    endif
+  repeat while (More pending reservations?) then (yes)
+  -> no;
+  :All reservations processed;
+  :Display summary;
+else (no pending reservations)
+  :Display empty state message;
+endif
+stop
+@enduml

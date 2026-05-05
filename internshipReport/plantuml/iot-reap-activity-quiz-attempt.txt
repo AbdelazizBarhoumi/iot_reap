@@ -1,0 +1,49 @@
+@startuml iot-reap-activity-quiz-attempt
+title IoT-REAP — Attempt Quiz Activity Diagram
+
+start
+:Engineer navigates to training path;
+:Select quiz component;
+if (Quiz available?) then (yes)
+  :Display quiz with questions;
+  :Start quiz timer;
+  fork
+    :Engineer answers questions;
+  fork again
+    :System tracks elapsed time;
+  end fork
+  :Engineer submits quiz;
+  if (Time expired?) then (yes)
+    :Auto-submit current answers;
+  else (no)
+    :Process submitted answers;
+  endif
+  :Evaluate each answer;
+  :Calculate total score;
+  :Record quiz attempt;
+  :Update training path progress;
+  if (Score >= passing threshold?) then (yes)
+    :Mark quiz as passed;
+    :Update completion percentage;
+    if (All components completed?) then (yes)
+      :Training path completed;
+      :Issue completion certificate;
+    else (no)
+      :Continue to next component;
+    endif
+  else (no)
+    :Mark quiz as failed;
+    if (Attempts remaining?) then (yes)
+      :Allow retry;
+      note right: Engineer can review\nincorrect answers
+    else (no)
+      :Lock quiz;
+      :Notify engineer;
+    endif
+  endif
+  :Display score and review;
+else (no)
+  :Display "Quiz not available";
+endif
+stop
+@enduml

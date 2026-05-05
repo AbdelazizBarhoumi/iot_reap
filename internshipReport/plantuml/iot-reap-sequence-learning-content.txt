@@ -1,0 +1,159 @@
+@startuml iot-reap-sequence-learning-content
+title IoT-REAP - Learning Content Consumption Sequence Diagram
+actor Engineer as engineer
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "TrainingPath\nController" as tp
+participant "Video\nController" as video
+participant "Article\nController" as article
+participant "Quiz\nController" as quiz
+participant "Database" as db
+
+engineer -> frontend : View my enrolled training paths
+frontend -> routes : GET /my-trainingPaths
+routes -> tp : myTrainingPaths()
+tp -> db : Load user's enrolled training paths
+tp -> db : Load progress for each path
+db --> tp : Return paths with progress
+tp --> routes : Return enrolled paths
+routes --> frontend : Display my training paths
+frontend --> engineer : Show enrolled courses with progress
+
+engineer -> frontend : Select training path
+frontend -> routes : GET /trainingPaths/{id}
+routes -> tp : show(trainingPathId)
+tp -> db : Load training path details
+tp -> db : Load modules and units
+tp -> db : Load user progress
+db --> tp : Return full training path data
+tp --> routes : Return training path
+routes --> frontend : Display training path page
+frontend --> engineer : Show course syllabus and progress
+
+engineer -> frontend : Select video unit
+frontend -> routes : GET /trainingPaths/{tpId}/trainingUnit/{unitId}
+routes -> tp : trainingUnit(tpId, unitId)
+tp -> db : Load training unit details
+tp -> db : Load video content
+tp -> db : Load user progress
+db --> tp : Return unit data
+tp --> routes : Return training unit
+routes --> frontend : Display video lesson
+frontend --> engineer : Show video player
+
+engineer -> frontend : Start watching video
+frontend -> routes : GET /trainingPaths/{tpId}/trainingUnits/{unitId}/video/status
+routes -> video : status(tpId, unitId)
+video -> db : Load video processing status
+video -> db : Load user watch progress
+db --> video : Return video status
+video --> routes : Return video status
+routes --> frontend : Initialize video player
+frontend --> engineer : Display video with progress
+
+engineer -> frontend : Update video progress
+frontend -> routes : POST /trainingPaths/{tpId}/trainingUnits/{unitId}/video-progress
+routes -> tp : updateVideoProgress(tpId, unitId, progress)
+tp -> db : Update user video progress
+tp -> db : Check if video completed
+db --> tp : Return updated progress
+tp --> routes : Return progress update
+routes --> frontend : Update progress bar
+frontend --> engineer : Show updated progress
+
+engineer -> frontend : Select article unit
+frontend -> routes : GET /trainingPaths/{tpId}/trainingUnit/{unitId}
+routes -> tp : trainingUnit(tpId, unitId)
+tp -> db : Load training unit details
+tp -> db : Load article content
+tp -> db : Load user progress
+db --> tp : Return unit data
+tp --> routes : Return training unit
+routes --> frontend : Display article lesson
+frontend --> engineer : Show article content
+
+engineer -> frontend : Mark article as read
+frontend -> routes : POST /trainingPaths/{tpId}/trainingUnits/{unitId}/article-read
+routes -> tp : markArticleRead(tpId, unitId)
+tp -> db : Update article read status
+tp -> db : Check if unit completed
+db --> tp : Return updated status
+tp --> routes : Return status update
+routes --> frontend : Update progress indicators
+frontend --> engineer : Show article as completed
+
+engineer -> frontend : Select quiz unit
+frontend -> routes : GET /trainingUnits/{unitId}/quiz
+routes -> quiz : take(unitId)
+quiz -> db : Load quiz details
+quiz -> db : Load questions
+quiz -> db : Check previous attempts
+db --> quiz : Return quiz data
+quiz --> routes : Return quiz
+routes --> frontend : Display quiz
+frontend --> engineer : Show quiz questions
+
+engineer -> frontend : Start quiz attempt
+frontend -> routes : POST /quizzes/{quiz}/start
+routes -> quiz : startAttempt(quizId)
+quiz -> db : Create quiz attempt record
+quiz -> db : Load questions for attempt
+db --> quiz : Return attempt data
+quiz --> routes : Return attempt
+routes --> frontend : Display quiz questions
+frontend --> engineer : Show quiz with timer (if applicable)
+
+engineer -> frontend : Submit quiz answers
+frontend -> routes : POST /quiz-attempts/{attempt}/submit
+routes -> quiz : submitAttempt(attemptId, answers)
+quiz -> db : Load quiz attempt
+quiz -> db : Load correct answers
+quiz -> quiz : Calculate score
+quiz -> db : Update attempt with score
+quiz -> db : Check if passed
+db --> quiz : Return results
+quiz --> routes : Return quiz results
+routes --> frontend : Display results
+frontend --> engineer : Show score and pass/fail status
+
+engineer -> frontend : View quiz history
+frontend -> routes : GET /quizzes/{quiz}/history
+routes -> quiz : attemptHistory(quizId)
+quiz -> db : Load user's quiz attempts
+db --> quiz : Return attempt history
+quiz --> routes : Return history
+routes --> frontend : Display attempt history
+frontend --> engineer : Show past quiz attempts
+
+engineer -> frontend : Mark unit as complete
+frontend -> routes : POST /trainingPaths/{tpId}/trainingUnits/{unitId}/complete
+routes -> tp : markTrainingUnitComplete(tpId, unitId)
+tp -> db : Update unit completion status
+tp -> db : Recalculate path progress
+tp -> db : Check if path completed
+db --> tp : Return updated progress
+tp --> routes : Return progress update
+routes --> frontend : Update progress display
+frontend --> engineer : Show unit as completed
+
+engineer -> frontend : Mark unit as incomplete
+frontend -> routes : DELETE /trainingPaths/{tpId}/trainingUnits/{unitId}/complete
+routes -> tp : markTrainingUnitIncomplete(tpId, unitId)
+tp -> db : Update unit completion status
+tp -> db : Recalculate path progress
+db --> tp : Return updated progress
+tp --> routes : Return progress update
+routes --> frontend : Update progress display
+frontend --> engineer : Show unit as incomplete
+
+note right of engineer
+  Learning content features:
+  - Video lessons with progress tracking
+  - Article content with read status
+  - Quiz assessments with scoring
+  - Unit completion tracking
+  - Overall training path progress
+  - Attempt history for quizzes
+end note
+
+@enduml

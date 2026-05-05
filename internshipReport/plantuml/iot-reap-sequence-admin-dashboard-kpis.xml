@@ -1,0 +1,215 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="3000" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Dashboard &amp; KPIs Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1200" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_frontend" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="160" y="50" width="100" height="2800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_routes" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="310" y="50" width="100" height="2800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_analytics" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Admin Analytics&#xa;Controller" vertex="1">
+      <mxGeometry x="460" y="50" width="100" height="2800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="620" y="50" width="100" height="2800" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SECTION 1: Admin Dashboard ===== -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Navigate to Admin Dashboard ==" vertex="1">
+      <mxGeometry x="150" y="160" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to admin dashboard" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="210" as="sourcePoint"/><mxPoint x="210" y="210" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/dashboard" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="240" as="sourcePoint"/><mxPoint x="360" y="240" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="dashboard()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="270" as="sourcePoint"/><mxPoint x="510" y="270" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load platform statistics / calculate KPIs / load recent activity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="300" as="sourcePoint"/><mxPoint x="670" y="300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return dashboard data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="330" as="sourcePoint"/><mxPoint x="510" y="330" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show KPI cards and health summary" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="360" as="sourcePoint"/><mxPoint x="90" y="360" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 2: Platform KPIs ===== -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== View Platform KPIs ==" vertex="1">
+      <mxGeometry x="150" y="400" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View platform KPIs" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="450" as="sourcePoint"/><mxPoint x="210" y="450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/analytics/kpis" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="480" as="sourcePoint"/><mxPoint x="360" y="480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="kpis()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="510" as="sourcePoint"/><mxPoint x="510" y="510" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Count users / active sessions / total revenue / training paths / completion rates" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="540" as="sourcePoint"/><mxPoint x="670" y="540" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return KPI data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="570" as="sourcePoint"/><mxPoint x="510" y="570" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show key metrics (users, revenue, sessions, paths)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="600" as="sourcePoint"/><mxPoint x="90" y="600" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 3: Platform Health ===== -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== View Platform Health ==" vertex="1">
+      <mxGeometry x="150" y="640" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View platform health" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="690" as="sourcePoint"/><mxPoint x="210" y="690" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/analytics/health" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="720" as="sourcePoint"/><mxPoint x="360" y="720" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="health()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="750" as="sourcePoint"/><mxPoint x="510" y="750" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Check DB connections / Proxmox / gateway nodes / system resources" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="780" as="sourcePoint"/><mxPoint x="670" y="780" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return health data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="810" as="sourcePoint"/><mxPoint x="510" y="810" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show system health (green/yellow/red)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="840" as="sourcePoint"/><mxPoint x="90" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 4: System Alerts ===== -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== View System Alerts ==" vertex="1">
+      <mxGeometry x="150" y="880" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View system alerts" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="930" as="sourcePoint"/><mxPoint x="210" y="930" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/alerts" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="960" as="sourcePoint"/><mxPoint x="360" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="alerts()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="990" as="sourcePoint"/><mxPoint x="510" y="990" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load unacknowledged / alert statistics / recent alerts" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1020" as="sourcePoint"/><mxPoint x="670" y="1020" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return alert data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="1050" as="sourcePoint"/><mxPoint x="510" y="1050" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show system alerts with severity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1080" as="sourcePoint"/><mxPoint x="90" y="1080" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 5: Activity Logs ===== -->
+    <mxCell id="sep5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== View Activity Logs ==" vertex="1">
+      <mxGeometry x="150" y="1120" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View activity logs" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1170" as="sourcePoint"/><mxPoint x="210" y="1170" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1200" as="sourcePoint"/><mxPoint x="360" y="1200" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="activityLogs()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1230" as="sourcePoint"/><mxPoint x="510" y="1230" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load recent logs / filter by date range / group by action type" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1260" as="sourcePoint"/><mxPoint x="670" y="1260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return log data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="1290" as="sourcePoint"/><mxPoint x="510" y="1290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show recent system activity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1320" as="sourcePoint"/><mxPoint x="90" y="1320" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 6: Recent Activity ===== -->
+    <mxCell id="sep6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== View Recent Activity ==" vertex="1">
+      <mxGeometry x="150" y="1360" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View recent activity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1410" as="sourcePoint"/><mxPoint x="210" y="1410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs/recent" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1440" as="sourcePoint"/><mxPoint x="360" y="1440" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="recent()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1470" as="sourcePoint"/><mxPoint x="510" y="1470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load last N activities / user info / action details" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1500" as="sourcePoint"/><mxPoint x="670" y="1500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return recent activity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="1530" as="sourcePoint"/><mxPoint x="510" y="1530" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show latest system events" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1560" as="sourcePoint"/><mxPoint x="90" y="1560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 7: Filter Logs by User ===== -->
+    <mxCell id="sep7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== Filter Logs by User ==" vertex="1">
+      <mxGeometry x="150" y="1600" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Filter logs by user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1650" as="sourcePoint"/><mxPoint x="210" y="1650" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m38" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs/user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1680" as="sourcePoint"/><mxPoint x="360" y="1680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m39" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="userActivity(userId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1710" as="sourcePoint"/><mxPoint x="510" y="1710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m40" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load user activity / filter by date range / group by action type" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1740" as="sourcePoint"/><mxPoint x="670" y="1740" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m41" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return user activity" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="1770" as="sourcePoint"/><mxPoint x="510" y="1770" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m42" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show specific user activity history" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1800" as="sourcePoint"/><mxPoint x="90" y="1800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 8: Activity Log Statistics ===== -->
+    <mxCell id="sep8" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" value="== View Activity Log Statistics ==" vertex="1">
+      <mxGeometry x="150" y="1840" width="640" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m43" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View activity log statistics" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1890" as="sourcePoint"/><mxPoint x="210" y="1890" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m44" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs/stats" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1920" as="sourcePoint"/><mxPoint x="360" y="1920" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m45" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="stats()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1950" as="sourcePoint"/><mxPoint x="510" y="1950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m46" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Count total / group by action type / group by user role / calculate trends" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1980" as="sourcePoint"/><mxPoint x="670" y="1980" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m47" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return statistics" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="2010" as="sourcePoint"/><mxPoint x="510" y="2010" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m48" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show activity breakdown and trends" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="2040" as="sourcePoint"/><mxPoint x="90" y="2040" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

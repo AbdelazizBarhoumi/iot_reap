@@ -1,0 +1,143 @@
+@startuml iotreap-deployment-diagram
+title IoT-REAP - Deployment Diagram
+
+skinparam nodeStyle rectangle
+
+' ==================== CLIENT NODES ====================
+
+node "Engineer Workstation" as EngWS {
+    [Web Browser\n(Chrome/Firefox/Edge)] as EngBrowser
+}
+
+node "Teacher Workstation" as TeachWS {
+    [Web Browser] as TeachBrowser
+}
+
+node "Admin Workstation" as AdminWS {
+    [Web Browser] as AdminBrowser
+}
+
+' ==================== APPLICATION SERVER ====================
+
+node "Application Server\n(Ubuntu 22.04 LTS)" as AppServer {
+    node "Nginx\n(Reverse Proxy + SSL)" as Nginx {
+        [HTTP/HTTPS\nTermination] as SSL
+    }
+    
+    node "PHP-FPM 8.3" as PHPFPM {
+        [Laravel 12 Application] as Laravel
+        artifact "Source Code\n(app/, routes/, resources/)" as SourceCode
+    }
+    
+    node "Node.js Runtime" as NodeJS {
+        [Vite Build Pipeline] as Vite
+        artifact "React Frontend\n(resources/js/)" as FrontendAssets
+    }
+    
+    node "Supervisor" as Supervisor {
+        [Queue Workers\n(queue:work)] as QueueWorker
+        [Scheduler\n(schedule:run)] as Scheduler
+    }
+}
+
+' ==================== DATABASE SERVER ====================
+
+node "Database Server" as DBServer {
+    database "MySQL 8.0\n(Primary Database)" as MySQL {
+        [users, training_paths,\nvm_sessions, payments,\nusb_devices, cameras,\nreservations, ...] as Tables
+    }
+}
+
+node "Cache Server" as CacheServer {
+    [Redis 7\n(Cache, Sessions,\nRate Limiting)] as Redis
+}
+
+node "File Storage" as FileStorage {
+    [Local Disk / S3\n(Videos, Images,\nCertificates, Exports)] as Disk
+}
+
+' ==================== VIRTUALIZATION INFRASTRUCTURE ====================
+
+node "Proxmox VE Cluster\n(Bare Metal)" as ProxmoxCluster {
+    node "Proxmox Node 1\n(pve-node-01)" as PNode1 {
+        [VM Templates\n(Windows 11, Ubuntu,\nKali Linux)] as Templates1
+        [Running VMs\n(Engineer Sessions)] as RunningVMs1
+    }
+    
+    node "Proxmox Node 2\n(pve-node-02)" as PNode2 {
+        [VM Templates] as Templates2
+        [Running VMs] as RunningVMs2
+    }
+}
+
+' ==================== REMOTE ACCESS INFRASTRUCTURE ====================
+
+node "Guacamole Server\n(Container)" as GuacServer {
+    [guacd\n(Guacamole Daemon)] as Guacd
+    [guacamole-web\n(Java Servlet)] as GuacWeb
+    database "Guacamole DB\n(Connection Registry)" as GuacDB
+}
+
+' ==================== IoT / HARDWARE INFRASTRUCTURE ====================
+
+node "USB/IP Gateway Node 1\n(Raspberry Pi / Container)" as GW1 {
+    [usbipd Daemon\n(USB Device Sharing)] as USBIP1
+    [FFmpeg\n(Camera Streaming)] as FFmpeg1
+}
+
+node "USB/IP Gateway Node 2\n(Raspberry Pi / Container)" as GW2 {
+    [usbipd Daemon] as USBIP2
+    [FFmpeg] as FFmpeg2
+}
+
+node "IoT Devices" as IoTDevices {
+    [USB Camera\n(Webcam)] as USBCam
+    [USB Sensor\n(Arduino/ESP32)] as USBSensor
+    [Robot with\nPTZ Camera] as Robot
+}
+
+node "MQTT Broker\n(Mosquitto)" as MQTTBroker {
+    [robot/{id}/commands\n(QoS 1)] as CmdTopic
+    [robot/{id}/telemetry\n(QoS 1)] as TelemetryTopic
+}
+
+' ==================== EXTERNAL SERVICES ====================
+
+cloud "External Services" as External {
+    node "Stripe API\n(Payment Processing)" as StripeAPI
+    node "Google OAuth\n(Social Login)" as GoogleOAuth
+    node "SMTP Server\n(Email Delivery)" as SMTPServer
+}
+
+' ==================== NETWORK CONNECTIONS ====================
+
+EngBrowser --> Nginx : HTTPS (443)
+TeachBrowser --> Nginx : HTTPS (443)
+AdminBrowser --> Nginx : HTTPS (443)
+
+Nginx --> PHPFPM : FastCGI (Unix Socket)
+PHPFPM --> MySQL : TCP (3306)
+PHPFPM --> Redis : TCP (6379)
+PHPFPM --> FileStorage : Local File I/O
+
+Laravel --> ProxmoxCluster : PVE API (HTTPS:8006)\n(API Token Auth)
+Laravel --> GuacServer : Guacamole REST API\n(HTTPS:8443)
+Laravel --> GW1 : USB/IP Protocol\n(TCP:3240)
+Laravel --> GW2 : USB/IP Protocol\n(TCP:3240)
+Laravel --> MQTTBroker : MQTT v5\n(TCP:1883)
+Laravel --> StripeAPI : HTTPS (443)
+Laravel --> GoogleOAuth : HTTPS (443)
+Laravel --> SMTPServer : SMTP (587)
+
+EngBrowser --> GuacWeb : WebSocket\n(Remote Desktop Tunnel)
+Guacd --> PNode1 : RDP/VNC/SSH\n(Per-Session Protocol)
+Guacd --> PNode2 : RDP/VNC/SSH
+
+GW1 --> USBCam : USB
+GW1 --> USBSensor : USB
+GW2 --> Robot : USB / Serial
+
+Robot --> MQTTBroker : MQTT Publish\n(Telemetry)
+MQTTBroker --> Laravel : MQTT Subscribe\n(Command Dispatch)
+
+@enduml

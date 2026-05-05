@@ -1,0 +1,73 @@
+@startuml iotreap-activity-vm-lifecycle
+title IoT-REAP - Virtual Machine Session Lifecycle Activity Diagram
+
+|Engineer|
+start
+:Request new VM session;
+:Select template and duration;
+
+|System|
+:Check authentication and verification;
+if (Is authorized?) then (yes)
+    :Check user quota (QuotaService);
+    if (Quota available?) then (yes)
+        :Select least-loaded node (LoadBalancer);
+        :Request VM clone on Proxmox;
+        if (Provisioning succeeded?) then (yes)
+            :Create VMSession record (PENDING → ACTIVE);
+            :Schedule CleanupVMJob (delay = duration);
+            |Engineer|
+            :View active session;
+            :Request Guacamole access token;
+            |System|
+            :Generate one-time Guacamole token;
+            :Create connection with protocol params;
+            |Engineer|
+            :Access remote desktop via browser;
+            :Attach/detach hardware as needed;
+            :Control cameras when required;
+            
+            repeat
+                :Use remote laboratory;
+                if (Extend session?) then (yes)
+                    |System|
+                    :Validate extension request;
+                    :Update expires_at;
+                    :Reschedule CleanupVMJob;
+                elseif (Terminate session?) then (yes)
+                    |System|
+                    :Stop VM on Proxmox;
+                    :Set status to TERMINATED;
+                    :Detach all hardware;
+                    :Delete Guacamole connection;
+                    stop
+                endif
+            repeat until (Session expires or user terminates)
+            
+            |System|
+            :CleanupVMJob fires;
+            :Stop VM on Proxmox;
+            :Set status to EXPIRED;
+            :Detach all hardware;
+            :Delete Guacamole connection;
+            stop
+        else (no - provisioning failed)
+            :Set status to FAILED;
+            :Create system alert;
+            :Log failure details;
+            |Engineer|
+            :See failure notification;
+            stop
+        endif
+    else (no - quota exceeded)
+        |Engineer|
+        :Receive quota exceeded error;
+        stop
+    endif
+else (no - not authorized)
+    |Engineer|
+    :Receive 403 Forbidden;
+    stop
+endif
+
+@enduml

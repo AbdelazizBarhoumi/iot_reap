@@ -1,0 +1,85 @@
+@startuml iot-reap-sequence-register-login
+title IoT-REAP — Register Account & Login Sequence Diagram
+
+actor Guest
+participant "Frontend\n(React)" as FE
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UserRepository" as UR
+participant "Database" as DB
+participant "EmailService" as EM
+
+== Register Account ==
+Guest -> FE: Fill registration form
+FE -> AC: POST /register
+AC -> AS: register(validatedData)
+AS -> UR: findByEmail(email)
+UR -> DB: SELECT users WHERE email
+DB --> UR: null (not found)
+UR --> AS: null
+AS -> UR: create(userData)
+UR -> DB: INSERT INTO users
+DB --> UR: User model
+UR --> AS: User
+AS -> EM: sendVerificationEmail(user)
+EM --> Guest: Verification email
+AS --> AC: User (pending verification)
+AC --> FE: 201 Created
+FE --> Guest: "Check your email to verify"
+
+== Email Verification ==
+Guest -> FE: Click verification link
+FE -> AC: GET /verify-email/{token}
+AC -> AS: verifyEmail(token)
+AS -> UR: findByVerificationToken(token)
+UR -> DB: SELECT users WHERE token
+DB --> UR: User
+UR --> AS: User
+AS -> UR: markEmailVerified(user)
+UR -> DB: UPDATE users SET email_verified_at
+DB --> UR: true
+UR --> AS: User (verified)
+AS --> AC: User (verified)
+AC --> FE: 200 OK
+FE --> Guest: "Account verified! Please log in"
+
+== Login (Email/Password) ==
+Guest -> FE: Enter email & password
+FE -> AC: POST /login
+AC -> AS: login(credentials)
+AS -> UR: findByEmail(email)
+UR -> DB: SELECT users WHERE email
+DB --> UR: User
+UR --> AS: User
+AS -> AS: verifyPassword(hash)
+AS -> AS: checkRateLimit(user)
+AS -> UR: updateLastLogin(user)
+UR -> DB: UPDATE users SET last_login_at
+DB --> UR: true
+AS --> AC: User + session token
+AC --> FE: 200 OK + session cookie
+FE --> Guest: Redirect to dashboard
+
+== Login (Google OAuth) ==
+Guest -> FE: Click "Sign in with Google"
+FE -> AC: GET /auth/google/redirect
+AC -> FE: Redirect to Google
+FE --> Guest: Google consent screen
+Guest -> FE: Authorize
+FE -> AC: GET /auth/google/callback
+AC -> AS: handleGoogleCallback(code)
+AS -> AS: exchangeCodeForToken(code)
+AS -> UR: findByGoogleId(googleId)
+UR -> DB: SELECT users WHERE google_id
+DB --> UR: User or null
+UR --> AS: User or null
+alt New Google User
+    AS -> UR: createFromGoogle(googleData)
+    UR -> DB: INSERT INTO users
+    DB --> UR: User
+    UR --> AS: User
+end
+AS --> AC: User + session token
+AC --> FE: 200 OK + session cookie
+FE --> Guest: Redirect to dashboard
+@enduml

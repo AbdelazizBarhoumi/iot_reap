@@ -1,0 +1,114 @@
+@startuml iot-reap-sequence-admin-alerts
+title IoT-REAP - Admin Alerts Management Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Alert\nController" as alert
+participant "Database" as db
+participant "Alert\nModel" as am
+participant "Notification\nService" as notify
+
+admin -> frontend : Navigate to alerts page
+frontend -> routes : GET /admin/alerts
+routes -> alert : index()
+alert -> db : Load all alerts
+alert -> db : Load alert statistics
+alert -> db : Filter by status
+db --> alert : Return alert data
+alert --> routes : Return alerts
+routes --> frontend : Display alerts page
+frontend --> admin : Show all system alerts
+
+admin -> frontend : View unacknowledged alerts
+frontend -> routes : GET /admin/alerts/unacknowledged
+routes -> alert : unacknowledged()
+alert -> db : Load unacknowledged alerts
+alert -> db : Filter by severity
+alert -> db : Sort by creation time
+db --> alert : Return unacknowledged alerts
+alert --> routes : Return alerts
+routes --> frontend : Display unacknowledged alerts
+frontend --> admin : Show alerts requiring attention
+
+admin -> frontend : View alert statistics
+frontend -> routes : GET /admin/alerts/stats
+routes -> alert : stats()
+alert -> db : Count total alerts
+alert -> db : Count by severity (critical, warning, info)
+alert -> db : Count by status (unacknowledged, acknowledged, resolved)
+alert -> db : Calculate trends
+db --> alert : Return statistics
+alert --> routes : Return alert stats
+routes --> frontend : Display alert statistics
+frontend --> admin : Show alert breakdown and trends
+
+admin -> frontend : Acknowledge alert
+frontend -> routes : POST /admin/alerts/{alert}/acknowledge
+routes -> alert : acknowledge(alertId)
+alert -> db : Load alert record
+alert -> db : Update status to acknowledged
+alert -> db : Set acknowledged_at timestamp
+alert -> db : Set acknowledged_by to admin
+alert -> db : Save changes
+alert --> routes : Return success
+routes --> frontend : Update alert display
+frontend --> admin : Show alert as acknowledged
+
+admin -> frontend : Acknowledge all alerts
+frontend -> routes : POST /admin/alerts/acknowledge-all
+routes -> alert : acknowledgeAll()
+alert -> db : Load all unacknowledged alerts
+alert -> db : Update status to acknowledged
+alert -> db : Set timestamps and admin
+alert -> db : Save changes
+alert --> routes : Return count
+routes --> frontend : Update all alerts
+frontend --> admin : Show all alerts acknowledged
+
+admin -> frontend : Resolve alert
+frontend -> routes : POST /admin/alerts/{alert}/resolve
+routes -> alert : resolve(alertId)
+alert -> db : Load alert record
+alert -> db : Update status to resolved
+alert -> db : Set resolved_at timestamp
+alert -> db : Set resolved_by to admin
+alert -> db : Save changes
+alert -> notify : Notify relevant users
+notify -> db : Create notifications
+alert --> routes : Return success
+routes --> frontend : Update alert display
+frontend --> admin : Show alert as resolved
+
+admin -> frontend : Delete alert
+frontend -> routes : DELETE /admin/alerts/{alert}
+routes -> alert : destroy(alertId)
+alert -> db : Load alert record
+alert -> db : Delete alert record
+alert -> db : Save changes
+alert --> routes : Return success
+routes --> frontend : Remove alert from list
+frontend --> admin : Show alert deleted
+
+note right of admin
+  Alert management features:
+  - View all system alerts
+  - Filter by status and severity
+  - Acknowledge individual alerts
+  - Acknowledge all alerts at once
+  - Resolve alerts with notes
+  - Delete old alerts
+  - Alert statistics and trends
+  - Automatic notifications on resolution
+end note
+
+note right of admin
+  Alert types:
+  - System health issues
+  - Service failures
+  - Resource warnings
+  - Security alerts
+  - Integration failures
+  - Performance issues
+end note
+
+@enduml

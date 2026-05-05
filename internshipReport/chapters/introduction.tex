@@ -1,0 +1,24 @@
+% ==================== Introduction ====================
+% STYLE GUIDELINES:
+% - Maximum 3 pages
+% - Present: context, problem statement, internship location
+% - Provide overview of report structure/plan
+% - NO SECTION TITLES - continuous paragraphs only
+% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+% - Pagination begins here with arabic numerals (page 1)
+% - Font: Times New Roman 12pt, line spacing 1.5
+% ====================================================================
+
+\phantomsection
+\addcontentsline{toc}{chapter}{General Introduction}
+{\huge\bfseries General Introduction}
+\vspace{1cm}
+\initial{T}he Fourth Industrial Revolution, or Industry 4.0, has fundamentally transformed industrial operations by integrating artificial intelligence (AI), Internet of Things (IoT), cloud computing, and advanced automation into manufacturing and operational processes. As industrial systems become increasingly digitized and interconnected, engineers and technicians require secure, remote access to specialized equipment—PLCs, HMIs, SCADA systems, and industrial robots—for training, development, and maintenance purposes. Traditional approaches to industrial remote access present significant challenges: VPN-based solutions are complex to configure and often incompatible with OT (Operational Technology) security requirements; existing remote desktop tools lack integration with industrial protocols; and no unified platform exists for VM provisioning, remote desktop access, and IoT device control.
+
+This internship was conducted at \textbf{Novation City}, a competitiveness cluster established in 2009 in Sousse, Tunisia, as a public-private partnership dedicated to fostering innovation and industrial transformation within mechatronics and Industry 4.0 sectors \cite{novationcity2025}. Novation City operates through four specialized business units: \textbf{Acceleration} (startup support), \textbf{Advisory} (digital transformation consulting), \textbf{Formation—Novation Akademy} (training and skills development), and \textbf{Innovation} (R\&D initiatives).
+
+To address the critical operational challenges of secure industrial remote access, Novation City initiated the \textbf{IoT-REAP (Internet of Things - Remote Equipment Access Platform)} project. This platform provides engineers with browser-based access to virtual machines via Proxmox VE integration, clientless remote desktop through Apache Guacamole (supporting RDP/VNC/SSH), IoT robot control via MQTT protocol, and AI-powered demand forecasting for resource optimization—all within a zero-trust security framework enforcing IEC 62443 industrial compliance. The platform eliminates the need for client-side software installation while maintaining strict OT network isolation following the Purdue model.
+
+The report comprises four chapters documenting the complete development lifecycle. \textbf{Chapter 1} establishes the professional context at Novation City, identifies the challenges of secure industrial remote access, defines project objectives, and presents the Agile Scrum development methodology with an 8-sprint timeline. \textbf{Chapter 2} analyzes existing industrial remote access solutions, identifies their limitations, proposes the IoT-REAP architecture, and establishes the theoretical foundations including MVC architecture and the technology stack. \textbf{Chapter 3} details the requirements analysis using UML diagrams including use cases, sequence diagrams, and class diagrams. \textbf{Chapter 4} presents the implementation, working environment, key interfaces, security testing, and evaluation results. The conclusion summarizes achievements, challenges encountered, and recommendations for future enhancements.
+
+\cleardoublepage

@@ -1,0 +1,51 @@
+@startuml iot-reap-sequence-mqtt-robot
+title IoT-REAP - MQTT Robot Command and Telemetry Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "RobotController" as Controller
+participant "RobotCommandService" as CmdSvc
+participant "MqttPublisherService" as MqttPub
+participant "Mosquitto Broker" as Broker
+participant "ESP32 Robot" as Robot
+participant "MqttSubscriberService" as MqttSub
+participant "TelemetryRepository" as TelemRepo
+database "MySQL" as DB
+
+== Command Flow (Engineer → Robot) ==
+
+Engineer -> Browser: Send robot command (e.g., move forward)
+Browser -> Controller: POST /robots/{id}/command {action: "move_forward", params: {}}
+Controller -> CmdSvc: sendCommand(user, robot, command)
+
+CmdSvc -> CmdSvc: validateCommand(command)
+CmdSvc -> CmdSvc: sanitizePayload(params)
+CmdSvc -> MqttPub: publish(topic: "robot/{robot_id}/command", payload: {action, params}, qos: 1)
+
+MqttPub -> Broker: PUBLISH robot/{robot_id}/command (QoS 1)
+Broker -> Robot: DELIVER robot/{robot_id}/command
+Broker --> MqttPub: PUBACK (delivery confirmed)
+MqttPub --> CmdSvc: published
+CmdSvc --> Controller: command_id
+Controller --> Browser: 202 Accepted {command_id}
+Browser -> Engineer: Command sent confirmation
+
+== Telemetry Flow (Robot → Platform) ==
+
+Robot -> Broker: PUBLISH robot/{robot_id}/telemetry {sensor_data, position, status}
+Broker -> MqttSub: DELIVER robot/{robot_id}/telemetry
+
+MqttSub -> MqttSub: validateTelemetry(payload)
+MqttSub -> TelemRepo: store({robot_id, sensor_data, position, status, received_at})
+TelemRepo -> DB: INSERT INTO robot_telemetry
+TelemRepo --> MqttSub: stored
+
+MqttSub -> MqttSub: broadcastToSession(robot_id, telemetry)
+
+== Real-time Telemetry to Engineer ==
+
+MqttSub -> Broker: forward to websocket channel
+Broker --> Browser: WebSocket push: telemetry update
+Browser -> Engineer: Live telemetry dashboard updated
+
+@enduml

@@ -1,0 +1,101 @@
+@startuml iot-reap-sequence-camera-management-extras
+title IoT-REAP - Camera Management Extras Sequence Diagram
+actor Engineer as engineer
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Session Camera\nController" as camera
+participant "Hardware\nController" as hardware
+participant "Gateway\nNodes" as gateways
+participant "Database" as db
+participant "WebRTC\nStream" as webrtc
+
+engineer -> frontend : View session cameras
+frontend -> routes : GET /sessions/{session}/cameras
+routes -> camera : index(sessionId)
+camera -> db : Load session and assigned cameras
+camera -> gateways : Get camera stream status
+gateways --> camera : Return stream availability
+camera --> routes : Return camera list
+routes --> frontend : Display camera panel
+frontend --> engineer : Show available cameras for session
+
+engineer -> frontend : Select camera to view
+frontend -> routes : GET /sessions/{session}/cameras/{camera}
+routes -> camera : show(sessionId, cameraId)
+camera -> db : Load camera details
+camera -> gateways : Get camera current state
+gateways --> camera : Return camera state
+camera --> routes : Return camera data
+routes --> frontend : Display camera view
+frontend --> engineer : Show camera stream preview
+
+engineer -> frontend : View available resolutions
+frontend -> routes : GET /sessions/{session}/cameras/resolutions
+routes -> camera : resolutions(sessionId)
+camera -> gateways : Query supported resolutions
+gateways --> camera : Return resolution list
+camera --> routes : Return resolutions
+routes --> frontend : Display resolution options
+frontend --> engineer : Show available stream qualities
+
+engineer -> frontend : Select resolution
+frontend -> routes : PUT /sessions/{session}/cameras/{camera}/resolution
+routes -> camera : changeResolution(sessionId, cameraId, resolution)
+camera -> gateways : Set camera resolution
+gateways --> camera : Confirm resolution change
+camera -> db : Update camera settings
+camera --> routes : Return success
+routes --> frontend : Update stream quality
+frontend --> engineer : Show stream at new resolution
+
+engineer -> frontend : Acquire camera control
+frontend -> routes : POST /sessions/{session}/cameras/{camera}/control
+routes -> camera : acquireControl(sessionId, cameraId)
+camera -> db : Check if camera is controlled
+camera -> gateways : Request PTZ control
+gateways --> camera : Grant control
+camera -> db : Mark camera as controlled
+camera --> routes : Return control token
+routes --> frontend : Enable PTZ controls
+frontend --> engineer : Show PTZ control buttons
+
+engineer -> frontend : Send PTZ move command
+frontend -> routes : POST /sessions/{session}/cameras/{camera}/move
+routes -> camera : move(sessionId, cameraId, direction, speed)
+camera -> gateways : Send PTZ command
+gateways --> camera : Confirm movement
+camera --> routes : Return success
+routes --> frontend : Update camera view
+frontend --> engineer : Show camera movement
+
+engineer -> frontend : Start WebRTC stream
+frontend -> routes : POST /sessions/{session}/cameras/{camera}/whep
+routes -> camera : whepProxy(sessionId, cameraId)
+camera -> gateways : Request WHEP stream URL
+gateways --> camera : Return stream endpoint
+camera -> webrtc : Establish WebRTC connection
+webrtc --> camera : Return stream URL
+camera --> routes : Return WHEP endpoint
+routes --> frontend : Start video stream
+frontend --> engineer : Display live camera stream
+
+engineer -> frontend : Release camera control
+frontend -> routes : DELETE /sessions/{session}/cameras/{camera}/control
+routes -> camera : releaseControl(sessionId, cameraId)
+camera -> db : Mark camera as available
+camera -> gateways : Release PTZ control
+gateways --> camera : Confirm release
+camera --> routes : Return success
+routes --> frontend : Disable PTZ controls
+frontend --> engineer : Hide PTZ control buttons
+
+note right of engineer
+  Camera management extras:
+  - Real-time PTZ control
+  - Resolution adjustment
+  - WebRTC streaming (WHEP)
+  - Control locking mechanism
+  - Stream quality optimization
+end note
+
+@enduml

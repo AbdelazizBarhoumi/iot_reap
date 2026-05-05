@@ -1,0 +1,366 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1800" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Teacher Submission for Review Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1200" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actors -->
+    <mxCell id="actor_teacher" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Teacher" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Administrator" vertex="1">
+      <mxGeometry x="1235" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_browser" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Browser" vertex="1">
+      <mxGeometry x="160" y="50" width="100" height="1650" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_controller" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="TrainingPath&#xa;Controller" vertex="1">
+      <mxGeometry x="320" y="50" width="100" height="1650" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_tpsvc" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="TrainingPath&#xa;Service" vertex="1">
+      <mxGeometry x="480" y="50" width="100" height="1650" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_tprepo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="TrainingPath&#xa;Repository" vertex="1">
+      <mxGeometry x="640" y="50" width="100" height="1650" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="MySQL" vertex="1">
+      <mxGeometry x="800" y="50" width="100" height="1650" as="geometry" />
+    </mxCell>
+
+    <!-- ===== Edit Training Path ===== -->
+
+    <!-- Teacher -> Browser -->
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Edit training path content" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="90" y="160" as="sourcePoint" />
+        <mxPoint x="210" y="160" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="PUT /trainingPaths/{id} (modules, units, articles, quizzes)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="190" as="sourcePoint" />
+        <mxPoint x="370" y="190" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> TPSvc -->
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="updateTrainingPath(user, trainingPath, data)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="220" as="sourcePoint" />
+        <mxPoint x="530" y="220" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc -> TPRepo -->
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="update(trainingPath, data)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="250" as="sourcePoint" />
+        <mxPoint x="690" y="250" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo -> DB -->
+    <mxCell id="m5" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPDATE training_paths, modules, units" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="280" as="sourcePoint" />
+        <mxPoint x="850" y="280" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo <-- DB -->
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="updated trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="850" y="310" as="sourcePoint" />
+        <mxPoint x="690" y="310" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc <-- TPRepo -->
+    <mxCell id="m7" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="updated trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="340" as="sourcePoint" />
+        <mxPoint x="530" y="340" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- TPSvc -->
+    <mxCell id="m8" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="370" as="sourcePoint" />
+        <mxPoint x="370" y="370" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m9" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="400" as="sourcePoint" />
+        <mxPoint x="210" y="400" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== Submit for Review ===== -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Submit for Review ==" vertex="1">
+      <mxGeometry x="150" y="440" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Teacher -> Browser -->
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click &quot;Submit for Review&quot;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="90" y="490" as="sourcePoint" />
+        <mxPoint x="210" y="490" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /trainingPaths/{id}/submit" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="520" as="sourcePoint" />
+        <mxPoint x="370" y="520" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> TPSvc -->
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="submitForReview(user, trainingPath)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="550" as="sourcePoint" />
+        <mxPoint x="530" y="550" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc -> TPSvc: assertOwnership -->
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="assertOwnership(user, trainingPath)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="580" as="sourcePoint" />
+        <mxPoint x="530" y="610" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="580" />
+          <mxPoint x="595" y="610" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc -> TPSvc: assertReadyForSubmission -->
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="assertReadyForSubmission(trainingPath)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="640" as="sourcePoint" />
+        <mxPoint x="530" y="670" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="640" />
+          <mxPoint x="595" y="670" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== ALT: Submittable ===== -->
+    <!-- Alt frame box -->
+    <mxCell id="alt_frame" parent="1" style="swimlane;startSize=20;html=1;fontSize=10;fontStyle=1;align=left;fillColor=none;strokeColor=#666666;strokeWidth=1;rounded=0;" value="alt" vertex="1">
+      <mxGeometry x="150" y="700" width="1100" height="700" as="geometry" />
+    </mxCell>
+
+    <!-- [Training path is submittable] label -->
+    <mxCell id="alt_ok_label" parent="alt_frame" style="text;html=1;align=left;verticalAlign=top;fontSize=9;fontStyle=2;fontColor=#82b366;" value="[Training path is submittable]" vertex="1">
+      <mxGeometry x="10" y="22" width="200" height="16" as="geometry" />
+    </mxCell>
+
+    <!-- TPSvc -> TPRepo: update status PENDING_REVIEW -->
+    <mxCell id="m15" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="update(trainingPath, {status: PENDING_REVIEW})" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="750" as="sourcePoint" />
+        <mxPoint x="690" y="750" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo -> DB -->
+    <mxCell id="m16" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPDATE training_paths SET status = 'pending_review'" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="780" as="sourcePoint" />
+        <mxPoint x="850" y="780" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo <-- DB -->
+    <mxCell id="m17" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="updated trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="850" y="810" as="sourcePoint" />
+        <mxPoint x="690" y="810" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc <-- TPRepo -->
+    <mxCell id="m18" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="updated trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="840" as="sourcePoint" />
+        <mxPoint x="530" y="840" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc -> TPSvc: dispatch NotifyAdminsJob -->
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="dispatch(NotifyAdminsJob, trainingPath)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="870" as="sourcePoint" />
+        <mxPoint x="530" y="900" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="870" />
+          <mxPoint x="595" y="900" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- TPSvc -->
+    <mxCell id="m20" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="trainingPath" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="930" as="sourcePoint" />
+        <mxPoint x="370" y="930" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m21" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {status: 'pending_review'}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="960" as="sourcePoint" />
+        <mxPoint x="210" y="960" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Teacher <-- Browser -->
+    <mxCell id="m22" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirmation message displayed" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="990" as="sourcePoint" />
+        <mxPoint x="90" y="990" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== Admin views pending ===== -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Admin: View Pending Submissions ==" vertex="1">
+      <mxGeometry x="160" y="1025" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Admin -> Browser -->
+    <mxCell id="m23" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Open admin dashboard" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1250" y="1075" as="sourcePoint" />
+        <mxPoint x="210" y="1075" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m24" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/training-paths?status=pending_review" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="1105" as="sourcePoint" />
+        <mxPoint x="370" y="1105" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> TPSvc -->
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getPendingReviewPaths()" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="1135" as="sourcePoint" />
+        <mxPoint x="530" y="1135" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc -> TPRepo -->
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findByStatus(PENDING_REVIEW)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1165" as="sourcePoint" />
+        <mxPoint x="690" y="1165" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo -> DB -->
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM training_paths WHERE status = 'pending_review'" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="1195" as="sourcePoint" />
+        <mxPoint x="850" y="1195" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPRepo <-- DB -->
+    <mxCell id="m28" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Collection of pending paths" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="850" y="1225" as="sourcePoint" />
+        <mxPoint x="690" y="1225" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- TPSvc <-- TPRepo -->
+    <mxCell id="m29" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="pending paths" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="1255" as="sourcePoint" />
+        <mxPoint x="530" y="1255" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- TPSvc -->
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="pending paths" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1285" as="sourcePoint" />
+        <mxPoint x="370" y="1285" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m31" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {pending paths list}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="1315" as="sourcePoint" />
+        <mxPoint x="210" y="1315" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Admin <-- Browser -->
+    <mxCell id="m32" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Pending submissions displayed" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="1345" as="sourcePoint" />
+        <mxPoint x="1250" y="1345" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== ALT: Not ready (else) ===== -->
+    <!-- Divider line inside alt frame -->
+    <mxCell id="alt_divider" parent="1" style="endArrow=none;dashed=1;html=1;strokeWidth=1;strokeColor=#666666;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="150" y="1390" as="sourcePoint" />
+        <mxPoint x="1250" y="1390" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- [else] label -->
+    <mxCell id="alt_else_label" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=9;fontStyle=2;fontColor=#b85450;" value="[Training path not ready]" vertex="1">
+      <mxGeometry x="155" y="1393" width="180" height="16" as="geometry" />
+    </mxCell>
+
+    <!-- TPSvc --> Controller: throw SubmissionNotReadyException -->
+    <mxCell id="m33" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#b85450;" value="throw SubmissionNotReadyException" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1430" as="sourcePoint" />
+        <mxPoint x="370" y="1430" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller: 422 -->
+    <mxCell id="m34" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#b85450;" value="422 Unprocessable {errors}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="1460" as="sourcePoint" />
+        <mxPoint x="210" y="1460" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Teacher <-- Browser -->
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#b85450;" value="Validation errors displayed" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="1490" as="sourcePoint" />
+        <mxPoint x="90" y="1490" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

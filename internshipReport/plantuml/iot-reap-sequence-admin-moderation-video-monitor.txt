@@ -1,0 +1,185 @@
+@startuml iot-reap-sequence-admin-moderation-video-monitor
+title IoT-REAP - Admin Moderation & Video Monitor Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Forum\nController" as forum
+participant "Database" as db
+participant "Thread\nModel" as thread
+participant "Reply\nModel" as reply
+participant "Notification\nService" as notify
+
+== Forum Moderation ==
+
+admin -> frontend : Navigate to forum moderation
+frontend -> routes : GET /admin/forum/flagged
+routes -> forum : flaggedThreads()
+forum -> db : Load flagged threads
+forum -> db : Load flag details
+forum -> db : Load thread content
+db --> forum : Return flagged threads
+forum --> routes : Return flagged threads
+routes --> frontend : Display flagged threads
+frontend --> admin : Show threads requiring moderation
+
+admin -> frontend : View flagged replies
+frontend -> routes : GET /admin/forum/flagged-replies
+routes -> forum : flaggedReplies()
+forum -> db : Load flagged replies
+forum -> db : Load flag details
+forum -> db : Load reply content
+db --> forum : Return flagged replies
+forum --> routes : Return flagged replies
+routes --> frontend : Display flagged replies
+frontend --> admin : Show replies requiring moderation
+
+admin -> frontend : Review flagged thread
+frontend -> routes : GET /forum/threads/{threadId}
+routes -> forum : show(threadId)
+forum -> db : Load thread with replies
+forum -> db : Load flags and upvotes
+db --> forum : Return thread data
+forum --> routes : Return thread
+routes --> frontend : Display thread
+frontend --> admin : Show thread with moderation options
+
+admin -> frontend : Unflag thread
+frontend -> routes : POST /admin/forum/threads/{threadId}/unflag
+routes -> forum : unflagThread(threadId)
+forum -> db : Load thread flags
+forum -> db : Clear all thread flags
+forum -> db : Save changes
+forum -> db : Log moderation action
+forum -> notify : Notify thread author
+notify -> db : Create notification
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> admin : Show thread flags cleared
+
+admin -> frontend : Unflag reply
+frontend -> routes : POST /admin/forum/replies/{replyId}/unflag
+routes -> forum : unflagReply(replyId)
+forum -> db : Load reply flags
+forum -> db : Clear all reply flags
+forum -> db : Save changes
+forum -> db : Log moderation action
+forum -> notify : Notify reply author
+notify -> db : Create notification
+forum --> routes : Return success
+routes --> frontend : Update reply display
+frontend --> admin : Show reply flags cleared
+
+admin -> frontend : Delete inappropriate thread
+frontend -> routes : DELETE /forum/threads/{threadId}
+routes -> forum : destroyThread(threadId)
+forum -> db : Load thread
+forum -> db : Check permissions
+forum -> db : Delete thread and replies
+forum -> db : Log moderation action
+forum -> notify : Notify thread author
+notify -> db : Create notification
+forum --> routes : Return success
+routes --> frontend : Remove thread from list
+frontend --> admin : Show thread deleted
+
+admin -> frontend : Delete inappropriate reply
+frontend -> routes : DELETE /forum/replies/{replyId}
+routes -> forum : destroyReply(replyId)
+forum -> db : Load reply
+forum -> db : Check permissions
+forum -> db : Delete reply record
+forum -> db : Log moderation action
+forum -> notify : Notify reply author
+notify -> db : Create notification
+forum --> routes : Return success
+routes --> frontend : Remove reply from thread
+frontend --> admin : Show reply deleted
+
+== Video Monitoring ==
+
+admin -> frontend : Navigate to video monitoring
+frontend -> routes : GET /admin/video-monitor
+routes -> frontend : Render video monitor page
+frontend --> admin : Show video monitoring dashboard
+
+admin -> frontend : View active camera streams
+frontend -> routes : GET /admin/cameras/active
+routes -> frontend : Load active cameras
+frontend -> db : Query active camera sessions
+db --> frontend : Return active cameras
+frontend --> admin : Display live camera streams
+
+admin -> frontend : Monitor specific camera
+frontend -> routes : GET /admin/cameras/{camera}/monitor
+routes -> frontend : Load camera stream
+frontend -> db : Query camera details
+frontend -> db : Get stream URL
+db --> frontend : Return camera data
+frontend --> admin : Display camera stream with controls
+
+admin -> frontend : Take camera control
+frontend -> routes : POST /admin/cameras/{camera}/control
+routes -> frontend : Acquire admin control
+frontend -> db : Update camera control status
+db --> frontend : Confirm control
+frontend --> admin : Enable PTZ controls
+
+admin -> frontend : Send PTZ command
+frontend -> routes : POST /admin/cameras/{camera}/move
+routes -> frontend : Send PTZ movement
+frontend -> db : Update camera position
+db --> frontend : Confirm movement
+frontend --> admin : Show camera movement
+
+admin -> frontend : Release camera control
+frontend -> routes : DELETE /admin/cameras/{camera}/control
+routes -> frontend : Release admin control
+frontend -> db : Update camera control status
+db --> frontend : Confirm release
+frontend --> admin : Disable PTZ controls
+
+admin -> frontend : View camera recording
+frontend -> routes : GET /admin/cameras/{camera}/recording
+routes -> frontend : Load camera recording
+frontend -> db : Query recording files
+db --> frontend : Return recording list
+frontend --> admin : Display available recordings
+
+admin -> frontend : Download recording
+frontend -> routes : GET /admin/cameras/{camera}/recording/{recordingId}
+routes -> frontend : Stream recording file
+frontend -> db : Load recording file
+db --> frontend : Return file stream
+frontend --> admin : Download recording file
+
+admin -> frontend : View camera analytics
+frontend -> routes : GET /admin/cameras/{camera}/analytics
+routes -> frontend : Load camera analytics
+frontend -> db : Query camera usage statistics
+frontend -> db : Calculate viewing metrics
+db --> frontend : Return analytics data
+frontend --> admin : Display camera usage analytics
+
+note right of admin
+  Forum moderation features:
+  - View flagged content
+  - Review threads and replies
+  - Unflag appropriate content
+  - Delete inappropriate content
+  - Notify users of actions
+  - Log all moderation actions
+  - Rate limited write operations
+end note
+
+note right of admin
+  Video monitoring features:
+  - View active camera streams
+  - Monitor specific cameras
+  - Take PTZ control
+  - View and download recordings
+  - Access camera analytics
+  - Admin-only access
+  - Real-time monitoring
+end note
+
+@enduml

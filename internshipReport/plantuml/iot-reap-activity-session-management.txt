@@ -1,0 +1,48 @@
+@startuml iot-reap-activity-session-management
+title IoT-REAP — Extend/Terminate Session Activity Diagram
+
+start
+:Engineer views active session;
+fork
+  :Extend Session path;
+  :Select additional duration;
+  :Check user quota;
+  if (Quota available?) then (yes)
+    :Update session expiry time;
+    :Reschedule cleanup job;
+    :Confirm extension;
+  else (no)
+    :Display quota exceeded error;
+    :Suggest shorter duration;
+  endif
+
+fork again
+  :Terminate Session path;
+  :Show confirmation dialog;
+  if (Engineer confirms?) then (yes)
+    :Stop VM via Proxmox API;
+    if (Stop successful?) then (yes)
+      :Delete VM from Proxmox;
+      :Update session status to Expired;
+      :Release hardware reservations;
+      :Cancel scheduled cleanup job;
+      :Delete Guacamole connection;
+      :Confirm termination;
+    else (no - API failure)
+      :Retry stop (max 3 attempts);
+      if (Retry successful?) then (yes)
+        :Delete VM from Proxmox;
+        :Update session status;
+        :Release resources;
+        :Confirm termination;
+      else (no)
+        :Alert administrator;
+        :Display error to engineer;
+      endif
+    endif
+  else (no)
+    :Return to session view;
+  endif
+end fork
+stop
+@enduml

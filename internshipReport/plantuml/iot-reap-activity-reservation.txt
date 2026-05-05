@@ -1,0 +1,48 @@
+@startuml iot-reap-activity-reservation
+title IoT-REAP - Reservation Management Activity Diagram
+
+start
+:Engineer consults device calendar;
+:Engineer selects time slot;
+:Engineer submits reservation request;
+if (Device available in slot?) then (yes)
+  if (No scheduling conflicts?) then (yes)
+    :Reservation status -> PENDING;
+    if (Device requires approval?) then (yes)
+      :Administrator reviews reservation;
+      if (Approved?) then (yes)
+        :Reservation status -> APPROVED;
+      else (no)
+        :Reservation status -> REJECTED;
+        :Notify engineer with reason;
+        stop
+      endif
+    else (no approval needed)
+      :Reservation status -> APPROVED;
+    endif
+    :Wait for scheduled period;
+    if (Scheduled time reached?) then (yes)
+      :Reservation status -> ACTIVE;
+      :Device accessible to engineer;
+      :Engineer uses device in session;
+      if (Reservation period ends?) then (yes)
+        :Reservation status -> COMPLETED;
+        :Release device;
+        :Notify next user in queue (if any);
+      elseif (Engineer cancels?) then (yes)
+        :Reservation status -> CANCELLED;
+        :Release device;
+      endif
+    endif
+  else (conflict exists)
+    :Return conflict error with details;
+    stop
+  endif
+else (device unavailable)
+  :Return unavailability error;
+  :Suggest alternative slots;
+  stop
+endif
+stop
+
+@enduml

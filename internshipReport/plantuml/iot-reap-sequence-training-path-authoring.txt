@@ -1,0 +1,194 @@
+@startuml iot-reap-sequence-training-path-authoring
+title IoT-REAP - Training Path Authoring Sequence Diagram
+actor Teacher as teacher
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Teaching\nController" as teaching
+participant "Database" as db
+participant "TrainingPath\nModel" as tp
+participant "Module\nModel" as module
+participant "TrainingUnit\nModel" as unit
+
+teacher -> frontend : Navigate to teaching dashboard
+frontend -> routes : GET /teaching
+routes -> teaching : index()
+teaching -> db : Load teacher's training paths
+teaching -> db : Load path statuses
+db --> teaching : Return training paths
+teaching --> routes : Redirect to analytics
+routes --> frontend : Display teaching analytics
+frontend --> teacher : Show teacher workspace
+
+teacher -> frontend : View training paths
+frontend -> routes : GET /teaching/training-paths
+routes -> teaching : index()
+teaching -> db : Load teacher's training paths
+teaching -> db : Load approval status
+db --> teaching : Return paths with status
+teaching --> routes : Return training paths
+routes --> frontend : Display training paths list
+frontend --> teacher : Show all training paths with status
+
+teacher -> frontend : Click "Create New Training Path"
+frontend -> routes : GET /teaching/create
+routes --> frontend : Render create form
+frontend --> teacher : Display training path creation form
+
+teacher -> frontend : Fill form and submit
+frontend -> routes : POST /teaching
+routes -> teaching : store(trainingPathData)
+teaching -> db : Create training path record
+teaching -> db : Set status to draft
+teaching -> tp : Initialize empty modules array
+tp --> teaching : Return new training path
+teaching --> routes : Return created path
+routes --> frontend : Redirect to edit page
+frontend --> teacher : Show training path editor
+
+teacher -> frontend : Edit training path details
+frontend -> routes : GET /teaching/{id}/edit
+routes -> teaching : edit(trainingPathId)
+teaching -> db : Load training path
+teaching -> db : Load modules and units
+db --> teaching : Return full path data
+teaching --> routes : Return training path
+routes --> frontend : Display edit form
+frontend --> teacher : Show training path editor with content
+
+teacher -> frontend : Update training path details
+frontend -> routes : PATCH /teaching/{trainingPath}
+routes -> teaching : update(trainingPathId, data)
+teaching -> db : Update training path record
+teaching -> db : Save changes
+teaching --> routes : Return updated path
+routes --> frontend : Update display
+frontend --> teacher : Show updated training path
+
+teacher -> frontend : Add module to training path
+frontend -> routes : POST /teaching/{trainingPath}/modules
+routes -> teaching : storeModule(trainingPathId, moduleData)
+teaching -> db : Create module record
+teaching -> db : Link to training path
+teaching -> module : Initialize empty units array
+module --> teaching : Return new module
+teaching --> routes : Return created module
+routes --> frontend : Add module to UI
+frontend --> teacher : Show new module in path
+
+teacher -> frontend : Edit module details
+frontend -> routes : PATCH /teaching/{trainingPath}/modules/{module}
+routes -> teaching : updateModule(trainingPathId, moduleId, data)
+teaching -> db : Update module record
+teaching -> db : Save changes
+teaching --> routes : Return updated module
+routes --> frontend : Update module display
+frontend --> teacher : Show updated module
+
+teacher -> frontend : Delete module
+frontend -> routes : DELETE /teaching/{trainingPath}/modules/{module}
+routes -> teaching : destroyModule(trainingPathId, moduleId)
+teaching -> db : Load module with units
+teaching -> db : Delete module and units
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Remove module from UI
+frontend --> teacher : Show module deleted
+
+teacher -> frontend : Reorder modules
+frontend -> routes : PATCH /teaching/{trainingPath}/modules/reorder
+routes -> teaching : reorderModules(trainingPathId, moduleOrder)
+teaching -> db : Update module order values
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Update module order
+frontend --> teacher : Show reordered modules
+
+teacher -> frontend : Add training unit to module
+frontend -> routes : POST /teaching/{trainingPath}/modules/{module}/trainingUnits
+routes -> teaching : storeTrainingUnit(trainingPathId, moduleId, unitData)
+teaching -> db : Create training unit record
+teaching -> db : Link to module
+teaching -> unit : Initialize content fields
+unit --> teaching : Return new unit
+teaching --> routes : Return created unit
+routes --> frontend : Add unit to module
+frontend --> teacher : Show new unit in module
+
+teacher -> frontend : Edit training unit
+frontend -> routes : PATCH /teaching/{trainingPath}/modules/{module}/trainingUnits/{unit}
+routes -> teaching : updateTrainingUnit(trainingPathId, moduleId, unitId, data)
+teaching -> db : Update training unit record
+teaching -> db : Save changes
+teaching --> routes : Return updated unit
+routes --> frontend : Update unit display
+frontend --> teacher : Show updated unit
+
+teacher -> frontend : Delete training unit
+frontend -> routes : DELETE /teaching/{trainingPath}/modules/{module}/trainingUnits/{unit}
+routes -> teaching : destroyTrainingUnit(trainingPathId, moduleId, unitId)
+teaching -> db : Load training unit
+teaching -> db : Delete unit and content
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Remove unit from UI
+frontend --> teacher : Show unit deleted
+
+teacher -> frontend : Reorder training units
+frontend -> routes : PATCH /teaching/{trainingPath}/modules/{module}/trainingUnits/reorder
+routes -> teaching : reorderTrainingUnits(trainingPathId, moduleId, unitOrder)
+teaching -> db : Update unit order values
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Update unit order
+frontend --> teacher : Show reordered units
+
+teacher -> frontend : Submit for review
+frontend -> routes : POST /teaching/{trainingPath}/submit
+routes -> teaching : submitForReview(trainingPathId)
+teaching -> db : Update status to pending_review
+teaching -> db : Save changes
+teaching -> db : Notify admins
+teaching --> routes : Return success
+routes --> frontend : Show submission confirmation
+frontend --> teacher : Display "Submitted for Review" message
+
+teacher -> frontend : Archive training path
+frontend -> routes : POST /teaching/{trainingPath}/archive
+routes -> teaching : archive(trainingPathId)
+teaching -> db : Update status to archived
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Update status display
+frontend --> teacher : Show path as archived
+
+teacher -> frontend : Restore archived path
+frontend -> routes : POST /teaching/{trainingPath}/restore
+routes -> teaching : restore(trainingPathId)
+teaching -> db : Update status to draft
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Update status display
+frontend --> teacher : Show path as draft
+
+teacher -> frontend : Delete training path
+frontend -> routes : DELETE /teaching/{trainingPath}
+routes -> teaching : destroy(trainingPathId)
+teaching -> db : Load training path
+teaching -> db : Check for enrollments
+teaching -> db : Delete path and content
+teaching -> db : Save changes
+teaching --> routes : Return success
+routes --> frontend : Remove from list
+frontend --> teacher : Show path deleted
+
+note right of teacher
+  Training path authoring features:
+  - Create/edit/delete training paths
+  - Module management (CRUD + reorder)
+  - Training unit management (CRUD + reorder)
+  - Submit for admin approval
+  - Archive/restore functionality
+  - Rate limited creation (throttle:trainingPath-creation)
+end note
+
+@enduml

@@ -1,0 +1,54 @@
+@startuml iot-reap-sequence-certificate-verification
+title IoT-REAP - Certificate Verification & Download Sequence Diagram
+actor Guest as guest
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Certificate\nController" as cert
+participant "Certificate\nModel" as model
+participant "Database" as db
+participant "PDF\nGenerator" as pdf
+
+guest -> frontend : Navigate to certificate verification
+frontend -> routes : GET /certificates/verify
+routes --> frontend : Render verification form
+frontend --> guest : Display certificate lookup form
+
+guest -> frontend : Enter certificate hash
+frontend -> routes : GET /certificates/{hash}/verify
+routes -> cert : verify(hash)
+cert -> model : findByHash(hash)
+model --> cert : Return certificate or null
+
+alt Certificate found
+    cert -> model : loadRelations(user, trainingPath)
+    model --> cert : Return full certificate data
+    cert --> routes : Return certificate details
+    routes --> frontend : Display certificate verification result
+    frontend --> guest : Show certificate details (engineer, course, completion date)
+
+    guest -> frontend : Click download certificate
+    frontend -> routes : GET /certificates/{hash}/download
+    routes -> cert : download(hash)
+    cert -> model : findByHash(hash)
+    model --> cert : Return certificate
+    cert -> pdf : generateCertificatePDF(certificate)
+    pdf --> cert : Return PDF stream
+    cert --> routes : Return PDF download
+    routes --> frontend : Trigger file download
+    frontend --> guest : Download certificate PDF
+else Certificate not found
+    cert --> routes : Return 404
+    routes --> frontend : Display error
+    frontend --> guest : Show "Certificate not found" error
+end
+
+note right of guest
+  Certificate verification features:
+  - Public access (no authentication required)
+  - Hash-based lookup for security
+  - PDF generation on demand
+  - Includes engineer name, course, completion date
+  - Verifiable by employers/institutions
+end note
+
+@enduml

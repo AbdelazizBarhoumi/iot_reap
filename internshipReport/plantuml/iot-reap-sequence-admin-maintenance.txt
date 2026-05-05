@@ -1,0 +1,119 @@
+@startuml iot-reap-sequence-admin-maintenance
+title IoT-REAP - Admin Maintenance Management Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Maintenance\nController" as maintenance
+participant "Database" as db
+participant "USB Device\nModel" as usb
+participant "Camera\nModel" as camera
+participant "Gateway\nNodes" as gateways
+
+admin -> frontend : Navigate to maintenance management
+frontend -> routes : GET /admin/maintenance
+routes -> maintenance : index()
+maintenance -> db : Load all devices in maintenance
+maintenance -> db : Load maintenance descriptions
+maintenance -> db : Load device statuses
+db --> maintenance : Return maintenance data
+maintenance --> routes : Return maintenance overview
+routes --> frontend : Display maintenance page
+frontend --> admin : Show devices in maintenance mode
+
+admin -> frontend : View devices in maintenance
+frontend -> routes : GET /admin/maintenance/in-maintenance
+routes -> maintenance : inMaintenance()
+maintenance -> db : Load USB devices in maintenance
+maintenance -> db : Load cameras in maintenance
+maintenance -> db : Load maintenance details
+db --> maintenance : Return maintenance devices
+maintenance --> routes : Return maintenance list
+routes --> frontend : Display maintenance devices
+frontend --> admin : Show all devices under maintenance
+
+admin -> frontend : Set USB device maintenance description
+frontend -> routes : POST /admin/maintenance/description
+routes -> maintenance : updateDescription(deviceId, description)
+maintenance -> db : Load device record
+maintenance -> db : Update maintenance description
+maintenance -> db : Save changes
+maintenance --> routes : Return success
+routes --> frontend : Update description display
+frontend --> admin : Show updated maintenance description
+
+admin -> frontend : Enable USB device maintenance
+frontend -> routes : POST /admin/maintenance/usb-devices/{device}
+routes -> maintenance : setUsbDeviceMaintenance(deviceId)
+maintenance -> db : Load USB device record
+maintenance -> db : Update status to maintenance
+maintenance -> db : Set maintenance_start timestamp
+maintenance -> db : Save changes
+maintenance -> gateways : Disable device for reservations
+gateways --> maintenance : Confirm disable
+maintenance --> routes : Return success
+routes --> frontend : Update device status
+frontend --> admin : Show USB device in maintenance
+
+admin -> frontend : Disable USB device maintenance
+frontend -> routes : DELETE /admin/maintenance/usb-devices/{device}
+routes -> maintenance : clearUsbDeviceMaintenance(deviceId)
+maintenance -> db : Load USB device record
+maintenance -> db : Update status to available
+maintenance -> db : Clear maintenance timestamps
+maintenance -> db : Save changes
+maintenance -> gateways : Enable device for reservations
+gateways --> maintenance : Confirm enable
+maintenance --> routes : Return success
+routes --> frontend : Update device status
+frontend --> admin : Show USB device available
+
+admin -> frontend : Enable camera maintenance mode
+frontend -> routes : POST /admin/maintenance/cameras/{camera}
+routes -> maintenance : setCameraMaintenance(cameraId)
+maintenance -> db : Load camera record
+maintenance -> db : Update status to maintenance
+maintenance -> db : Set maintenance_start timestamp
+maintenance -> db : Save changes
+maintenance -> gateways : Disable camera for streaming
+gateways --> maintenance : Confirm disable
+maintenance --> routes : Return success
+routes --> frontend : Update camera status
+frontend --> admin : Show camera in maintenance
+
+admin -> frontend : Disable camera maintenance mode
+frontend -> routes : DELETE /admin/maintenance/cameras/{camera}
+routes -> maintenance : clearCameraMaintenance(cameraId)
+maintenance -> db : Load camera record
+maintenance -> db : Update status to active
+maintenance -> db : Clear maintenance timestamps
+maintenance -> db : Save changes
+maintenance -> gateways : Enable camera for streaming
+gateways --> maintenance : Confirm enable
+maintenance --> routes : Return success
+routes -> frontend : Update camera status
+frontend --> admin : Show camera available
+
+note right of admin
+  Maintenance management features:
+  - View all devices in maintenance
+  - Set maintenance descriptions
+  - Enable/disable USB device maintenance
+  - Enable/disable camera maintenance
+  - Automatic device status updates
+  - Gateway integration for device control
+  - Maintenance timestamp tracking
+  - Prevent reservations during maintenance
+end note
+
+note right of admin
+  Maintenance workflow:
+  1. Admin sets device to maintenance mode
+  2. Device status updated in database
+  3. Gateway notified to disable device
+  4. Reservations blocked for device
+  5. Maintenance description displayed
+  6. Admin clears maintenance when done
+  7. Device re-enabled for use
+end note
+
+@enduml

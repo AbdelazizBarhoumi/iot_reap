@@ -1,0 +1,53 @@
+@startuml iot-reap-sequence-vm-reservation-approval
+title IoT-REAP - VM Reservation Approval Sequence
+actor Admin
+participant "Browser" as Browser
+participant "AdminVMReservationController" as Controller
+participant "VMReservationService" as ResSvc
+participant "VMReservationRepository" as ResRepo
+participant "ProxmoxClient" as Proxmox
+database "MySQL" as DB
+
+== View Pending VM Reservations ==
+Admin -> Browser: Navigate to VM Reservations
+Browser -> Controller: GET /admin/vm-reservations?status=pending
+Controller -> ResSvc: getPendingReservations(page)
+ResSvc -> ResRepo: findPending(page)
+ResRepo -> DB: SELECT * FROM vm_reservations WHERE status = 'pending' ORDER BY created_at DESC
+ResRepo --> ResSvc: Collection<VMReservation>
+ResSvc --> Controller: PaginatedResult<VMReservation>
+Controller --> Browser: 200 OK {data, meta}
+Browser -> Admin: Display pending reservation requests
+
+== Approve VM Reservation ==
+Admin -> Browser: Click Approve on reservation
+Browser -> Controller: POST /admin/vm-reservations/{id}/approve
+Controller -> ResSvc: approveReservation(reservationId, admin)
+ResSvc -> ResRepo: findById(reservationId)
+ResRepo -> DB: SELECT * FROM vm_reservations WHERE id = ?
+ResRepo --> ResSvc: VMReservation
+ResSvc -> ResSvc: checkResourceAvailability(reservation)
+ResSvc -> Proxmox: checkNodeCapacity(node, template)
+Proxmox --> ResSvc: capacity available
+ResSvc -> ResRepo: updateStatus(reservationId, APPROVED)
+ResRepo -> DB: UPDATE vm_reservations SET status = 'approved', admin_id = ? WHERE id = ?
+ResRepo --> ResSvc: VMReservation updated
+ResSvc -> ResSvc: notifyEngineer(reservation, approved)
+ResSvc --> Controller: VMReservation
+Controller --> Browser: 200 OK {data}
+Browser -> Admin: Approval confirmed
+
+== Reject VM Reservation ==
+Admin -> Browser: Click Reject with reason
+Browser -> Controller: POST /admin/vm-reservations/{id}/reject {reason}
+Controller -> ResSvc: rejectReservation(reservationId, admin, reason)
+ResSvc -> ResRepo: findById(reservationId)
+ResRepo --> ResSvc: VMReservation
+ResSvc -> ResRepo: updateStatus(reservationId, REJECTED, reason)
+ResRepo -> DB: UPDATE vm_reservations SET status = 'rejected', rejection_reason = ? WHERE id = ?
+ResRepo --> ResSvc: VMReservation updated
+ResSvc -> ResSvc: notifyEngineer(reservation, rejected)
+ResSvc --> Controller: VMReservation
+Controller --> Browser: 200 OK {data}
+Browser -> Admin: Rejection confirmed
+@enduml

@@ -1,0 +1,1395 @@
+% filepath: d:\projects\DTR\internshipReport\chapters\chapter3.tex
+% ==================== CHAPTER 3: CONCEPTUAL ANALYSIS ====================
+% ==================== SECTION NUMBERING RULE ====================
+% Section numbering DOES NOT include chapter number.
+% After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
+% Then subsequent subsections are numbered 1.1, 1.2, 1.3, etc.
+% Following sections reset to 2., 2.1, 2.2, etc. within the same chapter.
+% ============================================================================
+% STYLE GUIDELINES:
+% - Font: Times New Roman 12pt, line spacing 1.5
+% - Titles: Left-aligned, numbered decimally, bold
+% - Figures/Tables: Numbered (Figure 3.1, Table 3.1, etc.)
+% - Captions: 12pt Times, centered, justified
+% - Formulas: Numbered (1) to (n), right-aligned on first or last line
+% - Use italics or bold for emphasis, NEVER underline
+% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+%
+% CHAPTER 3 CONTENT:
+% - Actor identification and role analysis
+% - Use case diagrams with detailed refinements
+% - Sequence diagrams for all major workflows
+% - Activity diagrams for critical processes
+% - Class diagram and physical data model
+% ============================================================================
+
+\chapter{Conceptual Analysis}
+\setcounter{section}{0}
+
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+\initial{T}his chapter presents the conceptual analysis of the current IoT REAP platform.Web-based learning and remote laboratory environment built around training paths, virtual machine sessions, hardware reservations, multimedia learning content, discussion features, and administrative infrastructure management. The chapter models the system through actor identification, requirements specification, use case analysis, sequence and activity modeling, class-level conceptualization, and the physical data model that supports platform execution.
+
+\section{Identification of the Actors}
+
+The platform is organized around role-based access control implemented in the
+application through the user roles \texttt{engineer}, \texttt{teacher}, and
+\texttt{admin}, in addition to the public unauthenticated state. Each actor
+interacts with the same platform from a different operational perspective, and
+each role is associated with a distinct set of services, permissions, and
+workflows.
+
+\textbf{Unauthenticated User (Guest)} represents any visitor who has not yet authenticated in the system. This actor can browse public training paths, access legal and informational pages, consult public discussion threads in read-only mode, view training path reviews, verify public certificates, initiate authentication and registration workflows, and access public checkout result pages after external payment redirection. The guest actor therefore serves as the entry point into the platform ecosystem.
+
+\textbf{Engineer} is the primary learner and remote laboratory user. This actor enrolls in training paths, consumes educational resources such as articles and videos, takes quizzes, tracks progress, writes notes, participates in discussions, posts reviews, claims certificates, and initiates payment and refund operations when a training path is monetized. Beyond the learning dimension, the engineer also provisions virtual machine sessions, opens remote desktop access through Guacamole, configures connection preferences, reserves USB devices and cameras, attaches hardware to active sessions, enters waiting queues when devices are busy, and interacts with session-bound lab resources.
+
+\textbf{Teacher} is the content producer and pedagogical supervisor. This actor creates and manages training paths, modules, and training units; authors articles; uploads and manages videos and captions; creates and publishes quizzes; reviews learner interactions through analytics dashboards; moderates instructional discussions; submits training paths for administrative approval; and requests payout for generated revenue. The teacher role links educational design with operational control over learning content.
+
+\textbf{Administrator} is the platform governance and infrastructure actor. This role supervises users, teacher approval, training path approval, featured training path ordering, payment-related review processes, payout validation, infrastructure supervision, Proxmox server and node management, VM assignment approval, hardware gateway verification, camera and reservation management, moderation of flagged forum content, maintenance operations, alerts, and activity logging. Administrators also have access to impersonation and compliance-sensitive actions such as suspension and GDPR-oriented user deletion.
+
+\textbf{Stripe (External Payment Processor)} is an external system actor that supports the platform commerce workflows. IoT-REAP integrates with Stripe through hosted checkout redirections and signed webhook callbacks to confirm payments, create internal payment records, and react to asynchronous state changes. Stripe also participates in finance workflows such as refunds and instructor payouts, where administrators trigger payout transfers and refund executions through Stripe APIs while preserving auditability and transaction integrity.
+
+The interaction among these actors reveals that the platform combines four
+complementary dimensions: e-learning delivery, instructor authoring, virtual
+laboratory provisioning, and infrastructure governance. This combination
+distinguishes the project from a conventional learning management system
+because educational workflows are directly connected to remote computing and
+physical IoT resource access.
+
+\section{Requirements Specifications}
+
+This section formalizes the system requirements derived from the implemented
+routes, services, and domain models. The requirements are divided into
+functional and non-functional categories in order to describe both what the
+platform must do and how well it must perform those responsibilities.
+
+\subsection{Functional Requirements}
+
+The platform must support the following functional requirements according to
+actor responsibilities and shared system behavior.
+
+\textbf{Unauthenticated User (Guest):}
+\begin{itemize}[label=-]
+    \item Access account registration and login workflows
+    \item Consult the landing page and public legal pages
+    \item Browse public training paths and training path details
+    \item Read public reviews and forum threads in read-only mode
+    \item Verify and download publicly accessible certificates through verification links
+    \item View public search results, trending queries, and category-based discovery
+    \item Access checkout success and cancellation pages after external payment flows
+\end{itemize}
+
+\textbf{Engineer:}
+\begin{itemize}[label=-]
+    \item Enroll in and unenroll from training paths
+    \item Access owned or enrolled training units and learning materials
+    \item Read articles and track article completion
+    \item Stream instructional videos and update playback progress
+    \item Attempt quizzes, submit answers, and review attempt history
+    \item Mark training units complete or incomplete based on learning progress
+    \item Create, update, and delete personal notes for training units
+    \item Create, edit, and delete reviews for completed or relevant training paths
+    \item Participate in forum discussions by creating threads, replying, voting, and
+          flagging content
+    \item View notifications and manage read status
+    \item Claim, verify, and download certificates
+    \item Initiate checkout for paid training paths
+    \item Review payment history and submit refund requests
+    \item Provision, extend, view, and terminate virtual machine sessions
+    \item Retrieve Guacamole access tokens for remote desktop connectivity
+    \item Manage connection preference profiles for available protocols
+    \item Browse available Proxmox virtual machines and snapshots
+    \item Reserve USB devices and cameras
+    \item Attach or detach session hardware and join hardware waiting queues
+    \item Access session camera streams, request control, move PTZ-enabled cameras, and
+          change stream resolution
+\end{itemize}
+
+\textbf{Teacher:}
+\begin{itemize}[label=-]
+    \item Create, edit, archive, restore, and delete training paths
+    \item Organize training paths into modules and training units
+    \item Reorder modules and training units
+    \item Create and maintain quiz structures, questions, and publication status
+    \item Create, update, and delete article content
+    \item Upload, retry, and delete training videos
+    \item Manage video captions
+    \item Submit training paths for administrative review
+    \item View teacher analytics for enrollment, earnings, and learning funnel data
+    \item Access a teacher discussion inbox and moderate course-related threads
+    \item Request revenue payout
+    \item Submit training unit virtual machine assignment requests
+\end{itemize}
+
+\textbf{Administrator:}
+\begin{itemize}[label=-]
+    \item Access the administrative dashboard and KPI views
+    \item Approve, reject, feature, unfeature, and order training paths
+    \item Review pending VM assignment requests
+    \item Manage reservations for devices and cameras
+    \item Block or lock a USB device or camera to prevent new reservations (maintenance
+          or administrative hold), or toggle an "open-for-all" mode to allow immediate
+          non-reserved access
+    \item Manage Proxmox servers and nodes
+    \item Start, stop, reboot, and shut down virtual machines through node operations
+    \item Register, verify, update, and remove gateway nodes
+    \item Discover hardware devices and refresh infrastructure status
+    \item Bind, unbind, attach, detach, dedicate, and configure devices and cameras
+    \item Assign and unassign cameras to virtual machines
+    \item Approve teacher accounts and manage user roles
+    \item Suspend, unsuspend, impersonate, and delete user accounts where authorized
+    \item Review and process refund requests
+    \item Review, approve, reject, and process payout requests
+    \item Monitor video processing status
+    \item Place devices and cameras in maintenance mode
+    \item Moderate flagged threads and replies
+    \item Manage system alerts and consult activity logs
+\end{itemize}
+
+\section{Use Case Diagram}
+
+After identifying actors and requirements, the conceptual analysis of the
+platform can be refined through use case modeling. The implemented application
+suggests one general use case view and several actor-specific refinements. The
+general model places the platform at the center and connects the four user
+actors (Guest, Engineer, Teacher, Administrator) as well as the external Stripe
+actor to the services they invoke: public discovery, learning progression,
+content authoring, infrastructure access, commerce, and administrative
+governance.
+
+\subsection{General Use Case Diagram}
+
+The general use case diagram groups system behavior into four principal
+subsystems:
+
+\begin{itemize}[label=-]
+    \item \textbf{Public Access and Discovery:} registration, authentication, public browsing, search, certificate verification
+    \item \textbf{Learning and Participation:} enrollment, content consumption, quizzes, notes, reviews, forum participation, notifications, certificates
+    \item \textbf{Teaching and Publishing:} training path authoring, multimedia management, quiz management, analytics, payout requests, submission for review
+    \item \textbf{Remote Laboratory and Administration:} VM provisioning, remote access, reservation management, device control, infrastructure supervision, moderation, refunds, payouts, alerts, and logs
+\end{itemize}
+
+In this model, the Engineer extends the Guest by inheriting public consultation
+capabilities and adding authenticated learning and virtual laboratory
+operations. The Teacher extends the Engineer's authenticated access with
+content authoring and instructional management. The Administrator occupies the
+supervisory position by controlling both business governance and infrastructure
+operations. Stripe is modeled as a standalone external actor that interacts
+with the platform through checkout, webhook callbacks, refunds, and
+payout-related flows. Figure~\ref{fig:general-use-case} presents the general
+use case diagram of the IoT-REAP platform, showing the four user actors plus
+Stripe and their principal interactions with the system subsystems.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.1\textwidth]{assets/chapter3/general-use-case}
+    \caption{General Use Case Diagram}
+    \label{fig:general-use-case}
+\end{figure}
+
+\subsection{Refinement and Specification of Use Cases}
+
+The major use cases can be refined through representative specifications
+aligned with the actual implemented routes and domain behaviors.
+
+\input{chapters/chapter3/guest}
+\input{chapters/chapter3/engineer}
+\input{chapters/chapter3/teacher}
+\input{chapters/chapter3/admin}
+\input{chapters/chapter3/sequence}
+
+\iffalse
+\section{Activity Diagrams}
+
+    \subsection{Register Account and Login Sequence}
+    This sequence describes the two primary authentication pathways available to
+    guests: email-based registration with verification and login, and Google
+    OAuth-based single sign-on. The registration flow validates input, creates a
+    pending-verification account, dispatches a verification email, and activates
+    the account upon confirmation. The login flow validates credentials against
+    stored hashes, enforces rate limiting, and establishes an authenticated session
+    with the user's assigned role. Google OAuth provides an alternative pathway
+    where the account is created or linked automatically through the Google
+    identity provider.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Guest fills out the registration form with name, email, and password
+        \item System validates input and checks for duplicate email
+        \item System creates the account in pending verification state
+        \item System dispatches a verification email
+        \item Guest clicks the verification link to activate the account
+        \item Guest logs in with email and password or Google OAuth
+        \item System validates credentials and creates an authenticated session
+        \item System redirects the guest to their role-specific dashboard
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-register-login} illustrates the register account and login
+    sequence, showing both the email-based registration with verification and the
+    Google OAuth login pathway.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-register-login.png}
+        \caption{Sequence Diagram: Register Account and Login}
+        \label{fig:seq-register-login}
+    \end{figure}
+
+    \subsection{Remote Desktop Access Sequence}
+    This sequence models the connection workflow when an engineer accesses a
+    provisioned VM session through the Apache Guacamole remote desktop gateway. The
+    process involves session validation, one-time token generation, Guacamole
+    connection creation, and the establishment of a live remote desktop session.
+    The sequence also covers session monitoring and the extension workflow when the
+    session is about to expire.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer clicks the Connect button on an active VM session
+        \item System validates the session status and VM availability
+        \item System requests a one-time Guacamole connection token
+        \item Guacamole creates the connection with protocol-specific parameters
+        \item Frontend opens the Guacamole client in an embedded iframe
+        \item Engineer interacts with the remote desktop via keyboard and mouse
+        \item System monitors connection health and session timer
+        \item If the session is about to expire, the engineer may extend it
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-remote-desktop} presents the remote desktop access
+    sequence, showing the interaction between the engineer, the frontend, the VM
+    session service, and the Guacamole gateway.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-remote-desktop.png}
+        \caption{Sequence Diagram: Remote Desktop Access}
+        \label{fig:seq-remote-desktop}
+    \end{figure}
+
+    \subsection{Session Management Sequence}
+    This sequence describes the extend and terminate operations that an engineer
+    can perform on an active VM session. Extension involves checking quota
+    availability, updating the session expiry, and rescheduling the cleanup job.
+    Termination involves shutting down the VM through the Proxmox API, updating the
+    session status, and releasing all associated resources including hardware
+    reservations and Guacamole connections.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer views their active VM session details
+        \item Engineer selects either Extend Session or Terminate Session
+        \item If extending, the system checks quota availability for the additional duration
+        \item System updates the session expiry and reschedules the cleanup job
+        \item If terminating, the system shuts down the VM via the Proxmox API
+        \item System updates the session status and releases all associated resources
+        \item System removes Guacamole connections and releases hardware reservations
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-session-management} illustrates the session management
+    sequence, showing both the extension and termination workflows.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-session-management.png}
+        \caption{Sequence Diagram: Session Management}
+        \label{fig:seq-session-management}
+    \end{figure}
+
+    \subsection{Device Reservation Sequence}
+    This sequence models the reservation workflow for USB devices and cameras from
+    the hardware pool. The engineer browses available devices, selects one, and
+    submits a reservation request. The system checks availability, creates the
+    reservation, and updates the device status. If the device is unavailable, the
+    engineer may join a waiting queue and receive a notification when the device
+    becomes available.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer navigates to the hardware inventory from their session page
+        \item System displays available devices with type, model, and status
+        \item Engineer selects a device and clicks Reserve
+        \item System checks device availability and session compatibility
+        \item System creates a reservation linking the device to the session
+        \item If the device is unavailable, the engineer joins the device queue
+        \item When the device becomes available, the system notifies the next user in queue
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-device-reservation} presents the device reservation
+    sequence, including the queueing mechanism for unavailable devices.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-device-reservation.png}
+        \caption{Sequence Diagram: Device Reservation}
+        \label{fig:seq-device-reservation}
+    \end{figure}
+
+    \subsection{Hardware Attach and Detach Sequence}
+    This sequence describes the attachment and detachment of reserved hardware
+    devices to a VM session. The attachment workflow invokes the USB/IP proxy to
+    connect the device to the Proxmox VM, with retry logic on failure. The
+    detachment workflow safely disconnects the device, updates its status to
+    available, and removes the reservation record.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer clicks Attach on a reserved device
+        \item System invokes the USB/IP proxy to attach the device to the Proxmox VM
+        \item If attachment fails, the system retries up to three times
+        \item System updates the device status to Attached
+        \item Engineer verifies the device appears in the remote desktop
+        \item To detach, the engineer clicks Detach on an attached device
+        \item System safely disconnects the device via the proxy
+        \item System updates the device status to Available and removes the reservation
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-hardware-attach-detach} illustrates the hardware attach and
+    detach sequence, showing both the attachment and detachment workflows with
+    error handling.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-hardware-attach-detach.png}
+        \caption{Sequence Diagram: Hardware Attach and Detach}
+        \label{fig:seq-hardware-attach-detach}
+    \end{figure}
+
+    \subsection{Refund Request Sequence}
+    This sequence models the engineer-initiated refund request workflow. The
+    engineer navigates to their payment history, selects a completed payment, and
+    submits a refund request with a reason. The system validates that the payment
+    exists, belongs to the requesting user, is within the refund window, and has no
+    existing refund. Upon successful validation, a refund request is created with
+    pending status and administrators are notified for review.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer navigates to their payment history
+        \item Engineer selects a completed payment and clicks Request Refund
+        \item System validates the payment exists and belongs to the user
+        \item System checks the refund window has not expired
+        \item System checks no duplicate refund exists for this payment
+        \item System creates a refund request with pending status
+        \item System notifies administrators of the new refund request
+        \item Engineer receives confirmation that the request is under review
+    \end{enumerate}
+
+    Figure~\ref{fig:seq-refund-request} presents the refund request sequence,
+    showing the validation steps and the creation of the pending refund request.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-refund-request.png}
+        \caption{Sequence Diagram: Refund Request}
+        \label{fig:seq-refund-request}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{assets/chapter3/iot-reap-sequence-search-training-paths.png}
+        \caption{Sequence Diagram: Search Training Paths}
+        \label{fig:seq-search-training-paths}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{assets/chapter3/iot-reap-sequence-activity-logs.png}
+        \caption{Sequence Diagram: Activity Logs}
+        \label{fig:seq-activity-logs}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{assets/chapter3/iot-reap-sequence-vm-reservation-approval.png}
+        \caption{Sequence Diagram: VM Reservation Approval}
+        \label{fig:seq-vm-reservation-approval}
+    \end{figure}
+
+    \subsection{Landing Page Sequence}
+    This sequence models the guest landing page workflow. The guest navigates to
+    the home page, the system retrieves featured training paths, and displays them
+    with course previews. The landing page serves as the primary entry point for
+    unauthenticated users to discover available learning content.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Guest navigates to the home page
+        \item System retrieves featured training paths (limit 3)
+        \item System checks registration availability
+        \item System renders welcome page with featured courses
+        \item Guest views course previews and navigation options
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-landing-page.png]
+    % Figure~\ref{fig:seq-landing-page} presents the landing page sequence, showing the data retrieval and rendering process for the home page.
+    %
+    % \begin{figure}[H]
+    %     \centering
+    %     \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-landing-page.png}
+    %     \caption{Sequence Diagram: Landing Page}
+    %     \label{fig:seq-landing-page}
+    % \end{figure}
+
+    \subsection{Legal Pages Sequence}
+    This sequence models the guest access to legal pages. The guest navigates to
+    Terms of Service or Privacy Policy pages, the system renders the static
+    content, and displays the legal documents. These pages are publicly accessible
+    and require no authentication.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Guest navigates to Terms of Service or Privacy Policy
+        \item System retrieves the latest version of the legal document
+        \item System renders the document in readable format
+        \item Guest views the legal content
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-legal-pages.png]
+    % Figure~\ref{fig:seq-legal-pages} presents the legal pages sequence, showing the static content rendering process.
+    %
+    % \begin{figure}[H]
+    %     \centering
+    %     \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-legal-pages.png}
+    %     \caption{Sequence Diagram: Legal Pages}
+    %     \label{fig:seq-legal-pages}
+    % \end{figure}
+
+    \subsection{Password Reset Sequence}
+    This sequence models the password reset workflow. The user requests a password
+    reset, the system validates the email, creates a reset token, sends an email
+    with a secure link, and allows the user to set a new password. The process
+    includes security measures to prevent email enumeration.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item User clicks "Forgot Password" on login page
+        \item User enters their email address
+        \item System validates the email and creates a reset token
+        \item System sends a password reset email with a secure link
+        \item User clicks the link and is redirected to the reset form
+        \item User enters and confirms a new password
+        \item System validates the password and updates the account
+        \item System invalidates the reset token and notifies the user
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-password-reset.png]
+    % Figure~\ref{fig:seq-password-reset} presents the password reset sequence, showing the token generation and password update process.
+    %
+    % \begin{figure}[H]
+    %     \centering
+    %     \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-password-reset.png}
+    %     \caption{Sequence Diagram: Password Reset}
+    %     \label{fig:seq-password-reset}
+    % \end{figure}
+
+    \subsection{Certificate Verification and Download Sequence}
+    This sequence models the public certificate verification and download workflow.
+    A guest or employer verifies a certificate using its hash, the system validates
+    the hash, retrieves the certificate details, and allows PDF download. This
+    enables third-party verification of course completion.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Guest receives a certificate (via email or LinkedIn)
+        \item Guest navigates to the certificate verification page
+        \item Guest enters the certificate hash or clicks a verification link
+        \item System validates the hash and retrieves the certificate record
+        \item System displays certificate details (engineer, course, completion date)
+        \item Guest clicks download certificate
+        \item System generates PDF and triggers file download
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-certificate-verification.png]
+    % Figure~\ref{fig:seq-certificate-verification} presents the certificate verification sequence, showing the hash validation and PDF generation process.
+    %
+    % \begin{figure}[H]
+    %     \centering
+    %     \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-sequence-certificate-verification.png}
+    %     \caption{Sequence Diagram: Certificate Verification and Download}
+    %     \label{fig:seq-certificate-verification}
+    % \end{figure}
+
+    \subsection{Checkout Result Screens Sequence}
+    This sequence models the checkout result page workflows. After completing or
+    cancelling payment on Stripe, the user is redirected to success or cancellation
+    pages. The system retrieves the session details, updates enrollment status, and
+    displays appropriate result screens with next steps.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item User completes payment on Stripe
+        \item Stripe redirects to success or cancellation page
+        \item System retrieves checkout session details
+        \item System validates the session and updates enrollment status
+        \item System renders success page with course access
+        \item Or system renders cancellation page with retry options
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-checkout-result.png]
+    % Figure~\ref{fig:seq-checkout-result} presents the checkout result screens sequence, showing the redirect handling and status updates.
+
+    \subsection{VM Snapshots Sequence}
+    This sequence models the VM snapshot viewing workflow. The engineer views
+    available snapshots for a session or browses Proxmox VM snapshots across
+    servers. The system queries Proxmox for snapshot lists and displays them with
+    metadata for session provisioning context.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer opens the sessions interface
+        \item Engineer selects a session and views snapshots
+        \item System queries Proxmox for VM snapshots
+        \item System displays snapshots with names and timestamps
+        \item Or engineer browses Proxmox VM browser
+        \item System displays available VMs and their snapshots
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-vm-snapshots.png]
+    % Figure~\ref{fig:seq-vm-snapshots} presents the VM snapshots sequence, showing the Proxmox integration and snapshot display.
+
+    \subsection{Hardware Inventory and Status Sequence}
+    This sequence models the hardware inventory viewing workflow. The engineer
+    browses available USB devices and cameras, checks their status, and refreshes
+    device information. The system queries gateway nodes for real-time device
+    status and displays the inventory with availability information.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer navigates to hardware inventory page
+        \item System retrieves gateway nodes and device lists
+        \item System queries device status from gateways
+        \item System displays devices with status (available, reserved, maintenance)
+        \item Engineer clicks refresh to update device status
+        \item System re-queries gateways and updates display
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-hardware-inventory.png]
+    % Figure~\ref{fig:seq-hardware-inventory} presents the hardware inventory sequence, showing the gateway integration and status monitoring.
+
+    \subsection{Camera Management Extras Sequence}
+    This sequence models the advanced camera management workflow. The engineer
+    views camera streams, acquires PTZ control, adjusts resolution, and manages
+    WebRTC streaming. The system handles camera control locking, stream quality
+    optimization, and real-time video delivery.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer views session cameras
+        \item Engineer selects camera and views stream
+        \item Engineer acquires PTZ control
+        \item System grants control and enables PTZ commands
+        \item Engineer sends PTZ move commands
+        \item Engineer adjusts stream resolution
+        \item System starts WebRTC stream (WHEP)
+        \item Engineer releases camera control
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-camera-management-extras.png]
+    % Figure~\ref{fig:seq-camera-management-extras} presents the camera management extras sequence, showing PTZ control and streaming management.
+
+    \subsection{VM Reservation Sequence}
+    This sequence models the VM reservation workflow. The engineer browses
+    available VMs, views reservation calendars, creates time-based reservations,
+    and manages reservation status. The system checks for conflicts, creates
+    reservation records, and handles approval workflows.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer views available VMs
+        \item Engineer selects VM and views reservation calendar
+        \item Engineer selects time slot and creates reservation
+        \item System checks for conflicting reservations
+        \item System creates reservation with pending status
+        \item Engineer views reservation details and status
+        \item Engineer cancels reservation if needed
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-vm-reservation.png]
+    % Figure~\ref{fig:seq-vm-reservation} presents the VM reservation sequence, showing the conflict detection and reservation management.
+
+    \subsection{Learning Content Sequence}
+    This sequence models the learning content consumption workflow. The engineer
+    enrolls in training paths, watches videos, reads articles, takes quizzes, and
+    tracks progress. The system records completion status, updates progress
+    indicators, and manages learning state across different content types.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Engineer views enrolled training paths
+        \item Engineer selects training path and views modules
+        \item Engineer watches video lesson
+        \item System records video progress and updates completion
+        \item Engineer reads article lesson
+        \item System marks article as read and updates progress
+        \item Engineer takes quiz assessment
+        \item System evaluates answers and records score
+        \item Engineer marks unit as complete
+        \item System recalculates overall path progress
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-learning-content.png]
+    % Figure~\ref{fig:seq-learning-content} presents the learning content sequence, showing the progress tracking across different content types.
+
+    \subsection{Training Path Authoring Sequence}
+    This sequence models the training path creation workflow. The teacher creates
+    training paths, adds modules and units, organizes content structure, and
+    submits for review. The system manages the hierarchical content structure,
+    validates completeness, and handles the approval workflow.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher navigates to teaching workspace
+        \item Teacher creates new training path
+        \item Teacher adds modules to the path
+        \item Teacher adds training units to modules
+        \item Teacher reorders modules and units
+        \item Teacher edits path details and content
+        \item Teacher submits path for admin review
+        \item System updates status to pending\_review
+        \item Teacher can archive or delete paths
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-training-path-authoring.png]
+    % Figure~\ref{fig:seq-training-path-authoring} presents the training path authoring sequence, showing the hierarchical content management.
+
+    \subsection{Teacher Content Flows Sequence}
+    This sequence models the content authoring workflows for teachers. The teacher
+    creates quizzes, writes articles, uploads videos, manages captions, and
+    publishes content. The system handles content processing, status management,
+    and quality control for different content types.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher creates quiz with questions
+        \item Teacher publishes or unpublishes quiz
+        \item Teacher views quiz statistics
+        \item Teacher writes article content
+        \item Teacher updates or deletes article
+        \item Teacher uploads video file
+        \item System processes video asynchronously
+        \item Teacher checks processing status
+        \item Teacher retries failed processing
+        \item Teacher manages video captions
+        \item Teacher deletes video and captions
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-teacher-content-flows.png]
+    % Figure~\ref{fig:seq-teacher-content-flows} presents the teacher content flows sequence, showing the content management for different types.
+
+    \subsection{Teacher Forum Moderation Sequence}
+    This sequence models the teacher forum moderation workflow. The teacher views
+    forum inbox, pins important threads, locks discussions, marks answers, and
+    manages community interactions. The system handles moderation actions,
+    notifications, and thread management for course discussions.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher navigates to forum inbox
+        \item Teacher views threads and replies for their courses
+        \item Teacher pins or unpins important threads
+        \item Teacher locks or unlocks discussions
+        \item Teacher marks reply as accepted answer
+        \item Teacher resolves flagged content
+        \item Teacher posts replies and upvotes content
+        \item Teacher flags inappropriate content
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-teacher-forum-moderation.png]
+    % Figure~\ref{fig:seq-teacher-forum-moderation} presents the teacher forum moderation sequence, showing the community management capabilities.
+
+    \subsection{Teacher Analytics and Payouts Sequence}
+    This sequence models the teacher analytics and payout workflows. The teacher
+    views performance metrics, tracks earnings, requests payouts, and exports
+    reports. The system calculates KPIs, manages payout requests, and handles
+    financial transactions for instructors.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher views analytics dashboard
+        \item Teacher views KPIs (engineers, revenue, completion)
+        \item Teacher views enrollment and revenue charts
+        \item Teacher views engineer progress per course
+        \item Teacher views completion funnel
+        \item Teacher views earnings summary
+        \item Teacher requests payout
+        \item Teacher exports earnings report
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-teacher-analytics-payouts.png]
+    % Figure~\ref{fig:seq-teacher-analytics-payouts} presents the teacher analytics and payouts sequence, showing the performance tracking and financial management.
+
+    \subsection{Teacher VM Assignments Sequence}
+    This sequence models the VM assignment workflow for teachers. The teacher
+    browses available VM templates, submits assignments for training units, and
+    manages assignment status. The system handles the approval workflow, VM
+    assignment tracking, and integration with course content.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher views available VM templates
+        \item Teacher selects training unit for VM assignment
+        \item Teacher checks existing VM assignment
+        \item Teacher submits VM assignment
+        \item System creates assignment with pending\_approval status
+        \item Teacher views assignment details and status
+        \item Teacher updates or deletes assignment
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-teacher-vm-assignments.png]
+    % Figure~\ref{fig:seq-teacher-vm-assignments} presents the teacher VM assignments sequence, showing the assignment submission and approval workflow.
+
+    \subsection{Admin Dashboard and KPIs Sequence}
+    This sequence models the admin dashboard and KPI viewing workflow. The
+    administrator views platform metrics, checks system health, monitors alerts,
+    and reviews activity logs. The system aggregates data from multiple sources and
+    provides real-time visibility into platform performance.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator navigates to admin dashboard
+        \item System displays platform KPIs (users, revenue, sessions)
+        \item Administrator views system health indicators
+        \item Administrator views system alerts
+        \item Administrator views activity logs
+        \item Administrator filters logs by user or date range
+        \item Administrator views activity statistics
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-dashboard-kpis.png]
+    % Figure~\ref{fig:seq-admin-dashboard-kpis} presents the admin dashboard and KPIs sequence, showing the platform monitoring and analytics.
+
+    \subsection{Admin Alerts Sequence}
+    This sequence models the system alerts management workflow. The administrator
+    views alerts, acknowledges issues, resolves problems, and manages alert
+    lifecycle. The system handles alert generation, status tracking, and
+    notification management for platform monitoring.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views system alerts
+        \item Administrator views unacknowledged alerts
+        \item Administrator views alert statistics
+        \item Administrator acknowledges individual alert
+        \item Administrator acknowledges all alerts
+        \item Administrator resolves alert with notes
+        \item Administrator deletes old alerts
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-alerts.png]
+    % Figure~\ref{fig:seq-admin-alerts} presents the admin alerts sequence, showing the alert management and resolution workflow.
+
+    \subsection{Admin User Governance Sequence}
+    This sequence models the user management workflow for administrators. The admin
+    views users, approves teachers, manages roles, suspends accounts, and handles
+    compliance actions. The system enforces role-based access, manages user
+    lifecycle, and maintains security governance.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views all users
+        \item Administrator views user details
+        \item Administrator approves teacher account
+        \item Administrator revokes teacher approval
+        \item Administrator suspends user account
+        \item Administrator unsuspends user account
+        \item Administrator changes user role
+        \item Administrator impersonates user for debugging
+        \item Administrator performs GDPR data deletion
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-user-governance.png]
+    % Figure~\ref{fig:seq-admin-user-governance} presents the admin user governance sequence, showing the user management and security actions.
+
+    \subsection{Admin Infrastructure Sequence}
+    This sequence models the infrastructure management workflow. The administrator
+    manages Proxmox servers, controls VMs, manages hardware gateways, and monitors
+    system resources. The system handles server connectivity, VM lifecycle,
+    hardware discovery, and infrastructure health monitoring.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views Proxmox servers
+        \item Administrator tests server connection
+        \item Administrator registers new server
+        \item Administrator edits server credentials
+        \item Administrator inactivates or deletes server
+        \item Administrator syncs nodes from server
+        \item Administrator manages VMs (start, stop, reboot)
+        \item Administrator manages gateway nodes
+        \item Administrator discovers hardware devices
+        \item Administrator refreshes gateway status
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-infrastructure.png]
+    % Figure~\ref{fig:seq-admin-infrastructure} presents the admin infrastructure sequence, showing the comprehensive infrastructure management.
+
+    \subsection{Admin Camera and Reservation Administration Sequence}
+    This sequence models the camera and reservation administration workflow. The
+    administrator manages camera assignments, approves reservations, blocks time
+    slots, and oversees resource allocation. The system handles camera-VM
+    associations, reservation approval workflows, and resource availability
+    management.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views all cameras
+        \item Administrator assigns camera to VM
+        \item Administrator unassigns camera
+        \item Administrator bulk assigns cameras
+        \item Administrator activates or deactivates camera
+        \item Administrator views USB reservations
+        \item Administrator approves or rejects USB reservation
+        \item Administrator blocks device time slot
+        \item Administrator views camera reservations
+        \item Administrator approves or rejects camera reservation
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-camera-reservation.png]
+    % Figure~\ref{fig:seq-admin-camera-reservation} presents the admin camera and reservation administration sequence, showing the resource management workflows.
+
+    \subsection{Admin Finance Sequence}
+    This sequence models the financial management workflow for administrators. The
+    admin manages payouts, processes refunds, reviews financial transactions, and
+    handles Stripe integration. The system validates financial requests, executes
+    transfers, maintains audit trails, and ensures transaction integrity.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views finance overview
+        \item Administrator views payout requests
+        \item Administrator exports payouts report
+        \item Administrator approves payout request
+        \item Administrator rejects payout request
+        \item Administrator processes payout transfer via Stripe
+        \item Administrator views refund requests
+        \item Administrator views all refunds history
+        \item Administrator approves refund request
+        \item Administrator executes Stripe refund
+        \item Administrator rejects refund request
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-finance.png]
+    % Figure~\ref{fig:seq-admin-finance} presents the admin finance sequence, showing the financial transaction management and Stripe integration.
+
+    \subsection{Admin Maintenance Sequence}
+    This sequence models the maintenance management workflow. The administrator
+    places devices in maintenance mode, sets maintenance descriptions, and manages
+    device availability. The system handles maintenance status updates, gateway
+    integration, and prevents reservations during maintenance periods.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views devices in maintenance
+        \item Administrator sets USB device maintenance description
+        \item Administrator enables USB device maintenance
+        \item Administrator disables USB device maintenance
+        \item Administrator enables camera maintenance mode
+        \item Administrator disables camera maintenance mode
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-maintenance.png]
+    % Figure~\ref{fig:seq-admin-maintenance} presents the admin maintenance sequence, showing the device maintenance management.
+
+    \subsection{Admin Moderation and Video Monitor Sequence}
+    This sequence models the content moderation and video monitoring workflow. The
+    administrator reviews flagged forum content, takes moderation actions, monitors
+    camera streams, and manages video recordings. The system handles content
+    review, user notifications, and real-time video monitoring.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Administrator views flagged forum threads
+        \item Administrator views flagged replies
+        \item Administrator reviews thread content
+        \item Administrator unflags thread or reply
+        \item Administrator deletes inappropriate content
+        \item Administrator views active camera streams
+        \item Administrator monitors specific camera
+        \item Administrator takes PTZ control
+        \item Administrator views camera recordings
+        \item Administrator downloads recording
+        \item Administrator views camera analytics
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-admin-moderation-video-monitor.png]
+    % Figure~\ref{fig:seq-admin-moderation-video-monitor} presents the admin moderation and video monitor sequence, showing the content moderation and surveillance capabilities.
+
+    \subsection{Stripe Checkout Sequence}
+    This sequence models the Stripe checkout payment workflow. The user initiates
+    checkout, the system creates a Stripe session, redirects to payment, and
+    handles the result. The system manages enrollment creation, payment
+    confirmation, and webhook processing for transaction completion.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item User views training path details
+        \item User clicks enroll or purchase
+        \item System creates pending enrollment
+        \item System creates Stripe Checkout session
+        \item System redirects user to Stripe payment
+        \item User completes payment on Stripe
+        \item Stripe redirects to success or cancellation page
+        \item System updates enrollment status
+        \item System creates payment record
+        \item System notifies user and teacher
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-stripe-checkout.png]
+    % Figure~\ref{fig:seq-stripe-checkout} presents the Stripe checkout sequence, showing the payment integration and enrollment activation.
+
+    \subsection{Stripe Refund Sequence}
+    This sequence models the Stripe refund workflow. The user requests a refund,
+    the admin approves the request, and the system executes the refund through
+    Stripe. The system handles refund eligibility checking, approval workflows,
+    Stripe integration, and enrollment revocation.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item User views enrolled courses
+        \item User requests refund with reason
+        \item System validates refund eligibility
+        \item System creates refund request with pending status
+        \item System notifies admins
+        \item Administrator reviews refund request
+        \item Administrator approves or rejects request
+        \item System executes Stripe refund if approved
+        \item System updates payment and enrollment status
+        \item System notifies user and teacher
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-stripe-refund.png]
+    % Figure~\ref{fig:seq-stripe-refund} presents the Stripe refund sequence, showing the refund request and execution workflow.
+
+    \subsection{Stripe Payout Sequence}
+    This sequence models the Stripe payout workflow for instructors. The teacher
+    requests payout, the admin approves the request, and the system processes the
+    transfer through Stripe. The system handles earnings validation, payout
+    management, Stripe transfer execution, and teacher notifications.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Teacher views earnings summary
+        \item Teacher requests payout
+        \item System validates available balance
+        \item System creates payout request with pending status
+        \item System deducts from available balance
+        \item System notifies admins
+        \item Administrator reviews payout request
+        \item Administrator approves or rejects request
+        \item System processes Stripe transfer if approved
+        \item System updates payout status to paid
+        \item System notifies teacher of completion
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-stripe-payout.png]
+    % Figure~\ref{fig:seq-stripe-payout} presents the Stripe payout sequence, showing the instructor payout and transfer workflow.
+
+    \subsection{Stripe Webhooks Sequence}
+    This sequence models the Stripe webhook processing workflow. Stripe sends
+    webhook events for payment status changes, the system verifies signatures,
+    processes events, and updates internal records. The system handles multiple
+    event types, ensures idempotency, and maintains transaction integrity.
+
+    \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item Stripe sends webhook event
+        \item System verifies webhook signature
+        \item System parses event type and data
+        \item System processes checkout.session.completed event
+        \item System processes payment\_intent.succeeded event
+        \item System processes payment\_intent.payment\_failed event
+        \item System processes charge.refunded event
+        \item System processes transfer.created event
+        \item System processes transfer.paid event
+        \item System processes transfer.failed event
+        \item System updates internal records
+        \item System notifies relevant users
+    \end{enumerate}
+
+    % [FIGURE COMMENTED OUT: Missing image file iot-reap-sequence-stripe-webhooks.png]
+    % Figure~\ref{fig:seq-stripe-webhooks} presents the Stripe webhooks sequence, showing the event processing and system integration.
+
+    Activity diagrams emphasize decisions, branch conditions, and process states.
+    In this platform, they are especially useful for approval workflows and
+    infrastructure-dependent operations where multiple outcomes are possible.
+
+    \subsection{Training Path Approval Activity}
+
+    The activity starts with a teacher submission and ends either with approval or
+    rejection. The major states are content preparation, submission, administrative
+    review, decision, and post-decision visibility. If the administrator approves
+    the path, it becomes available in the approved catalog and may later be
+    featured. If rejected, the path returns to the teacher for revision.
+    Figure~\ref{fig:act-tp-approval} presents the training path approval activity
+    diagram, showing the decision branches between approval and rejection.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-tp-approval.png}
+        \caption{Activity Diagram: Training Path Approval}
+        \label{fig:act-tp-approval}
+    \end{figure}
+
+    \subsection{Virtual Machine Session Lifecycle Activity}
+
+    The VM lifecycle activity begins with a session request and progresses through
+    authorization, capacity verification, session creation, active usage, extension
+    or expiration, and termination. A failure branch exists whenever no capacity is
+    available or provisioning fails. A normal branch leads to active session
+    access, optional snapshot consultation, remote connection token generation, and
+    eventual cleanup. Figure~\ref{fig:act-vm-lifecycle} presents the virtual
+    machine session lifecycle activity diagram, including the failure branch and
+    the normal operational flow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-vm-lifecycle.png}
+        \caption{Activity Diagram: Virtual Machine Session Lifecycle}
+        \label{fig:act-vm-lifecycle}
+    \end{figure}
+
+    \subsection{Reservation Management Activity}
+
+    Reservation activity applies to USB devices and cameras. The process begins
+    with calendar consultation, followed by request submission, conflict
+    verification, pending review, approval or rejection, activation within the
+    scheduled period, and completion or cancellation. Administrative intervention
+    may also insert blocked periods or maintenance-driven unavailability.
+    Figure~\ref{fig:act-reservation} presents the reservation management activity
+    diagram, showing the flow from consultation through approval or rejection to
+    activation and completion.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-reservation.png}
+        \caption{Activity Diagram: Reservation Management}
+        \label{fig:act-reservation}
+    \end{figure}
+
+    \subsection{Refund Processing Activity}
+
+    The refund process begins when an engineer submits a refund request for a
+    payment. The request enters a pending state, is reviewed by an administrator,
+    and either gets approved or rejected. If approved, the process continues to
+    refund execution and final completion; if rejected, the request is closed with
+    explanatory notes. This activity illustrates how payment governance is handled
+    as an auditable business workflow rather than a simple transaction update.
+    Figure~\ref{fig:act-refund} presents the refund processing activity diagram,
+    showing the decision branches between approval and rejection and the subsequent
+    execution or closure.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-refund.png}
+        \caption{Activity Diagram: Refund Processing}
+        \label{fig:act-refund}
+    \end{figure}
+
+    \subsection{Account Registration Activity}
+
+    The account registration activity covers the user onboarding workflow from the
+    initial registration form through email verification and optional role
+    selection. The process begins when a guest fills out the registration form with
+    name, email, and password. The system validates the input, creates the user
+    account in an unverified state, and dispatches a verification email. The user
+    must click the verification link to activate the account. For accounts created
+    through Google OAuth, the email is pre-verified and the user is prompted to
+    select a role. If the user chooses the teacher role, the account enters a
+    pending approval state until an administrator grants teacher privileges.
+    Figure~\ref{fig:act-registration} presents the account registration activity
+    diagram, including the email verification branch and the role selection
+    decision.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-registration.png}
+        \caption{Activity Diagram: Account Registration}
+        \label{fig:act-registration}
+    \end{figure}
+
+    \subsection{Activity Diagrams (Supplementary)}
+
+    The following activity diagrams provide detailed workflow descriptions for key
+    use cases that complement the diagrams presented earlier in this chapter.
+
+    \textbf{Device Reservation.} The device reservation activity diagram illustrates the workflow for reserving a USB device or camera. The engineer selects a device type and preferred time slot, the system checks availability, and upon confirmation the reservation is recorded with a pending status. If the device is already reserved, the engineer may join a wait queue. Figure~\ref{fig:act-device-reservation} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-device-reservation.png}
+        \caption{Activity Diagram: Device Reservation}
+        \label{fig:act-device-reservation}
+    \end{figure}
+
+    \textbf{Specification of the Use Case Hardware Attach/Detach.} The hardware attach and detach activity diagram shows the process of connecting or disconnecting USB devices from a running virtual machine. The engineer initiates the operation, the system verifies the device status and VM state, performs the USB redirection through the Proxmox agent, and confirms the result. Figure~\ref{fig:act-hardware-attach-detach} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-hardware-attach-detach.png}
+        \caption{Activity Diagram: Hardware Attach/Detach}
+        \label{fig:act-hardware-attach-detach}
+    \end{figure}
+
+    \textbf{Specification of the Use Case Quiz Attempt.} The quiz attempt activity diagram depicts the workflow when an engineer takes a quiz within a training path. The system loads the quiz questions, the engineer submits answers, each answer is evaluated, and the final score is calculated. If the passing threshold is met, a certificate may be issued. Figure~\ref{fig:act-quiz-attempt} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-quiz-attempt.png}
+        \caption{Activity Diagram: Quiz Attempt}
+        \label{fig:act-quiz-attempt}
+    \end{figure}
+
+    \textbf{Specification of the Use Case Refund Request.} The refund request activity diagram shows the process when an engineer requests a refund for a training path enrollment. The engineer submits the request with a reason, the system validates the refund policy and eligibility period, and the request is forwarded to an administrator for approval or rejection. Figure~\ref{fig:act-refund-request} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-refund-request.png}
+        \caption{Activity Diagram: Refund Request}
+        \label{fig:act-refund-request}
+    \end{figure}
+
+    \textbf{Specification of the Use Case Account Registration and Login.} The account registration and login activity diagram covers the combined authentication workflow. It begins with the guest choosing between registration and login, proceeds through form validation and credential verification, handles Google OAuth as an alternative path, and includes email verification and role selection branches. Figure~\ref{fig:act-register-login} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-register-login.png}
+        \caption{Activity Diagram: Account Registration and Login}
+        \label{fig:act-register-login}
+    \end{figure}
+
+    \textbf{Specification of the Use Case Session Management.} The session management activity diagram illustrates the lifecycle of a VM session from creation through extension and termination. The engineer provisions a session, the system clones the template VM via Proxmox, creates a Guacamole connection, and the engineer can extend or terminate the session. Automatic cleanup occurs when the session expires. Figure~\ref{fig:act-session-management} presents this workflow.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{assets/chapter3/iot-reap-activity-session-management.png}
+        \caption{Activity Diagram: Session Management}
+        \label{fig:act-session-management}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{assets/chapter3/iot-reap-activity-forum-moderation.png}
+        \caption{Activity Diagram: Forum Moderation}
+        \label{fig:act-forum-moderation}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{assets/chapter3/iot-reap-activity-camera-reservation-approval.png}
+        \caption{Activity Diagram: Camera Reservation Approval}
+        \label{fig:act-camera-reservation-approval}
+    \end{figure}
+
+\fi
+
+\section{Class Diagram}
+
+The class diagram of the current platform is broader than that of a
+conventional learning portal because it combines academic content, learner
+engagement, payment processing, virtual machine infrastructure, device
+reservation, and operational monitoring. The conceptual model can therefore be
+organized into interrelated domains.
+
+\subsection{User and Access Domain}
+
+\textbf{User Class:}
+The \texttt{User} class is the central identity entity of the platform. It stores authentication and profile information, enforces role-aware behavior through helper methods such as teacher and administrator checks, and links a person to enrollments, taught training paths, quiz attempts, payments, and notifications. It is the pivot between educational participation and infrastructure usage.
+
+\textbf{Notification and Activity Classes:}
+The \texttt{Notification}, \texttt{ActivityLog}, and \texttt{SystemAlert} classes support communication, auditability, and operational supervision. Notifications deliver user-level updates, activity logs record significant actions, and system alerts capture infrastructure or platform incidents that require administrative attention.
+
+\subsection{Learning Content Domain}
+
+\textbf{TrainingPath Class:}
+The \texttt{TrainingPath} class is the main pedagogical aggregate. It belongs to an instructor, contains modules and training units, receives enrollments, collects reviews and payments, and exposes status-dependent scopes such as approved or pending review. It represents the complete educational offering published on the platform.
+
+\textbf{TrainingPathModule and TrainingUnit Classes:}
+\texttt{TrainingPathModule} structures a training path into ordered thematic groups, while \texttt{TrainingUnit} represents the granular learning unit. A training unit can contain one article, one video, one quiz, one virtual machine assignment, and multiple forms of progress tracking. These classes define the educational hierarchy used by both teachers and learners.
+
+\textbf{Article, Video, and Caption Classes:}
+\texttt{Article} stores textual educational content and derived metrics such as word count and estimated reading time. \texttt{Video} stores media-related metadata, processing status, and streaming access paths. \texttt{Caption} complements the video model with subtitle and accessibility support. Together, these classes model the multimedia core of the learning experience.
+
+\textbf{Quiz Domain Classes:}
+The assessment subsystem is formed by \texttt{Quiz}, \texttt{QuizQuestion}, \texttt{QuizQuestionOption}, \texttt{QuizAttempt}, and \texttt{QuizAttemptAnswer}. These classes represent the authored evaluation structure, learner answers, scoring context, attempt limits, and result history. They support both teacher-side authoring and learner-side evaluation.
+
+\textbf{Progress and Participation Classes:}
+\texttt{TrainingUnitProgress}, \texttt{VideoProgress}, \texttt{TrainingUnitNote}, \texttt{TrainingPathEnrollment}, \texttt{TrainingPathReview}, \texttt{DiscussionThread}, \texttt{ThreadReply}, and \texttt{ThreadVote} model learner participation. They collectively express completion state, note taking, enrollment membership, reputation, peer interaction, and social learning dynamics.
+
+\textbf{Certificate Class:}
+The \texttt{Certificate} class materializes completion outcomes. It belongs to a user and a training path, and provides verification and download URLs that support public authenticity checks.
+
+\subsection{Commerce and Revenue Domain}
+
+\textbf{Payment and RefundRequest Classes:}
+The \texttt{Payment} class records financial transactions associated with users and training paths. It stores amount-related data, completion state, and refund relationships. \texttt{RefundRequest} adds the post-payment governance layer by representing approval, rejection, processing, and failure states for refund handling.
+
+\textbf{PayoutRequest Class:}
+The \texttt{PayoutRequest} class represents teacher-side revenue withdrawal requests. It links the requesting user with administrative review and processing decisions, thereby connecting platform earnings to instructor compensation workflows.
+
+\subsection{Virtual Laboratory and Infrastructure Domain}
+
+\textbf{VMSession Class:}
+The \texttt{VMSession} class represents an engineer's temporary remote laboratory instance. It belongs to a user, server, and compute node, and connects to attached devices and hardware queues. It is the main bridge between educational access and infrastructure provisioning.
+
+\textbf{ProxmoxServer and ProxmoxNode Classes:}
+\texttt{ProxmoxServer} models the virtualization cluster endpoint, while \texttt{ProxmoxNode} models the compute node hosted under that server. These classes represent capacity, status, and allocation context required for provisioning VM sessions.
+
+\textbf{TrainingUnitVMAssignment Class:}
+The \texttt{TrainingUnitVMAssignment} class links pedagogical content to technical infrastructure by allowing a training unit to request and receive an approved virtual machine environment. It connects teacher requests to administrator approval and provides a controlled way to embed hands-on lab work inside a training path.
+
+\textbf{GatewayNode, UsbDevice, Camera, and Reservation Classes:}
+\texttt{GatewayNode} models the hardware gateway responsible for exposing physical resources. \texttt{UsbDevice} represents a manageable peripheral, while \texttt{Camera} represents a visual sensor that may also be associated with a robot or USB device. Reservation behavior is represented through \texttt{Reservation}, \texttt{UsbDeviceReservation}, and \texttt{CameraReservation}. These classes support availability planning, conflicts, approval, activation, and maintenance-aware control.
+
+\textbf{CameraSessionControl and Queueing Classes:}
+\texttt{CameraSessionControl} represents temporary exclusive control of a camera inside a VM session. \texttt{UsbDeviceQueue} models waiting behavior when multiple users contend for limited hardware resources. These classes express concurrency control within the remote laboratory domain. Figure~\ref{fig:class-diagram} presents the complete class diagram of the IoT-REAP platform, organized into the domain packages described above: User and Access, Learning Content, Commerce and Revenue, and Virtual Laboratory and Infrastructure.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-class-diagram.png}
+    \caption{Class Diagram of the IoT-REAP Platform}
+    \label{fig:class-diagram}
+\end{figure}
+
+\section{Physical Data Model}
+
+The physical data model follows the domain structure exposed by the Eloquent
+models and route organization. At database level, the platform is centered on
+the \texttt{users} table, which is referenced by multiple transactional and
+educational tables. From this anchor, the model expands into five major
+relational clusters.
+
+\subsection{Learning and Authoring Tables}
+
+The training subsystem is organized around \texttt{training\_paths},
+\texttt{training\_path\_modules}, and \texttt{training\_units}. The
+relationship is hierarchical: one training path contains many modules, and one
+module contains many training units. Additional one-to-one or one-to-many
+tables extend training units with content and pedagogy, including
+\texttt{articles}, \texttt{videos}, \texttt{captions}, \texttt{quizzes},
+\texttt{quiz\_questions}, \texttt{quiz\_question\_options},
+\texttt{quiz\_attempts}, and \texttt{quiz\_attempt\_answers}. Progress-oriented
+tables such as \texttt{training\_unit\_progress}, \texttt{video\_progress}, and
+\texttt{training\_unit\_notes} preserve learner-state evolution over time.
+
+\subsection{Participation and Certification Tables}
+
+Collaborative learning is represented by \texttt{discussion\_threads},
+\texttt{thread\_replies}, and \texttt{thread\_votes}. Satisfaction and
+reputation are represented by \texttt{training\_path\_reviews}. Enrollment
+membership is represented by \texttt{training\_path\_enrollments}. Completion
+evidence is represented by \texttt{certificates}, which reference both user and
+training path and expose verifiable hashes for public consultation.
+
+\subsection{Payment and Revenue Tables}
+
+Commercial activity is represented by \texttt{payments},
+\texttt{refund\_requests}, \texttt{payout\_requests}, and
+\texttt{stripe\_webhooks}. These tables preserve financial state transitions,
+external payment event traceability, and instructor revenue workflows. The data
+model ensures that one payment belongs to one user and one training path, while
+a payment may receive multiple related refund records depending on business
+logic.
+
+\subsection{Virtual Machine and Infrastructure Tables}
+
+Remote laboratory persistence is built around \texttt{vm\_sessions},
+\texttt{proxmox\_servers}, \texttt{proxmox\_nodes},
+\texttt{training\_unit\_vm\_assignments}, and user-specific connection
+preference tables such as \texttt{guacamole\_connection\_preferences} and
+\texttt{user\_vm\_connection\_default\_profiles}. This cluster stores compute
+allocation, session duration, infrastructure ownership, and preferred access
+settings.
+
+\subsection{Hardware and Reservation Tables}
+
+The IoT and device-control cluster includes \texttt{gateway\_nodes},
+\texttt{usb\_devices}, \texttt{cameras}, \texttt{camera\_session\_controls},
+\texttt{reservations}, \texttt{usb\_device\_reservations},
+\texttt{camera\_reservations}, and \texttt{usb\_device\_queues}. These tables
+model the availability, attachment, queueing, maintenance, and scheduling logic
+required to safely expose real laboratory resources to remote users.
+
+\subsection{Governance and Monitoring Tables}
+
+Operational governance is supported by \texttt{notifications},
+\texttt{activity\_logs}, \texttt{system\_alerts},
+\texttt{node\_credentials\_logs}, and derived or statistical tables such as
+\texttt{daily\_training\_path\_stats}. Together, these structures provide
+auditability, accountability, administrative observability, and monitoring
+support for a platform that mixes education with infrastructure control.
+
+Overall, the physical data model reflects a normalized but highly
+interconnected design. Foreign keys enforce ownership and navigation between
+users, content, payments, reservations, and infrastructure entities. This
+organization makes the database suitable for both transactional consistency and
+operational extensibility. Figure~\ref{fig:er-diagram} presents the
+entity-relationship diagram of the IoT-REAP physical data model, showing the
+major tables, their attributes, and the foreign key relationships across the
+six relational clusters.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-er-diagram.png}
+    \caption{Entity-Relationship Diagram of the IoT-REAP Physical Data Model}
+    \label{fig:er-diagram}
+\end{figure}
+
+\section{Component Architecture Diagram}
+
+The component architecture of IoT-REAP reflects the separation of concerns
+between the frontend presentation layer, the backend application layer, and the
+external infrastructure services. The platform is built as a monolithic Laravel
+application with an Inertia.js-bridged React frontend, communicating with
+Proxmox VE for virtualization, Apache Guacamole for remote desktop proxying, an
+MQTT broker for robot telemetry and control, Stripe for payment processing, and
+USB/IP gateways for hardware device access.
+
+The frontend layer consists of React components organized into pages, shared
+components, custom hooks, Zustand state stores, and typed API modules. The
+backend layer follows the request lifecycle pattern: FormRequest validation,
+thin Controllers, Service classes containing business logic, Repository classes
+for data access, Eloquent Models for domain representation, and API Resources
+for response shaping. Background processing is handled through Laravel Queues
+with jobs for VM provisioning, video processing, and cleanup operations.
+
+The infrastructure layer includes Proxmox VE clusters for compute
+virtualization, Apache Guacamole for protocol-adaptive remote access (RDP, VNC,
+SSH), Mosquitto MQTT broker for real-time robot communication, Stripe for
+payment and refund processing, and USB/IP gateway nodes for physical device
+exposure. Laravel Echo and Pusher provide real-time event broadcasting for
+notifications and live updates.
+
+Figure~\ref{fig:component-architecture} presents the component architecture
+diagram, showing the major subsystems and their communication pathways.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-component-architecture.png}
+    \caption{Component Architecture Diagram of the IoT-REAP Platform}
+    \label{fig:component-architecture}
+\end{figure}
+
+\section{Deployment Diagram}
+
+The deployment of IoT-REAP spans multiple physical and virtual nodes,
+reflecting the hybrid nature of an educational platform that integrates
+cloud-hosted application services with on-premises laboratory infrastructure.
+The deployment architecture consists of the following principal nodes.
+
+The \textbf{Web Application Server} hosts the Laravel application, the React
+frontend served through Inertia.js, the Nginx reverse proxy, and the PHP-FPM
+process manager. This node also runs the MySQL database, the Redis cache and
+session store, and the Laravel queue worker processes. The Mosquitto MQTT
+broker may be co-located on this server or deployed on a separate node
+depending on traffic requirements.
+
+The \textbf{Proxmox VE Cluster} comprises one or more physical servers running
+the Proxmox hypervisor. Each cluster node hosts virtual machines that are
+provisioned on demand for engineer lab sessions. The cluster is accessed
+through the Proxmox API using token-based authentication.
+
+The \textbf{Apache Guacamole Gateway} runs as a separate service that proxies
+remote desktop protocols (RDP, VNC, SSH) to the engineer's browser. It connects
+to the provisioned VMs through the internal network and exposes a
+WebSocket-based client interface.
+
+The \textbf{USB/IP Gateway Nodes} are physical machines running the USB/IP
+kernel module and custom gateway management software. Each gateway node exposes
+attached USB devices and cameras to the virtual machines through IP-based USB
+forwarding. The gateways register with the main application and report device
+availability and health status.
+
+The \textbf{Stripe Payment Service} operates as an external SaaS endpoint,
+receiving checkout sessions and webhook callbacks over HTTPS. It is not
+deployed within the platform infrastructure but is integrated through the
+Stripe SDK and webhook signature verification.
+
+Figure~\ref{fig:deployment-diagram} presents the deployment diagram, showing
+the physical nodes, the software artifacts deployed on each node, and the
+communication protocols between them.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/chapter3/iot-reap-deployment-diagram.png}
+    \caption{Deployment Diagram of the IoT-REAP Platform}
+    \label{fig:deployment-diagram}
+\end{figure}
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+This chapter presented the conceptual analysis of the current IoT REAP
+platform. The rewrite replaced the outdated assessment-oriented description
+with a model that corresponds to the implemented system: a role-based learning
+and remote laboratory platform integrating public discovery, course authoring,
+learner progression, payment workflows, virtual machine provisioning, device
+and camera reservations, and administrative governance. The actor analysis,
+requirements specification, use case refinements, sequence and activity
+descriptions, class model, physical data model, component architecture, and
+deployment diagram together provide a coherent conceptual foundation for the
+technical realization discussed in the following chapters.
+
+\cleardoublepage

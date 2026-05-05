@@ -1,0 +1,66 @@
+@startuml iot-reap-sequence-remote-desktop
+title IoT-REAP — Access Remote Desktop Sequence Diagram
+
+actor Engineer
+participant "Frontend\n(React)" as FE
+participant "VMSessionController" as VC
+participant "VMSessionService" as VS
+participant "GuacamoleClient" as GC
+participant "ProxmoxClient" as PC
+participant "VMSessionRepo" as VR
+participant "Database" as DB
+
+Engineer -> FE: Click "Connect" on active session
+FE -> VC: GET /sessions/{id}/connect
+VC -> VS: getConnectionUrl(user, sessionId)
+VS -> VR: findActiveByUserAndId(user, sessionId)
+VR -> DB: SELECT vm_sessions WHERE id AND user_id AND status='active'
+DB --> VR: VMSession or null
+VR --> VS: VMSession
+
+alt Session not found or not active
+    VS --> VC: VMSessionNotFoundException
+    VC --> FE: 404 Not Found
+    FE --> Engineer: "Session not available"
+else Session is active
+    VS -> PC: getVMStatus(node, vmid)
+    PC --> VS: VM running
+    VS -> GC: createConnection(params)
+    GC -> GC: Authenticate with Guacamole API
+    GC -> GC: Create connection with RDP/VNC params
+    GC --> VS: connectionId + oneTimeToken
+    VS -> VR: updateGuacamoleConnection(session, connectionId)
+    VR -> DB: UPDATE vm_sessions SET guacamole_connection_id
+    DB --> VR: true
+    VR --> VS: VMSession
+    VS --> VC: connectionUrl
+    VC --> FE: 200 OK { guacamole_url }
+    FE -> FE: Open Guacamole iframe with token
+    FE --> Engineer: Remote desktop displayed
+end
+
+== Session Monitoring ==
+loop Every 30 seconds
+    FE -> VC: GET /sessions/{id}/status
+    VC -> VS: getSessionStatus(sessionId)
+    VS -> VR: findById(sessionId)
+    VR --> VS: VMSession
+    VS --> VC: { status, expires_at, remaining_minutes }
+    VC --> FE: 200 OK
+    FE -> FE: Update session timer
+end
+
+== Session Expiry Warning ==
+VS -> FE: WebSocket: session expiring in 5 minutes
+FE --> Engineer: "Session expires soon. Extend?"
+Engineer -> FE: Click "Extend Session"
+FE -> VC: POST /sessions/{id}/extend
+VC -> VS: extendSession(user, sessionId, duration)
+VS -> VR: updateExpiry(session, newExpiry)
+VR -> DB: UPDATE vm_sessions SET expires_at
+DB --> VR: true
+VR --> VS: VMSession
+VS --> VC: updatedSession
+VC --> FE: 200 OK { new_expires_at }
+FE --> Engineer: "Session extended"
+@enduml

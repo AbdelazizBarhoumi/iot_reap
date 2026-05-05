@@ -1,0 +1,206 @@
+@startuml iot-reap-sequence-stripe-payout
+title IoT-REAP - Stripe Payout Sequence Diagram
+actor Teacher as teacher
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Teacher Payout\nController" as payout
+participant "Admin Payout\nController" as admin_payout
+participant "Stripe\nService" as stripe
+participant "Database" as db
+participant "Payout\nModel" as pm
+participant "Payment\nModel" as payment
+participant "Stripe\nAPI" as stripe_api
+
+== Teacher Payout Request ==
+
+teacher -> frontend : Navigate to teaching analytics
+frontend -> routes : GET /teaching/analytics
+routes -> frontend : Display analytics dashboard
+frontend --> teacher : Show earnings and payout options
+
+teacher -> frontend : View earnings summary
+frontend -> routes : GET /teaching/analytics/earnings
+routes -> payout : earnings()
+payout -> db : Load total earnings
+payout -> db : Load available balance
+payout -> db : Load pending payouts
+payout -> db : Load paid amount
+db --> payout : Return earnings data
+payout --> routes : Return earnings summary
+routes --> frontend : Display earnings overview
+frontend --> teacher : Show total, available, pending, paid
+
+teacher -> frontend : View payout requests
+frontend -> routes : GET /teaching/payouts
+routes -> payout : index()
+payout -> db : Load teacher's payout requests
+payout -> db : Load request statuses
+payout -> db : Load payout amounts
+db --> payout : Return payout data
+payout --> routes : Return payout list
+routes --> frontend : Display payout history
+frontend --> teacher : Show all payout requests with status
+
+teacher -> frontend : Request payout
+frontend -> routes : POST /teaching/payouts/request
+routes -> payout : store(payoutData)
+payout -> db : Load teacher's available balance
+payout -> db : Validate payout amount
+payout -> db : Check minimum payout threshold
+payout -> db : Check payout frequency limits
+db --> payout : Return validation result
+
+alt Valid payout request
+    payout -> db : Create payout request
+    payout -> db : Set status to pending
+    payout -> db : Link to teacher
+    payout -> db : Set requested amount
+    payout -> db : Save changes
+    payout -> db : Deduct from available balance
+    payout -> db : Update teacher earnings
+    payout -> db : Save changes
+    payout -> db : Notify admins
+    payout --> routes : Return created request
+    routes --> frontend : Show confirmation
+    frontend --> teacher : Display "Payout request submitted"
+else Invalid request
+    payout --> routes : Return error
+    routes --> frontend : Display error message
+    frontend --> teacher : Show validation error
+end
+
+teacher -> frontend : Export earnings report
+frontend -> routes : GET /teaching/analytics/earnings/export
+routes -> payout : exportEarnings()
+payout -> db : Load payment history
+payout -> db : Load enrollment data
+payout -> db : Generate CSV report
+payout -> db : Format earnings data
+db --> payout : Return report data
+payout --> routes : Return CSV file
+routes --> frontend : Trigger file download
+frontend --> teacher : Download earnings report
+
+== Admin Payout Processing ==
+
+admin -> frontend : Navigate to payout management
+frontend -> routes : GET /admin/payouts
+routes -> admin_payout : index()
+admin_payout -> db : Load payout requests
+admin_payout -> db : Load request statuses
+admin_payout -> db : Load teacher information
+db --> admin_payout : Return payout data
+admin_payout --> routes : Return payout list
+routes --> frontend : Display payout requests
+frontend --> admin : Show all payout requests with status
+
+admin -> frontend : Export payouts report
+frontend -> routes : GET /admin/payouts/export
+routes -> admin_payout : export()
+admin_payout -> db : Load payout history
+admin_payout -> db : Generate CSV report
+admin_payout -> db : Format payout data
+db --> admin_payout : Return report data
+admin_payout --> routes : Return CSV file
+routes --> frontend : Trigger file download
+frontend --> admin : Download payouts report
+
+admin -> frontend : Review payout request
+frontend -> routes : GET /admin/payouts/{payout}
+routes -> admin_payout : show(payoutId)
+admin_payout -> db : Load payout request
+admin_payout -> db : Load teacher details
+admin_payout -> db : Load earnings breakdown
+admin_payout -> db : Load payment history
+db --> admin_payout : Return payout details
+admin_payout --> routes : Return payout data
+routes --> frontend : Display payout details
+frontend --> admin : Show comprehensive payout information
+
+admin -> frontend : Approve payout request
+frontend -> routes : POST /admin/payouts/{payout}/approve
+routes -> admin_payout : approve(payoutId)
+admin_payout -> db : Load payout request
+admin_payout -> db : Update status to approved
+admin_payout -> db : Set approved_at timestamp
+admin_payout -> db : Set approved_by to admin
+admin_payout -> db : Save changes
+admin_payout -> db : Notify teacher
+admin_payout --> routes : Return success
+routes --> frontend : Update payout status
+frontend --> admin : Show payout as approved
+
+admin -> frontend : Process payout transfer
+frontend -> routes : POST /admin/payouts/{payout}/process
+routes -> admin_payout : process(payoutId)
+admin_payout -> db : Load payout request
+admin_payout -> db : Load teacher's Stripe account
+admin_payout -> db : Update status to processing
+admin_payout -> db : Save changes
+admin_payout -> stripe : Initiate Stripe transfer
+stripe -> stripe_api : POST /v1/transfers
+stripe_api --> stripe : Return transfer result
+
+alt Transfer successful
+    stripe -> db : Update status to paid
+    stripe -> db : Set paid_at timestamp
+    stripe -> db : Set stripe_transfer_id
+    stripe -> db : Save changes
+    stripe -> db : Notify teacher
+    stripe -> db : Update teacher payout history
+    stripe --> admin_payout : Return success
+    admin_payout --> routes : Return success
+    routes --> frontend : Update payout status
+    frontend --> admin : Show payout as paid
+else Transfer failed
+    stripe -> db : Update status to failed
+    stripe -> db : Set error message
+    stripe -> db : Save changes
+    stripe -> db : Notify admins
+    stripe -> db : Return funds to pending
+    stripe --> admin_payout : Return error
+    admin_payout --> routes : Return error
+    routes --> frontend : Show error
+    frontend --> admin : Display transfer failure
+end
+
+admin -> frontend : Reject payout request
+frontend -> routes : POST /admin/payouts/{payout}/reject
+routes -> admin_payout : reject(payoutId, reason)
+admin_payout -> db : Load payout request
+admin_payout -> db : Update status to rejected
+admin_payout -> db : Set rejection reason
+admin_payout -> db : Save changes
+admin_payout -> db : Return funds to available balance
+admin_payout -> db : Update teacher earnings
+admin_payout -> db : Save changes
+admin_payout -> db : Notify teacher
+admin_payout --> routes : Return success
+routes --> frontend : Update payout status
+frontend --> admin : Show payout as rejected
+
+note right of teacher
+  Teacher payout features:
+  - View earnings breakdown
+  - Request payout withdrawals
+  - View payout request status
+  - Export earnings reports
+  - Automatic balance validation
+  - Minimum threshold enforcement
+  - Frequency limit checks
+end note
+
+note right of admin
+  Admin payout features:
+  - View all payout requests
+  - Review payout details
+  - Approve/reject requests
+  - Process Stripe transfers
+  - Export payout reports
+  - Teacher notifications
+  - Payout history tracking
+  - Failed transfer handling
+end note
+
+@enduml

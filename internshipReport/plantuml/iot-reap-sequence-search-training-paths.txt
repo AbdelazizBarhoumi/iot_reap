@@ -1,0 +1,45 @@
+@startuml iot-reap-sequence-search-training-paths
+title IoT-REAP - Search Training Paths Sequence
+actor Guest
+participant "Browser" as Browser
+participant "SearchController" as Controller
+participant "SearchService" as SearchSvc
+participant "TrainingPathRepository" as TPRepo
+database "MySQL" as DB
+
+== Public Search ==
+Guest -> Browser: Enter search query
+Browser -> Controller: GET /training-paths/search?q={query}&category={cat}
+Controller -> SearchSvc: search(query, category, filters)
+SearchSvc -> SearchSvc: sanitizeQuery(query)
+SearchSvc -> TPRepo: searchByKeyword(query, category)
+TPRepo -> DB: SELECT * FROM training_paths WHERE MATCH(title, description) AGAINST(?)
+TPRepo --> SearchSvc: Collection<TrainingPath>
+SearchSvc -> SearchSvc: applyFilters(results, filters)
+SearchSvc -> SearchSvc: paginate(results, page, perPage)
+SearchSvc --> Controller: PaginatedResult<TrainingPath>
+Controller --> Browser: 200 OK {data, meta}
+Browser -> Guest: Display search results with pagination
+
+== Browse Recent Paths ==
+Guest -> Browser: Browse training paths
+Browser -> Controller: GET /training-paths/recent
+Controller -> SearchSvc: getRecentPaths(limit)
+SearchSvc -> TPRepo: findRecent(limit)
+TPRepo -> DB: SELECT * FROM training_paths ORDER BY created_at DESC LIMIT ?
+TPRepo --> SearchSvc: Collection<TrainingPath>
+SearchSvc --> Controller: Collection<TrainingPath>
+Controller --> Browser: 200 OK {data}
+Browser -> Guest: Display recent training paths
+
+== Filter by Category ==
+Guest -> Browser: Select category filter
+Browser -> Controller: GET /training-paths/search?category={cat}
+Controller -> SearchSvc: search(query, category, filters)
+SearchSvc -> TPRepo: findByCategory(category)
+TPRepo -> DB: SELECT * FROM training_paths WHERE category = ?
+TPRepo --> SearchSvc: Collection<TrainingPath>
+SearchSvc --> Controller: PaginatedResult<TrainingPath>
+Controller --> Browser: 200 OK {data, meta}
+Browser -> Guest: Display filtered results
+@enduml

@@ -1,0 +1,189 @@
+@startuml iot-reap-sequence-teacher-forum-moderation
+title IoT-REAP - Teacher Forum Moderation Sequence Diagram
+actor Teacher as teacher
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Forum\nController" as forum
+participant "Database" as db
+participant "Thread\nModel" as thread
+participant "Reply\nModel" as reply
+participant "Notification\nService" as notify
+
+teacher -> frontend : Navigate to teaching forum inbox
+frontend -> routes : GET /teaching/forum/inbox
+routes -> forum : teacherInbox()
+forum -> db : Load teacher's training paths
+forum -> db : Load threads for those paths
+forum -> db : Load recent replies
+db --> forum : Return forum data
+forum --> routes : Return inbox data
+routes --> frontend : Display forum inbox
+frontend --> teacher : Show threads and replies for teacher's courses
+
+teacher -> frontend : View thread details
+frontend -> routes : GET /forum/threads/{threadId}
+routes -> forum : show(threadId)
+forum -> db : Load thread with replies
+forum -> db : Load upvotes and flags
+db --> forum : Return thread data
+forum --> routes : Return thread
+routes --> frontend : Display thread
+frontend --> teacher : Show thread with all replies
+
+teacher -> frontend : Pin thread
+frontend -> routes : POST /forum/threads/{threadId}/pin
+routes -> forum : pin(threadId)
+forum -> db : Update thread pinned status
+forum -> db : Set pinned_at timestamp
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread as pinned
+
+teacher -> frontend : Unpin thread
+frontend -> routes : POST /forum/threads/{threadId}/unpin
+routes -> forum : unpin(threadId)
+forum -> db : Update thread pinned status
+forum -> db : Clear pinned_at timestamp
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread as unpinned
+
+teacher -> frontend : Lock thread
+frontend -> routes : POST /forum/threads/{threadId}/lock
+routes -> forum : lock(threadId)
+forum -> db : Update thread locked status
+forum -> db : Set locked_at timestamp
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread as locked (no new replies)
+
+teacher -> frontend : Unlock thread
+frontend -> routes : POST /forum/threads/{threadId}/unlock
+routes -> forum : unlock(threadId)
+forum -> db : Update thread locked status
+forum -> db : Clear locked_at timestamp
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread as unlocked
+
+teacher -> frontend : Resolve flag on thread
+frontend -> routes : POST /forum/threads/{threadId}/resolve-flag
+routes -> forum : resolveFlag(threadId)
+forum -> db : Load thread flags
+forum -> db : Clear thread flags
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread flags resolved
+
+teacher -> frontend : Mark reply as answer
+frontend -> routes : POST /forum/replies/{replyId}/answer
+routes -> forum : markAnswer(replyId)
+forum -> db : Load reply and thread
+forum -> db : Mark reply as accepted answer
+forum -> db : Update thread with answer reference
+forum -> db : Save changes
+forum -> notify : Notify thread author
+notify -> db : Create notification
+forum --> routes : Return success
+routes --> frontend : Update reply display
+frontend --> teacher : Show reply marked as answer
+
+teacher -> frontend : Post reply to thread
+frontend -> routes : POST /forum/threads/{threadId}/reply
+routes -> forum : reply(threadId, replyData)
+forum -> db : Create reply record
+forum -> db : Link to thread and user
+forum -> db : Save changes
+forum -> notify : Notify thread participants
+notify -> db : Create notifications
+forum --> routes : Return created reply
+routes --> frontend : Add reply to thread
+frontend --> teacher : Show new reply in thread
+
+teacher -> frontend : Upvote thread
+frontend -> routes : POST /forum/threads/{threadId}/upvote
+routes -> forum : upvoteThread(threadId)
+forum -> db : Check existing upvote
+forum -> db : Create or remove upvote
+forum -> db : Update thread upvote count
+forum -> db : Save changes
+forum --> routes : Return updated count
+routes --> frontend : Update upvote button
+frontend --> teacher : Show updated upvote count
+
+teacher -> frontend : Flag thread
+frontend -> routes : POST /forum/threads/{threadId}/flag
+routes -> forum : flagThread(threadId)
+forum -> db : Create flag record
+forum -> db : Link to thread and user
+forum -> db : Save changes
+forum -> notify : Notify admins
+notify -> db : Create admin notification
+forum --> routes : Return success
+routes --> frontend : Update thread display
+frontend --> teacher : Show thread as flagged
+
+teacher -> frontend : Upvote reply
+frontend -> routes : POST /forum/replies/{replyId}/upvote
+routes -> forum : upvoteReply(replyId)
+forum -> db : Check existing upvote
+forum -> db : Create or remove upvote
+forum -> db : Update reply upvote count
+forum -> db : Save changes
+forum --> routes : Return updated count
+routes --> frontend : Update upvote button
+frontend --> teacher : Show updated upvote count
+
+teacher -> frontend : Flag reply
+frontend -> routes : POST /forum/replies/{replyId}/flag
+routes -> forum : flagReply(replyId)
+forum -> db : Create flag record
+forum -> db : Link to reply and user
+forum -> db : Save changes
+forum -> notify : Notify admins
+notify -> db : Create admin notification
+forum --> routes : Return success
+routes --> frontend : Update reply display
+frontend --> teacher : Show reply as flagged
+
+teacher -> frontend : Delete own reply
+frontend -> routes : DELETE /forum/replies/{replyId}
+routes -> forum : destroyReply(replyId)
+forum -> db : Load reply
+forum -> db : Check ownership
+forum -> db : Delete reply record
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Remove reply from thread
+frontend --> teacher : Show reply deleted
+
+teacher -> frontend : Delete own thread
+frontend -> routes : DELETE /forum/threads/{threadId}
+routes -> forum : destroyThread(threadId)
+forum -> db : Load thread
+forum -> db : Check ownership and replies
+forum -> db : Delete thread and replies
+forum -> db : Save changes
+forum --> routes : Return success
+routes --> frontend : Remove thread from list
+frontend --> teacher : Show thread deleted
+
+note right of teacher
+  Teacher forum moderation features:
+  - View inbox for their training paths
+  - Pin/unpin important threads
+  - Lock/unlock threads to prevent new replies
+  - Mark replies as accepted answers
+  - Resolve flags on content
+  - Post replies and upvote content
+  - Flag inappropriate content for admin review
+  - Delete own content
+  - Rate limited write operations (throttle:forum-write)
+end note
+
+@enduml

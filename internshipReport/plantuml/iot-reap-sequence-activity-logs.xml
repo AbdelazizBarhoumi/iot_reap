@@ -1,0 +1,283 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1400" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Activity Logs Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="820" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="70" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_browser" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Browser" vertex="1">
+      <mxGeometry x="170" y="50" width="100" height="1280" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_controller" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="ActivityLog&#xa;Controller" vertex="1">
+      <mxGeometry x="320" y="50" width="120" height="1280" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_logsvc" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="ActivityLog&#xa;Service" vertex="1">
+      <mxGeometry x="490" y="50" width="120" height="1280" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_logrepo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="ActivityLog&#xa;Repository" vertex="1">
+      <mxGeometry x="660" y="50" width="120" height="1280" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="MySQL" vertex="1">
+      <mxGeometry x="840" y="50" width="100" height="1280" as="geometry" />
+    </mxCell>
+
+    <!-- ===== View Activity Logs ===== -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Activity Logs ==" vertex="1">
+      <mxGeometry x="150" y="130" width="820" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to Activity Logs">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="85" y="175" as="sourcePoint" />
+        <mxPoint x="220" y="175" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m2" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="205" as="sourcePoint" />
+        <mxPoint x="380" y="205" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m3" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getPaginatedLogs(page, perPage)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="235" as="sourcePoint" />
+        <mxPoint x="550" y="235" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m4" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findPaginated(page, perPage)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="265" as="sourcePoint" />
+        <mxPoint x="720" y="265" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m5" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ? OFFSET ?">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="295" as="sourcePoint" />
+        <mxPoint x="890" y="295" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m6" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="LengthAwarePaginator&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="890" y="325" as="sourcePoint" />
+        <mxPoint x="720" y="325" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m7" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="LengthAwarePaginator&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="355" as="sourcePoint" />
+        <mxPoint x="550" y="355" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m8" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="PaginatedResult&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="385" as="sourcePoint" />
+        <mxPoint x="380" y="385" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m9" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {data, meta}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="415" as="sourcePoint" />
+        <mxPoint x="220" y="415" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display activity log entries">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="445" as="sourcePoint" />
+        <mxPoint x="85" y="445" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== Filter Activity Logs ===== -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Filter Activity Logs ==" vertex="1">
+      <mxGeometry x="150" y="475" width="820" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Apply filters (date, user, type, severity)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="85" y="520" as="sourcePoint" />
+        <mxPoint x="220" y="520" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs?date_from={from}&amp;date_to={to}&amp;user_id={uid}&amp;type={type}&amp;severity={sev}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="550" as="sourcePoint" />
+        <mxPoint x="380" y="550" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getFilteredLogs(filters, page)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="580" as="sourcePoint" />
+        <mxPoint x="550" y="580" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Self-call: LogSvc -> LogSvc: validateFilters -->
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;edgeStyle=orthogonalEdgeStyle;" value="validateFilters(filters)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="610" as="sourcePoint" />
+        <mxPoint x="550" y="638" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="600" y="610" />
+          <mxPoint x="600" y="638" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findByFilters(filters, page)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="665" as="sourcePoint" />
+        <mxPoint x="720" y="665" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM activity_logs WHERE created_at BETWEEN ? AND ? AND user_id=? AND type=? AND severity=?">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="695" as="sourcePoint" />
+        <mxPoint x="890" y="695" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="LengthAwarePaginator&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="890" y="725" as="sourcePoint" />
+        <mxPoint x="720" y="725" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="LengthAwarePaginator&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="755" as="sourcePoint" />
+        <mxPoint x="550" y="755" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="PaginatedResult&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="785" as="sourcePoint" />
+        <mxPoint x="380" y="785" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {data, meta}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="815" as="sourcePoint" />
+        <mxPoint x="220" y="815" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display filtered log entries">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="845" as="sourcePoint" />
+        <mxPoint x="85" y="845" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== Export Activity Logs ===== -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Export Activity Logs ==" vertex="1">
+      <mxGeometry x="150" y="875" width="820" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click Export">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="85" y="920" as="sourcePoint" />
+        <mxPoint x="220" y="920" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/activity-logs/export?format=csv">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="950" as="sourcePoint" />
+        <mxPoint x="380" y="950" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="exportLogs(filters, format)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="980" as="sourcePoint" />
+        <mxPoint x="550" y="980" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="findByFilters(filters, noPagination)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="1010" as="sourcePoint" />
+        <mxPoint x="720" y="1010" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT * FROM activity_logs WHERE ...">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="1040" as="sourcePoint" />
+        <mxPoint x="890" y="1040" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Collection&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="890" y="1070" as="sourcePoint" />
+        <mxPoint x="720" y="1070" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Collection&lt;ActivityLog&gt;">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="720" y="1100" as="sourcePoint" />
+        <mxPoint x="550" y="1100" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Self-call: LogSvc -> LogSvc: generateExport -->
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;edgeStyle=orthogonalEdgeStyle;" value="generateExport(results, format)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="1130" as="sourcePoint" />
+        <mxPoint x="550" y="1158" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="600" y="1130" />
+          <mxPoint x="600" y="1158" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="ExportFile">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="550" y="1185" as="sourcePoint" />
+        <mxPoint x="380" y="1185" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {download_url}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="380" y="1215" as="sourcePoint" />
+        <mxPoint x="220" y="1215" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Download exported log file">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="220" y="1245" as="sourcePoint" />
+        <mxPoint x="85" y="1245" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

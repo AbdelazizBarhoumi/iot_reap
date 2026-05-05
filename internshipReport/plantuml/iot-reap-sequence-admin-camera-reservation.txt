@@ -1,0 +1,236 @@
+@startuml iot-reap-sequence-admin-camera-reservation
+title IoT-REAP - Admin Camera & Reservation Administration Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Admin Camera\nController" as camera
+participant "Admin Reservation\nController" as reservation
+participant "Database" as db
+participant "Camera\nModel" as cm
+participant "Reservation\nModel" as rm
+participant "Gateway\nNodes" as gateways
+
+== Camera Administration ==
+
+admin -> frontend : Navigate to camera management
+frontend -> routes : GET /admin/cameras
+routes -> camera : cameras()
+camera -> db : Load all cameras
+camera -> db : Load camera assignments
+camera -> db : Load camera status
+db --> camera : Return camera data
+camera --> routes : Return cameras
+routes --> frontend : Display camera list
+frontend --> admin : Show all cameras with assignments
+
+admin -> frontend : Assign camera to VM
+frontend -> routes : PUT /admin/cameras/{camera}/assign
+routes -> camera : assignToVm(cameraId, vmId)
+camera -> db : Load camera record
+camera -> db : Load VM record
+camera -> db : Create camera-VM assignment
+camera -> db : Save changes
+camera --> routes : Return assignment
+routes --> frontend : Update camera display
+frontend --> admin : Show camera assigned to VM
+
+admin -> frontend : Unassign camera
+frontend -> routes : DELETE /admin/cameras/{camera}/assign
+routes -> camera : unassignFromVm(cameraId)
+camera -> db : Load camera assignment
+camera -> db : Delete assignment record
+camera -> db : Save changes
+camera --> routes : Return success
+routes --> frontend : Update camera display
+frontend --> admin : Show camera unassigned
+
+admin -> frontend : Bulk assign cameras
+frontend -> routes : POST /admin/cameras/bulk-assign
+routes -> camera : bulkAssign(cameraIds, vmId)
+camera -> db : Load camera records
+camera -> db : Load VM record
+loop For each camera
+    camera -> db : Create camera-VM assignment
+end
+camera -> db : Save all changes
+camera --> routes : Return assignment count
+routes --> frontend : Update camera display
+frontend --> admin : Show cameras assigned
+
+admin -> frontend : Activate camera
+frontend -> routes : PUT /admin/cameras/{camera}/activate
+routes -> camera : activate(cameraId)
+camera -> db : Load camera record
+camera -> db : Update status to active
+camera -> db : Save changes
+camera -> gateways : Activate camera stream
+gateways --> camera : Confirm activation
+camera --> routes : Return success
+routes --> frontend : Update camera status
+frontend --> admin : Show camera as active
+
+admin -> frontend : Deactivate camera
+frontend -> routes : PUT /admin/cameras/{camera}/deactivate
+routes -> camera : deactivate(cameraId)
+camera -> db : Load camera record
+camera -> db : Update status to inactive
+camera -> db : Save changes
+camera -> gateways : Deactivate camera stream
+gateways --> camera : Confirm deactivation
+camera --> routes : Return success
+routes --> frontend : Update camera status
+frontend --> admin : Show camera as inactive
+
+== USB Device Reservation Administration ==
+
+admin -> frontend : View USB reservations
+frontend -> routes : GET /admin/reservations
+routes -> reservation : index()
+reservation -> db : Load all USB reservations
+reservation -> db : Load reservation statuses
+reservation -> db : Load device information
+db --> reservation : Return reservations
+reservation --> routes : Return reservation list
+routes --> frontend : Display reservations
+frontend --> admin : Show all USB reservations
+
+admin -> frontend : View pending reservations
+frontend -> routes : GET /admin/reservations/pending
+routes -> reservation : pending()
+reservation -> db : Load pending reservations
+reservation -> db : Load user information
+reservation -> db : Load device information
+db --> reservation : Return pending reservations
+reservation --> routes : Return pending list
+routes --> frontend : Display pending reservations
+frontend --> admin : Show reservations awaiting approval
+
+admin -> frontend : View upcoming reservations
+frontend -> routes : GET /admin/reservations/upcoming
+routes -> reservation : upcoming()
+reservation -> db : Load upcoming reservations
+reservation -> db : Filter by future dates
+reservation -> db : Load device information
+db --> reservation : Return upcoming reservations
+reservation --> routes : Return upcoming list
+routes --> frontend : Display upcoming reservations
+frontend --> admin : Show scheduled reservations
+
+admin -> frontend : Approve USB reservation
+frontend -> routes : POST /admin/reservations/{reservation}/approve
+routes -> reservation : approve(reservationId)
+reservation -> db : Load reservation record
+reservation -> db : Update status to approved
+reservation -> db : Set approved_at timestamp
+reservation -> db : Set approved_by to admin
+reservation -> db : Save changes
+reservation -> db : Notify user
+reservation --> routes : Return success
+routes --> frontend : Update reservation status
+frontend --> admin : Show reservation as approved
+
+admin -> frontend : Reject USB reservation
+frontend -> routes : POST /admin/reservations/{reservation}/reject
+routes -> reservation : reject(reservationId, reason)
+reservation -> db : Load reservation record
+reservation -> db : Update status to rejected
+reservation -> db : Set rejection reason
+reservation -> db : Save changes
+reservation -> db : Notify user
+reservation --> routes : Return success
+routes --> frontend : Update reservation status
+frontend --> admin : Show reservation as rejected
+
+admin -> frontend : Block device time slot
+frontend -> routes : POST /admin/reservations/block
+routes -> reservation : createBlock(blockData)
+reservation -> db : Create block reservation
+reservation -> db : Set status to blocked
+reservation -> db : Save changes
+reservation --> routes : Return created block
+routes --> frontend : Add block to calendar
+frontend --> admin : Show time slot blocked
+
+== Camera Reservation Administration ==
+
+admin -> frontend : View camera reservations
+frontend -> routes : GET /admin/cameras/reservations
+routes -> camera : index()
+camera -> db : Load all camera reservations
+camera -> db : Load reservation statuses
+camera -> db : Load camera information
+db --> camera : Return reservations
+camera --> routes : Return reservation list
+routes --> frontend : Display camera reservations
+frontend --> admin : Show all camera reservations
+
+admin -> frontend : View pending camera reservations
+frontend -> routes : GET /admin/cameras/reservations/pending
+routes -> camera : pending()
+camera -> db : Load pending camera reservations
+camera -> db : Load user information
+camera -> db : Load camera information
+db --> camera : Return pending reservations
+camera --> routes : Return pending list
+routes --> frontend : Display pending reservations
+frontend --> admin : Show camera reservations awaiting approval
+
+admin -> frontend : View upcoming camera reservations
+frontend -> routes : GET /admin/cameras/reservations/upcoming
+routes -> camera : upcoming()
+camera -> db : Load upcoming camera reservations
+camera -> db : Filter by future dates
+camera -> db : Load camera information
+db --> camera : Return upcoming reservations
+camera --> routes : Return upcoming list
+routes --> frontend : Display upcoming reservations
+frontend --> admin : Show scheduled camera reservations
+
+admin -> frontend : Approve camera reservation
+frontend -> routes : POST /admin/cameras/reservations/{reservation}/approve
+routes -> camera : approve(reservationId)
+camera -> db : Load reservation record
+camera -> db : Update status to approved
+camera -> db : Set approved_at timestamp
+camera -> db : Set approved_by to admin
+camera -> db : Save changes
+camera -> db : Notify user
+camera --> routes : Return success
+routes --> frontend : Update reservation status
+frontend --> admin : Show camera reservation as approved
+
+admin -> frontend : Reject camera reservation
+frontend -> routes : POST /admin/cameras/reservations/{reservation}/reject
+routes -> camera : reject(reservationId, reason)
+camera -> db : Load reservation record
+camera -> db : Update status to rejected
+camera -> db : Set rejection reason
+camera -> db : Save changes
+camera -> db : Notify user
+camera --> routes : Return success
+routes --> frontend : Update reservation status
+frontend --> admin : Show camera reservation as rejected
+
+admin -> frontend : Block camera time slot
+frontend -> routes : POST /admin/cameras/reservations/block
+routes -> camera : createBlock(blockData)
+camera -> db : Create camera block reservation
+camera -> db : Set status to blocked
+camera -> db : Save changes
+camera --> routes : Return created block
+routes --> frontend : Add block to calendar
+frontend --> admin : Show camera time slot blocked
+
+note right of admin
+  Camera & reservation administration features:
+  - Camera assignment to VMs
+  - Bulk camera operations
+  - Camera activation/deactivation
+  - USB device reservation management
+  - Camera reservation management
+  - Approval/rejection workflows
+  - Time slot blocking
+  - User notifications
+end note
+
+@enduml

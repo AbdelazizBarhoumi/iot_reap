@@ -1,0 +1,167 @@
+@startuml iotreap-component-architecture
+title IoT-REAP - Component Architecture Diagram
+
+skinparam componentStyle rectangle
+
+' ==================== CLIENT TIER ====================
+
+package "Client Tier" {
+    [Web Browser] as Browser
+    component "React 18 + TypeScript\n(Inertia.js SSR)" as Frontend {
+        [Pages] as Pages
+        [Components] as Components
+        [Custom Hooks] as Hooks
+        [Zustand Store] as Store
+        [API Client (Axios)] as APIClient
+    }
+}
+
+' ==================== APPLICATION TIER ====================
+
+package "Application Tier (Laravel 12)" {
+    
+    package "HTTP Layer" {
+        [Routes (web, auth,\nsessions, admin,\ntrainingPaths, teaching)] as Routes
+        [Middleware\n(Auth, CSRF, Rate Limit,\nRole Gates)] as Middleware
+        [FormRequests\n(Validation + Authorization)] as FormRequests
+    }
+    
+    package "Controller Layer" {
+        [AuthController] as AuthCtrl
+        [VMSessionController] as VMCtrl
+        [TrainingPathController] as TPCtrl
+        [TeachingController] as TeachCtrl
+        [AdminController] as AdminCtrl
+        [HardwareController] as HWCrtl
+    }
+    
+    package "Service Layer" {
+        [VMSessionService] as VMSvc
+        [TrainingPathService] as TPSvc
+        [CheckoutService] as CheckoutSvc
+        [ProxmoxClient] as ProxmoxSvc
+        [GuacamoleClient] as GuacSvc
+        [GatewayService] as GatewaySvc
+        [UsbDeviceQueueService] as QueueSvc
+        [CameraService] as CameraSvc
+        [QuizService] as QuizSvc
+        [ForumService] as ForumSvc
+        [MqttService] as MqttSvc
+        [QuotaService] as QuotaSvc
+    }
+    
+    package "Repository Layer" {
+        [VMSessionRepository] as VMRepo
+        [TrainingPathRepository] as TPRepo
+        [PaymentRepository] as PayRepo
+        [UsbDeviceRepository] as USBRepo
+        [CameraRepository] as CamRepo
+        [QuizAttemptRepository] as QuizRepo
+    }
+    
+    package "Domain Models (Eloquent)" {
+        [User] as UserModel
+        [VMSession] as VMModel
+        [TrainingPath] as TPModel
+        [UsbDevice] as USBModel
+        [Camera] as CamModel
+        [Payment] as PayModel
+    }
+    
+    package "Background Jobs" {
+        [ProvisionVMJob] as ProvisionJob
+        [CleanupVMJob] as CleanupJob
+        [ProcessVideoJob] as VideoJob
+    }
+}
+
+' ==================== INFRASTRUCTURE TIER ====================
+
+package "Infrastructure Tier" {
+    component "Proxmox VE Cluster" as Proxmox {
+        [Proxmox Node 1] as PNode1
+        [Proxmox Node 2] as PNode2
+    }
+    
+    component "Apache Guacamole" as Guacamole {
+        [Guacamole Daemon\n(guacd)] as Guacd
+        [Guacamole Web App] as GuacWeb
+    }
+    
+    component "USB/IP Gateways" as Gateways {
+        [Gateway Node 1] as GW1
+        [Gateway Node 2] as GW2
+    }
+    
+    component "MQTT Broker\n(Mosquitto)" as MQTT {
+        [robot/{id}/commands] as RobotTopic
+        [robot/{id}/telemetry] as TelemetryTopic
+    }
+    
+    component "Stripe API" as Stripe
+}
+
+' ==================== DATA TIER ====================
+
+package "Data Tier" {
+    database "MySQL\n(Primary DB)" as MySQL
+    component "Redis\n(Cache + Sessions)" as Redis
+    component "File Storage\n(Videos, Assets)" as FileStorage
+}
+
+' ==================== CONNECTIONS ====================
+
+Browser --> Frontend : HTTPS
+Frontend --> Routes : Inertia.js / AJAX
+Routes --> Middleware
+Middleware --> FormRequests
+FormRequests --> AuthCtrl
+FormRequests --> VMCtrl
+FormRequests --> TPCtrl
+FormRequests --> TeachCtrl
+FormRequests --> AdminCtrl
+FormRequests --> HWCrtl
+
+AuthCtrl --> VMSvc
+VMCtrl --> VMSvc
+TPCtrl --> TPSvc
+TeachCtrl --> TPSvc
+AdminCtrl --> TPSvc
+HWCrtl --> GatewaySvc
+HWCrtl --> QueueSvc
+
+VMSvc --> VMRepo
+VMSvc --> ProxmoxSvc
+VMSvc --> GuacSvc
+VMSvc --> QuotaSvc
+TPSvc --> TPRepo
+CheckoutSvc --> PayRepo
+GatewaySvc --> USBRepo
+QueueSvc --> USBRepo
+CameraSvc --> CamRepo
+QuizSvc --> QuizRepo
+
+VMRepo --> VMModel
+TPRepo --> TPModel
+PayRepo --> PayModel
+USBRepo --> USBModel
+CamRepo --> CamModel
+
+ProxmoxSvc --> Proxmox : PVE API (HTTPS:8006)
+GuacSvc --> Guacamole : Guacamole REST API
+GatewaySvc --> Gateways : USB/IP Protocol
+MqttSvc --> MQTT : MQTT v5
+
+VMSvc --> ProvisionJob
+VMSvc --> CleanupJob
+TPSvc --> VideoJob
+
+UserModel --> MySQL : Eloquent ORM
+VMModel --> MySQL : Eloquent ORM
+TPModel --> MySQL : Eloquent ORM
+PayModel --> MySQL : Eloquent ORM
+
+CheckoutSvc --> Stripe : Stripe SDK
+Frontend --> GuacWeb : WebSocket (remote desktop)
+
+@enduml

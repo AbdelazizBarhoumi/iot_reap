@@ -1,0 +1,26 @@
+@startuml iot-reap-activity-refund-request
+title IoT-REAP — Request Refund Activity Diagram
+
+start
+:Engineer opens payment history;
+:Select a completed payment;
+:Click "Request Refund";
+:Enter refund reason;
+:Submit refund request;
+if (Payment found?) then (yes)
+  if (Within refund window?) then (yes)
+    if (No existing refund?) then (yes)
+      :Create refund request (pending);
+      :Notify administrator;
+      :Display confirmation to engineer;
+    else (no - duplicate)
+      :Display "Refund already requested";
+    endif
+  else (no - expired)
+    :Display "Refund period expired";
+  endif
+else (no)
+  :Display "Payment not found";
+endif
+stop
+@enduml

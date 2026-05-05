@@ -1,0 +1,600 @@
+% ==================== CHAPTER 2: THEORETICAL STUDY ====================
+% ==================== SECTION NUMBERING RULE ====================
+% Section numbering DOES NOT include chapter number.
+% After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
+% Then subsequent subsections are numbered 1.1, 1.2, 1.3, etc.
+% Following sections reset to 2., 2.1, 2.2, etc. within the same chapter.
+% ============================================================================
+% STYLE GUIDELINES:
+% - Font: Times New Roman 12pt, line spacing 1.5
+% - Titles: Left-aligned, numbered decimally, bold
+% - Figures/Tables: Numbered (Figure 2.1, Table 2.1, etc.)
+% - Captions: 12pt Times, centered, justified
+% - One blank line above caption, two blank lines below
+% - Formulas: Numbered (1) to (n), right-aligned
+% - Use italics or bold for emphasis, NEVER underline
+% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+% 
+% CHAPTER 2 CONTENT:
+% - Criticism of existing solutions
+% - Comparative analysis with existing systems
+% - Proposed solution and theoretical foundations
+% - MVC architecture and design patterns
+% ============================================================================
+
+\chapter{Theoretical Study}
+\setcounter{section}{0}
+
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+\initial{T}his chapter examines existing industrial remote access solutions, identifies their limitations, proposes the IoT-REAP platform architecture, and establishes the theoretical foundations including MVC architecture and the technology stack.
+
+\section{Study of the Existing}
+
+Before proposing the IoT-REAP architecture, it is essential to examine current
+industrial remote access solutions, understand their technical approaches, and
+identify the specific gaps they fail to address. This analysis establishes the
+foundation for the proposed platform design.
+
+\subsection{Analysis of Existing Industrial Remote Access Solutions}
+
+Industrial remote access has traditionally relied on several established
+approaches, each with distinct characteristics and limitations. Understanding
+these existing solutions is essential for positioning the IoT-REAP platform
+within the current technological landscape.
+
+\textbf{Virtual Private Networks (VPNs):} The most common approach for industrial remote access involves establishing encrypted tunnels between remote users and industrial networks. Organizations deploy VPN concentrators at facility perimeters, requiring engineers to install client software, configure connections, and authenticate before accessing internal resources.
+
+\textbf{Jump Servers / Bastion Hosts:} Some organizations implement intermediate servers that act as controlled access points to OT networks. Engineers first connect to the jump server, then establish secondary connections to target systems. This adds a security layer but increases connection complexity and latency.
+
+\textbf{Proprietary Remote Access Tools:} Industrial equipment vendors (Siemens, Rockwell, Schneider) offer vendor-specific remote access solutions tied to their hardware ecosystems. These tools provide optimized connections to specific PLCs and HMIs but create vendor lock-in and fragmentation across multi-vendor environments.
+
+\textbf{Cloud-Based IIoT Platforms:} Emerging platforms like AWS IoT, Azure IoT Hub, and PTC ThingWorx provide cloud connectivity for industrial devices. However, these focus primarily on data collection and monitoring rather than interactive remote control and desktop access.
+
+\textbf{Generic Remote Desktop Solutions:} Tools like TeamViewer, AnyDesk, and Microsoft RDP provide remote desktop capabilities but lack industrial-specific features such as OT network isolation, session quotas, audit logging for compliance, and integration with virtualization platforms.
+
+\subsection{Criticism of the Existing}
+
+The current industrial remote access landscape exhibits several fundamental
+deficiencies:
+
+\textbf{VPN Complexity and Security Risks:} VPN deployments require significant IT expertise for configuration and maintenance. Split tunneling creates security vulnerabilities, and VPN credentials are prime targets for attackers. Once inside the VPN, lateral movement across the network is often unrestricted, violating zero-trust principles.
+
+\textbf{Lack of Session Management:} Existing solutions provide no automated session expiration, resource quotas, or reservation systems. Shared equipment (industrial VMs, robots) cannot be efficiently scheduled, leading to conflicts and underutilization.
+
+\textbf{No OT/IT Network Isolation:} Traditional remote access tools do not enforce Purdue model network segmentation. Engineers accessing OT systems from IT networks create security vulnerabilities that violate IEC 62443 standards.
+
+\textbf{Missing Audit Trail:} Compliance with industrial security standards requires comprehensive logging of all access and commands. Existing tools lack tamper-proof audit logs with cryptographic integrity verification.
+
+\textbf{Fragmented Tooling:} Organizations must deploy separate systems for VM management, remote desktop, IoT device control, and camera monitoring. This fragmentation increases operational complexity and prevents unified security policies.
+
+\textbf{No Predictive Capabilities:} Existing solutions provide no demand forecasting for resource allocation or predictive maintenance for connected equipment. Administrators cannot anticipate peak usage or equipment failures.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of Existing Remote Access Solutions vs. IoT-REAP Requirements}
+    \begin{tabular}{|p{2.8cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+        \hline
+        \textbf{Requirement} & \textbf{VPN Solutions} & \textbf{Generic RDP Tools} & \textbf{IIoT Platforms}         \\
+        \hline
+        Browser-based Access & No client required     & No client required         & Yes, web dashboards             \\
+        \hline
+        VM Provisioning      & Not supported          & Not supported              & Not supported (data focus only) \\
+        \hline
+        Session Management   & Poor: Manual only      & Poor: No automation        & Partial support                 \\
+        \hline
+        OT/IT Isolation      & Poor: Bypasses zones   & Poor: No awareness         & Partial support                 \\
+        \hline
+        Audit Logging        & Good: Basic logs       & Poor: Insufficient         & Good: Good logging              \\
+        \hline
+        IoT Integration      & Poor: Not supported    & Poor: Not supported        & Good: Core feature              \\
+        \hline
+        AI Analytics         & Poor: Not supported    & Poor: Not supported        & Good: Growing support           \\
+        \hline
+    \end{tabular}
+    \label{tab:solution-comparison}
+\end{table}
+
+\textbf{Summary of Critical Deficiencies:} The systematic analysis reveals that current solutions are designed for traditional IT environments and fail to address the unique requirements of Industry 4.0: \textbf{zero-trust security} (assumed perimeter trust is obsolete), \textbf{OT compliance} (industrial standards require specific controls), \textbf{resource efficiency} (expensive equipment needs intelligent scheduling), \textbf{unified management} (fragmented tools create security gaps), and \textbf{predictive operations} (reactive approaches cause downtime). These deficiencies create the business case for a purpose-built industrial remote access platform.
+
+\section{Proposed Solution}
+
+Based on the identified deficiencies in existing solutions, this section
+presents the IoT-REAP platform architecture, its core functional components,
+security framework, and the AI/ML capabilities that enable intelligent resource
+management and predictive operations.
+
+\subsection{Project Definition}
+
+The IoT-REAP (Internet of Things - Remote Equipment Access Platform) project
+aims to develop an integrated web-based platform that provides secure remote
+access to industrial systems, virtual machines, and IoT devices. The project
+addresses the critical limitations identified in current industrial remote
+access solutions, creating a unified platform for Industry 4.0 operations.
+
+\textbf{Project Scope:} Development of a comprehensive platform enabling engineers to provision virtual machines, access them via browser-based remote desktop, control IoT robots, monitor camera feeds, and operate within a zero-trust security framework—all from a single unified interface without client-side software installation.
+
+\textbf{Core Problem Statement:} Existing remote access solutions are fragmented, lack OT-specific security controls, provide no intelligent resource management, and fail to meet industrial compliance requirements. Organizations need a purpose-built platform that unifies VM provisioning, remote desktop access, IoT control, and security monitoring.
+
+\subsection{Solution Architecture}
+
+The proposed solution employs a modern web application architecture built on
+established software engineering principles:
+
+\textbf{Separation of Concerns:} Clear architectural boundaries between data management, business logic, and presentation layers enable independent development and maintenance of each component. The backend follows the Service-Repository pattern, ensuring controllers remain thin.
+
+\textbf{API-First Integration:} External services (Proxmox VE, Apache Guacamole, MQTT broker, AI microservice) integrate through well-defined interfaces, ensuring loose coupling and flexibility to adapt to evolving infrastructure.
+
+\textbf{Event-Driven Architecture:} System components communicate via Laravel Events and WebSocket broadcasts, enabling real-time updates for session status, robot telemetry, and security alerts.
+
+\textbf{Microservices for AI/ML:} Machine learning components (demand forecasting, anomaly detection) are deployed as separate Python FastAPI services, allowing independent scaling and technology-appropriate implementations.
+
+\textbf{Zero-Trust Security Model:} Every access request is verified regardless of network location. Sessions are continuously monitored with real-time risk scoring and automatic termination of high-risk activities.
+
+\section{Requirements Specifications}
+
+This section formalizes the system requirements derived from the implemented
+routes, services, and domain models. The requirements are divided into
+functional and non-functional categories in order to describe both what the
+platform must do and how well it must perform those responsibilities.
+
+\subsection{Functional Requirements}
+
+The platform must support the following functional requirements according to
+actor responsibilities and shared system behavior.
+
+\textbf{Unauthenticated User (Guest):}
+\begin{itemize}[label=-]
+    \item Access account registration and login workflows
+    \item Consult the landing page and public legal pages
+    \item Browse public training paths and training path details
+    \item Read public reviews and forum threads in read-only mode
+    \item Verify and download publicly accessible certificates through verification links
+    \item View public search results, trending queries, and category-based discovery
+    \item Access checkout success and cancellation pages after external payment flows
+\end{itemize}
+
+\textbf{Engineer:}
+\begin{itemize}[label=-]
+    \item Enroll in and unenroll from training paths
+    \item Access owned or enrolled training units and learning materials
+    \item Read articles and track article completion
+    \item Stream instructional videos and update playback progress
+    \item Attempt quizzes, submit answers, and review attempt history
+    \item Mark training units complete or incomplete based on learning progress
+    \item Create, update, and delete personal notes for training units
+    \item Create, edit, and delete reviews for completed or relevant training paths
+    \item Participate in forum discussions by creating threads, replying, voting, and
+          flagging content
+    \item View notifications and manage read status
+    \item Claim, verify, and download certificates
+    \item Initiate checkout for paid training paths
+    \item Review payment history and submit refund requests
+    \item Provision, extend, view, and terminate virtual machine sessions
+    \item Retrieve Guacamole access tokens for remote desktop connectivity
+    \item Manage connection preference profiles for available protocols
+    \item Browse available Proxmox virtual machines and snapshots
+    \item Reserve USB devices and cameras
+    \item Attach or detach session hardware and join hardware waiting queues
+    \item Access session camera streams, request control, move PTZ-enabled cameras, and
+          change stream resolution
+\end{itemize}
+
+\textbf{Teacher:}
+\begin{itemize}[label=-]
+    \item Create, edit, archive, restore, and delete training paths
+    \item Organize training paths into modules and training units
+    \item Reorder modules and training units
+    \item Create and maintain quiz structures, questions, and publication status
+    \item Create, update, and delete article content
+    \item Upload, retry, and delete training videos
+    \item Manage video captions
+    \item Submit training paths for administrative review
+    \item View teacher analytics for enrollment, earnings, and learning funnel data
+    \item Access a teacher discussion inbox and moderate course-related threads
+    \item Request revenue payout
+    \item Submit training unit virtual machine assignment requests
+\end{itemize}
+
+\textbf{Administrator:}
+\begin{itemize}[label=-]
+    \item Access the administrative dashboard and KPI views
+    \item Approve, reject, feature, unfeature, and order training paths
+    \item Review pending VM assignment requests
+    \item Manage reservations for devices and cameras
+    \item Manage Proxmox servers and nodes
+    \item Start, stop, reboot, and shut down virtual machines through node operations
+    \item Register, verify, update, and remove gateway nodes
+    \item Discover hardware devices and refresh infrastructure status
+    \item Bind, unbind, attach, detach, dedicate, and configure devices and cameras
+    \item Assign and unassign cameras to virtual machines
+    \item Approve teacher accounts and manage user roles
+    \item Suspend, unsuspend, impersonate, and delete user accounts where authorized
+    \item Review and process refund requests
+    \item Review, approve, reject, and process payout requests
+    \item Monitor video processing status
+    \item Place devices and cameras in maintenance mode
+    \item Moderate flagged threads and replies
+    \item Manage system alerts and consult activity logs
+\end{itemize}
+
+\textbf{System-Wide Functional Requirements:}
+\begin{itemize}[label=-]
+    \item Enforce authentication and email verification for protected features
+    \item Apply authorization policies according to role and ability
+    \item Persist learning, payment, infrastructure, and moderation data
+    \item Support public and protected routes through a unified web interface
+    \item Provide rate limiting for sensitive or abuse-prone operations
+    \item Maintain notification and audit mechanisms for critical events
+    \item Support asynchronous or stateful workflows such as video processing, VM
+          lifecycle operations, refund handling, and hardware attachment
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+The quality constraints of the platform are defined by the educational,
+infrastructure, and operational nature of the system.
+
+\textbf{Performance:}
+\begin{itemize}[label=-]
+    \item The platform must provide responsive navigation across training,
+          administration, and infrastructure pages
+    \item Video streaming and progress tracking must occur with acceptable latency
+    \item VM provisioning and session retrieval must remain usable under concurrent
+          demand
+    \item Search, analytics summaries, and notification retrieval must execute
+          efficiently
+\end{itemize}
+
+\textbf{Security:}
+\begin{itemize}[label=-]
+    \item Authentication must rely on secure identity management and verified email
+          addresses
+    \item Authorization must be enforced by middleware and policy gates
+    \item Payment workflows must validate external webhook signatures and preserve
+          transaction integrity
+    \item Access to VM sessions, cameras, and USB devices must be restricted to
+          authorized users
+    \item Sensitive administrative actions must be auditable
+\end{itemize}
+
+\textbf{Reliability:}
+\begin{itemize}[label=-]
+    \item Learning progress, notes, payments, and reservations must remain durable and
+          consistent
+    \item Hardware and infrastructure actions must tolerate transient failure and
+          preserve observable state
+    \item Session resources must support lifecycle management including creation,
+          extension, and cleanup
+    \item Alerting and logging must assist recovery from operational issues
+\end{itemize}
+
+\textbf{Usability:}
+\begin{itemize}[label=-]
+    \item The user interface must remain coherent for learners, teachers, and
+          administrators
+    \item Learning workflows must be understandable without specialized infrastructure
+          knowledge
+    \item Administrative screens must expose complex operations in a controlled and
+          structured form
+    \item Forum, notes, reviews, and certificate features must integrate naturally into
+          the learning experience
+\end{itemize}
+
+\textbf{Scalability and Maintainability:}
+\begin{itemize}[label=-]
+    \item The architecture must support extension through modular routes, controllers,
+          models, and services
+    \item Domain separation between learning, commerce, virtual lab, and operations must
+          remain clear
+    \item The platform must support future growth in training content, users, devices,
+          and compute nodes
+    \item The codebase must remain testable and maintainable through strongly typed
+          frontend code and structured backend services
+\end{itemize}
+
+\iffalse
+    \subsection{Functional Components}
+
+    The IoT-REAP platform comprises seven integrated functional modules:
+
+    \textbf{Authentication \& RBAC Module:} Provides session-based authentication via Laravel Breeze, role-based access control (engineer, admin, security\_officer), device fingerprinting, and geo-IP anomaly detection. Implements password reset and maintains audit trails for all authentication events.
+
+    \textbf{VM Session Management Module:} Orchestrates virtual machine lifecycle through Proxmox VE API integration. Features include template browsing, session provisioning with configurable duration, load balancing across nodes, automatic cleanup of expired sessions, and support for multiple Proxmox clusters with encrypted credentials.
+
+    \textbf{Remote Desktop Access Module:} Integrates Apache Guacamole for clientless remote desktop access (RDP/VNC/SSH). Provides one-time token generation, session extension capabilities, connection preference persistence, and embedded viewer within the React interface.
+
+    \textbf{Robot Control \& Telemetry Module:} Manages IoT robot interactions through MQTT protocol. Features atomic reservation system preventing double-booking, Blockly visual programming interface, real-time telemetry streaming via WebSocket, emergency stop functionality, and command logging for audit purposes.
+
+    \textbf{Camera \& AI Scheduler Module:} Streams live video from ESP32-CAM devices and provides AI-powered demand forecasting. The Python FastAPI microservice uses RandomForestRegressor to predict VM requirements 24 hours ahead, enabling proactive resource pre-warming and idle session hibernation.
+
+    \textbf{Security \& Compliance Module:} Implements zero-trust access layer with device fingerprinting, geo-IP detection (MaxMind), and real-time risk scoring (0-100). Enforces Purdue model OT network isolation, maintains tamper-proof audit logs with SHA-256 hash chain, and generates IEC 62443 compliance reports.
+
+    \textbf{Technical Training Platform Module:} Delivers structured industrial skills training through a comprehensive learning management system. Features include multi-level course organization (courses, modules, lessons), HLS video streaming with adaptive quality (360p-1080p) and progress tracking, timed quizzes with auto-grading and configurable retry limits, hands-on VM lab sessions integrated directly into course lessons, and verifiable digital certificates with unique hash-based verification URLs. Supports instructor analytics dashboards tracking enrollments, completions, and learner progress.
+
+    \subsection{Expected Objectives}
+
+    The implementation of the IoT-REAP platform targets specific, measurable
+    objectives:
+
+    \textbf{Primary Operational Objectives:}
+    \vspace*{-0.2cm}
+    \begin{itemize}[label=-]
+        \item \textbf{Browser-Based Access:} Provide zero-install remote access to industrial VMs from any device with a web browser
+        \item \textbf{Concurrent Users:} Support 50+ concurrent users with automatic VM provisioning across multiple Proxmox nodes
+        \item \textbf{Session Management:} Implement automatic session expiration, extension capabilities, and quota enforcement
+        \item \textbf{Real-Time Control:} Achieve $<$200ms latency for robot telemetry and $<$700ms for camera feeds
+    \end{itemize}
+
+    \textbf{Security Objectives:}
+    \vspace*{-0.2cm}
+    \begin{itemize}[label=-]
+        \item \textbf{Zero-Trust Architecture:} Continuous session monitoring with automatic termination when risk score $>$85
+        \item \textbf{OT Compliance:} Enforce Purdue model network isolation with IT/OT zone separation
+        \item \textbf{Audit Trail:} Tamper-proof logging with SHA-256 hash chain for IEC 62443 compliance
+        \item \textbf{Security Testing:} OWASP ZAP scan with zero critical/high findings
+    \end{itemize}
+
+    \textbf{AI/ML Objectives:}
+    \vspace*{-0.2cm}
+    \begin{itemize}[label=-]
+        \item \textbf{Demand Forecasting:} Predict VM requirements 24 hours ahead to pre-warm standby VMs
+        \item \textbf{Predictive Maintenance:} Compute robot health scores (0-100) with alerts when health $<$40
+        \item \textbf{Idle Detection:} Automatically hibernate sessions after 10 minutes of inactivity
+    \end{itemize}
+
+    \textbf{Success Criteria:} The project will be deemed successful upon achieving: (1) functional platform deployment enabling end-to-end industrial remote access workflows, (2) support for 50+ concurrent users with automatic VM provisioning, (3) successful completion of security testing with zero critical/high OWASP findings, (4) positive user acceptance from engineering team, and (5) IEC 62443 compliance with tamper-proof audit logging.
+
+    The proposed solution represents a comprehensive response to identified
+    challenges, transforming industrial remote access from fragmented, insecure
+    tools into a unified, secure platform grounded in modern software engineering
+    principles and proven architectural patterns. 
+    \fi
+\subsection{SWOT Analysis}
+
+A strategic analysis of the IoT-REAP platform positions it within the
+competitive landscape of industrial remote access solutions:
+
+\begin{table}[H]
+    \centering
+    \caption{SWOT Analysis of IoT-REAP Platform}
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Strengths}     & \textbf{Weaknesses} \\
+        \hline
+        \begin{itemize}[leftmargin=*, nosep]
+            \item Unified platform (VM + RDP + IoT + AI)
+            \item Zero client installation (browser-based)
+            \item Zero-trust security with real-time risk scoring
+            \item IEC 62443 compliance with audit logging
+            \item AI-powered demand forecasting
+            \item Open-source foundation (Laravel, React)
+        \end{itemize}
+                               &
+        \begin{itemize}[leftmargin=*, nosep]
+            \item New platform without production track record
+            \item Dependency on external APIs (Proxmox, Guacamole)
+            \item Solo developer limiting parallel development
+            \item Initial setup complexity for multi-cluster environments
+        \end{itemize}
+        \\
+        \hline
+        \textbf{Opportunities} & \textbf{Threats}    \\
+        \hline
+        \begin{itemize}[leftmargin=*, nosep]
+            \item Growing Industry 4.0 adoption in MENA region
+            \item Increasing remote work requirements post-pandemic
+            \item Limited competition in OT-compliant remote access
+            \item Educational institution partnerships
+            \item Extension to additional industrial protocols
+        \end{itemize}
+                               &
+        \begin{itemize}[leftmargin=*, nosep]
+            \item Competition from cloud vendors (AWS IoT, Azure IoT)
+            \item Rapid evolution of security threats
+            \item Vendor lock-in concerns from enterprises
+            \item Budget constraints in industrial sector
+            \item Regulatory changes in OT security standards
+        \end{itemize}
+        \\
+        \hline
+    \end{tabular}
+    \label{tab:swot-analysis}
+\end{table}
+
+\section{MVC Architecture}
+
+\subsection{Architectural Pattern Overview}
+
+The Model-View-Controller (MVC) architectural pattern is a foundational design
+pattern in software development that promotes separation of concerns,
+maintainability, and scalability \cite{fowler2003}. MVC divides applications
+into three interconnected components:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{assets/chapter2/mvc-pattern-diagram.png}
+    \caption{MVC Architectural Pattern: Component Interaction Flow}
+    \label{fig:mvc-pattern}
+\end{figure}
+
+\textbf{Model Component:} Represents data structures, business logic, and data management rules. Responsible for data persistence, retrieval, validation, and enforcing business constraints independently of the user interface.
+
+\textbf{View Component:} Handles presentation layer and user interface rendering. Displays data in appropriate formats and captures user input without containing business logic.
+
+\textbf{Controller Component:} Manages data flow between Models and Views, orchestrating application logic. Receives user requests, interacts with Models, applies business rules, and selects appropriate Views for rendering responses.
+
+This architectural separation enables independent development, testing, and
+modification of each component, reducing code coupling and improving
+maintainability.
+
+\subsection{MVC Layers in IoT-REAP Context}
+
+\textbf{The Model Layer} encapsulates data structures, database interactions, and business rules. IoT-REAP Models define database structure for users, VM sessions, robots, telemetry, and audit logs. Models implement entity relationships, provide CRUD operations, and enforce data integrity through Eloquent ORM patterns.
+
+\textbf{The View Layer} in IoT-REAP is implemented as a React 18 frontend with TypeScript. Key principles include component-based architecture, typed props interfaces, custom hooks for data fetching, and Zustand for state management. Views render dashboards, session interfaces, robot control panels, and admin consoles.
+
+\textbf{The Controller Layer} orchestrates application logic between Models and Services. IoT-REAP Controllers remain thin—validating input via FormRequests, delegating to Services for business logic, and returning JSON responses via API Resources. Controllers handle authentication/authorization via middleware and manage error responses.
+
+\textbf{The Service Layer} contains all business logic. Services like \texttt{VMProvisioningService}, \texttt{GuacamoleClient}, \texttt{MqttService}, and \texttt{RiskScoreEngine} encapsulate complex operations, enabling testability and reuse.
+
+\textbf{The Repository Layer} handles all database queries. Repositories like \texttt{VMSessionRepository} and \texttt{UserRepository} abstract Eloquent operations, returning Models or Collections—never raw arrays.
+
+\begin{table}[H]
+    \centering
+    \caption{IoT-REAP Platform Core Controllers and Responsibilities}
+    \begin{tabular}{|p{4cm}|p{10cm}|}
+        \hline
+        \textbf{Controller}     & \textbf{Primary Responsibilities}                                            \\
+        \hline
+        AuthController          & User authentication, registration, password reset, session management        \\
+        \hline
+        VMSessionController     & Session creation, extension, termination; delegates to VMProvisioningService \\
+        \hline
+        VMTemplateController    & Template listing, admin CRUD operations for VM templates                     \\
+        \hline
+        ProxmoxNodeController   & Node stats, VM listing, VM control (start/stop/reboot)                       \\
+        \hline
+        RobotSessionController  & Robot reservation, command dispatch via MqttService                          \\
+        \hline
+        SecurityEventController & Security event listing, active sessions with risk scores                     \\
+        \hline
+        AdminController         & User quota management, activity logs, system configuration                   \\
+        \hline
+    \end{tabular}
+    \label{tab:iotreap-controllers}
+\end{table}
+
+\subsection{MVC Benefits for IoT-REAP Platform}
+
+The MVC architectural pattern provides critical advantages:
+
+\textbf{Separation of Concerns:} Database specialists focus on Model optimization, frontend developers concentrate on React components, backend developers work on Services and Controllers, enabling parallel development without conflicts.
+
+\textbf{Maintainability:} Database schema changes don't require React modifications; UI redesigns don't affect business logic; clear organization enables rapid developer onboarding.
+
+\textbf{Testability:} Models and Services can be unit tested independently; Controllers tested through feature tests with mocked external APIs (Proxmox, Guacamole); React components tested with React Testing Library.
+
+\textbf{Reusability:} Services reused across multiple Controllers (e.g., \texttt{ProxmoxClient} used by both \texttt{VMSessionController} and \texttt{ProxmoxNodeController}); React hooks shared across pages.
+
+\textbf{Scalability:} Independent layer scaling based on performance requirements; AI microservice scales separately from Laravel backend.
+
+\begin{table}[H]
+    \centering
+    \caption{How MVC Architecture Supports IoT-REAP Platform Requirements}
+    \begin{tabular}{|p{4cm}|p{10cm}|}
+        \hline
+        \textbf{Requirement} & \textbf{MVC Architectural Support}                                         \\
+        \hline
+        VM Provisioning      & Service layer encapsulates Proxmox API; Controllers orchestrate workflow   \\
+        \hline
+        Remote Desktop       & GuacamoleClient service handles connection lifecycle; Views embed viewer   \\
+        \hline
+        Robot Control        & MqttService publishes commands; WebSocket broadcasts telemetry to Views    \\
+        \hline
+        AI Forecasting       & External microservice called via HTTP; results cached and served to Views  \\
+        \hline
+        Zero-Trust Security  & Middleware layer computes risk scores; Controllers enforce access policies \\
+        \hline
+        Audit Logging        & Observer pattern on Models; AuditLogger service maintains hash chain       \\
+        \hline
+        Real-Time Updates    & Events broadcast via Laravel Echo; React Views subscribe via WebSocket     \\
+        \hline
+    \end{tabular}
+    \label{tab:mvc-requirements}
+\end{table}
+
+The MVC pattern, extended with Service and Repository layers, provides the
+essential structural foundation enabling the IoT-REAP platform to meet all
+functional and non-functional requirements while maintaining high code quality
+and long-term maintainability. \iffalse
+    \section{Technology Stack}
+
+    The IoT-REAP platform integrates multiple technologies to deliver its
+    functionality. This section describes the key technologies and their roles in
+    the system architecture.
+
+    \subsection{Backend Technologies}
+
+    \textbf{Laravel 12:} The primary backend framework providing MVC architecture, Eloquent ORM, routing, middleware, queues, and events. Laravel's ecosystem includes Breeze for authentication, Sanctum for API tokens, and Horizon for queue monitoring.
+
+    \textbf{PHP 8.4+:} The runtime environment enabling modern PHP features including typed properties, enums, readonly classes, and named arguments used throughout the codebase.
+
+    \textbf{MySQL:} The relational database storing users, VM sessions, robot reservations, audit logs, and all persistent data. Indexed for query performance with foreign key constraints ensuring referential integrity.
+
+    \textbf{Redis:} In-memory data store used for session management, queue backend, caching (Proxmox node stats, AI predictions), and real-time broadcasting via Laravel Echo.
+
+    \subsection{Frontend Technologies}
+
+    \textbf{React 18:} The frontend framework providing component-based architecture, hooks for state and effects, and concurrent rendering capabilities for responsive UIs.
+
+    \textbf{TypeScript 5.x (Strict Mode):} Type-safe JavaScript ensuring compile-time error detection. All interfaces, props, and API responses are explicitly typed—no \texttt{any} types allowed.
+
+    \textbf{Zustand:} Lightweight state management for authentication state and global UI state. Stores user information in memory (never localStorage for sensitive data).
+
+    \textbf{Tailwind CSS:} Utility-first CSS framework enabling rapid UI development with consistent styling across the application.
+
+    \textbf{Vite:} Build tool providing fast hot module replacement during development and optimized production builds.
+
+    \subsection{Infrastructure Technologies}
+
+    \textbf{Proxmox VE 8.x:} Open-source virtualization platform providing the VM infrastructure. IoT-REAP integrates via the Proxmox REST API for template cloning, VM lifecycle management, and node statistics.
+
+    \textbf{Apache Guacamole 1.5.x:} Clientless remote desktop gateway supporting RDP, VNC, and SSH protocols. Users access VMs directly in their browser without installing client software. IoT-REAP manages connections via the Guacamole REST API.
+
+    \textbf{MQTT (Mosquitto):} Lightweight publish-subscribe messaging protocol for IoT communication. Robots receive commands on \texttt{robot/\{id\}/command} and publish telemetry on \texttt{robot/\{id\}/telemetry}.
+
+    \textbf{Docker:} Containerization platform for consistent development and deployment environments. Services run in isolated containers with Docker Compose orchestration.
+
+    \textbf{HLS Video Streaming:} HTTP Live Streaming protocol for adaptive video delivery in the Technical Training Platform. Videos are transcoded to multiple quality levels (360p, 720p, 1080p) enabling automatic quality adaptation based on network conditions. Progress tracking integrates with course completion metrics.
+
+    \subsection{AI/ML Technologies}
+
+    \textbf{Python 3.11+ / FastAPI:} The AI microservice runtime and framework. FastAPI provides async request handling, automatic OpenAPI documentation, and Pydantic validation.
+
+    \textbf{scikit-learn:} Machine learning library providing RandomForestRegressor for demand forecasting and IsolationForest for anomaly detection in robot telemetry.
+
+    \textbf{MaxMind GeoLite2:} IP geolocation database for geo-IP anomaly detection in the zero-trust security layer.
+
+    \begin{table}[H]
+        \centering
+        \caption{IoT-REAP Technology Stack Summary}
+        \begin{tabular}{|p{3cm}|p{4cm}|p{7cm}|}
+            \hline
+            \textbf{Layer}    & \textbf{Technology}           & \textbf{Purpose}                      \\
+            \hline
+            Backend           & Laravel 12, PHP 8.4+          & MVC framework, API, queues, events    \\
+            \hline
+            Frontend          & React 18, TypeScript          & Component-based UI with type safety   \\
+            \hline
+            Database          & MySQL, Redis                  & Persistent storage and caching        \\
+            \hline
+            Virtualization    & Proxmox VE 8.x                & VM provisioning and management        \\
+            \hline
+            Remote Desktop    & Apache Guacamole              & Browser-based RDP/VNC/SSH access      \\
+            \hline
+            IoT Messaging     & MQTT/Mosquitto                & Robot command and telemetry transport \\
+            \hline
+            Training Platform & HLS, FFmpeg                   & Adaptive video streaming for courses  \\
+            \hline
+            AI/ML             & Python, FastAPI, scikit-learn & Demand forecasting, anomaly detection \\
+            \hline
+            DevOps            & Docker, GitHub Actions        & Containerization and CI/CD            \\
+            \hline
+        \end{tabular}
+        \label{tab:tech-stack}
+    \end{table}
+\fi
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+This chapter analyzed existing industrial remote access solutions, revealing
+limitations in VPN complexity, session management, OT compliance, and unified
+tooling. The proposed IoT-REAP platform addresses these challenges through an
+integrated architecture combining Proxmox VM provisioning, Guacamole remote
+desktop, MQTT robot control, and AI-powered scheduling—all built on Laravel MVC
+with a React TypeScript frontend.
+
+\cleardoublepage

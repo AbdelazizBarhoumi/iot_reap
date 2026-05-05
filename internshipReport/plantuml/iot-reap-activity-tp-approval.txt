@@ -1,0 +1,39 @@
+@startuml iot-reap-activity-tp-approval
+title IoT-REAP - Training Path Approval Activity Diagram
+
+start
+:Teacher edits training path content;
+:Teacher submits for review;
+if (Ownership verified?) then (yes)
+  if (Content ready for submission?) then (yes)
+    :Training path status -> PENDING_REVIEW;
+    :Notify administrators;
+    :Administrator opens review dashboard;
+    :Administrator reviews content;
+    if (Content meets standards?) then (yes)
+      :Training path status -> APPROVED;
+      :Path visible in public catalog;
+      if (Administrator selects as featured?) then (yes)
+        :Add to featured list;
+        :Set featured order;
+      else (no)
+        :Path available but not featured;
+      endif
+    else (no - rejected)
+      :Training path status -> REJECTED;
+      :Record rejection reason;
+      :Notify teacher;
+      :Teacher revises content;
+      stop
+    endif
+  else (no)
+    :Display validation errors;
+    stop
+  endif
+else (no)
+  :Return 403 Forbidden;
+  stop
+endif
+stop
+
+@enduml

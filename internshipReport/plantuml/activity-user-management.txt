@@ -1,0 +1,229 @@
+@startuml activity-user-management
+!theme carbon-gray
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+
+title DTR Platform - User Management Activity Diagram\nSuper Administrator User Administration
+
+|Super Administrator|
+start
+
+:Navigate to /admin/users;
+
+|System|
+:Verify superadmin role;
+
+if (User has superadmin role?) then (yes)
+  :Authorization granted;
+else (no)
+  :Return HTTP 403;
+  |Super Administrator|
+  :See "Access Denied" message;
+  stop
+endif
+
+|System|
+:Load all users from database
+WITH departments, roles;
+:Display user management interface;
+
+|Super Administrator|
+:View user list with:
+- Name, Email
+- Role, Department
+- Status (Active/Suspended)
+- Actions menu;
+
+' ============================================================================
+' USER ACTIONS CHOICE
+' ============================================================================
+
+|Super Administrator|
+switch (Select action?)
+case (Create New User)
+  partition "Create User" {
+    |Super Administrator|
+    :Click "Create User" button;
+    
+    |System|
+    :Display user creation form;
+    
+    |Super Administrator|
+    :Fill form:
+    - Name, Email
+    - Password
+    - Role (employer/dept_admin/superadmin)
+    - Department (optional)
+    - Company info;
+    :Submit form;
+    
+    |System|
+    :Validate input;
+    if (Email unique?) then (yes)
+      :Hash password;
+      :Insert into database;
+      :Send welcome email;
+      :Display success message;
+    else (no)
+      :Show error "Email already exists";
+    endif
+  }
+
+case (Edit User)
+  partition "Edit User" {
+    |Super Administrator|
+    :Click "Edit" on user row;
+    
+    |System|
+    :Load user data;
+    :Display edit form (pre-filled);
+    
+    |Super Administrator|
+    :Modify fields;
+    :Submit changes;
+    
+    |System|
+    :Validate updates;
+    :Update database record;
+    :Display success message;
+  }
+
+case (Suspend User)
+  partition "Suspend User" {
+    |Super Administrator|
+    :Click "Suspend" on active user;
+    :Enter suspension reason;
+    :Set suspension duration (optional);
+    :Confirm action;
+    
+    |System|
+    :Check not suspending self;
+    if (Attempting self-suspension?) then (yes)
+      :Show error "Cannot suspend yourself";
+      stop
+    else (no)
+      :Update user:
+      - is_active = false
+      - suspension_reason
+      - suspension_date
+      - suspension_end_date;
+      :Invalidate all user sessions;
+      :Send suspension notification;
+      :Display success message;
+    endif
+  }
+
+case (Activate User)
+  partition "Activate User" {
+    |Super Administrator|
+    :Click "Activate" on suspended user;
+    :Confirm activation;
+    
+    |System|
+    :Update user:
+    - is_active = true
+    - Clear suspension fields;
+    :Send activation notification;
+    :Display success message;
+  }
+
+case (Assign Role)
+  partition "Assign Role" {
+    |Super Administrator|
+    :Click "Assign Role" on user;
+    :Select new role:
+    - employer
+    - dept_admin
+    - superadmin;
+    :Confirm assignment;
+    
+    |System|
+    :Update user.role;
+    if (Role = dept_admin?) then (yes)
+      :Prompt for department selection;
+      :Assign department_id;
+    endif
+    :Display success message;
+  }
+
+case (Delete User)
+  partition "Delete User" {
+    |Super Administrator|
+    :Click "Delete" on user;
+    :View warning:
+    "Permanently delete user?
+    Related data will be preserved";
+    :Confirm deletion;
+    
+    |System|
+    :Check not deleting self;
+    if (Attempting self-deletion?) then (yes)
+      :Show error "Cannot delete yourself";
+      stop
+    else (no)
+      :BEGIN TRANSACTION;
+      :Soft delete user (deleted_at);
+      :Preserve related submissions;
+      :COMMIT TRANSACTION;
+      :Display success message;
+    endif
+  }
+
+case (Review User Activity)
+  partition "View Activity" {
+    |Super Administrator|
+    :Click "View Activity" on user;
+    
+    |System|
+    :Load user activity log:
+    - Login history
+    - Assessment submissions
+    - Actions performed
+    - Last activity timestamp;
+    :Display activity dashboard;
+    
+    |Super Administrator|
+    :Review user behavior;
+    :Make administrative decisions;
+  }
+
+endswitch
+
+|Super Administrator|
+if (Perform another action?) then (yes)
+  :Return to user list;
+  detach
+else (no)
+  stop
+endif
+
+legend right
+  **User Management Actions**
+  
+  **Available Operations:**
+  1. Create User - Add new platform user
+  2. Edit User - Modify user details
+  3. Suspend User - Temporarily disable access
+  4. Activate User - Re-enable suspended account
+  5. Assign Role - Change user permissions
+  6. Delete User - Soft delete account
+  7. Review Activity - Audit user actions
+  
+  **Role Types:**
+  - Employer: Basic assessment access
+  - Dept Admin: Department management
+  - Super Admin: Full system control
+  
+  **Security Measures:**
+  - Cannot suspend/delete self
+  - Superadmin role required
+  - Audit logging
+  - Session invalidation on status change
+  
+  **Database Operations:**
+  - Soft deletes (preserve data)
+  - Transaction safety
+  - Relationship integrity
+endlegend
+
+@enduml

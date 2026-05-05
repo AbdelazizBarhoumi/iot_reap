@@ -1,0 +1,73 @@
+﻿@startuml guest-use-case
+!theme carbon-gray
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecaseStyle rectangle
+skinparam defaultFontSize 11
+skinparam defaultFontName Arial
+
+title Unauthenticated User - Complete Use Case Diagram
+left to right direction
+
+' ============================================================================
+' ACTORS
+' ============================================================================
+actor "Unauthenticated\nUser" as GU #9E9E9E
+actor "Email\nSystem" as EMAIL #E0E0E0
+
+' ============================================================================
+' GENERALIZED USE CASES (from General Diagram)
+' ============================================================================
+
+usecase "Register" as UC_REGISTER_GEN
+
+' ============================================================================
+' DETAILED USE CASES (Children)
+' ============================================================================
+
+  usecase "Register Account" as UC_REGISTER
+  usecase "Login to Platform" as UC_LOGIN
+  usecase "Request Password Reset" as UC_REQUEST_RESET
+  usecase "Reset Password" as UC_RESET
+  usecase "Verify Email Address" as UC_VERIFY
+
+
+  usecase "Send Verification Email" as UC_EMAIL_VERIFY
+  usecase "Send Password Reset Link" as UC_EMAIL_RESET
+  usecase "Send Welcome Email" as UC_EMAIL_WELCOME
+  usecase "Resend Verification" as UC_EMAIL_RESEND
+
+
+' ============================================================================
+' ASSOCIATIONS
+' ============================================================================
+
+' Generalized use case
+GU -- UC_REGISTER_GEN
+
+' Email system associations
+EMAIL -- UC_EMAIL_VERIFY
+EMAIL -- UC_EMAIL_RESET
+EMAIL -- UC_EMAIL_WELCOME
+EMAIL -- UC_EMAIL_RESEND
+
+' ============================================================================
+' RELATIONSHIPS - Generalization (child includes parent)
+' ============================================================================
+
+' Register children
+UC_REGISTER ..> UC_REGISTER_GEN : <<include>>
+UC_LOGIN ..> UC_REGISTER_GEN : <<include>>
+UC_REQUEST_RESET ..> UC_REGISTER_GEN : <<include>>
+UC_RESET ..> UC_REGISTER_GEN : <<include>>
+UC_VERIFY ..> UC_REGISTER_GEN : <<include>>
+
+' Internal relationships
+UC_REGISTER ..> UC_VERIFY : <<include>>
+UC_REGISTER ..> UC_EMAIL_VERIFY : <<include>>
+UC_REGISTER ..> UC_EMAIL_WELCOME : <<include>>
+UC_REQUEST_RESET ..> UC_EMAIL_RESET : <<include>>
+UC_RESET ..> UC_REQUEST_RESET : <<include>>
+UC_EMAIL_RESEND ..> UC_REGISTER : <<extend>>
+
+@enduml

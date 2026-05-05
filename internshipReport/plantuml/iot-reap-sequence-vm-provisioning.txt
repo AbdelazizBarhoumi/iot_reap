@@ -1,0 +1,89 @@
+@startuml iotreap-vm-provisioning
+title IoT-REAP - Virtual Machine Provisioning Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "VMSession\nController" as Controller
+participant "VMSession\nService" as VMService
+participant "Quota\nService" as QuotaService
+participant "Proxmox\nLoad Balancer" as LoadBalancer
+participant "Proxmox\nClient" as Proxmox
+participant "Guacamole\nClient" as Guacamole
+participant "VMSession\nRepository" as VMRepo
+database "Database" as DB
+
+== Session Request ==
+
+Engineer -> Browser: Click "New Session"
+Browser -> Controller: POST /sessions {template_id, duration}
+Controller -> Controller: Validate request (FormRequest)
+Controller -> VMService: provision(user, templateId, duration)
+
+== Quota Check ==
+
+VMService -> QuotaService: assertNotExceeded(user)
+QuotaService -> VMRepo: countActiveByUser(user)
+VMRepo -> DB: SELECT COUNT(*) FROM vm_sessions WHERE user_id = ? AND status = 'active'
+DB --> VMRepo: Active session count
+VMRepo --> QuotaService: Count result
+QuotaService --> VMService: Quota available
+
+== Infrastructure Selection ==
+
+VMService -> LoadBalancer: selectNode()
+LoadBalancer -> DB: Fetch available nodes with capacity
+DB --> LoadBalancer: Node list with load metrics
+LoadBalancer --> VMService: Selected ProxmoxNode (least loaded)
+
+== VM Clone on Proxmox ==
+
+VMService -> Proxmox: cloneTemplate(templateId, node)
+Proxmox -> Proxmox: POST /api2/json/nodes/{node}/qemu/{vmid}/clone
+note right: Poll for completion\n(clone is async)
+Proxmox --> VMService: New VMID assigned
+
+== Session Record Creation ==
+
+VMService -> VMRepo: create(user, server, node, vmid, expiresAt)
+VMRepo -> DB: INSERT vm_sessions
+DB --> VMRepo: VMSession record
+VMRepo --> VMService: VMSession created
+
+VMService -> VMService: dispatch(CleanupVMJob, delay = duration)
+
+== Remote Access Token (On Demand) ==
+
+Engineer -> Browser: Click "Connect"
+Browser -> Controller: GET /sessions/{id}/guacamole-token
+Controller -> VMService: generateGuacamoleToken(session)
+VMService -> Guacamole: createConnection(session)
+Guacamole -> Guacamole: POST /api/session/data/mysql/connections
+Guacamole --> VMService: Connection identifier
+VMService -> Guacamole: getAuthToken(connectionId)
+Guacamole --> VMService: One-time access token
+VMService --> Controller: Token + Guacamole URL
+Controller --> Browser: {guacamole_url, token}
+Browser --> Engineer: Embed Guacamole remote desktop
+
+== Session Lifecycle ==
+
+Engineer -> Browser: Click "Extend Session"
+Browser -> Controller: POST /sessions/{id}/extend
+Controller -> VMService: extendSession(session, additionalMinutes)
+VMService -> VMRepo: updateExpiresAt(session, newExpiry)
+VMRepo -> DB: UPDATE vm_sessions SET expires_at = ?
+DB --> VMRepo: Updated
+VMService --> Controller: Extended session
+
+Engineer -> Browser: Click "Terminate"
+Browser -> Controller: DELETE /sessions/{id}
+Controller -> VMService: terminateSession(session)
+VMService -> Proxmox: stopVM(node, vmid)
+Proxmox --> VMService: VM stopped
+VMService -> VMRepo: updateStatus(session, TERMINATED)
+VMRepo -> DB: UPDATE vm_sessions SET status = 'terminated'
+DB --> VMRepo: Updated
+VMService --> Controller: Session terminated
+Controller --> Browser: Redirect to sessions list
+
+@enduml

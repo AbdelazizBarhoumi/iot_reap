@@ -1,0 +1,393 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1900" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Quiz Attempt Submission Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1200" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor_eng" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Engineer" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_browser" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Browser" vertex="1">
+      <mxGeometry x="160" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_controller" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Quiz&#xa;Controller" vertex="1">
+      <mxGeometry x="320" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_quizsvc" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Quiz&#xa;Service" vertex="1">
+      <mxGeometry x="480" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_attemptrepo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="QuizAttempt&#xa;Repository" vertex="1">
+      <mxGeometry x="640" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_progressrepo" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="TrainingUnit&#xa;Progress Repo" vertex="1">
+      <mxGeometry x="800" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="960" y="50" width="100" height="1750" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SECTION 1: Open Quiz ===== -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Open Quiz ==" vertex="1">
+      <mxGeometry x="150" y="160" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Engineer -> Browser -->
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to quiz in training unit" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="90" y="210" as="sourcePoint" />
+        <mxPoint x="210" y="210" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{pathId}/trainingUnit/{unitId}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="240" as="sourcePoint" />
+        <mxPoint x="370" y="240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> QuizSvc -->
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="getQuizForUnit(unitId)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="270" as="sourcePoint" />
+        <mxPoint x="530" y="270" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc -> DB -->
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="SELECT quizzes WHERE training_unit_id = ?" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="300" as="sourcePoint" />
+        <mxPoint x="1010" y="300" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB --> QuizSvc -->
+    <mxCell id="m5" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Quiz with questions and options" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1010" y="330" as="sourcePoint" />
+        <mxPoint x="530" y="330" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- QuizSvc -->
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Quiz data" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="360" as="sourcePoint" />
+        <mxPoint x="370" y="360" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m7" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Render quiz view" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="390" as="sourcePoint" />
+        <mxPoint x="210" y="390" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Engineer <-- Browser -->
+    <mxCell id="m8" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display quiz questions" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="420" as="sourcePoint" />
+        <mxPoint x="90" y="420" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 2: Start Attempt ===== -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Start Attempt ==" vertex="1">
+      <mxGeometry x="150" y="460" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Engineer -> Browser -->
+    <mxCell id="m9" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Click &quot;Start Quiz&quot;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="90" y="510" as="sourcePoint" />
+        <mxPoint x="210" y="510" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /trainingPaths/{pathId}/quizzes/{quizId}/attempt" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="540" as="sourcePoint" />
+        <mxPoint x="370" y="540" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> QuizSvc -->
+    <mxCell id="m11" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="startAttempt(user, quiz)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="570" as="sourcePoint" />
+        <mxPoint x="530" y="570" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc -> QuizSvc: checkEligibility -->
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="checkEligibility(user, quiz)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="600" as="sourcePoint" />
+        <mxPoint x="530" y="630" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="600" />
+          <mxPoint x="595" y="630" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Note for checkEligibility -->
+    <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=9;fillColor=#ffffc0;strokeColor=#999900;align=left;" value="Verify: enrolled in path,&#xa;not exceeded max attempts" vertex="1">
+      <mxGeometry x="610" y="593" width="175" height="44" as="geometry" />
+    </mxCell>
+
+    <!-- QuizSvc -> AttemptRepo: create -->
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="create(user, quiz)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="660" as="sourcePoint" />
+        <mxPoint x="690" y="660" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- AttemptRepo -> DB -->
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="INSERT quiz_attempts (status: 'in_progress')" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="690" as="sourcePoint" />
+        <mxPoint x="1010" y="690" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB <-- AttemptRepo -->
+    <mxCell id="m15" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="QuizAttempt record" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1010" y="720" as="sourcePoint" />
+        <mxPoint x="690" y="720" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc <-- AttemptRepo -->
+    <mxCell id="m16" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Quiz attempt" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="750" as="sourcePoint" />
+        <mxPoint x="530" y="750" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- QuizSvc -->
+    <mxCell id="m17" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Attempt created" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="780" as="sourcePoint" />
+        <mxPoint x="370" y="780" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m18" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="201 Created {attempt_id}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="810" as="sourcePoint" />
+        <mxPoint x="210" y="810" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Engineer <-- Browser -->
+    <mxCell id="m19" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display quiz form with timer" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="840" as="sourcePoint" />
+        <mxPoint x="90" y="840" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 3: Submit Answers ===== -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Submit Answers ==" vertex="1">
+      <mxGeometry x="150" y="880" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- Engineer -> Browser -->
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Fill answers and click &quot;Submit&quot;" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="90" y="930" as="sourcePoint" />
+        <mxPoint x="210" y="930" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser -> Controller -->
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /quizzes/attempts/{attemptId}/submit {answers[]}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="960" as="sourcePoint" />
+        <mxPoint x="370" y="960" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller -> QuizSvc -->
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="submitAttempt(attempt, answers)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="990" as="sourcePoint" />
+        <mxPoint x="530" y="990" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc -> QuizSvc: validateAnswers -->
+    <mxCell id="m23" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="validateAnswers(attempt, answers)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1020" as="sourcePoint" />
+        <mxPoint x="530" y="1050" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="1020" />
+          <mxPoint x="595" y="1050" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Note for validateAnswers -->
+    <mxCell id="note2" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=9;fillColor=#ffffc0;strokeColor=#999900;align=left;" value="Check: attempt belongs to user,&#xa;attempt is in_progress,&#xa;within time limit" vertex="1">
+      <mxGeometry x="610" y="1013" width="175" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- loop frame -->
+    <mxCell id="loop_frame" parent="1" style="swimlane;startSize=20;html=1;fontSize=10;fontStyle=1;align=left;fillColor=none;strokeColor=#666666;strokeWidth=1;rounded=0;" value="loop  [For each answer]" vertex="1">
+      <mxGeometry x="150" y="1080" width="870" height="130" as="geometry" />
+    </mxCell>
+
+    <!-- QuizSvc -> AttemptRepo: saveAnswer -->
+    <mxCell id="m24" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="saveAnswer(attempt, questionId, selectedOptionIds)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1120" as="sourcePoint" />
+        <mxPoint x="690" y="1120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- AttemptRepo -> DB -->
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="INSERT quiz_attempt_answers" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="1150" as="sourcePoint" />
+        <mxPoint x="1010" y="1150" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB <-- AttemptRepo -->
+    <mxCell id="m26" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Answer record" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1010" y="1180" as="sourcePoint" />
+        <mxPoint x="690" y="1180" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== SECTION 4: Score and Complete ===== -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Score and Complete ==" vertex="1">
+      <mxGeometry x="150" y="1240" width="870" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- QuizSvc -> QuizSvc: calculateScore -->
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;curved=1;" value="calculateScore(attempt)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1290" as="sourcePoint" />
+        <mxPoint x="530" y="1320" as="targetPoint" />
+        <Array as="points">
+          <mxPoint x="595" y="1290" />
+          <mxPoint x="595" y="1320" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Note for calculateScore -->
+    <mxCell id="note3" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=9;fillColor=#ffffc0;strokeColor=#999900;align=left;" value="Compare selected options&#xa;against correct answers,&#xa;compute percentage score" vertex="1">
+      <mxGeometry x="610" y="1283" width="175" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- QuizSvc -> AttemptRepo: completeAttempt -->
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="completeAttempt(attempt, score, passed)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1355" as="sourcePoint" />
+        <mxPoint x="690" y="1355" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- AttemptRepo -> DB -->
+    <mxCell id="m29" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPDATE quiz_attempts SET score = ?, passed = ?, status = 'completed'" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="1385" as="sourcePoint" />
+        <mxPoint x="1010" y="1385" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB <-- AttemptRepo -->
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Updated attempt" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1010" y="1415" as="sourcePoint" />
+        <mxPoint x="690" y="1415" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc <-- AttemptRepo -->
+    <mxCell id="m31" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Completed attempt" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="690" y="1445" as="sourcePoint" />
+        <mxPoint x="530" y="1445" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc -> ProgressRepo: updateUnitProgress -->
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="updateUnitProgress(user, unitId)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1475" as="sourcePoint" />
+        <mxPoint x="850" y="1475" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ProgressRepo -> DB -->
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="UPSERT training_unit_progress (quiz_completed = true)" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="850" y="1505" as="sourcePoint" />
+        <mxPoint x="1010" y="1505" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- DB <-- ProgressRepo -->
+    <mxCell id="m34" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Updated progress" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1010" y="1535" as="sourcePoint" />
+        <mxPoint x="850" y="1535" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- QuizSvc <-- ProgressRepo -->
+    <mxCell id="m35" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Progress updated" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="850" y="1565" as="sourcePoint" />
+        <mxPoint x="530" y="1565" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Controller <-- QuizSvc -->
+    <mxCell id="m36" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Attempt result {score, passed, total}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="530" y="1600" as="sourcePoint" />
+        <mxPoint x="370" y="1600" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Browser <-- Controller -->
+    <mxCell id="m37" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="200 OK {score, passed}" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="370" y="1630" as="sourcePoint" />
+        <mxPoint x="210" y="1630" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Engineer <-- Browser -->
+    <mxCell id="m38" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display quiz results" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="210" y="1660" as="sourcePoint" />
+        <mxPoint x="90" y="1660" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

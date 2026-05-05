@@ -1,0 +1,202 @@
+@startuml iot-reap-sequence-admin-finance
+title IoT-REAP - Admin Finance Flows Sequence Diagram
+actor Admin as admin
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Admin Finance\nController" as finance
+participant "Admin Payout\nController" as payout
+participant "Admin Refund\nController" as refund
+participant "Database" as db
+participant "Stripe\nAPI" as stripe
+participant "Payout\nModel" as pm
+participant "Refund\nModel" as rm
+participant "Payment\nModel" as payment
+
+== Finance Dashboard ==
+
+admin -> frontend : Navigate to finance workspace
+frontend -> routes : GET /admin/finance
+routes -> finance : index()
+finance -> db : Load financial overview
+finance -> db : Calculate total revenue
+finance -> db : Load pending payouts
+finance -> db : Load pending refunds
+db --> finance : Return finance data
+finance --> routes : Return finance dashboard
+routes --> frontend : Display finance overview
+frontend --> admin : Show revenue, payouts, refunds summary
+
+== Payout Management ==
+
+admin -> frontend : View payout requests
+frontend -> routes : GET /admin/payouts
+routes -> payout : index()
+payout -> db : Load payout requests
+payout -> db : Load request statuses
+payout -> db : Load teacher information
+db --> payout : Return payout data
+payout --> routes : Return payout list
+routes --> frontend : Display payout requests
+frontend --> admin : Show all payout requests with status
+
+admin -> frontend : Export payouts report
+frontend -> routes : GET /admin/payouts/export
+routes -> payout : export()
+payout -> db : Load payout history
+payout -> db : Generate CSV report
+payout -> db : Format payout data
+db --> payout : Return report data
+payout --> routes : Return CSV file
+routes --> frontend : Trigger file download
+frontend --> admin : Download payouts report
+
+admin -> frontend : Approve payout request
+frontend -> routes : POST /admin/payouts/{payout}/approve
+routes -> payout : approve(payoutId)
+payout -> db : Load payout request
+payout -> db : Update status to approved
+payout -> db : Set approved_at timestamp
+payout -> db : Set approved_by to admin
+payout -> db : Save changes
+payout -> db : Notify teacher
+payout --> routes : Return success
+routes --> frontend : Update payout status
+frontend --> admin : Show payout as approved
+
+admin -> frontend : Reject payout request
+frontend -> routes : POST /admin/payouts/{payout}/reject
+routes -> payout : reject(payoutId, reason)
+payout -> db : Load payout request
+payout -> db : Update status to rejected
+payout -> db : Set rejection reason
+payout -> db : Save changes
+payout -> db : Notify teacher
+payout -> db : Return funds to available balance
+payout --> routes : Return success
+routes --> frontend : Update payout status
+frontend --> admin : Show payout as rejected
+
+admin -> frontend : Process payout transfer
+frontend -> routes : POST /admin/payouts/{payout}/process
+routes -> payout : process(payoutId)
+payout -> db : Load payout request
+payout -> db : Update status to processing
+payout -> db : Save changes
+payout -> stripe : Initiate Stripe transfer
+stripe --> payout : Return transfer result
+
+alt Transfer successful
+    payout -> db : Update status to paid
+    payout -> db : Set paid_at timestamp
+    payout -> db : Set stripe_transfer_id
+    payout -> db : Save changes
+    payout -> db : Notify teacher
+    payout --> routes : Return success
+    routes --> frontend : Update payout status
+    frontend --> admin : Show payout as paid
+else Transfer failed
+    payout -> db : Update status to failed
+    payout -> db : Set error message
+    payout -> db : Save changes
+    payout -> db : Notify admins
+    payout --> routes : Return error
+    routes --> frontend : Show error
+    frontend --> admin : Display transfer failure
+end
+
+== Refund Management ==
+
+admin -> frontend : View refund requests
+frontend -> routes : GET /admin/refunds
+routes -> refund : index()
+refund -> db : Load refund requests
+refund -> db : Load request statuses
+refund -> db : Load user information
+refund -> db : Load payment information
+db --> refund : Return refund data
+refund --> routes : Return refund list
+routes --> frontend : Display refund requests
+frontend --> admin : Show all refund requests with status
+
+admin -> frontend : View all refunds history
+frontend -> routes : GET /admin/refunds/all
+routes -> refund : all()
+refund -> db : Load all refund records
+refund -> db : Load refund statuses
+refund -> db : Load payment information
+db --> refund : Return refund history
+refund --> routes : Return refund history
+routes --> frontend : Display refund history
+frontend --> admin : Show complete refund history
+
+admin -> frontend : Approve refund request
+frontend -> routes : POST /admin/refunds/{refund}/approve
+routes -> refund : approve(refundId)
+refund -> db : Load refund request
+refund -> db : Load payment record
+refund -> db : Update status to approved
+refund -> db : Set approved_at timestamp
+refund -> db : Set approved_by to admin
+refund -> db : Save changes
+refund -> db : Notify user
+refund --> routes : Return success
+routes --> frontend : Update refund status
+frontend --> admin : Show refund as approved
+
+admin -> frontend : Execute Stripe refund
+frontend -> routes : POST /admin/refunds/{refund}/execute-stripe-refund
+routes -> refund : executeStripeRefund(refundId)
+refund -> db : Load refund request
+refund -> db : Load payment record
+refund -> db : Update status to processing
+refund -> db : Save changes
+refund -> stripe : Create Stripe refund
+stripe --> refund : Return refund result
+
+alt Refund successful
+    refund -> db : Update status to completed
+    refund -> db : Set completed_at timestamp
+    refund -> db : Set stripe_refund_id
+    refund -> db : Update payment status
+    refund -> db : Save changes
+    refund -> db : Notify user
+    refund -> db : Revoke enrollment
+    refund --> routes : Return success
+    routes --> frontend : Update refund status
+    frontend --> admin : Show refund as completed
+else Refund failed
+    refund -> db : Update status to failed
+    refund -> db : Set error message
+    refund -> db : Save changes
+    refund -> db : Notify admins
+    refund --> routes : Return error
+    routes --> frontend : Show error
+    frontend --> admin : Display refund failure
+end
+
+admin -> frontend : Reject refund request
+frontend -> routes : POST /admin/refunds/{refund}/reject
+routes -> refund : reject(refundId, reason)
+refund -> db : Load refund request
+refund -> db : Update status to rejected
+refund -> db : Set rejection reason
+refund -> db : Save changes
+refund -> db : Notify user
+refund --> routes : Return success
+routes --> frontend : Update refund status
+frontend --> admin : Show refund as rejected
+
+note right of admin
+  Finance management features:
+  - Financial overview dashboard
+  - Payout request management
+  - Payout approval and processing
+  - Stripe transfer integration
+  - Refund request management
+  - Refund approval and execution
+  - Stripe refund integration
+  - Financial reporting and export
+  - User notifications for all actions
+end note
+
+@enduml

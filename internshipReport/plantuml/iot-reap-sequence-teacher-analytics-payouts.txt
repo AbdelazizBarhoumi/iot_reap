@@ -1,0 +1,157 @@
+@startuml iot-reap-sequence-teacher-analytics-payouts
+title IoT-REAP - Teacher Analytics & Payouts Sequence Diagram
+actor Teacher as teacher
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Teacher Analytics\nController" as analytics
+participant "Teacher Payout\nController" as payout
+participant "Database" as db
+participant "Enrollment\nModel" as enrollment
+participant "Payment\nModel" as payment
+participant "Payout\nModel" as payout_model
+participant "Stripe\nAPI" as stripe
+
+== Analytics Dashboard ==
+
+teacher -> frontend : Navigate to teaching analytics
+frontend -> routes : GET /teaching
+routes -> analytics : index()
+analytics -> db : Load teacher's training paths
+analytics -> db : Calculate overall KPIs
+analytics -> db : Load recent activity
+db --> analytics : Return analytics data
+analytics --> routes : Return analytics dashboard
+routes --> frontend : Display analytics dashboard
+frontend --> teacher : Show KPIs, charts, and metrics
+
+teacher -> frontend : View KPIs
+frontend -> routes : GET /teaching/analytics/kpis
+routes -> analytics : kpis()
+analytics -> db : Calculate total engineers
+analytics -> db : Calculate total revenue
+analytics -> db : Calculate completion rates
+analytics -> db : Calculate active courses
+db --> analytics : Return KPI data
+analytics --> routes : Return KPIs
+routes --> frontend : Display KPI cards
+frontend --> teacher : Show key performance indicators
+
+teacher -> frontend : View enrollment chart
+frontend -> routes : GET /teaching/analytics/enrollment-chart
+routes -> analytics : enrollmentChart()
+analytics -> db : Load enrollment history
+analytics -> db : Group by date
+analytics -> db : Calculate daily enrollments
+db --> analytics : Return chart data
+analytics --> routes : Return enrollment data
+routes --> frontend : Display enrollment chart
+frontend --> teacher : Show enrollment over time graph
+
+teacher -> frontend : View revenue chart
+frontend -> routes : GET /teaching/analytics/revenue-chart
+routes -> analytics : revenueChart()
+analytics -> db : Load payment history
+analytics -> db : Group by date
+analytics -> db : Calculate daily revenue
+db --> analytics : Return chart data
+analytics --> routes : Return revenue data
+routes --> frontend : Display revenue chart
+frontend --> teacher : Show revenue over time graph
+
+teacher -> frontend : View engineer progress for specific path
+frontend -> routes : GET /teaching/analytics/trainingPaths/{trainingPath}/engineers
+routes -> analytics : engineers(trainingPathId)
+analytics -> db : Load enrolled engineers
+analytics -> db : Load progress for each engineer
+analytics -> db : Calculate completion percentages
+db --> analytics : Return engineer data
+analytics --> routes : Return engineer list
+routes --> frontend : Display engineer progress
+frontend --> teacher : Show each engineer's progress
+
+teacher -> frontend : View completion funnel
+frontend -> routes : GET /teaching/analytics/trainingPaths/{trainingPath}/funnel
+routes -> analytics : funnel(trainingPathId)
+analytics -> db : Load total enrollments
+analytics -> db : Load started engineers
+analytics -> db : Load module completions
+analytics -> db : Load path completions
+db --> analytics : Return funnel data
+analytics --> routes : Return funnel metrics
+routes --> frontend : Display funnel chart
+frontend --> teacher : Show completion funnel visualization
+
+== Earnings & Payouts ==
+
+teacher -> frontend : View earnings summary
+frontend -> routes : GET /teaching/analytics/earnings
+routes -> analytics : earnings()
+analytics -> db : Load total earnings
+analytics -> db : Load available balance
+analytics -> db : Load pending payouts
+analytics -> db : Load paid amount
+db --> analytics : Return earnings data
+analytics --> routes : Return earnings summary
+routes --> frontend : Display earnings overview
+frontend --> teacher : Show total, available, pending, paid
+
+teacher -> frontend : View payout requests
+frontend -> routes : GET /teaching/payouts
+routes -> payout : index()
+payout -> db : Load teacher's payout requests
+payout -> db : Load request statuses
+payout -> db : Load payout amounts
+db --> payout : Return payout data
+payout --> routes : Return payout list
+routes --> frontend : Display payout history
+frontend --> teacher : Show all payout requests with status
+
+teacher -> frontend : Request payout
+frontend -> routes : POST /teaching/payouts/request
+routes -> payout : store(payoutData)
+payout -> db : Load teacher's available balance
+payout -> db : Validate payout amount
+payout -> db : Create payout request
+payout -> db : Set status to pending
+payout -> db : Deduct from available balance
+payout -> db : Save changes
+payout -> db : Notify admins
+payout --> routes : Return created request
+routes --> frontend : Show confirmation
+frontend --> teacher : Display payout request submitted
+
+teacher -> frontend : Export earnings report
+frontend -> routes : GET /teaching/analytics/earnings/export
+routes -> analytics : exportEarnings()
+analytics -> db : Load payment history
+analytics -> db : Load enrollment data
+analytics -> db : Generate CSV report
+analytics -> db : Format earnings data
+db --> analytics : Return report data
+analytics --> routes : Return CSV file
+routes --> frontend : Trigger file download
+frontend --> teacher : Download earnings report
+
+note right of teacher
+  Teacher analytics features:
+  - KPI dashboard (engineers, revenue, completion)
+  - Enrollment and revenue charts
+  - Engineer progress tracking per course
+  - Completion funnel analysis
+  - Earnings summary and breakdown
+  - Payout request management
+  - Earnings report export
+  - Real-time data calculations
+end note
+
+note right of teacher
+  Payout workflow:
+  - View available balance
+  - Request payout (amount validation)
+  - Status tracking (pending, approved, paid, rejected)
+  - Admin approval required
+  - Stripe transfer for payment
+  - History and export capabilities
+end note
+
+@enduml

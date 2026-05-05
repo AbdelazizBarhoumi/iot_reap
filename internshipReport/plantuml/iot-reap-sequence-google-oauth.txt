@@ -1,0 +1,52 @@
+@startuml iot-reap-sequence-google-oauth
+title IoT-REAP - Google OAuth Authentication Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "AuthController" as Controller
+participant "SocialAuthService" as SocialSvc
+participant "Google OAuth" as Google
+participant "UserRepository" as UserRepo
+participant "AuthService" as AuthSvc
+database "MySQL" as DB
+
+Engineer -> Browser: Click "Sign in with Google"
+Browser -> Controller: GET /auth/google/redirect
+Controller -> SocialSvc: getGoogleRedirectUrl()
+SocialSvc --> Controller: redirect_url (with client_id, scope, state)
+Controller --> Browser: 302 Redirect to Google
+Browser -> Google: Authorization consent screen
+Engineer -> Google: Select account & grant permissions
+Google --> Browser: 302 Redirect to callback with authorization code
+Browser -> Controller: GET /auth/google/callback?code=xxx&state=yyy
+
+Controller -> SocialSvc: handleGoogleCallback(code)
+SocialSvc -> Google: POST /oauth2/v4/token (exchange code for tokens)
+Google --> SocialSvc: {access_token, id_token}
+SocialSvc -> Google: GET /oauth2/v3/userinfo (with access_token)
+Google --> SocialSvc: {sub, email, name, picture}
+
+SocialSvc -> UserRepo: findByEmail(email)
+
+alt User exists
+    UserRepo -> DB: SELECT * FROM users WHERE email = ?
+    UserRepo --> SocialSvc: existing_user
+
+    SocialSvc -> UserRepo: update(existing_user, {google_id, avatar, email_verified_at})
+    UserRepo -> DB: UPDATE users SET google_id = ?, avatar = ?
+
+else User does not exist
+    SocialSvc -> AuthSvc: registerFromOAuth({name, email, google_id, avatar})
+    AuthSvc -> UserRepo: create({name, email, google_id, avatar, role: ENGINEER, email_verified_at: now()})
+    UserRepo -> DB: INSERT INTO users
+    UserRepo --> AuthSvc: new_user
+end
+
+SocialSvc -> AuthSvc: login(user)
+AuthSvc -> AuthSvc: createSession(user)
+AuthSvc --> SocialSvc: session established
+SocialSvc --> Controller: authenticated user
+Controller --> Browser: 302 Redirect to /dashboard
+Browser -> Engineer: Dashboard loaded (authenticated)
+
+@enduml

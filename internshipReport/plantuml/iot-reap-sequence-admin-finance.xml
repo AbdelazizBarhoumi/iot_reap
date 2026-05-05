@@ -1,0 +1,571 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="3600" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Finance Flows Sequence Diagram&lt;/b&gt;" vertex="1">
+      <mxGeometry x="80" y="10" width="1700" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ACTOR -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="45" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="140" y="50" width="120" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="340" y="50" width="100" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_fc" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Admin Finance&#xa;Controller" vertex="1">
+      <mxGeometry x="520" y="50" width="120" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_pc" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Admin Payout&#xa;Controller" vertex="1">
+      <mxGeometry x="720" y="50" width="120" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rc" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Admin Refund&#xa;Controller" vertex="1">
+      <mxGeometry x="930" y="50" width="120" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Database" vertex="1">
+      <mxGeometry x="1140" y="50" width="100" height="3480" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_st" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Stripe&#xa;API" vertex="1">
+      <mxGeometry x="1340" y="50" width="100" height="3480" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- SECTION 1: Finance Dashboard -->
+    <!-- ══════════════════════════════════════ -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Finance Dashboard ==" vertex="1">
+      <mxGeometry x="80" y="130" width="1380" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="act_fe_s1" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="105" width="10" height="310" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="125" width="10" height="280" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fc_s1" parent="ll_fc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="145" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="163" width="10" height="180" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to finance workspace">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="168" as="sourcePoint" />
+        <mxPoint x="195" y="168" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m2" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/finance">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="190" as="sourcePoint" />
+        <mxPoint x="390" y="190" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m3" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="210" as="sourcePoint" />
+        <mxPoint x="575" y="210" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m4" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load financial overview / Calculate revenue / Load pending payouts &amp; refunds">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="233" as="sourcePoint" />
+        <mxPoint x="1190" y="233" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m5" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Finance data">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1190" y="310" as="sourcePoint" />
+        <mxPoint x="580" y="310" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m6" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Finance dashboard / Show revenue, payouts, refunds summary">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="398" as="sourcePoint" />
+        <mxPoint x="75" y="398" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- SECTION 2: Payout Management -->
+    <!-- ══════════════════════════════════════ -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Payout Management ==" vertex="1">
+      <mxGeometry x="80" y="430" width="1380" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- View payouts -->
+    <mxCell id="act_fe_s2a" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="415" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2a" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="435" width="10" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="act_pc_s2a" parent="ll_pc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="455" width="10" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2a" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="473" width="10" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m7" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View payout requests">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="453" as="sourcePoint" />
+        <mxPoint x="195" y="453" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m8" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/payouts">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="473" as="sourcePoint" />
+        <mxPoint x="390" y="473" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m9" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="493" as="sourcePoint" />
+        <mxPoint x="775" y="493" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load payout requests / statuses / teacher info">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="515" as="sourcePoint" />
+        <mxPoint x="1190" y="515" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Payout data">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1190" y="575" as="sourcePoint" />
+        <mxPoint x="780" y="575" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all payout requests with status">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="640" as="sourcePoint" />
+        <mxPoint x="75" y="640" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Approve payout -->
+    <mxCell id="act_fe_s2b" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="675" width="10" height="250" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2b" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="695" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_pc_s2b" parent="ll_pc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="715" width="10" height="188" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2b" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="733" width="10" height="148" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Approve payout request">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="698" as="sourcePoint" />
+        <mxPoint x="195" y="698" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/payouts/{payout}/approve">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="718" as="sourcePoint" />
+        <mxPoint x="390" y="718" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="approve(payoutId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="738" as="sourcePoint" />
+        <mxPoint x="775" y="738" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Update status=approved / Set approved_at / Set approved_by / Notify teacher">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="760" as="sourcePoint" />
+        <mxPoint x="1190" y="760" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show payout as approved">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="900" as="sourcePoint" />
+        <mxPoint x="75" y="900" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Reject payout -->
+    <mxCell id="act_fe_s2c" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="940" width="10" height="230" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2c" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="960" width="10" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="act_pc_s2c" parent="ll_pc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="978" width="10" height="170" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2c" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="995" width="10" height="130" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reject payout request">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="963" as="sourcePoint" />
+        <mxPoint x="195" y="963" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/payouts/{payout}/reject">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="983" as="sourcePoint" />
+        <mxPoint x="390" y="983" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="reject(payoutId, reason)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1003" as="sourcePoint" />
+        <mxPoint x="775" y="1003" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Update status=rejected / Set reason / Notify / Return funds">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1023" as="sourcePoint" />
+        <mxPoint x="1190" y="1023" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show payout as rejected">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1153" as="sourcePoint" />
+        <mxPoint x="75" y="1153" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Process payout -->
+    <mxCell id="act_fe_s2d" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1190" width="10" height="450" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2d" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1210" width="10" height="420" as="geometry" />
+    </mxCell>
+    <mxCell id="act_pc_s2d" parent="ll_pc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1230" width="10" height="390" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2d" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1248" width="10" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="act_st_s2d" parent="ll_st" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1360" width="10" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Process payout transfer">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1213" as="sourcePoint" />
+        <mxPoint x="195" y="1213" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/payouts/{payout}/process">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1233" as="sourcePoint" />
+        <mxPoint x="390" y="1233" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="process(payoutId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1253" as="sourcePoint" />
+        <mxPoint x="775" y="1253" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Update status=processing / Save">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1273" as="sourcePoint" />
+        <mxPoint x="1190" y="1273" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Initiate Stripe transfer">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1363" as="sourcePoint" />
+        <mxPoint x="1390" y="1363" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Transfer result">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1390" y="1393" as="sourcePoint" />
+        <mxPoint x="780" y="1393" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ALT: Transfer success/fail -->
+    <mxCell id="alt_payout" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;recursiveResize=0;container=1;collapsible=0;width=50;height=30;" value="alt" vertex="1">
+      <mxGeometry x="80" y="1418" width="1380" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="alt_payout_g1" parent="alt_payout" style="text;html=1;" value="[Transfer successful]" vertex="1">
+      <mxGeometry width="150" height="20" relative="1" as="geometry">
+        <mxPoint x="20" y="40" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="alt_payout_sep" parent="alt_payout" style="line;strokeWidth=1;dashed=1;labelPosition=center;verticalLabelPosition=bottom;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;html=1;whiteSpace=wrap;" value="[Transfer failed]" vertex="1">
+      <mxGeometry width="1380" height="10" y="120" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update status=paid / Set paid_at / Set stripe_transfer_id / Notify teacher">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1460" as="sourcePoint" />
+        <mxPoint x="1190" y="1460" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show payout as paid">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1520" as="sourcePoint" />
+        <mxPoint x="75" y="1520" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update status=failed / Set error / Notify admins">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1575" as="sourcePoint" />
+        <mxPoint x="1190" y="1575" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display transfer failure">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="780" y="1640" as="sourcePoint" />
+        <mxPoint x="75" y="1640" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- SECTION 3: Refund Management -->
+    <!-- ══════════════════════════════════════ -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Refund Management ==" vertex="1">
+      <mxGeometry x="80" y="1690" width="1380" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- View refunds -->
+    <mxCell id="act_fe_s3a" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1680" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3a" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1700" width="10" height="210" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rc_s3a" parent="ll_rc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1718" width="10" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3a" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1735" width="10" height="130" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m33" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View refund requests">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1703" as="sourcePoint" />
+        <mxPoint x="195" y="1703" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m34" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/refunds">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1723" as="sourcePoint" />
+        <mxPoint x="390" y="1723" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m35" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1743" as="sourcePoint" />
+        <mxPoint x="985" y="1743" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m36" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load refund requests / statuses / user &amp; payment info">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="1763" as="sourcePoint" />
+        <mxPoint x="1190" y="1763" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m37" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all refund requests with status">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="1895" as="sourcePoint" />
+        <mxPoint x="75" y="1895" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Approve refund -->
+    <mxCell id="act_fe_s3b" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1935" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3b" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1955" width="10" height="210" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rc_s3b" parent="ll_rc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1973" width="10" height="180" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3b" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1990" width="10" height="143" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m38" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Approve refund request">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1958" as="sourcePoint" />
+        <mxPoint x="195" y="1958" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m39" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/refunds/{refund}/approve">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1978" as="sourcePoint" />
+        <mxPoint x="390" y="1978" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m40" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="approve(refundId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1998" as="sourcePoint" />
+        <mxPoint x="985" y="1998" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m41" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Load payment / Update status=approved / Set timestamps / Notify user">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2018" as="sourcePoint" />
+        <mxPoint x="1190" y="2018" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m42" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show refund as approved">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2155" as="sourcePoint" />
+        <mxPoint x="75" y="2155" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Execute Stripe refund -->
+    <mxCell id="act_fe_s3c" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2195" width="10" height="490" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3c" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2215" width="10" height="460" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rc_s3c" parent="ll_rc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2233" width="10" height="435" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3c" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2250" width="10" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="act_st_s3c" parent="ll_st" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2368" width="10" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m43" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Execute Stripe refund">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="2218" as="sourcePoint" />
+        <mxPoint x="195" y="2218" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m44" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/refunds/{refund}/execute-stripe-refund">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="2238" as="sourcePoint" />
+        <mxPoint x="390" y="2238" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m45" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="executeStripeRefund(refundId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="2258" as="sourcePoint" />
+        <mxPoint x="985" y="2258" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m46" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Load payment / Update status=processing / Save">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2278" as="sourcePoint" />
+        <mxPoint x="1190" y="2278" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m47" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create Stripe refund">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2373" as="sourcePoint" />
+        <mxPoint x="1390" y="2373" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m48" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Refund result">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1390" y="2400" as="sourcePoint" />
+        <mxPoint x="990" y="2400" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ALT: Refund success/fail -->
+    <mxCell id="alt_refund" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;recursiveResize=0;container=1;collapsible=0;width=50;height=30;" value="alt" vertex="1">
+      <mxGeometry x="80" y="2425" width="1380" height="270" as="geometry" />
+    </mxCell>
+    <mxCell id="alt_refund_g1" parent="alt_refund" style="text;html=1;" value="[Refund successful]" vertex="1">
+      <mxGeometry width="150" height="20" relative="1" as="geometry">
+        <mxPoint x="20" y="40" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="alt_refund_sep" parent="alt_refund" style="line;strokeWidth=1;dashed=1;labelPosition=center;verticalLabelPosition=bottom;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;html=1;whiteSpace=wrap;" value="[Refund failed]" vertex="1">
+      <mxGeometry width="1380" height="10" y="140" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m49" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update status=completed / Set completed_at / stripe_refund_id / Update payment / Revoke enrollment / Notify user">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2468" as="sourcePoint" />
+        <mxPoint x="1190" y="2468" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m50" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show refund as completed">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2548" as="sourcePoint" />
+        <mxPoint x="75" y="2548" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m51" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update status=failed / Set error / Notify admins">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2605" as="sourcePoint" />
+        <mxPoint x="1190" y="2605" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m52" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display refund failure">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2673" as="sourcePoint" />
+        <mxPoint x="75" y="2673" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Reject refund -->
+    <mxCell id="act_fe_s3d" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2733" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3d" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2753" width="10" height="190" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rc_s3d" parent="ll_rc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="2770" width="10" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3d" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="2788" width="10" height="120" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m53" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reject refund request">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="2756" as="sourcePoint" />
+        <mxPoint x="195" y="2756" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m54" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/refunds/{refund}/reject">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="2776" as="sourcePoint" />
+        <mxPoint x="390" y="2776" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m55" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="reject(refundId, reason)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="2796" as="sourcePoint" />
+        <mxPoint x="985" y="2796" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m56" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Update status=rejected / Set reason / Save / Notify user">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2816" as="sourcePoint" />
+        <mxPoint x="1190" y="2816" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m57" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show refund as rejected">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="990" y="2935" as="sourcePoint" />
+        <mxPoint x="75" y="2935" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

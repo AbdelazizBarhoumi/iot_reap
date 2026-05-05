@@ -1,0 +1,55 @@
+@startuml iotreap-activity-training-path-approval
+title IoT-REAP - Training Path Approval Activity Diagram
+
+|Teacher|
+start
+:Open training path editor;
+:Create/update modules and units;
+:Add articles, videos, quizzes;
+:Click "Submit for Review";
+
+|System|
+:Validate training path completeness;
+if (Is complete?) then (yes)
+    :Set status to PENDING_REVIEW;
+    :Create admin alert;
+else (no)
+    :Return validation errors;
+    |Teacher|
+    :Fix incomplete content;
+    stop
+endif
+
+|Administrator|
+:Open admin approval dashboard;
+:Review training path content;
+:Inspect modules, units, and media;
+
+if (Approve?) then (yes)
+    |System|
+    :Set status to APPROVED;
+    :Notify teacher of approval;
+    :Make path visible in public catalog;
+    
+    if (Feature on homepage?) then (yes)
+        :Set featured flag;
+        :Update featured ordering;
+    else (no)
+        :Path remains in catalog only;
+    endif
+    
+    stop
+else (reject)
+    |System|
+    :Set status to REJECTED;
+    :Record rejection reason;
+    :Notify teacher of rejection;
+    
+    |Teacher|
+    :Revise content based on feedback;
+    :Re-submit for review;
+    note right: Returns to PENDING_REVIEW
+    stop
+endif
+
+@enduml

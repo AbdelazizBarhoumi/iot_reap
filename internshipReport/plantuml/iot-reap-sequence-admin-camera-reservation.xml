@@ -1,0 +1,357 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="5000" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Camera &amp; Reservation Administration Sequence&lt;/b&gt;" vertex="1">
+      <mxGeometry x="150" y="10" width="1400" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="55" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll_frontend" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="160" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_routes" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="310" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_camera" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Admin Camera&#xa;Controller" vertex="1">
+      <mxGeometry x="460" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_reservation" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Admin Reservation&#xa;Controller" vertex="1">
+      <mxGeometry x="620" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Database" vertex="1">
+      <mxGeometry x="780" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_gateways" parent="1" style="shape=umlLifeline;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=1;dashed=1;fontSize=10;size=60;" value="Gateway&#xa;Nodes" vertex="1">
+      <mxGeometry x="940" y="50" width="100" height="4800" as="geometry" />
+    </mxCell>
+
+    <!-- ========== PART 1: Camera Administration ========== -->
+    <mxCell id="part1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Camera Administration" vertex="1">
+      <mxGeometry x="150" y="160" width="870" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View All Cameras === -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View All Cameras ==" vertex="1">
+      <mxGeometry x="150" y="210" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to camera management" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="260" as="sourcePoint"/><mxPoint x="210" y="260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/cameras" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="290" as="sourcePoint"/><mxPoint x="360" y="290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="cameras()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="320" as="sourcePoint"/><mxPoint x="510" y="320" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load all cameras / assignments / status" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="350" as="sourcePoint"/><mxPoint x="830" y="350" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return camera data" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="380" as="sourcePoint"/><mxPoint x="510" y="380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all cameras with assignments" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="410" as="sourcePoint"/><mxPoint x="90" y="410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Assign Camera to VM === -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Assign Camera to VM ==" vertex="1">
+      <mxGeometry x="150" y="450" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Assign camera to VM" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="500" as="sourcePoint"/><mxPoint x="210" y="500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="PUT /admin/cameras/{camera}/assign" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="530" as="sourcePoint"/><mxPoint x="360" y="530" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="assignToVm(cameraId, vmId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="560" as="sourcePoint"/><mxPoint x="510" y="560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load camera / load VM / create assignment / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="590" as="sourcePoint"/><mxPoint x="830" y="590" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return assignment / Show camera assigned" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="620" as="sourcePoint"/><mxPoint x="90" y="620" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Unassign Camera === -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Unassign Camera ==" vertex="1">
+      <mxGeometry x="150" y="660" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m12" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Unassign camera" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="710" as="sourcePoint"/><mxPoint x="210" y="710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="DELETE /admin/cameras/{camera}/assign" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="740" as="sourcePoint"/><mxPoint x="360" y="740" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="unassignFromVm(cameraId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="770" as="sourcePoint"/><mxPoint x="510" y="770" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load assignment / delete record / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="800" as="sourcePoint"/><mxPoint x="830" y="800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show camera unassigned" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="830" as="sourcePoint"/><mxPoint x="90" y="830" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Bulk Assign Cameras === -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" value="== Bulk Assign Cameras ==" vertex="1">
+      <mxGeometry x="150" y="870" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m17" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Bulk assign cameras" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="920" as="sourcePoint"/><mxPoint x="210" y="920" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/bulk-assign" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="950" as="sourcePoint"/><mxPoint x="360" y="950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m19" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="bulkAssign(cameraIds, vmId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="980" as="sourcePoint"/><mxPoint x="510" y="980" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load camera records / load VM record" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1010" as="sourcePoint"/><mxPoint x="830" y="1010" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- loop frame -->
+    <mxCell id="loop1" parent="1" style="swimlane;startSize=20;html=1;fontSize=10;fontStyle=1;align=left;fillColor=none;strokeColor=#666666;strokeWidth=1;rounded=0;" value="loop  [For each camera]" vertex="1">
+      <mxGeometry x="150" y="1040" width="870" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="m21" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create camera-VM assignment" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1075" as="sourcePoint"/><mxPoint x="830" y="1075" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m22" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Save all changes" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1130" as="sourcePoint"/><mxPoint x="830" y="1130" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m23" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return assignment count / Show cameras assigned" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="1160" as="sourcePoint"/><mxPoint x="90" y="1160" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Activate Camera === -->
+    <mxCell id="sep5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Activate Camera ==" vertex="1">
+      <mxGeometry x="150" y="1200" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m24" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Activate camera" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1250" as="sourcePoint"/><mxPoint x="210" y="1250" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m25" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="PUT /admin/cameras/{camera}/activate" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1280" as="sourcePoint"/><mxPoint x="360" y="1280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m26" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="activate(cameraId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1310" as="sourcePoint"/><mxPoint x="510" y="1310" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load camera / update status to active / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1340" as="sourcePoint"/><mxPoint x="830" y="1340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m28" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Activate camera stream" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1370" as="sourcePoint"/><mxPoint x="990" y="1370" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m29" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm activation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="990" y="1400" as="sourcePoint"/><mxPoint x="510" y="1400" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show camera as active" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1430" as="sourcePoint"/><mxPoint x="90" y="1430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Deactivate Camera === -->
+    <mxCell id="sep6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Deactivate Camera ==" vertex="1">
+      <mxGeometry x="150" y="1470" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m31" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Deactivate camera" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1520" as="sourcePoint"/><mxPoint x="210" y="1520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="PUT /admin/cameras/{camera}/deactivate" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1550" as="sourcePoint"/><mxPoint x="360" y="1550" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m33" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="deactivate(cameraId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1580" as="sourcePoint"/><mxPoint x="510" y="1580" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m34" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load camera / update status to inactive / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1610" as="sourcePoint"/><mxPoint x="830" y="1610" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m35" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Deactivate camera stream" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1640" as="sourcePoint"/><mxPoint x="990" y="1640" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m36" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm deactivation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="990" y="1670" as="sourcePoint"/><mxPoint x="510" y="1670" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m37" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show camera as inactive" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="1700" as="sourcePoint"/><mxPoint x="90" y="1700" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ========== PART 2: USB Device Reservation Administration ========== -->
+    <mxCell id="part2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="USB Device Reservation Administration" vertex="1">
+      <mxGeometry x="150" y="1750" width="870" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View USB Reservations === -->
+    <mxCell id="sep7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View USB Reservations ==" vertex="1">
+      <mxGeometry x="150" y="1800" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m38" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View USB reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="1850" as="sourcePoint"/><mxPoint x="210" y="1850" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m39" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="1880" as="sourcePoint"/><mxPoint x="360" y="1880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m40" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="1910" as="sourcePoint"/><mxPoint x="670" y="1910" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m41" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load all reservations / statuses / device info" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="1940" as="sourcePoint"/><mxPoint x="830" y="1940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m42" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return reservations / Show all USB reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="1970" as="sourcePoint"/><mxPoint x="90" y="1970" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Approve USB Reservation === -->
+    <mxCell id="sep8" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Approve USB Reservation ==" vertex="1">
+      <mxGeometry x="150" y="2010" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m43" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Approve USB reservation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2060" as="sourcePoint"/><mxPoint x="210" y="2060" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m44" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/reservations/{reservation}/approve" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="2090" as="sourcePoint"/><mxPoint x="360" y="2090" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m45" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="approve(reservationId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="2120" as="sourcePoint"/><mxPoint x="670" y="2120" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m46" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update to approved / set approved_at / set approved_by / save / notify user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="2150" as="sourcePoint"/><mxPoint x="830" y="2150" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m47" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show reservation as approved" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="2180" as="sourcePoint"/><mxPoint x="90" y="2180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Reject USB Reservation === -->
+    <mxCell id="sep9" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Reject USB Reservation ==" vertex="1">
+      <mxGeometry x="150" y="2220" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m48" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reject USB reservation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2270" as="sourcePoint"/><mxPoint x="210" y="2270" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m49" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/reservations/{reservation}/reject" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="2300" as="sourcePoint"/><mxPoint x="360" y="2300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m50" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="reject(reservationId, reason)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="2330" as="sourcePoint"/><mxPoint x="670" y="2330" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m51" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update to rejected / set reason / save / notify user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="2360" as="sourcePoint"/><mxPoint x="830" y="2360" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m52" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show reservation as rejected" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="2390" as="sourcePoint"/><mxPoint x="90" y="2390" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Block USB Device Time Slot === -->
+    <mxCell id="sep10" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Block USB Device Time Slot ==" vertex="1">
+      <mxGeometry x="150" y="2430" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m53" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Block device time slot" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2480" as="sourcePoint"/><mxPoint x="210" y="2480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m54" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/reservations/block" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="2510" as="sourcePoint"/><mxPoint x="360" y="2510" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m55" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="createBlock(blockData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="2540" as="sourcePoint"/><mxPoint x="670" y="2540" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m56" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create block reservation / set to blocked / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="670" y="2570" as="sourcePoint"/><mxPoint x="830" y="2570" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m57" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return created block / Show time slot blocked" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="2600" as="sourcePoint"/><mxPoint x="90" y="2600" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ========== PART 3: Camera Reservation Administration ========== -->
+    <mxCell id="part3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#ffffff;fillColor=#647687;strokeColor=#314354;rounded=1;" value="Camera Reservation Administration" vertex="1">
+      <mxGeometry x="150" y="2650" width="870" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- === View Camera Reservations === -->
+    <mxCell id="sep11" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Camera Reservations ==" vertex="1">
+      <mxGeometry x="150" y="2700" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m58" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View camera reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2750" as="sourcePoint"/><mxPoint x="210" y="2750" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m59" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/cameras/reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="2780" as="sourcePoint"/><mxPoint x="360" y="2780" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m60" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="index()" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="2810" as="sourcePoint"/><mxPoint x="510" y="2810" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m61" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load all camera reservations / statuses / camera info" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="2840" as="sourcePoint"/><mxPoint x="830" y="2840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m62" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return reservations / Show all camera reservations" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="2870" as="sourcePoint"/><mxPoint x="90" y="2870" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Approve Camera Reservation === -->
+    <mxCell id="sep12" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" value="== Approve Camera Reservation ==" vertex="1">
+      <mxGeometry x="150" y="2910" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m63" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Approve camera reservation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="2960" as="sourcePoint"/><mxPoint x="210" y="2960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m64" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/reservations/{reservation}/approve" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="2990" as="sourcePoint"/><mxPoint x="360" y="2990" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m65" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="approve(reservationId)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="3020" as="sourcePoint"/><mxPoint x="510" y="3020" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m66" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update to approved / set approved_at / set approved_by / save / notify user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="3050" as="sourcePoint"/><mxPoint x="830" y="3050" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m67" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show camera reservation as approved" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="3080" as="sourcePoint"/><mxPoint x="90" y="3080" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Reject Camera Reservation === -->
+    <mxCell id="sep13" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;" value="== Reject Camera Reservation ==" vertex="1">
+      <mxGeometry x="150" y="3120" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m68" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Reject camera reservation" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="3170" as="sourcePoint"/><mxPoint x="210" y="3170" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m69" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/reservations/{reservation}/reject" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="3200" as="sourcePoint"/><mxPoint x="360" y="3200" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m70" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="reject(reservationId, reason)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="3230" as="sourcePoint"/><mxPoint x="510" y="3230" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m71" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load record / update to rejected / set reason / save / notify user" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="3260" as="sourcePoint"/><mxPoint x="830" y="3260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m72" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success / Show camera reservation as rejected" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="3290" as="sourcePoint"/><mxPoint x="90" y="3290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- === Block Camera Time Slot === -->
+    <mxCell id="sep14" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#ffe6cc;strokeColor=#d6b656;rounded=1;" value="== Block Camera Time Slot ==" vertex="1">
+      <mxGeometry x="150" y="3330" width="870" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m73" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Block camera time slot" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="90" y="3380" as="sourcePoint"/><mxPoint x="210" y="3380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m74" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/reservations/block" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="3410" as="sourcePoint"/><mxPoint x="360" y="3410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m75" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="createBlock(blockData)" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="3440" as="sourcePoint"/><mxPoint x="510" y="3440" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m76" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create camera block / set to blocked / save" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="510" y="3470" as="sourcePoint"/><mxPoint x="830" y="3470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m77" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return created block / Show camera time slot blocked" edge="1">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="830" y="3500" as="sourcePoint"/><mxPoint x="90" y="3500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

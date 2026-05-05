@@ -1,0 +1,64 @@
+@startuml iot-reap-sequence-checkout-result
+title IoT-REAP - Checkout Result Screens Sequence Diagram
+actor User as user
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Checkout\nController" as checkout
+participant "Stripe\nService" as stripe
+participant "Database" as db
+participant "Enrollment\nModel" as enrollment
+participant "TrainingPath\nModel" as trainingPath
+
+user -> frontend : Complete payment on Stripe
+frontend -> stripe : Stripe Checkout redirect
+stripe -> routes : GET /checkout/success?session_id=xxx
+routes -> checkout : success(session_id)
+checkout -> stripe : retrieveCheckoutSession(session_id)
+stripe --> checkout : Return session details
+
+alt Valid session
+    checkout -> db : Find or create enrollment
+    checkout -> enrollment : markAsPaid()
+    enrollment -> db : Update enrollment status
+    checkout -> trainingPath : loadWithModules()
+    trainingPath --> checkout : Return training path data
+    checkout -> routes : Return success data
+    routes --> frontend : Render success page
+    frontend --> user : Display payment success screen
+    note right of user
+      Success screen shows:
+      - Training path details
+      - Enrollment confirmation
+      - Access to course content
+      - Receipt information
+    end note
+else Invalid session
+    checkout -> routes : Return error
+    routes -> frontend : Redirect to home
+    frontend -> user : Display error or redirect
+end
+
+user -> frontend : Cancel payment on Stripe
+frontend -> stripe : Stripe Checkout cancel
+stripe -> routes : GET /checkout/cancelled
+routes -> checkout : cancelled()
+checkout -> routes : Return cancelled data
+routes --> frontend : Render cancelled page
+frontend --> user : Display payment cancelled screen
+note right of user
+  Cancelled screen shows:
+  - Payment cancellation message
+  - Option to retry payment
+  - Link back to course details
+  - No enrollment created
+end note
+
+note right of user
+  Checkout result flows:
+  - No authentication required
+  - Stripe webhook handles final confirmation
+  - Success/cancel pages provide immediate feedback
+  - User can retry if cancelled
+end note
+
+@enduml

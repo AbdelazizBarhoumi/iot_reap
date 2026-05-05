@@ -1,0 +1,101 @@
+@startuml iot-reap-sequence-device-reservation
+title IoT-REAP — Reserve USB Device / Reserve Camera Sequence Diagram
+
+actor Engineer
+participant "Frontend\n(React)" as FE
+participant "HardwareController" as HC
+participant "HardwareService" as HS
+participant "HardwareRepo" as HR
+participant "DeviceQueueService" as DQ
+participant "MQTTClient" as MQ
+participant "Database" as DB
+
+== Browse Available Devices ==
+Engineer -> FE: Open hardware inventory
+FE -> HC: GET /hardware/available
+HC -> HS: getAvailableDevices(sessionId)
+HS -> HR: findAvailableByType(type)
+HR -> DB: SELECT hardware_devices WHERE status='available'
+DB --> HR: Collection
+HR --> HS: Collection<HardwareDevice>
+HS --> HC: HardwareDeviceResource collection
+HC --> FE: 200 OK { devices[] }
+FE --> Engineer: Display available devices
+
+== Reserve USB Device ==
+Engineer -> FE: Click "Reserve" on USB device
+FE -> HC: POST /hardware/{deviceId}/reserve
+HC -> HS: reserveDevice(user, sessionId, deviceId)
+HS -> HR: findById(deviceId)
+HR -> DB: SELECT hardware_devices WHERE id
+DB --> HR: HardwareDevice
+HR --> HS: HardwareDevice
+
+alt Device not available
+    HS --> HC: DeviceNotAvailableException
+    HC --> FE: 409 Conflict
+    FE --> Engineer: "Device unavailable. Join queue?"
+else Device is available
+    HS -> HR: createReservation(deviceId, sessionId)
+    HR -> DB: INSERT INTO hardware_reservations
+    DB --> HR: HardwareReservation
+    HR --> HS: HardwareReservation
+    HS -> HR: updateDeviceStatus(device, 'reserved')
+    HR -> DB: UPDATE hardware_devices SET status='reserved'
+    DB --> HR: true
+    HR --> HS: true
+    HS --> HC: HardwareReservation
+    HC --> FE: 201 Created { reservation }
+    FE --> Engineer: "Device reserved successfully"
+end
+
+== Reserve Camera ==
+Engineer -> FE: Click "Reserve" on Camera
+FE -> HC: POST /hardware/{cameraId}/reserve
+HC -> HS: reserveDevice(user, sessionId, cameraId)
+HS -> HR: findById(cameraId)
+HR -> DB: SELECT hardware_devices WHERE id
+DB --> HR: HardwareDevice
+HR --> HS: HardwareDevice
+HS -> HR: createReservation(cameraId, sessionId)
+HR -> DB: INSERT INTO hardware_reservations
+DB --> HR: HardwareReservation
+HR --> HS: HardwareReservation
+HS -> HR: updateDeviceStatus(camera, 'reserved')
+HR -> DB: UPDATE hardware_devices SET status='reserved'
+DB --> HR: true
+HR --> HS: true
+HS --> HC: HardwareReservation + streamUrl
+HC --> FE: 201 Created { reservation, stream_url }
+FE --> Engineer: "Camera reserved. Stream ready."
+
+== Join Device Queue (when unavailable) ==
+Engineer -> FE: Click "Join Queue"
+FE -> HC: POST /hardware/{deviceId}/queue
+HC -> HS: joinDeviceQueue(user, sessionId, deviceId)
+HS -> DQ: enqueue(user, sessionId, deviceId)
+DQ -> DB: INSERT INTO device_queues
+DB --> DQ: DeviceQueueEntry
+DQ --> HS: position
+HS --> HC: { position, estimated_wait }
+HC --> FE: 202 Accepted { queue_position }
+FE --> Engineer: "You are #2 in queue"
+
+== Device Becomes Available ==
+DQ -> HS: notifyNextInQueue(deviceId)
+HS -> FE: WebSocket: "USB device now available"
+FE --> Engineer: "Device available! Reserve now?"
+Engineer -> FE: Click "Reserve"
+FE -> HC: POST /hardware/{deviceId}/reserve
+HC -> HS: reserveDevice(user, sessionId, deviceId)
+HS -> DQ: dequeue(user, deviceId)
+DQ -> DB: DELETE FROM device_queues
+DB --> DQ: true
+HS -> HR: createReservation(deviceId, sessionId)
+HR -> DB: INSERT INTO hardware_reservations
+DB --> HR: HardwareReservation
+HR --> HS: HardwareReservation
+HS --> HC: HardwareReservation
+HC --> FE: 201 Created { reservation }
+FE --> Engineer: "Device reserved from queue"
+@enduml

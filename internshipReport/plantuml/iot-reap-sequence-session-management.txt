@@ -1,0 +1,77 @@
+@startuml iot-reap-sequence-session-management
+title IoT-REAP — Extend/Terminate Session Sequence Diagram
+
+actor Engineer
+participant "Frontend\n(React)" as FE
+participant "VMSessionController" as VC
+participant "VMSessionService" as VS
+participant "QuotaService" as QS
+participant "ProxmoxClient" as PC
+participant "CleanupVMJob" as CJ
+participant "VMSessionRepo" as VR
+participant "Database" as DB
+
+== Extend Session ==
+Engineer -> FE: Click "Extend Session"
+FE -> VC: POST /sessions/{id}/extend { duration_minutes: 60 }
+VC -> VS: extendSession(user, sessionId, 60)
+VS -> VR: findActiveByUserAndId(user, sessionId)
+VR -> DB: SELECT vm_sessions WHERE id AND user_id AND status='active'
+DB --> VR: VMSession
+VR --> VS: VMSession
+
+VS -> QS: checkQuotaRemaining(user)
+QS --> VS: quotaRemaining
+
+alt Quota exceeded
+    VS --> VC: QuotaExceededException
+    VC --> FE: 403 Forbidden { message, remaining_quota }
+    FE --> Engineer: "Quota exceeded. Try shorter duration."
+else Quota available
+    VS -> VR: updateExpiry(session, newExpiry)
+    VR -> DB: UPDATE vm_sessions SET expires_at = new_expiry
+    DB --> VR: true
+    VR --> VS: VMSession
+    VS -> CJ: dispatch(CleanupVMJob, session)->delay(newExpiry)
+    CJ --> CJ: Reschedule cleanup job
+    VS --> VC: VMSession (updated)
+    VC --> FE: 200 OK { new_expires_at }
+    FE --> Engineer: "Session extended to 14:30"
+end
+
+== Terminate Session ==
+Engineer -> FE: Click "Terminate Session"
+FE -> FE: Show confirmation dialog
+Engineer -> FE: Confirm termination
+FE -> VC: POST /sessions/{id}/terminate
+VC -> VS: terminateSession(user, sessionId)
+VS -> VR: findActiveByUserAndId(user, sessionId)
+VR -> DB: SELECT vm_sessions WHERE id AND user_id AND status='active'
+DB --> VR: VMSession
+VR --> VS: VMSession
+
+VS -> PC: stopVM(node, vmid)
+PC -> PC: POST /nodes/{node}/qemu/{vmid}/status/stop
+PC --> VS: success
+
+alt Proxmox stop failed
+    VS -> VS: Retry (max 3 attempts)
+    VS --> VC: VMProvisioningException
+    VC -> FE: 500 Error
+    FE --> Engineer: "Failed to stop VM. Admin notified."
+else VM stopped successfully
+    VS -> PC: deleteVM(node, vmid)
+    PC -> PC: DELETE /nodes/{node}/qemu/{vmid}
+    PC --> VS: success
+    VS -> VR: updateStatus(session, 'expired')
+    VR -> DB: UPDATE vm_sessions SET status='expired'
+    DB --> VR: true
+    VR --> VS: VMSession
+    VS -> VS: releaseHardwareReservations(session)
+    VS -> CJ: cancelScheduledJob(sessionId)
+    CJ --> CJ: Remove from queue
+    VS --> VC: VMSession (expired)
+    VC --> FE: 200 OK { status: 'expired' }
+    FE --> Engineer: "Session terminated. Resources released."
+end
+@enduml

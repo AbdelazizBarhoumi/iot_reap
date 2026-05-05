@@ -1,0 +1,187 @@
+@startuml activity-registration
+!theme carbon-gray
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+
+title DTR Platform - User Registration Activity Diagram\nAccount Creation with Email Verification
+
+start
+
+:User navigates to /register;
+:Display registration form;
+:User fills registration form
+(name, email, password, company info);
+
+:Submit registration form;
+note right
+POST /register
+Fields: name, email, password,
+password_confirmation,
+company_name, industry, phone
+end note
+
+' ============================================================================
+' VALIDATION PHASE
+' ============================================================================
+
+partition "Validation Phase" {
+:Validate input data;
+
+if (Name valid?) then (yes)
+:Name validated;
+else (no)
+:Add error: "Name required";
+:Return to form with errors;
+stop
+endif
+
+if (Email format valid?) then (yes)
+:Email format validated;
+else (no)
+:Add error: "Invalid email";
+:Return to form with errors;
+stop
+endif
+
+:Check email uniqueness in database;
+if (Email already exists?) then (yes)
+:Add error: "Email already taken";
+:Return to form with errors;
+stop
+else (no)
+:Email unique;
+endif
+
+if (Password min 8 chars?) then (yes)
+:Password length validated;
+else (no)
+:Add error: "Password too short";
+:Return to form with errors;
+stop
+endif
+
+if (Password confirmation matches?) then (yes)
+:Password confirmed;
+else (no)
+:Add error: "Passwords don't match";
+:Return to form with errors;
+stop
+endif
+}
+
+' ============================================================================
+' USER CREATION
+' ============================================================================
+
+partition "User Creation" {
+:Hash password using bcrypt;
+
+:Create User record with:
+- name
+- email
+- hashed password
+- company_name
+- industry
+- phone
+- role = 'employer'
+- is_active = true
+- email_verified_at = NULL;
+
+:Insert into database;
+
+if (Insert successful?) then (yes)
+:User created;
+else (no)
+:Database error occurred;
+:Display error message;
+stop
+endif
+}
+
+' ============================================================================
+' EVENT DISPATCHING
+' ============================================================================
+
+partition "Event & Email Handling" {
+:Dispatch Registered event;
+
+fork
+:Queue verification email job;
+:Generate signed verification URL
+with expiration (24 hours);
+:Send verification email
+with verification link;
+fork again
+:Queue welcome email job;
+:Send welcome email
+with platform introduction;
+end fork
+}
+
+' ============================================================================
+' AUTO-LOGIN
+' ============================================================================
+
+partition "Auto-Login" {
+:Authenticate user automatically;
+:Create session;
+:Set authentication cookie;
+}
+
+' ============================================================================
+' RESPONSE
+' ============================================================================
+
+:Redirect to /dashboard;
+:Display success message:
+"Registration successful!
+Please verify your email";
+
+' ============================================================================
+' EMAIL VERIFICATION FLOW (Async)
+' ============================================================================
+
+partition "Email Verification (Separate Flow)" {
+#LightBlue:User checks email inbox;
+#LightBlue:User clicks verification link;
+
+#LightBlue:System validates signed URL;
+
+if (URL valid and not expired?) then (yes)
+#LightBlue:Update email_verified_at
+to current timestamp;
+#LightBlue:Display "Email verified" message;
+else (no)
+if (URL expired?) then (yes)
+#LightBlue:Display "Link expired" message;
+#LightBlue:Offer resend verification option;
+else (no)
+#LightBlue:Display "Invalid link" error;
+endif
+endif
+}
+
+stop
+
+legend right
+**Registration Flow Summary**
+1. Form validation (6 checks)
+2. Password hashing (bcrypt)
+3. Database insertion
+4. Event dispatching
+5. Email queue (verification + welcome)
+6. Auto-login
+7. Dashboard redirect
+
+**Async Operations:**
+- Email sending (queue-based)
+- Email verification (user-initiated)
+
+**Security Measures:**
+- Password hashing
+- Email uniqueness
+- Signed URLs with expiration
+- CSRF protection
+endlegend
+
+@enduml

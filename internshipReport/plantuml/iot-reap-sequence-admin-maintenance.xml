@@ -1,0 +1,415 @@
+<mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="3200" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Maintenance Management Sequence Diagram&lt;/b&gt;" vertex="1">
+      <mxGeometry x="80" y="10" width="1200" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Actor -->
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="45" y="65" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--                    LIFELINE CONTAINERS                           -->
+    <!-- ================================================================ -->
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="100" y="50" width="110" height="3100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="260" y="50" width="110" height="3100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_mc" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Maintenance&#xa;Controller" vertex="1">
+      <mxGeometry x="420" y="50" width="110" height="3100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Database" vertex="1">
+      <mxGeometry x="580" y="50" width="110" height="3100" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_gw" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Gateway&#xa;Nodes" vertex="1">
+      <mxGeometry x="740" y="50" width="110" height="3100" as="geometry" />
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 1: View Maintenance Overview                            -->
+    <!-- ================================================================ -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Maintenance Overview ==" vertex="1">
+      <mxGeometry x="80" y="130" width="800" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="act_fe_s1"  parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="125" width="10" height="280" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1"  parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="155" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s1"  parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="180" width="10" height="165" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1"  parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="205" width="10" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to maintenance management">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="175" as="sourcePoint"/><mxPoint x="150" y="175" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="205" as="sourcePoint"/><mxPoint x="310" y="205" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="index()">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="230" as="sourcePoint"/><mxPoint x="470" y="230" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load all devices in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="255" as="sourcePoint"/><mxPoint x="630" y="255" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load maintenance descriptions">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="280" as="sourcePoint"/><mxPoint x="630" y="280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load device statuses">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="305" as="sourcePoint"/><mxPoint x="630" y="305" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return maintenance data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="630" y="330" as="sourcePoint"/><mxPoint x="480" y="330" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return maintenance overview">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="355" as="sourcePoint"/><mxPoint x="320" y="355" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display maintenance page">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="380" as="sourcePoint"/><mxPoint x="160" y="380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show devices in maintenance mode">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="405" as="sourcePoint"/><mxPoint x="75" y="405" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 2: View In-Maintenance Devices                          -->
+    <!-- ================================================================ -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Devices In Maintenance ==" vertex="1">
+      <mxGeometry x="80" y="430" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s2" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="430" width="10" height="280" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="460" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s2" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="485" width="10" height="165" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="510" width="10" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View devices in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="480" as="sourcePoint"/><mxPoint x="150" y="480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/maintenance/in-maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="510" as="sourcePoint"/><mxPoint x="310" y="510" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="inMaintenance()">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="535" as="sourcePoint"/><mxPoint x="470" y="535" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load USB devices in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="560" as="sourcePoint"/><mxPoint x="630" y="560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load cameras in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="585" as="sourcePoint"/><mxPoint x="630" y="585" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load maintenance details">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="610" as="sourcePoint"/><mxPoint x="630" y="610" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return maintenance devices">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="630" y="635" as="sourcePoint"/><mxPoint x="480" y="635" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return maintenance list">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="660" as="sourcePoint"/><mxPoint x="320" y="660" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display maintenance devices">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="685" as="sourcePoint"/><mxPoint x="160" y="685" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show all devices under maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="710" as="sourcePoint"/><mxPoint x="75" y="710" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 3: Update Description                                   -->
+    <!-- ================================================================ -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Set USB Device Maintenance Description ==" vertex="1">
+      <mxGeometry x="80" y="735" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s3" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="735" width="10" height="250" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="765" width="10" height="190" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s3" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="790" width="10" height="140" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="815" width="10" height="85" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Set USB device maintenance description">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="785" as="sourcePoint"/><mxPoint x="150" y="785" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/maintenance/description">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="815" as="sourcePoint"/><mxPoint x="310" y="815" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="updateDescription(deviceId, description)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="840" as="sourcePoint"/><mxPoint x="470" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load device record">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="865" as="sourcePoint"/><mxPoint x="630" y="865" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update maintenance description / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="890" as="sourcePoint"/><mxPoint x="630" y="890" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="930" as="sourcePoint"/><mxPoint x="320" y="930" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Update description display">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="955" as="sourcePoint"/><mxPoint x="160" y="955" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show updated maintenance description">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="985" as="sourcePoint"/><mxPoint x="75" y="985" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 4: Enable USB Maintenance                               -->
+    <!-- ================================================================ -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Enable USB Device Maintenance ==" vertex="1">
+      <mxGeometry x="80" y="1010" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s4" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1010" width="10" height="335" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s4" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1040" width="10" height="275" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s4" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1065" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s4" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1090" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_gw_s4" parent="ll_gw" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1235" width="10" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Enable USB device maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="1060" as="sourcePoint"/><mxPoint x="150" y="1060" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/maintenance/usb-devices/{device}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="1090" as="sourcePoint"/><mxPoint x="310" y="1090" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="setUsbDeviceMaintenance(deviceId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="1115" as="sourcePoint"/><mxPoint x="470" y="1115" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load USB device record">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1140" as="sourcePoint"/><mxPoint x="630" y="1140" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m33" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update status to maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1165" as="sourcePoint"/><mxPoint x="630" y="1165" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m34" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Set maintenance_start timestamp / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1190" as="sourcePoint"/><mxPoint x="630" y="1190" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m35" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Disable device for reservations">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1265" as="sourcePoint"/><mxPoint x="790" y="1265" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m36" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm disable">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="790" y="1290" as="sourcePoint"/><mxPoint x="480" y="1290" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m37" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="1315" as="sourcePoint"/><mxPoint x="320" y="1315" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m38" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Update device status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="1340" as="sourcePoint"/><mxPoint x="160" y="1340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m39" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show USB device in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="1365" as="sourcePoint"/><mxPoint x="75" y="1365" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 5: Disable USB Maintenance                              -->
+    <!-- ================================================================ -->
+    <mxCell id="sep5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Disable USB Device Maintenance ==" vertex="1">
+      <mxGeometry x="80" y="1390" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s5" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1390" width="10" height="335" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s5" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1420" width="10" height="275" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s5" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1445" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s5" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1470" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_gw_s5" parent="ll_gw" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1615" width="10" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m40" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Disable USB device maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="1440" as="sourcePoint"/><mxPoint x="150" y="1440" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m41" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="DELETE /admin/maintenance/usb-devices/{device}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="1470" as="sourcePoint"/><mxPoint x="310" y="1470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m42" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="clearUsbDeviceMaintenance(deviceId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="1495" as="sourcePoint"/><mxPoint x="470" y="1495" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m43" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load USB device record">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1520" as="sourcePoint"/><mxPoint x="630" y="1520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m44" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update status to available">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1545" as="sourcePoint"/><mxPoint x="630" y="1545" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m45" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Clear maintenance timestamps / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1570" as="sourcePoint"/><mxPoint x="630" y="1570" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m46" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Enable device for reservations">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1645" as="sourcePoint"/><mxPoint x="790" y="1645" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m47" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm enable">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="790" y="1670" as="sourcePoint"/><mxPoint x="480" y="1670" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m48" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="1695" as="sourcePoint"/><mxPoint x="320" y="1695" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m49" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Update device status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="1720" as="sourcePoint"/><mxPoint x="160" y="1720" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m50" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show USB device available">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="1745" as="sourcePoint"/><mxPoint x="75" y="1745" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 6: Enable Camera Maintenance                            -->
+    <!-- ================================================================ -->
+    <mxCell id="sep6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Enable Camera Maintenance Mode ==" vertex="1">
+      <mxGeometry x="80" y="1770" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s6" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1770" width="10" height="335" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s6" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1800" width="10" height="275" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s6" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1825" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s6" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1850" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_gw_s6" parent="ll_gw" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1995" width="10" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m51" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Enable camera maintenance mode">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="1820" as="sourcePoint"/><mxPoint x="150" y="1820" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m52" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/maintenance/cameras/{camera}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="1850" as="sourcePoint"/><mxPoint x="310" y="1850" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m53" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="setCameraMaintenance(cameraId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="1875" as="sourcePoint"/><mxPoint x="470" y="1875" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m54" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load camera record">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1900" as="sourcePoint"/><mxPoint x="630" y="1900" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m55" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update status to maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1925" as="sourcePoint"/><mxPoint x="630" y="1925" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m56" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Set maintenance_start timestamp / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="1950" as="sourcePoint"/><mxPoint x="630" y="1950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m57" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Disable camera for streaming">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="2025" as="sourcePoint"/><mxPoint x="790" y="2025" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m58" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm disable">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="790" y="2050" as="sourcePoint"/><mxPoint x="480" y="2050" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m59" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="2075" as="sourcePoint"/><mxPoint x="320" y="2075" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m60" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Update camera status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="2100" as="sourcePoint"/><mxPoint x="160" y="2100" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m61" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show camera in maintenance">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="2125" as="sourcePoint"/><mxPoint x="75" y="2125" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  SECTION 7: Disable Camera Maintenance                           -->
+    <!-- ================================================================ -->
+    <mxCell id="sep7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Disable Camera Maintenance Mode ==" vertex="1">
+      <mxGeometry x="80" y="2150" width="800" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s7" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2150" width="10" height="335" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s7" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2180" width="10" height="275" as="geometry" />
+    </mxCell>
+    <mxCell id="act_mc_s7" parent="ll_mc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2205" width="10" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s7" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2230" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_gw_s7" parent="ll_gw" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2375" width="10" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m62" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Disable camera maintenance mode">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="75" y="2200" as="sourcePoint"/><mxPoint x="150" y="2200" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m63" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="DELETE /admin/maintenance/cameras/{camera}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="160" y="2230" as="sourcePoint"/><mxPoint x="310" y="2230" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m64" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="clearCameraMaintenance(cameraId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="320" y="2255" as="sourcePoint"/><mxPoint x="470" y="2255" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m65" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load camera record">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="2280" as="sourcePoint"/><mxPoint x="630" y="2280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m66" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update status to active">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="2305" as="sourcePoint"/><mxPoint x="630" y="2305" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m67" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Clear maintenance timestamps / Save">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="2330" as="sourcePoint"/><mxPoint x="630" y="2330" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m68" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Enable camera for streaming">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="2405" as="sourcePoint"/><mxPoint x="790" y="2405" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m69" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Confirm enable">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="790" y="2430" as="sourcePoint"/><mxPoint x="480" y="2430" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m70" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return success">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="2455" as="sourcePoint"/><mxPoint x="320" y="2455" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m71" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Update camera status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="310" y="2480" as="sourcePoint"/><mxPoint x="160" y="2480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m72" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show camera available">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="2505" as="sourcePoint"/><mxPoint x="75" y="2505" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  NOTE                                                            -->
+    <!-- ================================================================ -->
+    <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fontSize=9;align=left;fillColor=#fff9c4;strokeColor=#d6b600;" value="&lt;b&gt;Maintenance features:&lt;/b&gt;&lt;br/&gt;- View all devices in maintenance&lt;br/&gt;- Set maintenance descriptions&lt;br/&gt;- Enable/disable USB device maintenance&lt;br/&gt;- Enable/disable camera maintenance&lt;br/&gt;- Automatic device status updates&lt;br/&gt;- Gateway integration for device control&lt;br/&gt;- Maintenance timestamp tracking&lt;br/&gt;- Prevent reservations during maintenance" vertex="1">
+      <mxGeometry x="870" y="1010" width="280" height="155" as="geometry" />
+    </mxCell>
+    <mxCell id="note2" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fontSize=9;align=left;fillColor=#fff9c4;strokeColor=#d6b600;" value="&lt;b&gt;Maintenance workflow:&lt;/b&gt;&lt;br/&gt;1. Admin sets device to maintenance mode&lt;br/&gt;2. Device status updated in database&lt;br/&gt;3. Gateway notified to disable device&lt;br/&gt;4. Reservations blocked for device&lt;br/&gt;5. Maintenance description displayed&lt;br/&gt;6. Admin clears maintenance when done&lt;br/&gt;7. Device re-enabled for use" vertex="1">
+      <mxGeometry x="870" y="1200" width="280" height="140" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

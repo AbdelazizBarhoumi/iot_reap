@@ -1,0 +1,463 @@
+<mxGraphModel dx="2575" dy="1355" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="3200" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Admin Moderation &amp; Video Monitor Sequence Diagram&lt;/b&gt;" vertex="1">
+      <mxGeometry x="80" y="10" width="1500" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ACTOR -->
+    <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Admin" vertex="1">
+      <mxGeometry x="45" y="60" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="ll_fe" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="140" y="50" width="120" height="3080" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="340" y="50" width="100" height="3080" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_fc" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Forum&#xa;Controller" vertex="1">
+      <mxGeometry x="520" y="50" width="120" height="3080" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Database" vertex="1">
+      <mxGeometry x="740" y="50" width="100" height="3080" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_ns" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Notification&#xa;Service" vertex="1">
+      <mxGeometry x="940" y="50" width="120" height="3080" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- SECTION 1: Forum Moderation -->
+    <!-- ══════════════════════════════════════ -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Forum Moderation ==" vertex="1">
+      <mxGeometry x="80" y="130" width="1000" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- View flagged threads -->
+    <mxCell id="act_fe_s1a" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="105" width="10" height="245" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1a" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="125" width="10" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fc_s1a" parent="ll_fc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="143" width="10" height="183" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1a" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="160" width="10" height="120" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to forum moderation">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="163" as="sourcePoint" />
+        <mxPoint x="195" y="163" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m2" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/forum/flagged">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="185" as="sourcePoint" />
+        <mxPoint x="390" y="185" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m3" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="flaggedThreads()">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="205" as="sourcePoint" />
+        <mxPoint x="575" y="205" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m4" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load flagged threads / flags / content">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="228" as="sourcePoint" />
+        <mxPoint x="790" y="228" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m5" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Flagged threads">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="295" as="sourcePoint" />
+        <mxPoint x="580" y="295" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m6" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show threads requiring moderation">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="333" as="sourcePoint" />
+        <mxPoint x="75" y="333" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Unflag thread -->
+    <mxCell id="act_fe_s1b" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="373" width="10" height="280" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1b" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="393" width="10" height="250" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fc_s1b" parent="ll_fc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="410" width="10" height="225" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1b" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="428" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_ns_s1b" parent="ll_ns" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="575" width="10" height="50" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m7" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Unflag thread">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="395" as="sourcePoint" />
+        <mxPoint x="195" y="395" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m8" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/forum/threads/{threadId}/unflag">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="415" as="sourcePoint" />
+        <mxPoint x="390" y="415" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m9" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="unflagThread(threadId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="435" as="sourcePoint" />
+        <mxPoint x="575" y="435" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load flags / Clear flags / Save / Log moderation action">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="455" as="sourcePoint" />
+        <mxPoint x="790" y="455" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify thread author">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="578" as="sourcePoint" />
+        <mxPoint x="995" y="578" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create notification">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1000" y="600" as="sourcePoint" />
+        <mxPoint x="790" y="600" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread flags cleared">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="635" as="sourcePoint" />
+        <mxPoint x="75" y="635" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Delete thread -->
+    <mxCell id="act_fe_s1c" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="670" width="10" height="270" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1c" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="690" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fc_s1c" parent="ll_fc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="708" width="10" height="213" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1c" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="725" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_ns_s1c" parent="ll_ns" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="865" width="10" height="50" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete inappropriate thread">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="693" as="sourcePoint" />
+        <mxPoint x="195" y="693" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="DELETE /forum/threads/{threadId}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="713" as="sourcePoint" />
+        <mxPoint x="390" y="713" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="destroyThread(threadId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="733" as="sourcePoint" />
+        <mxPoint x="575" y="733" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Check permissions / Delete thread &amp; replies / Log action">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="753" as="sourcePoint" />
+        <mxPoint x="790" y="753" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify thread author">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="868" as="sourcePoint" />
+        <mxPoint x="995" y="868" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create notification">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1000" y="890" as="sourcePoint" />
+        <mxPoint x="790" y="890" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show thread deleted">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="923" as="sourcePoint" />
+        <mxPoint x="75" y="923" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Delete reply -->
+    <mxCell id="act_fe_s1d" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="960" width="10" height="270" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1d" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="978" width="10" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fc_s1d" parent="ll_fc" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="995" width="10" height="213" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1d" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1013" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_ns_s1d" parent="ll_ns" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1155" width="10" height="50" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Delete inappropriate reply">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="980" as="sourcePoint" />
+        <mxPoint x="195" y="980" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="DELETE /forum/replies/{replyId}">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1000" as="sourcePoint" />
+        <mxPoint x="390" y="1000" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="destroyReply(replyId)">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1020" as="sourcePoint" />
+        <mxPoint x="575" y="1020" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Load / Check permissions / Delete reply / Log action">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="1040" as="sourcePoint" />
+        <mxPoint x="790" y="1040" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Notify reply author">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="1158" as="sourcePoint" />
+        <mxPoint x="995" y="1158" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Create notification">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1000" y="1178" as="sourcePoint" />
+        <mxPoint x="790" y="1178" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show reply deleted">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="580" y="1213" as="sourcePoint" />
+        <mxPoint x="75" y="1213" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- SECTION 2: Video Monitoring -->
+    <!-- ══════════════════════════════════════ -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Video Monitoring ==" vertex="1">
+      <mxGeometry x="80" y="1255" width="1000" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- View active cameras -->
+    <mxCell id="act_fe_s2a" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1243" width="10" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2a" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1263" width="10" height="170" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2a" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1310" width="10" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Navigate to video monitoring">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1265" as="sourcePoint" />
+        <mxPoint x="195" y="1265" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/video-monitor">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1285" as="sourcePoint" />
+        <mxPoint x="390" y="1285" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/cameras/active">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1308" as="sourcePoint" />
+        <mxPoint x="390" y="1308" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Query active camera sessions">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1328" as="sourcePoint" />
+        <mxPoint x="790" y="1328" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Active cameras">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="1380" as="sourcePoint" />
+        <mxPoint x="392" y="1380" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m33" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display live camera streams">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1425" as="sourcePoint" />
+        <mxPoint x="75" y="1425" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Monitor camera + PTZ control -->
+    <mxCell id="act_fe_s2b" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="55" y="1465" width="10" height="580" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2b" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1485" width="10" height="548" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2b" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;" value="" vertex="1">
+      <mxGeometry x="45" y="1530" width="10" height="473" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m34" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Monitor specific camera">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1468" as="sourcePoint" />
+        <mxPoint x="195" y="1468" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m35" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/cameras/{camera}/monitor">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1490" as="sourcePoint" />
+        <mxPoint x="390" y="1490" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m36" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Query camera details / Get stream URL">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1513" as="sourcePoint" />
+        <mxPoint x="790" y="1513" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m37" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Camera data / Display stream with controls">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="1575" as="sourcePoint" />
+        <mxPoint x="75" y="1575" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m38" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Take camera control">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1608" as="sourcePoint" />
+        <mxPoint x="195" y="1608" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m39" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/{camera}/control">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1628" as="sourcePoint" />
+        <mxPoint x="390" y="1628" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m40" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update camera control status">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1648" as="sourcePoint" />
+        <mxPoint x="790" y="1648" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m41" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Enable PTZ controls">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="1685" as="sourcePoint" />
+        <mxPoint x="75" y="1685" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m42" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Send PTZ command">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1718" as="sourcePoint" />
+        <mxPoint x="195" y="1718" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m43" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="POST /admin/cameras/{camera}/move">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1738" as="sourcePoint" />
+        <mxPoint x="390" y="1738" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m44" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update camera position">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1758" as="sourcePoint" />
+        <mxPoint x="790" y="1758" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m45" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Show camera movement">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="1793" as="sourcePoint" />
+        <mxPoint x="75" y="1793" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m46" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Release camera control">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1828" as="sourcePoint" />
+        <mxPoint x="195" y="1828" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m47" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="DELETE /admin/cameras/{camera}/control">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1848" as="sourcePoint" />
+        <mxPoint x="390" y="1848" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m48" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update camera control status">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1868" as="sourcePoint" />
+        <mxPoint x="790" y="1868" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m49" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Disable PTZ controls">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="1905" as="sourcePoint" />
+        <mxPoint x="75" y="1905" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="m50" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View / Download recording">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="75" y="1940" as="sourcePoint" />
+        <mxPoint x="195" y="1940" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m51" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="GET /admin/cameras/{camera}/recording[/{recordingId}]">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="265" y="1963" as="sourcePoint" />
+        <mxPoint x="390" y="1963" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m52" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Query recording files / Load file stream">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="392" y="1985" as="sourcePoint" />
+        <mxPoint x="790" y="1985" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m53" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display recordings / Download file">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="790" y="2025" as="sourcePoint" />
+        <mxPoint x="75" y="2025" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

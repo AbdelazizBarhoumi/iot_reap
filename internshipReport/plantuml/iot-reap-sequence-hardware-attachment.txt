@@ -1,0 +1,93 @@
+@startuml iotreap-hardware-attachment
+title IoT-REAP - Hardware Attachment and Queue Sequence
+
+actor Engineer
+participant "Browser" as Browser
+participant "Hardware\nController" as Controller
+participant "USB Device\nQueue Service" as QueueService
+participant "Gateway\nService" as GatewayService
+participant "USB Device\nRepository" as DeviceRepo
+participant "USB Device\nQueue Repo" as QueueRepo
+database "Database" as DB
+participant "MQTT\nBroker" as MQTT
+
+== Browse Available Devices ==
+
+Engineer -> Browser: Open hardware page for session
+Browser -> Controller: GET /sessions/{id}/hardware
+Controller -> DeviceRepo: findAvailableByGateway(gatewayNode)
+DeviceRepo -> DB: SELECT usb_devices WHERE status = 'available'
+DB --> DeviceRepo: Available devices
+DeviceRepo --> Controller: Device collection
+Controller --> Browser: Render hardware list
+Browser --> Engineer: Display available devices
+
+== Request Device Attachment ==
+
+Engineer -> Browser: Click "Attach" on device
+Browser -> Controller: POST /sessions/{id}/hardware/{deviceId}/attach
+Controller -> QueueService: requestAttachment(session, device)
+
+== Check Device Availability ==
+
+QueueService -> DeviceRepo: findById(deviceId)
+DeviceRepo -> DB: SELECT usb_devices WHERE id = ?
+DB --> DeviceRepo: USB device
+DeviceRepo --> QueueService: Device with status
+
+alt Device is AVAILABLE
+    == Direct Attachment ==
+    QueueService -> DeviceRepo: updateStatus(device, PENDING_ATTACHMENT)
+    DeviceRepo -> DB: UPDATE usb_devices SET status = 'pending_attachment'
+    
+    QueueService -> GatewayService: attachDevice(gatewayNode, device, session)
+    GatewayService -> MQTT: PUBLISH usbip/attach {busid, vmid}
+    MQTT --> GatewayService: ACK
+    GatewayService --> QueueService: Attachment initiated
+    
+    QueueService -> DeviceRepo: updateStatus(device, ATTACHED)
+    DeviceRepo -> DB: UPDATE usb_devices SET status = 'attached', session_id = ?
+    
+    QueueService --> Controller: Device attached successfully
+    Controller --> Browser: 200 OK
+    Browser --> Engineer: Device now attached to session
+
+else Device is ATTACHED or BUSY
+    == Join Waiting Queue ==
+    QueueService -> QueueRepo: create(session, device, user)
+    QueueRepo -> DB: INSERT usb_device_queues
+    DB --> QueueRepo: Queue entry
+    QueueRepo --> QueueService: Queue position
+    
+    QueueService --> Controller: Queued (position: N)
+    Controller --> Browser: 202 Accepted {queue_position}
+    Browser --> Engineer: "Device busy, you are #N in queue"
+
+end
+
+== Device Release and Queue Processing ==
+
+note over Engineer, MQTT: When current user detaches or session ends
+
+QueueService -> DeviceRepo: updateStatus(device, AVAILABLE)
+DeviceRepo -> DB: UPDATE usb_devices SET status = 'available', session_id = NULL
+
+QueueService -> QueueRepo: findNextInQueue(device)
+QueueRepo -> DB: SELECT * FROM usb_device_queues WHERE device_id = ? ORDER BY created_at ASC LIMIT 1
+DB --> QueueRepo: Next queue entry
+
+alt Queue entry exists
+    QueueService -> QueueRepo: markAsProcessing(queueEntry)
+    QueueService -> DeviceRepo: updateStatus(device, PENDING_ATTACHMENT)
+    QueueService -> GatewayService: attachDevice(gatewayNode, device, nextSession)
+    GatewayService -> MQTT: PUBLISH usbip/attach {busid, vmid}
+    MQTT --> GatewayService: ACK
+    GatewayService --> QueueService: Attachment initiated
+    QueueService -> DeviceRepo: updateStatus(device, ATTACHED)
+    QueueService -> QueueRepo: delete(queueEntry)
+    note right: Notification sent to next user
+else Queue is empty
+    QueueService -> QueueService: Device remains AVAILABLE
+end
+
+@enduml

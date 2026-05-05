@@ -1,0 +1,310 @@
+\documentclass[12pt,a4paper]{report}
+
+% ==================== STYLE GUIDELINES REFERENCE ====================
+% Font: Times New Roman, 12pt for body text
+% Line spacing: 1.5 (onehalfspacing)
+% Margins: All 2.5cm, Header: 1.0cm, Footer: 1.0cm
+% Headers: Chapter title (max 40 chars), 10pt italic
+% Footers: Page number centered, 10pt
+% Emphasis: Use italics or bold, NEVER underline
+% No automatic hyphenation
+% Pagination: Starts from Introduction (arabic numerals)
+% Formulas: Numbered (1) to (n), right-aligned
+% Tables/Figures: Numbered consecutively, captions 12pt Times, centered
+% Footnotes: 10pt, 11pt line spacing, non-superscript with 3pt upward shift
+% ========================================================================
+
+% ==================== PACKAGES ====================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm, headheight=1cm, footskip=1cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[hidelinks,bookmarksdepth=4]{hyperref}
+\usepackage{bookmark}
+\usepackage{tocloft}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{lettrine}
+
+% pdfpages is not needed in this document; removed to avoid missing package dependency.
+
+% ==================== CODE LISTING SETUP ====================
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% ==================== PAGE SETUP ====================
+\onehalfspacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Set section numbering depth to include subsubsections (3.2.2.1)
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+% ==================== SECTION NUMBERING RULE ====================
+% IMPORTANT: Section numbering does NOT include chapter number.
+% After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
+% Then subsequent subsections are numbered 1.1, 1.2, 1.3, etc.
+% Following sections reset to 2., 2.1, 2.2, etc. within the same chapter.
+% Each new chapter resets the section counter (1., 1.1, 1.2, ... 2., 2.1, ...)
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\renewcommand{\theparagraph}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{paragraph}}
+
+% Disable automatic hyphenation per guidelines
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+
+% Prevent text overflow by allowing flexible line breaking
+\sloppy
+\emergencystretch=3em
+
+% Command for proper NOTE formatting per guidelines
+% Usage: \pfeNote{Your note text here}
+\newcommand{\pfeNote}[1]{\textsc{\textbf{note.}}--- #1}
+
+% Commands for clearing empty pages
+\newcommand{\clearemptydoublepage}{\newpage\thispagestyle{empty}\cleardoublepage}
+\newcommand{\clearemptypage}{\newpage\thispagestyle{empty}}
+
+\renewcommand{\lstlistingname}{Algorithm}% Listing -> Algorithm
+
+\newcommand*{\initial}[1]
+{
+  \lettrine[lines=3, lhang=0.26, nindent=0em, findent=-1em]
+  {
+    \color{gray}{\textsc{#1}}
+  }{}
+}
+
+% ==================== HEADERS AND FOOTERS ====================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\fontsize{10}{12}\selectfont\itshape\nouppercase{\leftmark}}
+\fancyfoot[C]{\fontsize{10}{12}\selectfont\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\fontsize{10}{12}\selectfont\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% ==================== CHAPTER TITLE PAGE STYLE ====================
+% Chapter title pages are counted but page number is NOT displayed
+\fancypagestyle{chapterstyle}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+  % Page counter increments automatically but nothing is displayed
+}
+
+% ==================== CHAPTER FORMATTING ====================
+% Each chapter starts with a title page (centered, only chapter number and title)
+% with a double line below the title, then content begins on the next page
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\centering}
+  {\chaptertitlename\ \thechapter}
+  {20pt}
+  {\Huge}
+  [\vspace{10pt}{\titlerule[0.8pt]}\vspace{2pt}{\titlerule[0.8pt]}\clearpage] % Double line below title
+\titlespacing*{\chapter}{0pt}{0.3\textheight}{0.3\textheight}
+
+
+% Subsubsubsection formatting (uses \paragraph level)
+\titleformat{\paragraph}[hang]
+  {\normalfont\normalsize\bfseries}
+  {\theparagraph}
+  {1em}
+  {}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Convenience alias so you can use \subsubsubsection{Title}
+\makeatletter
+\newcommand{\subsubsubsection}{\@ifstar\@subsubsubsecstar\@subsubsubsecnostar}
+\newcommand{\@subsubsubsecstar}[1]{\paragraph*{#1}}
+\newcommand{\@subsubsubsecnostar}[2][]{\paragraph[#1]{#2}}
+\makeatother
+% Ensure chapter title pages use chapterstyle (counted but no page number displayed)
+\assignpagestyle{\chapter}{chapterstyle}
+
+% ==================== TABLE OF CONTENTS FORMATTING ====================
+% Ensure chapter entries in TOC show "Chapter X" before title
+\renewcommand{\cftchappresnum}{Chapter }
+\renewcommand{\cftchapaftersnum}{: }
+\setlength{\cftchapnumwidth}{6em}
+\renewcommand{\cftparaleader}{\cftdotfill{\cftdotsep}}
+\setlength{\cftparaindent}{10em}
+\setlength{\cftparanumwidth}{3.5em}
+
+% Add dotted leaders for chapters in TOC (tocloft removes them by default)
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+
+
+
+% Ensure sections and subsections also have dotted leaders
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
+
+% ==================== CAPTION FORMATTING ====================
+\captionsetup{font={normalsize,rm},labelfont=bf,justification=centering,skip=6pt}
+
+% ==================== FOOTNOTE FORMATTING ====================
+% Footnotes: 10pt, 11pt line spacing, non-superscript with 3pt upward shift
+\renewcommand{\footnotesize}{\fontsize{10}{11}\selectfont}
+\renewcommand{\thefootnote}{\raisebox{3pt}[0pt][0pt]{\textnormal{\arabic{footnote}}}}
+
+% ==================== BEGIN DOCUMENT ====================
+
+% ==================== PAGINATION RULE ====================
+% FRONT MATTER (Roman numerals: i, ii, iii, iv, v...)
+% Page numbers ARE displayed in footer
+% - Cover page (empty/no number)
+% - Dedications (i) - page number visible
+% - Acknowledgments (ii) - page number visible
+% - Table of Contents (iii) - page number visible
+% - List of Figures (iv) - page number visible
+% - List of Tables (v) - page number visible  
+% - List of Acronyms (vi) - page number visible
+%
+% MAIN CONTENT (Arabic numerals: 1, 2, 3, 4...)
+% - Chapter title pages: COUNTED but page number NOT displayed
+% - Regular content pages: COUNTED and page number displayed
+% - General Introduction (starts at 1) - page number visible
+% - All Chapters (continue numbering) - title page counted but hidden, content visible
+% - Conclusion
+% - Bibliography
+% 
+% RULE: All pages are counted in pagination
+% - Page numbers display in footer (centered, 10pt) on regular pages
+% - Chapter opening pages have no visible page number but counter still increments
+% ================================================================
+% ==================== DOT HEADING ====================
+\newcommand{\dotsection}[1]{%
+ \vspace{1ex}
+ {\normalfont\normalsize\bfseries $\bullet$\ #1\par}
+ \vspace{0.5ex}
+}
+
+
+\begin{document}
+
+% ==================== START ROMAN PAGE NUMBERING ====================
+% Preliminary pages use Roman numerals (i, ii, iii, etc.)
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% ==================== COVER PAGE ====================
+%\includepdf[pages={1}]{assets/DS-Rapport-Stage-Pro-EN}
+
+
+\newpage
+\thispagestyle{empty}
+\begin{figure}
+\centering
+\includegraphics[trim = 0mm 0mm 0mm 150mm,width=0.7\linewidth]{assets/quran}\\
+\includegraphics[trim = 0mm 30mm 0mm 0mm,width=0.65\linewidth]{assets/aya}
+\end{figure}
+\clearemptydoublepage
+\setcounter{page}{1}
+% ==================== DEDICATIONS ====================
+\phantomsection
+\input{chapters/dedications}
+
+% ==================== ACKNOWLEDGMENTS ====================
+\phantomsection
+\input{chapters/acknowledgments}
+
+
+% ==================== TABLE OF CONTENTS ====================
+\vspace*{-2cm}
+\tableofcontents
+\cleardoublepage
+
+% ==================== LIST OF FIGURES ====================
+\phantomsection
+\addcontentsline{toc}{chapter}{List of Figures}
+\vspace*{-2cm}
+\listoffigures
+\bookmarksetup{startatroot}
+\cleardoublepage
+
+% ==================== LIST OF TABLES ====================
+\phantomsection
+\addcontentsline{toc}{chapter}{List of Tables}
+\vspace*{-2cm}
+\listoftables
+\bookmarksetup{startatroot}
+\cleardoublepage
+
+% ==================== LIST OF ACRONYMS ====================
+%\input{chapters/acronyms}
+
+% ==================== START ARABIC PAGE NUMBERING ====================
+% Main content uses Arabic numerals (1, 2, 3, etc.) starting from Introduction
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ==================== Introduction ====================
+%\include{chapters/introduction}
+% ==================== CHAPTER 1 ====================
+%\include{chapters/chapter1}
+
+% ==================== CHAPTER 2 ====================
+%\include{chapters/chapter2}
+
+% ==================== CHAPTER 3 ====================
+\include{chapters/chapter3}
+
+% ==================== CHAPTER 4 ====================
+%\include{chapters/chapter4}
+
+% ==================== CONCLUSION ====================
+%\include{chapters/conclusion}
+
+% ==================== BIBLIOGRAPHY ====================
+%\input{chapters/bibliography}
+
+% ==================== ABSTRACT ====================
+%\input{chapters/abstract}
+
+% ==================== END OF DOCUMENT ====================
+\end{document}

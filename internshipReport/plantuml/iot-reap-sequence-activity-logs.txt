@@ -1,0 +1,44 @@
+@startuml iot-reap-sequence-activity-logs
+title IoT-REAP - Activity Logs Sequence
+actor Admin
+participant "Browser" as Browser
+participant "ActivityLogController" as Controller
+participant "ActivityLogService" as LogSvc
+participant "ActivityLogRepository" as LogRepo
+database "MySQL" as DB
+
+== View Activity Logs ==
+Admin -> Browser: Navigate to Activity Logs
+Browser -> Controller: GET /admin/activity-logs
+Controller -> LogSvc: getPaginatedLogs(page, perPage)
+LogSvc -> LogRepo: findPaginated(page, perPage)
+LogRepo -> DB: SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ? OFFSET ?
+LogRepo --> LogSvc: LengthAwarePaginator<ActivityLog>
+LogSvc --> Controller: PaginatedResult<ActivityLog>
+Controller --> Browser: 200 OK {data, meta}
+Browser -> Admin: Display activity log entries
+
+== Filter Activity Logs ==
+Admin -> Browser: Apply filters (date, user, type, severity)
+Browser -> Controller: GET /admin/activity-logs?date_from={from}&date_to={to}&user_id={uid}&type={type}&severity={sev}
+Controller -> LogSvc: getFilteredLogs(filters, page)
+LogSvc -> LogSvc: validateFilters(filters)
+LogSvc -> LogRepo: findByFilters(filters, page)
+LogRepo -> DB: SELECT * FROM activity_logs WHERE created_at BETWEEN ? AND ? AND user_id = ? AND type = ? AND severity = ?
+LogRepo --> LogSvc: LengthAwarePaginator<ActivityLog>
+LogSvc --> Controller: PaginatedResult<ActivityLog>
+Controller --> Browser: 200 OK {data, meta}
+Browser -> Admin: Display filtered log entries
+
+== Export Activity Logs ==
+Admin -> Browser: Click Export
+Browser -> Controller: GET /admin/activity-logs/export?format=csv
+Controller -> LogSvc: exportLogs(filters, format)
+LogSvc -> LogRepo: findByFilters(filters, noPagination)
+LogRepo -> DB: SELECT * FROM activity_logs WHERE ...
+LogRepo --> LogSvc: Collection<ActivityLog>
+LogSvc -> LogSvc: generateExport(results, format)
+LogSvc --> Controller: ExportFile
+Controller --> Browser: 200 OK {download_url}
+Browser -> Admin: Download exported log file
+@enduml

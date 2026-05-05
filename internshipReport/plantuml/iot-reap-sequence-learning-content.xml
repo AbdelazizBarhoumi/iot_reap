@@ -1,0 +1,464 @@
+<mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="4500" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" value="&lt;b&gt;IoT-REAP — Learning Content Consumption Sequence Diagram&lt;/b&gt;" vertex="1">
+      <mxGeometry x="80" y="10" width="1300" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=11;" value="Engineer" vertex="1">
+      <mxGeometry x="35" y="65" width="30" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="ll_fe"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Frontend&#xa;(React/Inertia)" vertex="1">
+      <mxGeometry x="85"  y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_rt"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Laravel&#xa;Routes" vertex="1">
+      <mxGeometry x="245" y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_tp"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="TrainingPath&#xa;Controller" vertex="1">
+      <mxGeometry x="405" y="50" width="120" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_vi"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Video&#xa;Controller" vertex="1">
+      <mxGeometry x="575" y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_ar"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Article&#xa;Controller" vertex="1">
+      <mxGeometry x="735" y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_qu"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Quiz&#xa;Controller" vertex="1">
+      <mxGeometry x="895" y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+    <mxCell id="ll_db"  parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;" value="Database" vertex="1">
+      <mxGeometry x="1055" y="50" width="110" height="4380" as="geometry" />
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S1: View Enrolled Paths                                          -->
+    <!-- ================================================================ -->
+    <mxCell id="sep1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== View Enrolled Training Paths ==" vertex="1">
+      <mxGeometry x="65" y="130" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s1" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="125" width="10" height="285" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s1" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="155" width="10" height="225" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s1" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="180" width="10" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s1" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="205" width="10" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="m1"  edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View my enrolled training paths">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="175" as="sourcePoint"/><mxPoint x="135" y="175" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2"  edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /my-trainingPaths">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="205" as="sourcePoint"/><mxPoint x="295" y="205" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3"  edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="myTrainingPaths()">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="230" as="sourcePoint"/><mxPoint x="460" y="230" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4"  edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load user's enrolled training paths">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="255" as="sourcePoint"/><mxPoint x="1105" y="255" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5"  edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load progress for each path">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="280" as="sourcePoint"/><mxPoint x="1105" y="280" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6"  edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return paths with progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="305" as="sourcePoint"/><mxPoint x="470" y="305" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7"  edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return enrolled paths">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="355" as="sourcePoint"/><mxPoint x="305" y="355" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8"  edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Display / Show enrolled courses with progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="295" y="410" as="sourcePoint"/><mxPoint x="65" y="410" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S2: Select Training Path                                         -->
+    <!-- ================================================================ -->
+    <mxCell id="sep2" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Select Training Path ==" vertex="1">
+      <mxGeometry x="65" y="440" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s2" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="440" width="10" height="315" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s2" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="470" width="10" height="255" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s2" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="495" width="10" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s2" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="520" width="10" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="m9"  edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Select training path">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="490" as="sourcePoint"/><mxPoint x="135" y="490" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{id}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="520" as="sourcePoint"/><mxPoint x="295" y="520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="show(trainingPathId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="545" as="sourcePoint"/><mxPoint x="460" y="545" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load training path details">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="570" as="sourcePoint"/><mxPoint x="1105" y="570" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load modules and units">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="595" as="sourcePoint"/><mxPoint x="1105" y="595" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load user progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="620" as="sourcePoint"/><mxPoint x="1105" y="620" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return full training path data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="645" as="sourcePoint"/><mxPoint x="470" y="645" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return training path / Display / Show course syllabus">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="755" as="sourcePoint"/><mxPoint x="65" y="755" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S3: Select & Watch Video                                         -->
+    <!-- ================================================================ -->
+    <mxCell id="sep3" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Video Unit: Load &amp; Watch ==" vertex="1">
+      <mxGeometry x="65" y="785" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s3" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="785" width="10" height="590" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s3" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="815" width="10" height="530" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s3" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="840" width="10" height="195" as="geometry" />
+    </mxCell>
+    <mxCell id="act_vi_s3" parent="ll_vi" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1065" width="10" height="195" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s3" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="865" width="10" height="360" as="geometry" />
+    </mxCell>
+
+    <!-- Load video unit -->
+    <mxCell id="m17" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Select video unit">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="835" as="sourcePoint"/><mxPoint x="135" y="835" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m18" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{tpId}/trainingUnit/{unitId}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="865" as="sourcePoint"/><mxPoint x="295" y="865" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m19" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="trainingUnit(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="890" as="sourcePoint"/><mxPoint x="460" y="890" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m20" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load unit details / video content / user progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="915" as="sourcePoint"/><mxPoint x="1105" y="915" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m21" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return unit data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="945" as="sourcePoint"/><mxPoint x="470" y="945" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m22" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return training unit / Display video lesson / Show video player">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="1035" as="sourcePoint"/><mxPoint x="65" y="1035" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Video status -->
+    <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Start watching video">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="1085" as="sourcePoint"/><mxPoint x="135" y="1085" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m24" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{tpId}/trainingUnits/{unitId}/video/status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="1115" as="sourcePoint"/><mxPoint x="295" y="1115" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m25" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="status(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="1140" as="sourcePoint"/><mxPoint x="625" y="1140" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m26" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load video processing status / user watch progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="635" y="1165" as="sourcePoint"/><mxPoint x="1105" y="1165" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m27" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return video status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="1195" as="sourcePoint"/><mxPoint x="635" y="1195" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m28" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return video status / Initialize player / Display video with progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="625" y="1375" as="sourcePoint"/><mxPoint x="65" y="1375" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S4: Update Video Progress                                        -->
+    <!-- ================================================================ -->
+    <mxCell id="sep4" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Update Video Progress ==" vertex="1">
+      <mxGeometry x="65" y="1405" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s4" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1405" width="10" height="265" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s4" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1435" width="10" height="205" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s4" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="1460" width="10" height="150" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s4" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1485" width="10" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="m29" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Update video progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="1455" as="sourcePoint"/><mxPoint x="135" y="1455" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m30" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /trainingPaths/{tpId}/trainingUnits/{unitId}/video-progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="1485" as="sourcePoint"/><mxPoint x="295" y="1485" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m31" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="updateVideoProgress(tpId, unitId, progress)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="1510" as="sourcePoint"/><mxPoint x="460" y="1510" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m32" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update user video progress / Check if video completed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="1535" as="sourcePoint"/><mxPoint x="1105" y="1535" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m33" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return updated progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="1565" as="sourcePoint"/><mxPoint x="470" y="1565" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m34" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return progress update / Update progress bar / Show updated progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="1670" as="sourcePoint"/><mxPoint x="65" y="1670" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S5: Article Unit                                                 -->
+    <!-- ================================================================ -->
+    <mxCell id="sep5" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Article Unit: Load &amp; Mark Read ==" vertex="1">
+      <mxGeometry x="65" y="1700" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s5" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1700" width="10" height="560" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s5" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1730" width="10" height="500" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s5a" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="1755" width="10" height="185" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s5b" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="1980" width="10" height="155" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s5" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="1780" width="10" height="320" as="geometry" />
+    </mxCell>
+    <!-- Load article unit -->
+    <mxCell id="m35" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Select article unit">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="1750" as="sourcePoint"/><mxPoint x="135" y="1750" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m36" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingPaths/{tpId}/trainingUnit/{unitId}">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="1780" as="sourcePoint"/><mxPoint x="295" y="1780" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m37" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="trainingUnit(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="1805" as="sourcePoint"/><mxPoint x="460" y="1805" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m38" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load unit details / article content / user progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="1830" as="sourcePoint"/><mxPoint x="1105" y="1830" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m39" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return unit data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="1860" as="sourcePoint"/><mxPoint x="470" y="1860" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m40" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return training unit / Display article lesson / Show article content">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="1940" as="sourcePoint"/><mxPoint x="65" y="1940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- Mark article read -->
+    <mxCell id="m41" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Mark article as read">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="2000" as="sourcePoint"/><mxPoint x="135" y="2000" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m42" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /trainingPaths/{tpId}/trainingUnits/{unitId}/article-read">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="2030" as="sourcePoint"/><mxPoint x="295" y="2030" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m43" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="markArticleRead(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="2055" as="sourcePoint"/><mxPoint x="460" y="2055" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m44" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update article read status / Check if unit completed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="2080" as="sourcePoint"/><mxPoint x="1105" y="2080" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m45" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return updated status / Update indicators / Show article as completed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="2260" as="sourcePoint"/><mxPoint x="65" y="2260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S6: Quiz — Take, Start, Submit, History                         -->
+    <!-- ================================================================ -->
+    <mxCell id="sep6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Quiz: Take → Start → Submit → History ==" vertex="1">
+      <mxGeometry x="65" y="2290" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s6" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2290" width="10" height="1285" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s6" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2320" width="10" height="1225" as="geometry" />
+    </mxCell>
+    <mxCell id="act_qu_s6" parent="ll_qu" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2345" width="10" height="1175" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s6" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="2370" width="10" height="1100" as="geometry" />
+    </mxCell>
+    <!-- Quiz self-call: Calculate score -->
+    <mxCell id="act_qu_self" parent="ll_qu" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
+      <mxGeometry x="60" y="2975" width="10" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- Take quiz -->
+    <mxCell id="m46" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Select quiz unit">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="2340" as="sourcePoint"/><mxPoint x="135" y="2340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m47" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /trainingUnits/{unitId}/quiz">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="2370" as="sourcePoint"/><mxPoint x="295" y="2370" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m48" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="take(unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="2395" as="sourcePoint"/><mxPoint x="945" y="2395" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m49" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load quiz details / questions / check previous attempts">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="955" y="2420" as="sourcePoint"/><mxPoint x="1105" y="2420" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m50" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return quiz data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="2470" as="sourcePoint"/><mxPoint x="955" y="2470" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m51" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return quiz / Display quiz / Show quiz questions">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="2560" as="sourcePoint"/><mxPoint x="65" y="2560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Start attempt -->
+    <mxCell id="m52" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Start quiz attempt">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="2600" as="sourcePoint"/><mxPoint x="135" y="2600" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m53" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /quizzes/{quiz}/start">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="2630" as="sourcePoint"/><mxPoint x="295" y="2630" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m54" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="startAttempt(quizId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="2655" as="sourcePoint"/><mxPoint x="945" y="2655" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m55" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Create quiz attempt record / Load questions for attempt">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="955" y="2680" as="sourcePoint"/><mxPoint x="1105" y="2680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m56" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return attempt data">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="2725" as="sourcePoint"/><mxPoint x="955" y="2725" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m57" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return attempt / Display questions with timer">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="2820" as="sourcePoint"/><mxPoint x="65" y="2820" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Submit answers -->
+    <mxCell id="m58" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Submit quiz answers">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="2865" as="sourcePoint"/><mxPoint x="135" y="2865" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m59" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /quiz-attempts/{attempt}/submit">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="2895" as="sourcePoint"/><mxPoint x="295" y="2895" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m60" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="submitAttempt(attemptId, answers)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="2920" as="sourcePoint"/><mxPoint x="945" y="2920" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m61" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load quiz attempt / Load correct answers">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="955" y="2945" as="sourcePoint"/><mxPoint x="1105" y="2945" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- self-call: Calculate score -->
+    <mxCell id="m62" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;edgeStyle=orthogonalEdgeStyle;" value="calculateScore()">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="955" y="2975" as="sourcePoint"/>
+        <mxPoint x="955" y="3003" as="targetPoint"/>
+        <Array as="points"><mxPoint x="1010" y="2975"/><mxPoint x="1010" y="3003"/></Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m63" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update attempt with score / Check if passed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="955" y="3030" as="sourcePoint"/><mxPoint x="1105" y="3030" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m64" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return results">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="3075" as="sourcePoint"/><mxPoint x="955" y="3075" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m65" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return quiz results / Display results / Show score and pass/fail">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="3200" as="sourcePoint"/><mxPoint x="65" y="3200" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- History -->
+    <mxCell id="m66" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="View quiz history">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="3245" as="sourcePoint"/><mxPoint x="135" y="3245" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m67" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="GET /quizzes/{quiz}/history">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="3275" as="sourcePoint"/><mxPoint x="295" y="3275" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m68" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="attemptHistory(quizId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="3300" as="sourcePoint"/><mxPoint x="945" y="3300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m69" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Load user's quiz attempts">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="955" y="3325" as="sourcePoint"/><mxPoint x="1105" y="3325" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m70" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return attempt history">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="3360" as="sourcePoint"/><mxPoint x="955" y="3360" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m71" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return history / Display history / Show past attempts">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="3575" as="sourcePoint"/><mxPoint x="65" y="3575" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ================================================================ -->
+    <!--  S7: Mark Unit Complete / Incomplete                              -->
+    <!-- ================================================================ -->
+    <mxCell id="sep7" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#333333;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" value="== Mark Training Unit Complete / Incomplete ==" vertex="1">
+      <mxGeometry x="65" y="3610" width="1150" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="act_fe_s7" parent="ll_fe" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="3610" width="10" height="600" as="geometry" />
+    </mxCell>
+    <mxCell id="act_rt_s7" parent="ll_rt" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="3640" width="10" height="540" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s7a" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="3665" width="10" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="act_tp_s7b" parent="ll_tp" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="55" y="3930" width="10" height="185" as="geometry" />
+    </mxCell>
+    <mxCell id="act_db_s7" parent="ll_db" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;" value="" vertex="1">
+      <mxGeometry x="50" y="3690" width="10" height="400" as="geometry" />
+    </mxCell>
+
+    <!-- Mark complete -->
+    <mxCell id="m72" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Mark unit as complete">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="3660" as="sourcePoint"/><mxPoint x="135" y="3660" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m73" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="POST /trainingPaths/{tpId}/trainingUnits/{unitId}/complete">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="3690" as="sourcePoint"/><mxPoint x="295" y="3690" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m74" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="markTrainingUnitComplete(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="3715" as="sourcePoint"/><mxPoint x="460" y="3715" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m75" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update unit completion status">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="3740" as="sourcePoint"/><mxPoint x="1105" y="3740" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m76" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Recalculate path progress / Check if path completed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="3770" as="sourcePoint"/><mxPoint x="1105" y="3770" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m77" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return updated progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="3800" as="sourcePoint"/><mxPoint x="470" y="3800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m78" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#82b366;" value="Return progress update / Update display / Show unit as completed">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="3880" as="sourcePoint"/><mxPoint x="65" y="3880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Mark incomplete -->
+    <mxCell id="m79" edge="1" parent="1" style="endArrow=open;html=1;strokeWidth=1;fontSize=9;" value="Mark unit as incomplete">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="65" y="3950" as="sourcePoint"/><mxPoint x="135" y="3950" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m80" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="DELETE /trainingPaths/{tpId}/trainingUnits/{unitId}/complete">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="145" y="3980" as="sourcePoint"/><mxPoint x="295" y="3980" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m81" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="markTrainingUnitIncomplete(tpId, unitId)">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="4005" as="sourcePoint"/><mxPoint x="460" y="4005" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m82" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=1;fontSize=9;" value="Update unit completion status / Recalculate path progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="470" y="4030" as="sourcePoint"/><mxPoint x="1105" y="4030" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m83" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#999999;" value="Return updated progress">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="1105" y="4065" as="sourcePoint"/><mxPoint x="470" y="4065" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m84" edge="1" parent="1" style="endArrow=open;dashed=1;html=1;strokeWidth=1;fontSize=9;strokeColor=#b85450;" value="Return progress update / Update display / Show unit as incomplete">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="460" y="4195" as="sourcePoint"/><mxPoint x="65" y="4195" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Note -->
+    <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fontSize=9;align=left;fillColor=#fff9c4;strokeColor=#d6b600;" value="&lt;b&gt;Learning content features:&lt;/b&gt;&lt;br/&gt;- Video lessons with progress tracking&lt;br/&gt;- Article content with read status&lt;br/&gt;- Quiz assessments with scoring&lt;br/&gt;- Unit completion tracking&lt;br/&gt;- Overall training path progress&lt;br/&gt;- Attempt history for quizzes" vertex="1">
+      <mxGeometry x="1200" y="2290" width="240" height="130" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

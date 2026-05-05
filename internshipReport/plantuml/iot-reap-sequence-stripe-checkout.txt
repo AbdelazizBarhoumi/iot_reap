@@ -1,0 +1,116 @@
+@startuml iot-reap-sequence-stripe-checkout
+title IoT-REAP - Stripe Checkout Payment Sequence Diagram
+actor User as user
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Checkout\nController" as checkout
+participant "Stripe\nService" as stripe
+participant "Database" as db
+participant "Enrollment\nModel" as enrollment
+participant "Payment\nModel" as payment
+participant "Stripe\nAPI" as stripe_api
+
+user -> frontend : View training path details
+frontend -> routes : GET /trainingPaths/{id}
+routes -> frontend : Display training path
+frontend --> user : Show course with price and "Enroll" button
+
+user -> frontend : Click "Enroll" or "Purchase"
+frontend -> routes : POST /checkout/initiate
+routes -> checkout : checkout(trainingPathId)
+checkout -> db : Load training path
+checkout -> db : Check existing enrollment
+db --> checkout : Return path and enrollment status
+
+alt Not enrolled
+    checkout -> db : Create pending enrollment
+    checkout -> db : Set status to pending_payment
+    checkout -> db : Save enrollment
+    checkout -> stripe : Create Stripe Checkout session
+    stripe -> stripe_api : POST /v1/checkout/sessions
+    stripe_api --> stripe : Return session URL and ID
+    stripe -> db : Save Stripe session ID
+    stripe -> db : Link session to enrollment
+    stripe -> db : Save changes
+    stripe --> checkout : Return checkout URL
+    checkout --> routes : Return redirect URL
+    routes --> frontend : Redirect to Stripe
+    frontend -> stripe_api : Redirect to Stripe Checkout
+    stripe_api --> user : Display payment form
+
+    user -> stripe_api : Enter payment details
+    user -> stripe_api : Submit payment
+    stripe_api -> stripe_api : Process payment
+    stripe_api -> stripe_api : Validate payment
+
+    alt Payment successful
+        stripe_api -> routes : GET /checkout/success?session_id=xxx
+        routes -> checkout : success(sessionId)
+        checkout -> db : Find enrollment by session ID
+        checkout -> db : Update enrollment status to active
+        checkout -> db : Set enrolled_at timestamp
+        checkout -> db : Save enrollment
+        checkout -> db : Create payment record
+        checkout -> db : Set payment status to completed
+        checkout -> db : Save payment
+        checkout -> db : Notify user
+        checkout -> db : Notify teacher
+        checkout --> routes : Return success data
+        routes --> frontend : Render success page
+        frontend --> user : Display payment success screen
+        note right of user
+          Success screen shows:
+          - Training path details
+          - Enrollment confirmation
+          - Access to course content
+          - Receipt information
+        end note
+    else Payment failed
+        stripe_api -> routes : GET /checkout/cancelled
+        routes -> checkout : cancelled()
+        checkout -> db : Find enrollment by session ID
+        checkout -> db : Update enrollment status to cancelled
+        checkout -> db : Save enrollment
+        checkout -> db : Delete pending payment record
+        checkout -> db : Save changes
+        checkout --> routes : Return cancelled data
+        routes --> frontend : Render cancelled page
+        frontend --> user : Display payment cancelled screen
+        note right of user
+          Cancelled screen shows:
+          - Payment cancellation message
+          - Option to retry payment
+          - Link back to course details
+          - No enrollment created
+        end note
+    end
+else Already enrolled
+    checkout -> db : Load existing enrollment
+    checkout --> routes : Return enrollment data
+    routes --> frontend : Redirect to course
+    frontend --> user : Show "Already enrolled" message
+end
+
+user -> frontend : View payment history
+frontend -> routes : GET /checkout/payments
+routes -> checkout : payments()
+checkout -> db : Load user's payments
+checkout -> db : Load payment details
+checkout -> db : Load linked enrollments
+db --> checkout : Return payment history
+checkout --> routes : Return payments
+routes --> frontend : Display payment history
+frontend --> user : Show all past payments
+
+note right of user
+  Checkout features:
+  - Stripe Checkout integration
+  - Pending enrollment creation
+  - Payment success/cancel handling
+  - Automatic enrollment activation
+  - Payment history tracking
+  - User and teacher notifications
+  - Rate limited (5 requests per minute)
+end note
+
+@enduml

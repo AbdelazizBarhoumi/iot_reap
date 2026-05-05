@@ -1,0 +1,87 @@
+@startuml iot-reap-sequence-hardware-attach-detach
+title IoT-REAP -- Attach/Detach Hardware Sequence Diagram
+
+actor Engineer
+participant "Frontend\n(React)" as FE
+participant "HardwareController" as HC
+participant "HardwareService" as HS
+participant "USBIPProxy" as UP
+participant "ProxmoxClient" as PC
+participant "HardwareRepo" as HR
+participant "Database" as DB
+
+== Attach Hardware Device ==
+
+Engineer -> FE: Click "Attach" on reserved device
+FE -> HC: POST /hardware/{reservationId}/attach
+HC -> HS: attachDevice(user, reservationId)
+HS -> HR: findReservationById(reservationId)
+HR -> DB: SELECT hardware_reservations WHERE id
+DB --> HR: HardwareReservation
+HR --> HS: HardwareReservation
+
+alt Reservation not found or not owned
+    HS --> HC: ReservationNotFoundException
+    HC --> FE: 404 Not Found
+    FE --> Engineer: "Reservation not found"
+else Valid reservation
+    HS -> UP: attachDevice(device, vmNode, vmid)
+    UP -> PC: attachUSBDevice(node, vmid, deviceId)
+    PC -> PC: POST /nodes/{node}/qemu/{vmid}/agent/file-exec
+    PC --> UP: success
+    UP --> HS: attached
+
+    alt Attach failed
+        UP --> HS: USBIPAttachException
+        HS -> HS: Retry (max 3)
+        HS --> HC: HardwareAttachmentException
+        HC --> FE: 500 Error
+        FE --> Engineer: "Failed to attach device. Retrying..."
+    else Attach succeeded
+        HS -> HR: updateDeviceStatus(device, attached)
+        HR -> DB: UPDATE hardware_devices SET status=attached
+        DB --> HR: true
+        HR --> HS: true
+        HS --> HC: HardwareReservation (attached)
+        HC --> FE: 200 OK
+        FE --> Engineer: "Device attached to VM"
+        note right: Device appears in remote desktop
+    end
+end
+
+== Detach Hardware Device ==
+
+Engineer -> FE: Click "Detach" on attached device
+FE -> HC: POST /hardware/{reservationId}/detach
+HC -> HS: detachDevice(user, reservationId)
+HS -> HR: findReservationById(reservationId)
+HR -> DB: SELECT hardware_reservations WHERE id
+DB --> HR: HardwareReservation
+HR --> HS: HardwareReservation
+HS -> UP: detachDevice(device, vmNode, vmid)
+UP -> PC: detachUSBDevice(node, vmid, deviceId)
+PC -> PC: POST /nodes/{node}/qemu/{vmid}/agent/file-exec
+PC --> UP: success
+UP --> HS: detached
+
+alt Detach failed
+    UP --> HS: USBIPDetachException
+    HS -> HS: Retry (max 3)
+    HS --> HC: HardwareDetachmentException
+    HC --> FE: 500 Error
+    FE --> Engineer: "Failed to detach. Try again."
+else Detach succeeded
+    HS -> HR: updateDeviceStatus(device, available)
+    HR -> DB: UPDATE hardware_devices SET status=available
+    DB --> HR: true
+    HR --> HS: true
+    HS -> HR: deleteReservation(reservationId)
+    HR -> DB: DELETE FROM hardware_reservations
+    DB --> HR: true
+    HR --> HS: true
+    HS --> HC: status detached
+    HC --> FE: 200 OK
+    FE --> Engineer: "Device detached and released"
+end
+
+@enduml

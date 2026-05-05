@@ -1,0 +1,47 @@
+@startuml iot-reap-activity-hardware-attach-detach
+title IoT-REAP — Attach/Detach Hardware Activity Diagram
+
+start
+:Engineer views session with reserved devices;
+fork
+  :Attach path;
+  :Click "Attach" on reserved device;
+  :Invoke USB/IP proxy to attach device;
+  if (Attach successful?) then (yes)
+    :Update device status to Attached;
+    :Device appears in remote desktop;
+    :Engineer verifies device in VM;
+  else (no)
+    :Retry attachment (max 3);
+    if (Retry successful?) then (yes)
+      :Update device status to Attached;
+      :Confirm to engineer;
+    else (no)
+      :Display error;
+      :Alert administrator;
+    endif
+  endif
+
+fork again
+  :Detach path;
+  :Click "Detach" on attached device;
+  :Safely disconnect via USB/IP proxy;
+  if (Detach successful?) then (yes)
+    :Update device status to Available;
+    :Delete reservation record;
+    :Notify next user in queue;
+    :Confirm detachment to engineer;
+  else (no)
+    :Retry detachment (max 3);
+    if (Retry successful?) then (yes)
+      :Update device status;
+      :Release reservation;
+      :Confirm detachment;
+    else (no)
+      :Display error;
+      :Alert administrator;
+    endif
+  endif
+end fork
+stop
+@enduml

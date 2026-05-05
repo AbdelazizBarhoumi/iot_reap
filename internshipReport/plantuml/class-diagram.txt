@@ -1,0 +1,307 @@
+@startuml DTR_Complete_Class_Diagram
+!define ENTITY_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define MIDDLEWARE_COLOR #FFF9C4
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #01579B
+    ArrowColor #01579B
+    FontSize 11
+}
+
+' ========== MODELS (DATABASE ENTITIES) ==========
+package "Models (Domain Entities)" <<Rectangle>> {
+    
+    class User <<Entity>> {
+        + id: bigint
+        + name: string
+        + email: string (unique)
+        + password: string
+        + phone: string (nullable)
+        + profile_photo: string (nullable)
+        + role: string (employer/department_admin/superadmin)
+        + department_id: bigint (nullable, FK)
+        + is_active: boolean
+        + last_login_at: timestamp (nullable)
+        + suspension_reason: text (nullable)
+        + suspension_date: timestamp (nullable)
+        + suspension_end_date: timestamp (nullable)
+        + must_change_password: boolean
+        + password_history: json (nullable)
+        + email_verified_at: timestamp (nullable)
+        + remember_token: string (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + isSuperAdmin(): bool
+        + isDepartmentAdmin(): bool
+        + isEmployer(): bool
+        + department(): BelongsTo
+        + siriSubmissions(): HasMany
+        + appeals(): HasMany
+        + reviewedAppeals(): HasMany
+    }
+    
+    class Department <<Entity>> {
+        + id: bigint
+        + name: string (unique)
+        + description: text (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + users(): HasMany
+    }
+    
+    class Siri_submission <<Entity>> {
+        + id: bigint
+        + user_id: bigint (nullable, FK)
+        + name: string
+        + email: string
+        + company_website: string (nullable)
+        + country: string (nullable)
+        + data: json
+        + locale: string(2)
+        + pdf_path: string (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + user(): BelongsTo
+        + digitalItems(): BelongsToMany
+        + deployedTools(): Collection
+        + identifiedGaps(): Collection
+    }
+    
+    class CoSiri_submission <<Entity>> {
+        + id: bigint
+        + user_id: bigint (nullable, FK)
+        + name: string
+        + email: string
+        + company_website: string (nullable)
+        + country: string (nullable)
+        + data: json
+        + locale: string(2)
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + user(): BelongsTo
+        + digitalItems(): BelongsToMany
+        + deployedTools(): Collection
+        + identifiedGaps(): Collection
+    }
+    
+    class DigitalItem <<Entity>> {
+        + id: bigint
+        + name: string
+        + field_type: string
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + siriSubmissions(): BelongsToMany
+    }
+    
+    class Tool <<Entity>> {
+        + id: bigint
+        + name: string
+        + created_at: timestamp
+        + updated_at: timestamp
+        + deleted_at: timestamp (nullable)
+        --
+        + submissions(): BelongsToMany
+    }
+    
+    class AccountAppeal <<Entity>> {
+        + id: bigint
+        + user_id: bigint (FK)
+        + reason: text
+        + additional_info: text (nullable)
+        + status: string (pending/approved/rejected)
+        + admin_notes: text (nullable)
+        + reviewed_by: bigint (nullable, FK)
+        + reviewed_at: timestamp (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        --
+        + user(): BelongsTo
+        + reviewer(): BelongsTo
+    }
+    
+    class NovationInovSiriBenchmark <<Entity>> {
+        + id: bigint
+        + key: string (unique)
+        + value: json (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+    }
+    
+    class NovationInovCosiriBenchmark <<Entity>> {
+        + id: bigint
+        + key: string (unique)
+        + value: json (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+    }
+    
+    class UpdateJob <<Entity>> {
+        + id: bigint
+        + job_id: string (unique)
+        + user_id: bigint (nullable)
+        + version_from: string
+        + version_to: string
+        + new_version: string (nullable)
+        + old_version: string (nullable)
+        + backup_id: string (nullable)
+        + status: enum(pending/running/completed/failed/cancelled)
+        + progress_percentage: integer
+        + current_step: string (nullable)
+        + progress_log: json (nullable)
+        + logs: json (nullable)
+        + error_message: text (nullable)
+        + metadata: json (nullable)
+        + started_at: timestamp (nullable)
+        + completed_at: timestamp (nullable)
+        + failed_at: timestamp (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        --
+        + getNewVersionAttribute(): string
+        + setNewVersionAttribute(value): void
+    }
+    
+    class DatabaseNotification <<Entity>> {
+        + id: uuid (primary key)
+        + type: string
+        + notifiable_type: string
+        + notifiable_id: bigint
+        + data: text
+        + read_at: timestamp (nullable)
+        + created_at: timestamp
+        + updated_at: timestamp
+        --
+        + markAsRead(): void
+        + markAsUnread(): void
+        + read(): bool
+        + unread(): bool
+        + notifiable(): MorphTo
+    }
+}
+
+' ========== SERVICES (BUSINESS LOGIC) ==========
+package "Services (Business Logic)" <<Rectangle>> {
+    
+    class SiriAIService <<Service>> SERVICE_COLOR {
+        - client: Client
+        - apiKey: string
+        --
+        + __construct()
+        - sanitizeInput(input: ?string): string
+        - normalizeUrl(url: ?string): ?string
+        - determineFutureLevel(currentLevel: ?int): ?int
+        + generateContent(data: array): array
+        + analyzeMaturity(data: array): array
+        + generateRecommendations(data: array): array
+    }
+    
+    class CoSiriAIService <<Service>> SERVICE_COLOR {
+        - client: Client
+        - apiKey: string
+        --
+        + __construct()
+        - sanitizeInput(input: ?string): string
+        - normalizeUrl(url: ?string): ?string
+        - determineFutureLevel(currentLevel: ?int): ?int
+        + generateContent(data: array): array
+        + analyzeSocialImpact(data: array): array
+        + generateRoadmap(data: array): array
+    }
+}
+
+' ========== MIDDLEWARE (SECURITY & ACCESS CONTROL) ==========
+package "Middleware (Security)" <<Rectangle>> {
+    
+    class RoleMiddleware <<Middleware>> MIDDLEWARE_COLOR {
+        + handle(request: Request, next: Closure, roles: ...$string): Response
+    }
+    
+    class DepartmentMiddleware <<Middleware>> MIDDLEWARE_COLOR {
+        + handle(request: Request, next: Closure, departments: ...$string): Response
+    }
+}
+
+' ========== RELATIONSHIPS ==========
+
+' User Relationships
+User "1" --> "0..*" Siri_submission : creates >
+User "1" --> "0..*" CoSiri_submission : creates >
+User "0..*" --> "0..1" Department : belongs to >
+User "1" --> "0..*" AccountAppeal : submits >
+User "1" --> "0..*" AccountAppeal : reviews >
+User "1" --> "0..*" DatabaseNotification : receives >
+
+' Notification Relationships
+DatabaseNotification "*" --> "1" User : notifiable (polymorphic) >
+
+' Submission Relationships
+Siri_submission "0..*" --> "0..*" DigitalItem : uses >
+CoSiri_submission "0..*" --> "0..*" DigitalItem : uses >
+
+' Tool Relationships (specialized DigitalItem)
+Tool --|> DigitalItem : extends
+
+' Service Usage (dotted lines indicate service dependencies)
+Siri_submission ..> SiriAIService : uses
+CoSiri_submission ..> CoSiriAIService : uses
+
+' Middleware Protection
+RoleMiddleware ..> User : validates role
+DepartmentMiddleware ..> User : validates department
+DepartmentMiddleware ..> Department : checks membership
+
+note right of User
+    **Role System**: Simple string-based
+    No separate Role/Permission models
+    Three hardcoded roles:
+    - superadmin
+    - department_admin  
+    - employer
+end note
+
+note bottom of DigitalItem
+    **Pivot Table**: novation_inov_siri_submission_digital_item
+    Contains field_type: 'tool' or 'gap'
+    Used to distinguish deployed tools from identified gaps
+end note
+
+note top of SiriAIService
+    **Google Gemini AI Integration**
+    - 60s timeout, 10s connection timeout
+    - Input sanitization for security
+    - URL normalization
+    - Maturity level progression logic
+end note
+
+note bottom of UpdateJob
+    **System Update Management**
+    Tracks application version updates
+    Stores backup information
+    Progress logging and error handling
+end note
+
+note right of DatabaseNotification
+    **Laravel Notification System**
+    Polymorphic relationship with User via Notifiable trait
+    Stores in-app notifications:
+    - Account status changes
+    - Appeal decisions
+    - System updates
+    - Admin actions
+end note
+
+@enduml

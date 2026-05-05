@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2200" dy="1700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="s_sys" value="IoT-REAP — Stripe Integration Use Cases"
+      style="rounded=0;whiteSpace=wrap;verticalAlign=top;html=1;fillColor=none;strokeColor=#333333;strokeWidth=3;fontSize=15;fontStyle=1;"
+      vertex="1" parent="1">
+      <mxGeometry x="180" y="30" width="1900" height="1500" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ac_eng" value="Engineer"
+      style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="50" y="540" width="40" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ac_teacher" value="Teacher"
+      style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="50" y="810" width="40" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ac_admin" value="Admin"
+      style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="50" y="1090" width="40" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ac_stripe" value="Stripe"
+      style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=none;strokeWidth=2;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="2120" y="700" width="40" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="n_stripe" value="[external payment processor]"
+      style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontStyle=2;fontColor=#666666;"
+      vertex="1" parent="1">
+      <mxGeometry x="2040" y="770" width="200" height="25" as="geometry" />
+    </mxCell>
+
+    <mxCell id="pkg_checkout" value="Checkout &amp; Enrollment\n(routes/trainingPaths.php + CheckoutService)"
+      style="rounded=1;arcSize=3;strokeColor=#6c8ebf;fillColor=#dae8fc;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;html=1;strokeWidth=2;"
+      vertex="1" parent="1">
+      <mxGeometry x="210" y="70" width="820" height="420" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_init_checkout" value="Initiate Checkout\n(POST /checkout/initiate)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="230" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_create_pending" value="Create Pending Payment Record\n(status: pending)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="500" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_redirect_stripe" value="Redirect User to\nHosted Stripe Checkout"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="770" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_free_enroll" value="Auto-enroll for Free Training Path\n(no Stripe charge)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="230" y="290" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_view_payments" value="View Payment History\n(GET /checkout/payments)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="500" y="290" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="suc_view_refunds" value="View Refund Requests\n(GET /checkout/refunds)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="770" y="290" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="pkg_webhook" value="Webhook Processing\n(/stripe/webhook + StripeWebhookService)"
+      style="rounded=1;arcSize=3;strokeColor=#82b366;fillColor=#d5e8d4;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;html=1;strokeWidth=2;"
+      vertex="1" parent="1">
+      <mxGeometry x="210" y="520" width="820" height="510" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_receive" value="Receive Stripe Webhook\n(POST /stripe/webhook)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="230" y="580" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_verify" value="Verify Webhook Signature\n(STRIPE_WEBHOOK_SECRET)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="500" y="580" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_complete" value="Handle checkout.session.completed"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="770" y="580" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_expired" value="Handle checkout.session.expired"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="230" y="760" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_failed" value="Handle payment_intent.payment_failed"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="500" y="760" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_refunded" value="Handle charge.refunded"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="770" y="760" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_update_status" value="Update Payment Status\n(pending/completed/failed/refunded)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="230" y="920" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_enroll" value="Enroll User after Successful Payment"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="500" y="920" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="swc_unenroll" value="Unenroll User after Full Refund"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="770" y="920" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="pkg_finance" value="Refunds &amp; Payouts\n(RefundService + PayoutService)"
+      style="rounded=1;arcSize=3;strokeColor=#d79b00;fillColor=#ffe6cc;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;html=1;strokeWidth=2;"
+      vertex="1" parent="1">
+      <mxGeometry x="1060" y="70" width="980" height="960" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_request_refund" value="Request Refund\n(POST /checkout/refund)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1080" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_approve_refund" value="Approve Refund Request\n(Admin)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1350" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_reject_refund" value="Reject Refund Request\n(Admin)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1620" y="130" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_exec_refund" value="Execute Stripe Refund\n(Refund::create)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1080" y="320" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_teacher_payout" value="Request Payout\n(Teacher)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1350" y="320" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_approve_payout" value="Approve Payout Request\n(Admin)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1620" y="320" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_reject_payout" value="Reject Payout Request\n(Admin)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1080" y="510" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_process_payout" value="Process Stripe Transfer\n(Transfer::create)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1350" y="510" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="sfc_connect_required" value="Require Teacher Stripe\nConnected Account"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1620" y="510" width="230" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="pkg_public" value="Authenticated Checkout Result Pages\n(engineer access)"
+      style="rounded=1;arcSize=3;strokeColor=#9673a6;fillColor=#e1d5e7;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;html=1;strokeWidth=2;"
+      vertex="1" parent="1">
+      <mxGeometry x="1060" y="1060" width="980" height="260" as="geometry" />
+    </mxCell>
+
+    <mxCell id="spc_success" value="View Checkout Success Page\n(GET /checkout/success)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1160" y="1140" width="300" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="spc_cancel" value="View Checkout Cancelled Page\n(GET /checkout/cancelled)"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#000000;"
+      vertex="1" parent="1">
+      <mxGeometry x="1620" y="1140" width="300" height="72" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e9001" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="suc_init_checkout"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9002" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="suc_view_payments"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9003" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="suc_view_refunds"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9004" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="sfc_request_refund"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9005" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_teacher" target="sfc_teacher_payout"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9006" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_admin" target="sfc_approve_refund"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9007" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_admin" target="sfc_reject_refund"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9008" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_admin" target="sfc_approve_payout"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9009" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_admin" target="sfc_reject_payout"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9010" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="spc_success"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9011" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_eng" target="spc_cancel"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9012" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_stripe" target="suc_redirect_stripe"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9013" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_stripe" target="swc_receive"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9014" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_stripe" target="sfc_exec_refund"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9015" value="" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="ac_stripe" target="sfc_process_payout"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9016" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="suc_init_checkout" target="suc_create_pending"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9017" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="suc_init_checkout" target="suc_redirect_stripe"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9018" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="suc_free_enroll" target="suc_init_checkout"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9019" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_receive" target="swc_verify"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9020" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_complete" target="swc_update_status"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9021" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_complete" target="swc_enroll"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9022" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_expired" target="swc_update_status"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9023" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_failed" target="swc_update_status"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9024" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_refunded" target="swc_update_status"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9025" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="swc_refunded" target="swc_unenroll"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+    <mxCell id="e9026" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="sfc_approve_refund" target="sfc_exec_refund"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9027" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="sfc_approve_payout" target="sfc_process_payout"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9028" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=7;dashed=1;html=1;rounded=0;fontSize=9;strokeColor=#666666;fontColor=#666666;strokeWidth=1;" edge="1" parent="1" source="sfc_process_payout" target="sfc_connect_required"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+  </root>
+</mxGraphModel>

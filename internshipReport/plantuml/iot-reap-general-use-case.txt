@@ -1,0 +1,138 @@
+@startuml iotreap-general-use-case
+title IoT-REAP - General Use Case Diagram
+
+left to right direction
+
+actor "Guest\n(Unauthenticated)" as Guest
+actor "Engineer" as Engineer
+actor "Teacher" as Teacher
+actor "Administrator" as Admin
+
+rectangle "IoT-REAP Platform" {
+
+    package "Public Access & Discovery" {
+        usecase "Register Account" as UC_Register
+        usecase "Login" as UC_Login
+        usecase "Browse Training Paths" as UC_BrowseTP
+        usecase "Search Content" as UC_Search
+        usecase "Verify Certificate" as UC_VerifyCert
+        usecase "View Legal Pages" as UC_Legal
+        usecase "Read Forum Threads" as UC_ReadForum
+        usecase "Access Checkout Result" as UC_CheckoutResult
+    }
+
+    package "Learning & Participation" {
+        usecase "Enroll in Training Path" as UC_Enroll
+        usecase "Read Articles" as UC_Article
+        usecase "Watch Videos" as UC_Video
+        usecase "Attempt Quizzes" as UC_Quiz
+        usecase "Track Progress" as UC_Progress
+        usecase "Write Notes" as UC_Notes
+        usecase "Post Reviews" as UC_Review
+        usecase "Participate in Forum" as UC_Forum
+        usecase "Claim Certificate" as UC_Cert
+        usecase "Manage Notifications" as UC_Notif
+        usecase "Initiate Payment" as UC_Pay
+        usecase "Request Refund" as UC_Refund
+    }
+
+    package "Teaching & Publishing" {
+        usecase "Create Training Path" as UC_CreateTP
+        usecase "Manage Modules & Units" as UC_Modules
+        usecase "Author Articles" as UC_AuthorArticle
+        usecase "Upload Videos" as UC_UploadVideo
+        usecase "Create Quizzes" as UC_CreateQuiz
+        usecase "Manage Captions" as UC_Captions
+        usecase "Submit for Review" as UC_SubmitReview
+        usecase "View Analytics" as UC_TAnalytics
+        usecase "Moderate Discussions" as UC_TModerate
+        usecase "Request Payout" as UC_Payout
+        usecase "Request VM Assignment" as UC_VMAssign
+    }
+
+    package "Remote Laboratory & Administration" {
+        usecase "Provision VM Session" as UC_ProvisionVM
+        usecase "Access Remote Desktop" as UC_RemoteDesktop
+        usecase "Extend/Terminate Session" as UC_SessionLifecycle
+        usecase "Reserve USB Device" as UC_ReserveUSB
+        usecase "Reserve Camera" as UC_ReserveCamera
+        usecase "Attach Hardware" as UC_AttachHW
+        usecase "Join Device Queue" as UC_JoinQueue
+        usecase "Control Camera (PTZ)" as UC_CameraPTZ
+        usecase "Manage Connection Prefs" as UC_ConnPrefs
+        usecase "Approve Training Path" as UC_ApproveTP
+        usecase "Manage Infrastructure" as UC_Infra
+        usecase "Manage Users & Roles" as UC_Users
+        usecase "Process Refunds" as UC_ProcessRefund
+        usecase "Process Payouts" as UC_ProcessPayout
+        usecase "Moderate Flagged Content" as UC_Moderate
+        usecase "Manage Alerts & Logs" as UC_Alerts
+        usecase "View Activity Logs" as UC_ActivityLogs
+        usecase "Manage Reservations" as UC_ManageReservations
+    }
+}
+
+' Guest associations
+Guest --> UC_Register
+Guest --> UC_Login
+Guest --> UC_BrowseTP
+Guest --> UC_Search
+Guest --> UC_VerifyCert
+Guest --> UC_Legal
+Guest --> UC_ReadForum
+Guest --> UC_CheckoutResult
+
+' Engineer inherits Guest + adds learning & lab
+Engineer --> UC_Enroll
+Engineer --> UC_Article
+Engineer --> UC_Video
+Engineer --> UC_Quiz
+Engineer --> UC_Progress
+Engineer --> UC_Notes
+Engineer --> UC_Review
+Engineer --> UC_Forum
+Engineer --> UC_Cert
+Engineer --> UC_Notif
+Engineer --> UC_Pay
+Engineer --> UC_Refund
+Engineer --> UC_ProvisionVM
+Engineer --> UC_RemoteDesktop
+Engineer --> UC_SessionLifecycle
+Engineer --> UC_ReserveUSB
+Engineer --> UC_ReserveCamera
+Engineer --> UC_AttachHW
+Engineer --> UC_JoinQueue
+Engineer --> UC_CameraPTZ
+Engineer --> UC_ConnPrefs
+
+' Teacher inherits Engineer auth + adds teaching
+Teacher --> UC_CreateTP
+Teacher --> UC_Modules
+Teacher --> UC_AuthorArticle
+Teacher --> UC_UploadVideo
+Teacher --> UC_CreateQuiz
+Teacher --> UC_Captions
+Teacher --> UC_SubmitReview
+Teacher --> UC_TAnalytics
+Teacher --> UC_TModerate
+Teacher --> UC_Payout
+Teacher --> UC_VMAssign
+
+' Administrator
+Admin --> UC_ApproveTP
+Admin --> UC_Infra
+Admin --> UC_Users
+Admin --> UC_ProcessRefund
+Admin --> UC_ProcessPayout
+Admin --> UC_Moderate
+Admin --> UC_Alerts
+Admin --> UC_ActivityLogs
+Admin --> UC_ManageReservations
+
+' Include/extend relationships
+UC_Enroll ..> UC_Pay : <<include>>
+UC_RemoteDesktop ..> UC_ProvisionVM : <<include>>
+UC_AttachHW ..> UC_JoinQueue : <<extend>>
+UC_SubmitReview ..> UC_ApproveTP : <<extend>>
+
+@enduml

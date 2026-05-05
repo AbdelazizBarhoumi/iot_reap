@@ -1,0 +1,28 @@
+@startuml iot-reap-sequence-landing-page
+title IoT-REAP - Landing Page Sequence Diagram
+actor Guest as guest
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "TrainingPath\nService" as service
+participant "Database" as db
+participant "TrainingPath\nModel" as model
+
+guest -> frontend : Navigate to home page (/)
+frontend -> routes : GET /
+routes -> service : getApprovedTrainingPaths()
+service -> db : Query approved training paths
+db --> service : Return approved paths
+service -> model : TrainingPathResource::collection()
+model --> service : Return resource collection
+service --> routes : Return featured paths (limit 3)
+routes --> frontend : Render welcome page with data
+frontend --> guest : Display landing page with featured courses
+
+note right of guest
+  Guest can view:
+  - Featured training paths (3 items)
+  - Registration availability
+  - Navigation to catalog
+end note
+
+@enduml

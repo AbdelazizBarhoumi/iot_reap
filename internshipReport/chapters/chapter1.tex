@@ -1,0 +1,451 @@
+% ==================== CHAPTER 1: CONTEXT AND ENVIRONMENT ====================
+% ==================== SECTION NUMBERING RULE ====================
+% Section numbering DOES NOT include chapter number.
+% After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
+% Then subsequent subsections are numbered 1.1, 1.2, 1.3, etc.
+% Following sections reset to 2., 2.1, 2.2, etc. within the same chapter.
+% ============================================================================
+% STYLE GUIDELINES FOR ALL CHAPTERS:
+% - Each chapter starts on a new page with title page
+% - Font: Times New Roman 12pt for body, line spacing 1.5
+% - Titles: Left-aligned, numbered decimally (1, 1.1, 1.1.1), bold
+% - No title isolated at bottom of page (avoid orphans/widows)
+% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+% - Figures/Tables: Numbered consecutively (Figure 1.1, Table 1.1, etc.)
+% - Figure captions: Below figure, 12pt Times, centered, justified
+% - Table captions: Above table, 12pt Times, centered, justified
+% - One blank line above caption, two blank lines below
+% - Formulas: Numbered (1) to (n), right-aligned
+% - Emphasis: Use italics or bold, NEVER underline
+% - No automatic hyphenation
+% 
+% CHAPTER 1 CONTENT:
+% - Presentation of company/study framework (history, missions, technologies)
+% - Organization chart and team description
+% - Description of tasks performed and methods used
+% ============================================================================
+% ==================== CHAPTER 1: CONTEXT AND ENVIRONMENT ====================
+\chapter{Context and Environment of the Project}
+\setcounter{section}{0}
+
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+\initial{T}his chapter presents the professional context of the IoT-REAP platform development at Novation City, covering the organization's structure, the problem addressed, project objectives, and development planning.
+
+\section{Company Presentation: Novation City}
+
+Novation City serves as the professional context for the IoT-REAP platform development. This section presents the organization's institutional framework, operational structure, strategic focus, and the specialized business units that support industry through innovation, consulting, training, and research initiatives.
+
+\subsection{Foundation and Mission}
+
+Novation City is a competitiveness cluster established in 2009 in Sousse, Tunisia, as a public-private partnership. The cluster is designed to foster innovation ecosystems and enhance industrial competitiveness through digital transformation and advanced technologies, addressing the growing need for mechatronics expertise and Industry 4.0 adoption in the MENA region \cite{novationcity2025}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3.5cm]{assets/chapter1/novation-city-logo.png}
+\caption{Novation City Official Logo and Branding}
+\label{fig:novation-logo}
+\end{figure}
+
+\textbf{Mission Statement:} Novation City's mission is to foster an innovation ecosystem in the mechatronics sector by synergizing innovative companies, industrial entities, research centers, universities, and engineering schools. The cluster aims to enhance regional and national competitiveness through technology advancement, knowledge transfer, and strategic investment attraction.
+
+\textbf{Vision:} The cluster envisions becoming the leading competitiveness hub for Industry 4.0 adoption and digital transformation in North Africa and the broader MENA region, focusing on world-class innovation infrastructure, highly skilled technical talent development, and sustainable academia-industry partnerships.
+\newpage
+\subsection{Business Units and Services}
+
+Novation City operates through four specialized business units, each addressing distinct aspects of the innovation ecosystem:
+
+\textbf{Acceleration Unit:} Supports startup growth through business incubation services, mentorship programs, and access to funding opportunities. Services include workspace provision, networking, and investor connections.
+
+\textbf{Advisory Unit:} Delivers strategic consulting focused on digital transformation and Industry 4.0 implementation. The advisory services encompass digital readiness assessment, technology selection, change management, security compliance audits, and infrastructure planning for remote operations platforms.
+
+\textbf{Formation Unit (Novation Akademy):} Provides training and skills development programs covering mechatronics, automation, digital technologies, project management, and innovation methodologies in collaboration with universities and industry partners.
+
+\textbf{Innovation Unit:} Drives research and development initiatives, facilitating collaborative R\&D between academic institutions and industrial partners while exploring emerging technologies for the regional ecosystem.
+
+\subsection{Infrastructure and Strategic Focus}
+
+Novation City manages three specialized geographic zones:
+
+\begin{itemize}
+    \item \textbf{Mechatronic City:} Houses companies focused on mechatronics, robotics, and advanced manufacturing with specialized laboratories and testing facilities.
+    \item \textbf{Business City:} Accommodates service-oriented companies and consulting firms with modern office spaces and collaborative environments.
+    \item \textbf{Industrial City:} Dedicated to manufacturing operations with infrastructure supporting advanced manufacturing processes and Industry 4.0 technologies.
+\end{itemize}
+
+A central pillar of Novation City's strategy is promoting Industry 4.0 principles and digital transformation. The cluster recognizes that many industrial companies face significant challenges in implementing Industry 4.0 technologies, including limited awareness, uncertainty about ROI, skills gaps, and integration difficulties with legacy systems.
+
+To address these challenges, Novation City extends its capabilities with secure remote access platforms enabling engineers to interact with industrial systems remotely through the IoT-REAP initiative, combining Infrastructure-as-a-Service provisioning with zero-trust security principles \cite{edb2017} \cite{tuvsud2023}.
+
+\section{Problem and Objective of the Project}
+
+This section identifies the critical challenges facing industrial organizations requiring secure remote access to specialized equipment, analyzes the limitations of existing solutions, and presents the strategic objectives driving the IoT-REAP platform development.
+
+\subsection{Problem}
+
+The IoT-REAP project emerges from critical operational challenges facing industrial companies and training institutions within the Industry 4.0 ecosystem. As manufacturing systems become increasingly digitized and interconnected, engineers and technicians require hands-on access to specialized industrial equipment—PLCs (Programmable Logic Controllers), HMIs (Human-Machine Interfaces), SCADA systems, and industrial robots—for training, development, and maintenance purposes.
+
+\textbf{Remote Access Limitations:} Traditional approaches to industrial system access present significant challenges:
+
+\begin{itemize}
+    \item Physical presence requirements limit training scalability and increase travel costs
+    \item VPN-based solutions are complex to configure, difficult to maintain, and often incompatible with OT (Operational Technology) security requirements
+    \item Existing remote desktop tools lack integration with industrial protocols and equipment
+    \item No unified platform exists for VM provisioning, remote desktop access, and IoT device control
+\end{itemize}
+
+\textbf{Security Concerns in OT Environments:} Industrial networks require strict isolation following the Purdue model, yet traditional IT remote access tools are not designed for OT security requirements:
+
+\begin{itemize}
+    \item \textbf{Network Segmentation:} IT remote access solutions often bypass OT network boundaries, creating security vulnerabilities
+    \item \textbf{Session Management:} No automatic session expiration or quota management for shared industrial resources
+    \item \textbf{Audit Trail:} Insufficient logging for compliance with industrial security standards (IEC 62443)
+    \item \textbf{Access Control:} Lack of fine-grained role-based access to different industrial zones
+\end{itemize}
+
+\textbf{Resource Sharing Challenges:} Educational institutions and industrial companies face difficulties in sharing expensive equipment:
+
+\begin{itemize}
+    \item \textbf{Equipment Scarcity:} Industrial robots and specialized VMs are costly and limited in quantity
+    \item \textbf{Scheduling Conflicts:} No automated reservation system prevents double-booking of shared resources
+    \item \textbf{Utilization Monitoring:} Inability to track usage patterns and optimize resource allocation
+    \item \textbf{Maintenance Visibility:} No predictive maintenance for shared industrial equipment
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Critical Limitations of Current Industrial Remote Access Solutions}
+\begin{tabular}{|p{3.5cm}|p{5.5cm}|p{5cm}|}
+\hline
+\textbf{Limitation Category} & \textbf{Specific Problem} & \textbf{Business Impact} \\
+\hline
+Physical Access & Engineers must be on-site to access equipment & Limited training capacity, high travel costs \\
+\hline
+VPN Complexity & Complex configuration, security vulnerabilities & IT overhead, OT security risks \\
+\hline
+Fragmented Tools & Separate systems for VMs, remote desktop, robots & Context-switching, integration difficulties \\
+\hline
+No Session Management & No automatic expiration or resource quotas & Resource conflicts, security exposure \\
+\hline
+Limited Audit Trail & Insufficient logging for compliance & IEC 62443 non-compliance \\
+\hline
+No Predictive Maintenance & Reactive maintenance only & Equipment downtime, safety risks \\
+\hline
+\end{tabular}
+\label{tab:current-limitations}
+\end{table}
+
+\subsection{Project Objectives}
+
+The primary goal was to develop the \textbf{IoT-REAP platform}—a secure industrial remote operations platform enabling engineers to access virtual machines, control robots, and monitor equipment through a unified web interface. The vision: provide \textbf{secure, browser-based access} to industrial systems with \textbf{zero client-side installation} while maintaining strict OT security compliance.
+
+\textbf{Specific Technical Objectives:}
+
+\begin{enumerate}
+    \item \textbf{VM Provisioning System:} Develop automated virtual machine lifecycle management using \textbf{Proxmox VE API}, supporting automatic cleanup of expired sessions
+    \item \textbf{Browser-Based Remote Access:} Integrate \textbf{Apache Guacamole} for clientless remote desktop (RDP/VNC/SSH) access to industrial VMs, eliminating the need for local client installation
+    \item \textbf{IoT Robot Control:} Build real-time robot control interface using \textbf{MQTT protocol} with ESP32 microcontrollers, supporting visual programming via Blockly and emergency stop functionality
+    \item \textbf{Camera Streaming \& AI Scheduling:} Implement live camera feeds from industrial equipment with \textbf{AI-powered demand forecasting} to pre-warm VMs during peak usage periods
+    \item \textbf{Zero-Trust Security:} Implement comprehensive security layer including device fingerprinting, geo-IP anomaly detection, real-time risk scoring, and automatic session termination for high-risk activities
+    \item \textbf{OT Network Isolation:} Enforce Purdue model network segmentation, restricting OT zone access to authorized users with tamper-proof audit logging for IEC 62443 compliance
+    \item \textbf{Predictive Maintenance:} Deploy machine learning models to analyze robot telemetry, compute health scores, and alert maintenance teams before equipment failures
+    \item \textbf{Technical Training Platform:} Develop a comprehensive learning management system enabling structured industrial skills training with video-based courses, interactive quizzes, hands-on VM lab sessions, and verifiable digital certificates—bridging the gap between theoretical knowledge and practical application
+\end{enumerate}
+
+\textbf{Expected Business Impact:}
+
+\begin{itemize}
+    \item \textbf{Accessibility:} Enable remote access to industrial systems from any location with a web browser
+    \item \textbf{Security:} Zero-trust architecture with real-time risk monitoring and automatic threat response
+    \item \textbf{Scalability:} Support 50+ concurrent users with automatic VM provisioning and load balancing
+    \item \textbf{Compliance:} Full audit trail meeting IEC 62443 industrial security standards
+    \item \textbf{Efficiency:} AI-powered resource optimization reducing idle time and improving utilization
+    \item \textbf{Reliability:} Predictive maintenance reducing unexpected equipment downtime
+    \item \textbf{Skills Development:} Integrated training platform enabling continuous workforce upskilling with progress tracking and certification
+\end{itemize}   
+\section{Work Methodology}
+
+The development of IoT-REAP required a structured approach to coordinate complex technical requirements with evolving stakeholder needs. This section presents the Agile Scrum methodology framework and the specific development timeline employed throughout the project.
+
+\subsection{The Agile Scrum Methodology}
+
+\subsubsection{Definition}
+
+Agile Scrum is a concrete, structured framework for implementing Agile principles in software development. While Agile is a broader philosophy emphasizing iterative delivery and flexibility, Scrum is a specific instantiation of Agile that defines roles, ceremonies, and artifacts. Scrum breaks projects into fixed-duration iterations called \textbf{sprints} (typically 1-2 weeks), during which a cross-functional team commits to delivering a potentially shippable product increment. Each sprint cycles through planning, daily standups, development, and review ceremonies, with retrospectives enabling continuous process improvement.
+
+Scrum defines three key roles: \textbf{Product Owner} (prioritizes backlog and validates requirements), \textbf{Scrum Master} (facilitates ceremonies and removes blockers), and \textbf{Development Team} (delivers the increment). The framework manages work through three artifacts: \textbf{Product Backlog} (prioritized features and requirements), \textbf{Sprint Backlog} (selected items for current sprint), and \textbf{Increment} (working software produced at sprint end).
+
+The Agile Scrum framework emerges from the Agile Manifesto (2001), which prioritizes:
+\begin{itemize}
+    \item Individuals and interactions over processes and tools
+    \item Working software over comprehensive documentation
+    \item Customer collaboration over contract negotiation
+    \item Responding to change over following a plan
+\end{itemize}
+
+For the IoT-REAP platform, Agile Scrum is particularly appropriate given the need to balance evolving requirements, stakeholder feedback, and technical innovation in AI integration. The structured ceremonies and defined roles provide accountability, while the sprint structure enables regular milestone verification and MVP validation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{assets/chapter1/agile_methodology.png}
+\caption{Agile Scrum Methodology Workflow}
+\label{fig:agile-methodology}
+\end{figure}
+
+\subsubsection{Characteristics of Agile Scrum}
+
+\textbf{Sprint-Based Delivery:} The IoT-REAP project is organized into fixed 2-week sprints, each with a clear starting point (Sprint Planning), daily synchronization (Daily Standup), and endpoint (Sprint Review \& Retrospective). This structure provides predictable delivery cycles and regular stakeholder engagement.
+
+\textbf{Sprint Planning \& Commitment:} At the beginning of each sprint, the team (in the solo developer context, this involves supervisors and stakeholders) commits to specific user stories and tasks. Sprint planning defines clear acceptance criteria, ensuring understanding of requirements before development begins.
+
+\textbf{Product Backlog Management:} Features and requirements are maintained in a prioritized Product Backlog of 50 user stories (245 story points total). The Product Owner role prioritizes items based on business value, risk, and dependencies. This allows adaptation: new security requirements or infrastructure changes are incorporated into subsequent sprints.
+
+\textbf{Sprint Increments:} Each sprint produces a working increment of the software. Early sprints deliver authentication and VM provisioning; middle sprints add remote desktop and robot control; later sprints implement AI scheduling and compliance features. This incremental approach enables early validation through the Sprint 3 MVP demo.
+
+\textbf{Daily Standups \& Transparency:} Regular synchronization meetings (adapted to weekly supervisor meetings in this solo context) maintain transparency on progress, blockers, and dependencies. This enables rapid problem-solving and prevents misalignment.
+
+\textbf{Sprint Review \& Stakeholder Feedback:} At each sprint boundary, completed work is demonstrated to stakeholders. This enables immediate validation, ensures features meet needs, and allows requirement refinement for subsequent sprints.
+
+\textbf{Sprint Retrospective \& Process Improvement:} After each sprint review, the team conducts retrospectives to identify what goes well, what can improve, and what to change. This continuous improvement mindset enhances developer productivity, code quality, and stakeholder satisfaction over successive iterations.
+
+\textbf{Definition of Done:} Scrum requires clear acceptance criteria for task completion. For IoT-REAP, "done" means: code written, unit tests passing (target 80\% coverage), code reviewed against project guidelines, feature documented, and acceptance criteria validated.
+
+\subsection{Product Backlog}
+
+The IoT-REAP platform development followed Agile Scrum principles with a prioritized product backlog organized by sprint. The complete backlog comprises 50 user stories totaling 245 story points. Table \ref{tab:product-backlog} presents key user stories with priorities and sprint assignments.
+
+\begin{longtable}{|p{0.03\textwidth}|p{0.70\textwidth}|p{0.08\textwidth}|p{0.09\textwidth}|}
+\caption{IoT-REAP Platform Product Backlog}
+\label{tab:product-backlog} \\
+\hline
+\textbf{ID} & \textbf{User Story / Feature} & \textbf{Priority} & \textbf{Sprint} \\
+\hline
+\endfirsthead
+
+\multicolumn{4}{c}{\tablename\ \thetable} \\
+\hline
+\textbf{ID} & \textbf{User Story / Feature} & \textbf{Priority} & \textbf{Sprint} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+\multicolumn{4}{|c|}{\textbf{Sprint 1: Foundation \& Authentication (26 SP)}} \\
+\hline
+01 & As a user, I want to register and log in securely using session-based authentication & High & Sprint 1 \\
+\hline
+02 & As an admin, I want role-based access control (engineer, admin, security\_officer) & High & Sprint 1 \\
+\hline
+03 & As a developer, I need database schema for users with ULID primary keys & High & Sprint 1 \\
+\hline
+04 & As a user, I want password reset functionality via email & Medium & Sprint 1 \\
+\hline
+05 & As a developer, I need React frontend with TypeScript and Zustand state management & High & Sprint 1 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 2: Proxmox Integration (28 SP)}} \\
+\hline
+06 & As a developer, I need database schema for VM nodes, templates, and sessions & High & Sprint 2 \\
+\hline
+07 & As a developer, I need Proxmox API client with retry logic and error handling & High & Sprint 2 \\
+\hline
+08 & As an engineer, I want to browse VM templates and launch sessions & High & Sprint 2 \\
+\hline
+09 & As a developer, I need load balancer to distribute VMs across Proxmox nodes & High & Sprint 2 \\
+\hline
+10 & As an admin, I want to view all nodes with live CPU/RAM stats & Medium & Sprint 2 \\
+\hline
+11 & As an admin, I want to register multiple Proxmox servers with encrypted credentials & High & Sprint 2 \\
+\hline
+\pagebreak[4]
+\multicolumn{4}{|c|}{\textbf{Sprint 3: Guacamole Remote Access — MVP (26 SP)}} \\
+\hline
+12 & As a developer, I need Guacamole client service for connection management & High & Sprint 3 \\
+\hline
+13 & As an engineer, I want browser-based RDP/VNC access to my VM session & High & Sprint 3 \\
+\hline
+14 & As an engineer, I want to extend my session duration (+30 min increments) & High & Sprint 3 \\
+\hline
+15 & As an engineer, I want to terminate my session and have the VM cleaned up & High & Sprint 3 \\
+\hline
+16 & As an engineer, I want to save my preferred connection settings (display, audio) & Medium & Sprint 3 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 4: File Transfer \& Robot Foundation (28 SP)}} \\
+\hline
+17 & As a developer, I need MQTT service for robot command publishing & High & Sprint 4 \\
+\hline
+18 & As an engineer, I want to reserve a robot with atomic transaction locks & High & Sprint 4 \\
+\hline
+19 & As an engineer, I want to control the robot using Blockly visual programming & High & Sprint 4 \\
+\hline
+20 & As an engineer, I want an emergency stop button that works instantly & High & Sprint 4 \\
+\hline
+21 & As an engineer, I want real-time robot telemetry via WebSocket & High & Sprint 4 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 4.5: Technical Training Platform (45 SP)}} \\
+\hline
+41 & As an instructor, I want to create structured courses with modules, lessons, and prerequisite tracking & High & Sprint 4.5 \\
+\hline
+42 & As an instructor, I want to upload videos with HLS streaming and multi-quality playback (360p-1080p) & High & Sprint 4.5 \\
+\hline
+43 & As a learner, I want to enroll in courses and track my progress across lessons and modules & High & Sprint 4.5 \\
+\hline
+44 & As an instructor, I want to create timed quizzes with auto-grading, passing scores, and retry limits & High & Sprint 4.5 \\
+\hline
+45 & As a learner, I want hands-on VM lab sessions integrated with course lessons for practical training & High & Sprint 4.5 \\
+\hline
+46 & As a learner, I want to receive verifiable digital certificates upon course completion & High & Sprint 4.5 \\
+\hline
+47 & As a learner, I want to take timestamped notes during video lessons for later review & Medium & Sprint 4.5 \\
+\hline
+48 & As a learner, I want to rate and review courses to help other learners & Medium & Sprint 4.5 \\
+\hline
+49 & As an instructor, I want analytics dashboard showing enrollments, completions, and revenue & High & Sprint 4.5 \\
+\hline
+50 & As an admin, I want to manage course categories and featured course placement & Medium & Sprint 4.5 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 5: Camera \& AI Scheduler (34 SP)}} \\
+\hline
+22 & As a developer, I need Python FastAPI microservice for ML demand forecasting & High & Sprint 5 \\
+\hline
+23 & As an admin, I want 24-hour VM demand predictions with auto-refresh & High & Sprint 5 \\
+\hline
+24 & As a developer, I need idle session hibernation (suspend after 10 min inactivity) & Medium & Sprint 5 \\
+\hline
+25 & As an engineer, I want live camera feed from ESP32-CAM during robot control & High & Sprint 5 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 6: Zero-Trust Security — Feature Complete (34 SP)}} \\
+\hline
+26 & As a developer, I need device fingerprinting service & High & Sprint 6 \\
+\hline
+27 & As a developer, I need geo-IP anomaly detection using MaxMind & High & Sprint 6 \\
+\hline
+28 & As a security officer, I want real-time risk scores (0-100) for all sessions & High & Sprint 6 \\
+\hline
+29 & As a security officer, I want automatic session termination when risk > 85 & High & Sprint 6 \\
+\hline
+30 & As a developer, I need predictive maintenance AI for robot health scoring & High & Sprint 6 \\
+\hline
+\pagebreak[4]
+\multicolumn{4}{|c|}{\textbf{Sprint 7: OT Isolation, Catalog \& Compliance (34 SP)}} \\
+\hline
+31 & As an admin, I want to enforce Purdue model network isolation (IT/OT zones) & High & Sprint 7 \\
+\hline
+32 & As a developer, I need tamper-proof audit log with SHA-256 hash chain & High & Sprint 7 \\
+\hline
+33 & As an admin, I want PDF compliance reports for IEC 62443 audits & High & Sprint 7 \\
+\hline
+34 & As an engineer, I want AI-assisted template suggestions based on my description & Medium & Sprint 7 \\
+\hline
+35 & As an admin, I want complete dashboard with quota management and activity logs & High & Sprint 7 \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 8: Testing(35 SP)}} \\
+\hline
+36 & As a developer, I need 80\% test coverage with mocked external APIs & High & Sprint 8 \\
+\hline
+37 & As a developer, I need load testing: 50 concurrent logins, 25 VMs, 40 Guacamole sessions & High & Sprint 8 \\
+\hline
+38 & As a security officer, I need OWASP ZAP scan with 0 critical/high findings & High & Sprint 8 \\
+\hline
+39 & As a user, I want comprehensive documentation (user manual, API docs) & High & Sprint 8 \\
+\hline
+40 & As a developer, I need to prepare and deliver 15-minute live demo & High & Sprint 8 \\
+\hline
+\end{longtable}
+
+\subsection{Agile Scrum Ceremonies and Collaboration}
+
+\textbf{Sprint Planning (Duration: 2-4 hours):} At the beginning of each 2-week sprint, sprint planning meetings engage the developer, supervisors, and Advisory Unit stakeholders. Sessions define sprint goals, select user stories from the prioritized Product Backlog (based on business value and dependencies), and break them into implementation tasks. Each user story receives effort estimation using story points, resulting in a Sprint Backlog of committed work with clear acceptance criteria. This ceremony ensures shared understanding of requirements and realistic commitment.
+
+\textbf{Daily Standup (Duration: 15 minutes):} Although conducted as a solo developer, daily progress tracking maintains transparency. Weekly formal standups (Mondays) with supervisors answer three questions: What was completed? What will be done? What obstacles exist? This adaptation of the daily ceremony pattern provides checkpoint accountability while respecting the solo context.
+
+\textbf{Sprint Review \& Demo (Duration: 1-2 hours):} At each sprint's end, completed work is demonstrated to stakeholders. Reviewers examine running features, validate acceptance criteria compliance, and provide feedback influencing subsequent sprint prioritization. The Sprint 3 review includes a formal MVP (Minimum Viable Product) demo showcasing VM provisioning, remote desktop access, and basic robot control—a critical milestone confirming core platform viability.
+
+\textbf{Sprint Retrospective (Duration: 1 hour):} Following the review, the team conducts retrospectives examining what works well, what can improve, and specific action items for the next sprint. Early retrospectives identify: need for more comprehensive API documentation, benefit of Copilot-assisted development, and infrastructure bottlenecks requiring architectural adjustments. These insights are systematically incorporated into subsequent sprints, improving productivity and code quality.
+
+\textbf{Product Backlog Refinement (Ongoing):} Between sprints, the Product Backlog is continuously refined. New requirements (additional security measures, infrastructure changes, performance optimizations) are added, prioritized, and estimated. This preparation ensures Sprint Planning sessions are efficient and focused on high-value items.
+
+\subsection{The UML Modeling Language}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=8cm]{assets/chapter1/uml.png}
+\caption{UML modeling language}
+\label{fig:uml-logo}
+\end{figure}
+
+Unified Modeling Language (UML) is a standardized visual modeling language used in software engineering to specify, visualize, construct, and document the artifacts of software systems \cite{booch2005}. Developed by Grady Booch, James Rumbaugh, and Ivar Jacobson in the mid-1990s, UML provides a common vocabulary for object-oriented software design and is the industry standard for software architecture documentation.
+
+UML consists of multiple diagram types that capture different aspects of system design:
+
+\begin{itemize}
+    \item \textbf{Structural Diagrams:} Class diagrams, component diagrams, deployment diagrams, package diagrams
+    \item \textbf{Behavioral Diagrams:} Use case diagrams, sequence diagrams, activity diagrams, state machine diagrams
+\end{itemize}
+
+For the IoT-REAP platform development, UML modeling provided a visual framework for communicating system architecture, clarifying requirements, and documenting design decisions across the development team and stakeholders.
+
+\section{Planning}
+
+The IoT-REAP platform development is executed over a 17-week period from February 2, 2026 to June 1, 2026, following an Agile Scrum sprint-based approach \cite{agile}. The project is structured into eight two-week sprints (16 weeks of development plus 1 week buffer), each delivering specific features and capabilities, with key milestones at Sprint 3 (MVP Demo) and Sprint 6 (Feature Complete).
+
+\subsection{Sprint-Based Development Phases}
+
+\textbf{Sprint 1: Foundation \& Authentication (February 2-15, 2026)}
+
+Establishes project foundation with Laravel 12 and React 18 integration via Breeze. Implements session-based authentication, role-based access control (engineer, admin, security\_officer), and database schema with ULID primary keys. Sets up MySQL, Redis, and Docker development environment.
+
+\textbf{Sprint 2: Proxmox Integration (February 16 - March 1, 2026)}
+
+Builds Proxmox VE API client wrapper with retry logic and error handling. Creates database schema for VM nodes, templates, and sessions. Implements load balancer for VM distribution across nodes and admin node management dashboard with live stats.
+
+\textbf{Sprint 2.5: Multi-Proxmox Server Support (March 2-8, 2026)}
+
+Extends architecture to support multiple independent Proxmox clusters. Implements encrypted credential storage, server registration API, and cluster selection logic for engineers launching VMs.
+
+\textbf{Sprint 3: Guacamole Remote Access — MVP Demo (March 9-22, 2026)}
+
+Deploys Apache Guacamole and integrates its API with Laravel. Implements connection creation, one-time token generation, and embedded viewer in React. Adds session extension, termination, and connection preference persistence. \textbf{This sprint culminates in the MVP demonstration.}
+
+\textbf{Sprint 4: File Transfer \& Robot Foundation (March 23 - April 5, 2026)}
+
+Builds MQTT infrastructure for robot command publishing with QoS 1. Creates atomic robot reservation system preventing double-booking. Deploys Blockly visual programming interface and implements real-time telemetry streaming via WebSocket.
+
+\textbf{Sprint 4.5: Technical Training Platform (April 6-19, 2026)}
+
+Develops comprehensive learning management system for industrial skills training. Implements course structure with modules, lessons (video, reading, practice, VM-lab types), and prerequisite tracking. Builds HLS video streaming with adaptive quality (360p-1080p) and progress tracking. Creates timed quiz system with auto-grading, passing scores, and retry limits. Integrates VM lab sessions directly into course lessons for hands-on practice. Implements digital certificate generation with unique verification hashes.
+
+\textbf{Sprint 5: Camera \& AI Scheduler (April 20 - May 3, 2026)}
+
+Deploys Python FastAPI microservice for ML-based demand forecasting using RandomForestRegressor. Integrates predictions with Laravel scheduler for VM pre-warming. Adds live ESP32-CAM video feed and idle session hibernation.
+
+\textbf{Sprint 6: Zero-Trust Security — Feature Complete (May 4-17, 2026)}
+
+Implements device fingerprinting and geo-IP anomaly detection. Builds real-time risk scoring engine with automatic session termination for high-risk activities. Trains IsolationForest model for robot health anomaly detection. \textbf{All 60 user stories are implemented at this checkpoint.}
+
+\textbf{Sprint 7: OT Isolation, Catalog \& Compliance (May 18-31, 2026)}
+
+Enforces Purdue model network isolation with IT/OT zone separation. Builds tamper-proof audit log with SHA-256 hash chain for IEC 62443 compliance. Implements PDF compliance report generator and AI-assisted template catalog.
+
+\textbf{Sprint 8: Testing(June 1-14, 2026)}
+
+Achieves 80\% test coverage with mocked external APIs. Conducts load testing (50 concurrent logins, 25 VMs, 40 Guacamole sessions). Executes OWASP ZAP security scan. Prepares documentation and rehearses defense presentation.
+
+\begin{figure}[H]
+\centering
+\rotatebox{-90}{\includegraphics[width=23cm]{assets/chapter1/gantt.png}}
+\caption{IoT-REAP Platform Development Timeline and Milestones (need to be changed)}
+\label{fig:project-timeline}
+\end{figure}
+
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+This chapter establishes the professional context at Novation City, identifies the critical challenges of secure industrial remote access for Industry 4.0, and defines project objectives for the IoT-REAP platform. The 17-week development plan across 8 sprints targets a comprehensive solution integrating VM provisioning, browser-based remote desktop, IoT robot control, AI-powered scheduling, and zero-trust security.
+
+\cleardoublepage

@@ -1,0 +1,53 @@
+@startuml iot-reap-sequence-teacher-review
+title IoT-REAP - Teacher Submission for Review Sequence
+
+actor Teacher
+participant "Browser" as Browser
+participant "TrainingPathController" as Controller
+participant "TrainingPathService" as TPSvc
+participant "TrainingPathRepository" as TPRepo
+database "MySQL" as DB
+actor Administrator
+
+Teacher -> Browser: Edit training path content
+Browser -> Controller: PUT /trainingPaths/{id} (modules, units, articles, quizzes)
+Controller -> TPSvc: updateTrainingPath(user, trainingPath, data)
+TPSvc -> TPRepo: update(trainingPath, data)
+TPRepo -> DB: UPDATE training_paths, modules, units
+TPRepo --> TPSvc: updated trainingPath
+TPSvc --> Controller: trainingPath
+Controller --> Browser: 200 OK
+
+Teacher -> Browser: Click "Submit for Review"
+Browser -> Controller: POST /trainingPaths/{id}/submit
+Controller -> TPSvc: submitForReview(user, trainingPath)
+
+TPSvc -> TPSvc: assertOwnership(user, trainingPath)
+TPSvc -> TPSvc: assertReadyForSubmission(trainingPath)
+
+alt Training path is submittable
+    TPSvc -> TPRepo: update(trainingPath, {status: PENDING_REVIEW})
+    TPRepo -> DB: UPDATE training_paths SET status = 'pending_review'
+    TPRepo --> TPSvc: updated trainingPath
+    TPSvc -> TPSvc: dispatch(NotifyAdminsJob, trainingPath)
+    TPSvc --> Controller: trainingPath
+    Controller --> Browser: 200 OK {status: 'pending_review'}
+    Browser -> Teacher: Confirmation message displayed
+
+    Administrator -> Browser: Open admin dashboard
+    Browser -> Controller: GET /admin/training-paths?status=pending_review
+    Controller -> TPSvc: getPendingReviewPaths()
+    TPSvc -> TPRepo: findByStatus(PENDING_REVIEW)
+    TPRepo -> DB: SELECT * FROM training_paths WHERE status = 'pending_review'
+    TPRepo --> TPSvc: Collection of pending paths
+    TPSvc --> Controller: pending paths
+    Controller --> Browser: 200 OK {pending paths list}
+    Browser -> Administrator: Pending submissions displayed
+
+else Training path not ready
+    TPSvc --> Controller: throw SubmissionNotReadyException
+    Controller --> Browser: 422 Unprocessable {errors}
+    Browser -> Teacher: Validation errors displayed
+end
+
+@enduml

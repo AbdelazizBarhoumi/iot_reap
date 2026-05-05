@@ -1,0 +1,40 @@
+@startuml iot-reap-activity-forum-moderation
+title IoT-REAP - Forum Moderation Activity Diagram
+start
+:Administrator navigates to Forum Moderation;
+:System loads flagged posts queue;
+if (Flagged posts exist?) then (yes)
+  :Display list of flagged posts
+  with flag reason and reporter;
+  repeat
+    :Administrator reviews
+    flagged post content;
+    if (Post violates guidelines?) then (yes)
+      if (Action type?) then (delete)
+        :Delete post from forum;
+        :Remove post from
+        moderation queue;
+        :Log moderation action;
+      elseif (warn user) then
+        :Send warning notification
+        to post author;
+        :Mark post as moderated;
+        :Remove from queue;
+        :Log moderation action;
+      endif
+    else (no violation)
+      :Unflag the post;
+      :Dismiss the report;
+      :Remove from queue;
+      :Log dismissal action;
+    endif
+  repeat while (More flagged posts?) then (yes)
+  -> no;
+  :Moderation queue empty;
+  :Display completion message;
+else (no flagged posts)
+  :Display empty state message;
+  :Suggest checking back later;
+endif
+stop
+@enduml

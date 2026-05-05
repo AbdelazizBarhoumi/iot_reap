@@ -1,0 +1,271 @@
+@startuml iot-reap-sequence-teacher-content-flows
+title IoT-REAP - Teacher Content Authoring Flows Sequence Diagram
+actor Teacher as teacher
+participant "Frontend\n(React/Inertia)" as frontend
+participant "Laravel\nRoutes" as routes
+participant "Quiz\nController" as quiz
+participant "Article\nController" as article
+participant "Video\nController" as video
+participant "Database" as db
+participant "Video\nProcessor" as processor
+participant "Quiz\nModel" as qm
+participant "Article\nModel" as am
+participant "Video\nModel" as vm
+
+== Quiz Content Flow ==
+
+teacher -> frontend : Select training unit for quiz
+frontend -> routes : GET /teaching/{tpId}/module/{modId}/trainingUnit/{unitId}
+routes -> frontend : Display training unit editor
+frontend --> teacher : Show unit editor with quiz option
+
+teacher -> frontend : Click "Create Quiz"
+frontend -> routes : GET /trainingUnits/{unitId}/quiz
+routes -> quiz : show(unitId)
+quiz -> db : Load existing quiz or null
+db --> quiz : Return quiz or null
+quiz --> routes : Return quiz form
+routes --> frontend : Display quiz editor
+frontend --> teacher : Show quiz creation form
+
+teacher -> frontend : Fill quiz details and submit
+frontend -> routes : POST /trainingUnits/{unitId}/quiz
+routes -> quiz : store(unitId, quizData)
+quiz -> db : Create quiz record
+quiz -> db : Link to training unit
+quiz -> qm : Initialize questions array
+qm --> quiz : Return new quiz
+quiz --> routes : Return created quiz
+routes --> frontend : Display quiz editor
+frontend --> teacher : Show quiz with question editor
+
+teacher -> frontend : Add question to quiz
+frontend -> routes : POST /quizzes/{quiz}/questions
+routes -> quiz : storeQuestion(quizId, questionData)
+quiz -> db : Create question record
+quiz -> db : Link to quiz
+quiz -> db : Create answer options
+quiz --> routes : Return created question
+routes --> frontend : Add question to list
+frontend --> teacher : Show new question in quiz
+
+teacher -> frontend : Edit question
+frontend -> routes : PATCH /questions/{question}
+routes -> quiz : updateQuestion(questionId, questionData)
+quiz -> db : Update question record
+quiz -> db : Update answer options
+quiz --> routes : Return updated question
+routes --> frontend : Update question display
+frontend --> teacher : Show updated question
+
+teacher -> frontend : Delete question
+frontend -> routes : DELETE /questions/{question}
+routes -> quiz : destroyQuestion(questionId)
+quiz -> db : Delete question and options
+quiz --> routes : Return success
+routes --> frontend : Remove question from list
+frontend --> teacher : Show question deleted
+
+teacher -> frontend : Reorder questions
+frontend -> routes : POST /quizzes/{quiz}/reorder
+routes -> quiz : reorderQuestions(quizId, questionOrder)
+quiz -> db : Update question order values
+quiz -> db : Save changes
+quiz --> routes : Return success
+routes --> frontend : Update question order
+frontend --> teacher : Show reordered questions
+
+teacher -> frontend : Update quiz settings
+frontend -> routes : PATCH /quizzes/{quiz}
+routes -> quiz : update(quizId, quizData)
+quiz -> db : Update quiz record
+quiz -> db : Save changes
+quiz --> routes : Return updated quiz
+routes --> frontend : Update quiz settings
+frontend --> teacher : Show updated quiz settings
+
+teacher -> frontend : Publish quiz
+frontend -> routes : POST /quizzes/{quiz}/publish
+routes -> quiz : publish(quizId)
+quiz -> db : Update status to published
+quiz -> db : Save changes
+quiz --> routes : Return success
+routes --> frontend : Update quiz status
+frontend --> teacher : Show quiz as published
+
+teacher -> frontend : Unpublish quiz
+frontend -> routes : POST /quizzes/{quiz}/unpublish
+routes -> quiz : unpublish(quizId)
+quiz -> db : Update status to draft
+quiz -> db : Save changes
+quiz --> routes : Return success
+routes --> frontend : Update quiz status
+frontend --> teacher : Show quiz as draft
+
+teacher -> frontend : View quiz statistics
+frontend -> routes : GET /quizzes/{quiz}/stats
+routes -> quiz : stats(quizId)
+quiz -> db : Load quiz attempts
+quiz -> db : Calculate pass rates
+quiz -> db : Load question analytics
+db --> quiz : Return statistics
+quiz --> routes : Return quiz stats
+routes --> frontend : Display statistics
+frontend --> teacher : Show quiz performance data
+
+teacher -> frontend : Delete quiz
+frontend -> routes : DELETE /quizzes/{quiz}
+routes -> quiz : destroy(quizId)
+quiz -> db : Load quiz with questions
+quiz -> db : Delete quiz and questions
+quiz --> routes : Return success
+routes --> frontend : Remove quiz from unit
+frontend --> teacher : Show quiz deleted
+
+== Article Content Flow ==
+
+teacher -> frontend : Select training unit for article
+frontend -> routes : GET /trainingUnits/{unitId}/article
+routes -> article : show(unitId)
+article -> db : Load existing article or null
+db --> article : Return article or null
+article --> routes : Return article form
+routes --> frontend : Display article editor
+frontend --> teacher : Show rich text editor
+
+teacher -> frontend : Write article content
+frontend -> routes : POST /trainingUnits/{unitId}/article
+routes -> article : upsert(unitId, articleData)
+article -> db : Create or update article record
+article -> db : Link to training unit
+article -> am : Save rich text content
+am --> article : Return article
+article --> routes : Return article
+routes --> frontend : Update article display
+frontend --> teacher : Show saved article
+
+teacher -> frontend : Update article content
+frontend -> routes : POST /trainingUnits/{unitId}/article
+routes -> article : upsert(unitId, articleData)
+article -> db : Update article record
+article -> db : Save new content
+article --> routes : Return updated article
+routes --> frontend : Update article display
+frontend --> teacher : Show updated article
+
+teacher -> frontend : Delete article
+frontend -> routes : DELETE /trainingUnits/{unitId}/article
+routes -> article : destroy(unitId)
+article -> db : Delete article record
+article --> routes : Return success
+routes --> frontend : Remove article from unit
+frontend --> teacher : Show article deleted
+
+== Video Content Flow ==
+
+teacher -> frontend : Select training unit for video
+frontend -> routes : GET /trainingUnits/{unitId}/video
+routes -> video : show(unitId)
+video -> db : Load existing video or null
+video -> processor : Check processing status
+processor --> video : Return status
+video --> routes : Return video form
+routes --> frontend : Display video uploader
+frontend --> teacher : Show video upload interface
+
+teacher -> frontend : Upload video file
+frontend -> routes : POST /trainingUnits/{unitId}/video
+routes -> video : store(unitId, videoFile)
+video -> db : Create video record
+video -> db : Set status to processing
+video -> processor : Queue video for processing
+processor -> video : Start processing
+video --> routes : Return video record
+routes --> frontend : Show processing status
+frontend --> teacher : Display "Video processing" message
+
+teacher -> frontend : Check video processing status
+frontend -> routes : GET /trainingUnits/{unitId}/video/status
+routes -> video : status(unitId)
+video -> db : Load video record
+video -> processor : Get processing status
+processor --> video : Return status
+video --> routes : Return status
+routes --> frontend : Update status display
+frontend --> teacher : Show current processing status
+
+alt Processing complete
+    video -> db : Update status to ready
+    video -> db : Save video URLs
+    video --> routes : Return ready status
+    routes --> frontend : Show video ready
+    frontend --> teacher : Display video player
+else Processing failed
+    video -> db : Update status to failed
+    video -> db : Save error message
+    video --> routes : Return failed status
+    routes --> frontend : Show error
+    frontend --> teacher : Display retry option
+end
+
+teacher -> frontend : Retry failed video processing
+frontend -> routes : POST /trainingUnits/{unitId}/video/retry
+routes -> video : retry(unitId)
+video -> db : Update status to processing
+video -> processor : Requeue video for processing
+processor -> video : Start processing
+video --> routes : Return processing status
+routes --> frontend : Show processing status
+frontend --> teacher : Display "Retrying processing" message
+
+teacher -> frontend : View video captions
+frontend -> routes : GET /trainingUnits/{unitId}/video/captions
+routes -> video : captions(unitId)
+video -> db : Load video captions
+db --> video : Return captions
+video --> routes : Return captions list
+routes --> frontend : Display captions
+frontend --> teacher : Show existing captions
+
+teacher -> frontend : Upload caption file
+frontend -> routes : POST /trainingUnits/{unitId}/video/captions
+routes -> video : storeCaption(unitId, captionFile, language)
+video -> db : Create caption record
+video -> db : Link to video
+video -> db : Save caption file
+video --> routes : Return caption
+routes --> frontend : Add caption to list
+frontend --> teacher : Show new caption
+
+teacher -> frontend : Delete caption
+frontend -> routes : DELETE /trainingUnits/{unitId}/video/captions/{captionId}
+routes -> video : destroyCaption(unitId, captionId)
+video -> db : Delete caption record
+video -> db : Delete caption file
+video --> routes : Return success
+routes --> frontend : Remove caption from list
+frontend --> teacher : Show caption deleted
+
+teacher -> frontend : Delete video
+frontend -> routes : DELETE /trainingUnits/{unitId}/video
+routes -> video : destroy(unitId)
+video -> db : Load video record
+video -> processor : Delete video files
+processor -> video : Confirm deletion
+video -> db : Delete video record
+video -> db : Delete captions
+video --> routes : Return success
+routes --> frontend : Remove video from unit
+frontend --> teacher : Show video deleted
+
+note right of teacher
+  Content authoring features:
+  - Quiz: Create questions, options, scoring, publishing
+  - Article: Rich text editor, upsert operations
+  - Video: Upload, processing status, captions, retry
+  - All content types support CRUD operations
+  - Video processing is asynchronous
+  - Rate limited video uploads (10 per minute)
+end note
+
+@enduml

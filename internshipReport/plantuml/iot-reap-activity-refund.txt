@@ -1,0 +1,39 @@
+@startuml iot-reap-activity-refund
+title IoT-REAP - Refund Processing Activity Diagram
+
+start
+:Engineer submits refund request;
+:Validate payment ownership;
+if (Payment belongs to user?) then (yes)
+  if (Payment is refundable?) then (yes)
+    :RefundRequest status -> PENDING;
+    :Administrator opens refund dashboard;
+    :Administrator reviews request;
+    if (Refund justified?) then (yes)
+      :RefundRequest status -> APPROVED;
+      :Process refund via Stripe;
+      if (Stripe refund succeeded?) then (yes)
+        :RefundRequest status -> COMPLETED;
+        :Payment status -> REFUNDED;
+        :Notify engineer of refund completion;
+      else (no)
+        :RefundRequest status -> FAILED;
+        :Alert administrators;
+        :Log Stripe error;
+      endif
+    else (no - rejected)
+      :RefundRequest status -> REJECTED;
+      :Record admin notes;
+      :Notify engineer of rejection with reason;
+    endif
+  else (not refundable)
+    :Return refund not allowed error;
+    stop
+  endif
+else (not owner)
+  :Return 403 Forbidden;
+  stop
+endif
+stop
+
+@enduml

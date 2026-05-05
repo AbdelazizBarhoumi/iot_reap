@@ -1,0 +1,46 @@
+@startuml iot-reap-activity-device-reservation
+title IoT-REAP — Reserve Hardware Device Activity Diagram
+
+start
+:Engineer opens hardware inventory;
+:Display available devices;
+:Engineer selects a device;
+if (Device available?) then (yes)
+  :Check session compatibility;
+  if (Session supports device type?) then (yes)
+    :Create reservation;
+    :Update device status to Reserved;
+    :Confirm reservation to engineer;
+    if (Device type = Camera?) then (yes)
+      :Provide stream URL;
+    else (no - USB)
+      :Enable Attach button;
+    endif
+  else (no)
+    :Display compatibility error;
+  endif
+else (no - device unavailable)
+  :Display queue option;
+  if (Engineer joins queue?) then (yes)
+    :Add to device queue;
+    :Display queue position;
+    :Wait for notification;
+    if (Device becomes available?) then (yes)
+      :Notify engineer via WebSocket;
+      if (Engineer reserves within window?) then (yes)
+        :Create reservation;
+        :Remove from queue;
+        :Confirm reservation;
+      else (no - timeout)
+        :Offer to next in queue;
+        :Remove engineer from queue;
+      endif
+    else (no - session expired)
+      :Remove from queue;
+    endif
+  else (no)
+    :Suggest alternative devices;
+  endif
+endif
+stop
+@enduml
