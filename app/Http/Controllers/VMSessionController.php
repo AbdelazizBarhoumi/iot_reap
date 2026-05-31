@@ -44,13 +44,20 @@ class VMSessionController extends Controller
 
     /**
      * Get all sessions for the authenticated user.
-     * Returns Inertia page for browser requests, JSON for XHR.
+    * Returns JSON for XHR and redirects browser visits to the VM Dashboard.
      */
-    public function index(Request $request): JsonResponse|InertiaResponse
+    public function index(Request $request): JsonResponse|RedirectResponse
     {
         // Lazy expiration: mark overdue sessions before listing so the
         // frontend always sees correct statuses without queue:work.
         $this->cleanupService->expireOverdueSessions();
+
+        // Session history is now embedded in the VM Dashboard.
+        // Keep the JSON API for hooks, but redirect browser visits away from the
+        // standalone /sessions page so it is no longer a user-facing page.
+        if (! $request->wantsJson()) {
+            return redirect()->route('dashboard');
+        }
 
         if ($request->user()->can('admin-only') && $request->has('all')) {
             $sessions = $this->sessionRepository->findAllActive();
@@ -64,7 +71,9 @@ class VMSessionController extends Controller
             ]);
         }
 
-        return Inertia::render('sessions/index');
+        return response()->json([
+            'data' => VMSessionResource::collection($sessions),
+        ]);
     }
 
     /**

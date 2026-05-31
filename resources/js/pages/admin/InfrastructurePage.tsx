@@ -891,7 +891,8 @@ function UsbDeviceRow({
     onRemoveDedication,
 }: UsbDeviceRowProps) {
     const hasCameraRegistration = device.has_camera_registration;
-    const isDedicated = device.dedicated_vmid !== null;
+    const isDedicated =
+        device.is_dedicated ?? device.dedicated_vmid != null;
 
     return (
         <div className="rounded-md border p-3">
@@ -945,16 +946,41 @@ function UsbDeviceRow({
 
             <div className="flex flex-wrap gap-2">
                 {hasCameraRegistration ? (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={onRemoveCamera}
-                        disabled={loading}
-                        className="border-destructive/30 text-destructive hover:bg-destructive/10"
-                    >
-                        <Camera className="mr-1 h-3 w-3" />
-                        Remove Camera
-                    </Button>
+                    <>
+                        {isDedicated ? (
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={onRemoveDedication}
+                                disabled={loading}
+                                className="border-destructive/30 text-white hover:bg-destructive/10 hover:text-destructive"
+                            >
+                                <Lock className="mr-1 h-3 w-3" />
+                                Remove Dedication
+                            </Button>
+                        ) : (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={onDedicate}
+                                disabled={loading}
+                            >
+                                <Unlock className="mr-1 h-3 w-3" />
+                                Dedicate
+                            </Button>
+                        )}
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={onRemoveCamera}
+                            disabled={loading}
+                            className="border-destructive/30 text-destructive hover:bg-destructive hover:text-white"
+                        >
+                            <Camera className="mr-1 h-3 w-3" />
+                            Remove Camera
+                        </Button>
+                    </>
                 ) : (
                     <>
                         <Button
@@ -962,7 +988,7 @@ function UsbDeviceRow({
                             variant="outline"
                             onClick={onMarkAsCamera}
                             disabled={loading}
-                            className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                            className="border-purple-300 text-purple-600 hover:bg-purple-600 hover:text-white"
                         >
                             <Camera className="mr-1 h-3 w-3" />
                             Mark as Camera
@@ -1033,7 +1059,7 @@ function UsbDeviceRow({
                                 variant="destructive"
                                 onClick={onRemoveDedication}
                                 disabled={loading}
-                                className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                                className="border-destructive/30 text-white hover:bg-destructive/10 hover:text-destructive"
                             >
                                 <Lock className="mr-1 h-3 w-3" />
                                 Remove Dedication
@@ -1328,7 +1354,7 @@ function CameraCard({
                         variant="outline"
                         onClick={onActivate}
                         disabled={loading}
-                        className="border-success/30 text-success hover:bg-success/10"
+                        className="border-success/30 text-success hover:bg-success hover:text-white"
                     >
                         <Check className="mr-1 h-3 w-3" />
                         Activate
@@ -1339,7 +1365,7 @@ function CameraCard({
                         variant="outline"
                         onClick={onDeactivate}
                         disabled={loading}
-                        className="border-amber-300 text-amber-600 hover:bg-amber-50"
+                        className="border-amber-300 text-amber-600 hover:bg-amber-600 hover:text-white"
                     >
                         <X className="mr-1 h-3 w-3" />
                         Deactivate
@@ -1583,6 +1609,7 @@ export default function InfrastructurePage({
         loading: hardwareLoading,
         actionLoading: hardwareActionLoading,
         error: hardwareError,
+        refetch: refetchHardware,
         refreshAll,
         refreshNode,
         bindDevice,
@@ -2212,7 +2239,7 @@ export default function InfrastructurePage({
             });
 
             // refresh data
-            await fetchNodes();
+            await refetchHardware();
             await fetchCameras();
             toast.success('Device dedicated to VM successfully');
         } catch (err) {
@@ -2233,7 +2260,7 @@ export default function InfrastructurePage({
         setDedicateLoading(true);
         try {
             await hardwareApi.removeDedication(deviceId);
-            await fetchNodes();
+            await refetchHardware();
             await fetchCameras();
             toast.success('Removed device dedication');
         } catch (err) {
@@ -2927,12 +2954,6 @@ export default function InfrastructurePage({
 
                             {/* ── Cameras Tab ── */}
                             <TabsContent value="cameras">
-                                <p className="mb-3 text-xs text-muted-foreground">
-                                    Reservation approvals moved to Admin
-                                    Reservations. Attach/detach actions remain
-                                    available here.
-                                </p>
-
                                 <div>
                                     <div className="mb-3 flex items-center justify-between gap-2">
                                         <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

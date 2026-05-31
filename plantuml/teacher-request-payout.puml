@@ -1,0 +1,77 @@
+' Request Payout sequence diagram
+@startuml
+title Request Payout - Main Success Scenario (UC-TS-07)
+
+actor Teacher
+
+participant "EarningsController" as Controller
+participant "PayoutService" as Service
+participant "WalletRepository" as WalletRepo
+participant "PayoutRepository" as PayoutRepo
+
+== Teacher opens payout request ==
+Teacher -> Controller : GET /teacher/earnings/payout-form
+activate Controller
+Controller -> WalletRepo : getSummaryByTeacher(teacherId)
+activate WalletRepo
+WalletRepo --> Controller : availableBalance, pendingPayouts
+deactivate WalletRepo
+Controller --> Teacher : 200 OK + payout form data
+deactivate Controller
+
+== Teacher submits payout request ==
+Teacher -> Controller : POST /teacher/payouts {amount, paymentMethod}
+activate Controller
+Controller -> Service : requestPayout(teacher, amount, paymentMethod)
+activate Service
+
+loop validate each input field/rule
+    Service -> Service : validateRule(rule, requestData)
+end
+
+Service -> WalletRepo : getAvailableBalanceAndThreshold(teacherId)
+activate WalletRepo
+WalletRepo --> Service : availableBalance, minimumThreshold
+deactivate WalletRepo
+
+alt amount <= availableBalance and amount >= minimumThreshold and paymentMethod valid
+    Service -> PayoutRepo : createPendingRequest(teacherId, amount, paymentMethod)
+    activate PayoutRepo
+    PayoutRepo --> Service : payoutRequest(id, status=pending)
+    deactivate PayoutRepo
+
+    Service --> Controller : payoutRequestCreated
+    deactivate Service
+    Controller --> Teacher : 201 Created + confirmation
+    deactivate Controller
+else amount > availableBalance
+    Service --> Controller : ValidationException("Amount exceeds available balance")
+    deactivate Service
+    Controller --> Teacher : 422 Unprocessable Entity
+    deactivate Controller
+else amount < minimumThreshold
+    Service --> Controller : ValidationException("Amount below minimum payout threshold")
+    deactivate Service
+    Controller --> Teacher : 422 Unprocessable Entity
+    deactivate Controller
+else payment method invalid
+    Service --> Controller : ValidationException("Invalid payment method")
+    deactivate Service
+    Controller --> Teacher : 422 Unprocessable Entity
+    deactivate Controller
+else persistence/service failure
+    Service --> Controller : ServiceException("Unable to create payout request")
+    deactivate Service
+    Controller --> Teacher : 500 Internal Server Error
+    deactivate Controller
+end
+
+note right of Service
+Business rules:
+- Amount must be <= available balance
+- Amount must be >= minimum threshold
+- Payment method must be valid
+- New request status = pending
+end note
+
+@enduml

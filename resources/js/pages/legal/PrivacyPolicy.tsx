@@ -189,7 +189,7 @@ export default function PrivacyPolicy() {
                 {
                     subtitle: '8.5 Privacy Rights Under Law',
                     content:
-                        'Depending on your location (e.g., GDPR in Europe, CCPA in California), you may have additional rights including the right to restrict processing, object to processing, and lodge complaints with data protection authorities.',
+                        'Depending on your location (e.g.,  in Europe, CCPA in California), you may have additional rights including the right to restrict processing, object to processing, and lodge complaints with data protection authorities.',
                 },
             ],
         },
@@ -198,9 +198,9 @@ export default function PrivacyPolicy() {
             title: '9. Regional Data Protection Laws',
             subsections: [
                 {
-                    subtitle: '9.1 GDPR (European Union)',
+                    subtitle: '9.1  (European Union)',
                     content:
-                        'If you are in the EU/EEA, your data is processed in accordance with GDPR. You have the right to request access, deletion, rectification, and portability. You also have the right to lodge a complaint with your local data protection authority.',
+                        'If you are in the EU/EEA, your data is processed in accordance with . You have the right to request access, deletion, rectification, and portability. You also have the right to lodge a complaint with your local data protection authority.',
                 },
                 {
                     subtitle: '9.2 CCPA (California)',

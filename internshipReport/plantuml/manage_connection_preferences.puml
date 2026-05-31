@@ -1,0 +1,128 @@
+@startuml
+title Manage Connection Preferences - Sequence Diagram
+
+actor Administrator as Admin
+
+participant "ConnectionPreferencesController" as Controller
+participant "ConnectionPreferencesService" as Service
+participant "Validator" as Validator
+participant "SecretStore / KeyManager" as SecretStore
+participant "ConnectionPreferencesRepository" as Repo
+participant "AuditService" as Audit
+participant "ExternalClientFactory" as ClientFactory
+participant "External Service" as External
+
+== Submit Preferences ==
+
+Admin -> Controller : SubmitChanges(payload)
+activate Controller
+
+Controller -> Validator : validate(payload)
+activate Validator
+Validator --> Controller : ValidationResult
+deactivate Validator
+
+alt Validation Failed
+
+    Controller --> Admin : HTTP 422 Validation Errors
+    deactivate Controller
+
+else Validation Succeeded
+
+    Controller -> Service : submitPreference(payload, testRequested)
+    activate Service
+
+    Service -> SecretStore : encryptSecrets(payload.secrets)
+    activate SecretStore
+    SecretStore --> Service : tokenRef
+    deactivate SecretStore
+
+    alt Encryption Failed
+
+        Service --> Controller : Operation Failed
+        deactivate Service
+
+        Controller --> Admin : HTTP 500
+        deactivate Controller
+
+    else Encryption Successful
+
+        Service -> Repo : beginTransaction()
+        activate Repo
+        Repo --> Service : Transaction Started
+        deactivate Repo
+
+        Service -> Repo : savePreferences(metadata, tokenRef)
+        activate Repo
+        Repo --> Service : savedPreference
+        deactivate Repo
+
+        alt Persistence Failed
+
+            Service -> Repo : rollback()
+            activate Repo
+            Repo --> Service : Rolled Back
+            deactivate Repo
+
+            Service --> Controller : Operation Failed
+            deactivate Service
+
+            Controller --> Admin : HTTP 500
+            deactivate Controller
+
+        else Preferences Saved
+
+            opt Connectivity Test Requested
+
+                Service -> ClientFactory : createClient(type, config)
+                activate ClientFactory
+                ClientFactory --> Service : Client
+                deactivate ClientFactory
+
+                Service -> External : testConnectivity()
+                activate External
+
+                alt Connection Successful
+                    External --> Service : Success(status,message)
+                else Connection Failed
+                    External --> Service : Error(code,message)
+                end
+
+                deactivate External
+
+                Service -> Repo : persistTestResult(id,outcome)
+                activate Repo
+                Repo --> Service : Acknowledged
+                deactivate Repo
+
+            end
+
+            Service -> Audit : recordChange(adminId,id,diff,testOutcome)
+            activate Audit
+            Audit --> Service : Acknowledged
+            deactivate Audit
+
+            Service -> Repo : commitTransaction()
+            activate Repo
+            Repo --> Service : Committed
+            deactivate Repo
+
+            Service --> Controller : OperationResult
+            deactivate Service
+
+            Controller --> Admin : HTTP 200/201
+            deactivate Controller
+
+        end
+    end
+end
+
+note right of External
+Selected external API:
+- Proxmox
+- Guacamole
+- MQTT Broker
+- Gateway API
+end note
+
+@enduml

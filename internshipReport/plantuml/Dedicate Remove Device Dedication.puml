@@ -1,0 +1,92 @@
+@startuml
+title Use Case: Dedicate / Remove Device Dedication - Sequence
+
+actor Administrator as Admin
+boundary "Admin Hardware Page" as UI
+control "Admin\\HardwareController" as Controller
+control "GatewayService" as GatewayService
+database "UsbDeviceRepository" as UsbDeviceRepo
+entity "ProxmoxServer" as ProxmoxServer
+control "CameraRepository" as CameraRepo
+entity "Camera" as Camera
+participant "GatewayAPI" as GatewayAPI
+
+Admin -> UI : POST /admin/hardware/devices/{device}/dedicate\n{vmid, node, server_id}
+activate UI
+UI -> Controller : forward request
+activate Controller
+
+Controller -> Controller : authorize('admin-only')
+Controller -> Controller : validate(vmid, node, server_id)
+
+Controller -> ProxmoxServer : findOrFail(server_id)
+activate ProxmoxServer
+ProxmoxServer --> Controller : server
+deactivate ProxmoxServer
+
+Controller -> GatewayService : dedicateDeviceToVm(device, vmid, node, server)
+activate GatewayService
+
+note right of GatewayService
+Dedication is persisted metadata (dedicated_vmid, dedicated_node,
+dedicated_server_id). Service detaches/unbinds prior to persisting.
+end note
+
+alt Device is attached
+    GatewayService -> GatewayService : detachFromVm(device)
+    GatewayService -> GatewayAPI : POST /nodes/{node}/usb/detach
+    activate GatewayAPI
+    GatewayAPI --> GatewayService : {success}
+    deactivate GatewayAPI
+end
+
+alt Device is bound on gateway
+    GatewayService -> GatewayService : unbindDevice(device)
+    GatewayService -> GatewayAPI : POST /unbind
+    activate GatewayAPI
+    GatewayAPI --> GatewayService : {success}
+    deactivate GatewayAPI
+end
+
+GatewayService -> UsbDeviceRepo : setDedicatedVm(device, vmid, node, server.id)
+activate UsbDeviceRepo
+UsbDeviceRepo --> GatewayService : updated device
+deactivate UsbDeviceRepo
+
+opt device has linked camera
+    GatewayService -> CameraRepo : findByUsbDevice(device)
+    activate CameraRepo
+    CameraRepo --> GatewayService : camera (or null)
+    deactivate CameraRepo
+
+    alt camera found
+        GatewayService -> Camera : assignToVm(vmid)
+        activate Camera
+        Camera --> GatewayService : assigned
+        deactivate Camera
+
+        alt camera stream active
+            GatewayService -> GatewayAPI : POST /{node}:8000/stop_stream\n{stream_key}
+            activate GatewayAPI
+            GatewayAPI --> GatewayService : {success | error}
+            deactivate GatewayAPI
+
+            opt stop success
+                GatewayService -> Camera : update(status=INACTIVE)
+                activate Camera
+                Camera --> GatewayService : saved
+                deactivate Camera
+            end
+        end
+    end
+end
+
+GatewayService --> Controller : device updated
+deactivate GatewayService
+
+Controller --> UI : 200 OK + UsbDeviceResource
+deactivate Controller
+UI --> Admin : 200 OK + JSON
+deactivate UI
+
+@enduml

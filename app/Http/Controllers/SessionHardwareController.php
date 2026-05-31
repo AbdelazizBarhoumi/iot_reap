@@ -12,6 +12,7 @@ use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayService;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -38,7 +39,8 @@ class SessionHardwareController extends Controller
     public function index(VMSession $session): JsonResponse
     {
         // Ensure the session belongs to the authenticated user
-        if ($session->user_id !== auth()->id()) {
+        $currentUserId = Auth::id();
+        if ($session->user_id !== $currentUserId) {
             abort(403, 'Unauthorized access to session');
         }
 
@@ -46,6 +48,7 @@ class SessionHardwareController extends Controller
 
         // Get devices attached to this session or VM context and reconcile their
         // real runtime state so the UI reflects the VM, not only one session row.
+        /** @var \Illuminate\Database\Eloquent\Collection<int, UsbDevice> $attachedDevices */
         $attachedDevices = UsbDevice::where('status', 'attached')
             ->where(function ($query) use ($session) {
                 $query->where('attached_session_id', $session->id);
@@ -99,6 +102,7 @@ class SessionHardwareController extends Controller
         $attachedDevices = $reconciledAttachedDevices->values();
 
         // Build available device list after reconciliation to avoid stale states.
+        /** @var \Illuminate\Support\Collection<int, array{device: UsbDevice, can_attach: bool, is_attached_to_me: bool, queue_position: int|null, queue_length: int, attachment_reason: string|null, reserved_until: string|null, gateway_verified: bool}> $availableDevices */
         $availableDevices = $this->queueService->getAvailableDevicesForSession($session);
 
         // Get queue entries for this session
@@ -106,7 +110,7 @@ class SessionHardwareController extends Controller
 
         return response()->json([
             'data' => [
-                'available_devices' => $availableDevices->map(fn ($item) => [
+                'available_devices' => $availableDevices->map(fn (array $item) => [
                     'device' => new UsbDeviceResource($item['device']),
                     'can_attach' => $item['can_attach'],
                     'is_attached_to_me' => $item['is_attached_to_me'],
@@ -134,7 +138,7 @@ class SessionHardwareController extends Controller
     public function attach(VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
-        if ($session->user_id !== auth()->id()) {
+        if ($session->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to session');
         }
 
@@ -166,6 +170,24 @@ class SessionHardwareController extends Controller
                     'success' => false,
                     'message' => 'Device not found',
                 ], 404);
+            }
+
+            $isDedicatedForVm = $session->vm_id !== null
+                && $session->proxmox_server_id !== null
+                && $lockedDevice->isDedicatedTo($session->vm_id, $session->proxmox_server_id);
+
+            if ($lockedDevice->isDedicated() && ! $isDedicatedForVm) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Device is dedicated to another VM',
+                ], 422);
+            }
+
+            if ($lockedDevice->is_camera && ! $isDedicatedForVm) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Camera devices can only be attached when dedicated to this VM',
+                ], 422);
             }
 
             // Re-validate device state (may have changed while waiting for lock).
@@ -313,7 +335,7 @@ class SessionHardwareController extends Controller
     public function detach(VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
-        if ($session->user_id !== auth()->id()) {
+        if ($session->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to session');
         }
 
@@ -350,7 +372,7 @@ class SessionHardwareController extends Controller
     public function joinQueue(VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
-        if ($session->user_id !== auth()->id()) {
+        if ($session->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to session');
         }
 
@@ -378,7 +400,12 @@ class SessionHardwareController extends Controller
         }
 
         try {
-            $entry = $this->queueService->joinQueue($device, $session, auth()->user());
+            $user = Auth::user();
+            if ($user === null) {
+                abort(403, 'Unauthorized access to session');
+            }
+
+            $entry = $this->queueService->joinQueue($device, $session, $user);
 
             return response()->json([
                 'success' => true,
@@ -399,7 +426,7 @@ class SessionHardwareController extends Controller
     public function leaveQueue(VMSession $session, UsbDevice $device): JsonResponse
     {
         // Authorization
-        if ($session->user_id !== auth()->id()) {
+        if ($session->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to session');
         }
 

@@ -1,0 +1,89 @@
+@startuml "Delete VM Assignment - Sequence"
+actor Teacher
+
+participant "VMAssignmentController" as Controller
+participant "VMAssignmentService" as Service
+participant "VMAssignmentRepository" as Repository
+participant "SessionService" as SessionService
+participant "GuacamoleClient" as Guac
+participant "ProxmoxClient" as Proxmox
+participant "AuditService" as Audit
+participant "NotificationService" as Notify
+participant "JobQueue" as JobQueue
+
+Teacher -> Controller : DELETE /assignments/{id} [force?]
+activate Controller
+Controller -> Service : deleteAssignment(assignmentId, teacherId, force)
+activate Service
+
+Service -> Repository : findById(assignmentId)
+activate Repository
+Repository --> Service : Assignment(assignmentId, vmId, guacConnectionId, userId)
+deactivate Repository
+
+Service -> SessionService : findActiveByAssignment(assignmentId)
+activate SessionService
+SessionService --> Service : list<ActiveSession> (0..n)
+deactivate SessionService
+
+alt active sessions exist and force=false
+    Service --> Controller : error: ActiveSessionsExist (409)
+    deactivate Service
+    Controller --> Teacher : 409 Conflict (active sessions exist)
+    deactivate Controller
+    return
+else active sessions exist and force=true
+    note over Service,SessionService : Force delete: terminate active sessions
+    loop for each session in activeSessions
+        Service -> SessionService : terminate(sessionId)
+        activate SessionService
+        SessionService --> Service : terminationAck / status
+        deactivate SessionService
+    end
+end
+
+opt delete Guacamole connection
+    Service -> Guac : deleteConnection(guacConnectionId)
+    activate Guac
+    Guac --> Service : 200 OK / deleted
+    deactivate Guac
+end
+
+opt deprovision VM
+    Service -> Proxmox : deprovisionVM(vmId)
+    activate Proxmox
+    alt Proxmox immediate success
+        Proxmox --> Service : 200 OK / removed
+    else Proxmox async or unreachable
+        Proxmox --> Service : error / timeout
+        Service -> JobQueue : enqueue CleanupVMJob({vmId, assignmentId})
+        JobQueue --> Service : jobQueuedAck
+    end
+    deactivate Proxmox
+end
+
+Service -> Repository : beginTransaction()
+Service -> Repository : delete(assignmentId)
+activate Repository
+Repository --> Service : deleteAck
+deactivate Repository
+Service -> Repository : commit()
+
+Service -> Audit : logDeletion(teacherId, assignmentId, result=Success)
+activate Audit
+Audit --> Service : logAck
+deactivate Audit
+
+opt notify user if assigned
+    Service -> Notify : notifyUser(userId, "assignment_deleted", details)
+    activate Notify
+    Notify --> Service : notifyAck
+    deactivate Notify
+end
+
+Service --> Controller : 200 OK (deletion confirmed)
+deactivate Service
+Controller --> Teacher : 200 OK (Assignment deleted)
+deactivate Controller
+
+@enduml

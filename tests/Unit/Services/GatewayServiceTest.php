@@ -163,6 +163,25 @@ class GatewayServiceTest extends TestCase
         $this->service->bindDevice($device);
     }
 
+    #[Test]
+    public function it_binds_camera_device_when_not_dedicated(): void
+    {
+        $node = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()->for($node)->available()->create([
+            'busid' => '1-1',
+            'is_camera' => true,
+        ]);
+
+        Http::fake([
+            'http://192.168.50.6:8000/bind' => Http::response(['success' => true], 200),
+        ]);
+
+        $this->service->bindDevice($device);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
+    }
+
     // ─── Unbind Tests ─────────────────────────────────────────────────────────
 
     #[Test]

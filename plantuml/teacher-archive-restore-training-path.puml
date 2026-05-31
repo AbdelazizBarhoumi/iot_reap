@@ -1,0 +1,80 @@
+@startuml
+title Use Case: Archive / Restore Training Path - Sequence
+actor Teacher
+
+participant "UI (Web App)" as UI
+participant "TrainingPathController" as Controller
+participant "TrainingPathService" as Service
+participant "TrainingPathRepository" as Repo
+participant "AuditLogRepository" as Audit
+participant "SearchIndexService" as Search
+participant "NotificationService" as Notif
+
+== Archive Flow ==
+Teacher -> UI : Click "Archive" (trainingPathId)
+UI -> Teacher : Show confirmation dialog
+opt Teacher confirms
+    UI -> Controller : POST /training-paths/{id}/archive [userId]
+    Controller -> Service : archive(trainingPathId, userId)
+    activate Service
+    Service -> Repo : findById(trainingPathId)
+    activate Repo
+    Repo --> Service : trainingPath (ownerId, archived=false)
+    deactivate Repo
+    Service -> Service : verifyOwnershipAndState()
+    alt Ownership OK and not archived
+        Service -> Repo : update(trainingPathId, { archived:true, archived_at: now })
+        activate Repo
+        Repo --> Service : success
+        deactivate Repo
+
+        Service -> Audit : create({ action: "archive", trainingPathId, userId, timestamp })
+        activate Audit
+        Audit --> Service : created
+        deactivate Audit
+
+        Service -> Search : remove(trainingPathId) <<async>>
+        Service -> Notif : notifyOwnerArchived(trainingPathId, userId) <<async, optional>>
+
+        Service --> Controller : success (200)
+    else Ownership check fails
+        Service --> Controller : AuthorizationError
+    end
+    deactivate Service
+    Controller --> UI : 200 OK / 403
+    UI -> Teacher : Show "Training Path archived" or error
+end
+
+== Restore Flow ==
+Teacher -> UI : Click "Restore" (archived trainingPathId)
+UI -> Controller : POST /training-paths/{id}/restore [userId]
+Controller -> Service : restore(trainingPathId, userId)
+activate Service
+Service -> Repo : findById(trainingPathId)
+activate Repo
+Repo --> Service : trainingPath (ownerId, archived=true)
+deactivate Repo
+Service -> Service : verifyOwnershipAndState()
+alt Ownership OK and archived
+    Service -> Repo : update(trainingPathId, { archived:false, archived_at: null })
+    activate Repo
+    Repo --> Service : success
+    deactivate Repo
+
+    Service -> Audit : create({ action: "restore", trainingPathId, userId, timestamp })
+    activate Audit
+    Audit --> Service : created
+    deactivate Audit
+
+    Service -> Search : index(trainingPathId) <<async>>
+    Service -> Notif : notifyOwnerRestored(trainingPathId, userId) <<async, optional>>
+
+    Service --> Controller : success (200)
+else Ownership fails or not archived
+    Service --> Controller : ValidationError / AuthorizationError
+end
+deactivate Service
+Controller --> UI : 200 OK / error
+UI -> Teacher : Show "Training Path restored" or error
+
+@enduml

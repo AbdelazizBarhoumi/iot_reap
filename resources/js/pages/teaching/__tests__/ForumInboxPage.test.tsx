@@ -80,6 +80,30 @@ describe('TeacherForumInboxPage', () => {
         updatedAt: new Date().toISOString(),
     };
 
+    const recentThread = {
+        id: 'thread-2',
+        title: 'Equipment inspection follow-up',
+        content: 'Recent notes from the maintenance review.',
+        author: {
+            id: 3,
+            name: 'Taylor Supervisor',
+            role: 'teacher' as const,
+        },
+        status: 'open' as const,
+        upvotes: 0,
+        hasUpvoted: false,
+        replyCount: 0,
+        viewCount: 2,
+        isPinned: false,
+        isLocked: false,
+        isFlagged: false,
+        trainingPathId: 11,
+        trainingPath: { id: 11, title: 'Maintenance Operations' },
+        trainingUnit: { id: 21, title: 'Inspection Checklist' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+
     const fullThread = {
         ...summaryThread,
         replies: [
@@ -102,6 +126,11 @@ describe('TeacherForumInboxPage', () => {
         ],
     };
 
+    const recentFullThread = {
+        ...recentThread,
+        replies: [],
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         forumApiMock.getTeacherInbox.mockImplementation(
@@ -110,7 +139,7 @@ describe('TeacherForumInboxPage', () => {
                     filter === 'flagged'
                         ? [summaryThread]
                         : filter === 'recent'
-                          ? [summaryThread]
+                          ? [recentThread]
                           : [],
                 pagination: {
                     current_page: 1,
@@ -120,7 +149,9 @@ describe('TeacherForumInboxPage', () => {
                 },
             }),
         );
-        forumApiMock.getThread.mockResolvedValue(fullThread);
+        forumApiMock.getThread.mockImplementation(async (threadId: string) =>
+            threadId === 'thread-2' ? recentFullThread : fullThread,
+        );
         forumApiMock.lockThread.mockResolvedValue({});
         forumApiMock.resolveThreadFlag.mockResolvedValue({});
         forumApiMock.markAsAnswer.mockResolvedValue({});
@@ -184,5 +215,41 @@ describe('TeacherForumInboxPage', () => {
         await waitFor(() => {
             expect(forumApiMock.markAsAnswer).toHaveBeenCalledWith('reply-1');
         });
+    });
+
+    it('switches to the recent queue with tab-style filters', async () => {
+        const user = userEvent.setup();
+
+        render(
+            <TeacherForumInboxPage
+                initialFilter="flagged"
+                selectedThreadId="thread-1"
+                threads={{
+                    flagged: [summaryThread],
+                    unanswered: [],
+                    recent: [recentThread],
+                }}
+            />,
+        );
+
+        expect(
+            screen.getByRole('tab', { name: /flagged/i }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('tab', { name: /unanswered/i }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('tab', { name: /recent/i }));
+
+        await waitFor(() => {
+            expect(forumApiMock.getThread).toHaveBeenCalledWith('thread-2');
+        });
+
+        expect(
+            screen.getByRole('button', {
+                name: /equipment inspection follow-up/i,
+            }),
+        ).toBeInTheDocument();
     });
 });

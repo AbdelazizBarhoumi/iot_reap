@@ -155,6 +155,166 @@ class SessionHardwareTest extends TestCase
         $this->assertContains($visibleDevice->id, $availableDeviceIds);
     }
 
+    public function test_session_does_not_see_devices_dedicated_to_other_vms(): void
+    {
+        $dedicatedToOtherVm = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'dedicated_vmid' => 201,
+                'dedicated_node' => $this->proxmoxNode->name,
+                'dedicated_server_id' => $this->proxmoxServer->id,
+            ]);
+
+        $dedicatedToThisVm = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'dedicated_vmid' => $this->session->vm_id,
+                'dedicated_node' => $this->proxmoxNode->name,
+                'dedicated_server_id' => $this->proxmoxServer->id,
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+
+        $response->assertOk();
+
+        $availableDeviceIds = collect($response->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertNotContains($dedicatedToOtherVm->id, $availableDeviceIds);
+        $this->assertContains($dedicatedToThisVm->id, $availableDeviceIds);
+    }
+
+    public function test_session_does_not_see_undedicated_camera_devices_as_attachable(): void
+    {
+        $camera = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'is_camera' => true,
+                'vendor_id' => '0c45',
+                'product_id' => '6536',
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+
+        $response->assertOk();
+
+        $availableDeviceIds = collect($response->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertNotContains($camera->id, $availableDeviceIds);
+    }
+
+    public function test_session_sees_camera_dedicated_to_this_vm_as_attachable(): void
+    {
+        $camera = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'is_camera' => true,
+                'vendor_id' => '0c45',
+                'product_id' => '6536',
+                'dedicated_vmid' => $this->session->vm_id,
+                'dedicated_node' => $this->proxmoxNode->name,
+                'dedicated_server_id' => $this->proxmoxServer->id,
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+
+        $response->assertOk();
+
+        $availableDeviceIds = collect($response->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertContains($camera->id, $availableDeviceIds);
+    }
+
+    public function test_reservation_overrides_usb_dedication_for_reserving_user(): void
+    {
+        $reservingUser = User::factory()->engineer()->create();
+        $reservingSession = VMSession::factory()->active()->create([
+            'user_id' => $reservingUser->id,
+            'proxmox_server_id' => $this->proxmoxServer->id,
+            'node_id' => $this->proxmoxNode->id,
+            'vm_id' => $this->session->vm_id + 50,
+        ]);
+
+        $device = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'dedicated_vmid' => $this->session->vm_id,
+                'dedicated_node' => $this->proxmoxNode->name,
+                'dedicated_server_id' => $this->proxmoxServer->id,
+            ]);
+
+        Reservation::factory()->forUsbDevice($device)->active()->create([
+            'user_id' => $reservingUser->id,
+            'requested_start_at' => now()->subHour(),
+            'requested_end_at' => now()->addHour(),
+            'approved_start_at' => now()->subHour(),
+            'approved_end_at' => now()->addHour(),
+        ]);
+
+        $ownerResponse = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+        $ownerResponse->assertOk();
+
+        $ownerAvailableIds = collect($ownerResponse->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertNotContains($device->id, $ownerAvailableIds);
+
+        $reservingResponse = $this->actingAs($reservingUser)
+            ->getJson("/sessions/{$reservingSession->id}/hardware");
+        $reservingResponse->assertOk();
+
+        $reservingAvailableIds = collect($reservingResponse->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertContains($device->id, $reservingAvailableIds);
+
+        $reservation = Reservation::where('reservable_type', 'App\\Models\\UsbDevice')
+            ->where('reservable_id', $device->id)
+            ->firstOrFail();
+
+        $reservation->update([
+            'status' => 'completed',
+            'approved_end_at' => now()->subMinute(),
+            'actual_end_at' => now()->subMinute(),
+        ]);
+
+        $ownerAfterEndResponse = $this->actingAs($this->user)
+            ->getJson("/sessions/{$this->session->id}/hardware");
+        $ownerAfterEndResponse->assertOk();
+
+        $ownerAfterEndIds = collect($ownerAfterEndResponse->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertContains($device->id, $ownerAfterEndIds);
+
+        $reservingAfterEndResponse = $this->actingAs($reservingUser)
+            ->getJson("/sessions/{$reservingSession->id}/hardware");
+        $reservingAfterEndResponse->assertOk();
+
+        $reservingAfterEndIds = collect($reservingAfterEndResponse->json('data.available_devices'))
+            ->pluck('device.id')
+            ->all();
+
+        $this->assertNotContains($device->id, $reservingAfterEndIds);
+    }
+
     public function test_user_cannot_access_other_users_session_hardware(): void
     {
         $response = $this->actingAs($this->otherUser)
@@ -201,6 +361,37 @@ class SessionHardwareTest extends TestCase
 
         // Verify the command was executed via guest agent
         $this->fakeProxmoxClient->assertCommandExecuted('usbip attach');
+    }
+
+    public function test_user_cannot_attach_camera_dedicated_to_another_vm(): void
+    {
+        $otherSession = VMSession::factory()
+            ->for($this->otherUser)
+            ->active()
+            ->create([
+                'proxmox_server_id' => $this->proxmoxServer->id,
+                'node_id' => $this->proxmoxNode->id,
+                'vm_id' => $this->session->vm_id + 100,
+            ]);
+
+        $device = UsbDevice::factory()
+            ->for($this->gateway)
+            ->bound()
+            ->create([
+                'busid' => '1-9',
+                'is_camera' => true,
+                'dedicated_vmid' => $otherSession->vm_id,
+                'dedicated_node' => $this->proxmoxNode->name,
+                'dedicated_server_id' => $this->proxmoxServer->id,
+            ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/sessions/{$this->session->id}/hardware/devices/{$device->id}/attach");
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+        ]);
     }
 
     public function test_same_vm_new_session_sees_vm_owned_attached_device_as_theirs(): void

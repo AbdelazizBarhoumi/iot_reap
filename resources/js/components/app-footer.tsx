@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Server } from 'lucide-react';
 import { dashboard, terms, privacy } from '@/routes';
-import sessions from '@/routes/sessions';
 import teaching from '@/routes/teaching';
 import trainingPaths from '@/routes/trainingPaths';
 /**
@@ -15,7 +14,6 @@ export function AppFooter() {
     const isTeacher =
         role === 'admin' ||
         (role === 'teacher' && !!auth.user?.teacher_approved_at);
-    const isEngineer = role === 'engineer' || role === 'admin';
     return (
         <footer className="mt-auto border-t border-border bg-card/50 py-6">
             <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
@@ -50,14 +48,6 @@ export function AppFooter() {
                             className="transition-colors hover:text-foreground"
                         >
                             Content Studio
-                        </Link>
-                    )}
-                    {isEngineer && (
-                        <Link
-                            href={sessions.index.url()}
-                            className="transition-colors hover:text-foreground"
-                        >
-                            Sessions
                         </Link>
                     )}
                     {isAuthenticated && (

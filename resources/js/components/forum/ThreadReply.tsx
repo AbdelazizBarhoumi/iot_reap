@@ -189,8 +189,8 @@ export function ThreadReply({
                                 )}
                                 {canDelete && (
                                     <DropdownMenuItem
+                                        variant="destructive"
                                         onClick={() => onDelete?.(reply.id)}
-                                        className="text-destructive focus:text-destructive"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete

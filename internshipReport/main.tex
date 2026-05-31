@@ -36,9 +36,16 @@
 \usepackage{array}
 \usepackage{amssymb}
 \usepackage{longtable}
+\usepackage{atbegshi}
+\usepackage{pdflscape}
 \usepackage{lettrine}
+\usepackage{xparse}
+\usepackage{pdfpages}
 
-% pdfpages is not needed in this document; removed to avoid missing package dependency.
+% ==================== PDF BUFFER CONFIGURATION ====================
+% Increase PDF object stream buffer to handle complex PDFs
+\pdfminorversion=7
+\pdfobjcompresslevel=0
 
 % ==================== CODE LISTING SETUP ====================
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -157,11 +164,13 @@
 \titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
 % Convenience alias so you can use \subsubsubsection{Title}
-\makeatletter
-\newcommand{\subsubsubsection}{\@ifstar\@subsubsubsecstar\@subsubsubsecnostar}
-\newcommand{\@subsubsubsecstar}[1]{\paragraph*{#1}}
-\newcommand{\@subsubsubsecnostar}[2][]{\paragraph[#1]{#2}}
-\makeatother
+\NewDocumentCommand{\subsubsubsection}{s o m}{%
+  \IfBooleanTF{#1}{%
+    \paragraph*{#3}%
+  }{%
+    \IfNoValueTF{#2}{\paragraph{#3}}{\paragraph[#2]{#3}}%
+  }%
+}
 % Ensure chapter title pages use chapterstyle (counted but no page number displayed)
 \assignpagestyle{\chapter}{chapterstyle}
 
@@ -232,7 +241,7 @@
 \setcounter{page}{1}
 
 % ==================== COVER PAGE ====================
-%\includepdf[pages={1}]{assets/DS-Rapport-Stage-Pro-EN}
+\includepdf[pages={1}]{assets/DS-Rapport-Stage-Pro-EN}
 
 
 \newpage
@@ -283,21 +292,20 @@
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-% ==================== Introduction ====================
+% ==================== GENERAL INTRODUCTION ====================
 %\include{chapters/introduction}
-% ==================== CHAPTER 1 ====================
+
+% ==================== CHAPTER 1: PRELIMINARY STUDY ====================
 %\include{chapters/chapter1}
 
-% ==================== CHAPTER 2 ====================
-%\include{chapters/chapter2}
+% ==================== CHAPTER 2: CONCEPTUAL STUDY ====================
+\include{chapters/chapter2}
 
-% ==================== CHAPTER 3 ====================
-\include{chapters/chapter3}
+% ==================== CHAPTER 3: REALIZATION AND EXPERIMENTATION ====================
+%\include{chapters/chapter3}
 
-% ==================== CHAPTER 4 ====================
-%\include{chapters/chapter4}
 
-% ==================== CONCLUSION ====================
+% ==================== GENERAL CONCLUSION ====================
 %\include{chapters/conclusion}
 
 % ==================== BIBLIOGRAPHY ====================

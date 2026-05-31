@@ -1,0 +1,130 @@
+@startuml
+title Suspend / Unsuspend User Account - Sequence Diagram
+
+actor Administrator as Admin
+
+participant "UserController\n(API/Controller)" as UserController
+participant "UserService" as UserService
+participant "UserRepository\n(Repository)" as UserRepository
+participant "AuthenticationService\n(Auth)" as AuthService
+participant "AuditService" as AuditService
+participant "NotificationService\n(Notify)" as NotificationService
+
+== Initiation ==
+
+Admin -> UserController : POST /users/{id}/status\n{action, reason?, expires_at?}
+activate UserController
+
+UserController -> UserService : changeStatus(userId, action, metadata, adminId)
+activate UserService
+
+UserService -> UserRepository : findById(userId)
+activate UserRepository
+UserRepository --> UserService : User / null
+deactivate UserRepository
+
+alt User not found
+    UserService --> UserController : 404 Not Found
+    deactivate UserService
+    UserController --> Admin : 404 Not Found
+    deactivate UserController
+
+else User found
+
+    UserService -> UserService : validatePermissions(adminId, targetUser)
+
+    note right of UserService
+      - Check administrator privileges
+      - Cannot suspend self
+      - Cannot suspend higher-privilege accounts
+    end note
+
+    alt Unauthorized
+        UserService --> UserController : 403 Forbidden
+        deactivate UserService
+        UserController --> Admin : 403 Forbidden
+        deactivate UserController
+
+    else Authorized
+
+        UserService -> UserService : validateBusinessRules(action, metadata)
+
+        note right of UserService
+          Validate action type,
+          expiration date,
+          and suspension rules
+        end note
+
+        UserService -> UserRepository : beginTransaction()
+        activate UserRepository
+        UserRepository --> UserService : Transaction started
+        deactivate UserRepository
+
+        UserService -> UserRepository : updateStatus(userId, newStatus, metadata)
+        activate UserRepository
+        UserRepository --> UserService : Success / Error
+        deactivate UserRepository
+
+        alt Persistence error
+
+            UserService -> UserRepository : rollback()
+            activate UserRepository
+            UserRepository --> UserService : Rolled back
+            deactivate UserRepository
+
+            UserService --> UserController : 500 Internal Server Error
+            deactivate UserService
+
+            UserController --> Admin : 500 Internal Server Error
+            deactivate UserController
+
+        else Update successful
+
+            opt Action = Suspend
+
+                note over UserService, AuthService
+                  Revoke active sessions and tokens
+                end note
+
+                UserService -> AuthService : revokeSessions(userId)
+                activate AuthService
+
+                loop For each active session
+                    AuthService -> AuthService : invalidateToken(sessionId)
+                end
+
+                AuthService --> UserService : Revoke result
+                deactivate AuthService
+
+            end
+
+            UserService -> AuditService : record(action, adminId, userId, metadata)
+            activate AuditService
+            AuditService --> UserService : Acknowledged
+            deactivate AuditService
+
+            opt Notifications enabled
+
+                UserService -> NotificationService : sendStatusChange(...)
+                activate NotificationService
+                NotificationService --> UserService : Delivery result
+                deactivate NotificationService
+
+            end
+
+            UserService --> UserController : Success(status, metadata)
+            deactivate UserService
+
+            UserController --> Admin : 200 OK
+            deactivate UserController
+
+        end
+    end
+end
+
+note over UserRepository, AuditService
+All status changes are persisted
+and recorded for auditing purposes.
+end note
+
+@enduml

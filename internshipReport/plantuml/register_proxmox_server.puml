@@ -1,0 +1,84 @@
+@startuml
+title Register Proxmox Server - Sequence Diagram
+actor Admin as "Admin\n(System Administrator)"
+
+participant "Admin UI\n(Frontend)" as UI
+participant "ProxmoxController\n(Controller)" as Controller
+participant "RegisterProxmoxService\n(Service)" as Service
+participant "ProxmoxRepository\n(Repository)" as Repository
+participant "ProxmoxClient\n(External API Adapter)" as Client
+participant "Proxmox API\n(External System)" as PVE
+
+note over Controller, Service
+  Business rules enforced here:
+  - Do not log token_secret
+  - Use API tokens only (no username/password)
+  - Duplicate server detection: host+port+token_id
+end note
+
+== Admin submits registration ==
+Admin -> UI : Open Register Proxmox form
+Admin -> UI : Submit(serverData: host, port, token_id, token_secret,\nverify_ssl, vmidRanges, label)
+UI -> Controller : POST /api/proxmox-servers {serverData}
+
+activate Controller
+Controller -> Controller : FormRequest.validate(request)
+alt Validation fails
+    Controller --> UI : 422 Unprocessable Entity (field errors)
+    deactivate Controller
+end
+
+Controller -> Service : registerServer(adminId, validatedData)
+activate Service
+
+group Connection and discovery
+    Service -> Client : testConnection(validatedData)
+    activate Client
+    Client -> PVE : GET /api2/json/nodes (with token credentials)
+    activate PVE
+    alt Auth & metadata OK
+        PVE --> Client : 200 OK {nodes:[node1,node2],version,cluster}
+        deactivate PVE
+        Client --> Service : connectionResult(success=true, nodesMetadata)
+    else Auth failure
+        PVE --> Client : 401 Unauthorized {error}
+        deactivate PVE
+        Client --> Service : connectionResult(success=false, error=AuthError)
+    end
+    deactivate Client
+end
+
+alt Connection success
+    Service -> Service : validateNodes(nodesMetadata)
+    alt nodesMetadata invalid
+        Service --> Controller : error(NodeDiscoveryFailed)
+    else nodesMetadata valid
+        Service -> Repository : create(recordData)
+        activate Repository
+        Repository -> Repository : encryptAndPersist(recordData)
+        Repository --> Service : ProxmoxServer(model)
+        deactivate Repository
+
+        opt dispatch monitoring
+            Service -> Service : dispatch(MonitoringJob(proxmoxServerId))
+        end
+
+        Service --> Controller : result(success=true, resource=ProxmoxServerResource)
+    end
+else Connection failure
+    Service --> Controller : result(success=false, error=Auth/Conn)
+end
+
+deactivate Service
+
+alt Service result success
+    Controller --> UI : 201 Created {proxmoxServerResource}
+    deactivate Controller
+    UI --> Admin : Show success; server appears in inventory
+else Service result failure
+    Controller --> UI : 4xx/5xx {error message}
+    deactivate Controller
+    UI --> Admin : Show error guidance (no secrets leaked)
+end
+
+@enduml

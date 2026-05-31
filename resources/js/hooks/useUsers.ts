@@ -168,13 +168,13 @@ export function useUsers(initialData?: PaginatedUsers) {
         usersApi.impersonateUser(userId);
     }, []);
 
-    const gdprDeleteUser = useCallback(
+    const DeleteUser = useCallback(
         async (userId: string): Promise<boolean> => {
             setLoading(true);
             setError(null);
 
             try {
-                await usersApi.gdprDeleteUser(userId);
+                await usersApi.DeleteUser(userId);
                 setUsers((prev) => prev.filter((user) => user.id !== userId));
 
                 return true;
@@ -201,7 +201,7 @@ export function useUsers(initialData?: PaginatedUsers) {
         revokeTeacherApproval,
         updateUserRole,
         impersonateUser,
-        gdprDeleteUser,
+        DeleteUser,
         setError,
     };
 }

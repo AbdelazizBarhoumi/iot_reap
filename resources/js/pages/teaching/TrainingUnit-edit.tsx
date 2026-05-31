@@ -31,20 +31,12 @@ import {
     XCircle,
     Zap,
 } from 'lucide-react';
-import {
-    useState,
-    useMemo,
-    useCallback,
-    useEffect,
-    useRef,
-    type ElementType,
-} from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, type ElementType } from 'react';
 import { toast } from 'sonner';
 import { getOrCreateQuiz } from '@/api/quiz.api';
 import * as teachingApi from '@/api/teaching.api';
 import * as videoApi from '@/api/video.api';
 import { trainingUnitVMAssignmentApi } from '@/api/vm.api';
-import { MarkdownContent } from '@/components/markdown';
 import { TeacherQuizStatsPanel } from '@/components/quiz/TeacherQuizStatsPanel';
 import VideoUpload from '@/components/TrainingPaths/VideoUpload';
 import { Badge } from '@/components/ui/badge';
@@ -201,9 +193,6 @@ export default function EditTrainingUnitPage({
     const [objectives, setObjectives] = useState(
         (trainingUnit?.objectives || []).join('\n'),
     );
-    const [contentPreviewMode, setContentPreviewMode] = useState<
-        'edit' | 'preview'
-    >('edit');
     const [vmEnabled, setVmEnabled] = useState(
         trainingUnit?.vmEnabled || false,
     );
@@ -221,29 +210,12 @@ export default function EditTrainingUnitPage({
         if (trainingUnitResources.length === 0) {
             return [{ id: '1', title: '', url: '', type: 'link' as const }];
         }
-        return trainingUnitResources.map((resource, i) => {
-            // Handle both legacy string format and new object format
-            if (typeof resource === 'string') {
-                return {
-                    id: String(i + 1),
-                    title: '',
-                    url: resource,
-                    type: 'link' as const,
-                };
-            }
-            // New object format - cast to object type first
-            const resObj = resource as {
-                title?: string;
-                url: string;
-                type?: string;
-            };
-            return {
-                id: String(i + 1),
-                title: resObj.title || '',
-                url: resObj.url,
-                type: (resObj.type || 'link') as 'link' | 'file' | 'download',
-            };
-        });
+        return trainingUnitResources.map((url, i) => ({
+            id: String(i + 1),
+            title: '',
+            url: url,
+            type: 'link' as const,
+        }));
     });
     // VM Template removed - feature not available
     const [videoStatus, setVideoStatus] = useState<videoApi.VideoStatus | null>(
@@ -252,9 +224,6 @@ export default function EditTrainingUnitPage({
     const [uploadedVideo, setUploadedVideo] = useState<videoApi.Video | null>(
         null,
     );
-    const [draggedResourceIndex, setDraggedResourceIndex] = useState<
-        number | null
-    >(null);
     const [teacherQuiz, setTeacherQuiz] = useState<{
         id: string;
         title: string;
@@ -417,34 +386,6 @@ export default function EditTrainingUnitPage({
         },
         [resources],
     );
-    const reorderResources = useCallback(
-        (fromIndex: number, toIndex: number) => {
-            const updated = [...resources];
-            const [resource] = updated.splice(fromIndex, 1);
-            updated.splice(toIndex, 0, resource);
-            setResources(updated);
-        },
-        [resources],
-    );
-    const handleResourceDragStart = useCallback((index: number) => {
-        setDraggedResourceIndex(index);
-    }, []);
-    const handleResourceDragOver = useCallback(
-        (e: React.DragEvent<HTMLDivElement>, index: number) => {
-            e.preventDefault();
-            if (
-                draggedResourceIndex !== null &&
-                draggedResourceIndex !== index
-            ) {
-                reorderResources(draggedResourceIndex, index);
-                setDraggedResourceIndex(index);
-            }
-        },
-        [draggedResourceIndex, reorderResources],
-    );
-    const handleResourceDragEnd = useCallback(() => {
-        setDraggedResourceIndex(null);
-    }, []);
     // Handle video upload
     const handleVideoUpload = useCallback(
         async (file: File) => {
@@ -697,12 +638,7 @@ export default function EditTrainingUnitPage({
                     objectives: objectives.split('\n').filter(Boolean),
                     resources: resources
                         .filter((r) => r.url.trim() !== '')
-                        .map((r, index) => ({
-                            title: r.title || 'Resource',
-                            url: r.url,
-                            type: r.type,
-                            order: index,
-                        })),
+                        .map((r) => r.url),
                     vm_enabled: vmEnabled,
                     video_url: videoUrl || undefined,
                 },
@@ -1083,9 +1019,9 @@ export default function EditTrainingUnitPage({
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-6">
-                                            {/* Content editor with preview */}
+                                            {/* Content editor */}
                                             <div>
-                                                <div className="mb-3 flex items-center justify-between">
+                                                <div className="mb-2 flex items-center justify-between">
                                                     <Label className="text-sm font-medium">
                                                         Main Content
                                                     </Label>
@@ -1094,68 +1030,22 @@ export default function EditTrainingUnitPage({
                                                         characters
                                                     </span>
                                                 </div>
-                                                <Tabs
-                                                    value={contentPreviewMode}
-                                                    onValueChange={(v) =>
-                                                        setContentPreviewMode(
-                                                            v as
-                                                                | 'edit'
-                                                                | 'preview',
-                                                        )
-                                                    }
-                                                    className="w-full"
-                                                >
-                                                    <TabsList className="w-full justify-start rounded-b-none border-b">
-                                                        <TabsTrigger
-                                                            value="edit"
-                                                            className="gap-2"
-                                                        >
-                                                            <FileText className="h-4 w-4" />
-                                                            Write
-                                                        </TabsTrigger>
-                                                        <TabsTrigger
-                                                            value="preview"
-                                                            className="gap-2"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                            Preview
-                                                        </TabsTrigger>
-                                                    </TabsList>
-                                                    <TabsContent
-                                                        value="edit"
-                                                        className="mt-0"
-                                                    >
-                                                        <Textarea
-                                                            placeholder="Write your module content here...
+                                                <Textarea
+                                                    placeholder="Write your module content here...
 ## Introduction
 Start with an overview of what operators will learn.
 ## Key Concepts
 Explain the main ideas with examples.
 ## Summary
 Recap the important points."
-                                                            value={content}
-                                                            onChange={(e) =>
-                                                                setContent(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="min-h-[350px] resize-none rounded-t-none font-mono text-sm"
-                                                        />
-                                                    </TabsContent>
-                                                    <TabsContent
-                                                        value="preview"
-                                                        className="mt-0"
-                                                    >
-                                                        <div className="min-h-[350px] overflow-auto rounded-b-md border border-t-0 border-border bg-card p-4">
-                                                            <MarkdownContent
-                                                                content={
-                                                                    content
-                                                                }
-                                                            />
-                                                        </div>
-                                                    </TabsContent>
-                                                </Tabs>
+                                                    value={content}
+                                                    onChange={(e) =>
+                                                        setContent(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="min-h-[350px] resize-none font-mono text-sm"
+                                                />
                                                 <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                                                     <span>
                                                         Supports Markdown:
@@ -1215,7 +1105,7 @@ Recap the important points."
                                                 {trainingUnitType === 'video'
                                                     ? vmEnabled
                                                         ? 'Configure both video and VM environment'
-                                                        : 'Add a video for engineers to watch'
+                                                        : 'Add a video for students to watch'
                                                     : 'Configure the VM environment for this lab'}
                                             </CardDescription>
                                         </CardHeader>
@@ -1681,7 +1571,7 @@ Recap the important points."
                                                                     <SelectItem value="yes">
                                                                         Yes,
                                                                         save
-                                                                        engineer
+                                                                        student
                                                                         work
                                                                     </SelectItem>
                                                                     <SelectItem value="no">
@@ -1725,24 +1615,9 @@ Recap the important points."
                                                             opacity: 1,
                                                             y: 0,
                                                         }}
-                                                        draggable
-                                                        onDragStart={() =>
-                                                            handleResourceDragStart(
-                                                                index,
-                                                            )
-                                                        }
-                                                        onDragOver={(e) =>
-                                                            handleResourceDragOver(
-                                                                e,
-                                                                index,
-                                                            )
-                                                        }
-                                                        onDragEnd={
-                                                            handleResourceDragEnd
-                                                        }
-                                                        className={`group flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-4 transition-opacity ${draggedResourceIndex === index ? 'opacity-50' : ''}`}
+                                                        className="group flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-4"
                                                     >
-                                                        <GripVertical className="mt-2 h-5 w-5 cursor-grab text-muted-foreground/50 active:cursor-grabbing" />
+                                                        <GripVertical className="mt-2 h-5 w-5 cursor-grab text-muted-foreground/50" />
                                                         <div className="grid flex-1 grid-cols-2 gap-3">
                                                             <div>
                                                                 <Label className="text-xs text-muted-foreground">
@@ -1805,25 +1680,25 @@ Recap the important points."
                                                                 )
                                                             }
                                                         >
-                                                            <SelectTrigger className="mt-7 w-32">
+                                                            <SelectTrigger className="mt-5 w-32">
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 <SelectItem value="link">
-                                                                    Link
+                                                                    🔗 Link
                                                                 </SelectItem>
                                                                 <SelectItem value="file">
-                                                                    File
+                                                                    📄 File
                                                                 </SelectItem>
                                                                 <SelectItem value="download">
-                                                                    Download
+                                                                    ⬇️ Download
                                                                 </SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="mt-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/70 hover:text-white"
+                                                            className="mt-5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                                                             onClick={() =>
                                                                 removeResource(
                                                                     index,
@@ -1909,7 +1784,7 @@ Recap the important points."
                                                             <div className="flex flex-col gap-2">
                                                                 <p className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
                                                                     <Check className="h-4 w-4" />
-                                                                    Engineers
+                                                                    Students
                                                                     will have
                                                                     access to a
                                                                     VM during
@@ -1965,7 +1840,7 @@ Recap the important points."
                                                             Downloadable Content
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            Allow engineers to
+                                                            Allow students to
                                                             download
                                                             trainingUnit
                                                             materials
@@ -2093,13 +1968,9 @@ Recap the important points."
                                                         className="w-full justify-start"
                                                         variant={action.tone}
                                                         asChild
-                                                        disabled={
-                                                            !action.active
-                                                        }
+                                                        disabled={!action.active}
                                                     >
-                                                        <Link
-                                                            href={action.href}
-                                                        >
+                                                        <Link href={action.href}>
                                                             <ActionIcon className="mr-2 h-4 w-4" />
                                                             {action.label}
                                                         </Link>
@@ -2109,9 +1980,7 @@ Recap the important points."
                                                         className="w-full justify-start"
                                                         variant={action.tone}
                                                         onClick={openMediaTab}
-                                                        disabled={
-                                                            !action.active
-                                                        }
+                                                        disabled={!action.active}
                                                     >
                                                         <ActionIcon className="mr-2 h-4 w-4" />
                                                         {action.label}

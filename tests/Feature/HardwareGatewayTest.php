@@ -496,6 +496,77 @@ class HardwareGatewayTest extends TestCase
         $response->assertJsonPath('message', 'Device is not attached to any VM');
     }
 
+    // ─── Admin: POST /admin/hardware/devices/{device}/dedicate ───────────────
+
+    public function test_admin_can_dedicate_camera_device_to_vm(): void
+    {
+        $this->actingAs($this->admin);
+
+        $server = ProxmoxServer::factory()->create();
+        $node = GatewayNode::factory()->create();
+        $device = UsbDevice::factory()->for($node)->create([
+            'status' => UsbDeviceStatus::BOUND,
+            'is_camera' => true,
+        ]);
+        $camera = \App\Models\Camera::factory()
+            ->usb()
+            ->inactive()
+            ->create([
+                'robot_id' => null,
+                'gateway_node_id' => $node->id,
+                'usb_device_id' => $device->id,
+            ]);
+
+        Http::fake([
+            'http://'.$node->ip.':8000/unbind' => Http::response(['success' => true], 200),
+        ]);
+
+        $response = $this->postJson(
+            "/admin/hardware/devices/{$device->id}/dedicate",
+            [
+                'vmid' => 201,
+                'node' => 'pve1',
+                'server_id' => $server->id,
+            ],
+        );
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+        $response->assertJsonPath('message', 'Device unbound and dedicated to VM 201. It will auto-attach on VM start.');
+
+        $device->refresh();
+        $this->assertSame(201, $device->dedicated_vmid);
+        $this->assertSame('pve1', $device->dedicated_node);
+        $this->assertSame($server->id, $device->dedicated_server_id);
+        $this->assertTrue($device->is_camera);
+        $this->assertSame(UsbDeviceStatus::AVAILABLE, $device->status);
+
+        $camera->refresh();
+        $this->assertSame(201, $camera->assigned_vm_id);
+    }
+
+    public function test_user_can_bind_camera_device_when_not_dedicated(): void
+    {
+        $node = GatewayNode::factory()->create(['ip' => '192.168.50.6']);
+        $device = UsbDevice::factory()->for($node)->available()->create([
+            'busid' => '1-1',
+            'is_camera' => true,
+        ]);
+
+        Http::fake([
+            'http://192.168.50.6:8000/bind' => Http::response(['success' => true], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/hardware/devices/{$device->id}/bind");
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $device->refresh();
+        $this->assertEquals(UsbDeviceStatus::BOUND, $device->status);
+    }
+
     // ─── Admin: POST /admin/hardware/nodes ────────────────────────────────────
 
     public function test_admin_can_create_gateway_node(): void

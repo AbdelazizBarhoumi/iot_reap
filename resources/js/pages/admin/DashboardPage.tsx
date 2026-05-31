@@ -2,7 +2,7 @@
  * Admin Dashboard Page
  * Platform-wide analytics and key metrics overview.
  */
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Activity,
@@ -15,7 +15,7 @@ import {
     UserPlus,
     Users,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -36,6 +36,7 @@ import { AlertsPanel } from '@/components/monitoring/AlertsPanel';
 import { MetricsChart } from '@/components/monitoring/MetricsChart';
 import { SystemHealthOverview } from '@/components/monitoring/SystemHealthOverview';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import {
@@ -43,6 +44,7 @@ import {
     formatDate,
     formatDateTime,
 } from '@/lib/analytics.utils';
+import admin from '@/routes/admin';
 import type { BreadcrumbItem, PageProps } from '@/types';
 import type {
     ActivityLogItem,
@@ -968,6 +970,15 @@ export default function DashboardPage() {
                             >
                                 <AlertsPanel alerts={monitoringAlerts} />
                             </motion.div>
+                        </div>
+                        {/* Quick links to full monitoring pages */}
+                        <div className="flex justify-end gap-3">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={admin.alerts.index.url()}>View All Alerts</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={admin.activityLogs.index.url()}>View Activity Logs</Link>
+                            </Button>
                         </div>
                         {/* Metrics Charts */}
                         <motion.div

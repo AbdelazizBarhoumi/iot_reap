@@ -2,15 +2,14 @@
  * Earnings Page
  * Revenue tracking with export functionality.
  */
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
-    ArrowLeft,
     Download,
     DollarSign,
     TrendingUp,
     BookOpen,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
 import { KPICard, RevenueChart, PeriodSelector } from '@/components/analytics';
@@ -20,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import teaching from '@/routes/teaching';
-import type { BreadcrumbItem } from '@/types';
 import type {
     EarningsSummary,
     RevenueByTrainingPath,
@@ -39,14 +37,6 @@ export default function EarningsPage({
     revenueChart,
     period,
 }: EarningsPageProps) {
-    const breadcrumbs: BreadcrumbItem[] = useMemo(
-        () => [
-            { title: 'Teaching', href: teaching.index.url() },
-            { title: 'Analytics', href: teaching.analytics.index.url() },
-            { title: 'Earnings', href: teaching.analytics.earnings.url() },
-        ],
-        [],
-    );
     const handlePeriodChange = (newPeriod: string) => {
         router.get(
             teaching.analytics.earnings.url(),
@@ -57,33 +47,18 @@ export default function EarningsPage({
 
     const [payoutAmount, setPayoutAmount] = useState('');
     const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
-    const [availableBalance, setAvailableBalance] = useState<number | null>(
-        null,
-    );
     const [payoutRequests, setPayoutRequests] = useState<PayoutRequestItem[]>(
         [],
     );
 
-    useEffect(() => {
-        let mounted = true;
-
-        payoutApi
-            .getMyPayouts()
-            .then((payload) => {
-                if (!mounted) return;
-
-                setAvailableBalance(payload.available_balance);
-                setPayoutRequests(payload.data);
-            })
-            .catch(() => {
-                if (!mounted) return;
-                setAvailableBalance(null);
-                setPayoutRequests([]);
-            });
-
-        return () => {
-            mounted = false;
-        };
+    // Refresh payout data from API (called after successful payout request)
+    const refreshPayoutData = useCallback(async () => {
+        try {
+            const payload = await payoutApi.getMyPayouts();
+            setPayoutRequests(payload.data);
+        } catch {
+            // On error, keep current state
+        }
     }, []);
 
     const handleRequestPayout = async () => {
@@ -99,24 +74,21 @@ export default function EarningsPage({
             return;
         }
 
-        if (availableBalance !== null && amount > availableBalance) {
+        if (amount > summary.total_revenue) {
             toast.error('Requested amount exceeds your available balance.');
             return;
         }
 
         setIsSubmittingPayout(true);
         try {
-            const created = await payoutApi.requestPayout({
+            await payoutApi.requestPayout({
                 amount,
                 payout_method: 'stripe',
             });
 
-            setPayoutRequests((prev) => [created, ...prev]);
             setPayoutAmount('');
-            // Refresh available balance after request
-            const refreshed = await payoutApi.getMyPayouts();
-            setAvailableBalance(refreshed.available_balance);
-            setPayoutRequests(refreshed.data);
+            // Refresh payout requests after successful submission
+            await refreshPayoutData();
             toast.success('Payout request submitted.');
         } catch {
             toast.error('Unable to submit payout request right now.');
@@ -143,26 +115,20 @@ export default function EarningsPage({
         (sum, c) => sum + c.sales_count,
         0,
     );
-    const balanceToShow = availableBalance ?? summary.total_revenue;
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Earnings" />
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-8">
                 <TeachingWorkspaceTabs
                     activeTab="payouts"
                     header={
                         <>
-                            <div className="flex items-center gap-3">
-                                <Button variant="ghost" size="sm" asChild>
-                                    <Link href="/teaching/analytics">
-                                        <ArrowLeft className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                                <div className="flex-1">
-                                    <h1 className="font-heading text-2xl font-semibold text-foreground">
+                                <div className="space-y-2">
+                                <div >
+                                        <h1 className="font-heading text-3xl font-bold">
                                         Earnings
                                     </h1>
-                                    <p className="text-sm text-muted-foreground">
+                                        <p className="text-muted-foreground">
                                         Track your revenue and download reports
                                     </p>
                                 </div>
@@ -216,7 +182,7 @@ export default function EarningsPage({
                                     Available balance
                                 </p>
                                 <p className="text-2xl font-semibold">
-                                    {formatCurrency(balanceToShow)}
+                                    {formatCurrency(summary.total_revenue)}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-2 sm:flex-row">

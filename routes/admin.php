@@ -135,7 +135,7 @@ Route::middleware(['auth', 'verified', 'can:admin-only', 'throttle:admin'])->pre
         Route::post('/{user}/unsuspend', 'unsuspend')->name('unsuspend');
         Route::patch('/{user}/role', 'updateRole')->name('update-role');
         Route::post('/{user}/impersonate', 'impersonate')->name('impersonate');
-        Route::delete('/{user}/gdpr', 'gdprDelete')->name('gdpr-delete');
+        Route::delete('/{user}/', 'Delete')->name('delete');
     });
 
     // Unified finance workspace for payouts and refunds

@@ -1,0 +1,79 @@
+@startuml
+'Specification of the Use Case: Verify / Unverify Gateway Node - Sequence Diagram'
+actor Administrator
+
+participant "GatewayController" as Controller
+participant "GatewayService" as Service
+participant "GatewayRepository" as Repository
+participant "GatewayClient" as Client
+participant "AuditService" as Audit
+participant "DiscoveryService" as Discovery
+
+== Administrator initiates Verify ==
+Administrator -> Controller : POST /admin/gateways/{id}/verify\npayload { test:boolean, notes:string }
+activate Controller
+Controller -> Controller : authenticate() / authorize()
+alt unauthorized
+    Controller --> Administrator : HTTP 403 Forbidden
+    deactivate Controller
+    return
+end
+
+Controller -> Service : verifyNode(nodeId, options)
+activate Service
+
+Service -> Repository : findById(nodeId)
+activate Repository
+Repository --> Service : GatewayNode
+deactivate Repository
+
+alt test requested
+    Service -> Client : testConnectivity(GatewayNode, credentials)
+    activate Client
+    Client --> Service : ConnectivityResult { success:boolean, details }
+    deactivate Client
+
+    alt connectivity success
+        Service -> Repository : updateVerification(nodeId, verified=true, verified_at=now, verified_by=admin, notes, test_result)
+    else connectivity failed
+        Service -> Service : decide per policy (abort or persist with flag)
+        alt policy = require-success
+            Service --> Controller : Error (409/422) with test details
+            Service -> Audit : writeAudit(nodeId, action="verify", result="failed test", redacted)
+            deactivate Service
+            Controller --> Administrator : HTTP 409 Conflict { error }
+            deactivate Controller
+            return
+        else policy = allow-override
+            Service -> Repository : updateVerification(nodeId, verified=true, flagged=true, metadata...)
+        end
+    end
+else no test requested
+    Service -> Repository : updateVerification(nodeId, verified=true, verified_at=now, verified_by=admin, notes)
+end
+
+activate Repository
+Repository --> Service : updated GatewayNode
+deactivate Repository
+
+Service -> Audit : writeAudit(nodeId, action="verify", result="success", metadata redacted)
+activate Audit
+Audit --> Service : ack
+deactivate Audit
+
+opt trigger discovery if configured
+    Service -> Discovery : discoverDevices(nodeId)
+    activate Discovery
+    loop per device
+        Discovery --> Discovery : probe and register device
+    end
+    Discovery --> Service : discoveryResult
+    deactivate Discovery
+end
+
+Service --> Controller : updated GatewayNode (with verification state + test_result)
+deactivate Service
+Controller --> Administrator : HTTP 200 OK { gateway: updatedGatewayResource }
+deactivate Controller
+
+@enduml

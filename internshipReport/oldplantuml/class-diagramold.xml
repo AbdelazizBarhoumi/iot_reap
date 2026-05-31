@@ -1,0 +1,880 @@
+<mxGraphModel dx="4113" dy="2208" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1600" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="title" parent="1" style="text;html=1;align=center;fontSize=16;fontStyle=1;" value="IoT-REAP — Class Diagram" vertex="1">
+      <mxGeometry height="35" width="800" x="1600" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_auth" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#E3F2FD;strokeColor=#1565C0;rounded=0;" value="Authentication &amp; Core" vertex="1">
+      <mxGeometry height="900" width="520" x="30" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="User" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="User" vertex="1">
+      <mxGeometry height="480" width="300" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="User_attr" parent="User" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: ULID&lt;br&gt;+ name: string&lt;br&gt;+ email: string&lt;br&gt;+ google_id: string?&lt;br&gt;+ created_at: timestamp&lt;br&gt;+ updated_at: timestamp" vertex="1">
+      <mxGeometry height="110" width="300" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="User_div1" parent="User" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="300" y="140" as="geometry" />
+    </mxCell>
+    <mxCell id="User_meth" parent="User" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ login(): void&lt;br&gt;+ logout(): void&lt;br&gt;+ updateProfile(): void&lt;br&gt;+ manageSecurity(): void&lt;br&gt;+ manageNotifications(): void&lt;br&gt;+ managePreferences(): void&lt;br&gt;— — relationships — —&lt;br&gt;+ notifications(): HasMany Notification&lt;br&gt;+ activityLogs(): HasMany ActivityLog&lt;br&gt;+ searches(): HasMany Search&lt;br&gt;+ guacamolePreferences(): HasMany GuacamoleConnectionPreference&lt;br&gt;+ vmConnectionDefaults(): HasMany UserVMConnectionDefaultProfile" vertex="1">
+      <mxGeometry height="220" width="300" y="148" as="geometry" />
+    </mxCell>
+    <mxCell id="Notification" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="Notification" vertex="1">
+      <mxGeometry height="140" width="190" x="320" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Notification_attr" parent="Notification" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: uuid&lt;br&gt;+ user_id: ULID&lt;br&gt;+ type: string&lt;br&gt;+ title: string&lt;br&gt;+ read_at: timestamp?" vertex="1">
+      <mxGeometry height="70" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Notification_div" parent="Notification" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="190" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="Notification_meth" parent="Notification" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="25" width="190" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="Search" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="Search" vertex="1">
+      <mxGeometry height="145" width="190" x="320" y="195" as="geometry" />
+    </mxCell>
+    <mxCell id="Search_attr" parent="Search" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID?&lt;br&gt;+ query: string&lt;br&gt;+ results_count: int&lt;br&gt;+ created_at: timestamp" vertex="1">
+      <mxGeometry height="70" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Search_div" parent="Search" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="190" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="Search_meth" parent="Search" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="25" width="190" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="Engineer" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="Engineer" vertex="1">
+      <mxGeometry height="170" width="190" x="320" y="340" as="geometry" />
+    </mxCell>
+    <mxCell id="Engineer_attr" parent="Engineer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ role: engineer&lt;br&gt;+ permissions: provision-vm" vertex="1">
+      <mxGeometry height="45" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Engineer_div" parent="Engineer" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="190" y="75" as="geometry" />
+    </mxCell>
+    <mxCell id="Engineer_meth" parent="Engineer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ enrollInTrainingPath(): void&lt;br&gt;+ startVMSession(): void&lt;br&gt;+ requestReservation(): void&lt;br&gt;+ reserveCamera(): void&lt;br&gt;+ submitQuizAttempt(): void&lt;br&gt;+ writeReview(): void" vertex="1">
+      <mxGeometry height="80" width="190" y="83" as="geometry" />
+    </mxCell>
+    <mxCell id="Teacher" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="Teacher" vertex="1">
+      <mxGeometry height="170" width="190" x="320" y="520" as="geometry" />
+    </mxCell>
+    <mxCell id="Teacher_attr" parent="Teacher" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ role: teacher&lt;br&gt;+ permissions: teach" vertex="1">
+      <mxGeometry height="45" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Teacher_div" parent="Teacher" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="190" y="75" as="geometry" />
+    </mxCell>
+    <mxCell id="Teacher_meth" parent="Teacher" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ createTrainingPath(): void&lt;br&gt;+ manageModules(): void&lt;br&gt;+ manageTrainingUnits(): void&lt;br&gt;+ manageQuizContent(): void&lt;br&gt;+ submitForReview(): void&lt;br&gt;+ submitVMAssignment(): void" vertex="1">
+      <mxGeometry height="80" width="190" y="83" as="geometry" />
+    </mxCell>
+    <mxCell id="Admin" parent="pkg_auth" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#BBDEFB;strokeColor=#1565C0;" value="Admin" vertex="1">
+      <mxGeometry height="170" width="190" x="320" y="700" as="geometry" />
+    </mxCell>
+    <mxCell id="Admin_attr" parent="Admin" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ role: admin&lt;br&gt;+ permissions: admin-only" vertex="1">
+      <mxGeometry height="45" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Admin_div" parent="Admin" style="line;strokeColor=#1565C0;" vertex="1">
+      <mxGeometry height="8" width="190" y="75" as="geometry" />
+    </mxCell>
+    <mxCell id="Admin_meth" parent="Admin" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ approveTrainingPath(): void&lt;br&gt;+ approveReservation(): void&lt;br&gt;+ approveVMAssignment(): void&lt;br&gt;+ manageUsers(): void&lt;br&gt;+ manageInfrastructure(): void&lt;br&gt;+ processPayouts(): void" vertex="1">
+      <mxGeometry height="80" width="190" y="83" as="geometry" />
+    </mxCell>
+    <mxCell id="r1" edge="1" parent="pkg_auth" source="User" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Notification" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r2" edge="1" parent="pkg_auth" source="User" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Search" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r_role_eng" edge="1" parent="pkg_auth" source="Engineer" style="endArrow=block;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="User" value="generalization">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r_role_teacher" edge="1" parent="pkg_auth" source="Teacher" style="endArrow=block;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="User" value="generalization">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r_role_admin" edge="1" parent="pkg_auth" source="Admin" style="endArrow=block;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="User" value="generalization">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r53" edge="1" parent="pkg_auth" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;exitX=1;exitY=0.25;entryX=1;entryY=0.5;" target="Teacher" value="0..* approves 0..1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="530" y="85" />
+          <mxPoint x="530" y="190" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="pkg_infra" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;rounded=0;" value="Infrastructure (Proxmox)" vertex="1">
+      <mxGeometry height="380" width="580" x="570" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="ProxmoxServer" parent="pkg_infra" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C8E6C9;strokeColor=#2E7D32;" value="ProxmoxServer" vertex="1">
+      <mxGeometry height="300" width="230" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="PS_attr" parent="ProxmoxServer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ name: string&lt;br&gt;+ host: string (encrypted)&lt;br&gt;+ token_id: string (encrypted)&lt;br&gt;+ verify_ssl: bool&lt;br&gt;+ is_active: bool" vertex="1">
+      <mxGeometry height="85" width="230" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="PS_div" parent="ProxmoxServer" style="line;strokeColor=#2E7D32;" vertex="1">
+      <mxGeometry height="8" width="230" y="115" as="geometry" />
+    </mxCell>
+    <mxCell id="PS_meth" parent="ProxmoxServer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ createdBy(): BelongsTo User&lt;br&gt;+ nodes(): HasMany ProxmoxNode&lt;br&gt;+ vmSessions(): HasMany VMSession&lt;br&gt;+ credentialsLog(): HasMany NodeCredentialsLog" vertex="1">
+      <mxGeometry height="65" width="230" y="123" as="geometry" />
+    </mxCell>
+    <mxCell id="ProxmoxNode" parent="pkg_infra" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C8E6C9;strokeColor=#2E7D32;" value="ProxmoxNode" vertex="1">
+      <mxGeometry height="195" width="230" x="255" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="PN_attr" parent="ProxmoxNode" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ proxmox_server_id: bigInt&lt;br&gt;+ name: string&lt;br&gt;+ hostname: string&lt;br&gt;+ status: enum{online,offline,maintenance}&lt;br&gt;+ max_vms: int?" vertex="1">
+      <mxGeometry height="85" width="230" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="PN_div" parent="ProxmoxNode" style="line;strokeColor=#2E7D32;" vertex="1">
+      <mxGeometry height="8" width="230" y="115" as="geometry" />
+    </mxCell>
+    <mxCell id="PN_meth" parent="ProxmoxNode" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ proxmoxServer(): BelongsTo ProxmoxServer&lt;br&gt;+ vmSessions(): HasMany VMSession&lt;br&gt;+ trainingUnitVMAssignments(): HasMany" vertex="1">
+      <mxGeometry height="55" width="230" y="123" as="geometry" />
+    </mxCell>
+    <mxCell id="NodeCredLog" parent="pkg_infra" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C8E6C9;strokeColor=#2E7D32;" value="NodeCredentialsLog" vertex="1">
+      <mxGeometry height="110" width="230" x="255" y="250" as="geometry" />
+    </mxCell>
+    <mxCell id="NCL_attr" parent="NodeCredLog" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ proxmox_server_id: bigInt?&lt;br&gt;+ action: enum{registered,updated,tested,deleted}&lt;br&gt;+ changed_by: ULID?" vertex="1">
+      <mxGeometry height="55" width="230" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="NCL_div" parent="NodeCredLog" style="line;strokeColor=#2E7D32;" vertex="1">
+      <mxGeometry height="8" width="230" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="NCL_meth" parent="NodeCredLog" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ proxmoxServer(): BelongsTo&lt;br&gt;+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="25" width="230" y="90" as="geometry" />
+    </mxCell>
+    <mxCell id="r11" edge="1" parent="pkg_infra" source="ProxmoxServer" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="ProxmoxNode" value="1  1..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r12" edge="1" parent="pkg_infra" source="ProxmoxServer" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="NodeCredLog" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_vm" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#FFF8E1;strokeColor=#F57F17;rounded=0;" value="VM Sessions" vertex="1">
+      <mxGeometry height="270" width="300" x="1170" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="VMSession" parent="pkg_vm" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFF9C4;strokeColor=#F57F17;" value="VMSession" vertex="1">
+      <mxGeometry height="210" width="275" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="VMS_attr" parent="VMSession" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: ULID&lt;br&gt;+ user_id: ULID&lt;br&gt;+ proxmox_server_id: bigInt&lt;br&gt;+ node_id: bigInt?&lt;br&gt;+ vm_id: int?&lt;br&gt;+ status: enum{pending,provisioning,active,stopping,expired,failed}&lt;br&gt;+ protocol: enum{rdp,vnc,ssh}&lt;br&gt;+ expires_at: timestamp" vertex="1">
+      <mxGeometry height="110" width="275" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="VMS_div" parent="VMSession" style="line;strokeColor=#F57F17;" vertex="1">
+      <mxGeometry height="8" width="275" y="140" as="geometry" />
+    </mxCell>
+    <mxCell id="VMS_meth" parent="VMSession" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ getProtocol(): VMSessionProtocol&lt;br&gt;+ user(): BelongsTo User&lt;br&gt;+ proxmoxServer(): BelongsTo ProxmoxServer&lt;br&gt;+ node(): BelongsTo ProxmoxNode&lt;br&gt;+ attachedDevices(): HasMany UsbDevice&lt;br&gt;+ deviceQueueEntries(): HasMany UsbDeviceQueue&lt;br&gt;+ cameraSessionControls(): HasMany CameraSessionControl&lt;br&gt;+ reservations(): MorphMany Reservation" vertex="1">
+      <mxGeometry height="58" width="275" y="148" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_gw" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#FCE4EC;strokeColor=#880E4F;rounded=0;" value="Gateway &amp; USB Devices" vertex="1">
+      <mxGeometry height="360" width="820" x="30" y="660" as="geometry" />
+    </mxCell>
+    <mxCell id="GatewayNode" parent="pkg_gw" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#F8BBD0;strokeColor=#880E4F;" value="GatewayNode" vertex="1">
+      <mxGeometry height="160" width="220" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="GN_attr" parent="GatewayNode" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ name: string&lt;br&gt;+ ip: string&lt;br&gt;+ port: int&lt;br&gt;+ online: bool&lt;br&gt;+ is_verified: bool" vertex="1">
+      <mxGeometry height="80" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="GN_div" parent="GatewayNode" style="line;strokeColor=#880E4F;" vertex="1">
+      <mxGeometry height="8" width="220" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="GN_meth" parent="GatewayNode" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ usbDevices(): HasMany UsbDevice&lt;br&gt;+ cameras(): HasMany Camera" vertex="1">
+      <mxGeometry height="35" width="220" y="118" as="geometry" />
+    </mxCell>
+    <mxCell id="UsbDevice" parent="pkg_gw" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#F8BBD0;strokeColor=#880E4F;" value="UsbDevice" vertex="1">
+      <mxGeometry height="300" width="280" x="245" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="UD_attr" parent="UsbDevice" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ gateway_node_id: bigInt&lt;br&gt;+ status: enum{available,attached,queued,pending,dedicated,maintenance}&lt;br&gt;+ attached_session_id: ULID?&lt;br&gt;+ pending_server_id: bigInt?&lt;br&gt;+ dedicated_server_id: bigInt?&lt;br&gt;+ is_camera: bool" vertex="1">
+      <mxGeometry height="95" width="280" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="UD_div" parent="UsbDevice" style="line;strokeColor=#880E4F;" vertex="1">
+      <mxGeometry height="8" width="280" y="125" as="geometry" />
+    </mxCell>
+    <mxCell id="UD_meth" parent="UsbDevice" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ isAvailable(): bool&lt;br&gt;+ isBound(): bool&lt;br&gt;+ isAttached(): bool&lt;br&gt;+ hasActiveReservation(): bool&lt;br&gt;+ canAttach(userId): bool&lt;br&gt;+ isDedicated(): bool&lt;br&gt;+ gatewayNode(): BelongsTo GatewayNode&lt;br&gt;+ attachedSession(): BelongsTo VMSession&lt;br&gt;+ queueEntries(): HasMany UsbDeviceQueue&lt;br&gt;+ reservations(): MorphMany Reservation&lt;br&gt;+ camera(): HasOne Camera&lt;br&gt;+ pendingServer(): BelongsTo ProxmoxServer&lt;br&gt;+ dedicatedServer(): BelongsTo ProxmoxServer" vertex="1">
+      <mxGeometry height="160" width="280" y="133" as="geometry" />
+    </mxCell>
+    <mxCell id="UsbDeviceQueue" parent="pkg_gw" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#F8BBD0;strokeColor=#880E4F;" value="UsbDeviceQueue" vertex="1">
+      <mxGeometry height="175" width="270" x="540" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="UDQ_attr" parent="UsbDeviceQueue" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ usb_device_id: bigInt&lt;br&gt;+ session_id: ULID&lt;br&gt;+ user_id: ULID&lt;br&gt;+ position: int&lt;br&gt;+ queued_at: timestamp" vertex="1">
+      <mxGeometry height="85" width="270" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="UDQ_div" parent="UsbDeviceQueue" style="line;strokeColor=#880E4F;" vertex="1">
+      <mxGeometry height="8" width="270" y="115" as="geometry" />
+    </mxCell>
+    <mxCell id="UDQ_meth" parent="UsbDeviceQueue" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ device(): BelongsTo UsbDevice&lt;br&gt;+ session(): BelongsTo VMSession&lt;br&gt;+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="45" width="270" y="123" as="geometry" />
+    </mxCell>
+    <mxCell id="r19" edge="1" parent="pkg_gw" source="GatewayNode" style="endArrow=open;endFill=0;html=1;strokeColor=#880E4F;fontSize=9;" target="UsbDevice" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r21" edge="1" parent="pkg_gw" source="UsbDevice" style="endArrow=open;endFill=0;html=1;strokeColor=#880E4F;fontSize=9;" target="UsbDeviceQueue" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_train" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#E8EAF6;strokeColor=#283593;rounded=0;" value="Training System" vertex="1">
+      <mxGeometry height="680" width="1080" x="1860" y="1280" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingPath" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingPath" vertex="1">
+      <mxGeometry height="280" width="270" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="TP_attr" parent="TrainingPath" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ title: string&lt;br&gt;+ instructor_id: ULID&lt;br&gt;+ level: enum{beginner,intermediate,advanced,expert}&lt;br&gt;+ status: enum{draft,pending_review,approved,archived}&lt;br&gt;+ price_cents: int?&lt;br&gt;+ is_free: bool" vertex="1">
+      <mxGeometry height="95" width="270" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TP_div" parent="TrainingPath" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="270" y="125" as="geometry" />
+    </mxCell>
+    <mxCell id="TP_meth" parent="TrainingPath" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ isPublished(): bool&lt;br&gt;+ isOwnedBy(user): bool&lt;br&gt;+ refreshHasVirtualMachine(): void&lt;br&gt;+ instructor(): BelongsTo User&lt;br&gt;+ modules(): HasMany TrainingPathModule&lt;br&gt;+ trainingUnits(): HasManyThrough TrainingUnit&lt;br&gt;+ enrollments(): HasMany TrainingPathEnrollment&lt;br&gt;+ students(): BelongsToMany User&lt;br&gt;+ payments(): HasMany Payment&lt;br&gt;+ reviews(): HasMany TrainingPathReview&lt;br&gt;+ certificates(): HasMany Certificate&lt;br&gt;+ discussions(): HasMany DiscussionThread" vertex="1">
+      <mxGeometry height="140" width="270" y="133" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingPathModule" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingPathModule" vertex="1">
+      <mxGeometry height="155" width="230" x="295" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="TPM_attr" parent="TrainingPathModule" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ title: string&lt;br&gt;+ sort_order: int" vertex="1">
+      <mxGeometry height="55" width="230" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TPM_div" parent="TrainingPathModule" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="230" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="TPM_meth" parent="TrainingPathModule" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingPath(): BelongsTo TrainingPath&lt;br&gt;+ trainingUnits(): HasMany TrainingUnit" vertex="1">
+      <mxGeometry height="35" width="230" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingUnit" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingUnit" vertex="1">
+      <mxGeometry height="230" width="250" x="540" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="TU_attr" parent="TrainingUnit" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ module_id: bigInt&lt;br&gt;+ title: string&lt;br&gt;+ type: enum{video,article,quiz,discussion,lab}&lt;br&gt;+ vm_enabled: bool&lt;br&gt;+ sort_order: int" vertex="1">
+      <mxGeometry height="80" width="250" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TU_div" parent="TrainingUnit" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="250" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="TU_meth" parent="TrainingUnit" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ module(): BelongsTo TrainingPathModule&lt;br&gt;+ trainingPath(): BelongsTo TrainingPath&lt;br&gt;+ progress(): HasMany TrainingUnitProgress&lt;br&gt;+ quiz(): HasOne Quiz&lt;br&gt;+ article(): HasOne Article&lt;br&gt;+ video(): HasOne Video&lt;br&gt;+ vmAssignment(): HasOne TrainingUnitVMAssignment&lt;br&gt;+ notes(): HasMany TrainingUnitNote" vertex="1">
+      <mxGeometry height="108" width="250" y="118" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingUnitProgress" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingUnitProgress" vertex="1">
+      <mxGeometry height="145" width="250" x="805" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="TUP_attr" parent="TrainingUnitProgress" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ status: enum{not_started,in_progress,completed,failed}&lt;br&gt;+ progress_percentage: tinyInt" vertex="1">
+      <mxGeometry height="70" width="250" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TUP_div" parent="TrainingUnitProgress" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="250" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="TUP_meth" parent="TrainingUnitProgress" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ trainingUnit(): BelongsTo TrainingUnit" vertex="1">
+      <mxGeometry height="30" width="250" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingPathEnrollment" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingPathEnrollment" vertex="1">
+      <mxGeometry height="130" width="270" x="10" y="340" as="geometry" />
+    </mxCell>
+    <mxCell id="TPE_attr" parent="TrainingPathEnrollment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ progress_percentage: tinyInt" vertex="1">
+      <mxGeometry height="55" width="270" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TPE_div" parent="TrainingPathEnrollment" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="270" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="TPE_meth" parent="TrainingPathEnrollment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ trainingPath(): BelongsTo TrainingPath" vertex="1">
+      <mxGeometry height="30" width="270" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingUnitVMAssignment" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingUnitVMAssignment" vertex="1">
+      <mxGeometry height="175" width="270" x="295" y="215" as="geometry" />
+    </mxCell>
+    <mxCell id="TUVA_attr" parent="TrainingUnitVMAssignment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ status: enum{pending,approved,rejected}&lt;br&gt;+ vm_id: bigInt?&lt;br&gt;+ node_id: bigInt?&lt;br&gt;+ assigned_by: ULID?&lt;br&gt;+ approved_by: ULID?" vertex="1">
+      <mxGeometry height="95" width="270" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TUVA_div" parent="TrainingUnitVMAssignment" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="270" y="125" as="geometry" />
+    </mxCell>
+    <mxCell id="TUVA_meth" parent="TrainingUnitVMAssignment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingUnit(): BelongsTo TrainingUnit&lt;br&gt;+ node(): BelongsTo ProxmoxNode&lt;br&gt;+ assignedByUser(): BelongsTo User&lt;br&gt;+ approvedByUser(): BelongsTo User" vertex="1">
+      <mxGeometry height="35" width="270" y="133" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingUnitNote" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingUnitNote" vertex="1">
+      <mxGeometry height="130" width="230" x="580" y="290" as="geometry" />
+    </mxCell>
+    <mxCell id="TUN_attr" parent="TrainingUnitNote" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ content: text" vertex="1">
+      <mxGeometry height="55" width="230" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TUN_div" parent="TrainingUnitNote" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="230" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="TUN_meth" parent="TrainingUnitNote" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ trainingUnit(): BelongsTo TrainingUnit" vertex="1">
+      <mxGeometry height="30" width="230" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="TrainingPathReview" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="TrainingPathReview" vertex="1">
+      <mxGeometry height="120" width="240" x="820" y="205" as="geometry" />
+    </mxCell>
+    <mxCell id="TPR_attr" parent="TrainingPathReview" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ rating: tinyInt" vertex="1">
+      <mxGeometry height="55" width="240" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TPR_div" parent="TrainingPathReview" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="240" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="TPR_meth" parent="TrainingPathReview" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingPath(): BelongsTo&lt;br&gt;+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="22" width="240" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="Certificate" parent="pkg_train" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C5CAE9;strokeColor=#283593;" value="Certificate" vertex="1">
+      <mxGeometry height="120" width="240" x="820" y="340" as="geometry" />
+    </mxCell>
+    <mxCell id="Cert_attr" parent="Certificate" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ hash: string&lt;br&gt;+ issued_at: timestamp" vertex="1">
+      <mxGeometry height="65" width="240" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Cert_div" parent="Certificate" style="line;strokeColor=#283593;" vertex="1">
+      <mxGeometry height="8" width="240" y="95" as="geometry" />
+    </mxCell>
+    <mxCell id="Cert_meth" parent="Certificate" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ trainingPath(): BelongsTo TrainingPath" vertex="1">
+      <mxGeometry height="14" width="240" y="103" as="geometry" />
+    </mxCell>
+    <mxCell id="r24" edge="1" parent="pkg_train" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingPathModule" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r25" edge="1" parent="pkg_train" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingPathEnrollment" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r26" edge="1" parent="pkg_train" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingPathReview" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r27" edge="1" parent="pkg_train" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="Certificate" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r31" edge="1" parent="pkg_train" source="TrainingPathModule" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingUnit" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r32" edge="1" parent="pkg_train" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingUnitProgress" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r36" edge="1" parent="pkg_train" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingUnitVMAssignment" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r37" edge="1" parent="pkg_train" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="TrainingUnitNote" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_video" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#F3E5F5;strokeColor=#6A1B9A;rounded=0;" value="Video &amp; Content" vertex="1">
+      <mxGeometry height="310" width="850" x="30" y="1060" as="geometry" />
+    </mxCell>
+    <mxCell id="Video" parent="pkg_video" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#E1BEE7;strokeColor=#6A1B9A;" value="Video" vertex="1">
+      <mxGeometry height="145" width="220" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Vid_attr" parent="Video" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ status: enum{uploaded,processing,ready,failed}&lt;br&gt;+ hls_path: string?" vertex="1">
+      <mxGeometry height="55" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Vid_div" parent="Video" style="line;strokeColor=#6A1B9A;" vertex="1">
+      <mxGeometry height="8" width="220" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="Vid_meth" parent="Video" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingUnit(): BelongsTo TrainingUnit&lt;br&gt;+ captions(): HasMany Caption&lt;br&gt;+ progress(): HasMany VideoProgress" vertex="1">
+      <mxGeometry height="45" width="220" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="Caption" parent="pkg_video" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#E1BEE7;strokeColor=#6A1B9A;" value="Caption" vertex="1">
+      <mxGeometry height="120" width="190" x="245" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Cap_attr" parent="Caption" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ video_id: bigInt&lt;br&gt;+ language: string&lt;br&gt;+ is_default: bool" vertex="1">
+      <mxGeometry height="55" width="190" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Cap_div" parent="Caption" style="line;strokeColor=#6A1B9A;" vertex="1">
+      <mxGeometry height="8" width="190" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="Cap_meth" parent="Caption" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ video(): BelongsTo Video" vertex="1">
+      <mxGeometry height="20" width="190" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="VideoProgress" parent="pkg_video" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#E1BEE7;strokeColor=#6A1B9A;" value="VideoProgress" vertex="1">
+      <mxGeometry height="145" width="210" x="450" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="VP_attr" parent="VideoProgress" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ video_id: bigInt&lt;br&gt;+ watched_seconds: int&lt;br&gt;+ completed: bool" vertex="1">
+      <mxGeometry height="70" width="210" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="VP_div" parent="VideoProgress" style="line;strokeColor=#6A1B9A;" vertex="1">
+      <mxGeometry height="8" width="210" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="VP_meth" parent="VideoProgress" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ video(): BelongsTo Video" vertex="1">
+      <mxGeometry height="30" width="210" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="Article" parent="pkg_video" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#E1BEE7;strokeColor=#6A1B9A;" value="Article" vertex="1">
+      <mxGeometry height="110" width="165" x="675" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Art_attr" parent="Article" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ content: json" vertex="1">
+      <mxGeometry height="40" width="165" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Art_div" parent="Article" style="line;strokeColor=#6A1B9A;" vertex="1">
+      <mxGeometry height="8" width="165" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="Art_meth" parent="Article" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingUnit(): BelongsTo TrainingUnit" vertex="1">
+      <mxGeometry height="25" width="165" y="78" as="geometry" />
+    </mxCell>
+    <mxCell id="r39" edge="1" parent="pkg_video" source="Video" style="endArrow=open;endFill=0;html=1;strokeColor=#6A1B9A;fontSize=9;" target="Caption" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r40" edge="1" parent="pkg_video" source="Video" style="endArrow=open;endFill=0;html=1;strokeColor=#6A1B9A;fontSize=9;" target="VideoProgress" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_quiz" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#FFF3E0;strokeColor=#E65100;rounded=0;" value="Assessments (Quizzes)" vertex="1">
+      <mxGeometry height="340" width="880" x="900" y="1090" as="geometry" />
+    </mxCell>
+    <mxCell id="Quiz" parent="pkg_quiz" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFE0B2;strokeColor=#E65100;" value="Quiz" vertex="1">
+      <mxGeometry height="145" width="210" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Q_attr" parent="Quiz" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_unit_id: bigInt&lt;br&gt;+ title: string&lt;br&gt;+ passing_score: tinyInt&lt;br&gt;+ is_published: bool" vertex="1">
+      <mxGeometry height="70" width="210" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Q_div" parent="Quiz" style="line;strokeColor=#E65100;" vertex="1">
+      <mxGeometry height="8" width="210" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="Q_meth" parent="Quiz" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingUnit(): BelongsTo TrainingUnit&lt;br&gt;+ questions(): HasMany QuizQuestion&lt;br&gt;+ attempts(): HasMany QuizAttempt" vertex="1">
+      <mxGeometry height="30" width="210" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="QuizQuestion" parent="pkg_quiz" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFE0B2;strokeColor=#E65100;" value="QuizQuestion" vertex="1">
+      <mxGeometry height="130" width="220" x="235" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="QQ_attr" parent="QuizQuestion" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ quiz_id: bigInt&lt;br&gt;+ type: enum{multiple_choice,true_false,short_answer,essay}&lt;br&gt;+ points: tinyInt" vertex="1">
+      <mxGeometry height="55" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="QQ_div" parent="QuizQuestion" style="line;strokeColor=#E65100;" vertex="1">
+      <mxGeometry height="8" width="220" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="QQ_meth" parent="QuizQuestion" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ quiz(): BelongsTo Quiz&lt;br&gt;+ options(): HasMany QuizQuestionOption" vertex="1">
+      <mxGeometry height="30" width="220" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="QuizQuestionOption" parent="pkg_quiz" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFE0B2;strokeColor=#E65100;" value="QuizQuestionOption" vertex="1">
+      <mxGeometry height="120" width="220" x="235" y="190" as="geometry" />
+    </mxCell>
+    <mxCell id="QQO_attr" parent="QuizQuestionOption" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ question_id: bigInt&lt;br&gt;+ option_text: text&lt;br&gt;+ is_correct: bool" vertex="1">
+      <mxGeometry height="55" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="QQO_div" parent="QuizQuestionOption" style="line;strokeColor=#E65100;" vertex="1">
+      <mxGeometry height="8" width="220" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="QQO_meth" parent="QuizQuestionOption" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ question(): BelongsTo QuizQuestion" vertex="1">
+      <mxGeometry height="20" width="220" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="QuizAttempt" parent="pkg_quiz" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFE0B2;strokeColor=#E65100;" value="QuizAttempt" vertex="1">
+      <mxGeometry height="145" width="200" x="470" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="QA_attr" parent="QuizAttempt" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ quiz_id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ score: int&lt;br&gt;+ percentage: tinyInt&lt;br&gt;+ passed: bool" vertex="1">
+      <mxGeometry height="80" width="200" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="QA_div" parent="QuizAttempt" style="line;strokeColor=#E65100;" vertex="1">
+      <mxGeometry height="8" width="200" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="QA_meth" parent="QuizAttempt" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ quiz(): BelongsTo Quiz&lt;br&gt;+ user(): BelongsTo User&lt;br&gt;+ answers(): HasMany QuizAttemptAnswer" vertex="1">
+      <mxGeometry height="22" width="200" y="118" as="geometry" />
+    </mxCell>
+    <mxCell id="QuizAttemptAnswer" parent="pkg_quiz" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFE0B2;strokeColor=#E65100;" value="QuizAttemptAnswer" vertex="1">
+      <mxGeometry height="175" width="185" x="685" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="QAA_attr" parent="QuizAttemptAnswer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ attempt_id: bigInt&lt;br&gt;+ question_id: bigInt&lt;br&gt;+ selected_option_id: bigInt?&lt;br&gt;+ points_earned: tinyInt" vertex="1">
+      <mxGeometry height="70" width="185" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="QAA_div" parent="QuizAttemptAnswer" style="line;strokeColor=#E65100;" vertex="1">
+      <mxGeometry height="8" width="185" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="QAA_meth" parent="QuizAttemptAnswer" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ attempt(): BelongsTo QuizAttempt&lt;br&gt;+ question(): BelongsTo QuizQuestion&lt;br&gt;+ selectedOption(): BelongsTo QuizQuestionOption" vertex="1">
+      <mxGeometry height="60" width="185" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="r41" edge="1" parent="pkg_quiz" source="Quiz" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizQuestion" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r42" edge="1" parent="pkg_quiz" source="Quiz" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizAttempt" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r43" edge="1" parent="pkg_quiz" source="QuizQuestion" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizQuestionOption" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r44" edge="1" parent="pkg_quiz" source="QuizAttempt" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizAttemptAnswer" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_rob" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#E0F2F1;strokeColor=#004D40;rounded=0;" value="Robotics &amp; Cameras" vertex="1">
+      <mxGeometry height="560" width="680" x="1970" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="Robot" parent="pkg_rob" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#B2DFDB;strokeColor=#004D40;" value="Robot" vertex="1">
+      <mxGeometry height="115" width="220" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Rob_attr" parent="Robot" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ identifier: string&lt;br&gt;+ status: enum{online,offline,maintenance}" vertex="1">
+      <mxGeometry height="45" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Rob_div" parent="Robot" style="line;strokeColor=#004D40;" vertex="1">
+      <mxGeometry height="8" width="220" y="75" as="geometry" />
+    </mxCell>
+    <mxCell id="Rob_meth" parent="Robot" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ cameras(): HasMany Camera" vertex="1">
+      <mxGeometry height="22" width="220" y="83" as="geometry" />
+    </mxCell>
+    <mxCell id="Camera" parent="pkg_rob" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#B2DFDB;strokeColor=#004D40;" value="Camera" vertex="1">
+      <mxGeometry height="310" width="420" x="245" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Cam_attr" parent="Camera" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ robot_id: bigInt?&lt;br&gt;+ gateway_node_id: bigInt?&lt;br&gt;+ usb_device_id: bigInt?&lt;br&gt;+ assigned_vm_id: int?&lt;br&gt;+ name: string&lt;br&gt;+ stream_key: string&lt;br&gt;+ status: enum{online,offline,recording,error}&lt;br&gt;+ ptz_capable: bool" vertex="1">
+      <mxGeometry height="120" width="420" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Cam_div" parent="Camera" style="line;strokeColor=#004D40;" vertex="1">
+      <mxGeometry height="8" width="420" y="150" as="geometry" />
+    </mxCell>
+    <mxCell id="Cam_meth" parent="Camera" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ isUsbCamera(): bool&lt;br&gt;+ isRobotCamera(): bool&lt;br&gt;+ hasActiveReservation(): bool&lt;br&gt;+ isControlled(): bool&lt;br&gt;+ assignToVm(vmId): bool&lt;br&gt;+ unassignFromVm(): bool&lt;br&gt;+ robot(): BelongsTo Robot&lt;br&gt;+ gatewayNode(): BelongsTo GatewayNode&lt;br&gt;+ usbDevice(): BelongsTo UsbDevice&lt;br&gt;+ sessionControls(): HasMany CameraSessionControl&lt;br&gt;+ reservations(): MorphMany Reservation" vertex="1">
+      <mxGeometry height="148" width="420" y="158" as="geometry" />
+    </mxCell>
+    <mxCell id="CameraSessionControl" parent="pkg_rob" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#B2DFDB;strokeColor=#004D40;" value="CameraSessionControl" vertex="1">
+      <mxGeometry height="145" width="220" x="10" y="175" as="geometry" />
+    </mxCell>
+    <mxCell id="CSC_attr" parent="CameraSessionControl" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ camera_id: bigInt&lt;br&gt;+ session_id: ULID&lt;br&gt;+ acquired_at: timestamp&lt;br&gt;+ released_at: timestamp?" vertex="1">
+      <mxGeometry height="70" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="CSC_div" parent="CameraSessionControl" style="line;strokeColor=#004D40;" vertex="1">
+      <mxGeometry height="8" width="220" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="CSC_meth" parent="CameraSessionControl" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ camera(): BelongsTo Camera&lt;br&gt;+ session(): BelongsTo VMSession" vertex="1">
+      <mxGeometry height="30" width="220" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="r45" edge="1" parent="pkg_rob" source="Robot" style="endArrow=open;endFill=0;html=1;strokeColor=#004D40;fontSize=9;" target="Camera" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r46" edge="1" parent="pkg_rob" source="Camera" style="endArrow=open;endFill=0;html=1;strokeColor=#004D40;fontSize=9;" target="CameraSessionControl" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_pay" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#FFF9C4;strokeColor=#F9A825;rounded=0;" value="Payments &amp; Commerce" vertex="1">
+      <mxGeometry height="360" width="680" x="1970" y="660" as="geometry" />
+    </mxCell>
+    <mxCell id="Payment" parent="pkg_pay" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFF176;strokeColor=#F9A825;" value="Payment" vertex="1">
+      <mxGeometry height="135" width="220" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Pay_attr" parent="Payment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ status: enum{pending,succeeded,failed,refunded}&lt;br&gt;+ amount_cents: int" vertex="1">
+      <mxGeometry height="70" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Pay_div" parent="Payment" style="line;strokeColor=#F9A825;" vertex="1">
+      <mxGeometry height="8" width="220" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="Pay_meth" parent="Payment" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ trainingPath(): BelongsTo TrainingPath&lt;br&gt;+ refundRequest(): HasOne RefundRequest" vertex="1">
+      <mxGeometry height="20" width="220" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="RefundRequest" parent="pkg_pay" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFF176;strokeColor=#F9A825;" value="RefundRequest" vertex="1">
+      <mxGeometry height="135" width="220" x="245" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="RR_attr" parent="RefundRequest" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ payment_id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ status: enum{requested,approved,rejected,processed}&lt;br&gt;+ refund_amount_cents: int?" vertex="1">
+      <mxGeometry height="70" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="RR_div" parent="RefundRequest" style="line;strokeColor=#F9A825;" vertex="1">
+      <mxGeometry height="8" width="220" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="RR_meth" parent="RefundRequest" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ payment(): BelongsTo Payment&lt;br&gt;+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="20" width="220" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="StripeWebhook" parent="pkg_pay" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFF176;strokeColor=#F9A825;" value="StripeWebhook" vertex="1">
+      <mxGeometry height="105" width="185" x="480" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="SW_attr" parent="StripeWebhook" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ stripe_event_id: string&lt;br&gt;+ event_type: string&lt;br&gt;+ processed: bool" vertex="1">
+      <mxGeometry height="55" width="185" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="SW_div" parent="StripeWebhook" style="line;strokeColor=#F9A825;" vertex="1">
+      <mxGeometry height="8" width="185" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="PayoutRequest" parent="pkg_pay" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFF176;strokeColor=#F9A825;" value="PayoutRequest" vertex="1">
+      <mxGeometry height="145" width="250" x="10" y="195" as="geometry" />
+    </mxCell>
+    <mxCell id="PR_attr" parent="PayoutRequest" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ amount_cents: int&lt;br&gt;+ status: enum{requested,approved,rejected,processing,completed,failed}&lt;br&gt;+ approved_by: ULID?" vertex="1">
+      <mxGeometry height="70" width="250" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="PR_div" parent="PayoutRequest" style="line;strokeColor=#F9A825;" vertex="1">
+      <mxGeometry height="8" width="250" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="PR_meth" parent="PayoutRequest" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ approvedBy(): BelongsTo User" vertex="1">
+      <mxGeometry height="30" width="250" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="r48" edge="1" parent="pkg_pay" source="Payment" style="endArrow=open;endFill=0;html=1;strokeColor=#F9A825;fontSize=9;" target="RefundRequest" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_disc" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#EFEBE9;strokeColor=#3E2723;rounded=0;" value="Discussions &amp; Community" vertex="1">
+      <mxGeometry height="460" width="680" x="2680" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="DiscussionThread" parent="pkg_disc" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#D7CCC8;strokeColor=#3E2723;" value="DiscussionThread" vertex="1">
+      <mxGeometry height="185" width="300" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="DT_attr" parent="DiscussionThread" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ training_unit_id: bigInt?&lt;br&gt;+ author_id: ULID&lt;br&gt;+ status: enum{open,closed,archived,flagged}" vertex="1">
+      <mxGeometry height="70" width="300" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="DT_div" parent="DiscussionThread" style="line;strokeColor=#3E2723;" vertex="1">
+      <mxGeometry height="8" width="300" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="DT_meth" parent="DiscussionThread" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingPath(): BelongsTo TrainingPath&lt;br&gt;+ trainingUnit(): BelongsTo TrainingUnit&lt;br&gt;+ author(): BelongsTo User&lt;br&gt;+ replies(): HasMany ThreadReply&lt;br&gt;+ votes(): MorphMany ThreadVote" vertex="1">
+      <mxGeometry height="70" width="300" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="ThreadReply" parent="pkg_disc" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#D7CCC8;strokeColor=#3E2723;" value="ThreadReply" vertex="1">
+      <mxGeometry height="190" width="345" x="325" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="TR_attr" parent="ThreadReply" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ thread_id: bigInt&lt;br&gt;+ author_id: ULID&lt;br&gt;+ parent_id: bigInt?&lt;br&gt;+ is_answer: bool" vertex="1">
+      <mxGeometry height="70" width="345" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TR_div" parent="ThreadReply" style="line;strokeColor=#3E2723;" vertex="1">
+      <mxGeometry height="8" width="345" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="TR_meth" parent="ThreadReply" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ thread(): BelongsTo DiscussionThread&lt;br&gt;+ author(): BelongsTo User&lt;br&gt;+ parent(): BelongsTo ThreadReply&lt;br&gt;+ children(): HasMany ThreadReply&lt;br&gt;+ votes(): MorphMany ThreadVote" vertex="1">
+      <mxGeometry height="75" width="345" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="ThreadVote" parent="pkg_disc" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#D7CCC8;strokeColor=#3E2723;" value="ThreadVote" vertex="1">
+      <mxGeometry height="190" width="300" x="10" y="245" as="geometry" />
+    </mxCell>
+    <mxCell id="TV_attr" parent="ThreadVote" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ votable_type: string&lt;br&gt;+ votable_id: bigInt&lt;br&gt;+ value: tinyInt" vertex="1">
+      <mxGeometry height="70" width="300" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="TV_div" parent="ThreadVote" style="line;strokeColor=#3E2723;" vertex="1">
+      <mxGeometry height="8" width="300" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="TV_meth" parent="ThreadVote" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User&lt;br&gt;+ votable(): MorphTo DiscussionThread|ThreadReply" vertex="1">
+      <mxGeometry height="75" width="300" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="r49" edge="1" parent="pkg_disc" source="DiscussionThread" style="endArrow=open;endFill=0;html=1;strokeColor=#3E2723;fontSize=9;" target="ThreadReply" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r50" edge="1" parent="pkg_disc" source="DiscussionThread" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#3E2723;fontSize=9;" target="ThreadVote" value="votable  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r51" edge="1" parent="pkg_disc" source="ThreadReply" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#3E2723;fontSize=9;" target="ThreadVote" value="votable  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r52" edge="1" parent="pkg_disc" source="ThreadReply" style="endArrow=open;endFill=0;html=1;strokeColor=#3E2723;fontSize=9;exitX=1;exitY=0.5;entryX=1;entryY=0.25;" target="ThreadReply" value="0..* parent 0..1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="420" y="130" />
+          <mxPoint x="420" y="85" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="pkg_mon" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#ECEFF1;strokeColor=#263238;rounded=0;" value="System Monitoring &amp; Analytics" vertex="1">
+      <mxGeometry height="350" width="680" x="2680" y="560" as="geometry" />
+    </mxCell>
+    <mxCell id="SystemAlert" parent="pkg_mon" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#CFD8DC;strokeColor=#263238;" value="SystemAlert" vertex="1">
+      <mxGeometry height="120" width="220" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="SA_attr" parent="SystemAlert" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ severity: enum{info,warning,error,critical}&lt;br&gt;+ acknowledged_by: ULID?&lt;br&gt;+ resolved: bool" vertex="1">
+      <mxGeometry height="55" width="220" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="SA_div" parent="SystemAlert" style="line;strokeColor=#263238;" vertex="1">
+      <mxGeometry height="8" width="220" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="SA_meth" parent="SystemAlert" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ acknowledgedBy(): BelongsTo User" vertex="1">
+      <mxGeometry height="20" width="220" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="ActivityLog" parent="pkg_mon" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#CFD8DC;strokeColor=#263238;" value="ActivityLog" vertex="1">
+      <mxGeometry height="120" width="200" x="245" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="AL_attr" parent="ActivityLog" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ type: string&lt;br&gt;+ action: string&lt;br&gt;+ user_id: ULID?&lt;br&gt;+ created_at: timestamp" vertex="1">
+      <mxGeometry height="55" width="200" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="AL_div" parent="ActivityLog" style="line;strokeColor=#263238;" vertex="1">
+      <mxGeometry height="8" width="200" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="AL_meth" parent="ActivityLog" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="20" width="200" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="DailyStats" parent="pkg_mon" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#CFD8DC;strokeColor=#263238;" value="DailyTrainingPathStats" vertex="1">
+      <mxGeometry height="120" width="210" x="460" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="DS_attr" parent="DailyStats" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ training_path_id: bigInt&lt;br&gt;+ date: date&lt;br&gt;+ enrollments: int&lt;br&gt;+ revenue_cents: int" vertex="1">
+      <mxGeometry height="55" width="210" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="DS_div" parent="DailyStats" style="line;strokeColor=#263238;" vertex="1">
+      <mxGeometry height="8" width="210" y="85" as="geometry" />
+    </mxCell>
+    <mxCell id="DS_meth" parent="DailyStats" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ trainingPath(): BelongsTo TrainingPath" vertex="1">
+      <mxGeometry height="20" width="210" y="93" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_pref" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#E8F5E9;strokeColor=#1B5E20;rounded=0;" value="User Preferences" vertex="1">
+      <mxGeometry height="260" width="680" x="2680" y="940" as="geometry" />
+    </mxCell>
+    <mxCell id="GuacPref" parent="pkg_pref" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C8E6C9;strokeColor=#1B5E20;" value="GuacamoleConnectionPreference" vertex="1">
+      <mxGeometry height="200" width="310" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="GP_attr" parent="GuacPref" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ vm_session_type: enum{rdp,vnc,ssh}&lt;br&gt;+ profile_name: string&lt;br&gt;+ is_default: bool" vertex="1">
+      <mxGeometry height="70" width="310" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="GP_div" parent="GuacPref" style="line;strokeColor=#1B5E20;" vertex="1">
+      <mxGeometry height="8" width="310" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="GP_meth" parent="GuacPref" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="20" width="310" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="UserVMConn" parent="pkg_pref" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#C8E6C9;strokeColor=#1B5E20;" value="UserVMConnectionDefaultProfile" vertex="1">
+      <mxGeometry height="200" width="330" x="335" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="UVMC_attr" parent="UserVMConn" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ vm_id: int&lt;br&gt;+ vm_session_protocol: enum{rdp,vnc,ssh}&lt;br&gt;+ preferred_profile_name: string" vertex="1">
+      <mxGeometry height="70" width="330" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="UVMC_div" parent="UserVMConn" style="line;strokeColor=#1B5E20;" vertex="1">
+      <mxGeometry height="8" width="330" y="100" as="geometry" />
+    </mxCell>
+    <mxCell id="UVMC_meth" parent="UserVMConn" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ user(): BelongsTo User" vertex="1">
+      <mxGeometry height="20" width="330" y="108" as="geometry" />
+    </mxCell>
+    <mxCell id="pkg_res" parent="1" style="swimlane;startSize=25;fontStyle=1;fontSize=11;fillColor=#FBE9E7;strokeColor=#BF360C;rounded=0;" value="Reservations (Polymorphic)" vertex="1">
+      <mxGeometry height="320" width="770" x="1170" y="380" as="geometry" />
+    </mxCell>
+    <mxCell id="Reservation" parent="pkg_res" style="swimlane;startSize=30;fontStyle=1;fontSize=10;fillColor=#FFCCBC;strokeColor=#BF360C;" value="Reservation" vertex="1">
+      <mxGeometry height="255" width="745" x="10" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="Res_attr" parent="Reservation" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ id: bigInt&lt;br&gt;+ reservable_type: string&lt;br&gt;+ reservable_id: bigInt&lt;br&gt;+ user_id: ULID&lt;br&gt;+ approved_by: ULID?&lt;br&gt;+ status: enum{pending,approved,rejected,cancelled,active,completed}&lt;br&gt;+ requested_start_at: timestamp&lt;br&gt;+ approved_start_at: timestamp?&lt;br&gt;+ target_vm_id: int?&lt;br&gt;+ training_path_id: bigInt?" vertex="1">
+      <mxGeometry height="125" width="745" y="30" as="geometry" />
+    </mxCell>
+    <mxCell id="Res_div" parent="Reservation" style="line;strokeColor=#BF360C;" vertex="1">
+      <mxGeometry height="8" width="745" y="155" as="geometry" />
+    </mxCell>
+    <mxCell id="Res_meth" parent="Reservation" style="text;html=1;align=left;fontSize=9;spacingLeft=4;" value="+ isPending(): bool  + isApproved(): bool  + isActive(): bool  + canModify(): bool  + overlaps(start, end): bool&lt;br&gt;+ reservable(): MorphTo Camera|UsbDevice&lt;br&gt;+ user(): BelongsTo User  +  approvedBy(): BelongsTo User  + trainingPath(): BelongsTo TrainingPath" vertex="1">
+      <mxGeometry height="85" width="745" y="163" as="geometry" />
+    </mxCell>
+    <mxCell id="res_note" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=9;fillColor=#ffffc0;strokeColor=#999900;align=left;" value="Polymorphic reservation for Camera/UsbDevice." vertex="1">
+      <mxGeometry height="55" width="260" x="1970" y="410" as="geometry" />
+    </mxCell>
+    <mxCell id="r3" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="VMSession" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r4" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingPath" value="1  0..* teaches">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r5" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="QuizAttempt" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r6" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Payment" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r7" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="PayoutRequest" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r8" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Certificate" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r9" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="DiscussionThread" value="1  0..* author">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r10" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="ThreadVote" value="1  0..* voter">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r54" edge="1" parent="1" source="User" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="ActivityLog" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r55" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingPathEnrollment" value="1  0..* enrolls">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r56" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingUnitProgress" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r57" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingUnitNote" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r58" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="VideoProgress" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r59" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingPathReview" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r60" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Reservation" value="1  0..* requester">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r61" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="DiscussionThread" value="1  0..* author">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r62" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="ThreadReply" value="1  0..* author">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r63" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="ThreadVote" value="1  0..* voter">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r64" edge="1" parent="1" source="Teacher" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingUnitVMAssignment" value="1  0..* assigned_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r65" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="TrainingUnitVMAssignment" value="1  0..* approved_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r66" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="Reservation" value="1  0..* approved_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r67" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="PayoutRequest" value="1  0..* approved_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r68" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="ProxmoxServer" value="1  0..* created_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r69" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="NodeCredLog" value="1  0..* changed_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r70" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#263238;fontSize=9;" target="SystemAlert" value="1  0..* acknowledged_by">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r71" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1565C0;fontSize=9;" target="ThreadReply" value="1  0..* author">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r72" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#F9A825;fontSize=9;" target="RefundRequest" value="1  0..* requester">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r73" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1B5E20;fontSize=9;" target="GuacPref" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r74" edge="1" parent="1" source="Engineer" style="endArrow=open;endFill=0;html=1;strokeColor=#1B5E20;fontSize=9;" target="UserVMConn" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r75" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#F57F17;fontSize=9;" target="VMSession" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r76" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1B5E20;fontSize=9;" target="GuacPref" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r77" edge="1" parent="1" source="Admin" style="endArrow=open;endFill=0;html=1;strokeColor=#1B5E20;fontSize=9;" target="UserVMConn" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r78" edge="1" parent="1" source="Reservation" style="endArrow=open;endFill=0;html=1;strokeColor=#BF360C;fontSize=9;" target="TrainingPath" value="0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r13" edge="1" parent="1" source="ProxmoxServer" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="VMSession" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r14" edge="1" parent="1" source="ProxmoxNode" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="VMSession" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r15" edge="1" parent="1" source="ProxmoxNode" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="TrainingUnitVMAssignment" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r16" edge="1" parent="1" source="VMSession" style="endArrow=open;endFill=0;html=1;strokeColor=#F57F17;fontSize=9;" target="UsbDeviceQueue" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r17" edge="1" parent="1" source="VMSession" style="endArrow=open;endFill=0;html=1;strokeColor=#F57F17;fontSize=9;" target="CameraSessionControl" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r18" edge="1" parent="1" source="VMSession" style="endArrow=open;endFill=0;html=1;strokeColor=#F57F17;fontSize=9;" target="Reservation" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r20" edge="1" parent="1" source="GatewayNode" style="endArrow=open;endFill=0;html=1;strokeColor=#880E4F;fontSize=9;" target="Camera" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r22" edge="1" parent="1" source="UsbDevice" style="endArrow=open;endFill=0;html=1;strokeColor=#880E4F;fontSize=9;" target="Camera" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r23" edge="1" parent="1" source="UsbDevice" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#BF360C;fontSize=9;" target="Reservation" value="reservable  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r28" edge="1" parent="1" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="Payment" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r29" edge="1" parent="1" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="DailyStats" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r30" edge="1" parent="1" source="TrainingPath" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="DiscussionThread" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r33" edge="1" parent="1" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="Quiz" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r34" edge="1" parent="1" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="Article" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r35" edge="1" parent="1" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="Video" value="1  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r38" edge="1" parent="1" source="TrainingUnit" style="endArrow=open;endFill=0;html=1;strokeColor=#283593;fontSize=9;" target="DiscussionThread" value="1  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r47" edge="1" parent="1" source="Camera" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#BF360C;fontSize=9;" target="Reservation" value="reservable  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r79" edge="1" parent="1" source="VMSession" style="endArrow=open;endFill=0;html=1;strokeColor=#F57F17;fontSize=9;" target="UsbDevice" value="attachedDevices  0..*">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r80" edge="1" parent="1" source="UsbDevice" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="ProxmoxServer" value="pendingServer  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r81" edge="1" parent="1" source="UsbDevice" style="endArrow=open;endFill=0;html=1;strokeColor=#2E7D32;fontSize=9;" target="ProxmoxServer" value="dedicatedServer  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r82" edge="1" parent="1" source="QuizAttemptAnswer" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizQuestion" value="question  1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="r83" edge="1" parent="1" source="QuizAttemptAnswer" style="endArrow=open;endFill=0;html=1;strokeColor=#E65100;fontSize=9;" target="QuizQuestionOption" value="selectedOption  0..1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

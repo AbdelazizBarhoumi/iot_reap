@@ -307,6 +307,13 @@ class UsbDeviceQueueService
      */
     public function canUserAttachNow(UsbDevice $device, VMSession $session): array
     {
+        if (! $this->deviceIsDedicatedToSession($device, $session)) {
+            return [
+                'can_attach' => false,
+                'reason' => 'Device is dedicated to another VM',
+            ];
+        }
+
         $blockingReservation = $this->findOverlappingReservationForSession($device, $session);
 
         if ($blockingReservation === null) {
@@ -369,6 +376,10 @@ class UsbDeviceQueueService
             })
             ->get()
             ->filter(function (UsbDevice $device) use ($session): bool {
+                if (! $this->deviceIsDedicatedToSession($device, $session)) {
+                    return false;
+                }
+
                 $canAttach = $this->canUserAttachNow($device, $session);
 
                 return $canAttach['can_attach'] || ! array_key_exists('reserved_by', $canAttach);
@@ -422,5 +433,61 @@ class UsbDeviceQueueService
         return $reservation->target_vm_id !== null
             && $session->vm_id !== null
             && (int) $reservation->target_vm_id === (int) $session->vm_id;
+    }
+
+    private function deviceIsDedicatedToSession(UsbDevice $device, VMSession $session): bool
+    {
+        if (! $device->is_camera) {
+            if (! $device->isDedicated()) {
+                return true;
+            }
+
+            if ($session->vm_id === null || $session->proxmox_server_id === null) {
+                return false;
+            }
+
+            if ($device->isDedicatedTo($session->vm_id, $session->proxmox_server_id)) {
+                return true;
+            }
+
+            return $this->deviceHasActiveReservationForSession($device, $session);
+        }
+
+        if (! $device->isDedicated()) {
+            return $this->deviceHasActiveReservationForSession($device, $session);
+        }
+
+        if ($session->vm_id === null || $session->proxmox_server_id === null) {
+            return false;
+        }
+
+        if ($device->isDedicatedTo($session->vm_id, $session->proxmox_server_id)) {
+            return true;
+        }
+
+        return $this->deviceHasActiveReservationForSession($device, $session);
+    }
+
+    private function deviceHasActiveReservationForSession(UsbDevice $device, VMSession $session): bool
+    {
+        $now = now();
+
+        $blockingReservation = Reservation::where('reservable_type', 'App\\Models\\UsbDevice')
+            ->where('reservable_id', $device->id)
+            ->whereIn('status', [
+                UsbReservationStatus::APPROVED->value,
+                UsbReservationStatus::ACTIVE->value,
+            ])
+            ->whereNotNull('approved_start_at')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_start_at', '<=', $now)
+            ->where('approved_end_at', '>=', $now)
+            ->where(function ($query) use ($session) {
+                $query->where('user_id', $session->user_id)
+                    ->orWhere('target_vm_id', $session->vm_id);
+            })
+            ->exists();
+
+        return $blockingReservation;
     }
 }

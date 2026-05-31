@@ -149,6 +149,31 @@ export default function TrainingPathDetailPage() {
     );
     const thumbnailSrc =
         trainingPath.thumbnail ?? trainingPath.thumbnail_url ?? null;
+
+    const trainingModules = useMemo(() => {
+        if (Array.isArray(trainingPath.modules)) {
+            return trainingPath.modules;
+        }
+
+        const maybeModules =
+            (trainingPath.modules as { data?: unknown } | undefined)?.data;
+
+        return Array.isArray(maybeModules) ? maybeModules : [];
+    }, [trainingPath.modules]);
+
+    const getTrainingUnits = useCallback(
+        (module: { trainingUnits?: unknown }) => {
+            if (Array.isArray(module.trainingUnits)) {
+                return module.trainingUnits;
+            }
+
+            const maybeUnits =
+                (module.trainingUnits as { data?: unknown } | undefined)?.data;
+
+            return Array.isArray(maybeUnits) ? maybeUnits : [];
+        },
+        [],
+    );
     const handleEnroll = useCallback(async () => {
         if (!trainingPath?.id) return;
         setEnrolling(true);
@@ -172,10 +197,10 @@ export default function TrainingPathDetailPage() {
                 setProgress({
                     completed: 0,
                     total:
-                        trainingPath.modules?.reduce(
-                            (a, m) => a + m.trainingUnits.length,
+                        trainingModules.reduce(
+                            (a, m) => a + getTrainingUnits(m).length,
                             0,
-                        ) ?? 0,
+                        ),
                     percentage: 0,
                 });
                 trainingPathToasts.enrolled(trainingPath.title);
@@ -199,7 +224,7 @@ export default function TrainingPathDetailPage() {
         } finally {
             setEnrolling(false);
         }
-    }, [trainingPath?.id, trainingPath?.title, trainingPath?.modules]);
+    }, [getTrainingUnits, trainingModules, trainingPath?.id, trainingPath?.title]);
     const toggleModule = (moduleId: string | number) => {
         setExpandedModules((prev) => {
             const next = new Set(prev);
@@ -233,7 +258,7 @@ export default function TrainingPathDetailPage() {
         );
     }
     const totalTrainingUnits =
-        trainingPath.modules?.reduce((a, m) => a + m.trainingUnits.length, 0) ??
+        trainingModules.reduce((a, m) => a + getTrainingUnits(m).length, 0) ??
         0;
     const completedTrainingUnitsCount = completedTrainingUnitIds?.length ?? 0;
     const progressPercentage =
@@ -241,7 +266,7 @@ export default function TrainingPathDetailPage() {
         (totalTrainingUnits > 0
             ? (completedTrainingUnitsCount / totalTrainingUnits) * 100
             : 0);
-    const firstTrainingUnitId = trainingPath.modules?.[0]?.trainingUnits[0]?.id;
+    const firstTrainingUnitId = getTrainingUnits(trainingModules[0] ?? {})[0]?.id;
     const isTrainingUnitCompleted = (trainingUnitId: string | number) => {
         return (
             completedTrainingUnitIds?.some(
@@ -251,17 +276,18 @@ export default function TrainingPathDetailPage() {
     };
     // Calculate module completion
     const getModuleProgress = (module: {
-        trainingUnits: { id: string | number }[];
+        trainingUnits?: { id: string | number }[];
     }) => {
-        const completed = module.trainingUnits.filter((l) =>
+        const units = getTrainingUnits(module) as { id: string | number }[];
+        const completed = units.filter((l) =>
             isTrainingUnitCompleted(l.id),
         ).length;
         return {
             completed,
-            total: module.trainingUnits.length,
+            total: units.length,
             percentage:
-                module.trainingUnits.length > 0
-                    ? (completed / module.trainingUnits.length) * 100
+                units.length > 0
+                    ? (completed / units.length) * 100
                     : 0,
         };
     };
@@ -600,8 +626,7 @@ export default function TrainingPathDetailPage() {
                                                 TrainingPath Curriculum
                                             </h2>
                                             <p className="mt-1 text-sm text-muted-foreground">
-                                                {trainingPath.modules?.length ??
-                                                    0}{' '}
+                                                {trainingModules.length}{' '}
                                                 modules · {totalTrainingUnits}{' '}
                                                 trainingUnits ·{' '}
                                                 {trainingPath.duration}
@@ -613,33 +638,35 @@ export default function TrainingPathDetailPage() {
                                             onClick={() => {
                                                 if (
                                                     expandedModules.size ===
-                                                    trainingPath.modules?.length
+                                                    trainingModules.length
                                                 ) {
                                                     setExpandedModules(
                                                         new Set(),
                                                     );
                                                 } else {
                                                     setExpandedModules(
-                                                        new Set(
-                                                            trainingPath.modules?.map(
-                                                                (m) => m.id,
-                                                            ) || [],
-                                                        ),
+                                                        new Set(trainingModules.map((m) => m.id)),
                                                     );
                                                 }
                                             }}
                                             className="text-muted-foreground"
                                         >
                                             {expandedModules.size ===
-                                            trainingPath.modules?.length
+                                            trainingModules.length
                                                 ? 'Collapse all'
                                                 : 'Expand all'}
                                         </Button>
                                     </div>
                                     {/* Modules */}
                                     <div className="space-y-3">
-                                        {trainingPath.modules?.map(
-                                            (module, mi) => {
+                                        {trainingModules.map((module, mi) => {
+                                            const trainingUnits = getTrainingUnits(module) as Array<{
+                                                id: string | number;
+                                                type: string;
+                                                title: string;
+                                                duration?: string | null;
+                                                vmEnabled?: boolean;
+                                            }>;
                                                 const isExpanded =
                                                     expandedModules.has(
                                                         module.id,
@@ -699,9 +726,7 @@ export default function TrainingPathDetailPage() {
                                                                         </h3>
                                                                         <p className="mt-0.5 text-xs text-muted-foreground">
                                                                             {
-                                                                                module
-                                                                                    .trainingUnits
-                                                                                    .length
+                                                                                trainingUnits.length
                                                                             }{' '}
                                                                             trainingUnits
                                                                             {isEnrolled &&
@@ -765,7 +790,7 @@ export default function TrainingPathDetailPage() {
                                                                         className="overflow-hidden"
                                                                     >
                                                                         <ul className="divide-y divide-border/50 border-t border-border/50">
-                                                                            {module.trainingUnits.map(
+                                                                            {trainingUnits.map(
                                                                                 (
                                                                                     trainingUnit,
                                                                                     _li,

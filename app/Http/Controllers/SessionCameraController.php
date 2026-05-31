@@ -56,9 +56,10 @@ class SessionCameraController extends Controller
      */
     public function show(Request $request, string $sessionId, int $cameraId): JsonResponse
     {
-        $this->authorizeSession($request, $sessionId);
+        $session = $this->authorizeSession($request, $sessionId);
 
         $camera = app(CameraRepository::class)->findWithControl($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
 
         return response()->json([
             'data' => new CameraResource($camera),
@@ -72,6 +73,8 @@ class SessionCameraController extends Controller
     public function acquireControl(Request $request, string $sessionId, int $cameraId): JsonResponse
     {
         $session = $this->authorizeSession($request, $sessionId);
+        $camera = app(CameraRepository::class)->findWithControl($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
 
         try {
             $control = $this->cameraService->acquireControl($cameraId, $session->id);
@@ -96,6 +99,8 @@ class SessionCameraController extends Controller
     public function releaseControl(Request $request, string $sessionId, int $cameraId): JsonResponse
     {
         $session = $this->authorizeSession($request, $sessionId);
+        $camera = app(CameraRepository::class)->findWithControl($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
 
         $released = $this->cameraService->releaseControl($cameraId, $session->id);
 
@@ -120,6 +125,8 @@ class SessionCameraController extends Controller
     public function move(CameraMoveRequest $request, string $sessionId, int $cameraId): JsonResponse
     {
         $session = $this->authorizeSession($request, $sessionId);
+        $camera = app(CameraRepository::class)->findWithControl($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
 
         $direction = CameraPTZDirection::from($request->validated('direction'));
 
@@ -162,6 +169,7 @@ class SessionCameraController extends Controller
         $validated = $request->validated();
 
         $camera = app(CameraRepository::class)->findOrFail($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
 
         // Delegate to service for business logic
         $result = $this->cameraService->changeResolution($camera, $validated, $this->gatewayService);
@@ -184,9 +192,10 @@ class SessionCameraController extends Controller
      */
     public function whepProxy(Request $request, string $sessionId, int $cameraId): Response
     {
-        $this->authorizeSession($request, $sessionId);
+        $session = $this->authorizeSession($request, $sessionId);
 
         $camera = app(CameraRepository::class)->findOrFail($cameraId);
+        $this->ensureCameraAccessibleForSession($camera, $session);
         $camera->loadMissing('gatewayNode');
 
         // Use the camera's gateway node IP — each camera streams from its own gateway
@@ -246,5 +255,14 @@ class SessionCameraController extends Controller
         }
 
         return $session;
+    }
+
+    private function ensureCameraAccessibleForSession(Camera $camera, VMSession $session): void
+    {
+        if ($this->cameraService->canSessionAccessCamera($camera, $session)) {
+            return;
+        }
+
+        abort(403, 'Camera is assigned to another VM or reserved by another user');
     }
 }

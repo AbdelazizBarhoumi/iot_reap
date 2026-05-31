@@ -1,0 +1,76 @@
+@startuml Activate_Deactivate_Camera
+title Activate / Deactivate Camera
+
+actor Engineer as E
+participant "Frontend (Browser)" as FE
+participant "RobotCameraController" as CTL
+participant "ActivateCameraRequest (FormRequest)" as FR
+participant "CameraService" as SVC
+participant "CameraRepository" as REPO
+participant "MqttService" as MQTT
+participant "Robot (ESP32-CAM)" as ROBOT
+participant "MediaMTX (Stream Proxy)" as MEDIA
+participant "EventDispatcher" as EVT
+participant "AuditLogger" as AUD
+
+== Activation Flow ==
+E -> FE: Click "Activate Camera" (session page)
+FE -> CTL: POST /sessions/{sessionId}/cameras/{cameraId}/activate
+CTL -> FR: validate(request)
+FR --> CTL: valid
+CTL -> SVC: enableCamera(cameraId, sessionId, actor)
+SVC -> REPO: findById(cameraId)
+REPO --> SVC: camera(record: status=inactive, stream_key)
+SVC -> MQTT: publish(topic: "robot/{robotId}/camera/command", payload: camera_on)
+MQTT -> ROBOT: deliver camera_on
+ROBOT -> MQTT: publish status ack (camera_on_ack)
+MQTT --> SVC: ack received (within 10s)
+SVC -> MEDIA: configure(stream_key, source_url)
+MEDIA --> SVC: configured (rtsp/hls/webrtc URLs)
+SVC -> REPO: update(status=active, activated_at, session_id)
+SVC -> EVT: dispatch(CameraActivated)
+EVT -> AUD: log "Camera activated"
+SVC --> CTL: camera resource (with streams)
+CTL --> FE: HTTP 200 { camera resource }
+FE -> FE: render player (HLS/WebRTC)
+
+== Deactivation Flow ==
+E -> FE: Click "Deactivate Camera"
+FE -> CTL: POST /sessions/{sessionId}/cameras/{cameraId}/deactivate
+CTL -> FR: validate(request)
+FR --> CTL: valid
+CTL -> SVC: disableCamera(cameraId, sessionId, actor)
+SVC -> REPO: findById(cameraId)
+REPO --> SVC: camera(record: status=active, stream_key)
+SVC -> MQTT: publish(topic: "robot/{robotId}/camera/command", payload: camera_off)
+MQTT -> ROBOT: deliver camera_off
+ROBOT -> MQTT: publish status ack (camera_off_ack)
+MQTT --> SVC: ack received
+SVC -> MEDIA: stop(stream_key)
+MEDIA --> SVC: stopped
+SVC -> REPO: update(status=inactive, deactivated_at, session_id=NULL)
+SVC -> EVT: dispatch(CameraDeactivated)
+EVT -> AUD: log "Camera deactivated"
+SVC --> CTL: updated camera resource
+CTL --> FE: HTTP 200 { camera resource }
+FE -> FE: clear player, update UI
+
+== Exception notes ==
+alt MQTT timeout
+    MQTT --> SVC: no ack (timeout 10s)
+    SVC -> REPO: update(status=error, error_reason="MQTT timeout")
+    SVC -> EVT: dispatch(CameraActivationFailed)
+    EVT -> AUD: log "Activation failed: MQTT timeout"
+    SVC --> CTL: HTTP 504 { error }
+end
+
+alt MediaMTX failure after ack
+    MEDIA --> SVC: error
+    SVC -> MQTT: publish(camera_off) // rollback
+    SVC -> REPO: update(status=error, error_reason="MediaMTX configuration failed")
+    SVC -> EVT: dispatch(CameraActivationFailed)
+    EVT -> AUD: log "Activation failed: MediaMTX"
+    SVC --> CTL: HTTP 500 { error }
+end
+
+@enduml

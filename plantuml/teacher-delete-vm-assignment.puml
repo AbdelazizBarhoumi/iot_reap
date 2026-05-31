@@ -1,0 +1,90 @@
+' Delete VM Assignment sequence diagram
+@startuml
+title Delete VM Assignment - Main Success Scenario (UC-VM-DELETE-001)
+
+actor Teacher
+
+participant "VMAssignmentController" as Controller
+participant "VMAssignmentService" as Service
+participant "VMAssignmentRepository" as Repository
+participant "ProxmoxClient" as Proxmox
+participant "GuacamoleClient" as Guacamole
+participant "AuditService" as Audit
+participant "NotificationService" as Notify
+
+== User initiates deletion ==
+Teacher -> Controller : DELETE /assignments/{id} (auth token)\nrequestDelete(assignmentId)
+activate Controller
+
+Controller -> Service : deleteAssignment(user, assignmentId)
+activate Service
+
+note right of Service
+1) load assignment
+2) verify ownership & deletable status
+end note
+
+Service -> Repository : findById(assignmentId)
+activate Repository
+Repository --> Service : assignment (or null)
+deactivate Repository
+
+alt Assignment not found
+    Service --> Controller : throw NotFoundException
+    deactivate Service
+    Controller --> Teacher : HTTP 404 Not Found
+    deactivate Controller
+    return
+end
+
+Service -> Service : checkOwnershipAndStatus(user, assignment)
+alt Not owner or not deletable
+    Service --> Controller : throw AuthorizationException / ValidationError
+    deactivate Service
+    Controller --> Teacher : HTTP 403 / 400
+    deactivate Controller
+    return
+end
+
+opt assignment.hasVM()
+    Service -> Proxmox : destroyVM(vmid)
+    activate Proxmox
+    Proxmox --> Service : success / not found / error
+    deactivate Proxmox
+    note right: If "not found" -> log and continue (Alt-2)\nIf error -> retry/enqueue compensation (Exc-3)
+end
+
+opt assignment.hasConnection()
+    Service -> Guacamole : deleteConnection(connectionId)
+    activate Guacamole
+    Guacamole --> Service : success / not found / error
+    deactivate Guacamole
+    note right: Same failure handling as Proxmox
+end
+
+Service -> Repository : delete(assignment) / softDelete(assignment)
+activate Repository
+Repository --> Service : deletion result
+deactivate Repository
+
+Service -> Audit : logDeletion(user, assignmentId, metadata)
+activate Audit
+Audit --> Service : ack
+deactivate Audit
+
+Service -> Notify : notify(user, "vm_assignment_deleted", details)
+activate Notify
+Notify --> Service : ack
+deactivate Notify
+
+Service --> Controller : success (deleted metadata)
+deactivate Service
+
+Controller --> Teacher : HTTP 200 OK (or 204 No Content)
+deactivate Controller
+
+note left of Teacher
+UI: display confirmation and refresh list
+end note
+
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+title Use Case: Export Earnings Report - Sequence
+
+actor Teacher
+boundary EarningsPage
+control TeacherAnalyticsController as Controller
+control RevenueService as Service
+database Database as DB
+
+Teacher -> EarningsPage: Click "Export Earnings Report"
+activate EarningsPage
+
+EarningsPage -> Controller: GET /teaching/analytics/earnings/export\n(start_date?, end_date?)
+activate Controller
+
+Controller -> Controller: Resolve authenticated teacher\nand normalize date range
+opt Date range omitted
+    Controller -> Controller: Use last 30 days as default range
+end
+
+Controller -> Service: generateEarningsCSV(teacher, startDate, endDate)
+activate Service
+
+Service -> DB: Query completed payments for\nteacher-owned training paths
+activate DB
+DB --> Service: payment rows
+deactivate DB
+
+alt Matching payments exist
+    loop For each payment row
+        Service -> Service: Append CSV line
+    end
+else No matching payments
+    Service -> Service: Build header-only CSV
+end
+
+Service --> Controller: CSV content
+deactivate Service
+
+Controller --> EarningsPage: Streamed response\nContent-Type: text/csv
+deactivate Controller
+
+EarningsPage --> Teacher: Trigger file download
+deactivate EarningsPage
+
+note over Controller,Service
+Only completed payments from the authenticated teacher's
+training paths are exported.
+The export window defaults to the last 30 days when omitted.
+end note
+
+@enduml

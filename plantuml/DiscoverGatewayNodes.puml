@@ -1,0 +1,81 @@
+@startuml
+title Discover Gateway Nodes
+
+actor Administrator
+boundary HardwareController
+control GatewayDiscoveryService
+database ProxmoxServerModel
+participant ProxmoxClient
+entity GatewayNodeRepository
+participant "Gateway Agent" as GatewayAgent
+
+Administrator -> HardwareController: POST /admin/hardware/discover
+activate HardwareController
+
+HardwareController -> HardwareController: authorize('admin-only')
+HardwareController -> GatewayDiscoveryService: discoverAll()
+activate GatewayDiscoveryService
+
+GatewayDiscoveryService -> ProxmoxServerModel: where(is_active = true)->get()
+ProxmoxServerModel --> GatewayDiscoveryService: activeServers
+
+note over GatewayDiscoveryService
+Gateway containers are detected by the configured
+name pattern. Containers without an IP are skipped.
+A failure on one server does not stop the sweep.
+end note
+
+loop for each active Proxmox server
+    GatewayDiscoveryService -> GatewayDiscoveryService: discoverFromServer(server)
+    GatewayDiscoveryService -> ProxmoxClient: new(server)
+    GatewayDiscoveryService -> ProxmoxClient: getNodes()
+    ProxmoxClient --> GatewayDiscoveryService: clusterNodes
+
+    loop for each cluster node
+        GatewayDiscoveryService -> GatewayDiscoveryService: discoverFromNode(client, nodeName)
+        GatewayDiscoveryService -> ProxmoxClient: getContainers(nodeName)
+        ProxmoxClient --> GatewayDiscoveryService: containers
+
+        loop for each container
+            GatewayDiscoveryService -> GatewayDiscoveryService: isGatewayContainer(container)
+            alt container matches gateway pattern
+                GatewayDiscoveryService -> ProxmoxClient: getContainerNetworkIP(nodeName, vmid)
+                ProxmoxClient --> GatewayDiscoveryService: ip
+
+                opt IP is available
+                    GatewayDiscoveryService -> GatewayDiscoveryService: registerGateway(name, ip, port, proxmoxNode, proxmoxVmid)
+                    GatewayDiscoveryService -> GatewayNodeRepository: firstOrCreate(...)/update(...)
+                    GatewayNodeRepository --> GatewayDiscoveryService: gateway
+
+                    GatewayDiscoveryService -> GatewayDiscoveryService: checkGatewayHealth(gateway)
+                    GatewayDiscoveryService -> GatewayAgent: GET /devices
+                    activate GatewayAgent
+                    GatewayAgent --> GatewayDiscoveryService: 200 OK or failure
+                    deactivate GatewayAgent
+
+                    alt gateway is healthy
+                        GatewayDiscoveryService -> GatewayNodeRepository: markOnline(gateway)
+                    else gateway is unhealthy
+                        GatewayDiscoveryService -> GatewayNodeRepository: markOffline(gateway)
+                    end
+                else no IP available
+                    note over GatewayDiscoveryService
+                        Skip this container and continue scanning.
+                    end note
+                end
+            else not a gateway container
+                note over GatewayDiscoveryService
+                    Ignore non-gateway containers.
+                end note
+            end
+        end
+    end
+end
+
+GatewayDiscoveryService --> HardwareController: Collection<GatewayNode>
+deactivate GatewayDiscoveryService
+
+HardwareController -> HardwareController: count online/offline gateways
+HardwareController --> Administrator: 200 OK + discovery summary
+deactivate HardwareController
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+title Use Case: Resume Training
+
+actor Learner
+
+participant UI
+participant Controller
+participant AuthService
+participant TrainingService
+participant ProgressRepo
+participant ContentService
+
+Learner -> UI : Resume
+UI -> Controller : ResumeRequest
+
+activate Controller
+
+Controller -> AuthService : validateSession
+AuthService --> Controller : valid
+
+Controller -> TrainingService : checkEnrollment
+TrainingService --> Controller : enrolled
+
+Controller -> ProgressRepo : getProgress
+ProgressRepo --> Controller : progress
+
+Controller -> ContentService : getUnitContent
+ContentService --> Controller : content
+
+Controller --> UI : ResumePayload
+
+deactivate Controller
+
+activate UI
+UI -> UI : startPlayback
+deactivate UI
+
+loop Progress Updates
+    UI -> Controller : progressUpdate
+    activate Controller
+
+    Controller -> ProgressRepo : updateProgress
+    activate ProgressRepo
+    ProgressRepo --> Controller : ok
+    deactivate ProgressRepo
+
+    Controller --> UI : ok
+    deactivate Controller
+end
+
+@enduml

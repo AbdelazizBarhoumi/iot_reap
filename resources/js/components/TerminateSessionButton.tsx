@@ -84,6 +84,7 @@ export function TerminateSessionButton({
                 // we intentionally leave the VM running by default
                 stop_vm: false,
             });
+            setOpen(false);
             // notify parent that the session is gone so they can refresh list
             onTerminated();
         } catch (err: unknown) {

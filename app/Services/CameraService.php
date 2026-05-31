@@ -53,9 +53,37 @@ class CameraService
             return new Collection;
         }
 
-        return $this->cameraRepository->findByVmId($session->vm_id)
+        return $this->cameraRepository->findForSession($session)
             ->filter(fn (Camera $camera) => ! $this->isCameraBlockedByAnotherReservation($camera, $session))
             ->values();
+    }
+
+    /**
+     * Determine whether a session can access a camera.
+     * Reservation ownership can temporarily override VM dedication.
+     */
+    public function canSessionAccessCamera(Camera $camera, VMSession $session): bool
+    {
+        if ($camera->assigned_vm_id !== null && (int) $camera->assigned_vm_id === (int) $session->vm_id) {
+            return ! $this->isCameraBlockedByAnotherReservation($camera, $session);
+        }
+
+        if ($camera->assigned_vm_id === null) {
+            return $camera->status === CameraStatus::ACTIVE
+                && ! $this->isCameraBlockedByAnotherReservation($camera, $session);
+        }
+
+        return $this->isCameraReservedForSession($camera, $session);
+    }
+
+    /**
+     * Check whether the camera has an active reservation that belongs to the session.
+     */
+    public function isCameraReservedForSession(Camera $camera, VMSession $session): bool
+    {
+        $reservation = $this->findBlockingReservation($camera, $session);
+
+        return $reservation !== null && $this->reservationAppliesToSession($reservation, $session);
     }
 
     /**
@@ -83,21 +111,7 @@ class CameraService
      */
     private function isCameraBlockedByAnotherReservation(Camera $camera, VMSession $session): bool
     {
-        $windowStart = now();
-        $windowEnd = $session->expires_at ?? now();
-
-        $blockingReservation = Reservation::where('reservable_type', Camera::class)
-            ->where('reservable_id', $camera->id)
-            ->whereIn('status', [
-                CameraReservationStatus::APPROVED->value,
-                CameraReservationStatus::ACTIVE->value,
-            ])
-            ->whereNotNull('approved_start_at')
-            ->whereNotNull('approved_end_at')
-            ->where('approved_start_at', '<', $windowEnd)
-            ->where('approved_end_at', '>', $windowStart)
-            ->orderBy('approved_start_at')
-            ->first();
+        $blockingReservation = $this->findBlockingReservation($camera, $session);
 
         if ($blockingReservation === null) {
             return false;
@@ -118,6 +132,25 @@ class CameraService
         return $reservation->target_vm_id !== null
             && $session->vm_id !== null
             && (int) $reservation->target_vm_id === (int) $session->vm_id;
+    }
+
+    private function findBlockingReservation(Camera $camera, ?VMSession $session = null): ?Reservation
+    {
+        $windowStart = now();
+        $windowEnd = $session?->expires_at ?? now();
+
+        return Reservation::where('reservable_type', Camera::class)
+            ->where('reservable_id', $camera->id)
+            ->whereIn('status', [
+                CameraReservationStatus::APPROVED->value,
+                CameraReservationStatus::ACTIVE->value,
+            ])
+            ->whereNotNull('approved_start_at')
+            ->whereNotNull('approved_end_at')
+            ->where('approved_start_at', '<', $windowEnd)
+            ->where('approved_end_at', '>', $windowStart)
+            ->orderBy('approved_start_at')
+            ->first();
     }
 
     /**

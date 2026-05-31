@@ -40,7 +40,7 @@ export default defineConfig({
         // Configure HMR to use localhost for browser connections
         // This prevents CSP violations when server listens on 0.0.0.0
         hmr: {
-            host: 'localhost',
+            host: '127.0.0.1',
             port: 5173,
             protocol: 'http',
         },
@@ -50,7 +50,7 @@ export default defineConfig({
             output: {
                 manualChunks: {
                     // Vendor chunks - split large dependencies
-                    'vendor-react': ['react', 'react-dom', 'react-dom/client'],
+                    'vendor-react': ['react', 'react-dom'],
                     'vendor-inertia': ['@inertiajs/react'],
                     'vendor-ui': [
                         '@radix-ui/react-dialog',

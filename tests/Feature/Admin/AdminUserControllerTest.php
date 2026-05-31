@@ -314,19 +314,19 @@ class AdminUserControllerTest extends TestCase
         $response->assertRedirect(route('dashboard'));
     }
 
-    public function test_admin_can_gdpr_delete_user(): void
+    public function test_admin_can_delete_user(): void
     {
         $this->userManagementServiceMock
-            ->shouldReceive('gdprDelete')
+            ->shouldReceive('Delete')
             ->once()
             ->andReturnNull();
 
         $response = $this->actingAs($this->admin)
-            ->deleteJson("/admin/users/{$this->engineer->id}/gdpr");
+            ->deleteJson("/admin/users/{$this->engineer->id}/");
 
         $response->assertOk()
             ->assertJson([
-                'message' => 'User data anonymized successfully (GDPR deletion)',
+                'message' => 'User data anonymized successfully ( deletion)',
             ]);
     }
 
@@ -350,10 +350,10 @@ class AdminUserControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_non_admin_cannot_gdpr_delete_user(): void
+    public function test_non_admin_cannot_delete_user(): void
     {
         $response = $this->actingAs($this->engineer)
-            ->deleteJson("/admin/users/{$this->admin->id}/gdpr");
+            ->deleteJson("/admin/users/{$this->admin->id}/");
 
         $response->assertForbidden();
     }

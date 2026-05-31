@@ -264,7 +264,7 @@ class UserManagementService
     }
 
     /**
-     * GDPR user deletion - anonymizes PII while keeping transaction records.
+     *  user deletion - anonymizes PII while keeping transaction records.
      *
      * This method:
      * - Anonymizes personal data (name, email, IP addresses)
@@ -274,7 +274,7 @@ class UserManagementService
      *
      * @throws \InvalidArgumentException
      */
-    public function gdprDelete(User $user, User $admin): void
+    public function Delete(User $user, User $admin): void
     {
         if ($user->id === $admin->id) {
             throw new \DomainException('You cannot delete your own account');
@@ -284,7 +284,7 @@ class UserManagementService
             throw new \DomainException('Admin accounts cannot be deleted');
         }
 
-        Log::info('GDPR deletion initiated', [
+        Log::info(' deletion initiated', [
             'user_id' => $user->id,
             'user_email' => $user->email,
             'admin_id' => $admin->id,
@@ -300,7 +300,7 @@ class UserManagementService
             'password' => hash('sha256', random_bytes(32)), // Invalidate password
             'last_login_ip' => null,
             'suspended_at' => now(),
-            'suspended_reason' => 'GDPR deletion request',
+            'suspended_reason' => ' deletion request',
             'deleted_at' => now(), // Soft delete marker
         ]);
 
@@ -336,7 +336,7 @@ class UserManagementService
         // Revoke all tokens
         $user->tokens()->delete();
 
-        Log::info('GDPR deletion completed', [
+        Log::info(' deletion completed', [
             'user_id' => $user->id,
             'anonymized_id' => $anonymizedId,
             'admin_id' => $admin->id,

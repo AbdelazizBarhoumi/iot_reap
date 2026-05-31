@@ -1,0 +1,79 @@
+@startuml 
+title UC-031 Acquire / Release Camera Control
+actor Engineer
+participant "Client UI" as UI
+participant "CameraControlController" as Controller
+participant "CameraControlService" as Service
+participant "CameraRepository" as Repo
+participant "NotificationService" as Notifier
+participant "CameraDevice" as Device
+
+Engineer -> UI : Click "Acquire Control" (cameraId)
+activate UI
+UI -> Controller : POST /cameras/{id}/acquire { userId }
+deactivate UI
+activate Controller
+Controller -> Service : acquireControl(cameraId, userId)
+activate Service
+alt camera unreachable
+    Service -> Repo : getCameraStatus(cameraId)
+    Repo --> Service : status = offline
+    Service --> Controller : AcquireResult(failure: CAMERA_OFFLINE)
+    Controller --> UI : 409 Camera offline
+    deactivate Service
+    deactivate Controller
+end
+
+alt available and supports PTZ
+    Service -> Repo : getCameraStatus(cameraId)
+    Repo --> Service : status { available, supportsPTZ }
+    Service -> Repo : reserveControl(cameraId, userId, leaseExpiry)
+    Repo --> Service : ReserveResult(success)
+    Service --> Controller : AcquireResult(success, controller=userId)
+    Controller --> UI : 200 { status: controlled, controller:userId }
+    Service -> Notifier : notify(ControlGranted, cameraId, userId)
+    Notifier --> Service : ack
+else controlled by other
+    Service -> Repo : getCameraStatus(cameraId)
+    Repo --> Service : status { controlled, owner:ownerId }
+    Service --> Controller : AcquireResult(failure: BUSY, ownerId)
+    Controller --> UI : 409 { busy:true, owner:ownerId }
+    deactivate Service
+    deactivate Controller
+end
+
+loop while controlHeld
+    Engineer -> UI : PTZ command (cmd)
+    UI -> Controller : POST /cameras/{id}/ptz { cmd, userId }
+    activate Controller
+    Controller -> Service : validateAndSendPTZ(cameraId, cmd, userId)
+    activate Service
+    Service -> Device : sendPTZ(cmd)
+    activate Device
+    Device --> Service : ack/status
+    deactivate Device
+    Service --> Controller : PTZAck(status)
+    Controller --> UI : 200 { ack }
+    deactivate Service
+    deactivate Controller
+end
+
+Engineer -> UI : Click "Release Control"
+UI -> Controller : POST /cameras/{id}/release { userId }
+activate Controller
+Controller -> Service : releaseControl(cameraId, userId)
+activate Service
+Service -> Repo : clearControlOwnership(cameraId)
+activate Repo
+Repo --> Service : ClearResult(success)
+deactivate Repo
+Service -> Notifier : notify(ControlReleased, cameraId)
+activate Notifier
+Notifier --> Service : ack
+deactivate Notifier
+Service --> Controller : ReleaseResult(success)
+Controller --> UI : 200 { status: available }
+deactivate Service
+deactivate Controller
+
+@enduml

@@ -45,6 +45,9 @@ class UsbDeviceResource extends JsonResource
             'pending_vm_name' => $this->pending_vm_name,
             'pending_since' => $this->pending_since?->toIso8601String(),
             // Dedicated VM assignment (permanent binding using VID:PID)
+            'dedicated_vmid' => $this->dedicated_vmid,
+            'dedicated_node' => $this->dedicated_node,
+            'dedicated_server_id' => $this->dedicated_server_id,
             'is_dedicated' => $this->isDedicated(),
             'vid_pid' => $this->vid_pid,
             'queue_count' => $this->whenLoaded('queueEntries', fn () => $this->queueEntries->count()),

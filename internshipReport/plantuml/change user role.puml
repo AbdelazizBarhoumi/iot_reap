@@ -1,0 +1,62 @@
+@startuml
+title Change User Role
+
+actor Administrator as Admin
+boundary "Admin User Management UI" as UI
+control "AdminUserController" as Controller
+control "UpdateUserRoleRequest" as Request
+control "UserManagementService" as Service
+entity "UserRepository" as Repository
+entity "User" as TargetUser
+entity "UserResource" as Resource
+
+Admin -> UI : select user and submit new role
+UI -> Controller : updateRole(userId, role)
+activate Controller
+
+Controller -> Request : validate(authorize + role)
+activate Request
+Request --> Controller : validated role
+deactivate Request
+
+Controller -> Service : updateRole(TargetUser, newRole, Admin)
+activate Service
+
+Service -> Service : check self-role change
+Service -> Service : build update payload
+
+alt newRole == teacher
+  Service -> Service : set teacher_approved_at\nset teacher_approved_by
+else newRole != teacher
+  Service -> Service : clear teacher_approved_at\nclear teacher_approved_by
+end
+
+Service -> Repository : update(TargetUser, data)
+activate Repository
+Repository -> TargetUser : update(data)
+activate TargetUser
+TargetUser --> Repository : refreshed user
+deactivate TargetUser
+Repository --> Service : updated user
+deactivate Repository
+
+Service -> Service : log role change
+Service --> Controller : updated user
+deactivate Service
+
+Controller -> Resource : make(updated user)
+activate Resource
+Resource --> Controller : response payload
+deactivate Resource
+
+Controller --> UI : 200 OK + user data
+deactivate Controller
+UI --> Admin : show success message
+
+note over Service
+Only administrators may change roles.
+The service rejects self-role changes.
+Teacher assignments automatically carry approval metadata.
+end note
+
+@enduml

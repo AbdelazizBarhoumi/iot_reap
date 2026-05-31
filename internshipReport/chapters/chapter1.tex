@@ -1,4 +1,4 @@
-% ==================== CHAPTER 1: CONTEXT AND ENVIRONMENT ====================
+% ==================== CHAPTER 1: PRELIMINARY STUDY ====================
 % ==================== SECTION NUMBERING RULE ====================
 % Section numbering DOES NOT include chapter number.
 % After chapter introduction, first section is numbered 1. (not 1.1 or 2.1)
@@ -20,24 +20,25 @@
 % - No automatic hyphenation
 % 
 % CHAPTER 1 CONTENT:
-% - Presentation of company/study framework (history, missions, technologies)
-% - Organization chart and team description
-% - Description of tasks performed and methods used
+% - General project context (Novation City and academic framework)
+% - Problem statement and study of existing solutions
+% - Proposed solution and requirements specification
+% - Agile Scrum methodology and project planning
 % ============================================================================
-% ==================== CHAPTER 1: CONTEXT AND ENVIRONMENT ====================
-\chapter{Context and Environment of the Project}
+% ==================== CHAPTER 1: PRELIMINARY STUDY ====================
+\chapter{Preliminary Study}
 \setcounter{section}{0}
 
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
 
-\initial{T}his chapter presents the professional context of the IoT-REAP platform development at Novation City, covering the organization's structure, the problem addressed, project objectives, and development planning.
+\initial{T}his chapter presents the preliminary study of the IoT-REAP project. It situates the work in the Novation City context, reviews existing industrial remote access solutions, defines the proposed platform and its requirements, and ends with the methodology and planning used to structure the implementation.
 
-\section{Company Presentation: Novation City}
+\section{General Project Context}
 
-Novation City serves as the professional context for the IoT-REAP platform development. This section presents the organization's institutional framework, operational structure, strategic focus, and the specialized business units that support industry through innovation, consulting, training, and research initiatives.
+Novation City serves as the professional context for the IoT-REAP platform development. This section situates the project within the cluster's institutional framework, business units, infrastructure, and academic setting, all of which explain why a secure remote industrial access platform was needed.
 
-\subsection{Foundation and Mission}
+\subsection{Host Organization}
 
 Novation City is a competitiveness cluster established in 2009 in Sousse, Tunisia, as a public-private partnership. The cluster is designed to foster innovation ecosystems and enhance industrial competitiveness through digital transformation and advanced technologies, addressing the growing need for mechatronics expertise and Industry 4.0 adoption in the MENA region \cite{novationcity2025}.
 
@@ -78,11 +79,11 @@ A central pillar of Novation City's strategy is promoting Industry 4.0 principle
 
 To address these challenges, Novation City extends its capabilities with secure remote access platforms enabling engineers to interact with industrial systems remotely through the IoT-REAP initiative, combining Infrastructure-as-a-Service provisioning with zero-trust security principles \cite{edb2017} \cite{tuvsud2023}.
 
-\section{Problem and Objective of the Project}
+\subsection{Academic Framework}
 
-This section identifies the critical challenges facing industrial organizations requiring secure remote access to specialized equipment, analyzes the limitations of existing solutions, and presents the strategic objectives driving the IoT-REAP platform development.
+This project was carried out as part of an internship report in a software engineering and Industry 4.0 context. The academic objective was to apply web engineering, software architecture, database modeling, remote infrastructure integration, and secure system design to a real industrial problem. The work also required formal documentation through UML modeling, requirements analysis, implementation reporting, and verification of the delivered platform.
 
-\subsection{Problem}
+\subsection{Problem Statement}
 
 The IoT-REAP project emerges from critical operational challenges facing industrial companies and training institutions within the Industry 4.0 ecosystem. As manufacturing systems become increasingly digitized and interconnected, engineers and technicians require hands-on access to specialized industrial equipment—PLCs (Programmable Logic Controllers), HMIs (Human-Machine Interfaces), SCADA systems, and industrial robots—for training, development, and maintenance purposes.
 
@@ -136,39 +137,301 @@ No Predictive Maintenance & Reactive maintenance only & Equipment downtime, safe
 \label{tab:current-limitations}
 \end{table}
 
-\subsection{Project Objectives}
+\section{Study of the Existing}
 
-The primary goal was to develop the \textbf{IoT-REAP platform}—a secure industrial remote operations platform enabling engineers to access virtual machines, control robots, and monitor equipment through a unified web interface. The vision: provide \textbf{secure, browser-based access} to industrial systems with \textbf{zero client-side installation} while maintaining strict OT security compliance.
+Before proposing the IoT-REAP architecture, it is essential to examine current
+industrial remote access solutions, understand their technical approaches, and
+identify the specific gaps they fail to address. This analysis establishes the
+foundation for the proposed platform design.
 
-\textbf{Specific Technical Objectives:}
+\subsection{Analysis of Existing Industrial Remote Access Solutions}
 
-\begin{enumerate}
-    \item \textbf{VM Provisioning System:} Develop automated virtual machine lifecycle management using \textbf{Proxmox VE API}, supporting automatic cleanup of expired sessions
-    \item \textbf{Browser-Based Remote Access:} Integrate \textbf{Apache Guacamole} for clientless remote desktop (RDP/VNC/SSH) access to industrial VMs, eliminating the need for local client installation
-    \item \textbf{IoT Robot Control:} Build real-time robot control interface using \textbf{MQTT protocol} with ESP32 microcontrollers, supporting visual programming via Blockly and emergency stop functionality
-    \item \textbf{Camera Streaming \& AI Scheduling:} Implement live camera feeds from industrial equipment with \textbf{AI-powered demand forecasting} to pre-warm VMs during peak usage periods
-    \item \textbf{Zero-Trust Security:} Implement comprehensive security layer including device fingerprinting, geo-IP anomaly detection, real-time risk scoring, and automatic session termination for high-risk activities
-    \item \textbf{OT Network Isolation:} Enforce Purdue model network segmentation, restricting OT zone access to authorized users with tamper-proof audit logging for IEC 62443 compliance
-    \item \textbf{Predictive Maintenance:} Deploy machine learning models to analyze robot telemetry, compute health scores, and alert maintenance teams before equipment failures
-    \item \textbf{Technical Training Platform:} Develop a comprehensive learning management system enabling structured industrial skills training with video-based courses, interactive quizzes, hands-on VM lab sessions, and verifiable digital certificates—bridging the gap between theoretical knowledge and practical application
-\end{enumerate}
+Industrial remote access has traditionally relied on several established
+approaches, each with distinct characteristics and limitations. Understanding
+these existing solutions is essential for positioning the IoT-REAP platform
+within the current technological landscape.
 
-\textbf{Expected Business Impact:}
+\textbf{Virtual Private Networks (VPNs):} The most common approach for industrial remote access involves establishing encrypted tunnels between remote users and industrial networks. Organizations deploy VPN concentrators at facility perimeters, requiring engineers to install client software, configure connections, and authenticate before accessing internal resources.
 
-\begin{itemize}
-    \item \textbf{Accessibility:} Enable remote access to industrial systems from any location with a web browser
-    \item \textbf{Security:} Zero-trust architecture with real-time risk monitoring and automatic threat response
-    \item \textbf{Scalability:} Support 50+ concurrent users with automatic VM provisioning and load balancing
-    \item \textbf{Compliance:} Full audit trail meeting IEC 62443 industrial security standards
-    \item \textbf{Efficiency:} AI-powered resource optimization reducing idle time and improving utilization
-    \item \textbf{Reliability:} Predictive maintenance reducing unexpected equipment downtime
-    \item \textbf{Skills Development:} Integrated training platform enabling continuous workforce upskilling with progress tracking and certification
-\end{itemize}   
+\textbf{Jump Servers / Bastion Hosts:} Some organizations implement intermediate servers that act as controlled access points to OT networks. Engineers first connect to the jump server, then establish secondary connections to target systems. This adds a security layer but increases connection complexity and latency.
+
+\textbf{Proprietary Remote Access Tools:} Industrial equipment vendors (Siemens, Rockwell, Schneider) offer vendor-specific remote access solutions tied to their hardware ecosystems. These tools provide optimized connections to specific PLCs and HMIs but create vendor lock-in and fragmentation across multi-vendor environments.
+
+\textbf{Cloud-Based IIoT Platforms:} Emerging platforms like AWS IoT, Azure IoT Hub, and PTC ThingWorx provide cloud connectivity for industrial devices. However, these focus primarily on data collection and monitoring rather than interactive remote control and desktop access.
+
+\textbf{Generic Remote Desktop Solutions:} Tools like TeamViewer, AnyDesk, and Microsoft RDP provide remote desktop capabilities but lack industrial-specific features such as OT network isolation, session quotas, audit logging for compliance, and integration with virtualization platforms.
+
+\subsection{Criticism of the Existing}
+
+The current industrial remote access landscape exhibits several fundamental
+deficiencies:
+
+\textbf{VPN Complexity and Security Risks:} VPN deployments require significant IT expertise for configuration and maintenance. Split tunneling creates security vulnerabilities, and VPN credentials are prime targets for attackers. Once inside the VPN, lateral movement across the network is often unrestricted, violating zero-trust principles.
+
+\textbf{Lack of Session Management:} Existing solutions provide no automated session expiration, resource quotas, or reservation systems. Shared equipment (industrial VMs, robots) cannot be efficiently scheduled, leading to conflicts and underutilization.
+
+\textbf{No OT/IT Network Isolation:} Traditional remote access tools do not enforce Purdue model network segmentation. Engineers accessing OT systems from IT networks create security vulnerabilities that violate IEC 62443 standards.
+
+\textbf{Missing Audit Trail:} Compliance with industrial security standards requires comprehensive logging of all access and commands. Existing tools lack tamper-proof audit logs with cryptographic integrity verification.
+
+\textbf{Fragmented Tooling:} Organizations must deploy separate systems for VM management, remote desktop, IoT device control, and camera monitoring. This fragmentation increases operational complexity and prevents unified security policies.
+
+\textbf{No Predictive Capabilities:} Existing solutions provide no demand forecasting for resource allocation or predictive maintenance for connected equipment. Administrators cannot anticipate peak usage or equipment failures.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of Existing Remote Access Solutions vs. IoT-REAP Requirements}
+    \begin{tabular}{|p{2.8cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+        \hline
+        \textbf{Requirement} & \textbf{VPN Solutions} & \textbf{Generic RDP Tools} & \textbf{IIoT Platforms}         \\
+        \hline
+        Browser-based Access & No client required     & No client required         & Yes, web dashboards             \\
+        \hline
+        VM Provisioning      & Not supported          & Not supported              & Not supported (data focus only) \\
+        \hline
+        Session Management   & Poor: Manual only      & Poor: No automation        & Partial support                 \\
+        \hline
+        OT/IT Isolation      & Poor: Bypasses zones   & Poor: No awareness         & Partial support                 \\
+        \hline
+        Audit Logging        & Good: Basic logs       & Poor: Insufficient         & Good: Good logging              \\
+        \hline
+        IoT Integration      & Poor: Not supported    & Poor: Not supported        & Good: Core feature              \\
+        \hline
+        AI Analytics         & Poor: Not supported    & Poor: Not supported        & Good: Growing support           \\
+        \hline
+    \end{tabular}
+    \label{tab:solution-comparison}
+\end{table}
+
+\textbf{Summary of Critical Deficiencies:} The systematic analysis reveals that current solutions are designed for traditional IT environments and fail to address the unique requirements of Industry 4.0: \textbf{zero-trust security} (assumed perimeter trust is obsolete), \textbf{OT compliance} (industrial standards require specific controls), \textbf{resource efficiency} (expensive equipment needs intelligent scheduling), \textbf{unified management} (fragmented tools create security gaps), and \textbf{predictive operations} (reactive approaches cause downtime). These deficiencies create the business case for a purpose-built industrial remote access platform.
+
+\section{Proposed Solution}
+
+Based on the identified deficiencies in existing solutions, this section
+presents the IoT-REAP platform architecture, its core functional components,
+security framework, and the AI/ML capabilities that enable intelligent resource
+management and predictive operations.
+
+\subsection{Project Definition}
+
+The IoT-REAP (Internet of Things - Remote Equipment Access Platform) project
+aims to develop an integrated web-based platform that provides secure remote
+access to industrial systems, virtual machines, and IoT devices. The project
+addresses the critical limitations identified in current industrial remote
+access solutions, creating a unified platform for Industry 4.0 operations.
+
+\textbf{Project Scope:} Development of a comprehensive platform enabling engineers to provision virtual machines, access them via browser-based remote desktop, control IoT robots, monitor camera feeds, and operate within a zero-trust security framework—all from a single unified interface without client-side software installation.
+
+\textbf{Core Problem Statement:} Existing remote access solutions are fragmented, lack OT-specific security controls, provide no intelligent resource management, and fail to meet industrial compliance requirements. Organizations need a purpose-built platform that unifies VM provisioning, remote desktop access, IoT control, and security monitoring.
+
+\subsection{Solution Architecture}
+
+The proposed solution employs a modern web application architecture built on
+established software engineering principles:
+
+\textbf{Separation of Concerns:} Clear architectural boundaries between data management, business logic, and presentation layers enable independent development and maintenance of each component. The backend follows the Service-Repository pattern, ensuring controllers remain thin.
+
+\textbf{API-First Integration:} External services (Proxmox VE, Apache Guacamole, MQTT broker, AI microservice) integrate through well-defined interfaces, ensuring loose coupling and flexibility to adapt to evolving infrastructure.
+
+\textbf{Event-Driven Architecture:} System components communicate via Laravel Events and WebSocket broadcasts, enabling real-time updates for session status, robot telemetry, and security alerts.
+
+\textbf{Microservices for AI/ML:} Machine learning components (demand forecasting, anomaly detection) are deployed as separate Python FastAPI services, allowing independent scaling and technology-appropriate implementations.
+
+\textbf{Zero-Trust Security Model:} Every access request is verified regardless of network location. Sessions are continuously monitored with real-time risk scoring and automatic termination of high-risk activities.
+
+\section{Requirements Specification}
+
+The requirements specification translates the project problem and proposed solution into concrete actors, system services, and quality constraints. It distinguishes who interacts with the platform, what each actor must be able to do, and the non-functional qualities expected from the solution.
+
+\subsection{Identification of Actors}
+
+The platform is organized around role-based access control implemented in the
+application through the user roles \texttt{engineer}, \texttt{teacher}, and
+\texttt{admin}, in addition to the public unauthenticated state. Each actor
+interacts with the same platform from a different operational perspective, and
+each role is associated with a distinct set of services, permissions, and
+workflows.
+
+\textbf{Unauthenticated User (Guest)} represents any visitor who has not yet authenticated in the system. This actor can browse public training paths, access legal and informational pages, consult public discussion threads in read-only mode, view training path reviews, verify public certificates, initiate authentication and registration workflows, and access public checkout result pages after external payment redirection. The guest actor therefore serves as the entry point into the platform ecosystem.
+
+\textbf{Engineer} is the primary learner and remote laboratory user. This actor enrolls in training paths, consumes educational resources such as articles and videos, takes quizzes, tracks progress, writes notes, participates in discussions, posts reviews, claims certificates, and initiates payment and refund operations when a training path is monetized. Beyond the learning dimension, the engineer also provisions virtual machine sessions, opens remote desktop access through Guacamole, configures connection preferences, reserves USB devices and cameras, attaches hardware to active sessions, enters waiting queues when devices are busy, and interacts with session-bound lab resources.
+
+\textbf{Teacher} is the content producer and pedagogical supervisor. This actor creates and manages training paths, modules, and training units; authors articles; uploads and manages videos and captions; creates and publishes quizzes; reviews learner interactions through analytics dashboards; moderates instructional discussions; submits training paths for administrative approval; and requests payout for generated revenue. The teacher role links educational design with operational control over learning content.
+
+\textbf{Administrator} is the platform governance and infrastructure actor. This role supervises users, teacher approval, training path approval, featured training path ordering, payment-related review processes, payout validation, infrastructure supervision, Proxmox server and node management, VM assignment approval, hardware gateway verification, camera and reservation management, moderation of flagged forum content, maintenance operations, alerts, and activity logging. Administrators also have access to impersonation and compliance-sensitive actions such as suspension and -oriented user deletion.
+
+\textbf{Stripe (External Payment Processor)} is an external system actor that supports the platform commerce workflows. IoT-REAP integrates with Stripe through hosted checkout redirections and signed webhook callbacks to confirm payments, create internal payment records, and react to asynchronous state changes. Stripe also participates in finance workflows such as refunds and instructor payouts, where administrators trigger payout transfers and refund executions through Stripe APIs while preserving auditability and transaction integrity.
+
+The interaction among these actors reveals that the platform combines four
+complementary dimensions: e-learning delivery, instructor authoring, virtual
+laboratory provisioning, and infrastructure governance. This combination
+distinguishes the project from a conventional learning management system
+because educational workflows are directly connected to remote computing and
+physical IoT resource access.
+
+\subsection{Functional Requirements}
+
+The platform must support the following functional requirements according to
+actor responsibilities and shared system behavior.
+
+\textbf{Unauthenticated User (Guest):}
+\begin{itemize}[label=-]
+    \item Access account registration and login workflows
+    \item Consult the landing page and public legal pages
+    \item Browse public training paths and training path details
+    \item Read public reviews and forum threads in read-only mode
+    \item Verify and download publicly accessible certificates through verification links
+    \item View public search results, trending queries, and category-based discovery
+    \item Access checkout success and cancellation pages after external payment flows
+\end{itemize}
+
+\textbf{Engineer:}
+\begin{itemize}[label=-]
+    \item Enroll in and unenroll from training paths
+    \item Access owned or enrolled training units and learning materials
+    \item Read articles and track article completion
+    \item Stream instructional videos and update playback progress
+    \item Attempt quizzes, submit answers, and review attempt history
+    \item Mark training units complete or incomplete based on learning progress
+    \item Create, update, and delete personal notes for training units
+    \item Create, edit, and delete reviews for completed or relevant training paths
+    \item Participate in forum discussions by creating threads, replying, voting, and
+          flagging content
+    \item View notifications and manage read status
+    \item Claim, verify, and download certificates
+    \item Initiate checkout for paid training paths
+    \item Review payment history and submit refund requests
+    \item Provision, extend, view, and terminate virtual machine sessions
+    \item Retrieve Guacamole access tokens for remote desktop connectivity
+    \item Manage connection preference profiles for available protocols
+    \item Browse available Proxmox virtual machines and snapshots
+    \item Reserve USB devices and cameras
+    \item Attach or detach session hardware and join hardware waiting queues
+    \item Access session camera streams, request control, move PTZ-enabled cameras, and
+          change stream resolution
+\end{itemize}
+
+\textbf{Teacher:}
+\begin{itemize}[label=-]
+    \item Create, edit, archive, restore, and delete training paths
+    \item Organize training paths into modules and training units
+    \item Reorder modules and training units
+    \item Create and maintain quiz structures, questions, and publication status
+    \item Create, update, and delete article content
+    \item Upload, retry, and delete training videos
+    \item Manage video captions
+    \item Submit training paths for administrative review
+    \item View teacher analytics for enrollment, earnings, and learning funnel data
+    \item Access a teacher discussion inbox and moderate course-related threads
+    \item Request revenue payout
+    \item Submit training unit virtual machine assignment requests
+\end{itemize}
+
+\textbf{Administrator:}
+\begin{itemize}[label=-]
+    \item Access the administrative dashboard and KPI views
+    \item Approve, reject, feature, unfeature, and order training paths
+    \item Review pending VM assignment requests
+    \item Manage reservations for devices and cameras
+    \item Manage Proxmox servers and nodes
+    \item Start, stop, reboot, and shut down virtual machines through node operations
+    \item Register, verify, update, and remove gateway nodes
+    \item Discover hardware devices and refresh infrastructure status
+    \item Bind, unbind, attach, detach, dedicate, and configure devices and cameras
+    \item Assign and unassign cameras to virtual machines
+    \item Approve teacher accounts and manage user roles
+    \item Suspend, unsuspend, impersonate, and delete user accounts where authorized
+    \item Review and process refund requests
+    \item Review, approve, reject, and process payout requests
+    \item Monitor video processing status
+    \item Place devices and cameras in maintenance mode
+    \item Moderate flagged threads and replies
+    \item Manage system alerts and consult activity logs
+\end{itemize}
+
+\textbf{System-Wide Functional Requirements:}
+\begin{itemize}[label=-]
+    \item Enforce authentication and email verification for protected features
+    \item Apply authorization policies according to role and ability
+    \item Persist learning, payment, infrastructure, and moderation data
+    \item Support public and protected routes through a unified web interface
+    \item Provide rate limiting for sensitive or abuse-prone operations
+    \item Maintain notification and audit mechanisms for critical events
+    \item Support asynchronous or stateful workflows such as video processing, VM
+          lifecycle operations, refund handling, and hardware attachment
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+The quality constraints of the platform are defined by the educational,
+infrastructure, and operational nature of the system.
+
+\textbf{Performance:}
+\begin{itemize}[label=-]
+    \item The platform must provide responsive navigation across training,
+          administration, and infrastructure pages
+    \item Video streaming and progress tracking must occur with acceptable latency
+    \item VM provisioning and session retrieval must remain usable under concurrent
+          demand
+    \item Search, analytics summaries, and notification retrieval must execute
+          efficiently
+\end{itemize}
+
+\textbf{Security:}
+\begin{itemize}[label=-]
+    \item Authentication must rely on secure identity management and verified email
+          addresses
+    \item Authorization must be enforced by middleware and policy gates
+    \item Payment workflows must validate external webhook signatures and preserve
+          transaction integrity
+    \item Access to VM sessions, cameras, and USB devices must be restricted to
+          authorized users
+    \item Sensitive administrative actions must be auditable
+\end{itemize}
+
+\textbf{Reliability:}
+\begin{itemize}[label=-]
+    \item Learning progress, notes, payments, and reservations must remain durable and
+          consistent
+    \item Hardware and infrastructure actions must tolerate transient failure and
+          preserve observable state
+    \item Session resources must support lifecycle management including creation,
+          extension, and cleanup
+    \item Alerting and logging must assist recovery from operational issues
+\end{itemize}
+
+\textbf{Usability:}
+\begin{itemize}[label=-]
+    \item The user interface must remain coherent for learners, teachers, and
+          administrators
+    \item Learning workflows must be understandable without specialized infrastructure
+          knowledge
+    \item Administrative screens must expose complex operations in a controlled and
+          structured form
+    \item Forum, notes, reviews, and certificate features must integrate naturally into
+          the learning experience
+\end{itemize}
+
+\textbf{Scalability and Maintainability:}
+\begin{itemize}[label=-]
+    \item The architecture must support extension through modular routes, controllers,
+          models, and services
+    \item Domain separation between learning, commerce, virtual lab, and operations must
+          remain clear
+    \item The platform must support future growth in training content, users, devices,
+          and compute nodes
+    \item The codebase must remain testable and maintainable through strongly typed
+          frontend code and structured backend services
+\end{itemize}
+
+
 \section{Work Methodology}
 
 The development of IoT-REAP required a structured approach to coordinate complex technical requirements with evolving stakeholder needs. This section presents the Agile Scrum methodology framework and the specific development timeline employed throughout the project.
 
 \subsection{The Agile Scrum Methodology}
+
+This subsection explains why Scrum was selected for IoT-REAP and how its roles, ceremonies, and sprint structure organize the development work before the detailed definition below.
 
 \subsubsection{Definition}
 
@@ -389,11 +652,13 @@ UML consists of multiple diagram types that capture different aspects of system 
 
 For the IoT-REAP platform development, UML modeling provided a visual framework for communicating system architecture, clarifying requirements, and documenting design decisions across the development team and stakeholders.
 
-\section{Planning}
+\section{Project Planning}
 
-The IoT-REAP platform development is executed over a 17-week period from February 2, 2026 to June 1, 2026, following an Agile Scrum sprint-based approach \cite{agile}. The project is structured into eight two-week sprints (16 weeks of development plus 1 week buffer), each delivering specific features and capabilities, with key milestones at Sprint 3 (MVP Demo) and Sprint 6 (Feature Complete).
+The IoT-REAP platform development is organized as a phased timeline from February to mid-June 2026, following an Agile Scrum sprint-based approach \cite{agile}. The project is structured into eight two-week sprints with a small integration and testing buffer, and it reaches two key milestones at Sprint 3 (MVP Demo) and Sprint 6 (Feature Complete).
 
 \subsection{Sprint-Based Development Phases}
+
+The following phases present the project timeline in chronological order, showing how the platform evolved from foundation and integration work to testing and final delivery.
 
 \textbf{Sprint 1: Foundation \& Authentication (February 2-15, 2026)}
 
@@ -425,7 +690,7 @@ Deploys Python FastAPI microservice for ML-based demand forecasting using Random
 
 \textbf{Sprint 6: Zero-Trust Security — Feature Complete (May 4-17, 2026)}
 
-Implements device fingerprinting and geo-IP anomaly detection. Builds real-time risk scoring engine with automatic session termination for high-risk activities. Trains IsolationForest model for robot health anomaly detection. \textbf{All 60 user stories are implemented at this checkpoint.}
+Implements device fingerprinting and geo-IP anomaly detection. Builds real-time risk scoring engine with automatic session termination for high-risk activities. Trains IsolationForest model for robot health anomaly detection. \textbf{All core backlog items are implemented at this checkpoint.}
 
 \textbf{Sprint 7: OT Isolation, Catalog \& Compliance (May 18-31, 2026)}
 
@@ -442,10 +707,10 @@ Achieves 80\% test coverage with mocked external APIs. Conducts load testing (50
 \label{fig:project-timeline}
 \end{figure}
 
-
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
 
-This chapter establishes the professional context at Novation City, identifies the critical challenges of secure industrial remote access for Industry 4.0, and defines project objectives for the IoT-REAP platform. The 17-week development plan across 8 sprints targets a comprehensive solution integrating VM provisioning, browser-based remote desktop, IoT robot control, AI-powered scheduling, and zero-trust security.
+This chapter established the project context, studied current remote access limitations, presented the IoT-REAP solution, specified the main requirements, and described the Agile Scrum methodology and sprint planning used to organize the work.
 
 \cleardoublepage
+

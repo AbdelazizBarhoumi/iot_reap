@@ -105,11 +105,11 @@ export const usersApi = {
         window.location.assign('/dashboard');
     },
     /**
-     * GDPR anonymize a user.
+     *  anonymize a user.
      */
-    async gdprDeleteUser(userId: string): Promise<{ message: string }> {
+    async DeleteUser(userId: string): Promise<{ message: string }> {
         const { data } = await client.delete<{ message: string }>(
-            `${USERS_BASE_PATH}/${userId}/gdpr`,
+            `${USERS_BASE_PATH}/${userId}/`,
         );
 
         return data;

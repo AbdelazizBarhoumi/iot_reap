@@ -20,7 +20,6 @@ import {
 } from '@/components/analytics';
 import { CompletionFunnel } from '@/components/analytics/CompletionFunnel';
 import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { getPeriodLabel } from '@/lib/analytics.utils';
@@ -116,20 +115,10 @@ export default function AnalyticsPage({
                                     revenue
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <PeriodSelector
-                                    value={period}
-                                    onPeriodChange={handlePeriodChange}
-                                />
-                                <Button variant="outline" asChild>
-                                    <Link
-                                        href={teaching.analytics.earnings.url()}
-                                    >
-                                        <DollarSign className="mr-2 h-4 w-4" />
-                                        View Earnings
-                                    </Link>
-                                </Button>
-                            </div>
+                            <PeriodSelector
+                                value={period}
+                                onPeriodChange={handlePeriodChange}
+                            />
                         </>
                     }
                 />

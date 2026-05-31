@@ -1,0 +1,75 @@
+@startuml
+title Use Case: Pin / Unpin Thread - Sequence
+
+actor Teacher
+
+participant Frontend as "Frontend (UI)"
+participant Controller as "ForumController"
+participant Auth as "AuthService"
+participant Service as "ThreadModerationService"
+participant Repo as "ThreadRepository"
+participant Audit as "ModerationAuditService"
+participant Notification as "NotificationService"
+
+== Main Success Scenario ==
+Teacher -> Frontend : clickPin(threadId, action)
+Frontend -> Controller : POST /threads/{threadId}/pin { action, authToken }
+activate Controller
+
+Controller -> Auth : authorize(userToken, "moderate_thread")
+activate Auth
+Auth --> Controller : authorized
+deactivate Auth
+
+Controller -> Service : pinUnpinThread(threadId, actor, action)
+activate Service
+
+Service -> Repo : findById(threadId)
+activate Repo
+Repo --> Service : Thread (exists)
+deactivate Repo
+
+alt thread not found
+    Service -> Controller : throw NotFoundException
+    Controller --> Frontend : 404 Not Found
+    deactivate Service
+    deactivate Controller
+else permission check
+    Service -> Service : validateOwnershipAndPermissions(actor, thread)
+    alt permission denied
+        Service -> Controller : throw AuthorizationException
+        Controller --> Frontend : 403 Forbidden
+        deactivate Service
+        deactivate Controller
+    else perform update
+        Service -> Repo : beginTransaction()
+        activate Repo
+        Service -> Repo : update(thread.pinned = (action == "pin"), pinned_at)
+        Repo --> Service : updated Thread
+
+        Service -> Audit : recordModerationAction(actor, threadId, action, timestamp)
+        activate Audit
+        Audit --> Service : auditRecorded
+        deactivate Audit
+
+        Service -> Repo : commit()
+        Repo --> Service : commit OK
+        deactivate Repo
+
+        opt notifications enabled
+            Service -> Notification : notifySubscribers(threadId, action)
+            activate Notification
+            Notification --> Service : notificationsQueued
+            deactivate Notification
+        end
+
+        Service --> Controller : 200 OK {updated Thread}
+        deactivate Service
+        Controller --> Frontend : 200 OK {updated Thread}
+        deactivate Controller
+    end
+end
+
+Frontend -> Teacher : displaySuccess(updated thread state)
+
+@enduml

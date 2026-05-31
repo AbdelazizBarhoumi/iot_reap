@@ -530,14 +530,6 @@ class GatewayService
      */
     public function bindDevice(UsbDevice $device): void
     {
-        // Camera devices cannot be bound to VMs
-        if ($device->is_camera) {
-            throw new GatewayApiException(
-                'Camera devices cannot be bound to VMs. Cameras are managed separately via the camera streaming system.',
-                operation: 'bind'
-            );
-        }
-
         $node = $device->gatewayNode;
 
         if (! $node) {
@@ -677,10 +669,22 @@ class GatewayService
      */
     public function attachToSession(UsbDevice $device, VMSession $session): void
     {
-        // Camera devices cannot be attached to VMs
-        if ($device->is_camera) {
+        $vmid = $session->vm_id;
+        $serverId = $session->proxmox_server_id;
+        $isDedicatedForVm = $vmid !== null
+            && $serverId !== null
+            && $device->isDedicatedTo($vmid, $serverId);
+
+        if ($device->isDedicated() && ! $isDedicatedForVm) {
             throw new GatewayApiException(
-                'Camera devices cannot be attached to VMs. Cameras are managed separately via the camera streaming system.',
+                'Device is dedicated to another VM.',
+                operation: 'attach'
+            );
+        }
+
+        if ($device->is_camera && ! $isDedicatedForVm) {
+            throw new GatewayApiException(
+                'Camera devices can only be attached when dedicated to the target VM.',
                 operation: 'attach'
             );
         }
@@ -741,6 +745,7 @@ class GatewayService
         // Build the usbip attach command to run inside the VM
         $gatewayIp = $node->ip;
         $busid = $device->busid;
+        $vidPid = "{$device->vendor_id}:{$device->product_id}";
 
         try {
             // Get the Proxmox client for this session's server
@@ -752,7 +757,6 @@ class GatewayService
 
             // Real-state pre-check: device may already be attached in VM while DB says bound.
             // If found, sync DB and return immediately (no attach/poll needed).
-            $vidPid = "{$device->vendor_id}:{$device->product_id}";
             if (! app()->environment('testing')) {
                 $alreadyAttachedPort = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
@@ -2165,10 +2169,18 @@ class GatewayService
         string $vmName = 'direct-attach',
         bool $allowPending = true
     ): array {
-        // Camera devices cannot be attached to VMs
-        if ($device->is_camera) {
+        $isDedicatedForVm = $device->isDedicatedTo($vmid, $server->id);
+
+        if ($device->isDedicated() && ! $isDedicatedForVm) {
             throw new GatewayApiException(
-                'Camera devices cannot be attached to VMs. Cameras are managed separately via the camera streaming system.',
+                'Device is dedicated to another VM.',
+                operation: 'attach'
+            );
+        }
+
+        if ($device->is_camera && ! $isDedicatedForVm) {
+            throw new GatewayApiException(
+                'Camera devices can only be attached when dedicated to the target VM.',
                 operation: 'attach'
             );
         }
@@ -2257,6 +2269,7 @@ class GatewayService
 
         $gatewayIp = $node->ip;
         $busid = $device->busid;
+        $vidPid = "{$device->vendor_id}:{$device->product_id}";
 
         try {
             // Query the guest agent for the actual OS type
@@ -2264,7 +2277,6 @@ class GatewayService
             $isWindows = ($osType === 'windows');
 
             // Real-state pre-check: if already present in VM, sync and return immediately.
-            $vidPid = "{$device->vendor_id}:{$device->product_id}";
             if (! app()->environment('testing')) {
                 $alreadyAttachedPort = $this->getAttachedPort(
                     proxmoxClient: $proxmoxClient,
@@ -3182,12 +3194,28 @@ class GatewayService
         string $nodeName,
         ProxmoxServer $server
     ): void {
-        // Camera devices cannot be dedicated to VMs
-        if ($device->is_camera) {
-            throw new GatewayApiException(
-                'Camera devices cannot be dedicated to VMs',
-                operation: 'dedicate'
-            );
+        $camera = $this->cameraRepository->findByUsbDevice($device);
+
+        if ($device->isAttached()) {
+            Log::info('Detaching USB device before dedication', [
+                'device_id' => $device->id,
+                'current_vmid' => $device->attached_vmid,
+                'new_vmid' => $vmid,
+            ]);
+
+            $this->detachFromVm($device);
+            $device->refresh();
+        }
+
+        if ($device->isBound()) {
+            Log::info('Unbinding USB device before dedication', [
+                'device_id' => $device->id,
+                'current_dedication' => $device->dedicated_vmid,
+                'new_vmid' => $vmid,
+            ]);
+
+            $this->unbindDevice($device);
+            $device->refresh();
         }
 
         // Clear any existing dedication
@@ -3200,6 +3228,28 @@ class GatewayService
         }
 
         $this->deviceRepository->setDedicatedVm($device, $vmid, $nodeName, $server->id);
+
+        if ($camera !== null) {
+            $camera->assignToVm($vmid);
+
+            if ($camera->status === CameraStatus::ACTIVE && $camera->gatewayNode) {
+                $stopResult = $this->stopCameraStream(
+                    $camera->gatewayNode,
+                    $camera->stream_key
+                );
+
+                if ($stopResult['success'] ?? false) {
+                    $camera->update(['status' => CameraStatus::INACTIVE]);
+                } else {
+                    Log::warning('Failed to stop camera stream during dedication', [
+                        'camera_id' => $camera->id,
+                        'device_id' => $device->id,
+                        'vmid' => $vmid,
+                        'error' => $stopResult['error'] ?? 'unknown',
+                    ]);
+                }
+            }
+        }
 
         Log::info('USB device dedicated to VM', [
             'device_id' => $device->id,
@@ -3221,6 +3271,11 @@ class GatewayService
 
         $previousVmid = $device->dedicated_vmid;
         $this->deviceRepository->clearDedicatedVm($device);
+
+        $camera = $this->cameraRepository->findByUsbDevice($device);
+        if ($camera !== null && $camera->assigned_vm_id === $previousVmid) {
+            $camera->unassignFromVm();
+        }
 
         Log::info('USB device dedication removed', [
             'device_id' => $device->id,

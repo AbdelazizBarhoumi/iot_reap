@@ -1,0 +1,89 @@
+/' Use Case: Extend Session Duration - Sequence Diagram (PlantUML) '/
+@startuml
+title Use Case: Extend Session Duration
+actor Engineer
+
+participant "Frontend (Browser)" as Frontend
+participant "SessionController (API)" as SessionController
+participant "SessionService" as SessionService
+participant "VMSessionRepository" as Repo
+participant "QuotaService / Billing" as QuotaService
+participant "SchedulerService" as Scheduler
+participant "NotificationService" as Notification
+participant "AuditLog" as Audit
+participant "ProxmoxClient (optional)" as Proxmox
+
+== Main Success Scenario: Request extension ==
+Engineer -> Frontend : Click "Extend Session" (sessionId, requestedDuration)
+Frontend -> SessionController : POST /sessions/{id}/extend {requestedDuration}
+activate SessionController
+SessionController -> SessionService : extendSession(user, sessionId, requestedDuration)
+activate SessionService
+
+note over SessionService: Validate request, ownership, and status
+
+SessionService -> Repo : findOwnedByUser(sessionId, user)
+activate Repo
+Repo --> SessionService : VMSession (id, expiresAt, status)
+deactivate Repo
+
+alt session not active / not found
+    SessionService --> SessionController : throw NotFound/InvalidState
+    SessionController --> Frontend : HTTP 404/409 error
+    deactivate SessionService
+    deactivate SessionController
+    return
+end
+
+SessionService -> SessionService : validateRequestedDuration(requestedDuration)
+SessionService -> QuotaService : assertHasCapacity(user, requestedDuration)
+activate QuotaService
+QuotaService --> SessionService : OK (or failure)
+deactivate QuotaService
+
+alt quota/billing failure
+    SessionService --> SessionController : DomainException (quota/billing)
+    SessionController --> Frontend : HTTP 402/403/409 with message
+    deactivate SessionService
+    deactivate SessionController
+    return
+end
+
+SessionService -> SessionService : compute newExpire = expiresAt + requestedDuration
+
+SessionService -> Repo : updateExpiry(sessionId, newExpire)
+activate Repo
+Repo --> SessionService : success / updated VMSession
+deactivate Repo
+
+SessionService -> Scheduler : rescheduleCleanupJob(sessionId, newExpire)
+activate Scheduler
+Scheduler --> SessionService : ok
+deactivate Scheduler
+
+opt If integration with Proxmox requires runtime extension
+    SessionService -> Proxmox : extendSessionLease(vmId, newExpire)
+    activate Proxmox
+    Proxmox --> SessionService : ack
+    deactivate Proxmox
+end
+
+SessionService -> Audit : writeEntry(user, sessionId, oldExpire, newExpire, reason)
+activate Audit
+Audit --> SessionService : ack
+deactivate Audit
+
+SessionService -> Notification : notify(user, "Session extended", details)
+activate Notification
+Notification --> SessionService : ack
+deactivate Notification
+
+SessionService --> SessionController : updated VMSession resource
+deactivate SessionService
+
+SessionController --> Frontend : HTTP 200 {updated session}
+deactivate SessionController
+
+Frontend -> Engineer : Display success + updated timer
+
+@enduml

@@ -1,0 +1,701 @@
+@startuml IoT_REAP_Class_Diagram
+!define ENTITY_COLOR #E3F2FD
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #1565C0
+    ArrowColor #1565C0
+    FontSize 11
+}
+
+' ========== MODELS (DOMAIN ENTITIES) ==========
+
+package "Authentication & Core" <<Rectangle>> {
+    class User <<Entity>> {
+        + id: ULID
+        + name: string
+        + email: string
+        + role: enum{engineer,teacher,admin}
+        + teacher_approved_by: ULID?
+        + google_id: string?
+        + created_at: timestamp
+        + updated_at: timestamp
+        --
+        + isTeacher(): bool
+        + isTeacherApproved(): bool
+        + isSuspended(): bool
+        + isAdmin(): bool
+        + hasRole(role): bool
+        + hasAnyRole(roles): bool
+        + approvedBy(): BelongsTo User
+        + taughtTrainingPaths(): HasMany TrainingPath
+        + enrolledTrainingPaths(): BelongsToMany TrainingPath
+        + vmSessions(): HasMany VMSession
+        + quizAttempts(): HasMany QuizAttempt
+        + payments(): HasMany Payment
+        + payoutRequests(): HasMany PayoutRequest
+        + notifications(): HasMany Notification
+        + activityLogs(): HasMany ActivityLog
+        + searches(): HasMany Search
+        + guacamolePreferences(): HasMany GuacamoleConnectionPreference
+        + vmConnectionDefaults(): HasMany UserVMConnectionDefaultProfile
+        + certificates(): HasMany Certificate
+    }
+
+    class Notification <<Entity>> {
+        + id: uuid
+        + user_id: ULID
+        + type: string
+        + title: string
+        + read_at: timestamp?
+        --
+        + user(): BelongsTo User
+    }
+
+    class Search <<Entity>> {
+        + id: bigInt
+        + user_id: ULID?
+        + query: string
+        + results_count: int
+        + created_at: timestamp
+        --
+        + user(): BelongsTo User
+    }
+}
+
+package "Infrastructure (Proxmox)" <<Rectangle>> {
+    class ProxmoxServer <<Entity>> {
+        + id: bigInt
+        + name: string
+        + host: string (encrypted)
+        + token_id: string (encrypted)
+        + verify_ssl: bool
+        + is_active: bool
+        --
+        + createdBy(): BelongsTo User
+        + nodes(): HasMany ProxmoxNode
+        + vmSessions(): HasMany VMSession
+        + credentialsLog(): HasMany NodeCredentialsLog
+    }
+
+    class ProxmoxNode <<Entity>> {
+        + id: bigInt
+        + proxmox_server_id: bigInt
+        + name: string
+        + hostname: string
+        + status: enum{online,offline,maintenance}
+        + max_vms: int?
+        --
+        + proxmoxServer(): BelongsTo ProxmoxServer
+        + vmSessions(): HasMany VMSession
+        + trainingUnitVMAssignments(): HasMany TrainingUnitVMAssignment
+    }
+
+    class NodeCredentialsLog <<Entity>> {
+        + id: bigInt
+        + proxmox_server_id: bigInt?
+        + action: enum{registered,updated,tested,deleted}
+        + changed_by: ULID?
+        + created_at: timestamp
+        --
+        + proxmoxServer(): BelongsTo ProxmoxServer
+        + user(): BelongsTo User
+    }
+}
+
+package "VM Sessions" <<Rectangle>> {
+    class VMSession <<Entity>> {
+        + id: ULID
+        + user_id: ULID
+        + proxmox_server_id: bigInt
+        + node_id: bigInt?
+        + vm_id: int?
+        + status: enum{pending,provisioning,active,stopping,expired,failed}
+        + protocol: enum{rdp,vnc,ssh}
+        + expires_at: timestamp
+        --
+        + getProtocol(): VMSessionProtocol
+        + user(): BelongsTo User
+        + proxmoxServer(): BelongsTo ProxmoxServer
+        + node(): BelongsTo ProxmoxNode
+        + attachedDevices(): HasMany UsbDevice
+        + deviceQueueEntries(): HasMany UsbDeviceQueue
+        + cameraSessionControls(): HasMany CameraSessionControl
+        + reservations(): MorphMany Reservation
+    }
+}
+
+package "Gateway & USB Devices" <<Rectangle>> {
+    class GatewayNode <<Entity>> {
+        + id: bigInt
+        + name: string
+        + ip: string
+        + port: int
+        + online: bool
+        + is_verified: bool
+        --
+        + usbDevices(): HasMany UsbDevice
+        + cameras(): HasMany Camera
+    }
+
+    class UsbDevice <<Entity>> {
+        + id: bigInt
+        + gateway_node_id: bigInt
+        + status: enum{available,attached,queued,pending,dedicated,maintenance}
+        + attached_session_id: ULID?
+        + pending_server_id: bigInt?
+        + dedicated_server_id: bigInt?
+        + is_camera: bool
+        --
+        + isAvailable(): bool
+        + isBound(): bool
+        + isAttached(): bool
+        + hasActiveReservation(): bool
+        + canAttach(userId): bool
+        + isInMaintenance(): bool
+        + hasPendingAttachment(): bool
+        + isDedicated(): bool
+        + isKnownCamera(vendorId, productId): bool
+        + gatewayNode(): BelongsTo GatewayNode
+        + attachedSession(): BelongsTo VMSession
+        + queueEntries(): HasMany UsbDeviceQueue
+        + reservations(): MorphMany Reservation
+        + camera(): HasOne Camera
+        + pendingServer(): BelongsTo ProxmoxServer
+        + dedicatedServer(): BelongsTo ProxmoxServer
+    }
+
+    class UsbDeviceQueue <<Entity>> {
+        + id: bigInt
+        + usb_device_id: bigInt
+        + session_id: ULID
+        + user_id: ULID
+        + position: int
+        + queued_at: timestamp
+        --
+        + device(): BelongsTo UsbDevice
+        + session(): BelongsTo VMSession
+        + user(): BelongsTo User
+    }
+}
+
+package "Training System" <<Rectangle>> {
+    class TrainingPath <<Entity>> {
+        + id: bigInt
+        + title: string
+        + instructor_id: ULID
+        + level: enum{beginner,intermediate,advanced,expert}
+        + status: enum{draft,pending_review,approved,archived}
+        + price_cents: int?
+        + is_free: bool
+        --
+        + isPublished(): bool
+        + isOwnedBy(user): bool
+        + refreshHasVirtualMachine(): void
+        + instructor(): BelongsTo User
+        + modules(): HasMany TrainingPathModule
+        + trainingUnits(): HasManyThrough TrainingUnit
+        + enrollments(): HasMany TrainingPathEnrollment
+        + students(): BelongsToMany User
+        + payments(): HasMany Payment
+        + reviews(): HasMany TrainingPathReview
+        + certificates(): HasMany Certificate
+        + dailyStats(): HasMany DailyTrainingPathStats
+        + discussions(): HasMany DiscussionThread
+    }
+
+    class TrainingPathModule <<Entity>> {
+        + id: bigInt
+        + training_path_id: bigInt
+        + title: string
+        + sort_order: int
+        --
+        + trainingPath(): BelongsTo TrainingPath
+        + trainingUnits(): HasMany TrainingUnit
+    }
+
+    class TrainingUnit <<Entity>> {
+        + id: bigInt
+        + module_id: bigInt
+        + title: string
+        + type: enum{video,article,quiz,discussion,lab}
+        + vm_enabled: bool
+        + sort_order: int
+        --
+        + module(): BelongsTo TrainingPathModule
+        + trainingPath(): BelongsTo TrainingPath
+        + progress(): HasMany TrainingUnitProgress
+        + quiz(): HasOne Quiz
+        + article(): HasOne Article
+        + video(): HasOne Video
+        + vmAssignment(): HasOne TrainingUnitVMAssignment
+        + notes(): HasMany TrainingUnitNote
+        + discussions(): HasMany DiscussionThread
+    }
+
+    class TrainingUnitProgress <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + training_unit_id: bigInt
+        + status: enum{not_started,in_progress,completed,failed}
+        + progress_percentage: tinyInt
+        --
+        + user(): BelongsTo User
+        + trainingUnit(): BelongsTo TrainingUnit
+    }
+
+    class TrainingPathEnrollment <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + training_path_id: bigInt
+        + progress_percentage: tinyInt
+        --
+        + user(): BelongsTo User
+        + trainingPath(): BelongsTo TrainingPath
+    }
+
+    class TrainingUnitVMAssignment <<Entity>> {
+        + id: bigInt
+        + training_unit_id: bigInt
+        + status: enum{pending,approved,rejected}
+        + vm_id: bigInt?
+        + node_id: bigInt?
+        + assigned_by: ULID?
+        + approved_by: ULID?
+        --
+        + trainingUnit(): BelongsTo TrainingUnit
+        + node(): BelongsTo ProxmoxNode
+        + assignedByUser(): BelongsTo User
+        + approvedByUser(): BelongsTo User
+    }
+
+    class TrainingUnitNote <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + training_unit_id: bigInt
+        + content: text
+        --
+        + user(): BelongsTo User
+        + trainingUnit(): BelongsTo TrainingUnit
+    }
+
+    class TrainingPathReview <<Entity>> {
+        + id: bigInt
+        + training_path_id: bigInt
+        + user_id: ULID
+        + rating: tinyInt
+        --
+        + trainingPath(): BelongsTo TrainingPath
+        + user(): BelongsTo User
+    }
+
+    class Certificate <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + training_path_id: bigInt
+        + hash: string
+        + issued_at: timestamp
+        --
+        + user(): BelongsTo User
+        + trainingPath(): BelongsTo TrainingPath
+    }
+}
+
+package "Video & Content" <<Rectangle>> {
+    class Video <<Entity>> {
+        + id: bigInt
+        + training_unit_id: bigInt
+        + status: enum{uploaded,processing,ready,failed}
+        + hls_path: string?
+        --
+        + trainingUnit(): BelongsTo TrainingUnit
+        + captions(): HasMany Caption
+        + progress(): HasMany VideoProgress
+    }
+
+    class Caption <<Entity>> {
+        + id: bigInt
+        + video_id: bigInt
+        + language: string
+        + is_default: bool
+        --
+        + video(): BelongsTo Video
+    }
+
+    class VideoProgress <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + video_id: bigInt
+        + watched_seconds: int
+        + completed: bool
+        --
+        + user(): BelongsTo User
+        + video(): BelongsTo Video
+    }
+
+    class Article <<Entity>> {
+        + id: bigInt
+        + training_unit_id: bigInt
+        + content: json
+        --
+        + trainingUnit(): BelongsTo TrainingUnit
+    }
+}
+
+package "Assessments (Quizzes)" <<Rectangle>> {
+    class Quiz <<Entity>> {
+        + id: bigInt
+        + training_unit_id: bigInt
+        + title: string
+        + passing_score: tinyInt
+        + is_published: bool
+        --
+        + trainingUnit(): BelongsTo TrainingUnit
+        + questions(): HasMany QuizQuestion
+        + attempts(): HasMany QuizAttempt
+    }
+
+    class QuizQuestion <<Entity>> {
+        + id: bigInt
+        + quiz_id: bigInt
+        + type: enum{multiple_choice,true_false,short_answer,essay}
+        + points: tinyInt
+        --
+        + quiz(): BelongsTo Quiz
+        + options(): HasMany QuizQuestionOption
+    }
+
+    class QuizQuestionOption <<Entity>> {
+        + id: bigInt
+        + question_id: bigInt
+        + option_text: text
+        + is_correct: bool
+        --
+        + question(): BelongsTo QuizQuestion
+    }
+
+    class QuizAttempt <<Entity>> {
+        + id: bigInt
+        + quiz_id: bigInt
+        + user_id: ULID
+        + score: int
+        + percentage: tinyInt
+        + passed: bool
+        --
+        + quiz(): BelongsTo Quiz
+        + user(): BelongsTo User
+        + answers(): HasMany QuizAttemptAnswer
+    }
+
+    class QuizAttemptAnswer <<Entity>> {
+        + id: bigInt
+        + attempt_id: bigInt
+        + question_id: bigInt
+        + selected_option_id: bigInt?
+        + points_earned: tinyInt
+        --
+        + attempt(): BelongsTo QuizAttempt
+        + question(): BelongsTo QuizQuestion
+        + selectedOption(): BelongsTo QuizQuestionOption
+    }
+}
+
+package "Robotics & Cameras" <<Rectangle>> {
+    class Robot <<Entity>> {
+        + id: bigInt
+        + identifier: string
+        + status: enum{online,offline,maintenance}
+        --
+        + cameras(): HasMany Camera
+    }
+
+    class Camera <<Entity>> {
+        + id: bigInt
+        + robot_id: bigInt?
+        + gateway_node_id: bigInt?
+        + usb_device_id: bigInt?
+        + assigned_vm_id: int?
+        + name: string
+        + stream_key: string
+        + status: enum{online,offline,recording,error}
+        + ptz_capable: bool
+        --
+        + isUsbCamera(): bool
+        + isRobotCamera(): bool
+        + hasActiveReservation(): bool
+        + isControlled(): bool
+        + isControlledBySession(sessionId): bool
+        + isInMaintenance(): bool
+        + assignToVm(vmId): bool
+        + unassignFromVm(): bool
+        + robot(): BelongsTo Robot
+        + gatewayNode(): BelongsTo GatewayNode
+        + usbDevice(): BelongsTo UsbDevice
+        + sessionControls(): HasMany CameraSessionControl
+        + reservations(): MorphMany Reservation
+    }
+
+    class CameraSessionControl <<Entity>> {
+        + id: bigInt
+        + camera_id: bigInt
+        + session_id: ULID
+        + acquired_at: timestamp
+        + released_at: timestamp?
+        --
+        + camera(): BelongsTo Camera
+        + session(): BelongsTo VMSession
+    }
+}
+
+package "Payments & Commerce" <<Rectangle>> {
+    class Payment <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + training_path_id: bigInt
+        + status: enum{pending,succeeded,failed,refunded}
+        + amount_cents: int
+        --
+        + user(): BelongsTo User
+        + trainingPath(): BelongsTo TrainingPath
+        + refundRequest(): HasOne RefundRequest
+    }
+
+    class RefundRequest <<Entity>> {
+        + id: bigInt
+        + payment_id: bigInt
+        + user_id: ULID
+        + status: enum{requested,approved,rejected,processed}
+        + refund_amount_cents: int?
+        --
+        + payment(): BelongsTo Payment
+        + user(): BelongsTo User
+    }
+
+    class StripeWebhook <<Entity>> {
+        + id: bigInt
+        + stripe_event_id: string
+        + event_type: string
+        + processed: bool
+    }
+
+    class PayoutRequest <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + amount_cents: int
+        + status: enum{requested,approved,rejected,processing,completed,failed}
+        + approved_by: ULID?
+        --
+        + user(): BelongsTo User
+        + approvedBy(): BelongsTo User
+    }
+}
+
+package "Discussions & Community" <<Rectangle>> {
+    class DiscussionThread <<Entity>> {
+        + id: bigInt
+        + training_path_id: bigInt
+        + training_unit_id: bigInt?
+        + author_id: ULID
+        + status: enum{open,closed,archived,flagged}
+        --
+        + trainingPath(): BelongsTo TrainingPath
+        + trainingUnit(): BelongsTo TrainingUnit
+        + author(): BelongsTo User
+        + replies(): HasMany ThreadReply
+        + votes(): MorphMany ThreadVote
+    }
+
+    class ThreadReply <<Entity>> {
+        + id: bigInt
+        + thread_id: bigInt
+        + author_id: ULID
+        + parent_id: bigInt?
+        + is_answer: bool
+        --
+        + thread(): BelongsTo DiscussionThread
+        + author(): BelongsTo User
+        + parent(): BelongsTo ThreadReply
+        + children(): HasMany ThreadReply
+        + votes(): MorphMany ThreadVote
+    }
+
+    class ThreadVote <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + votable_type: string
+        + votable_id: bigInt
+        + value: tinyInt
+        --
+        + user(): BelongsTo User
+        + votable(): MorphTo DiscussionThread|ThreadReply
+    }
+}
+
+package "System Monitoring & Analytics" <<Rectangle>> {
+    class SystemAlert <<Entity>> {
+        + id: bigInt
+        + severity: enum{info,warning,error,critical}
+        + acknowledged_by: ULID?
+        + resolved: bool
+        --
+        + acknowledgedBy(): BelongsTo User
+    }
+
+    class ActivityLog <<Entity>> {
+        + id: bigInt
+        + type: string
+        + action: string
+        + user_id: ULID?
+        + created_at: timestamp
+        --
+        + user(): BelongsTo User
+    }
+
+    class DailyTrainingPathStats <<Entity>> {
+        + id: bigInt
+        + training_path_id: bigInt
+        + date: date
+        + enrollments: int
+        + revenue_cents: int
+        --
+        + trainingPath(): BelongsTo TrainingPath
+    }
+}
+
+package "User Preferences" <<Rectangle>> {
+    class GuacamoleConnectionPreference <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + vm_session_type: enum{rdp,vnc,ssh}
+        + profile_name: string
+        + is_default: bool
+        --
+        + user(): BelongsTo User
+    }
+
+    class UserVMConnectionDefaultProfile <<Entity>> {
+        + id: bigInt
+        + user_id: ULID
+        + vm_id: int
+        + vm_session_protocol: enum{rdp,vnc,ssh}
+        + preferred_profile_name: string
+        --
+        + user(): BelongsTo User
+    }
+}
+
+package "Reservations (Polymorphic)" <<Rectangle>> {
+    class Reservation <<Entity>> {
+        + id: bigInt
+        + reservable_type: string
+        + reservable_id: bigInt
+        + user_id: ULID
+        + approved_by: ULID?
+        + status: enum{pending,approved,rejected,cancelled,active,completed}
+        + requested_start_at: timestamp
+        + approved_start_at: timestamp?
+        + target_vm_id: int?
+        + training_path_id: bigInt?
+        --
+        + isPending(): bool
+        + isApproved(): bool
+        + isActive(): bool
+        + canModify(): bool
+        + overlaps(start, end): bool
+        + reservable(): MorphTo Camera|UsbDevice
+        + user(): BelongsTo User
+        + approvedBy(): BelongsTo User
+        + trainingPath(): BelongsTo TrainingPath
+    }
+}
+
+' ========== RELATIONSHIPS ==========
+
+User "1" --> "0..*" VMSession
+User "1" --> "0..*" TrainingPath : teaches >
+User "1" --> "0..*" TrainingPathEnrollment
+User "1" --> "0..*" TrainingUnitProgress
+User "1" --> "0..*" TrainingUnitNote
+User "1" --> "0..*" QuizAttempt
+User "1" --> "0..*" Payment
+User "1" --> "0..*" PayoutRequest
+User "1" --> "0..*" Notification
+User "1" --> "0..*" ActivityLog
+User "1" --> "0..*" Search
+User "1" --> "0..*" GuacamoleConnectionPreference
+User "1" --> "0..*" UserVMConnectionDefaultProfile
+User "1" --> "0..*" Certificate
+User "1" --> "0..*" DiscussionThread : author >
+User "1" --> "0..*" ThreadReply : author >
+User "1" --> "0..*" ThreadVote : voter >
+User "0..*" --> "0..1" User : approvedBy >
+
+ProxmoxServer "1" --> "1..*" ProxmoxNode
+ProxmoxServer "1" --> "0..*" NodeCredentialsLog
+ProxmoxServer "1" --> "0..*" VMSession
+
+ProxmoxNode "1" --> "0..*" VMSession
+ProxmoxNode "1" --> "0..*" TrainingUnitVMAssignment
+
+VMSession "1" --> "0..*" UsbDeviceQueue
+VMSession "1" --> "0..*" CameraSessionControl
+VMSession "1" --> "0..*" Reservation
+
+GatewayNode "1" --> "0..*" UsbDevice
+GatewayNode "1" --> "0..*" Camera
+
+UsbDevice "1" --> "0..*" UsbDeviceQueue
+UsbDevice "1" --> "0..1" Camera
+UsbDevice "1" --> "0..*" Reservation
+
+TrainingPath "1" --> "0..*" TrainingPathModule
+TrainingPath "1" --> "0..*" TrainingPathEnrollment
+TrainingPath "1" --> "0..*" TrainingPathReview
+TrainingPath "1" --> "0..*" Certificate
+TrainingPath "1" --> "0..*" Payment
+TrainingPath "1" --> "0..*" DailyTrainingPathStats
+TrainingPath "1" --> "0..*" DiscussionThread
+
+TrainingPathModule "1" --> "0..*" TrainingUnit
+TrainingUnit "1" --> "0..*" TrainingUnitProgress
+TrainingUnit "1" --> "0..1" Quiz
+TrainingUnit "1" --> "0..1" Article
+TrainingUnit "1" --> "0..1" Video
+TrainingUnit "1" --> "0..1" TrainingUnitVMAssignment
+TrainingUnit "1" --> "0..*" TrainingUnitNote
+TrainingUnit "1" --> "0..*" DiscussionThread
+
+Video "1" --> "0..*" Caption
+Video "1" --> "0..*" VideoProgress
+
+Quiz "1" --> "0..*" QuizQuestion
+Quiz "1" --> "0..*" QuizAttempt
+QuizQuestion "1" --> "0..*" QuizQuestionOption
+QuizAttempt "1" --> "0..*" QuizAttemptAnswer
+
+Robot "1" --> "0..*" Camera
+Camera "1" --> "0..*" CameraSessionControl
+Camera "1" --> "0..*" Reservation
+
+Payment "1" --> "0..1" RefundRequest
+PayoutRequest "0..*" --> "0..1" User : approvedBy >
+
+DiscussionThread "1" --> "0..*" ThreadReply
+DiscussionThread "1" --> "0..*" ThreadVote
+ThreadReply "1" --> "0..*" ThreadVote
+ThreadReply "0..*" --> "0..1" ThreadReply : parent >
+
+Reservation ..> Camera : reservable
+Reservation ..> UsbDevice : reservable
+ThreadVote ..> DiscussionThread : votable
+ThreadVote ..> ThreadReply : votable
+
+note bottom of Reservation
+  Polymorphic reservation for Camera/UsbDevice.
+  CameraReservation and UsbDeviceReservation
+  are legacy wrappers around this model.
+end note
+
+@enduml

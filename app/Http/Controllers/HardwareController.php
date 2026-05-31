@@ -1033,14 +1033,6 @@ class HardwareController extends Controller
             'server_id' => ['required', 'integer', 'exists:proxmox_servers,id'],
         ]);
 
-        // Camera devices cannot be dedicated
-        if ($device->is_camera) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Camera devices cannot be dedicated to VMs',
-            ], 422);
-        }
-
         $server = ProxmoxServer::findOrFail($validated['server_id']);
 
         try {
@@ -1053,7 +1045,7 @@ class HardwareController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Device dedicated to VM {$validated['vmid']}. It will auto-attach on VM start.",
+                'message' => "Device unbound and dedicated to VM {$validated['vmid']}. It will auto-attach on VM start.",
                 'device' => new UsbDeviceResource($device->fresh()->load('gatewayNode')),
             ]);
         } catch (GatewayApiException $e) {

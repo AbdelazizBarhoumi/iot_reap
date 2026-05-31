@@ -1,0 +1,76 @@
+@startuml eng-provision-create-vm-session
+title Use Case: Provision (Create) VM Session - Sequence Diagram
+
+actor Engineer
+
+participant VMSessionController as Controller
+participant CreateVMSessionRequest as Request
+participant VMProvisioningService as Service
+participant QuotaService as Quota
+participant LoadBalancer
+participant ProxmoxClient as Proxmox
+participant VMSessionRepository as Repository
+participant GuacamoleClient as Guac
+participant JobDispatcher as JobQueue
+participant EventDispatcher as Events
+participant VMSessionResource as Response
+
+Engineer -> Controller : POST /sessions (templateId, duration)
+Controller -> Request : validate() / authorize()
+Request --> Controller : validated data
+Controller -> Service : provision(user, templateId, duration)
+activate Service
+
+Service -> Quota : assertNotExceeded(user)
+Quota --> Service : ok
+
+Service -> LoadBalancer : selectNode(templateRequirements)
+LoadBalancer --> Service : nodeA
+
+Service -> Proxmox : cloneTemplate(templateId, nodeA)
+activate Proxmox
+Proxmox --> Service : taskId (clone-op-123)
+deactivate Proxmox
+
+loop poll clone status (until success or timeout)
+    Service -> Proxmox : pollTaskStatus(taskId)
+    activate Proxmox
+    Proxmox --> Service : status: running / completed
+    deactivate Proxmox
+end
+
+alt clone succeeded
+    Service -> Proxmox : getVMMetadata(taskId)
+    activate Proxmox
+    Proxmox --> Service : {vmid, host, ip}
+    deactivate Proxmox
+
+    Service -> Repository : create({user_id, vmid, host, ip, duration, status})
+    activate Repository
+    Repository --> Service : VMSession (id, status)
+    deactivate Repository
+
+    Service -> Guac : createConnection({sessionId, protocol, host, port, credentials})
+    activate Guac
+    Guac --> Service : {guacConnectionId, guacUrl, token}
+    deactivate Guac
+
+    Service -> Repository : update(sessionId, {guac_info, status: ACTIVE})
+    activate Repository
+    Repository --> Service : updated VMSession
+    deactivate Repository
+
+    Service -> JobQueue : dispatch(CleanupVMJob(sessionId)).delay(duration)
+    Service -> Events : emit(VMSessionCreated(session))
+    deactivate Service
+
+    Controller <-- Service : VMSession (created)
+    Controller -> Response : serialize(VMSession)
+    Controller --> Engineer : HTTP 201 Created + VMSessionResource
+else clone failed
+    Service -> Service : attemptCleanupIfPartial(vmid?)
+    Service --> Controller : throw VMProvisioningException
+    Controller --> Engineer : HTTP 502/500 error
+end
+
+@enduml

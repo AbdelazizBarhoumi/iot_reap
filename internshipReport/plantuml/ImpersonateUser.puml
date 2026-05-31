@@ -1,0 +1,71 @@
+@startuml
+title Impersonate User
+
+actor Administrator as Admin
+boundary "Admin Users Page" as UI
+control "AdminUserController" as Controller
+control "UserManagementService" as Service
+collections "Session Store" as SessionStore
+control "Auth Facade" as Auth
+control "Logger" as Logger
+
+Admin -> UI : click Impersonate on target user
+UI -> Controller : POST /admin/users/{user}/impersonate
+activate Controller
+
+note over Controller
+Admin middleware already guarantees an authenticated
+and authorized administrator before this action runs.
+end note
+
+Controller -> Service : startImpersonation(targetUser, admin)
+activate Service
+
+note over Service
+Business rules enforced here:
+- administrator cannot impersonate self
+- admin accounts cannot be impersonated
+- original admin id is stored in session
+end note
+
+Service -> Service : validateImpersonationRules(targetUser, admin)
+
+alt targetUser is the current administrator
+    Service --> Controller : DomainException("You cannot impersonate yourself")
+    deactivate Service
+    Controller --> UI : 422 / error message
+    deactivate Controller
+    UI --> Admin : show rejection
+else targetUser has admin role
+    Service --> Controller : DomainException("Admin accounts cannot be impersonated")
+    deactivate Service
+    Controller --> UI : 422 / error message
+    deactivate Controller
+    UI --> Admin : show rejection
+else targetUser is eligible
+    Service -> SessionStore : put("impersonator_id", admin.id)
+    activate SessionStore
+    SessionStore --> Service : stored
+    deactivate SessionStore
+
+    Service -> Auth : login(targetUser)
+    activate Auth
+    Auth --> Service : authenticated as target user
+    deactivate Auth
+
+    Service -> Logger : info("Impersonation started")
+    Logger --> Service : logged
+
+    Service --> Controller : impersonation started
+    deactivate Service
+    Controller --> UI : 302 redirect dashboard + flash info
+    deactivate Controller
+    UI --> Admin : dashboard shown as target user
+end
+
+note over Service
+The stop-impersonation flow restores the original
+administrator using session key impersonator_id.
+end note
+
+@enduml

@@ -14,7 +14,7 @@ import {
 import type { ProxmoxVM } from '../types/vm.types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 interface VMListCardProps {
     vms: ProxmoxVM[];
     loading: boolean;
@@ -106,25 +106,7 @@ export function VMListCard({
         );
     }
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                        Virtual Machines ({vms.length})
-                    </CardTitle>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onRefresh}
-                        disabled={loading}
-                    >
-                        <RefreshCw
-                            className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-                        />
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
+        <CardContent className="space-y-3">
                 {vms.map((vm) => (
                     <div
                         key={vm.vmid}
@@ -250,6 +232,5 @@ export function VMListCard({
                     </div>
                 ))}
             </CardContent>
-        </Card>
     );
 }

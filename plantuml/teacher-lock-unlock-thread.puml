@@ -1,0 +1,84 @@
+@startuml
+title UC-045: Lock / Unlock Thread - Sequence
+
+actor Teacher
+
+participant "ForumController" as ForumController
+participant "AuthorizationService" as AuthService
+participant "ThreadService" as ThreadService
+participant "ThreadRepository" as ThreadRepo
+participant "AuditLogService" as AuditService
+participant "NotificationService" as NotifyService
+
+== Teacher initiates action ==
+
+Teacher -> ForumController : POST /threads/threadId/moderate\n(action=lock or unlock, reason)
+activate ForumController
+
+ForumController -> AuthService : authorize(Teacher, action, Thread)
+activate AuthService
+AuthService --> ForumController : authorized / denied
+deactivate AuthService
+
+alt Authorized
+
+    ForumController -> ThreadService : changeLockState(threadId, lock, Teacher, reason)
+    activate ThreadService
+
+    ThreadService -> ThreadRepo : findById(threadId)
+    activate ThreadRepo
+    ThreadRepo --> ThreadService : Thread / null
+    deactivate ThreadRepo
+
+    alt Thread exists and is not archived
+
+        ThreadService -> ThreadService : validateBusinessRules()
+        ThreadService -> ThreadService : update lock status
+
+        ThreadService -> ThreadRepo : save(Thread)
+        activate ThreadRepo
+        ThreadRepo --> ThreadService : saved Thread
+        deactivate ThreadRepo
+
+        par Audit Log
+            ThreadService -> AuditService : record(action, actor, threadId, reason, timestamp)
+            activate AuditService
+            AuditService --> ThreadService : ack
+            deactivate AuditService
+
+        else Notifications
+
+            opt Notify subscribers
+                ThreadService -> NotifyService : notifySubscribers(threadId, LOCKED/UNLOCKED, reason)
+                activate NotifyService
+                NotifyService --> ThreadService : ack
+                deactivate NotifyService
+            end
+
+        end
+
+        ThreadService --> ForumController : updated Thread
+        deactivate ThreadService
+
+        ForumController --> Teacher : 200 OK + thread metadata
+
+    else Thread missing or archived
+
+        ThreadService --> ForumController : 404 Not Found / 400 Bad Request
+        deactivate ThreadService
+        ForumController --> Teacher : 404 / 400
+
+    end
+
+else Denied
+
+    ForumController --> Teacher : 403 Forbidden
+    note over ForumController, AuthService
+        Optionally record denied action in audit log
+    end note
+
+end
+
+deactivate ForumController
+
+@enduml

@@ -1,0 +1,77 @@
+@startuml
+title Use Case: Delete User Account and Data - Sequence
+
+actor Administrator
+participant "Admin UI" as AdminUI
+participant "AdminUserController" as AdminUserController
+participant "UserManagementService" as UserManagementService
+participant "UserRepository" as UserRepository
+database "ApplicationDB" as ApplicationDB
+
+Administrator -> AdminUI: Select "Delete" on user
+activate AdminUI
+AdminUI -> AdminUI: Show confirmation dialog
+Administrator -> AdminUI: Confirm deletion
+AdminUI -> AdminUserController: DELETE /admin/users/{userId}
+activate AdminUserController
+
+AdminUserController -> UserManagementService: Delete(user, admin)
+activate UserManagementService
+
+UserManagementService -> UserManagementService: Validate self-deletion and admin-account rules
+alt Self-deletion or target is admin
+    UserManagementService --> AdminUserController: throw DomainException
+    AdminUserController -> AdminUI: 4xx Error response
+    deactivate UserManagementService
+    deactivate AdminUserController
+    deactivate AdminUI
+else Deletion permitted
+    UserManagementService -> UserManagementService: Generate anonymized identifier
+    note right of UserManagementService
+      - Build anonymized id (deleted_user_<hash>)
+      - Prepare anonymized user payload
+    end note
+
+    UserManagementService -> UserRepository: update(user, anonymizedData)
+    activate UserRepository
+    UserRepository -> ApplicationDB: UPDATE users SET name='Deleted User', email='anonymized', password=..., deleted_at=NOW(), ...
+    ApplicationDB --> UserRepository: updated
+    deactivate UserRepository
+
+    loop Delete non-essential related data
+        UserManagementService -> ApplicationDB: DELETE FROM training_unit_progress WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM training_unit_notes WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM quiz_attempts WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM certificates WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM training_path_reviews WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM vm_sessions WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM notifications WHERE notifiable_id = :id
+        ApplicationDB --> UserManagementService: rows
+        UserManagementService -> ApplicationDB: DELETE FROM training_path_enrollments WHERE user_id = :id
+        ApplicationDB --> UserManagementService: rows
+    end
+
+    UserManagementService -> ApplicationDB: UPDATE payments SET user_id = user_id (preserve reference) -- anonymize related fields if required
+    ApplicationDB --> UserManagementService: updated
+
+    UserManagementService -> ApplicationDB: DELETE FROM personal_api_tokens WHERE user_id = :id
+    ApplicationDB --> UserManagementService: tokens_deleted
+
+    UserManagementService -> ApplicationDB: INSERT INTO audit_logs(...) VALUES(...)
+    ApplicationDB --> UserManagementService: logged
+
+    UserManagementService --> AdminUserController: success
+    deactivate UserManagementService
+
+    AdminUserController -> AdminUI: 200 { "message": "User data anonymized successfully" }
+    deactivate AdminUserController
+    deactivate AdminUI
+end
+
+@enduml

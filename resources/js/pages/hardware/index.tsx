@@ -71,6 +71,17 @@ function getDeviceStatusBadgeClass(status: UsbDevice['status']): string {
     }
 }
 
+function getDedicatedLabel(device: UsbDevice): string | null {
+    if (!device.is_dedicated && device.dedicated_vmid == null) {
+        return null;
+    }
+
+    const vmLabel = device.dedicated_vmid != null ? `VM #${device.dedicated_vmid}` : 'VM';
+    const nodeLabel = device.dedicated_node ? ` on ${device.dedicated_node}` : '';
+
+    return `Dedicated to ${vmLabel}${nodeLabel}`;
+}
+
 export default function HardwarePage() {
     const {
         nodes,
@@ -353,246 +364,193 @@ export default function HardwarePage() {
                                             </p>
                                         ) : (
                                             <div className="grid gap-3 md:grid-cols-2">
-                                                {devices.map((device) => (
-                                                    <div
-                                                        key={device.id}
-                                                        className="rounded-md border p-3"
-                                                    >
-                                                        <div className="mb-3 flex items-start justify-between gap-2">
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="text-sm font-medium">
-                                                                        {
-                                                                            device.name
-                                                                        }
-                                                                    </p>
-                                                                    {device.has_camera_registration && (
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className="border-primary/30 bg-primary/10 text-primary"
-                                                                        >
-                                                                            <CameraIcon className="mr-1 h-3 w-3" />
-                                                                            Camera
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    Bus{' '}
-                                                                    {
-                                                                        device.busid
-                                                                    }{' '}
-                                                                    · VID:PID{' '}
-                                                                    {
-                                                                        device.vendor_id
-                                                                    }
-                                                                    :
-                                                                    {
-                                                                        device.product_id
-                                                                    }
-                                                                </p>
-                                                                {device.attached_to && (
-                                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                                        Attached
-                                                                        to:{' '}
-                                                                        {
-                                                                            device.attached_to
-                                                                        }
-                                                                    </p>
-                                                                )}
-                                                                {device.status ===
-                                                                    'pending_attach' &&
-                                                                    device.pending_vmid && (
-                                                                        <p className="mt-1 text-xs text-amber-600">
-                                                                            Pending
-                                                                            on
-                                                                            VM #
-                                                                            {
-                                                                                device.pending_vmid
-                                                                            }
+                                                {devices.map((device) => {
+                                                    const dedicatedLabel = getDedicatedLabel(device);
+                                                    const isDedicated = device.is_dedicated ?? device.dedicated_vmid != null;
+
+                                                    return (
+                                                        <div
+                                                            key={device.id}
+                                                            className="rounded-md border p-3"
+                                                        >
+                                                            <div className="mb-3 flex items-start justify-between gap-2">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="text-sm font-medium">
+                                                                            {device.name}
+                                                                        </p>
+                                                                        {device.has_camera_registration && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="border-primary/30 bg-primary/10 text-primary"
+                                                                            >
+                                                                                <CameraIcon className="mr-1 h-3 w-3" />
+                                                                                Camera
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {dedicatedLabel && (
+                                                                        <p className="mt-1 text-xs font-medium text-emerald-600">
+                                                                            {dedicatedLabel}
                                                                         </p>
                                                                     )}
+
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Bus {device.busid} · VID:PID {device.vendor_id}:{device.product_id}
+                                                                    </p>
+
+                                                                    {device.attached_to && (
+                                                                        <p className="mt-1 text-xs text-muted-foreground">
+                                                                            Attached to: {device.attached_to}
+                                                                        </p>
+                                                                    )}
+
+                                                                    {device.status === 'pending_attach' &&
+                                                                        device.pending_vmid && (
+                                                                            <p className="mt-1 text-xs text-amber-600">
+                                                                                Pending on VM #{device.pending_vmid}
+                                                                            </p>
+                                                                        )}
+                                                                </div>
+
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className={getDeviceStatusBadgeClass(
+                                                                        device.status,
+                                                                    )}
+                                                                >
+                                                                    {device.status_label}
+                                                                </Badge>
                                                             </div>
 
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={getDeviceStatusBadgeClass(
-                                                                    device.status,
-                                                                )}
-                                                            >
-                                                                {
-                                                                    device.status_label
-                                                                }
-                                                            </Badge>
-                                                        </div>
-
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {device.status ===
-                                                                'available' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() =>
-                                                                        void bindDevice(
-                                                                            device.id,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        actionLoading
-                                                                    }
-                                                                >
-                                                                    <Plug className="mr-1 h-3 w-3" />
-                                                                    Bind
-                                                                </Button>
-                                                            )}
-
-                                                            {device.status ===
-                                                                'bound' && (
-                                                                <>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {device.status === 'available' && !isDedicated && (
                                                                     <Button
                                                                         size="sm"
+                                                                        variant="outline"
                                                                         onClick={() =>
-                                                                            openAttachDialog(
-                                                                                device,
-                                                                            )
+                                                                            void bindDevice(device.id)
                                                                         }
-                                                                        disabled={
-                                                                            actionLoading ||
-                                                                            attachableSessions.length ===
-                                                                                0
-                                                                        }
+                                                                        disabled={actionLoading}
                                                                     >
                                                                         <Plug className="mr-1 h-3 w-3" />
-                                                                        Attach
+                                                                        Bind
                                                                     </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() =>
-                                                                            void unbindDevice(
-                                                                                device.id,
-                                                                            )
-                                                                        }
-                                                                        disabled={
-                                                                            actionLoading
-                                                                        }
-                                                                    >
-                                                                        <Unplug className="mr-1 h-3 w-3" />
-                                                                        Unbind
-                                                                    </Button>
-                                                                </>
-                                                            )}
+                                                                )}
 
-                                                            {device.status ===
-                                                                'attached' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="destructive"
-                                                                    onClick={() =>
-                                                                        void detachDevice(
-                                                                            device.id,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        actionLoading
-                                                                    }
-                                                                >
-                                                                    <Unplug className="mr-1 h-3 w-3" />
-                                                                    Detach
-                                                                </Button>
-                                                            )}
+                                                                {device.status === 'bound' && (
+                                                                    <>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                openAttachDialog(device)
+                                                                            }
+                                                                            disabled={
+                                                                                actionLoading ||
+                                                                                attachableSessions.length === 0
+                                                                            }
+                                                                        >
+                                                                            <Plug className="mr-1 h-3 w-3" />
+                                                                            Attach
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                void unbindDevice(device.id)
+                                                                            }
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <Unplug className="mr-1 h-3 w-3" />
+                                                                            Unbind
+                                                                        </Button>
+                                                                    </>
+                                                                )}
 
-                                                            {device.status ===
-                                                                'pending_attach' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() =>
-                                                                        void cancelPendingAttachment(
-                                                                            device.id,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        actionLoading
-                                                                    }
-                                                                >
-                                                                    <Clock className="mr-1 h-3 w-3" />
-                                                                    Cancel
-                                                                    Pending
-                                                                </Button>
-                                                            )}
-
-                                                            {device.has_camera_registration ? (
-                                                                <>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() =>
-                                                                            void activateCamera(
-                                                                                device.id,
-                                                                            )
-                                                                        }
-                                                                        disabled={
-                                                                            actionLoading
-                                                                        }
-                                                                    >
-                                                                        <Video className="mr-1 h-3 w-3" />
-                                                                        Activate
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() =>
-                                                                            openCameraSettingsDialog(
-                                                                                device,
-                                                                            )
-                                                                        }
-                                                                        disabled={
-                                                                            actionLoading
-                                                                        }
-                                                                    >
-                                                                        <Settings2 className="mr-1 h-3 w-3" />
-                                                                        Settings
-                                                                    </Button>
+                                                                {device.status === 'attached' && (
                                                                     <Button
                                                                         size="sm"
                                                                         variant="destructive"
                                                                         onClick={() =>
-                                                                            void removeCamera(
-                                                                                device.id,
-                                                                            )
+                                                                            void detachDevice(device.id)
+                                                                        }
+                                                                        disabled={actionLoading}
+                                                                    >
+                                                                        <Unplug className="mr-1 h-3 w-3" />
+                                                                        Detach
+                                                                    </Button>
+                                                                )}
+
+                                                                {device.status === 'pending_attach' && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() =>
+                                                                            void cancelPendingAttachment(device.id)
+                                                                        }
+                                                                        disabled={actionLoading}
+                                                                    >
+                                                                        <Clock className="mr-1 h-3 w-3" />
+                                                                        Cancel Pending
+                                                                    </Button>
+                                                                )}
+
+                                                                {device.has_camera_registration ? (
+                                                                    <>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                void activateCamera(device.id)
+                                                                            }
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <Video className="mr-1 h-3 w-3" />
+                                                                            Activate
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                openCameraSettingsDialog(device)
+                                                                            }
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <Settings2 className="mr-1 h-3 w-3" />
+                                                                            Settings
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="destructive"
+                                                                            onClick={() =>
+                                                                                void removeCamera(device.id)
+                                                                            }
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <CameraIcon className="mr-1 h-3 w-3" />
+                                                                            Remove Camera
+                                                                        </Button>
+                                                                    </>
+                                                                ) : node.is_verified ? (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() =>
+                                                                            void markAsCamera(device.id)
                                                                         }
                                                                         disabled={
-                                                                            actionLoading
+                                                                            actionLoading ||
+                                                                            device.status === 'disconnected'
                                                                         }
                                                                     >
                                                                         <CameraIcon className="mr-1 h-3 w-3" />
-                                                                        Remove
-                                                                        Camera
+                                                                        Convert to Camera
                                                                     </Button>
-                                                                </>
-                                                            ) : node.is_verified ? (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() =>
-                                                                        void markAsCamera(
-                                                                            device.id,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        actionLoading ||
-                                                                        device.status ===
-                                                                            'disconnected'
-                                                                    }
-                                                                >
-                                                                    <CameraIcon className="mr-1 h-3 w-3" />
-                                                                    Convert to
-                                                                    Camera
-                                                                </Button>
-                                                            ) : null}
+                                                                ) : null}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </CardContent>

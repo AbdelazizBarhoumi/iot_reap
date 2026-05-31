@@ -64,7 +64,6 @@ import { useProxmoxVMs } from '@/hooks/useProxmoxVMs';
 import { useVMSessions } from '@/hooks/useVMSessions';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import sessionsRoute from '@/routes/sessions';
 import type { BreadcrumbItem } from '@/types';
 import type {
     ConnectionProfile,
@@ -156,6 +155,23 @@ export default function Dashboard() {
         name: string | null;
         isAdmin: boolean;
     }>({ name: null, isAdmin: false });
+
+    // Inline session history for dashboard
+    const historySessions = sessions.filter(
+        (s) =>
+            s.status === 'expired' || s.status === 'failed' || s.status === 'terminated',
+    );
+    const sessionsByDate = useMemo(() => {
+        const groups: Record<string, typeof historySessions> = {};
+        historySessions.forEach((session) => {
+            const dateKey = new Date(session.created_at).toLocaleDateString();
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(session);
+        });
+        return Object.entries(groups).sort(
+            ([a], [b]) => new Date(b).getTime() - new Date(a).getTime(),
+        );
+    }, [historySessions]);
 
     const launchProfiles = useMemo(
         () => savedProfiles[launchProtocol as keyof typeof savedProfiles] ?? [],
@@ -422,28 +438,27 @@ export default function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
                     >
-                        <Card className="shadow-card transition-shadow hover:shadow-card-hover">
-                            <CardContent className="p-5">
-                                <Link
-                                    href={sessionsRoute.index.url()}
-                                    className="flex items-center gap-4 transition-opacity hover:opacity-80"
-                                >
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                        <History className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Session History
-                                        </p>
-                                        <p className="text-sm font-medium text-info">
-                                            View past sessions →
-                                        </p>
-                                    </div>
-                                </Link>
-                            </CardContent>
-                        </Card>
+                                <Card className="shadow-card transition-shadow hover:shadow-card-hover">
+                                    <CardContent className="p-5">
+                                        <div className="flex w-full items-center gap-4 text-left">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                                <History className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Session History
+                                                </p>
+                                                <p className="text-sm font-medium text-info">
+                                                    Past sessions are shown below
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                     </motion.div>
                 </div>
+               
+
                 {/* ─── Active Sessions ─── */}
                 {!sessionsLoading && hasActiveSessions && (
                     <div className="mb-8">
@@ -751,6 +766,55 @@ export default function Dashboard() {
                                         </CardFooter>
                                     </Card>
                                 </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                 {/* Inline Session History panel */}
+                <div className="mt-8">
+                    <div className="mb-4 flex items-center gap-2">
+                        <h2 className="font-heading text-xl font-semibold text-foreground">
+                            Session History
+                        </h2>
+                        <Badge className="border-muted text-muted-foreground">
+                            {historySessions.length} past
+                        </Badge>
+                    </div>
+
+                    {historySessions.length === 0 ? (
+                        <Card className="shadow-card">
+                            <CardContent className="py-8 text-center">
+                                <p className="text-muted-foreground">No past sessions yet</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="space-y-4">
+                            {sessionsByDate.map(([dateKey, dateSessions]) => (
+                                <div key={dateKey} className="space-y-2">
+                                    <h3 className="mb-2 flex items-center gap-2 font-heading text-sm font-medium text-muted-foreground">
+                                        {dateKey}
+                                    </h3>
+                                    <div className="grid gap-2 sm:grid-cols-1 lg:grid-cols-2">
+                                        {dateSessions.map((sess) => (
+                                            <Card key={sess.id} className="shadow-card">
+                                                <CardContent className="py-3 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                                                            <Monitor className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">VM #{sess.vm_id}</p>
+                                                            <p className="text-xs text-muted-foreground">{sess.node_name} • {sess.protocol?.toUpperCase()}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right text-sm">
+                                                        <p className="text-muted-foreground">{new Date(sess.created_at).toLocaleString()}</p>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}

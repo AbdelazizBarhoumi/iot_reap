@@ -1,16 +1,601 @@
-\subsubsection{Teacher Use Cases}
+\subsubsection[Refinement of the Use Case Manage Content Studio]{Refinement of the Use Case Manage Content Studio} Figure
+\ref{fig:teacher-manage-content-studio-use-case} presents the refinement of the
+Use Case Manage Content Studio for the Teacher actor. This use case includes
+the following sub-use cases:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/chapter3/teacher-manage-content-studio-use-case}
+    \caption{Use Case Manage Content Studio}
+    \label{fig:teacher-manage-content-studio-use-case}
+\end{figure} 
 
-The Teacher actor is centered on pedagogical production and publication
-workflows. The most relevant use cases are training path creation, content
-maintenance, quiz publication, and submission for approval.
-
-\dotsection{\textbf{Specification of the Use Case View Analytics \& Performance}}
+\subsubsubsection{Specification of the Use Case Create / Edit / Delete Training Path}
 \begin{table}[H]
     \centering
-    \caption{Use Case Specification: View Analytics \& Performance}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \caption{Use Case Specification: Create / Edit / Delete Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
-        \textbf{Title}          & View Analytics \& Performance                                                                                   \\
+        \textbf{Title} & Create / Edit / Delete Training Path \\ \hline
+
+        \textbf{Summary} & Teacher creates, edits, or removes a training path. New paths start in draft; edits follow ownership rules; deletions require no active enrollments. \\ \hline
+
+
+        \textbf{Actor} & Primary: Teacher. Secondary: Administrator (approval), System. \\ \hline
+
+        \textbf{Precondition} & Teacher is authenticated and authorized; categories and VM templates exist; teacher has UI access. \\ \hline
+
+        \textbf{Post-condition} & 
+        \begin{itemize}[topsep=0pt,itemsep=0pt,parsep=0pt,partopsep=0pt]
+            \item Create: Training path exists in draft.
+            \item Edit: Metadata updated or flagged for approval.
+            \item Delete: Training path removed when business rules permit.
+        \end{itemize} \\ \hline
+
+        \textbf{Basic Scenario} & 
+        \begin{minipage}[t]{\linewidth}
+        \textbf{A. Create}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher provides title, description, category, price, difficulty and modules.
+            \item System validates permission.
+            \item System creates a draft training path and may create initial modules.
+            \item System displays the path for editing.
+        \end{enumerate}
+
+        \textbf{B. Edit}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher submits changes to existing path they own.
+            \item System validates changes and confirms ownership.
+            \item If approval required, system marks path pending and notifies admin; otherwise applies changes.
+            \item System presents updated or pending state.
+        \end{enumerate}
+
+        \textbf{C. Delete}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher requests deletion of an owned path.
+            \item System verifies ownership and checks for active enrollments.
+            \item If allowed, system removes the path and content; otherwise informs Teacher why it's blocked.
+            \item System confirms deletion or shows the blocking reason.
+        \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & 
+        \begin{itemize}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Validation failure: system informs Teacher and preserves input.
+            \item Unauthorized: system denies action and explains permissions.
+            \item Delete blocked: active enrollments prevent deletion; system explains condition.
+            \item System error: system preserves state, informs Teacher, and records incident.
+        \end{itemize} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-tp-crud}
+\end{table}
+
+
+\subsubsubsection{Specification of the Use Case Archive / Restore Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Archive / Restore Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Archive / Restore Training Path \\ \hline
+
+        \textbf{Summary}        & Teacher archives a training path to hide it from active listings while preserving content; later restores it to active listings. \\ \hline
+
+        \textbf{Actor}          & Teacher \\ \hline
+
+        \textbf{Precondition}   & Teacher is authenticated and owns the training path; it exists in the system. \\ \hline
+
+        \textbf{Post-condition} & Archive: path marked archived, removed from active listings, content preserved. Restore: archived flag cleared, path returns to active listings. \\ \hline
+
+        \textbf{Basic Scenario} & 
+        \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher selects path and chooses "Archive".
+            \item System asks for confirmation.
+            \item Teacher confirms.
+            \item System verifies ownership and archivable state.
+            \item System marks path as archived, records audit, and removes from active listings.
+            \item System confirms success; item no longer appears in active lists.
+            \item Later, Teacher navigates to archived items and chooses "Restore".
+            \item System asks for confirmation.
+            \item Teacher confirms.
+            \item System verifies ownership and archived state, clears archived status, records audit, and restores to active listings.
+            \item System confirms success; item appears again in active lists.
+        \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} &
+        \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item If Teacher does not own path, system denies action and displays authorization message.
+            \item If path is not found or already in requested state, system displays validation message.
+            \item If system persistence error occurs, system preserves consistent state, logs incident, and advises retry.
+            \item If auxiliary indexing fails, system completes in primary store, records inconsistency for reconciliation, and informs Teacher that listings may update shortly.
+        \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-archive-restore-tp}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Delete VM Assignment}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Delete VM Assignment}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Delete VM Assignment \\ \hline
+        \textbf{Summary}        & Teacher deletes an existing VM assignment they created; the system releases any provisioned VM and remote connections, records the action for audit, and notifies relevant parties. \\ \hline
+        \textbf{Actor}          & Teacher (primary). System (secondary). \\ \hline
+        \textbf{Precondition}   & Teacher is authenticated and authorized to manage the assignment; the VM assignment exists and is eligible for deletion. \\ \hline
+        \textbf{Post-condition} & On success: the assignment is removed (or soft‑deleted per policy); associated external resources are released or scheduled for cleanup; an audit entry is recorded; affected users are notified. \\ \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher locates the VM assignment and chooses Delete.
+                \item System asks the Teacher to confirm the deletion.
+                \item Teacher confirms the deletion.
+                \item System verifies the Teacher's authorization and that the assignment may be deleted.
+                \item System releases or schedules cleanup of any provisioned VM and removes any remote access/connection resources associated with the assignment.
+                \item System removes (or marks as deleted) the assignment record and records the deletion in the audit log.
+                \item System notifies the Teacher and any other relevant parties about the deletion and cleanup status.
+                \item The UI reflects the deletion and updated resource status.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Assignment not found: system informs the Teacher and makes no changes.
+                \item Unauthorized (not owner or insufficient privileges): system denies the action and explains required permissions.
+                \item External resource cleanup fails (e.g., VM removal or remote connection deletion): system logs the failure, retries or enqueues a cleanup job, may perform a soft‑delete of the assignment per policy, and notifies the Teacher of the partial outcome and next steps.
+                \item System error during deletion: system preserves consistent state, records the incident for investigation, and advises the Teacher to retry later or contact support.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-delete-vm-assignment}
+\end{table}
+
+
+\subsubsubsection{Specification of the Use Case Pin / Unpin Thread}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Pin / Unpin Thread}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title} & Pin / Unpin Thread \\ \hline
+
+        \textbf{Summary} & Teacher pins or unpins a forum thread within a training path to highlight or remove emphasis. The system updates the thread's visibility and records the moderation action for audit. \\ \hline
+
+        \textbf{Actor} & Teacher (primary) \\ \hline
+
+        \textbf{Precondition} & Teacher is authenticated and has moderation permission for the training path; the target thread exists and is not deleted. \\ \hline
+
+        \textbf{Post-condition} & The thread's pinned state is updated and persisted; forum listings and thread views reflect the change; a moderation audit entry is recorded. \\ \hline
+
+        \textbf{Basic Scenario} &
+        \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher opens the forum inbox or thread detail and selects the target thread.
+            \item Teacher chooses the Pin or Unpin action.
+            \item System verifies the teacher's authorization and that the thread is in a valid state for moderation.
+            \item System updates the thread's pinned status and persists the change.
+            \item System records a moderation audit entry (actor, action, thread identifier, timestamp).
+            \item System updates forum listings and thread ordering so the change is visible to authorized users.
+            \item UI displays confirmation and the thread's new pinned state.
+        \end{enumerate}
+        \end{minipage}
+        \\ \hline
+
+        \textbf{Error Scenario} &
+        \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Unauthorized: If the teacher lacks moderation permission, the system rejects the action and informs the teacher.
+            \item Not found / invalid state: If the thread is missing or deleted, the system reports the condition and takes no action.
+            \item Persistence failure: If the update cannot be saved, the system aborts the change, logs the failure, records an error audit, and notifies the teacher to retry later.
+        \end{enumerate}
+        \end{minipage}
+        \\ \hline
+    \end{tabular}
+    \label{tab:teacher-pin-unpin-thread}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Lock / Unlock Thread}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Lock / Unlock Thread}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Lock / Unlock Thread \\ \hline
+
+        \textbf{Summary}        & Teacher locks a thread to prevent further replies or unlocks it to allow discussion; the system enforces the state, records a moderation audit entry, and optionally notifies subscribers. \\ \hline
+
+        \textbf{Actor}          & Teacher (primary) \\ \hline
+
+        \textbf{Precondition}   & Teacher is authenticated and authorised to moderate the training path containing the thread; the thread exists and is not archived. \\ \hline
+
+        \textbf{Post-condition} & On success: the thread's locked state is set (locked/unlocked) and persisted; a moderation audit entry is recorded; subscribers may be notified of the change. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher selects Lock or Unlock for a target thread and confirms the action.
+                \item System verifies the teacher's moderation permission and that the thread is in a valid state for the requested action.
+                \item System updates and persists the thread's locked state.
+                \item System records a moderation audit entry with actor, action, thread identifier and timestamp.
+                \item System updates forum listings/permission enforcement so replies are blocked or allowed accordingly.
+                \item System returns confirmation to the teacher and the UI reflects the updated thread metadata.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Unauthorized: If the teacher lacks moderation permission, the system rejects the action and informs the teacher.
+                \item Not found / invalid state: If the thread cannot be located or is archived, the system reports the condition and takes no action.
+                \item Persistence / notification failure: If the locked-state update or notification cannot be saved/sent, the system aborts or rolls back the change, logs the failure, records an error audit, and informs the teacher to retry later.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-lock-unlock-thread}
+\end{table}
+
+
+\subsubsubsection{Specification of the Use Case Resolve Flag}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Resolve Flag}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title} & Resolve Flag \\ \hline
+
+        \textbf{Summary} & Teacher reviews a flagged discussion thread within an owned training path, takes an appropriate moderation action, and clears the flag so the thread is no longer treated as requiring attention. \\ \hline
+
+        \textbf{Actor} & Teacher \\ \hline
+
+        \textbf{Precondition} & Teacher is authenticated and owns the training path containing the flagged thread; the target thread exists and is currently flagged. \\ \hline
+
+        \textbf{Post-condition} & The flag is cleared on the target thread and persisted; the thread is removed from flagged-content views; the action is recorded for audit and the teacher receives confirmation. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the forum inbox or flagged-content view.
+                \item System displays flagged threads belonging to the teacher's training paths.
+                \item Teacher selects a flagged thread and reviews the content.
+                \item Teacher chooses the Resolve Flag action.
+                \item System verifies ownership and that the thread is still flagged.
+                \item System clears the flag, persists the updated moderation state, and records an audit entry.
+                \item System confirms success and the thread is removed from flagged-content views.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Unauthorized: If the teacher does not own the training path, the system rejects the action and keeps the flag unchanged.
+                \item Invalid state: If the thread is no longer flagged or cannot be found, the system informs the teacher and makes no change.
+                \item Persistence failure: If the unflag operation cannot be saved, the system preserves the previous state, logs the failure, records an error audit, and prompts the teacher to retry later.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-resolve-flag}
+\end{table}
+
+
+
+\subsubsubsection{Specification of the Use Case Request Payout}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Request Payout}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title} & Request Payout \\ \hline
+        \textbf{Summary} & Teacher requests withdrawal of an amount from available earnings. The system validates amount and payment method according to payout policies, creates a pending payout request, and confirms submission. \\ \hline
+        \textbf{Actor} & Primary: Teacher. Secondary: System. \\ \hline
+        \textbf{Precondition} & Teacher is authenticated and has earnings data with a non-zero available balance. Earnings/payout interface is available. \\ \hline
+        \textbf{Post-condition} & Payout request is created with status pending and associated with the teacher account. System confirms successful submission. \\ \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the earnings section and selects Request Payout.
+                \item System displays payout form with available balance and payment options.
+                \item Teacher enters payout amount and selects payment method.
+                \item Teacher submits the request.
+                \item System validates fields and checks available balance and minimum threshold.
+                \item System verifies amount and payment method validity.
+                \item System creates payout request with pending status and confirms submission to the Teacher.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Amount exceeds available balance: system rejects request and displays a validation message; Teacher may retry with a valid amount.
+                \item Amount below minimum threshold: system rejects request and prompts Teacher to increase amount; Teacher may retry.
+                \item Invalid payment method: system rejects request and requests a valid method; Teacher may retry.
+                \item Persistence or service failure: system preserves previous state, logs the incident, records an error audit, and informs the Teacher to retry later.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-request-payout}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Export Earnings Report}
+
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Export Earnings Report}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title} & Export Earnings Report \\
+        \hline
+        \textbf{Summary} & Teacher exports a CSV report of completed earnings transactions for a selected date range so the income history can be reviewed, reconciled, or archived for accounting purposes. The system generates a downloadable file without changing any financial records. \\
+        \hline
+        \textbf{Actor} & Primary: Teacher. Secondary: System. \\
+        \hline
+        \textbf{Precondition} & Teacher is authenticated and can access the earnings page. Earnings data is available in the system. If a date range is provided, it is valid. \\
+        \hline
+        \textbf{Post-condition} & CSV report is generated for the teacher's completed payments within the selected date range. Browser receives streamed download named earnings-YYYY-MM-DD.csv. No financial data is modified. \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the earnings page and requests an export.
+                \item System resolves the authenticated teacher and determines the export date range (selected or default).
+                \item System generates a CSV from the teacher's completed payments for the date range.
+                \item System streams the CSV file to the teacher's browser and the download starts.
+            \end{enumerate}
+        \end{minipage} \\ 
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Invalid or empty date range: supplied date range is malformed or inverted; system rejects the request and displays a validation message; no download occurs.
+                \item Export processing failure: data retrieval or CSV generation fails; system aborts the export, preserves current state, logs the incident, and surfaces a recoverable error.
+                \item No matching payments: selected date range contains no completed payments; system generates a CSV with header row only and streams it successfully.
+            \end{enumerate}
+        \end{minipage} \\ 
+        \hline
+    \end{tabular}
+    \label{tab:teacher-export-earnings}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\iffalse
+
+\subsubsubsection{Specification of the Use Case Submit VM Assignment}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Submit VM Assignment}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Submit VM Assignment \\
+        \hline
+        \textbf{Summary}        & Teacher creates a VM assignment request for a training unit, specifying template, duration, and justification \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authorized to request VMs for the target training unit \\
+        \hline
+        \textbf{Post-condition} & A new VM assignment record is created with pending status and notifications are dispatched as configured \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the VM assignment form for a training unit
+                \item Teacher selects a VM template and duration, and provides a justification
+                \item System validates ownership and field values, then creates the assignment record
+                \item System confirms submission and displays the new assignment with its pending status
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Validation failures surface field-level errors and preserve input
+                \item If quota or node availability prevents assignment, system displays an explanatory error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-submit-vm-assignment}
+\end{table}
+\subsubsubsection{Specification of the Use Case Create Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Create Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Create Training Path                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher creates a new training path with title, description, category, pricing, and initial structure \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                              \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated, verified, and approved to teach                                 \\
+        \hline
+        \textbf{Post-condition} & A new training path is created with draft status and assigned to the teacher            \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher clicks "Create New Training Path" from dashboard
+                                          \item System displays creation form with available categories and VM templates
+                                          \item Teacher enters title, description, category, price, and difficulty level
+                                          \item Teacher may optionally add initial modules and training units
+                                          \item Teacher submits the form
+                                          \item System validates input and creates training path with draft status
+                                          \item System redirects to edit page for content addition
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If required fields are missing, system displays validation errors
+                                          \item If rate limit exceeded, system displays throttle warning
+                                          \item If creation fails, system preserves input and shows error message
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-create-tp}
+\end{table}
+\subsubsubsection{Specification of the Use Case Edit Training Path Details}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Edit Training Path Details}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Edit Training Path Details                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher modifies training path metadata including title, description, category, and pricing \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                              \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the training path and it is not in published state without admin approval \\
+        \hline
+        \textbf{Post-condition} & Training path details are updated in the system                                          \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens training path from dashboard
+                                          \item System displays edit form with current values
+                                          \item Teacher modifies desired fields (title, description, category, price, etc.)
+                                          \item Teacher submits changes
+                                          \item System validates updates and persists changes
+                                          \item System confirms successful update
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher does not own training path, system denies access
+                                          \item If validation fails, system displays specific error messages
+                                          \item If update fails, system preserves previous state
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-edit-tp}
+\end{table}
+\subsubsubsection{Specification of the Use Case Delete Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Delete Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Delete Training Path                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher permanently deletes a training path and all associated content               \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                              \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the training path and it has no active enrollments                       \\
+        \hline
+        \textbf{Post-condition} & Training path and all related data are permanently removed from the system           \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher selects training path from dashboard
+                                          \item Teacher clicks delete option
+                                          \item System displays confirmation dialog with warning
+                                          \item Teacher confirms deletion
+                                          \item System performs cascading delete of training path, modules, units, and content
+                                          \item System confirms successful deletion and removes from list
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If training path has active enrollments, system prevents deletion
+                                          \item If teacher does not own training path, system denies access
+                                          \item If deletion fails, system displays error and preserves data
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-delete-tp}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Archive Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Archive Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Archive Training Path                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher archives a training path to hide it from public view while preserving data for potential restoration \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                              \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the training path                                                       \\
+        \hline
+        \textbf{Post-condition} & Training path is soft-deleted and removed from public listings                       \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher selects training path from dashboard
+                                          \item Teacher clicks archive option
+                                          \item System displays confirmation dialog
+                                          \item Teacher confirms archiving
+                                          \item System performs soft delete, preserving all data
+                                          \item System removes training path from public view and active listings
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher does not own training path, system denies access
+                                          \item If archiving fails, system displays error and preserves current state
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-archive-tp}
+\end{table}
+\subsubsubsection{Specification of the Use Case Restore Archived Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Restore Archived Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Restore Archived Path                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher restores a previously archived training path to make it available again         \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                              \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the archived training path                                              \\
+        \hline
+        \textbf{Post-condition} & Training path is restored to its previous state and becomes visible again             \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher navigates to archived training paths section
+                                          \item Teacher selects archived training path to restore
+                                          \item Teacher clicks restore option
+                                          \item System displays confirmation dialog
+                                          \item Teacher confirms restoration
+                                          \item System restores training path to its previous state
+                                          \item Training path becomes visible in dashboard and public listings
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher does not own training path, system denies access
+                                          \item If restoration fails, system displays error and preserves archived state
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-restore-tp}
+\end{table}
+\subsubsubsection{Specification of the Use Case Consult Analytics \& Performance}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Consult Analytics \& Performance}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Consult Analytics \& Performance                                                                                   \\
         \hline
         \textbf{Summary}        & Teacher reviews enrollment statistics, completion rates, and learner performance for their training paths \\
         \hline
@@ -41,387 +626,279 @@ maintenance, quiz publication, and submission for approval.
     \end{tabular}
     \label{tab:teacher-analytics}
 \end{table}
-
-\iffalse
-\subsubsubsection[View Analytics \& Performance]{Refinement of the Use Case View Analytics \& Performance} Figure
-\ref{fig:teacher-view-analytics-and-performance-use-case} presents the refinement of the
-Use Case View Analytics \& Performance for the Teacher actor. This use case includes
-the following sub-use cases:
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/teacher-view-analytics-and-performance-use-case}
-    \caption{Use Case View Analytics \& Performance}
-    \label{fig:teacher-view-analytics-and-performance-use-case}
-\end{figure}
-\dotsection{\textbf{Specification of the Use Case View Analytics Dashboard}}
+\subsubsubsection{Specification of the Use Case Browse Forum Inbox}
 \begin{table}[H]
     \centering
-    \caption{Use Case Specification: View Analytics Dashboard}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \caption{Use Case Specification: Browse Forum Inbox}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
-        \textbf{Title}          & View Analytics Dashboard                                                                 \\
+        \textbf{Title}          & Browse Forum Inbox \\
         \hline
-        \textbf{Summary}        & Teacher views comprehensive analytics dashboard with KPIs, charts, and trends \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and has at least one published training path        \\
-        \hline
-        \textbf{Post-condition} & Teacher views analytics data for all training paths with visualizations      \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher navigates to analytics dashboard
-                                          \item System retrieves key performance indicators
-                                          \item System displays KPI cards with totals and averages
-                                          \item System shows enrollment and revenue charts
-                                          \item System displays top performing training paths
-                                          \item Teacher may filter by time period
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no training paths exist, system displays empty state
-                                          \item If analytics service unavailable, system shows cached data with warning
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-analytics-dashboard}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case View Enrollment Chart}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: View Enrollment Chart}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & View Enrollment Chart                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher views enrollment trends over time with visual chart representation    \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and has training paths with enrollment data          \\
-        \hline
-        \textbf{Post-condition} & Teacher views enrollment chart with time-series data and trends              \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens analytics dashboard
-                                          \item Teacher navigates to enrollment chart section
-                                          \item System retrieves enrollment data by date
-                                          \item System displays line or bar chart with enrollment trends
-                                          \item Teacher may filter by time period (7d, 30d, 90d, 1y)
-                                          \item System updates chart with selected period
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no enrollment data exists, system displays empty chart
-                                          \item If chart generation fails, system displays error message
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-enrollment-chart}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case View Revenue Chart}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: View Revenue Chart}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & View Revenue Chart                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher views revenue trends over time with visual chart representation      \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and has training paths with paid enrollments         \\
-        \hline
-        \textbf{Post-condition} & Teacher views revenue chart with time-series data and earnings trends        \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens analytics dashboard
-                                          \item Teacher navigates to revenue chart section
-                                          \item System retrieves revenue data by date
-                                          \item System displays line or bar chart with revenue trends
-                                          \item Teacher may filter by time period (7d, 30d, 90d, 1y)
-                                          \item System shows breakdown by training path
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no revenue data exists, system displays empty chart
-                                          \item If chart generation fails, system displays error message
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-revenue-chart}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case View Engineer Roster}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: View Engineer Roster}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & View Engineer Roster                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher views list of enrolled engineers for a specific training path          \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path and it has enrolled engineers                  \\
-        \hline
-        \textbf{Post-condition} & Teacher views paginated list of engineers with enrollment details             \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens analytics dashboard
-                                          \item Teacher selects specific training path
-                                          \item Teacher navigates to engineer roster section
-                                          \item System retrieves enrolled engineers list
-                                          \item System displays engineers with names, enrollment dates, progress
-                                          \item Teacher may paginate through results
-                                          \item Teacher may filter by completion status
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If no engineers enrolled, system displays empty state
-                                          \item If roster retrieval fails, system displays error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-engineer-roster}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case View Completion Funnel}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: View Completion Funnel}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & View Completion Funnel                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher views completion funnel showing engineer progression through training path stages \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path and it has enrolled engineers                  \\
-        \hline
-        \textbf{Post-condition} & Teacher views visual funnel showing drop-off points and completion rates     \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens analytics dashboard
-                                          \item Teacher selects specific training path
-                                          \item Teacher navigates to completion funnel section
-                                          \item System retrieves engineer progression data
-                                          \item System displays funnel chart with stages: enrolled, started, in progress, completed
-                                          \item System shows completion percentages and drop-off points
-                                          \item Teacher may identify areas needing improvement
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If no engineer data exists, system displays empty funnel
-                                          \item If funnel generation fails, system displays error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-completion-funnel}
-\end{table}
-\fi
-
-
-\subsubsubsection[Manage Training Paths]{Refinement of the Use Case Manage Training Paths} Figure
-\ref{fig:teacher-manage-training-paths-use-case} presents the refinement of the
-Use Case Manage Training Paths for the Teacher actor. This use case includes
-the following sub-use cases:
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/teacher-manage-training-paths-use-case}
-    \caption{Use Case Manage Training Paths}
-    \label{fig:teacher-manage-training-paths-use-case}
-\end{figure}
-\dotsection{\textbf{Specification of the Use Case View Training Paths Dashboard}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: View Training Paths Dashboard}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & View Training Paths Dashboard \\
-        \hline
-        \textbf{Summary}        & Teacher views all owned training paths with statistics including total engineers, average ratings, and completion rates \\
+        \textbf{Summary}        & Teacher opens the discussion forum inbox and filters threads by status to identify questions requiring attention \\
         \hline
         \textbf{Actor}          & Teacher \\
         \hline
-        \textbf{Precondition}   & Teacher is authenticated, verified, and approved to teach \\
+        \textbf{Precondition}   & Teacher owns at least one training path with forum activity \\
         \hline
-        \textbf{Post-condition} & Teacher views the list of owned training paths with key metrics \\
+        \textbf{Post-condition} & Teacher views a filtered list of threads and may proceed to read or respond \\
         \hline
         \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
             \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher navigates to the teaching dashboard
-                \item System retrieves all training paths owned by the teacher
-                \item System calculates and displays statistics per path
-                \item Teacher may click any training path to view or edit details
+                \item Teacher navigates to the forum inbox from the teaching dashboard
+                \item System displays threads from all owned training paths with reply counts and timestamps
+                \item Teacher selects a filter to narrow the view:
+                \begin{itemize}
+                    \item \textbf{Flagged} — shows threads or replies that have been reported and require moderation
+                    \item \textbf{Unanswered} — shows threads with no teacher response yet
+                    \item \textbf{Recent} — shows threads sorted by most recent activity
+                \end{itemize}
+                \item System retrieves and displays threads matching the selected filter
+                \item Teacher may select any thread to read, respond, or take a moderation action
             \end{enumerate}
         \end{minipage} \\
         \hline
         \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
             \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item If no training paths exist, system displays empty state with create option
-                \item If teacher is not approved, system redirects to pending approval page
+                \item If no threads match the active filter, system displays an empty state
+                \item If filter retrieval fails, system falls back to showing all threads with an error notice
+                \item If teacher has no training paths, system displays an empty state with setup instructions
             \end{enumerate}
         \end{minipage} \\
         \hline
     \end{tabular}
-    \label{tab:teacher-view-dashboard}
+    \label{tab:teacher-forum-inbox}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Manage Training Path Lifecycle}}
+\subsubsubsection{Specification of the Use Case Moderate Forum Threads}
 \begin{table}[H]
     \centering
-    \caption{Use Case Specification: Manage Training Path Lifecycle}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \caption{Use Case Specification: Moderate Forum Threads}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
-        \textbf{Title}          & Manage Training Path Lifecycle \\
+        \textbf{Title}          & Moderate Forum Threads \\
         \hline
-        \textbf{Summary}        & Teacher creates, edits, deletes, archives, restores, and submits training paths for review throughout their lifecycle \\
+        \textbf{Summary}        & Teacher moderates discussion threads within owned training paths by pinning, locking, resolving flags, and editing or removing inappropriate content \\
         \hline
         \textbf{Actor}          & Teacher \\
         \hline
-        \textbf{Precondition}   & Teacher is authenticated, verified, approved to teach, and owns the target training path where applicable \\
+        \textbf{Precondition}   & Teacher owns the training path containing the target thread or reply \\
         \hline
-        \textbf{Post-condition} & The training path is created, updated, removed, archived, restored, or submitted for review according to the action performed \\
+        \textbf{Post-condition} & Thread state is updated according to the moderation action performed; a log entry is created and affected engineers are notified where applicable \\
         \hline
         \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
             \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher selects a lifecycle action from the dashboard: create, edit, delete, archive, restore, or submit for review
-                \item For \textbf{Create}: Teacher fills in title, description, category, price, and difficulty, then submits; system creates the path with draft status
-                \item For \textbf{Edit}: Teacher modifies desired metadata fields and submits; system validates and persists changes
-                \item For \textbf{Delete}: Teacher confirms permanent deletion; system cascades removal of all associated content
-                \item For \textbf{Archive}: Teacher confirms archiving; system soft-deletes the path and removes it from public listings
-                \item For \textbf{Restore}: Teacher selects an archived path and confirms restoration; system returns it to its previous state
-                \item For \textbf{Submit for Review}: Teacher confirms submission; system transitions the path to pending review and notifies administrators
+                \item Teacher opens a thread from the forum inbox
+                \item Teacher selects a moderation action:
+                \begin{itemize}
+                    \item \textbf{Pin / Unpin} — promotes the thread to the top of the forum listing or returns it to chronological order
+                    \item \textbf{Lock / Unlock} — prevents new replies from engineers or reopens the thread for discussion
+                    \item \textbf{Resolve Flag} — teacher reviews flagged content, takes appropriate action (approve, edit, or delete), then marks the flag as resolved
+                    \item \textbf{Edit / Delete post} — teacher corrects or removes inappropriate content and system logs the action with timestamp and reason
+                \end{itemize}
+                \item System validates ownership and applies the requested state change
+                \item System confirms the action and notifies affected engineers where applicable
             \end{enumerate}
         \end{minipage} \\
         \hline
         \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
             \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Missing or invalid fields cause validation failure and surface specific error messages
-                \item Deletion is blocked if active enrollments exist
-                \item Submission is rejected if the training path is incomplete
-                \item Unauthorized actions are denied and access is blocked
+                \item Unauthorized access is denied if teacher does not own the training path
+                \item If the target thread or post has already been removed, system displays a notice
+                \item Resolving a flag on non-flagged content surfaces an explanatory error
                 \item Persistence failures preserve the previous state and surface a recoverable error
             \end{enumerate}
         \end{minipage} \\
         \hline
     \end{tabular}
-    \label{tab:teacher-tp-lifecycle}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Manage Modules and Training Units}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Manage Modules and Training Units}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Manage Modules and Training Units \\
-        \hline
-        \textbf{Summary}        & Teacher adds, edits, reorders, and deletes modules and their contained training units to structure the learning content of a training path \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher is authorized to edit the target training path \\
-        \hline
-        \textbf{Post-condition} & The training path structure is updated to reflect the added, modified, reordered, or removed modules and training units \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher opens the training path editor
-                \item Teacher selects an action on a module or training unit: add, edit, reorder, or delete
-                \item For \textbf{Add}: Teacher enters title and description and submits; system creates the item and appends it to the structure
-                \item For \textbf{Edit}: Teacher modifies desired fields and submits; system validates and persists updates
-                \item For \textbf{Reorder}: Teacher drags items to the desired position; system persists the new order
-                \item For \textbf{Delete}: Teacher confirms deletion; system removes the item and all contained content with a cascading delete
-                \item System reflects all structural changes in the editor view
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Missing required fields surface validation errors
-                \item Deletion of items with active engineer progress is warned or blocked
-                \item Unauthorized access is denied
-                \item Persistence failures preserve the previous structure and surface a recoverable error
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-modules-units}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Manage Multimedia Learning Content}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Manage Multimedia Learning Content}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Manage Multimedia Learning Content \\
-        \hline
-        \textbf{Summary}        & Teacher creates or updates articles, videos, captions, and quizzes associated with a training unit \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher is authorized to edit the target training path and training unit \\
-        \hline
-        \textbf{Post-condition} & The selected educational asset is created, updated, published, unpublished, or deleted according to the action performed \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher selects a training unit and opens the content editor
-                \item For \textbf{Article}: Teacher writes or edits rich text content with formatting and media; system persists on save
-                \item For \textbf{Video}: Teacher uploads a video file; system validates format and size, stores the file, and queues it for transcoding; Teacher may monitor transcoding status, retry on failure, and manage caption files per language
-                \item For \textbf{Quiz}: Teacher creates a quiz with title, passing score, and time limit; adds, reorders, and manages multiple-choice questions with marked correct answers; then publishes or unpublishes the quiz; Teacher may also view attempt statistics including pass rates and average scores
-                \item System validates content structure and ownership at each step
-                \item System persists the asset and updates the training unit status accordingly
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Invalid or incomplete content causes validation failure with specific messages
-                \item Unauthorized editing is blocked
-                \item Video format or size violations prevent upload
-                \item Media processing failure leaves the asset in a retryable state
-                \item Quiz publication is blocked if no questions exist
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-content}
+    \label{tab:teacher-forum-moderation}
 \end{table}
 
 
-\iffalse
-% ------------------------------------------------------------------
-% 1. Manage Training Path
-% ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Training Path}}
+\subsubsubsection{Specification of the Use Case Open Forum Inbox}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Open Forum Inbox}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Open Forum Inbox                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher opens discussion forum inbox to view and manage engineer questions      \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns at least one training path with forum activity                   \\
+        \hline
+        \textbf{Post-condition} & Teacher views forum threads organized by priority and status                 \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher navigates to forum inbox from teaching dashboard
+                                          \item System displays threads from teacher's training paths
+                                          \item System organizes threads by filter (flagged, unanswered, recent)
+                                          \item Teacher views thread previews with reply counts
+                                          \item Teacher may select threads to read and respond
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher has no training paths, system displays empty state
+                                          \item If no forum activity exists, system displays no threads message
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-filter-flagged-threads}
+\end{table}
+\subsubsubsection{Specification of the Use Case Filter Flagged Threads}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Filter Flagged Threads}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Filter Flagged Threads                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher filters forum inbox to show only flagged threads requiring moderation \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns training paths with forum activity and some threads are flagged \\
+        \hline
+        \textbf{Post-condition} & Teacher views list of flagged threads requiring attention                      \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens forum inbox
+                                          \item Teacher selects "Flagged" filter option
+                                          \item System retrieves threads with flag status
+                                          \item System displays flagged threads with flag details
+                                          \item Teacher may review and resolve flags
+                                          \item Teacher may take moderation actions
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no flagged threads exist, system displays empty state
+                                          \item If filter fails, system displays error and shows all threads
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-filter-flagged}
+\end{table}
+\subsubsubsection{Specification of the Use Case Filter Unanswered Threads}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Filter Unanswered Threads}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Filter Unanswered Threads                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher filters forum inbox to show only threads without teacher responses    \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns training paths with forum activity and some threads lack answers \\
+        \hline
+        \textbf{Post-condition} & Teacher views list of unanswered threads requiring response                  \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens forum inbox
+                                          \item Teacher selects "Unanswered" filter option
+                                          \item System retrieves threads without teacher responses
+                                          \item System displays unanswered threads with question details
+                                          \item Teacher may read threads and provide answers
+                                          \item Teacher may mark replies as answers
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no unanswered threads exist, system displays empty state
+                                          \item If filter fails, system displays error and shows all threads
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-filter-unanswered}
+\end{table}
+\subsubsubsection{Specification of the Use Case Filter Recent Threads}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Filter Recent Threads}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Filter Recent Threads                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher filters forum inbox to show only the most recent threads by date      \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns training paths with forum activity                              \\
+        \hline
+        \textbf{Post-condition} & Teacher views list of recent threads sorted by creation date                  \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens forum inbox
+                                          \item Teacher selects "Recent" filter option
+                                          \item System retrieves threads sorted by most recent activity
+                                          \item System displays recent threads with timestamps
+                                          \item Teacher may view and respond to recent discussions
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no recent threads exist, system displays empty state
+                                          \item If filter fails, system displays error and shows all threads
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-filter-recent}
+\end{table}
+\subsubsubsection{Specification of the Use Case Submit VM Assignment}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Submit VM Assignment}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Submit VM Assignment                                                        \\
+        \hline
+        \textbf{Summary}        & Teacher creates a VM assignment request for a training unit, specifying template, duration and justification \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher is authorized to request VMs for the target training unit           \\
+        \hline
+        \textbf{Post-condition} & A new TrainingUnitVMAssignment record is created with status "pending" and notifications dispatched as configured \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens the "Submit VM Assignment" form for a training unit
+                                          \item Teacher selects VM template, duration and provides justification
+                                          \item System validates ownership and fields, then calls service to create assignment
+                                          \item System returns confirmation and lists the created assignment with status
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If validation fails, display field errors and preserve input
+                                          \item If quota or node availability prevents assignment, show an explanatory error
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-manage-training-path}
+\end{table}
+\subsubsubsection{Specification of the Use Case Manage Training Path}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Training Path}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Training Path \\
         \hline
@@ -465,15 +942,451 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-manage-tp}
 \end{table}
- 
+\subsubsubsection{Specification of the Use Case Manage Assignments}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage VM Assignments}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Manage VM Assignments \\
+        \hline
+        \textbf{Summary}        & Teacher views and cancels VM assignment requests associated with their training paths \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated and associated with at least one training path \\
+        \hline
+        \textbf{Post-condition} & Teacher views current assignments or a selected assignment is cancelled and any scheduled provisioning is aborted \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the forum inbox or flagged-content view.
+                \item System displays flagged threads belonging to the teacher's training paths.
+                \item Teacher may filter or sort the list, or open an assignment for details
+                \item To cancel, teacher selects an assignment and confirms the delete action
+                \item System verifies the assignment is in a cancellable state, removes or marks it cancelled, and updates the list
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no assignments exist, system displays an empty state with setup instructions
+                \item If the assignment is already provisioned or in a non-cancellable state, system displays an explanatory error
+                \item Persistence failures preserve current state and surface a recoverable error
+            \end{enumerate}
+                \item[Alt-1] \textbf{Flag not currently set}
+        \hline
+    \end{tabular}
+    \label{tab:teacher-manage-vm-assignments}
+\end{table}
+
+                \item[Alt-2] \textbf{Teacher resolves after review without content changes}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Earnings \& Payouts}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Earnings \& Payouts \\
+        \hline
+        \textbf{Summary}        & Teacher views their earnings summary, requests a payout of available balance, and exports transaction history as a CSV report \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+                \item[Exc-1] \textbf{Unauthorized access}
+        \hline
+        \textbf{Post-condition} & Teacher has viewed financial data, submitted a payout request, or downloaded an earnings report according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item[Exc-2] \textbf{Persistence failure}
+                \item System displays total earnings, available balance, pending payouts, and a revenue breakdown by training path; teacher may filter by date range
+                \item For \textbf{Request Payout}: teacher enters the desired amount and selects a payment method; system validates the amount against the available balance and minimum threshold, creates a pending payout request, and confirms submission
+                \item For \textbf{Export Report}: teacher specifies a date range and clicks export; system generates a CSV file of transaction details and initiates the download
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no earnings data exists, system displays an empty state
+                \item Payout amount exceeding available balance or falling below the minimum threshold surfaces a specific validation error
+                \item Invalid payment method prevents payout submission
+                \item An invalid or empty date range prevents CSV export
+                \item Service or export failures surface a recoverable error with a retry option
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-earnings}
+\end{table}
+
+\subsubsection[Refinement of the Use Case View Analytics \& Performance]{Refinement of the Use Case View Analytics \& Performance} This use case includes
+the following sub-use cases:
+
+\subsubsubsection{Specification of the Use Case View Analytics Dashboard}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Analytics Dashboard}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Analytics Dashboard                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher views comprehensive analytics dashboard with KPIs, charts, and trends \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated and has at least one published training path        \\
+        \hline
+        \textbf{Post-condition} & Teacher views analytics data for all training paths with visualizations      \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher navigates to analytics dashboard
+                                          \item System retrieves key performance indicators
+                                          \item System displays KPI cards with totals and averages
+                                          \item System shows enrollment and revenue charts
+                                          \item System displays top performing training paths
+                                          \item Teacher may filter by time period
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no training paths exist, system displays empty state
+                                          \item If analytics service unavailable, system shows cached data with warning
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-analytics-dashboard}
+\end{table}
+\subsubsubsection{Specification of the Use Case View Enrollment Chart}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Enrollment Chart}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Enrollment Chart                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher views enrollment trends over time with visual chart representation    \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated and has training paths with enrollment data          \\
+        \hline
+        \textbf{Post-condition} & Teacher views enrollment chart with time-series data and trends              \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens analytics dashboard
+                                          \item Teacher navigates to enrollment chart section
+                                          \item System retrieves enrollment data by date
+                                          \item System displays line or bar chart with enrollment trends
+                                          \item Teacher may filter by time period (7d, 30d, 90d, 1y)
+                                          \item System updates chart with selected period
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no enrollment data exists, system displays empty chart
+                                          \item If chart generation fails, system displays error message
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-enrollment-chart}
+\end{table}
+\subsubsubsection{Specification of the Use Case View Revenue Chart}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Revenue Chart}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Revenue Chart                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher views revenue trends over time with visual chart representation      \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated and has training paths with paid enrollments         \\
+        \hline
+        \textbf{Post-condition} & Teacher views revenue chart with time-series data and earnings trends        \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens analytics dashboard
+                                          \item Teacher navigates to revenue chart section
+                                          \item System retrieves revenue data by date
+                                          \item System displays line or bar chart with revenue trends
+                                          \item Teacher may filter by time period (7d, 30d, 90d, 1y)
+                                          \item System shows breakdown by training path
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If no revenue data exists, system displays empty chart
+                                          \item If chart generation fails, system displays error message
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-revenue-chart}
+\end{table}
+\subsubsubsection{Specification of the Use Case View Engineer Roster}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Engineer Roster}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Engineer Roster                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher views list of enrolled engineers for a specific training path          \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the training path and it has enrolled engineers                  \\
+        \hline
+        \textbf{Post-condition} & Teacher views paginated list of engineers with enrollment details             \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens analytics dashboard
+                                          \item Teacher selects specific training path
+                                          \item Teacher navigates to engineer roster section
+                                          \item System retrieves enrolled engineers list
+                                          \item System displays engineers with names, enrollment dates, progress
+                                          \item Teacher may paginate through results
+                                          \item Teacher may filter by completion status
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher does not own training path, system denies access
+                                          \item If no engineers enrolled, system displays empty state
+                                          \item If roster retrieval fails, system displays error
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-engineer-roster}
+\end{table}
+\subsubsubsection{Specification of the Use Case View Completion Funnel}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Completion Funnel}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Completion Funnel                                                                 \\
+        \hline
+        \textbf{Summary}        & Teacher views completion funnel showing engineer progression through training path stages \\
+        \hline
+        \textbf{Actor}          & Teacher                                                                      \\
+        \hline
+        \textbf{Precondition}   & Teacher owns the training path and it has enrolled engineers                  \\
+        \hline
+        \textbf{Post-condition} & Teacher views visual funnel showing drop-off points and completion rates     \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Teacher opens analytics dashboard
+                                          \item Teacher selects specific training path
+                                          \item Teacher navigates to completion funnel section
+                                          \item System retrieves engineer progression data
+                                          \item System displays funnel chart with stages: enrolled, started, in progress, completed
+                                          \item System shows completion percentages and drop-off points
+                                          \item Teacher may identify areas needing improvement
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item If teacher does not own training path, system denies access
+                                          \item If no engineer data exists, system displays empty funnel
+                                          \item If funnel generation fails, system displays error
+                                      \end{enumerate}
+                                  \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-completion-funnel}
+\end{table}
+
+
+
+
+
+\subsubsubsection{Specification of the Use Case View Training Paths Dashboard}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: View Training Paths Dashboard}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & View Training Paths Dashboard \\
+        \hline
+        \textbf{Summary}        & Teacher views all owned training paths with statistics including total engineers, average ratings, and completion rates \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated, verified, and approved to teach \\
+        \hline
+        \textbf{Post-condition} & Teacher views the list of owned training paths with key metrics \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher navigates to the teaching dashboard
+                \item System retrieves all training paths owned by the teacher
+                \item System calculates and displays statistics per path
+                \item Teacher may click any training path to view or edit details
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item If no training paths exist, system displays empty state with create option
+                \item If teacher is not approved, system redirects to pending approval page
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-view-dashboard}
+\end{table}
+\subsubsubsection{Specification of the Use Case Manage Training Path Lifecycle}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Training Path Lifecycle}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Training Path Lifecycle \\
+        \hline
+        \textbf{Summary}        & Teacher creates, edits, deletes, archives, restores, and submits training paths for review throughout their lifecycle \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authenticated, verified, approved to teach, and owns the target training path where applicable \\
+        \hline
+        \textbf{Post-condition} & The training path is created, updated, removed, archived, restored, or submitted for review according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher selects a lifecycle action from the dashboard: create, edit, delete, archive, restore, or submit for review
+                \item For \textbf{Create}: Teacher fills in title, description, category, price, and difficulty, then submits; system creates the path with draft status
+                \item For \textbf{Edit}: Teacher modifies desired metadata fields and submits; system validates and persists changes
+                \item For \textbf{Delete}: Teacher confirms permanent deletion; system cascades removal of all associated content
+                \item For \textbf{Archive}: Teacher confirms archiving; system soft-deletes the path and removes it from public listings
+                \item For \textbf{Restore}: Teacher selects an archived path and confirms restoration; system returns it to its previous state
+                \item For \textbf{Submit for Review}: Teacher confirms submission; system transitions the path to pending review and notifies administrators
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Missing or invalid fields cause validation failure and surface specific error messages
+                \item Deletion is blocked if active enrollments exist
+                \item Submission is rejected if the training path is incomplete
+                \item Unauthorized actions are denied and access is blocked
+                \item Persistence failures preserve the previous state and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-tp-lifecycle}
+\end{table}
+\subsubsubsection{Specification of the Use Case Manage Modules and Training Units}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Modules and Training Units}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Modules and Training Units \\
+        \hline
+        \textbf{Summary}        & Teacher adds, edits, reorders, and deletes modules and their contained training units to structure the learning content of a training path \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authorized to edit the target training path \\
+        \hline
+        \textbf{Post-condition} & The training path structure is updated to reflect the added, modified, reordered, or removed modules and training units \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the training path editor
+                \item Teacher selects an action on a module or training unit: add, edit, reorder, or delete
+                \item For \textbf{Add}: Teacher enters title and description and submits; system creates the item and appends it to the structure
+                \item For \textbf{Edit}: Teacher modifies desired fields and submits; system validates and persists updates
+                \item For \textbf{Reorder}: Teacher drags items to the desired position; system persists the new order
+                \item For \textbf{Delete}: Teacher confirms deletion; system removes the item and all contained content with a cascading delete
+                \item System reflects all structural changes in the editor view
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Missing required fields surface validation errors
+                \item Deletion of items with active engineer progress is warned or blocked
+                \item Unauthorized access is denied
+                \item Persistence failures preserve the previous structure and surface a recoverable error
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-modules-units}
+\end{table}
+\subsubsubsection{Specification of the Use Case Manage Multimedia Learning Content}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Manage Multimedia Learning Content}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Manage Multimedia Learning Content \\
+        \hline
+        \textbf{Summary}        & Teacher creates or updates articles, videos, captions, and quizzes associated with a training unit \\
+        \hline
+        \textbf{Actor}          & Teacher \\
+        \hline
+        \textbf{Precondition}   & Teacher is authorized to edit the target training path and training unit \\
+        \hline
+        \textbf{Post-condition} & The selected educational asset is created, updated, published, unpublished, or deleted according to the action performed \\
+        \hline
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher selects a training unit and opens the content editor
+                \item For \textbf{Article}: Teacher writes or edits rich text content with formatting and media; system persists on save
+                \item For \textbf{Video}: Teacher uploads a video file; system validates format and size, stores the file, and queues it for transcoding; Teacher may monitor transcoding status, retry on failure, and manage caption files per language
+                \item For \textbf{Quiz}: Teacher creates a quiz with title, passing score, and time limit; adds, reorders, and manages multiple-choice questions with marked correct answers; then publishes or unpublishes the quiz; Teacher may also view attempt statistics including pass rates and average scores
+                \item System validates content structure and ownership at each step
+                \item System persists the asset and updates the training unit status accordingly
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Invalid or incomplete content causes validation failure with specific messages
+                \item Unauthorized editing is blocked
+                \item Video format or size violations prevent upload
+                \item Media processing failure leaves the asset in a retryable state
+                \item Quiz publication is blocked if no questions exist
+            \end{enumerate}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \label{tab:teacher-content}
+\end{table}
+
+
+
+% ------------------------------------------------------------------
+% 1. Manage Training Path
+% ------------------------------------------------------------------
+
 % ------------------------------------------------------------------
 % 2. Manage Modules
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Modules}}
+\subsubsubsection{Specification of the Use Case Manage Modules}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Modules}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Modules \\
         \hline
@@ -515,11 +1428,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 3. Manage Training Units
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Training Units}}
+\subsubsubsection{Specification of the Use Case Manage Training Units}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Training Units}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Training Units \\
         \hline
@@ -561,11 +1474,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 4. Manage Quiz
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Quiz}}
+\subsubsubsection{Specification of the Use Case Manage Quiz}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Quiz}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Quiz \\
         \hline
@@ -609,11 +1522,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 5. Manage Quiz Questions
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Quiz Questions}}
+\subsubsubsection{Specification of the Use Case Manage Quiz Questions}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Quiz Questions}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Quiz Questions \\
         \hline
@@ -653,11 +1566,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 6. View Quiz Statistics
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case View Quiz Statistics}}
+\subsubsubsection{Specification of the Use Case View Quiz Statistics}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: View Quiz Statistics}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & View Quiz Statistics \\
         \hline
@@ -694,11 +1607,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 7. Manage Article Content
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Article Content}}
+\subsubsubsection{Specification of the Use Case Manage Article Content}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Article Content}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Article Content \\
         \hline
@@ -738,11 +1651,11 @@ the following sub-use cases:
 % ------------------------------------------------------------------
 % 8. Manage Video Content
 % ------------------------------------------------------------------
-\dotsection{\textbf{Specification of the Use Case Manage Video Content}}
+\subsubsubsection{Specification of the Use Case Manage Video Content}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Video Content}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Video Content \\
         \hline
@@ -782,14 +1695,13 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-manage-video}
 \end{table}
-\fi
 
-\iffalse
-\dotsection{\textbf{Specification of the Use Case View Training Paths Dashboard}}
+
+\subsubsubsection{Specification of the Use Case View Training Paths Dashboard}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: View Training Paths Dashboard}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & View Training Paths Dashboard                                                                 \\
         \hline
@@ -821,242 +1733,12 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-view-dashboard}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Create Training Path}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Create Training Path}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Create Training Path                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher creates a new training path with title, description, category, pricing, and initial structure \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                              \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated, verified, and approved to teach                                 \\
-        \hline
-        \textbf{Post-condition} & A new training path is created with draft status and assigned to the teacher            \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher clicks "Create New Training Path" from dashboard
-                                          \item System displays creation form with available categories and VM templates
-                                          \item Teacher enters title, description, category, price, and difficulty level
-                                          \item Teacher may optionally add initial modules and training units
-                                          \item Teacher submits the form
-                                          \item System validates input and creates training path with draft status
-                                          \item System redirects to edit page for content addition
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If required fields are missing, system displays validation errors
-                                          \item If rate limit exceeded, system displays throttle warning
-                                          \item If creation fails, system preserves input and shows error message
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-create-tp}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Edit Training Path Details}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Edit Training Path Details}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Edit Training Path Details                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher modifies training path metadata including title, description, category, and pricing \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                              \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path and it is not in published state without admin approval \\
-        \hline
-        \textbf{Post-condition} & Training path details are updated in the system                                          \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens training path from dashboard
-                                          \item System displays edit form with current values
-                                          \item Teacher modifies desired fields (title, description, category, price, etc.)
-                                          \item Teacher submits changes
-                                          \item System validates updates and persists changes
-                                          \item System confirms successful update
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If validation fails, system displays specific error messages
-                                          \item If update fails, system preserves previous state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-edit-tp}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Delete Training Path}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Delete Training Path}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Delete Training Path                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher permanently deletes a training path and all associated content               \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                              \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path and it has no active enrollments                       \\
-        \hline
-        \textbf{Post-condition} & Training path and all related data are permanently removed from the system           \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher selects training path from dashboard
-                                          \item Teacher clicks delete option
-                                          \item System displays confirmation dialog with warning
-                                          \item Teacher confirms deletion
-                                          \item System performs cascading delete of training path, modules, units, and content
-                                          \item System confirms successful deletion and removes from list
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If training path has active enrollments, system prevents deletion
-                                          \item If teacher does not own training path, system denies access
-                                          \item If deletion fails, system displays error and preserves data
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-delete-tp}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Archive Training Path}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Archive Training Path}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Archive Training Path                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher archives a training path to hide it from public view while preserving data for potential restoration \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                              \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path                                                       \\
-        \hline
-        \textbf{Post-condition} & Training path is soft-deleted and removed from public listings                       \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher selects training path from dashboard
-                                          \item Teacher clicks archive option
-                                          \item System displays confirmation dialog
-                                          \item Teacher confirms archiving
-                                          \item System performs soft delete, preserving all data
-                                          \item System removes training path from public view and active listings
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If archiving fails, system displays error and preserves current state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-archive-tp}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Restore Archived Path}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Restore Archived Path}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Restore Archived Path                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher restores a previously archived training path to make it available again         \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                              \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the archived training path                                              \\
-        \hline
-        \textbf{Post-condition} & Training path is restored to its previous state and becomes visible again             \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher navigates to archived training paths section
-                                          \item Teacher selects archived training path to restore
-                                          \item Teacher clicks restore option
-                                          \item System displays confirmation dialog
-                                          \item Teacher confirms restoration
-                                          \item System restores training path to its previous state
-                                          \item Training path becomes visible in dashboard and public listings
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If restoration fails, system displays error and preserves archived state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-restore-tp}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Submit Path for Review}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Submit Path for Review}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Submit Path for Review                                                                                       \\
-        \hline
-        \textbf{Summary}        & Teacher submits an authored training path to the administrative workflow for validation and publication readiness     \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                                                               \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated, verified, approved to teach, and owns the training path                                     \\
-        \hline
-        \textbf{Post-condition} & The training path status changes to a review-oriented state and becomes visible to administrative approval interfaces \\
-        \hline
-        \textbf{Basic Scenario} &
-        \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher opens the training path management dashboard
-                \item Teacher completes the required structure, modules, and training units
-                \item Teacher invokes the submit action
-                \item System validates ownership and submission eligibility
-                \item System updates the training path state to pending review
-                \item Administrators can then inspect the submitted training path from the approval
-                      dashboard
-            \end{enumerate}
-        \end{minipage}                                                      \\
-        \hline
-        \textbf{Error Scenario} &
-        \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item If the training path is incomplete, the system rejects submission
-                \item If the teacher lacks permission, the action is denied
-                \item If persistence fails, the previous state is preserved and the failure is logged
-            \end{enumerate}
-        \end{minipage}                                                    \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-submit-review}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Add Module}}
+
+\subsubsubsection{Specification of the Use Case Add Module}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Add Module}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Add Module                                                                 \\
         \hline
@@ -1091,11 +1773,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-add-module}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Reorder Modules}}
+\subsubsubsection{Specification of the Use Case Reorder Modules}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Reorder Modules}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Reorder Modules                                                                 \\
         \hline
@@ -1127,11 +1809,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-reorder-modules}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Delete Module}}
+\subsubsubsection{Specification of the Use Case Delete Module}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Delete Module}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Delete Module                                                                 \\
         \hline
@@ -1166,11 +1848,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-delete-module}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Edit Module}}
+\subsubsubsection{Specification of the Use Case Edit Module}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Edit Module}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Edit Module                                                                 \\
         \hline
@@ -1205,11 +1887,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-edit-module}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Add Training Unit}}
+\subsubsubsection{Specification of the Use Case Add Training Unit}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Add Training Unit}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Add Training Unit                                                                 \\
         \hline
@@ -1244,11 +1926,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-add-unit}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Edit Training Unit}}
+\subsubsubsection{Specification of the Use Case Edit Training Unit}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Edit Training Unit}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Edit Training Unit                                                                 \\
         \hline
@@ -1283,11 +1965,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-edit-unit}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Reorder Units}}
+\subsubsubsection{Specification of the Use Case Reorder Units}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Reorder Units}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Reorder Units                                                                 \\
         \hline
@@ -1320,11 +2002,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-reorder-units}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Delete Training Unit}}
+\subsubsubsection{Specification of the Use Case Delete Training Unit}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Delete Training Unit}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Delete Training Unit                                                                 \\
         \hline
@@ -1359,11 +2041,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-delete-unit}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Create Quiz}}
+\subsubsubsection{Specification of the Use Case Create Quiz}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Create Quiz}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Create Quiz                                                                 \\
         \hline
@@ -1399,11 +2081,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-create-quiz}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Edit Quiz Settings}}
+\subsubsubsection{Specification of the Use Case Edit Quiz Settings}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Edit Quiz Settings}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Edit Quiz Settings                                                                 \\
         \hline
@@ -1438,11 +2120,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-edit-quiz}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Add Questions \& Options}}
+\subsubsubsection{Specification of the Use Case Add Questions \& Options}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Add Questions \& Options}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Add Questions \& Options                                                                 \\
         \hline
@@ -1479,11 +2161,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-add-questions}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Reorder Questions}}
+\subsubsubsection{Specification of the Use Case Reorder Questions}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Reorder Questions}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Reorder Questions                                                                 \\
         \hline
@@ -1515,11 +2197,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-reorder-questions}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Publish / Unpublish Quiz}}
+\subsubsubsection{Specification of the Use Case Publish / Unpublish Quiz}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Publish / Unpublish Quiz}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Publish / Unpublish Quiz                                                                 \\
         \hline
@@ -1554,11 +2236,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-publish-quiz}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case View Quiz Statistics}}
+\subsubsubsection{Specification of the Use Case View Quiz Statistics}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: View Quiz Statistics}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & View Quiz Statistics                                                                 \\
         \hline
@@ -1591,11 +2273,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-quiz-stats}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Create / Update Article Content}}
+\subsubsubsection{Specification of the Use Case Create / Update Article Content}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Create / Update Article Content}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Create / Update Article Content                                                                 \\
         \hline
@@ -1630,11 +2312,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-article}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Delete Article}}
+\subsubsubsection{Specification of the Use Case Delete Article}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Delete Article}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Delete Article                                                                 \\
         \hline
@@ -1669,11 +2351,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-delete-article}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Upload Video}}
+\subsubsubsection{Specification of the Use Case Upload Video}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Upload Video}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Upload Video                                                                 \\
         \hline
@@ -1710,11 +2392,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-upload-video}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Monitor Transcoding Status}}
+\subsubsubsection{Specification of the Use Case Monitor Transcoding Status}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Monitor Transcoding Status}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Monitor Transcoding Status                                                                 \\
         \hline
@@ -1748,11 +2430,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-video-status}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Retry Failed Processing}}
+\subsubsubsection{Specification of the Use Case Retry Failed Processing}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Retry Failed Processing}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Retry Failed Processing                                                                 \\
         \hline
@@ -1787,11 +2469,11 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-retry-video}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Manage Captions / Subtitles}}
+\subsubsubsection{Specification of the Use Case Manage Captions / Subtitles}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Manage Captions / Subtitles}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & Manage Captions / Subtitles                                                                 \\
         \hline
@@ -1827,492 +2509,23 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-captions}
 \end{table}
-\fi
 
-\subsubsubsection[Manage Forum Interactions]{Refinement of the Use Case Manage Forum Interactions} Figure
-\ref{fig:teacher-manage-forum-internaction-use-case} presents the refinement of the
-Use Case Manage Forum Interactions for the Teacher actor. This use case includes
-the following sub-use cases:
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/teacher-manage-forum-internaction-use-case}
-    \caption{Use Case Manage Forum Interactions}
-    \label{fig:teacher-manage-forum-internaction-use-case}
-\end{figure}
 
-\dotsection{\textbf{Specification of the Use Case Browse Forum Inbox}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Browse Forum Inbox}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Browse Forum Inbox \\
-        \hline
-        \textbf{Summary}        & Teacher opens the discussion forum inbox and filters threads by status to identify questions requiring attention \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher owns at least one training path with forum activity \\
-        \hline
-        \textbf{Post-condition} & Teacher views a filtered list of threads and may proceed to read or respond \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher navigates to the forum inbox from the teaching dashboard
-                \item System displays threads from all owned training paths with reply counts and timestamps
-                \item Teacher selects a filter to narrow the view:
-                \begin{itemize}
-                    \item \textbf{Flagged} — shows threads or replies that have been reported and require moderation
-                    \item \textbf{Unanswered} — shows threads with no teacher response yet
-                    \item \textbf{Recent} — shows threads sorted by most recent activity
-                \end{itemize}
-                \item System retrieves and displays threads matching the selected filter
-                \item Teacher may select any thread to read, respond, or take a moderation action
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item If no threads match the active filter, system displays an empty state
-                \item If filter retrieval fails, system falls back to showing all threads with an error notice
-                \item If teacher has no training paths, system displays an empty state with setup instructions
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-forum-inbox}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Moderate Forum Threads}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Moderate Forum Threads}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Moderate Forum Threads \\
-        \hline
-        \textbf{Summary}        & Teacher moderates discussion threads within owned training paths by pinning, locking, resolving flags, and editing or removing inappropriate content \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path containing the target thread or reply \\
-        \hline
-        \textbf{Post-condition} & Thread state is updated according to the moderation action performed; a log entry is created and affected engineers are notified where applicable \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher opens a thread from the forum inbox
-                \item Teacher selects a moderation action:
-                \begin{itemize}
-                    \item \textbf{Pin / Unpin} — promotes the thread to the top of the forum listing or returns it to chronological order
-                    \item \textbf{Lock / Unlock} — prevents new replies from engineers or reopens the thread for discussion
-                    \item \textbf{Resolve Flag} — teacher reviews flagged content, takes appropriate action (approve, edit, or delete), then marks the flag as resolved
-                    \item \textbf{Edit / Delete post} — teacher corrects or removes inappropriate content and system logs the action with timestamp and reason
-                \end{itemize}
-                \item System validates ownership and applies the requested state change
-                \item System confirms the action and notifies affected engineers where applicable
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Unauthorized access is denied if teacher does not own the training path
-                \item If the target thread or post has already been removed, system displays a notice
-                \item Resolving a flag on non-flagged content surfaces an explanatory error
-                \item Persistence failures preserve the previous state and surface a recoverable error
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-forum-moderation}
-\end{table}
-\iffalse
-\dotsection{\textbf{Specification of the Use Case Open Forum Inbox}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Open Forum Inbox}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Open Forum Inbox                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher opens discussion forum inbox to view and manage engineer questions      \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns at least one training path with forum activity                   \\
-        \hline
-        \textbf{Post-condition} & Teacher views forum threads organized by priority and status                 \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher navigates to forum inbox from teaching dashboard
-                                          \item System displays threads from teacher's training paths
-                                          \item System organizes threads by filter (flagged, unanswered, recent)
-                                          \item Teacher views thread previews with reply counts
-                                          \item Teacher may select threads to read and respond
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher has no training paths, system displays empty state
-                                          \item If no forum activity exists, system displays no threads message
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-forum-inbox}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Filter Flagged Threads}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Filter Flagged Threads}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Filter Flagged Threads                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher filters forum inbox to show only flagged threads requiring moderation \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns training paths with forum activity and some threads are flagged \\
-        \hline
-        \textbf{Post-condition} & Teacher views list of flagged threads requiring attention                      \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens forum inbox
-                                          \item Teacher selects "Flagged" filter option
-                                          \item System retrieves threads with flag status
-                                          \item System displays flagged threads with flag details
-                                          \item Teacher may review and resolve flags
-                                          \item Teacher may take moderation actions
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no flagged threads exist, system displays empty state
-                                          \item If filter fails, system displays error and shows all threads
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-filter-flagged}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Filter Unanswered Threads}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Filter Unanswered Threads}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Filter Unanswered Threads                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher filters forum inbox to show only threads without teacher responses    \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns training paths with forum activity and some threads lack answers \\
-        \hline
-        \textbf{Post-condition} & Teacher views list of unanswered threads requiring response                  \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens forum inbox
-                                          \item Teacher selects "Unanswered" filter option
-                                          \item System retrieves threads without teacher responses
-                                          \item System displays unanswered threads with question details
-                                          \item Teacher may read threads and provide answers
-                                          \item Teacher may mark replies as answers
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no unanswered threads exist, system displays empty state
-                                          \item If filter fails, system displays error and shows all threads
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-filter-unanswered}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Filter Recent Threads}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Filter Recent Threads}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Filter Recent Threads                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher filters forum inbox to show only the most recent threads by date      \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns training paths with forum activity                              \\
-        \hline
-        \textbf{Post-condition} & Teacher views list of recent threads sorted by creation date                  \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens forum inbox
-                                          \item Teacher selects "Recent" filter option
-                                          \item System retrieves threads sorted by most recent activity
-                                          \item System displays recent threads with timestamps
-                                          \item Teacher may view and respond to recent discussions
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no recent threads exist, system displays empty state
-                                          \item If filter fails, system displays error and shows all threads
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-filter-recent}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Pin / Unpin Thread}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Pin / Unpin Thread}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Pin / Unpin Thread                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher pins important threads to top of forum or unpins them                \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path containing the forum thread                   \\
-        \hline
-        \textbf{Post-condition} & Thread pin status is updated and thread position changes accordingly         \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens forum thread
-                                          \item Teacher clicks "Pin" or "Unpin" option
-                                          \item System updates thread pin status
-                                          \item System confirms status change
-                                          \item Pinned threads appear at top of forum listings
-                                          \item Unpinned threads return to normal chronological order
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If thread not found, system displays error
-                                          \item If action fails, system displays error and preserves current state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-pin-thread}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Lock / Unlock Thread}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Lock / Unlock Thread}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Lock / Unlock Thread                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher locks threads to prevent new replies or unlocks them to allow discussion \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path containing the forum thread                   \\
-        \hline
-        \textbf{Post-condition} & Thread lock status is updated and reply permissions change accordingly         \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens forum thread
-                                          \item Teacher clicks "Lock" or "Unlock" option
-                                          \item System updates thread lock status
-                                          \item System confirms status change
-                                          \item Locked threads prevent new replies from engineers
-                                          \item Unlocked threads allow normal discussion
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If thread not found, system displays error
-                                          \item If action fails, system displays error and preserves current state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-lock-thread}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Resolve Flag}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Resolve Flag}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Resolve Flag                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher resolves flagged content after review and removes flag status        \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher owns the training path and thread or reply is flagged                \\
-        \hline
-        \textbf{Post-condition} & Flag status is removed and content is marked as reviewed                       \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens flagged thread or reply
-                                          \item Teacher reviews the flagged content
-                                          \item Teacher determines appropriate action (edit, delete, or approve)
-                                          \item Teacher takes moderation action
-                                          \item Teacher clicks "Resolve Flag" option
-                                          \item System removes flag status
-                                          \item System confirms resolution
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If teacher does not own training path, system denies access
-                                          \item If content not flagged, system displays error
-                                          \item If resolution fails, system displays error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-resolve-flag}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Submit VM Assignment}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Submit VM Assignment}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Submit VM Assignment                                                        \\
-        \hline
-        \textbf{Summary}        & Teacher creates a VM assignment request for a training unit, specifying template, duration and justification \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher is authorized to request VMs for the target training unit           \\
-        \hline
-        \textbf{Post-condition} & A new TrainingUnitVMAssignment record is created with status "pending" and notifications dispatched as configured \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher opens the "Submit VM Assignment" form for a training unit
-                                          \item Teacher selects VM template, duration and provides justification
-                                          \item System validates ownership and fields, then calls service to create assignment
-                                          \item System returns confirmation and lists the created assignment with status
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If validation fails, display field errors and preserve input
-                                          \item If quota or node availability prevents assignment, show an explanatory error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-submit-vm-assignment}
-\end{table}
-\fi
 
-\subsubsubsection[Manage VM Assignments]{Refinement of the Use Case Manage VM Assignments} Figure
-\ref{fig:teacher-manage-vm-assignments-use-case} presents the refinement of the
-Use Case Manage VM Assignments for the Teacher actor. This use case includes
-the following sub-use cases:
-\dotsection{\textbf{Specification of the Use Case Submit VM Assignment}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Submit VM Assignment}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Submit VM Assignment \\
-        \hline
-        \textbf{Summary}        & Teacher creates a VM assignment request for a training unit, specifying template, duration, and justification \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher is authorized to request VMs for the target training unit \\
-        \hline
-        \textbf{Post-condition} & A new VM assignment record is created with pending status and notifications are dispatched as configured \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher opens the VM assignment form for a training unit
-                \item Teacher selects a VM template and duration, and provides a justification
-                \item System validates ownership and field values, then creates the assignment record
-                \item System confirms submission and displays the new assignment with its pending status
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Validation failures surface field-level errors and preserve input
-                \item If quota or node availability prevents assignment, system displays an explanatory error
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-submit-vm-assignment}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Manage Assignments}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Manage VM Assignments}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Manage VM Assignments \\
-        \hline
-        \textbf{Summary}        & Teacher views and cancels VM assignment requests associated with their training paths \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and associated with at least one training path \\
-        \hline
-        \textbf{Post-condition} & Teacher views current assignments or a selected assignment is cancelled and any scheduled provisioning is aborted \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher opens the VM assignments view
-                \item System displays assignments grouped by training path with status, template, and timestamps
-                \item Teacher may filter or sort the list, or open an assignment for details
-                \item To cancel, teacher selects an assignment and confirms the delete action
-                \item System verifies the assignment is in a cancellable state, removes or marks it cancelled, and updates the list
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item If no assignments exist, system displays an empty state with setup instructions
-                \item If the assignment is already provisioned or in a non-cancellable state, system displays an explanatory error
-                \item Persistence failures preserve current state and surface a recoverable error
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-manage-vm-assignments}
-\end{table}
 
-\iffalse
+
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{assets/chapter3/teacher-manage-vm-assignments-use-case}
     \caption{Use Case Manage VM Assignments}
     \label{fig:teacher-manage-vm-assignments-use-case}
 \end{figure}
-\dotsection{\textbf{Specification of the Use Case View My VM Assignments}}
+\subsubsubsection{Specification of the Use Case View My VM Assignments}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: View My VM Assignments}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & View My VM Assignments                                                      \\
         \hline
@@ -2343,97 +2556,17 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-view-my-vm-assignments}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Delete VM Assignment}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Delete VM Assignment}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Delete VM Assignment                                                        \\
-        \hline
-        \textbf{Summary}        & Teacher deletes or cancels a previously submitted VM assignment when it is no longer required \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Assignment exists and is in a deletable state (e.g. pending or approved but not yet provisioned) \\
-        \hline
-        \textbf{Post-condition} & Assignment record is removed or marked cancelled; any scheduled provisioning is aborted and notifications sent as appropriate \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher selects an assignment and chooses "Delete/Cancel"
-                                          \item System confirms the action with the user
-                                          \item System verifies deletable state and calls repository/service to cancel the assignment
-                                          \item System returns success and updates the assignment list
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If assignment is already provisioned or in a non-deletable state, show an explanatory error
-                                          \item If the delete operation fails, display an error and preserve current state
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-delete-vm-assignment}
-\end{table}
-\fi
 
-\dotsection{\textbf{Specification of the Use Case Manage Earnings \& Payouts}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Manage Earnings \& Payouts}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Manage Earnings \& Payouts \\
-        \hline
-        \textbf{Summary}        & Teacher views their earnings summary, requests a payout of available balance, and exports transaction history as a CSV report \\
-        \hline
-        \textbf{Actor}          & Teacher \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and has at least one training path with paid enrollments \\
-        \hline
-        \textbf{Post-condition} & Teacher has viewed financial data, submitted a payout request, or downloaded an earnings report according to the action performed \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item Teacher navigates to the earnings section
-                \item System displays total earnings, available balance, pending payouts, and a revenue breakdown by training path; teacher may filter by date range
-                \item For \textbf{Request Payout}: teacher enters the desired amount and selects a payment method; system validates the amount against the available balance and minimum threshold, creates a pending payout request, and confirms submission
-                \item For \textbf{Export Report}: teacher specifies a date range and clicks export; system generates a CSV file of transaction details and initiates the download
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                \item If no earnings data exists, system displays an empty state
-                \item Payout amount exceeding available balance or falling below the minimum threshold surfaces a specific validation error
-                \item Invalid payment method prevents payout submission
-                \item An invalid or empty date range prevents CSV export
-                \item Service or export failures surface a recoverable error with a retry option
-            \end{enumerate}
-        \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-earnings}
-\end{table}
-\iffalse
-\subsubsubsection[Manage Earnings \& Payouts]{Refinement of the Use Case Manage Earnings \& Payouts} Figure
-\ref{fig:teacher-manage-earnings-and-payouts-use-case} presents the refinement of the
-Use Case Manage Earnings \& Payouts for the Teacher actor. This use case includes
-the following sub-use cases:
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{assets/chapter3/teacher-manage-earnings-and-payouts-use-case}
-    \caption{Use Case Manage Earnings \& Payouts}
-    \label{fig:teacher-manage-earnings-and-payouts-use-case}
-\end{figure}
-\dotsection{\textbf{Specification of the Use Case View Earnings Summary}}
+
+
+
+
+
+\subsubsubsection{Specification of the Use Case View Earnings Summary}
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: View Earnings Summary}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
         \textbf{Title}          & View Earnings Summary                                                                 \\
         \hline
@@ -2466,84 +2599,6 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-earnings-summary}
 \end{table}
-\dotsection{\textbf{Specification of the Use Case Request Payout}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Request Payout}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Request Payout                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher requests payout of available earnings to their designated payment method \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher has available balance above minimum payout threshold                   \\
-        \hline
-        \textbf{Post-condition} & Payout request is created and submitted for administrator processing          \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher navigates to earnings section
-                                          \item Teacher views available balance
-                                          \item Teacher clicks "Request Payout" button
-                                          \item System displays payout request form
-                                          \item Teacher enters payout amount and selects payment method
-                                          \item Teacher submits payout request
-                                          \item System validates amount against available balance
-                                          \item System creates payout request with pending status
-                                          \item System confirms submission
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If amount exceeds available balance, system displays error
-                                          \item If amount below minimum threshold, system displays minimum required
-                                          \item If payout method invalid, system displays error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-request-payout}
-\end{table}
-\dotsection{\textbf{Specification of the Use Case Export Earnings Report}}
-\begin{table}[H]
-    \centering
-    \caption{Use Case Specification: Export Earnings Report}
-    \begin{tabular}{|p{3.5cm}|p{10.5cm}|}
-        \hline
-        \textbf{Title}          & Export Earnings Report                                                                 \\
-        \hline
-        \textbf{Summary}        & Teacher exports earnings data to CSV file for accounting and record keeping   \\
-        \hline
-        \textbf{Actor}          & Teacher                                                                      \\
-        \hline
-        \textbf{Precondition}   & Teacher is authenticated and has earnings data to export                    \\
-        \hline
-        \textbf{Post-condition} & CSV file containing earnings data is downloaded to teacher's device         \\
-        \hline
-        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Teacher navigates to earnings section
-                                          \item Teacher specifies date range for export
-                                          \item Teacher clicks "Export CSV" button
-                                          \item System retrieves earnings data for specified period
-                                          \item System generates CSV file with transaction details
-                                          \item System initiates file download
-                                          \item Teacher saves CSV file to device
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
-                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If no earnings data for period, system displays empty CSV
-                                          \item If export fails, system displays error and retry option
-                                          \item If date range invalid, system displays validation error
-                                      \end{enumerate}
-                                  \end{minipage} \\
-        \hline
-    \end{tabular}
-    \label{tab:teacher-export-earnings}
-\end{table}
+
+
 \fi

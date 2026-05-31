@@ -1,0 +1,94 @@
+@startuml Manage_Sessions
+title Use Case: Manage Sessions - Sequence
+
+actor Administrator
+
+participant VMSessionController
+participant VMSessionCleanupService
+participant VMSessionRepository
+participant ExtendSessionService
+participant TerminateVMJob
+participant GuacamoleClientInterface
+participant ProxmoxClientInterface
+participant GatewayService
+participant CameraService
+participant UsbDeviceQueueService
+
+Administrator -> VMSessionController: GET /sessions?all=1
+activate VMSessionController
+
+VMSessionController -> VMSessionCleanupService: expireOverdueSessions()
+activate VMSessionCleanupService
+VMSessionCleanupService -> VMSessionRepository: findOverdueWithGuacamoleConnections()
+activate VMSessionRepository
+VMSessionRepository --> VMSessionCleanupService: overdueSessions
+deactivate VMSessionRepository
+
+loop for each overdue session
+  VMSessionCleanupService -> GuacamoleClientInterface: deleteConnection(connectionId)
+  GuacamoleClientInterface --> VMSessionCleanupService: deleted / not found
+  VMSessionCleanupService -> VMSessionRepository: update(..., guacamole_connection_id = null)
+end
+
+VMSessionCleanupService -> VMSessionRepository: markOverdueAsExpired()
+VMSessionRepository --> VMSessionCleanupService: expiredCount
+VMSessionCleanupService --> VMSessionController: expiredCount
+deactivate VMSessionCleanupService
+
+VMSessionController -> VMSessionRepository: findAllActive()
+activate VMSessionRepository
+VMSessionRepository --> VMSessionController: sessions
+deactivate VMSessionRepository
+
+VMSessionController --> Administrator: session list + details
+
+alt Extend Session
+  Administrator -> VMSessionController: POST /sessions/{id}/extend
+  VMSessionController -> ExtendSessionService: extend(session, minutes)
+  activate ExtendSessionService
+  ExtendSessionService -> VMSessionRepository: update(session, expires_at = newTime)
+  VMSessionRepository --> ExtendSessionService: updatedSession
+  ExtendSessionService --> VMSessionController: updatedSession
+  deactivate ExtendSessionService
+  VMSessionController --> Administrator: 200 VMSessionResource
+else Terminate Session
+  Administrator -> VMSessionController: DELETE /sessions/{id}
+  VMSessionController -> TerminateVMJob: dispatchSync(session, stopVm, returnSnapshot)
+  activate TerminateVMJob
+  TerminateVMJob -> GuacamoleClientInterface: deleteConnection(connectionId)
+  GuacamoleClientInterface --> TerminateVMJob: deleted / 404
+
+  TerminateVMJob -> CameraService: releaseCameraControls(session)
+  CameraService --> TerminateVMJob: released
+
+  TerminateVMJob -> GatewayService: cleanupAttachedUsb(session)
+  GatewayService -> UsbDeviceQueueService: notifyQueuedUsers(devices)
+  UsbDeviceQueueService --> GatewayService: notified
+  GatewayService --> TerminateVMJob: cleaned
+
+  alt session has VM
+    opt revert snapshot
+      TerminateVMJob -> ProxmoxClientInterface: revertSnapshot(node, vm, snapshot)
+      ProxmoxClientInterface --> TerminateVMJob: reverted
+    end
+    opt stop VM
+      TerminateVMJob -> ProxmoxClientInterface: stopVm(node, vm)
+      ProxmoxClientInterface --> TerminateVMJob: stopped
+    end
+  end
+
+  TerminateVMJob -> VMSessionRepository: update(session, status = expired)
+  VMSessionRepository --> TerminateVMJob: updated
+  TerminateVMJob --> VMSessionController: done
+  deactivate TerminateVMJob
+  VMSessionController --> Administrator: 200 Session terminated
+end
+
+deactivate VMSessionController
+
+note over VMSessionController,TerminateVMJob
+  Termination always deletes Guacamole connection first.
+  Extend uses quota and expiry validation before updating.
+end note
+
+@enduml

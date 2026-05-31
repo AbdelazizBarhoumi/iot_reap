@@ -29,6 +29,55 @@ use Tests\TestCase;
  */
 class GuacamoleTunnelIntegrationTest extends TestCase
 {
+    private function assertWebSocketHandshake(string $tunnel, array $params, string $skipMessagePrefix = ''): void
+    {
+        $fullUrl = $tunnel.'?'.http_build_query($params);
+
+        $parts = parse_url($fullUrl);
+        $scheme = $parts['scheme'] ?? 'ws';
+        $host = $parts['host'] ?? 'localhost';
+        $port = $parts['port'] ?? ($scheme === 'wss' ? 443 : 80);
+        $path = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
+
+        $transport = $scheme === 'wss' ? 'ssl://' : '';
+        $socket = @fsockopen($transport.$host, $port, $errno, $errstr, 5);
+        if (! $socket) {
+            $this->markTestSkipped($skipMessagePrefix."Could not open socket to {$host}: {$errstr} ({$errno})");
+        }
+
+        stream_set_timeout($socket, 5);
+
+        $key = base64_encode(random_bytes(16));
+        $req = "GET {$path} HTTP/1.1\r\n";
+        $req .= "Host: {$host}:{$port}\r\n";
+        $req .= "Origin: http://{$host}\r\n";
+        $req .= "Upgrade: websocket\r\n";
+        $req .= "Connection: Upgrade\r\n";
+        $req .= "Sec-WebSocket-Key: {$key}\r\n";
+        $req .= "Sec-WebSocket-Version: 13\r\n\r\n";
+
+        fwrite($socket, $req);
+
+        $response = '';
+        while (! feof($socket)) {
+            $chunk = fgets($socket);
+            if ($chunk === false) {
+                break;
+            }
+
+            $response .= $chunk;
+            if (str_contains($response, "\r\n\r\n")) {
+                break;
+            }
+        }
+
+        fclose($socket);
+
+        $firstLine = strtok($response, "\r\n");
+        $this->assertNotFalse($firstLine, 'No HTTP response received from tunnel endpoint.');
+        $this->assertStringContainsString('101', $firstLine, "Handshake failed: {$firstLine}");
+    }
+
     public function test_websocket_tunnel_url_accepts_handshake(): void
     {
         // Skip when GUACAMOLE_URL is missing, or when explicitly disabled.
@@ -80,7 +129,7 @@ class GuacamoleTunnelIntegrationTest extends TestCase
         $dataSource = $response->json('data_source');
         $connId = $response->json('connection_id');
 
-        $params = http_build_query([
+        $this->assertWebSocketHandshake($tunnel, [
             'token' => $token,
             'GUAC_DATA_SOURCE' => $dataSource,
             'GUAC_ID' => $connId,
@@ -88,35 +137,7 @@ class GuacamoleTunnelIntegrationTest extends TestCase
             'GUAC_WIDTH' => 800,
             'GUAC_HEIGHT' => 600,
             'GUAC_DPI' => 96,
-        ]);
-        $fullUrl = $tunnel.'?'.$params;
-
-        $parts = parse_url($fullUrl);
-        $scheme = $parts['scheme'] ?? 'ws';
-        $host = $parts['host'] ?? 'localhost';
-        $port = $parts['port'] ?? ($scheme === 'wss' ? 443 : 80);
-        $path = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
-
-        $transport = $scheme === 'wss' ? 'ssl://' : '';
-        $socket = @fsockopen($transport.$host, $port, $errno, $errstr, 5);
-        if (! $socket) {
-            // skip if unreachable
-            $this->markTestSkipped("Cannot reach Guacamole host {$host}: {$errstr} ({$errno})");
-        }
-
-        $key = base64_encode(random_bytes(16));
-        $req = "GET {$path} HTTP/1.1\r\n";
-        $req .= "Host: {$host}:{$port}\r\n";
-        $req .= "Upgrade: websocket\r\n";
-        $req .= "Connection: Upgrade\r\n";
-        $req .= "Sec-WebSocket-Key: {$key}\r\n";
-        $req .= "Sec-WebSocket-Version: 13\r\n\r\n";
-
-        fwrite($socket, $req);
-        $line = fgets($socket);
-        fclose($socket);
-
-        $this->assertStringContainsString('101', $line, "Handshake failed: {$line}");
+        ], 'Cannot reach Guacamole host. ');
     }
 
     /**
@@ -144,7 +165,7 @@ class GuacamoleTunnelIntegrationTest extends TestCase
         }
         fclose($check);
 
-        $params = http_build_query([
+        $this->assertWebSocketHandshake($tunnel, [
             'token' => $token,
             'GUAC_DATA_SOURCE' => $dataSource,
             'GUAC_ID' => $connId,
@@ -152,33 +173,6 @@ class GuacamoleTunnelIntegrationTest extends TestCase
             'GUAC_WIDTH' => 800,
             'GUAC_HEIGHT' => 600,
             'GUAC_DPI' => 96,
-        ]);
-        $fullUrl = $tunnel.'?'.$params;
-
-        $parts = parse_url($fullUrl);
-        $scheme = $parts['scheme'] ?? 'ws';
-        $host = $parts['host'] ?? 'localhost';
-        $port = $parts['port'] ?? ($scheme === 'wss' ? 443 : 80);
-        $path = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
-
-        $transport = $scheme === 'wss' ? 'ssl://' : '';
-        $socket = @fsockopen($transport.$host, $port, $errno, $errstr, 5);
-        if (! $socket) {
-            $this->markTestSkipped("Could not open socket to {$host}: {$errstr} ({$errno})");
-        }
-
-        $key = base64_encode(random_bytes(16));
-        $req = "GET {$path} HTTP/1.1\r\n";
-        $req .= "Host: {$host}:{$port}\r\n";
-        $req .= "Upgrade: websocket\r\n";
-        $req .= "Connection: Upgrade\r\n";
-        $req .= "Sec-WebSocket-Key: {$key}\r\n";
-        $req .= "Sec-WebSocket-Version: 13\r\n\r\n";
-
-        fwrite($socket, $req);
-        $line = fgets($socket);
-        fclose($socket);
-
-        $this->assertStringContainsString('101', $line, "Handshake failed: {$line}");
+        ], 'Sample token host not reachable. ');
     }
 }

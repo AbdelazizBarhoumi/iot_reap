@@ -2,7 +2,6 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     CalendarCheck,
     GraduationCap,
-    History,
     LayoutGrid,
     Menu,
     PenTool,
@@ -34,7 +33,6 @@ import { cn } from '@/lib/utils';
 import { login, dashboard, home } from '@/routes';
 import connectionPreferences from '@/routes/connection-preferences';
 import reservations from '@/routes/reservations';
-import sessions from '@/routes/sessions';
 import teaching from '@/routes/teaching';
 import trainingPaths from '@/routes/trainingPaths';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -60,18 +58,13 @@ function useNavItems(): NavItem[] {
         href: trainingPaths.index.url(),
         icon: GraduationCap,
     });
-    // Engineers see VM sessions, reservations, and their enrolled trainingPaths
-    if (isEngineer) {
+    // Engineers and administrators see Reservations + My Training
+    if (isEngineer || role === 'admin') {
         items.push(
             {
                 title: 'My Training',
                 href: trainingPaths.my.url(),
                 icon: GraduationCap,
-            },
-            {
-                title: 'Sessions',
-                href: sessions.index.url(),
-                icon: History,
             },
             {
                 title: 'Reservations',

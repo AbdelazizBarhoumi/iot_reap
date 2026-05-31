@@ -196,17 +196,17 @@ class AdminUserController extends Controller
     }
 
     /**
-     * GDPR delete a user (anonymize PII, keep transaction records).
+     *  delete a user (anonymize PII, keep transaction records).
      */
-    public function gdprDelete(Request $request, User $user): JsonResponse
+    public function Delete(Request $request, User $user): JsonResponse
     {
-        $this->userManagementService->gdprDelete(
+        $this->userManagementService->Delete(
             user: $user,
             admin: $request->user(),
         );
 
         return response()->json([
-            'message' => 'User data anonymized successfully (GDPR deletion)',
+            'message' => 'User data anonymized successfully ( deletion)',
         ]);
     }
 }

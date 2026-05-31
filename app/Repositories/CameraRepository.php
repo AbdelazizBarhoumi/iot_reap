@@ -6,6 +6,7 @@ use App\Enums\CameraReservationStatus;
 use App\Models\Camera;
 use App\Models\CameraSessionControl;
 use App\Models\UsbDevice;
+use App\Models\VMSession;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -50,14 +51,18 @@ class CameraRepository
     }
 
     /**
-     * Find cameras assigned to a specific VM ID, plus cameras not assigned to any VM.
-     * Only returns active cameras.
+     * Find cameras visible to a specific session.
      *
-     * @param  int|null  $vmId  The VM ID to filter by. If null, returns only unassigned cameras.
+     * Rules:
+     * - Cameras assigned to the session VM are visible even if inactive.
+     * - Unassigned cameras are visible only when active.
+     * - Cameras reserved for this session are visible even if assigned elsewhere.
+     *
+     * @param  VMSession  $session  Session whose camera list is being built.
      */
-    public function findByVmId(?int $vmId): Collection
+    public function findForSession(VMSession $session): Collection
     {
-        if ($vmId === null) {
+        if ($session->vm_id === null) {
             return Camera::whereNull('assigned_vm_id')
                 ->where('status', 'active')
                 ->with(['robot', 'gatewayNode', 'activeControl.session', 'reservations' => function ($query) {
@@ -72,11 +77,29 @@ class CameraRepository
                 ->get();
         }
 
-        return Camera::where(function ($query) use ($vmId) {
-            $query->where('assigned_vm_id', $vmId)
-                ->orWhereNull('assigned_vm_id');
+        return Camera::where(function ($query) use ($session) {
+            $query->where('assigned_vm_id', $session->vm_id)
+                ->orWhere(function ($unassigned) {
+                    $unassigned->whereNull('assigned_vm_id')
+                        ->where('status', 'active');
+                })
+                ->orWhereHas('reservations', function ($reservationQuery) use ($session) {
+                    $now = now();
+
+                    $reservationQuery->whereIn('status', [
+                        CameraReservationStatus::APPROVED->value,
+                        CameraReservationStatus::ACTIVE->value,
+                    ])
+                        ->whereNotNull('approved_start_at')
+                        ->whereNotNull('approved_end_at')
+                        ->where('approved_start_at', '<=', $now)
+                        ->where('approved_end_at', '>=', $now)
+                        ->where(function ($applies) use ($session) {
+                            $applies->where('user_id', $session->user_id)
+                                ->orWhere('target_vm_id', $session->vm_id);
+                        });
+                });
         })
-            ->where('status', 'active')
             ->with(['robot', 'gatewayNode', 'activeControl.session', 'reservations' => function ($query) {
                 $query->whereIn('status', [
                     CameraReservationStatus::APPROVED->value,

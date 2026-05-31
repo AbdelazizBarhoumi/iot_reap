@@ -1,0 +1,84 @@
+@startuml
+title Use Case: Rate & Review - Sequence
+
+actor Engineer
+boundary ReviewPage
+control ReviewController as Controller
+control ReviewService as Service
+database ReviewRepository as ReviewDB
+database TrainingPathRepository as PathDB
+
+Engineer -> ReviewPage: Open review section(pathId)
+activate ReviewPage
+
+ReviewPage -> Controller: loadReviewContext(engineerId, pathId)
+activate Controller
+
+Controller -> Service: getReviewContext(engineerId, pathId)
+activate Service
+
+Service -> ReviewDB: findByEngineerAndPath(engineerId, pathId)
+activate ReviewDB
+ReviewDB --> Service: existingReview / none
+deactivate ReviewDB
+
+Service --> Controller: reviewContext
+deactivate Service
+
+Controller --> ReviewPage: renderReviewForm(reviewContext)
+deactivate Controller
+
+ReviewPage --> Engineer: Show rating selector and comment box
+deactivate ReviewPage
+
+opt Optional written review
+    Engineer -> ReviewPage: Enter comment text
+end
+
+Engineer -> ReviewPage: Submit rating and review
+activate ReviewPage
+
+ReviewPage -> Controller: submitReview(pathId, rating, comment)
+activate Controller
+
+Controller -> Service: submitReview(engineerId, pathId, rating, comment)
+activate Service
+
+Service -> Service: validateRatingAndContent()
+
+Service -> ReviewDB: findByEngineerAndPath(engineerId, pathId)
+activate ReviewDB
+ReviewDB --> Service: existingReview / none
+deactivate ReviewDB
+
+alt Existing review found
+    Service -> ReviewDB: update(existingReview, rating, comment)
+    ReviewDB --> Service: review
+else No existing review
+    Service -> ReviewDB: create(engineerId, pathId, rating, comment)
+    ReviewDB --> Service: review
+end
+
+Service -> Service: recalculateAverageRating(pathId)
+Service -> PathDB: updateAverageRating(pathId, averageRating)
+activate PathDB
+PathDB --> Service: updatedPath
+deactivate PathDB
+
+Service --> Controller: submissionConfirmed(reviewStatus)
+deactivate Service
+
+Controller --> ReviewPage: showConfirmation(reviewStatus)
+deactivate Controller
+
+ReviewPage --> Engineer: Display success message
+deactivate ReviewPage
+
+note over Service
+Rating is mandatory.
+Review text is optional.
+Only one review per engineer per training path is kept.
+Average rating is recalculated after every successful save.
+end note
+
+@enduml

@@ -1,0 +1,93 @@
+@startuml
+title Use Case: Terminate Session - Sequence Diagram
+actor Engineer
+
+participant "VMSessionController" as Controller
+participant "VMSessionService" as Service
+participant "VMSessionRepository" as Repository
+participant "GuacamoleClient" as Guac
+participant "DeviceManager" as Devices
+participant "ProxmoxClient" as Proxmox
+participant "NotificationService" as Notify
+database "AuditLog" as Audit
+
+Engineer -> Controller : TerminateSession(sessionId)
+activate Controller
+
+Controller -> Service : terminateSession(sessionId, actor)
+activate Service
+
+alt Authorization OK
+    Service -> Repository : findById(sessionId)
+    activate Repository
+    Repository --> Service : session S (Active)
+    deactivate Repository
+
+    alt Session already terminated
+        Service --> Controller : 409/410 (Already terminated)
+        deactivate Service
+        Controller --> Engineer : 409/410 (Already terminated)
+        deactivate Controller
+        return
+    end
+
+    Service -> Repository : update(sessionId, {state: "terminating"})
+    activate Repository
+    Repository --> Service : success
+    deactivate Repository
+
+    Service -> Guac : revokeConnections(session.S.guacConnectionIds)
+    activate Guac
+    alt Guac success
+        Guac --> Service : ok
+    else Guac failure
+        Guac --> Service : error
+        note right of Service : log and retry per policy\nif still failing mark partial-failure
+    end
+    deactivate Guac
+
+    loop for each attachedDevice in session.S.attachedDevices
+        Service -> Devices : detachDevice(attachedDevice)
+        activate Devices
+        Devices --> Service : detachResult
+        deactivate Devices
+    end
+
+    Service -> Proxmox : stopAndDeleteVM(session.S.vmId)
+    activate Proxmox
+    alt Proxmox success
+        Proxmox --> Service : ok
+    else Proxmox failure
+        Proxmox --> Service : error
+        note right of Service : retry per policy; if still failing\nmark session: terminated-with-cleanup-errors
+    end
+    deactivate Proxmox
+
+    Service -> Repository : update(sessionId, {state: "terminated", ended_at: now()})
+    activate Repository
+    Repository --> Service : success
+    deactivate Repository
+
+    Service -> Audit : write(entry: termination, actor, sessionId, outcome)
+    activate Audit
+    Audit --> Service : ack
+    deactivate Audit
+
+    Service -> Notify : send(User:Engineer, "Session terminated", details)
+    activate Notify
+    Notify --> Service : ack
+    deactivate Notify
+
+    Service --> Controller : 200 OK / 204 No Content
+    deactivate Service
+    Controller --> Engineer : 200 OK (confirmation)
+    deactivate Controller
+
+else Authorization Failed
+    Service --> Controller : 403 Forbidden
+    deactivate Service
+    Controller --> Engineer : 403 Forbidden
+    deactivate Controller
+end
+
+@enduml

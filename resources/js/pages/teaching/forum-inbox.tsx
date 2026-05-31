@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowLeft,
     CheckCircle2,
     ExternalLink,
+    Clock,
     Flag,
     Lock,
     MessageSquare,
@@ -24,9 +24,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
-import teaching from '@/routes/teaching';
-import type { BreadcrumbItem } from '@/types';
 import type { DiscussionThread, ThreadReply } from '@/types/forum.types';
 
 type TeacherInboxFilter = 'flagged' | 'unanswered' | 'recent';
@@ -135,13 +134,6 @@ export default function TeacherForumInboxPage({
     selectedThreadId: initialSelectedThreadId = null,
     threads: initialThreads,
 }: TeacherForumInboxPageProps) {
-    const breadcrumbs: BreadcrumbItem[] = useMemo(
-        () => [
-            { title: 'Teaching', href: teaching.index.url() },
-            { title: 'Forum Inbox', href: teaching.forum.inbox.url() },
-        ],
-        [],
-    );
 
     const [activeFilter, setActiveFilter] =
         useState<TeacherInboxFilter>(initialFilter);
@@ -307,7 +299,7 @@ export default function TeacherForumInboxPage({
     const focusThread = selectedThread ?? selectedThreadSummary;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Teacher Forum Inbox" />
             <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
                 <div className="container py-8">
@@ -316,12 +308,6 @@ export default function TeacherForumInboxPage({
                         header={
                             <>
                                 <div className="space-y-2">
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={teaching.index.url()}>
-                                            <ArrowLeft className="mr-2 h-4 w-4" />
-                                            Back to Teaching
-                                        </Link>
-                                    </Button>
                                     <div>
                                         <h1 className="font-heading text-3xl font-bold">
                                             Forum Inbox
@@ -360,53 +346,62 @@ export default function TeacherForumInboxPage({
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-3 gap-2">
-                                    {(
-                                        [
-                                            {
-                                                key: 'flagged',
-                                                label: 'Flagged',
-                                                count: threadsByFilter.flagged
-                                                    .length,
-                                            },
-                                            {
-                                                key: 'unanswered',
-                                                label: 'Unanswered',
-                                                count: threadsByFilter
-                                                    .unanswered.length,
-                                            },
-                                            {
-                                                key: 'recent',
-                                                label: 'Recent',
-                                                count: threadsByFilter.recent
-                                                    .length,
-                                            },
-                                        ] as Array<{
-                                            key: TeacherInboxFilter;
-                                            label: string;
-                                            count: number;
-                                        }>
-                                    ).map((tab) => (
-                                        <Button
-                                            key={tab.key}
-                                            variant={
-                                                activeFilter === tab.key
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            className="justify-between"
-                                            onClick={() =>
-                                                handleFilterChange(tab.key)
-                                            }
+                                <Tabs
+                                    value={activeFilter}
+                                    onValueChange={(value) =>
+                                        handleFilterChange(
+                                            value as TeacherInboxFilter,
+                                        )
+                                    }
+                                >
+                                    <TabsList className="mb-4 grid w-full grid-cols-3">
+                                        <TabsTrigger
+                                            value="flagged"
+                                            className="gap-1.5 text-xs"
                                         >
-                                            <span>{tab.label}</span>
-                                            <Badge variant="secondary">
-                                                {tab.count}
-                                            </Badge>
-                                        </Button>
-                                    ))}
-                                </div>
-                                <Separator />
+                                            <Flag className="h-3.5 w-3.5" />
+                                            Flagged
+                                            {threadsByFilter.flagged.length > 0 && (
+                                                <Badge
+                                                    variant="destructive"
+                                                    className="ml-1 h-4 px-1 text-[10px]"
+                                                >
+                                                    {threadsByFilter.flagged.length}
+                                                </Badge>
+                                            )}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="unanswered"
+                                            className="gap-1.5 text-xs"
+                                        >
+                                            <MessageSquare className="h-3.5 w-3.5" />
+                                            Unanswered
+                                            {threadsByFilter.unanswered.length > 0 && (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="ml-1 h-4 px-1 text-[10px]"
+                                                >
+                                                    {threadsByFilter.unanswered.length}
+                                                </Badge>
+                                            )}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="recent"
+                                            className="gap-1.5 text-xs"
+                                        >
+                                            <Clock className="h-3.5 w-3.5" />
+                                            Recent
+                                            {threadsByFilter.recent.length > 0 && (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="ml-1 h-4 px-1 text-[10px]"
+                                                >
+                                                    {threadsByFilter.recent.length}
+                                                </Badge>
+                                            )}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                                 {isLoadingThreads ? (
                                     <div className="py-10 text-center text-sm text-muted-foreground">
                                         Loading moderation threads...
@@ -416,7 +411,7 @@ export default function TeacherForumInboxPage({
                                         No threads in this queue right now.
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
+                                    <div className="divide-y divide-border/50">
                                         {activeThreads.map((thread) => (
                                             <button
                                                 key={thread.id}
@@ -426,14 +421,14 @@ export default function TeacherForumInboxPage({
                                                         thread.id,
                                                     )
                                                 }
-                                                className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                                                className={`w-full cursor-pointer px-0 py-4 text-left transition-colors first:pt-0 last:pb-0 ${
                                                     selectedThreadId ===
                                                     thread.id
-                                                        ? 'border-primary bg-primary/5'
-                                                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                                                        ? 'bg-primary/5'
+                                                        : 'hover:bg-muted/30'
                                                 }`}
                                             >
-                                                <div className="flex items-start justify-between gap-3">
+                                                <div className="flex cursor-pointer items-start justify-between gap-3 rounded-lg px-3 py-3 transition-colors">
                                                     <div className="space-y-1">
                                                         <p className="font-medium">
                                                             {thread.title}

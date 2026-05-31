@@ -277,11 +277,16 @@ class ProxmoxNodeController extends Controller
 
                 $uptime = $status['uptime'] ?? 0;
 
+                // Get actual VM count from Proxmox API
+                $vms = $client->listVMsLight($nodeName);
+                $vmCount = count($vms);
+
                 return [
                     'cpu_percent' => $cpuPercent,
                     'ram_used_mb' => $ramUsedMb,
                     'ram_total_mb' => $ramTotalMb,
                     'uptime_seconds' => $uptime,
+                    'vm_count' => $vmCount,
                 ];
             } catch (Throwable $e) {
                 Log::warning('Failed to fetch node stats', [
@@ -295,6 +300,7 @@ class ProxmoxNodeController extends Controller
                     'ram_used_mb' => 0,
                     'ram_total_mb' => 0,
                     'uptime_seconds' => 0,
+                    'vm_count' => 0,
                 ];
             }
         });

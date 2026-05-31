@@ -1,0 +1,134 @@
+@startuml
+title Use Case: Create/Edit/Delete Training Path
+
+actor Teacher
+
+participant "TrainingPathController" as Controller
+participant "Create/Edit/Delete Request (FormRequest)" as Request
+participant "TrainingPathService" as Service
+participant "TrainingPathRepository" as Repo
+participant "ModuleRepository" as ModuleRepo
+participant "EnrollmentRepository" as EnrollmentRepo
+participant "NotificationService" as Notifier
+
+' -- CREATE flow --
+== Create Training Path ==
+Teacher -> Controller : POST /training-paths (payload)
+activate Controller
+Controller -> Request : validate(payload)
+activate Request
+Request --> Controller : validatedData / errors
+deactivate Request
+
+alt validation success
+    Controller -> Service : create(teacher, validatedData)
+    activate Service
+    Service -> Repo : create(trainingPathData with status=Draft)
+    activate Repo
+    Repo --> Service : TrainingPath(id, timestamps)
+    deactivate Repo
+
+    opt initial modules provided
+        Service -> ModuleRepo : loop over modules -> create(moduleData)
+        activate ModuleRepo
+        ModuleRepo --> Service : createdModule (per iteration)
+        deactivate ModuleRepo
+    end
+
+    Service --> Controller : TrainingPath(resource)
+    deactivate Service
+    Controller --> Teacher : HTTP 201 Created + TrainingPath resource
+else validation fails
+    Controller --> Teacher : HTTP 422 Unprocessable Entity (field errors)
+end
+deactivate Controller
+
+' -- EDIT flow --
+== Edit Training Path ==
+Teacher -> Controller : PUT /training-paths/{id} (payload)
+activate Controller
+Controller -> Request : validate(payload)
+activate Request
+Request --> Controller : validatedData
+deactivate Request
+
+Controller -> Service : update(teacher, id, validatedData)
+activate Service
+Service -> Repo : findById(id)
+activate Repo
+Repo --> Service : TrainingPath(existing)
+deactivate Repo
+
+Service -> Service : authorizeOwnership(teacher, TrainingPath)
+alt ownership ok
+    alt TrainingPath.status == "Published" and metadataChangeRequiresApproval
+        Service -> Repo : saveProposedChange(id, proposedData)
+        Service -> Notifier : notifyAdmin(proposedChange)
+        Notifier --> Service : ack
+        Service --> Controller : pending-approval (resource)
+    else no admin approval required
+        Service -> Repo : update(id, validatedData)
+        activate Repo
+        Repo --> Service : updatedTrainingPath
+        deactivate Repo
+        Service --> Controller : updatedTrainingPath
+    end
+else ownership denied
+    Service --> Controller : AuthorizationError
+end
+deactivate Service
+
+alt updated
+    Controller --> Teacher : HTTP 200 OK + updated resource
+else pending approval
+    Controller --> Teacher : HTTP 202 Accepted (pending approval)
+else auth error
+    Controller --> Teacher : HTTP 403 Forbidden
+end
+deactivate Controller
+
+' -- DELETE flow --
+== Delete Training Path ==
+Teacher -> Controller : DELETE /training-paths/{id}
+activate Controller
+Controller -> Service : delete(teacher, id)
+activate Service
+Service -> Repo : findById(id)
+activate Repo
+Repo --> Service : TrainingPath(existing)
+deactivate Repo
+
+Service -> Service : authorizeOwnership(teacher, TrainingPath)
+alt ownership ok
+    Service -> EnrollmentRepo : countActiveEnrollments(trainingPathId)
+    activate EnrollmentRepo
+    EnrollmentRepo --> Service : 0
+    deactivate EnrollmentRepo
+
+    alt no active enrollments
+        Service -> Repo : deleteCascade(trainingPathId)
+        activate Repo
+        Repo --> Service : deletionConfirmed
+        deactivate Repo
+        Service --> Controller : success
+        Controller --> Teacher : HTTP 204 No Content
+    else active enrollments > 0
+        Service --> Controller : DomainError("active enrollments")
+        Controller --> Teacher : HTTP 409 Conflict (cannot delete)
+    end
+else ownership denied
+    Service --> Controller : AuthorizationError
+    Controller --> Teacher : HTTP 403 Forbidden
+end
+deactivate Service
+deactivate Controller
+
+note over Service,Repo
+  Business rules enforced here:
+  - Ownership check (BR-1)
+  - Draft default on create (BR-2)
+  - Delete blocked if active enrollments (BR-4)
+  - Publish edits may require admin approval (BR-5)
+end note
+
+@enduml

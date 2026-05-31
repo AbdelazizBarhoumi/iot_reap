@@ -1,0 +1,49 @@
+@startuml
+actor Administrator
+boundary AdminUserController
+control UserManagementService
+entity UserRepository
+database Database
+boundary UserResource
+
+Administrator -> AdminUserController: POST /admin/users/{user}/approve-teacher\nor /revoke-teacher-approval
+activate AdminUserController
+
+AdminUserController -> UserManagementService: approveTeacher(teacher, admin)\nOR revokeTeacherApproval(teacher, admin)
+activate UserManagementService
+
+note right of UserManagementService
+Only accounts with role=teacher are eligible.
+Approve sets approval timestamp and approver.
+Revoke clears both fields.
+end note
+
+alt Approve teacher approval
+    UserManagementService -> UserManagementService: build approval update data
+    UserManagementService -> UserRepository: update(teacher, approval fields)
+    activate UserRepository
+    UserRepository -> Database: persist user changes
+    Database --> UserRepository: updated user
+    deactivate UserRepository
+    UserManagementService -> UserManagementService: log approval event
+else Revoke teacher approval
+    UserManagementService -> UserManagementService: build revocation update data
+    UserManagementService -> UserRepository: update(teacher, null approval fields)
+    activate UserRepository
+    UserRepository -> Database: persist user changes
+    Database --> UserRepository: updated user
+    deactivate UserRepository
+    UserManagementService -> UserManagementService: log revocation event
+end
+
+UserManagementService --> AdminUserController: updated user
+deactivate UserManagementService
+
+AdminUserController -> UserResource: toArray(updated user)
+activate UserResource
+UserResource --> AdminUserController: JSON-ready data
+deactivate UserResource
+
+AdminUserController --> Administrator: 200 OK + message + user data
+deactivate AdminUserController
+@enduml

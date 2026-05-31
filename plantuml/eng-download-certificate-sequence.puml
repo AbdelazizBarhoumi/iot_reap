@@ -1,0 +1,63 @@
+@startuml
+title Use Case: Download Certificate - Sequence
+
+actor Engineer
+
+participant "WebClient\nbrowser / mobile app" as Client
+participant "CertificateController" as Controller
+participant "AuthService / Middleware" as Auth
+participant "CertificateService" as Service
+participant "CertificateRepository" as Repo
+participant "CertificateGenerator" as Generator
+participant "StorageService" as Storage
+participant "AuditLogService" as Audit
+
+== Request and Authentication ==
+Engineer -> Client : Click "Download Certificate" (certificateId)
+Client -> Controller : GET /certificates/{certificateId}/download (Authorization)
+Controller -> Auth : validateToken(session/cookie)
+Auth --> Controller : authenticatedUser (userId)
+
+== Eligibility check ==
+Controller -> Service : verifyEligibility(userId, certificateId)
+activate Service
+Service -> Repo : getById(certificateId)
+activate Repo
+Repo --> Service : certificateRecord (ownerId, status, metadata)
+deactivate Repo
+
+alt Not owner or not completed
+    Service --> Controller : NotEligibleException
+    deactivate Service
+    Controller -> Client : 403 Forbidden (or 404) - "Certificate not available"
+    Controller -> Audit : logDownloadAttempt(userId, certificateId, result=FORBIDDEN)
+    return
+end
+
+== Retrieve or Generate certificate ==
+Service -> Storage : findFile(metadata.storagePath) [opt: pre-generated]
+activate Storage
+alt File exists
+    Storage --> Service : fileStream or signedURL
+    deactivate Storage
+else File missing
+    Storage --> Service : notFound
+    Service -> Generator : generatePDF(certificateRecord)
+    activate Generator
+    Generator --> Service : pdfBytes / file
+    deactivate Generator
+    Service -> Storage : saveFile(metadata.storagePath, pdfBytes)
+    activate Storage
+    Storage --> Service : fileStream or signedURL
+    deactivate Storage
+end
+
+== Deliver file and audit ==
+Service --> Controller : fileStream or signedURL (download metadata)
+deactivate Service
+Controller -> Audit : logDownloadAttempt(userId, certificateId, result=SUCCESS)
+Controller -> Client : HTTP 200 + Content-Disposition / redirect to signedURL
+Client --> Engineer : Browser prompts download (file saved)
+Audit --> Controller : ack
+
+@enduml

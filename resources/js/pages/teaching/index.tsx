@@ -3,7 +3,7 @@
  * Shows teacher's trainingPaths with stats, quick actions, and trainingPath management.
  * Professional design with animations and modern UI.
  */
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Archive,
@@ -15,7 +15,6 @@ import {
     Eye,
     FileEdit,
     Image,
-    MessageSquare,
     MoreHorizontal,
     Plus,
     Rocket,
@@ -25,13 +24,10 @@ import {
     TrendingUp,
     Trash2,
     Users,
-    Zap,
 } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { forumApi } from '@/api/forum.api';
 import type { TrainingPathEditing } from '@/api/teaching.api';
-import { TeacherInbox } from '@/components/forum/TeacherInbox';
 import { TeachingWorkspaceTabs } from '@/components/teaching/TeachingWorkspaceTabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,9 +43,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useMyTrainingPaths } from '@/hooks/useTeaching';
 import AppLayout from '@/layouts/app-layout';
-import teaching from '@/routes/teaching';
 import type { BreadcrumbItem } from '@/types';
-import type { DiscussionThread } from '@/types/forum.types';
 import type { TrainingPath } from '@/types/TrainingPath.types';
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Teaching', href: '/teaching/training-paths' },
@@ -121,75 +115,6 @@ export default function TeachingPage() {
     const [submittingId, setSubmittingId] = useState<string | number | null>(
         null,
     );
-    // Forum inbox state
-    const [forumInbox, setForumInbox] = useState<{
-        flagged: DiscussionThread[];
-        unanswered: DiscussionThread[];
-        recent: DiscussionThread[];
-    }>({ flagged: [], unanswered: [], recent: [] });
-    const [forumLoading, setForumLoading] = useState(true);
-    // Fetch forum inbox data
-    const fetchForumInbox = useCallback(async () => {
-        setForumLoading(true);
-        try {
-            const [flaggedRes, unansweredRes, recentRes] = await Promise.all([
-                forumApi.getTeacherInbox('flagged').catch((err) => {
-                    console.error('Failed to load flagged threads:', err);
-                    return {
-                        data: [],
-                        pagination: {
-                            current_page: 1,
-                            last_page: 1,
-                            per_page: 10,
-                            total: 0,
-                        },
-                    };
-                }),
-                forumApi.getTeacherInbox('unanswered').catch((err) => {
-                    console.error('Failed to load unanswered threads:', err);
-                    return {
-                        data: [],
-                        pagination: {
-                            current_page: 1,
-                            last_page: 1,
-                            per_page: 10,
-                            total: 0,
-                        },
-                    };
-                }),
-                forumApi.getTeacherInbox('recent').catch((err) => {
-                    console.error('Failed to load recent threads:', err);
-                    return {
-                        data: [],
-                        pagination: {
-                            current_page: 1,
-                            last_page: 1,
-                            per_page: 10,
-                            total: 0,
-                        },
-                    };
-                }),
-            ]);
-            setForumInbox({
-                flagged: flaggedRes.data || [],
-                unanswered: unansweredRes.data || [],
-                recent: recentRes.data || [],
-            });
-        } catch (err) {
-            console.error('Failed to load forum inbox:', err);
-            // Reset to empty state on critical error
-            setForumInbox({
-                flagged: [],
-                unanswered: [],
-                recent: [],
-            });
-        } finally {
-            setForumLoading(false);
-        }
-    }, []);
-    useEffect(() => {
-        fetchForumInbox();
-    }, [fetchForumInbox]);
     // Confirmation dialog state
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -214,9 +139,6 @@ export default function TeachingPage() {
     );
     const draftTrainingPaths = activeTrainingPaths.filter(
         (c) => c.status === 'draft',
-    );
-    const pendingTrainingPaths = activeTrainingPaths.filter(
-        (c) => c.status === 'pending_review',
     );
     const handleSubmitForReview = async (trainingPathId: string | number) => {
         setSubmittingId(trainingPathId);
@@ -320,28 +242,7 @@ export default function TeachingPage() {
             iconColor: 'text-emerald-500',
         },
     ];
-    const studioLinks = [
-        {
-            title: 'Moderate Forum Inbox',
-            description:
-                'Open the teacher inbox with thread-level moderation tools.',
-            href: teaching.forum.inbox.url(),
-            icon: MessageSquare,
-        },
-        {
-            title: 'Manage VM Assignments',
-            description:
-                'Review pending, approved, and rejected unit VM requests.',
-            href: teaching.trainingUnitAssignments.my.url(),
-            icon: Terminal,
-        },
-        {
-            title: 'Analytics & Payouts',
-            description: 'Track earnings, export reports, and request payouts.',
-            href: teaching.analytics.earnings.url(),
-            icon: BarChart3,
-        },
-    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Teaching Dashboard" />
@@ -415,169 +316,6 @@ export default function TeachingPage() {
                                 </Card>
                             </motion.div>
                         ))}
-                    </div>
-                    <div className="mb-8 grid gap-4 md:grid-cols-3">
-                        {studioLinks.map((link, index) => (
-                            <motion.div
-                                key={link.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 + index * 0.08 }}
-                            >
-                                <Card className="h-full border-border/60 shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5">
-                                    <CardContent className="flex h-full flex-col gap-4 p-5">
-                                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-                                            <link.icon className="h-5 w-5 text-primary" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h2 className="font-semibold text-foreground">
-                                                {link.title}
-                                            </h2>
-                                            <p className="text-sm text-muted-foreground">
-                                                {link.description}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            className="mt-auto justify-start"
-                                            asChild
-                                        >
-                                            <Link href={link.href}>Open</Link>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </div>
-                    {/* Two-column layout: Forum Inbox + Quick Actions */}
-                    <div className="mb-8 grid gap-6 lg:grid-cols-2">
-                        {/* Forum Inbox */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.35 }}
-                        >
-                            <TeacherInbox
-                                flaggedThreads={forumInbox.flagged}
-                                unansweredThreads={forumInbox.unanswered}
-                                recentThreads={forumInbox.recent}
-                                onViewThread={(
-                                    threadId,
-                                    _trainingPathId,
-                                    filter,
-                                ) => {
-                                    router.visit(
-                                        teaching.forum.inbox.url({
-                                            query: {
-                                                thread: threadId,
-                                                filter,
-                                            },
-                                        }),
-                                    );
-                                }}
-                                onResolveFlag={async (threadId) => {
-                                    try {
-                                        await forumApi.resolveThreadFlag(
-                                            threadId,
-                                        );
-                                        await fetchForumInbox();
-                                        toast.success('Thread flag resolved');
-                                    } catch {
-                                        toast.error('Failed to resolve flag');
-                                    }
-                                }}
-                                onPinThread={async (threadId) => {
-                                    try {
-                                        await forumApi.pinThread(threadId);
-                                        await fetchForumInbox();
-                                        toast.success('Thread pinned');
-                                    } catch {
-                                        toast.error('Failed to pin thread');
-                                    }
-                                }}
-                                onUnpinThread={async (threadId) => {
-                                    try {
-                                        await forumApi.unpinThread(threadId);
-                                        await fetchForumInbox();
-                                        toast.success('Thread unpinned');
-                                    } catch {
-                                        toast.error('Failed to unpin thread');
-                                    }
-                                }}
-                                onLockThread={async (threadId) => {
-                                    try {
-                                        await forumApi.lockThread(threadId);
-                                        await fetchForumInbox();
-                                        toast.success('Thread locked');
-                                    } catch {
-                                        toast.error('Failed to lock thread');
-                                    }
-                                }}
-                                onUnlockThread={async (threadId) => {
-                                    try {
-                                        await forumApi.unlockThread(threadId);
-                                        await fetchForumInbox();
-                                        toast.success('Thread unlocked');
-                                    } catch {
-                                        toast.error('Failed to unlock thread');
-                                    }
-                                }}
-                                onRefresh={fetchForumInbox}
-                                isLoading={forumLoading}
-                            />
-                        </motion.div>
-                        {/* Quick Actions for pending/drafts */}
-                        {(pendingTrainingPaths.length > 0 ||
-                            draftTrainingPaths.length > 0) && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                            >
-                                <Card className="border-primary/20 bg-primary/5">
-                                    <CardContent className="p-5">
-                                        <div className="mb-4 flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                                                <Zap className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-foreground">
-                                                    Quick Actions
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    You have paths that need
-                                                    attention
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {pendingTrainingPaths.length >
-                                                0 && (
-                                                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                    <Clock className="mr-1 h-3 w-3" />
-                                                    {
-                                                        pendingTrainingPaths.length
-                                                    }{' '}
-                                                    awaiting review
-                                                </Badge>
-                                            )}
-                                            {draftTrainingPaths.length > 0 && (
-                                                <Badge variant="secondary">
-                                                    <FileEdit className="mr-1 h-3 w-3" />
-                                                    {draftTrainingPaths.length}{' '}
-                                                    draft
-                                                    {draftTrainingPaths.length >
-                                                    1
-                                                        ? 's'
-                                                        : ''}{' '}
-                                                    to complete
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        )}
                     </div>
                     {/* TrainingPaths List */}
                     <div className="space-y-6">
@@ -836,17 +574,6 @@ export default function TeachingPage() {
                                                                                 </Button>
                                                                             </DropdownMenuTrigger>
                                                                             <DropdownMenuContent align="end">
-                                                                                <DropdownMenuItem
-                                                                                    asChild
-                                                                                >
-                                                                                    <Link
-                                                                                        href={`/teaching/${trainingPath.id}/edit`}
-                                                                                    >
-                                                                                        <Edit className="mr-2 h-4 w-4" />
-                                                                                        Edit
-                                                                                        TrainingPath
-                                                                                    </Link>
-                                                                                </DropdownMenuItem>
                                                                                 {trainingPath.status ===
                                                                                     'draft' && (
                                                                                     <DropdownMenuItem
@@ -878,21 +605,6 @@ export default function TeachingPage() {
                                                                                         Analytics
                                                                                     </Link>
                                                                                 </DropdownMenuItem>
-                                                                                {trainingPath.status ===
-                                                                                    'approved' && (
-                                                                                    <DropdownMenuItem
-                                                                                        asChild
-                                                                                    >
-                                                                                        <Link
-                                                                                            href={`/trainingPaths/${trainingPath.id}`}
-                                                                                        >
-                                                                                            <Eye className="mr-2 h-4 w-4" />
-                                                                                            View
-                                                                                            Public
-                                                                                            Page
-                                                                                        </Link>
-                                                                                    </DropdownMenuItem>
-                                                                                )}
                                                                                 <DropdownMenuSeparator />
                                                                                 {trainingPath.status ===
                                                                                 'archived' ? (
@@ -929,7 +641,7 @@ export default function TeachingPage() {
                                                                                     </DropdownMenuItem>
                                                                                 )}
                                                                                 <DropdownMenuItem
-                                                                                    className="text-destructive focus:text-destructive"
+                                                                                    variant="destructive"
                                                                                     onClick={() =>
                                                                                         handleDelete(
                                                                                             trainingPath.id,

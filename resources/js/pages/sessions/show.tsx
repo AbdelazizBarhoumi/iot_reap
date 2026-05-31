@@ -226,9 +226,14 @@ export default function SessionShowPage({
         [isAdmin],
     );
 
-    const handleSessionTerminated = () => {
-        // Session will be removed from list automatically
-    };
+    const handleSessionTerminated = useCallback(() => {
+        if (isAdmin) {
+            router.visit(admin.dashboard.url());
+            return;
+        }
+
+        router.visit(dashboard().url);
+    }, [isAdmin]);
 
     const handleToggleWorkspaceFullscreen = useCallback(() => {
         setIsWorkspaceFullscreen((previous) => !previous);

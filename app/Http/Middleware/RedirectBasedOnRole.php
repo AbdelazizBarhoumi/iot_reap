@@ -34,7 +34,9 @@ class RedirectBasedOnRole
         // Only enforce role redirects for authenticated dashboard entry points.
         // The public landing page (/) must stay accessible for all roles.
         $path = $request->path();
-        if ($path === 'dashboard' || $path === 'vmdashboard') {
+
+        // Main app dashboard: keep existing role-based redirects (teachers -> teaching, admin -> admin)
+        if ($path === 'dashboard') {
             if ($user->role === UserRole::TEACHER) {
                 if ($user->isTeacherApproved()) {
                     return redirect()->route('teaching.index');
@@ -43,6 +45,16 @@ class RedirectBasedOnRole
                 }
             }
 
+            if ($user->role === UserRole::ADMIN) {
+                return redirect()->route('admin.dashboard');
+            }
+
+            return $next($request);
+        }
+
+        // VM Dashboard should be accessible by engineers and teachers alike.
+        // Admins may still be redirected to admin dashboard when accessing VM dashboard.
+        if ($path === 'vmdashboard') {
             if ($user->role === UserRole::ADMIN) {
                 return redirect()->route('admin.dashboard');
             }

@@ -1,0 +1,49 @@
+@startuml
+title Use Case: Resolve Flag - Sequence
+
+actor Teacher
+boundary ForumController
+control ForumService
+database ForumRepository
+entity DiscussionThread
+
+Teacher -> ForumController: openFlaggedInbox()
+activate ForumController
+ForumController -> ForumService: getFlaggedThreads()
+activate ForumService
+ForumService -> ForumRepository: getFlaggedThreads()
+activate ForumRepository
+ForumRepository -> DiscussionThread: query flagged threads
+DiscussionThread --> ForumRepository: flagged thread list
+ForumRepository --> ForumService: paginated threads
+deactivate ForumRepository
+ForumService --> ForumController: paginated threads
+deactivate ForumService
+ForumController --> Teacher: flagged thread list
+deactivate ForumController
+
+Teacher -> ForumController: resolveFlag(threadId)
+activate ForumController
+ForumController -> DiscussionThread: findOrFail(threadId)
+activate DiscussionThread
+DiscussionThread --> ForumController: thread
+deactivate DiscussionThread
+ForumController -> ForumController: authorizeTeacherAction(user, thread)
+ForumController -> ForumService: unflagThread(thread)
+activate ForumService
+ForumService -> ForumRepository: updateThread(thread, {is_flagged: false})
+activate ForumRepository
+ForumRepository -> DiscussionThread: update({is_flagged: false})
+DiscussionThread --> ForumRepository: updated thread
+ForumRepository --> ForumService: refreshed thread
+deactivate ForumRepository
+ForumService --> ForumController: updated thread
+deactivate ForumService
+ForumController --> Teacher: JSON response with thread data and "Thread flag resolved"
+deactivate ForumController
+
+note over ForumService,ForumRepository
+Clearing the flag removes the thread from flagged-content views.
+end note
+
+@enduml

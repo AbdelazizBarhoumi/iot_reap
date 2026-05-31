@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowLeft,
     CheckCircle2,
     Clock,
     RefreshCw,
@@ -22,8 +21,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import teaching from '@/routes/teaching';
-import type { BreadcrumbItem } from '@/types';
 import type { TrainingUnitVMAssignment } from '@/types/vm.types';
 
 interface TeacherVMAssignmentsPageProps {
@@ -33,16 +30,6 @@ interface TeacherVMAssignmentsPageProps {
 export default function TeacherVMAssignmentsPage({
     assignments: initialAssignments,
 }: TeacherVMAssignmentsPageProps) {
-    const breadcrumbs: BreadcrumbItem[] = useMemo(
-        () => [
-            { title: 'Teaching', href: teaching.index.url() },
-            {
-                title: 'VM Assignments',
-                href: teaching.trainingUnitAssignments.my.url(),
-            },
-        ],
-        [],
-    );
 
     const [assignments, setAssignments] = useState(initialAssignments);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -129,7 +116,7 @@ export default function TeacherVMAssignmentsPage({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="My VM Assignments" />
             <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
                 <div className="container py-8">
@@ -138,12 +125,6 @@ export default function TeacherVMAssignmentsPage({
                         header={
                             <>
                                 <div className="space-y-2">
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={teaching.index.url()}>
-                                            <ArrowLeft className="mr-2 h-4 w-4" />
-                                            Back to Teaching
-                                        </Link>
-                                    </Button>
                                     <div>
                                         <h1 className="font-heading text-3xl font-bold">
                                             My VM Assignments
@@ -167,11 +148,6 @@ export default function TeacherVMAssignmentsPage({
                                             className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
                                         />
                                         Refresh
-                                    </Button>
-                                    <Button asChild>
-                                        <Link href={teaching.index.url()}>
-                                            Open Studio
-                                        </Link>
                                     </Button>
                                 </div>
                             </>
