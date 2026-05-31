@@ -9,65 +9,124 @@ the following sub-use cases:
     \label{fig:teacher-manage-content-studio-use-case}
 \end{figure} 
 
-\subsubsubsection{Specification of the Use Case Create / Edit / Delete Training Path}
+\subsubsubsection{Specification of the Use Case Create Training Path}
 \begin{table}[H]
     \centering
-    \caption{Use Case Specification: Create / Edit / Delete Training Path}
+    \caption{Use Case Specification: Create Training Path}
     \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
-        \textbf{Title} & Create / Edit / Delete Training Path \\ \hline
+        \textbf{Title}          & Create Training Path \\ \hline
 
-        \textbf{Summary} & Teacher creates, edits, or removes a training path. New paths start in draft; edits follow ownership rules; deletions require no active enrollments. \\ \hline
+        \textbf{Summary}        & Teacher creates a new training path by providing the basic information needed to define the learning content. \\ \hline
 
+        \textbf{Actor}          & Teacher \\ \hline
 
-        \textbf{Actor} & Primary: Teacher. Secondary: Administrator (approval), System. \\ \hline
+        \textbf{Precondition}   & Teacher is authenticated and authorized to create training content. \\ \hline
 
-        \textbf{Precondition} & Teacher is authenticated and authorized; categories and VM templates exist; teacher has UI access. \\ \hline
+        \textbf{Post-condition} & A new training path is created and associated with the Teacher in a draft state, ready for further editing. \\ \hline
 
-        \textbf{Post-condition} & 
-        \begin{itemize}[topsep=0pt,itemsep=0pt,parsep=0pt,partopsep=0pt]
-            \item Create: Training path exists in draft.
-            \item Edit: Metadata updated or flagged for approval.
-            \item Delete: Training path removed when business rules permit.
-        \end{itemize} \\ \hline
-
-        \textbf{Basic Scenario} & 
-        \begin{minipage}[t]{\linewidth}
-        \textbf{A. Create}
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
         \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-            \item Teacher provides title, description, category, price, difficulty and modules.
-            \item System validates permission.
-            \item System creates a draft training path and may create initial modules.
-            \item System displays the path for editing.
-        \end{enumerate}
-
-        \textbf{B. Edit}
-        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-            \item Teacher submits changes to existing path they own.
-            \item System validates changes and confirms ownership.
-            \item If approval required, system marks path pending and notifies admin; otherwise applies changes.
-            \item System presents updated or pending state.
-        \end{enumerate}
-
-        \textbf{C. Delete}
-        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-            \item Teacher requests deletion of an owned path.
-            \item System verifies ownership and checks for active enrollments.
-            \item If allowed, system removes the path and content; otherwise informs Teacher why it's blocked.
-            \item System confirms deletion or shows the blocking reason.
+            \item Teacher selects the option to create a new training path.
+            \item System displays the creation form.
+            \item Teacher enters the required information and any optional details.
+            \item Teacher submits the form.
+            \item System validates the submitted information.
+            \item System creates the new training path.
+            \item System confirms successful creation and presents the training path for further editing.
         \end{enumerate}
         \end{minipage} \\ \hline
 
-        \textbf{Error Scenario} & 
-        \begin{itemize}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-            \item Validation failure: system informs Teacher and preserves input.
-            \item Unauthorized: system denies action and explains permissions.
-            \item Delete blocked: active enrollments prevent deletion; system explains condition.
-            \item System error: system preserves state, informs Teacher, and records incident.
-        \end{itemize} \\ \hline
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Validation failure: system rejects invalid or incomplete input and preserves the entered values for correction.
+            \item Unauthorized access: system denies the action if the Teacher is not allowed to create training content.
+            \item Creation failure: system informs the Teacher that the training path could not be created and allows retrying later.
+        \end{enumerate}
+        \end{minipage} \\ \hline
     \end{tabular}
-    \label{tab:teacher-tp-crud}
+    \label{tab:teacher-create-tp}
 \end{table}
+
+\subsubsubsection{Specification of the Use Case Edit Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Edit Training Path}\label{tab:teacher-edit-training-path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Edit Training Path \\ \hline
+
+        \textbf{Summary}        & Teacher updates the details of an existing training path so its content, description, and related information remain accurate and aligned with the teaching plan. \\ \hline
+
+        \textbf{Actor}          & Teacher \\ \hline
+
+        \textbf{Precondition}   & Teacher is authenticated, owns the target training path, and the path is available for editing. \\ \hline
+
+        \textbf{Post-condition} & The training path details are updated and the Teacher can view the revised information. On failure, the original information remains unchanged. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher opens the training path editor.
+                \item System displays the current training path information.
+                \item Teacher modifies one or more editable fields.
+                \item Teacher submits the changes.
+                \item System validates the submitted information.
+                \item System updates the training path.
+                \item System confirms successful update and shows the revised details.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Validation failure: system rejects incomplete or invalid input and preserves the entered values for correction.
+                \item Unauthorized access: system denies the request if the Teacher is not allowed to edit the training path.
+                \item Training path not found: system informs the Teacher that the requested path is unavailable.
+                \item Update failure: system informs the Teacher that the changes could not be saved and keeps the original data unchanged.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Delete Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Delete Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title} & Delete Training Path \\ \hline
+
+        \textbf{Summary} & Teacher permanently removes one of their own training paths after confirming the action. \\ \hline
+
+        \textbf{Actor} & Teacher \\ \hline
+
+        \textbf{Precondition} & Teacher is authenticated, owns the target training path, and the path is eligible for deletion. \\ \hline
+
+        \textbf{Post-condition} & The training path is removed and no longer appears in the teacher's active listings. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Teacher selects a training path and chooses Delete.
+                \item System asks the Teacher to confirm the deletion.
+                \item Teacher confirms the deletion.
+                \item System verifies that the Teacher is allowed to delete the training path.
+                \item System removes the training path from active listings.
+                \item System confirms successful deletion.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+            \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                \item Deletion canceled: Teacher closes the dialog or selects Cancel; no action is taken.
+                \item Training path not eligible for deletion: system informs the Teacher that the path cannot be deleted.
+                \item Training path not found: system informs the Teacher that the requested path is unavailable.
+                \item Unauthorized access: system denies the request if the Teacher does not own the training path.
+                \item Deletion failure: system informs the Teacher that the path could not be deleted and keeps the current state unchanged.
+            \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-delete-training-path}
+\end{table}
+
 
 
 \subsubsubsection{Specification of the Use Case Archive / Restore Training Path}

@@ -1,0 +1,86 @@
+@startuml DeleteProxmoxServer
+title Delete Proxmox Server - Sequence Diagram
+
+actor Administrator
+
+participant "ProxmoxServerController" as ProxmoxServerController
+participant "AuthService / FormRequest" as AuthService
+participant "ProxmoxService" as ProxmoxService
+participant "ProxmoxServerRepository" as ProxmoxServerRepository
+participant "ProxmoxClient (PVE API)" as ProxmoxClient
+participant "SecretStore" as SecretStore
+participant "AuditService" as AuditService
+
+== Admin issues delete request ==
+
+Administrator -> ProxmoxServerController : DELETE /api/proxmox-servers/{id}\n(serverId, confirm=true)
+activate ProxmoxServerController
+
+ProxmoxServerController -> AuthService : authorize(actor, "delete:proxmox_server")
+activate AuthService
+AuthService --> ProxmoxServerController : authorized
+deactivate AuthService
+
+ProxmoxServerController -> ProxmoxService : deleteServer(serverId, actor)
+activate ProxmoxService
+
+ProxmoxService -> ProxmoxServerRepository : findById(serverId)
+activate ProxmoxServerRepository
+ProxmoxServerRepository --> ProxmoxService : ProxmoxServer{meta, connectionInfo}
+deactivate ProxmoxServerRepository
+
+note over ProxmoxService, ProxmoxClient
+Verify no active VMs or blocking resources
+end note
+
+ProxmoxService -> ProxmoxClient : listNodesAndVMs(connectionInfo)
+activate ProxmoxClient
+ProxmoxClient --> ProxmoxService : nodesAndVMsList
+deactivate ProxmoxClient
+
+alt Blocking resources found
+
+    ProxmoxService --> ProxmoxServerController : error(409, "Active VMs exist", details)
+    deactivate ProxmoxService
+
+    ProxmoxServerController --> Administrator : 409 Conflict
+    deactivate ProxmoxServerController
+
+else No blocking resources
+
+    ProxmoxService -> SecretStore : deleteCredentials(secretId)
+    activate SecretStore
+    SecretStore --> ProxmoxService : deleted / not-found
+    deactivate SecretStore
+
+    alt Secret deletion error
+
+        ProxmoxService --> ProxmoxServerController : error(502, "SecretStore delete failed")
+        deactivate ProxmoxService
+
+        ProxmoxServerController --> Administrator : 502 Bad Gateway
+        deactivate ProxmoxServerController
+
+    else Credentials removed
+
+        ProxmoxService -> ProxmoxServerRepository : delete(serverId)
+        activate ProxmoxServerRepository
+        ProxmoxServerRepository --> ProxmoxService : deleted
+        deactivate ProxmoxServerRepository
+
+        ProxmoxService -> AuditService : recordDeletion(actor, server.meta, success=true)
+        activate AuditService
+        AuditService --> ProxmoxService : recorded
+        deactivate AuditService
+
+        ProxmoxService --> ProxmoxServerController : success(200, {"message":"Server deleted"})
+        deactivate ProxmoxService
+
+        ProxmoxServerController --> Administrator : 200 OK
+        deactivate ProxmoxServerController
+
+    end
+
+end
+
+@enduml

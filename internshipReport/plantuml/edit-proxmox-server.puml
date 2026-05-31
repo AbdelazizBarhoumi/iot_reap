@@ -1,0 +1,128 @@
+@startuml
+title Use Case: Edit Proxmox Server - Sequence Diagram
+
+actor Administrator
+
+participant "InfrastructureController" as Controller
+participant "ProxmoxService" as Service
+participant "ProxmoxRepository" as Repository
+participant "SecretStore" as SecretStore
+participant "ProxmoxClient" as ProxmoxClient
+participant "NodeDiscoveryService" as NodeDiscovery
+participant "AuditService" as AuditService
+
+== Edit request received ==
+
+Administrator -> Controller : PUT /proxmox-servers/{id}
+activate Controller
+
+Controller -> Controller : authorize()
+Controller -> Controller : validate()
+
+alt Validation fails
+
+    Controller -> AuditService : record(failedValidation)
+    activate AuditService
+    AuditService --> Controller : auditAck
+    deactivate AuditService
+
+    Controller --> Administrator : HTTP 422 Validation Errors
+    deactivate Controller
+
+else Validation succeeds
+
+    Controller -> Service : updateServer(serverId, updatedFields, flags)
+    activate Service
+
+    Service -> Repository : loadServer(serverId)
+    activate Repository
+    Repository --> Service : serverRecord
+    deactivate Repository
+
+    Service -> Service : determineChangedFields()
+
+    alt Credentials changed
+
+        Service -> SecretStore : storeSecret(secretKey, secretValue)
+        activate SecretStore
+        SecretStore --> Service : storeResult(ok)
+        deactivate SecretStore
+
+    end
+
+    alt flags.testOnly = true
+
+        Service -> ProxmoxClient : testConnection(host, port, token)
+        activate ProxmoxClient
+        ProxmoxClient --> Service : testResult
+        deactivate ProxmoxClient
+
+        Service -> AuditService : record(testConnection)
+        activate AuditService
+        AuditService --> Service : auditAck
+        deactivate AuditService
+
+        Service --> Controller : testResult
+        deactivate Service
+
+        Controller --> Administrator : HTTP 200 Test Result
+        deactivate Controller
+
+    else Persist changes
+
+        Service -> Repository : beginTransaction()
+        activate Repository
+        Repository --> Service : transactionStarted
+
+        Service -> Repository : updateServerRecord(serverId, updatedFields, secretRefs)
+        Repository --> Service : updateAck
+
+        alt flags.testConnection = true
+
+            Service -> ProxmoxClient : testConnection(host, port, token)
+            activate ProxmoxClient
+            ProxmoxClient --> Service : testResult
+            deactivate ProxmoxClient
+
+            alt Connection successful
+
+                Service -> NodeDiscovery : discoverNodes(host)
+                activate NodeDiscovery
+                NodeDiscovery --> Service : nodeList
+                deactivate NodeDiscovery
+
+                Service -> Repository : updateDiscoveredNodes(serverId, nodeList)
+                Repository --> Service : nodesPersistedAck
+
+            else Connection failed
+
+                Service -> Service : markServerUnverified()
+                note right of Service
+                  Policy dependent:
+                  rollback or keep as unverified
+                end note
+
+            end
+
+        end
+
+        Service -> Repository : commitTransaction()
+        Repository --> Service : commitAck
+        deactivate Repository
+
+        Service -> AuditService : record(editProxmoxServer)
+        activate AuditService
+        AuditService --> Service : auditAck
+        deactivate AuditService
+
+        Service --> Controller : updatedServerResource
+        deactivate Service
+
+        Controller --> Administrator : HTTP 200 OK
+        deactivate Controller
+
+    end
+
+end
+
+@enduml

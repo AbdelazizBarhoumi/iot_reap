@@ -230,7 +230,6 @@ the following sub-use cases:
     \label{fig:admin-manage-infrastructure-and-hardware-use-case}
 \end{figure}
 \subsubsubsection{Specification of the Use Case Register Proxmox Server}
-
 \begin{table}[H]
     \centering
     \caption{Use Case Specification: Register Proxmox Server}
@@ -272,40 +271,84 @@ the following sub-use cases:
     \label{tab:admin-register-proxmox}
 \end{table}
 
-
-\subsubsubsection{Specification of the Use Case Edit / Delete Proxmox Server}
+\subsubsubsection{Specification of the Use Case Edit Proxmox Server}
 \begin{table}[H]
     \centering
-    \caption{Use Case Specification: Edit / Delete Proxmox Server}
+    \caption{Use Case Specification: Edit Proxmox Server}
     \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
         \hline
-        \textbf{Title}          & Edit / Delete Proxmox Server \\ \hline
-        \textbf{Summary}        & Administrator updates the configuration of an existing Proxmox server or removes it from the inventory. Editing updates details like credentials and resource limits; deletion removes the server and its local references from the database. \\ \hline
+        \textbf{Title}          & Edit Proxmox Server \\ \hline
+
+        \textbf{Summary}        & Administrator updates the details of an existing Proxmox VE server so the infrastructure inventory remains accurate and usable for provisioning. \\ \hline
+
         \textbf{Actor}          & Administrator \\ \hline
-        \textbf{Precondition}   & Administrator is authenticated and authorized to manage infrastructure; the target Proxmox server exists in the inventory. \\ \hline
-        \textbf{Post-condition} & If edited, the updated configuration is persisted and audited. If deleted, the server record and related local references are removed and audited. \\ \hline
+
+        \textbf{Precondition}   & Administrator is authenticated and authorized. The target Proxmox server exists in the inventory. \\ \hline
+
+        \textbf{Post-condition} & The Proxmox server details are updated in the inventory and available for subsequent infrastructure management tasks. \\ \hline
+
         \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
                                       \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item Administrator selects an existing Proxmox server from the inventory.
-                                          \item System validates administrator access, loads the server record, and displays management actions.
-                                          \item Administrator chooses either \textit{Edit} or \textit{Delete}.
-                                          \item \textbf{If Edit:} Administrator submits updated details, which the system validates.
-                                          \item System tests the connection if host, port, or credentials changed, then persists the new configuration and logs the update.
-                                          \item \textbf{If Delete:} Administrator confirms deletion. System removes associated local node and session references.
-                                          \item System deletes the Proxmox server record and logs the deletion.
-                                          \item System returns a success message and refreshes the inventory view.
+                                          \item Administrator opens the server details page and selects the edit option.
+                                          \item System displays the current server information.
+                                          \item Administrator modifies one or more server details.
+                                          \item Administrator submits the changes.
+                                          \item System validates the submitted information.
+                                          \item System updates the server record.
+                                          \item System confirms successful update and shows the revised server details.
                                       \end{enumerate}
                                   \end{minipage} \\ \hline
+
         \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
                                       \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-                                          \item If submitted edit data is invalid, the system returns a validation error without persisting changes.
-                                          \item If the connection test fails during an edit, the system aborts the update and retains the previous configuration.
-                                          \item If the target server does not exist, the system returns a not-found error.
-                                          \item If deletion fails (e.g., when removing related local records), the system aborts the operation and preserves the existing data.
+                                          \item Validation failure: system rejects incomplete or invalid input and preserves the entered values for correction.
+                                          \item Unauthorized access: system denies the request if the Administrator is not permitted to edit the server.
+                                          \item Server not found: system informs the Administrator that the selected server is unavailable.
+                                          \item Update failure: system informs the Administrator that the changes could not be saved and keeps the original data unchanged.
                                       \end{enumerate}
                                   \end{minipage} \\ \hline
     \end{tabular}
-    \label{tab:admin-edit-delete-proxmox-server}
+    \label{tab:admin-edit-proxmox}
+\end{table}
+
+\subsubsubsection{Specification of the Use Case Delete Proxmox Server}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Delete Proxmox Server}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Delete Proxmox Server \\ \hline
+
+        \textbf{Summary}        & Administrator removes a registered Proxmox VE server from the infrastructure inventory when it is no longer needed. \\ \hline
+
+        \textbf{Actor}          & Administrator \\ \hline
+
+        \textbf{Precondition}   & Administrator is authenticated and authorized to manage infrastructure. The target Proxmox server exists in the inventory. \\ \hline
+
+        \textbf{Post-condition} & The Proxmox server is removed from the inventory and is no longer available for provisioning. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Administrator selects a Proxmox server and chooses Delete.
+                                          \item System asks the Administrator to confirm the deletion.
+                                          \item Administrator confirms the deletion.
+                                          \item System checks that the server can be deleted.
+                                          \item System removes the server from the inventory.
+                                          \item System confirms successful deletion.
+                                      \end{enumerate}
+                                  \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+                                      \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+                                          \item Deletion canceled: Administrator closes the dialog or selects Cancel; no action is taken.
+                                          \item Server not eligible for deletion: system informs the Administrator that the server cannot be removed.
+                                          \item Server not found: system informs the Administrator that the selected server is unavailable.
+                                          \item Unauthorized access: system denies the request if the Administrator is not permitted to delete infrastructure entries.
+                                          \item Deletion failure: system informs the Administrator that the server could not be deleted and keeps the current state unchanged.
+                                      \end{enumerate}
+                                  \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:admin-delete-proxmox}
 \end{table}
 
 \subsubsubsection{Specification of the Use Case Manage Connection Preferences}

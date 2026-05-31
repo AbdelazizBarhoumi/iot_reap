@@ -1,0 +1,102 @@
+' Delete Training Path sequence diagram
+@startuml
+title Delete Training Path - Main Success Scenario (UC-TP-DEL-001)
+
+actor Teacher
+
+participant "Training Path UI" as UI
+participant "TrainingPathController" as Controller
+participant "TrainingPathService" as Service
+participant "TrainingPathRepository" as PathRepo
+participant "EnrollmentRepository" as EnrollmentRepo
+participant "ModuleRepository" as ModuleRepo
+participant "TrainingUnitRepository" as UnitRepo
+participant "ContentRepository" as ContentRepo
+participant "AuditLogService" as Audit
+
+note over Teacher, Service
+A training path can only be deleted if the Teacher owns it
+and the path has no active enrollments.
+end note
+
+Teacher -> UI : Click Delete
+activate UI
+UI -> Controller : delete(pathId)
+activate Controller
+
+Controller -> Service : deleteTrainingPath(authUser, pathId)
+activate Service
+
+Service -> PathRepo : findById(pathId)
+activate PathRepo
+PathRepo --> Service : trainingPath / null
+deactivate PathRepo
+
+alt training path not found
+    Service --> Controller : notFound()
+    Controller --> UI : showError("Training path not found")
+    deactivate Service
+    deactivate Controller
+    deactivate UI
+else training path found
+    Service -> Service : verifyOwnership(authUser, trainingPath)
+    Service -> EnrollmentRepo : hasActiveEnrollments(pathId)
+    activate EnrollmentRepo
+    EnrollmentRepo --> Service : true / false
+    deactivate EnrollmentRepo
+
+    alt unauthorized
+        Service --> Controller : authorizationError()
+        Controller --> UI : showError("You are not allowed to delete this training path")
+        deactivate Service
+        deactivate Controller
+        deactivate UI
+    else active enrollments exist
+        Service --> Controller : validationError("Active enrollments exist")
+        Controller --> UI : showError("Delete blocked because enrollments are active")
+        deactivate Service
+        deactivate Controller
+        deactivate UI
+    else deletion allowed
+        Service -> Service : prepareCascadeDeletion()
+
+        loop For each related module
+            Service -> ModuleRepo : deleteByTrainingPathId(pathId)
+            activate ModuleRepo
+            ModuleRepo --> Service : deleted
+            deactivate ModuleRepo
+        end
+
+        loop For each related training unit
+            Service -> UnitRepo : deleteByTrainingPathId(pathId)
+            activate UnitRepo
+            UnitRepo --> Service : deleted
+            deactivate UnitRepo
+        end
+
+        loop For each related content item
+            Service -> ContentRepo : deleteByTrainingPathId(pathId)
+            activate ContentRepo
+            ContentRepo --> Service : deleted
+            deactivate ContentRepo
+        end
+
+        Service -> PathRepo : delete(pathId)
+        activate PathRepo
+        PathRepo --> Service : deleted
+        deactivate PathRepo
+
+        Service -> Audit : recordDeletion(authUser, pathId)
+        activate Audit
+        Audit --> Service : recorded
+        deactivate Audit
+
+        Service --> Controller : success()
+        Controller --> UI : showDeletedState()
+        deactivate Service
+        deactivate Controller
+        deactivate UI
+    end
+end
+
+@enduml

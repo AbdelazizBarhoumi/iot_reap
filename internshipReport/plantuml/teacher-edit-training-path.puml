@@ -1,0 +1,89 @@
+' Edit Training Path sequence diagram
+@startuml
+title Edit Training Path - Main Success Scenario (UC-TP-EDT-001)
+
+actor Teacher
+
+participant "TrainingPathEditPage" as UI
+participant "TrainingPathController" as Controller
+participant "TrainingPathService" as Service
+participant "TrainingPathRepository" as Repo
+entity "TrainingPath" as TrainingPath
+
+Teacher -> UI : Open edit training path
+activate UI
+UI -> Controller : GET /training-paths/{id}/edit
+activate Controller
+Controller -> Service : getEditableTrainingPath(trainingPathId, teacher)
+activate Service
+Service -> Repo : findById(trainingPathId)
+activate Repo
+Repo -> TrainingPath : load record
+activate TrainingPath
+TrainingPath --> Repo : trainingPath data
+deactivate TrainingPath
+Repo --> Service : trainingPath
+deactivate Repo
+Service -> Service : verifyOwnershipAndEditability(teacher, trainingPath)
+
+alt Training path can be edited
+    Service --> Controller : editable training path data
+    Controller --> UI : render edit form
+    UI --> Teacher : show current values
+
+    Teacher -> UI : Submit updated fields
+    UI -> Controller : PUT /training-paths/{id}
+    Controller -> Service : updateTrainingPath(trainingPathId, teacher, data)
+    activate Service
+
+    loop validate each submitted field / rule
+        Service -> Service : validateField(rule)
+    end
+
+    Service -> Repo : findById(trainingPathId)
+    activate Repo
+    Repo -> TrainingPath : load record
+    activate TrainingPath
+    TrainingPath --> Repo : trainingPath data
+    deactivate TrainingPath
+    Repo --> Service : trainingPath
+    deactivate Repo
+
+    Service -> Service : verifyOwnershipAndEditability(teacher, trainingPath)
+
+    alt Validation or authorization failure
+        Service --> Controller : ValidationError / AuthorizationError
+        Controller --> UI : 422 / 403
+        UI --> Teacher : show error messages
+    else Update is valid
+        note over Service
+        Only editable metadata is updated.
+        Unchanged fields remain intact.
+        end note
+
+        Service -> Repo : update(trainingPathId, sanitizedChanges)
+        activate Repo
+        Repo -> TrainingPath : persist changes
+        activate TrainingPath
+        TrainingPath --> Repo : updated training path
+        deactivate TrainingPath
+        Repo --> Service : updatedTrainingPath
+        deactivate Repo
+
+        Service --> Controller : updatedTrainingPath
+        Controller --> UI : 200 OK + updated data
+        UI --> Teacher : confirmation and refreshed values
+    end
+
+    deactivate Service
+else Not found or not editable
+    Service --> Controller : NotFound / ValidationError
+    Controller --> UI : 404 / 400
+    UI --> Teacher : show error message
+end
+
+deactivate Service
+deactivate Controller
+deactivate UI
+
+@enduml

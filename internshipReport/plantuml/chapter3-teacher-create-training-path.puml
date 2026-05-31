@@ -1,0 +1,60 @@
+@startuml
+title Use Case: Create Training Path - Sequence
+actor Teacher
+participant TrainingPathController
+participant TrainingPathFormValidator
+participant TrainingPathService
+participant TrainingPathRepository
+participant AuditService
+
+Teacher -> TrainingPathController: requestCreateForm()
+activate TrainingPathController
+TrainingPathController -> TrainingPathController: renderCreateForm()
+TrainingPathController --> Teacher: showCreateForm()
+deactivate TrainingPathController
+
+Teacher -> TrainingPathController: submitCreate(formData)
+activate TrainingPathController
+TrainingPathController -> TrainingPathFormValidator: validate(formData)
+activate TrainingPathFormValidator
+TrainingPathFormValidator --> TrainingPathController: validationResult = OK
+deactivate TrainingPathFormValidator
+
+TrainingPathController -> TrainingPathService: createTrainingPath(teacherId, formData)
+activate TrainingPathService
+note right of TrainingPathService: business checks: teacher approved,\nset defaults (status=draft), generate slug
+TrainingPathService -> TrainingPathService: assertTeacherApproved(teacherId)
+TrainingPathService -> TrainingPathRepository: create(data {title,desc,category,pricing,status,slug,owner})
+activate TrainingPathRepository
+TrainingPathRepository --> TrainingPathService: TrainingPath{id,slug,status=draft,...}
+deactivate TrainingPathRepository
+
+TrainingPathService -> AuditService: recordCreation(actor=teacherId, trainingPathId)
+activate AuditService
+AuditService --> TrainingPathService: auditAck
+deactivate AuditService
+
+TrainingPathService --> TrainingPathController: TrainingPath{id,slug,status=draft}
+deactivate TrainingPathService
+
+TrainingPathController --> Teacher: redirectTo(editTrainingPathPage?trainingPathId={id})
+deactivate TrainingPathController
+
+alt Validation error
+    TrainingPathFormValidator --> TrainingPathController: validationErrors
+    TrainingPathController --> Teacher: showCreateForm(errors)
+end
+
+alt Authorization failure
+    TrainingPathService --> TrainingPathController: AuthorizationError
+    TrainingPathController --> Teacher: showError(403, "Account not approved to create training paths")
+end
+
+alt Persistence failure
+    TrainingPathRepository --> TrainingPathService: Error(DB)
+    TrainingPathService -> TrainingPathService: logError & attemptCompensation()
+    TrainingPathService --> TrainingPathController: creationFailed("persistence_error")
+    TrainingPathController --> Teacher: showError(500, "Could not create training path. Please retry or contact support.")
+end
+
+@enduml
