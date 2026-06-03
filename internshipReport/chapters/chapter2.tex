@@ -60,11 +60,11 @@ maintainability.
 
 \textbf{The Model Layer} encapsulates data structures, database interactions, and business rules. IoT-REAP Models define database structure for users, VM sessions, robots, telemetry, and audit logs. Models implement entity relationships, provide CRUD operations, and enforce data integrity through Eloquent ORM patterns.
 
-\textbf{The View Layer} in IoT-REAP is implemented as a React 18 frontend with TypeScript. Key principles include component-based architecture, typed props interfaces, custom hooks for data fetching, and Zustand for state management. Views render dashboards, session interfaces, robot control panels, and admin consoles.
+\textbf{The View Layer} in IoT-REAP is implemented as a React 18 frontend with TypeScript. Key principles include component-based architecture, typed props interfaces, custom hooks for data fetching, and Zustand for state management. Views render dashboards, session interfaces, robot control panels, and admin consoles \cite{react-docs} \cite{typescript-docs} \cite{zustand-docs}. % CITATION ADDED
 
 \textbf{The Controller Layer} orchestrates application logic between Models and Services. IoT-REAP Controllers remain thin—validating input via FormRequests, delegating to Services for business logic, and returning JSON responses via API Resources. Controllers handle authentication/authorization via middleware and manage error responses.
 
-\textbf{The Service Layer} contains all business logic. Services like \texttt{VMProvisioningService}, \texttt{GuacamoleClient}, \texttt{MqttService}, and \texttt{RiskScoreEngine} encapsulate complex operations, enabling testability and reuse.
+\textbf{The Service Layer} contains all business logic. Services like \texttt{VMProvisioningService}, \texttt{GuacamoleClient}, \texttt{MqttService}, and \texttt{RiskScoreEngine} encapsulate complex operations, enabling testability and reuse \cite{proxmox-ve-api} \cite{guacamole-manual} \cite{mqtt-oasis}. % CITATION ADDED
 
 \textbf{The Repository Layer} handles all database queries. Repositories like \texttt{VMSessionRepository} and \texttt{UserRepository} abstract Eloquent operations, returning Models or Collections—never raw arrays.
 
@@ -144,7 +144,7 @@ platform can be refined through use case modeling. The implemented application
 suggests one general use case view and several actor-specific refinements. The
 general model places the platform at the center and connects the four user
 actors (Guest, Engineer, Teacher, Administrator) as well as the external Stripe
-actor to the services they invoke: public discovery, learning progression,
+actor \cite{stripe-docs} to the services they invoke: public discovery, learning progression, % CITATION ADDED
 content authoring, infrastructure access, commerce, and administrative
 governance.
 
@@ -365,9 +365,6 @@ approval state.
 
 
 
-
-
-
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
 
@@ -377,4 +374,3 @@ class-level representation. These elements provide the bridge between the
 preliminary requirements and the realization of the platform.
 
 \cleardoublepage
-
