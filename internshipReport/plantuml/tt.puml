@@ -1,0 +1,85 @@
+@startuml
+actor User as "User (Guest)"
+participant "AuthController" as Controller
+participant "AuthService" as Service
+participant "UserRepository" as Repo
+participant "PasswordHasher" as Hasher
+participant "SessionManager" as Session
+participant "AuditLogger" as Logger
+participant "EmailService" as Email
+
+== Main success flow ==
+User -> Controller : POST /auth/login { email, password }
+activate Controller
+
+Controller -> Service : authenticate(email, password, clientMetadata)
+activate Service
+
+Service -> Repo : findByEmail(email)
+activate Repo
+Repo --> Service : UserRecord (id, email, passwordHash, status, emailVerified)
+deactivate Repo
+
+alt Account not found or user null
+    Service -> Logger : logAuthFailure(email, clientMetadata, reason="not_found")
+    Service --> Controller : AuthFailure(generic)
+    deactivate Service
+    Controller --> User : 401 Unauthorized (invalid credentials)
+    deactivate Controller
+    return
+end
+
+Service -> Service : check account status (active? suspended?)
+alt Account suspended/locked
+    Service -> Logger : logAuthFailure(userId, reason="locked")
+    Service --> Controller : AuthFailure(account_locked)
+    deactivate Service
+    Controller --> User : 423 Locked (account locked)
+    deactivate Controller
+    return
+end
+
+Service -> Hasher : verify(submittedPassword, passwordHash)
+activate Hasher
+Hasher --> Service : true
+deactivate Hasher
+
+opt Email not verified
+    Service -> Logger : logAuthInfo(userId, note="email_unverified")
+    Service -> Email : sendVerificationHint(user.email)  // optional
+    Service --> Controller : AuthFailure(email_unverified)
+    deactivate Service
+    Controller --> User : 403 Forbidden (verify email)
+    deactivate Controller
+    return
+end
+
+Service -> Session : createSession(userId, clientMetadata, expires)
+activate Session
+Session --> Service : SessionToken (id, token, expires)
+deactivate Session
+
+Service -> Logger : logAuthSuccess(userId, clientMetadata)
+Service --> Controller : AuthSuccess(sessionToken, minimalUserProfile)
+deactivate Service
+
+Controller -> User : 200 OK (set-cookie: session=..., body: userProfile)
+deactivate Controller
+
+== Alternative: Invalid credentials (Exc-1) ==
+alt Password mismatch
+    Service -> Hasher : verify(submittedPassword, passwordHash)
+    Hasher --> Service : false
+    Service -> Logger : logAuthFailure(userId?, reason="invalid_credentials")
+    Service -> Repo : incrementFailedLoginCounter(userId)
+    Service --> Controller : AuthFailure(generic)
+    Controller --> User : 401 Unauthorized (invalid credentials)
+end
+
+== Exception: Backend error ==
+opt DB or hashing failure
+    Service -> Logger : logError(exception)
+    Service --> Controller : ErrorResponse(500)
+    Controller --> User : 500 Internal Server Error
+end
+@enduml

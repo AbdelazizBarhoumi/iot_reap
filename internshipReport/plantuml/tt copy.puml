@@ -1,0 +1,53 @@
+@startuml
+actor User
+participant "Authentication System" as AuthSystem
+participant "User Account Store" as AccountStore
+participant "Audit/Logging" as Audit
+participant "Notification Service" as Notify
+
+User -> AuthSystem : SubmitCredentials(email, password)
+activate AuthSystem
+
+AuthSystem -> AuthSystem : ValidateInputFormat(credentials)
+alt Validation fails
+    AuthSystem -> User : 400 Bad Request (invalid input)
+    AuthSystem -> Audit : recordEvent("auth.input_validation_failed", metadata)
+    deactivate AuthSystem
+    return
+end
+
+AuthSystem -> AccountStore : RetrieveAccountByEmail(email)
+activate AccountStore
+AccountStore --> AuthSystem : AccountRecord or null
+deactivate AccountStore
+
+alt Account not found or credentials invalid
+    AuthSystem -> Audit : recordEvent("auth.failure", reason="invalid_credentials", metadata)
+    AuthSystem -> User : 401 Unauthorized (generic)
+    deactivate AuthSystem
+    return
+end
+
+AuthSystem -> AuthSystem : CheckAccountEligibility(accountRecord)
+alt Account not eligible (suspended/locked)
+    AuthSystem -> Audit : recordEvent("auth.failure", reason="account_ineligible", metadata)
+    AuthSystem -> Notify : sendLockoutNotice(accountRecord.contact)  // optional per policy
+    AuthSystem -> User : 423 Locked / 403 Forbidden
+    deactivate AuthSystem
+    return
+end
+
+AuthSystem -> AuthSystem : VerifyCredentials(accountRecord, submittedCredentials)
+alt Credentials verified
+    AuthSystem -> AuthSystem : CreateSessionOrToken(accountId, policy)
+    AuthSystem -> Audit : recordEvent("auth.success", metadata)
+    AuthSystem -> User : 200 OK (session/token, minimal profile)
+    deactivate AuthSystem
+    return
+else Credentials not verified
+    AuthSystem -> Audit : recordEvent("auth.failure", reason="invalid_credentials", metadata)
+    AuthSystem -> User : 401 Unauthorized (generic)
+    deactivate AuthSystem
+    return
+end
+@enduml

@@ -1,0 +1,59 @@
+@startuml eng-provision-create-vm-session
+title Use Case: Provision VM Session — Business-Level Sequence
+
+actor Engineer
+participant "FrontEnd" as Platform
+participant "Virtualization Platform\n(Proxmox)" as Proxmox
+participant "Remote Access Service\n(Guacamole)" as Guacamole
+
+Engineer -> Platform : Request a new VM session\n(select template and duration)
+activate Platform
+
+Platform -> Platform : Check access, quota,\nand session availability
+
+alt request not allowed or no capacity
+    Platform --> Engineer : Explain that the session\ncannot be created now
+    deactivate Platform
+else request accepted
+    Platform -> Proxmox : Prepare a VM for the session
+    activate Proxmox
+
+    alt provisioning succeeds
+        Proxmox --> Platform : VM becomes ready\n(with host and connection details)
+        deactivate Proxmox
+
+        Platform -> Guacamole : Enable one-time remote access\nfor the ready session
+        activate Guacamole
+        Guacamole --> Platform : Remote access is available
+        deactivate Guacamole
+
+        Platform -> Platform : Register the active session\nand schedule its end
+
+        Platform --> Engineer : Return the ready session\nwith remote access details
+    else provisioning fails
+        Proxmox --> Platform : The VM cannot be prepared
+        deactivate Proxmox
+        Platform --> Engineer : Inform that session provisioning failed
+    end
+
+    deactivate Platform
+end
+
+@enduml
+
+note left of Platform
+    Guards: auth + verified + can:provision-vm
+    Throttle: vm-provision
+    Business checks performed by the platform:
+    - quota limits (e.g. assertNotExceeded)
+    - session-window / reservation conflict prevention
+    - node capacity / availability
+end note
+
+note right
+    Typical failure reasons shown to the Engineer:
+    - quota exceeded
+    - no available compute capacity
+    - session conflict (overlapping reservation)
+    - provisioning error (hypervisor failure)
+end note
