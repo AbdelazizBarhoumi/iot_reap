@@ -46,9 +46,9 @@ const features = [
     },
     {
         icon: Shield,
-        title: 'OT Security and Compliance',
+        title: 'OT Security Controls',
         description:
-            'Role-based access, audit logging, and industrial security controls for production environments.',
+            'Role-based access, audit logging, and industrial security controls for managed environments.',
     },
 ];
 const stats = [

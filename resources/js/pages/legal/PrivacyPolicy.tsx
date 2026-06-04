@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
                 {
                     subtitle: '2.5 Payment Information',
                     content:
-                        'If applicable, payment processing is handled by third-party payment processors (e.g., Stripe). We do not store complete credit card numbers; payment information is processed and stored by these providers in compliance with PCI-DSS standards.',
+                        'If applicable, payment processing is handled by third-party payment processors (e.g., Stripe). We do not store complete credit card numbers; payment information is processed and stored by these providers according to their own security and compliance programs.',
                 },
             ],
         },
@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
                 {
                     subtitle: '4.2 Security and Compliance',
                     content:
-                        'We process data for security monitoring, fraud detection, abuse prevention, audit logging, compliance with industry standards (IEC 62443, NIST), and to investigate potential violations of our Terms of Service.',
+                        'We process data for security monitoring, fraud detection, abuse prevention, audit logging, alignment with internal security controls and industry best practices, and to investigate potential violations of our Terms of Service.',
                 },
                 {
                     subtitle: '4.3 Analytics and Improvement',

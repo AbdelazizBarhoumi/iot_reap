@@ -1,57 +1,48 @@
 % ==================== CHAPTER 3: REALIZATION AND EXPERIMENTATION ====================
 \chapter{Realization and Experimentation}
-\setcounter{section}{0}
 
+% -----------------------------------------------------------------------
+% PREAMBLE-LEVEL COMMANDS
+% \providecommand is used throughout to avoid "already defined" errors
+% if this file is \input more than once during partial compilation.
+% For cleaner project organisation, move both definitions to your main
+% preamble file (e.g., preamble.tex or main.tex) and remove them here.
+% -----------------------------------------------------------------------
+\providecommand{\stacklogo}[1]{%
+  \makebox[1.9cm][c]{%
+    \includegraphics[width=1.55cm,height=0.95cm,keepaspectratio]{#1}%
+  }%
+}
+
+\providecommand{\interfaceplaceholder}[1]{%
+  \begin{figure}[htbp]
+    \centering
+    \fbox{%
+      \parbox[c][5cm][c]{0.88\textwidth}{%
+        \centering \textbf{[Screenshot to be inserted before final submission]}\\[0.4cm]
+        #1%
+      }%
+    }
+    \caption{#1}
+  \end{figure}%
+}
+
+% -----------------------------------------------------------------------
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
 
-\initial{T}his chapter presents the practical realization of the IoT-REAP platform. It describes the development environment, the technologies and tools used, and the principal interfaces implemented for public users, learners, teachers, engineers, and administrators.
+\initial{T}his chapter presents the practical realization of the IoT-REAP platform and provides evidence of its correct operation. It is organized into five main parts. Section~\ref{sec:tools} describes the hardware resources, development tools, and technology stack used during implementation. Section~\ref{sec:implementation} presents the principal interfaces realized for each user role, from public visitors to platform administrators. Section~\ref{sec:network} details the network topology and segmentation strategy validated through simulation. Section~\ref{sec:hosting} covers the production deployment and security configuration. Finally, Section~\ref{sec:tests} reports the verification and testing activities conducted to validate functional correctness, role-based access control, and remote laboratory workflows.
 
+% -----------------------------------------------------------------------
 \section{Tools and Development Environment}
+\label{sec:tools}
 
-The implementation of IoT-REAP required a development environment capable of supporting backend web application development, reactive frontend interfaces, virtual machine orchestration, and industrial remote access workflows. The working environment therefore combined hardware resources suitable for local development and testing with a modern software stack centered on Laravel, React, TypeScript, and MySQL \cite{laravel-docs} \cite{react-docs} \cite{typescript-docs} \cite{mysql-docs}. % CITATION ADDED
+The implementation of IoT-REAP required a development environment capable of supporting backend web application development, reactive frontend interfaces, virtual machine orchestration, and industrial remote access workflows. The working environment therefore combined hardware resources suitable for local development and testing with a modern software stack centered on Laravel, React, TypeScript, and MySQL {\footnotesize\cite{laravel-docs,react-docs,typescript-docs,mysql-docs}}.
 
+% ------------------------------------------------------------------
 \subsection{Hardware Environment}
 
-The hardware environment of IoT-REAP comprises the physical machines, network equipment, and tangible devices that provide the foundation for remote laboratory operations. The table below summarizes the actual hardware components and their roles.
-
-\begin{longtable}{|p{3cm}|p{3.9cm}|p{8cm}|}
-\caption{Physical Hardware Components of IoT-REAP}
-\label{tab:hardware-env}\\
-\hline
-\textbf{Hardware Category} & \textbf{Main Components} & \textbf{Role in IoT-REAP} \\
-\hline
-\endfirsthead
-
-\hline
-\textbf{Hardware Category} & \textbf{Main Components} & \textbf{Role in IoT-REAP} \\
-\hline
-\endhead
-
-Compute hosts & Proxmox VE server, dedicated VM host & Provides the physical compute, memory, and storage resources for hosting virtual machines. Session VMs use the dedicated VMID range 200--999 to avoid conflicts with reusable templates \cite{proxmox-ve-api}. \\ % CITATION ADDED
-\hline
-
-Gateway node & Dedicated gateway server or edge device & Serves as the physical bridge between the virtualized environment and external devices. This machine runs the integration services that handle browser-based access, media streaming, camera handling, and peripheral management. \\
-\hline
-
-Camera hardware & USB webcams, IP cameras, ESP32-CAM devices, PTZ-capable cameras & Supplies live video sources for lab monitoring and experimentation. Default camera streams are configured at 640\,$\times$\,480 resolution, 15\,fps, and MJPEG input format. \\
-\hline
-
-USB peripherals & Cameras, adapters, and other attachable USB devices & Physical devices that can be bound to a running session when required, with tracked states such as available, bound, attached, and dedicated. \\
-\hline
-
-Industrial devices & MQTT-connected robots, sensors, and automation hardware & Provides the physical interaction layer for robotics and industrial control scenarios \cite{mqtt-oasis}. \\ % CITATION ADDED
-\hline
-
-Network infrastructure & Internal lab switches, routers, and cabling & Ensures reliable connectivity between compute hosts, gateway nodes, cameras, and industrial devices within the laboratory network. \\
-\hline
-\end{longtable}
-
-This hardware structure reflects the layered physical architecture of the platform: the compute hosts provide processing and storage resources, the gateway node enables connectivity between virtual and physical domains, the camera and USB peripherals supply visual and interactive capabilities, and the industrial devices deliver the hands-on experimentation layer required for remote laboratory work.
-
-\subsection{Hardware Environment}
-
-The hardware environment of IoT-REAP comprises the physical machines, network equipment, and tangible devices that provide the computational and operational foundation for remote laboratory work. Table~\ref{tab:hardware-env} summarizes the hardware components and their roles.
+The hardware environment of IoT-REAP comprises the physical machines, network equipment, and tangible devices that provide the computational and operational foundation for remote laboratory work. Table~\ref{tab:hardware-env} summarizes the hardware components and their respective roles within the platform.
 
 \begin{longtable}{|p{3.2cm}|p{3.9cm}|p{6.7cm}|}
 \caption{Physical Hardware Components of IoT-REAP}
@@ -60,13 +51,12 @@ The hardware environment of IoT-REAP comprises the physical machines, network eq
 \textbf{Hardware Category} & \textbf{Main Components} & \textbf{Role in IoT-REAP} \\
 \hline
 \endfirsthead
-
 \hline
 \textbf{Hardware Category} & \textbf{Main Components} & \textbf{Role in IoT-REAP} \\
 \hline
 \endhead
 
-Compute hosts & Proxmox VE server, dedicated VM host & Provides the physical compute, memory, and storage resources for hosting virtual machines. Session VMs use the dedicated VMID range 200--999 to avoid conflicts with reusable templates \cite{proxmox-ve-api}. \\ % CITATION ADDED
+Compute hosts & Proxmox VE server, dedicated VM host & Provides the physical compute, memory, and storage resources for hosting virtual machines. Session VMs use the dedicated VMID range 200--999 to avoid conflicts with reusable templates {\footnotesize\cite{proxmox-ve-api}}. \\
 \hline
 
 Gateway node & Dedicated edge server or industrial PC & Acts as the physical bridge between the virtualized environment and external devices. This machine hosts the integration services that handle browser-based access, media streaming, camera handling, and peripheral management. \\
@@ -75,24 +65,22 @@ Gateway node & Dedicated edge server or industrial PC & Acts as the physical bri
 Camera hardware & USB webcams, IP cameras, ESP32-CAM devices, PTZ-capable cameras & Supplies live video sources for lab monitoring and experimentation. Default camera streams are configured at 640\,$\times$\,480 resolution, 15\,fps, and MJPEG input format. \\
 \hline
 
-USB peripherals & Cameras, serial adapters, and other attachable USB devices & Physical devices that can be bound to a running session when required, with tracked states such as available, bound, attached, and dedicated. \\
+USB peripherals & Cameras, serial adapters, and other attachable USB devices & Physical devices that can be bound to a running session when required, with tracked states: \textit{available}, \textit{bound}, \textit{attached}, and \textit{dedicated}. \\
 \hline
 
-Industrial devices & MQTT-connected robots, sensors, and automation hardware & Provides the physical interaction layer for robotics and industrial control scenarios \cite{mqtt-oasis}. \\ % CITATION ADDED
+Industrial devices & MQTT-connected robots, sensors, and automation hardware & Provides the physical interaction layer for robotics and industrial control scenarios {\footnotesize\cite{mqtt-oasis}}. \\
 \hline
 
 Network infrastructure & Internal lab switches, routers, and cabling & Ensures reliable connectivity between compute hosts, gateway nodes, cameras, and industrial devices within the laboratory network. \\
 \hline
 \end{longtable}
 
-This hardware structure reflects the layered physical architecture of the platform: the compute hosts provide processing and storage resources, the gateway node enables connectivity between virtual and physical domains, the camera and USB peripherals supply visual and interactive capabilities, and the industrial devices deliver the hands-on experimentation layer required for remote laboratory work.
+This hardware structure reflects the layered physical architecture of the platform: compute hosts provide processing and storage resources, the gateway node enables connectivity between virtual and physical domains, camera and USB peripherals supply visual and interactive capabilities, and industrial devices deliver the hands-on experimentation layer required for remote laboratory work.
 
 % ------------------------------------------------------------------
 \subsection{Development Environment}
 
-The development environment comprises the tools and utilities used to build, test, and document the IoT-REAP platform. Since the platform is implemented as a Laravel application using Inertia.js and React, both PHP and JavaScript tooling were required throughout the development cycle. Table~\ref{tab:dev-env} summarizes the main development tools.
-
-\newcommand{\stacklogo}[1]{\makebox[1.9cm][c]{\includegraphics[width=1.55cm,height=0.95cm,keepaspectratio]{#1}}}
+The development environment comprises the tools and utilities used to build, test, and document the IoT-REAP platform. Since the platform is implemented as a Laravel application using Inertia.js and React, both PHP and JavaScript tooling were required throughout the development cycle. Table~\ref{tab:dev-env} summarizes the main development tools and their roles.
 
 \begin{longtable}{|p{3.7cm}|p{2.2cm}|p{8cm}|}
 \caption{Development Environment}
@@ -101,43 +89,39 @@ The development environment comprises the tools and utilities used to build, tes
 \textbf{Tool} & \textbf{Logo} & \textbf{Role in the Project} \\
 \hline
 \endfirsthead
-
 \hline
 \textbf{Tool} & \textbf{Logo} & \textbf{Role in the Project} \\
 \hline
 \endhead
 
-Visual Studio Code & \stacklogo{assets/chapter4/vscode-logo.png} & Used as the main integrated development environment for editing PHP, TypeScript, React components, route definitions, configuration files, and LaTeX report sources \cite{vscode-docs}. \\ % CITATION ADDED
+Visual Studio Code & \stacklogo{assets/chapter3/vscode-logo.png} & Used as the main integrated development environment for editing PHP, TypeScript, React components, route definitions, configuration files, and \LaTeX{} report sources {\footnotesize\cite{vscode-docs}}. \\
 \hline
 
-Laravel Herd & \stacklogo{assets/chapter4/herd-logo.png} & Used as a lightweight local development environment for running the Laravel application, PHP runtime, and MySQL database during implementation \cite{herd-docs}. \\ % CITATION ADDED
+Git and GitHub & \stacklogo{assets/chapter3/git-logo.png} & Used to manage source code history, feature evolution, and recovery of stable project states during iterative development {\footnotesize\cite{git-docs,github-docs}}. \\
 \hline
 
-Git and GitHub & \stacklogo{assets/chapter4/git-logo.png} & Used to manage source code history, feature evolution, collaboration, and recovery of stable project states during iterative development \cite{git-docs} \cite{github-docs}. \\ % CITATION ADDED
+Composer & \stacklogo{assets/chapter3/composer-logo.png} & Used to install and manage Laravel framework packages and backend dependencies {\footnotesize\cite{composer-docs}}. \\
 \hline
 
-Composer & \stacklogo{assets/chapter4/composer-logo.png} & Used to install and manage Laravel framework packages and backend dependencies \cite{composer-docs}. \\ % CITATION ADDED
+NPM & \stacklogo{assets/chapter3/npm-logo.png} & Used to manage frontend dependencies including React, TypeScript, Vite, Tailwind CSS, Radix UI components, Zustand, React Query, and Vitest {\footnotesize\cite{npm-docs}}. \\
 \hline
 
-NPM & \stacklogo{assets/chapter4/npm-logo.png} & Used to manage frontend dependencies including React, TypeScript, Vite, Tailwind CSS, Radix UI components, Zustand, React Query, and Vitest \cite{npm-docs}. \\ % CITATION ADDED
+Postman & \stacklogo{assets/chapter3/postman-logo.png} & Used to verify HTTP routes, request payloads, responses, authentication behavior, and external integration endpoints during development {\footnotesize\cite{postman-docs}}. \\
 \hline
 
-Postman & \stacklogo{assets/chapter4/postman-logo.png} & Used to verify HTTP routes, request payloads, responses, authentication behavior, and external integration endpoints during development \cite{postman-docs}. \\ % CITATION ADDED
+Draw.io & \stacklogo{assets/chapter3/drawio-logo.png} & Used to prepare architecture, workflow, and UML diagrams integrated into the academic report {\footnotesize\cite{drawio-site}}. \\
 \hline
 
-Draw.io & \stacklogo{assets/chapter4/drawio-logo.png} & Used to prepare architecture, workflow, and UML diagrams integrated into the academic report \cite{drawio-site}. \\ % CITATION ADDED
+OWASP ZAP & \stacklogo{assets/chapter3/zap-logo.png} & Used to perform security testing against the running application, including vulnerability scanning, authentication flow testing, and session management analysis {\footnotesize\cite{owasp-zap-docs}}. \\
 \hline
 
-OWASP ZAP & \stacklogo{assets/chapter4/zap-logo.png} & Used to perform security testing against the running application, including vulnerability scanning, authentication flow testing, and session management analysis \cite{owasp-zap-docs}. \\ % CITATION ADDED
+Cisco Packet Tracer & \stacklogo{assets/chapter3/packet-tracer-logo.png} & Used to simulate the network topology and segmentation of the platform, demonstrating the isolation between corporate LAN, virtualization cluster, and external access points {\footnotesize\cite{cisco-packet-tracer-docs}}. \\
 \hline
 
-Cisco Packet Tracer & \stacklogo{assets/chapter4/packet-tracer-logo.png} & Used to simulate the network topology and segmentation of the platform, demonstrating the isolation between corporate LAN, virtualization cluster, and external access points \cite{cisco-packet-tracer-docs}. \\ % CITATION ADDED
+VMware Workstation & \stacklogo{assets/chapter3/vmware-logo.png} & Used to create and manage virtual machine templates for the Proxmox VE environment, including Windows and Linux images with preconfigured software for training sessions {\footnotesize\cite{vmware-docs}}. \\
 \hline
-
-VMware Workstation & \stacklogo{assets/chapter4/vmware-logo.png} & Used to create and manage virtual machine templates for the Proxmox VE environment, including Windows and Linux images with preconfigured software for training sessions \cite{vmware-docs}. \\ % CITATION ADDED 
 
 \end{longtable}
-
 
 % ------------------------------------------------------------------
 \subsection{Technology Stack}
@@ -153,298 +137,383 @@ The IoT-REAP platform relies on a diverse technology stack that supports applica
 \textbf{Technology} & \textbf{Logo} & \textbf{Role in the Platform} \\
 \hline
 \endfirsthead
-
-\multicolumn{3}{c}%
-{{\tablename\ \thetable{} -- Continued from previous page}}\\
+\multicolumn{3}{c}{{\tablename\ \thetable{} -- Continued from previous page}}\\
 \hline
 \textbf{Technology} & \textbf{Logo} & \textbf{Role in the Platform} \\
 \hline
 \endhead
-
 \hline
 \endfoot
-
 \hline
 \endlastfoot
 
 \multicolumn{3}{|l|}{\textit{\textbf{Backend and Application Layer}}} \\
 \hline
 
-PHP & \stacklogo{assets/chapter4/php-logo.png} & Main backend programming language used to implement controllers, services, models, jobs, events, policies, and platform business logic \cite{php-docs}. \\ % CITATION ADDED
+PHP & \stacklogo{assets/chapter3/php-logo.png} & Main backend programming language used to implement controllers, services, models, jobs, events, policies, and platform business logic {\footnotesize\cite{php-docs}}. \\
 \hline
 
-Laravel & \stacklogo{assets/chapter4/laravel-logo.png} & Backend framework used for routing, authentication, queue processing, validation, authorization, database access, and modular organization of application logic \cite{laravel-docs}. \\ % CITATION ADDED
+Laravel & \stacklogo{assets/chapter3/laravel-logo.png} & Backend framework used for routing, authentication, queue processing, validation, authorization, database access, and modular organization of application logic {\footnotesize\cite{laravel-docs}}. \\
 \hline
 
-Inertia.js & \stacklogo{assets/chapter4/inertia-logo.png} & Connects Laravel routes to React pages without building a separate REST-only frontend, enabling a smooth single-page navigation model \cite{inertia-docs}. \\ % CITATION ADDED
+Inertia.js & \stacklogo{assets/chapter3/inertia-logo.png} & Connects Laravel routes to React pages without building a separate REST-only frontend, enabling a smooth single-page navigation model {\footnotesize\cite{inertia-docs}}. \\
 \hline
 
-Laravel Fortify & \stacklogo{assets/chapter4/laravel-logo.png} & Provides authentication scaffolding including login, registration, password reset, email verification, and two-factor authentication flows \cite{fortify-docs}. \\ % CITATION ADDED
+Laravel Fortify & \stacklogo{assets/chapter3/laravel-logo.png} & Provides authentication scaffolding including login, registration, password reset, email verification, and two-factor authentication flows {\footnotesize\cite{fortify-docs}}. \\
 \hline
 
-Laravel Socialite & \stacklogo{assets/chapter4/laravel-logo.png} & Provides Google OAuth authentication, allowing users to register and log in through their Google accounts \cite{socialite-docs} \cite{google-oauth-docs}. \\ % CITATION ADDED
+Laravel Socialite & \stacklogo{assets/chapter3/laravel-logo.png} & Provides Google OAuth authentication, allowing users to register and log in through their Google accounts {\footnotesize\cite{socialite-docs,google-oauth-docs}}. \\
 \hline
 
-Laravel Reverb & \stacklogo{assets/chapter4/laravel-logo.png} & Provides real-time WebSocket broadcasting for live session updates, notifications, and operational event delivery \cite{reverb-docs}. \\ % CITATION ADDED
+Laravel Reverb & \stacklogo{assets/chapter3/laravel-logo.png} & Provides real-time WebSocket broadcasting for live session updates, notifications, and operational event delivery {\footnotesize\cite{reverb-docs}}. \\
 \hline
 
-Laravel Telescope & \stacklogo{assets/chapter4/laravel-logo.png} & Development-time inspection tool for monitoring requests, exceptions, queries, and queue jobs during implementation \cite{telescope-docs}. \\ % CITATION ADDED
+Laravel Telescope & \stacklogo{assets/chapter3/laravel-logo.png} & Development-time inspection tool for monitoring requests, exceptions, queries, and queue jobs during implementation {\footnotesize\cite{telescope-docs}}. \\
 \hline
 
-Stripe & \stacklogo{assets/chapter4/stripe-logo.png} & Supports checkout, payment tracking, refund workflows, and payout-related administrative features \cite{stripe-docs}. \\ % CITATION ADDED
+Stripe & \stacklogo{assets/chapter3/stripe-logo.png} & Supports checkout, payment tracking, refund workflows, and payout-related administrative features {\footnotesize\cite{stripe-docs}}. \\
 \hline
 
 \multicolumn{3}{|l|}{\textit{\textbf{Frontend Layer}}} \\
 \hline
 
-React & \stacklogo{assets/chapter4/react-logo.png} & Used to build the interactive frontend interfaces for training paths, dashboards, teaching pages, administration panels, and user settings \cite{react-docs}. \\ % CITATION ADDED
+React & \stacklogo{assets/chapter3/react-logo.png} & Used to build the interactive frontend interfaces for training paths, dashboards, teaching pages, administration panels, and user settings {\footnotesize\cite{react-docs}}. \\
 \hline
 
-TypeScript & \stacklogo{assets/chapter4/typescript-logo.png} & Provides type safety across the frontend codebase, improving maintainability and reducing interface integration errors \cite{typescript-docs}. \\ % CITATION ADDED
+TypeScript & \stacklogo{assets/chapter3/typescript-logo.png} & Provides type safety across the frontend codebase, improving maintainability and reducing interface integration errors {\footnotesize\cite{typescript-docs}}. \\
 \hline
 
-Vite & \stacklogo{assets/chapter4/vite-logo.png} & Used for modern frontend asset bundling, hot module replacement in development, and production asset compilation \cite{vite-docs}. \\ % CITATION ADDED
+Vite & \stacklogo{assets/chapter3/vite-logo.png} & Used for modern frontend asset bundling, hot module replacement in development, and production asset compilation {\footnotesize\cite{vite-docs}}. \\
 \hline
 
-Tailwind CSS & \stacklogo{assets/chapter4/tailwind-logo.png} & Used for responsive and utility-based user interface styling across public, learner, instructor, and administration pages \cite{tailwind-docs}. \\ % CITATION ADDED
+Tailwind CSS & \stacklogo{assets/chapter3/tailwind-logo.png} & Used for responsive and utility-based user interface styling across public, learner, instructor, and administration pages {\footnotesize\cite{tailwind-docs}}. \\
 \hline
 
-Radix UI & \stacklogo{assets/chapter4/radix-logo.png} & Supplies accessible UI primitives including dialogs, dropdowns, tooltips, and tabs that form the basis of the component library \cite{radix-docs}. \\ % CITATION ADDED
+Radix UI & \stacklogo{assets/chapter3/radix-logo.png} & Supplies accessible UI primitives including dialogs, dropdowns, tooltips, and tabs that form the basis of the component library {\footnotesize\cite{radix-docs}}. \\
 \hline
 
-React Hook Form & \stacklogo{assets/chapter4/react-hook-form-logo.png} & Manages complex form validation and submission state across teaching, administrative, and user settings interfaces \cite{react-hook-form-docs}. \\ % CITATION ADDED
+React Hook Form & \stacklogo{assets/chapter3/react-hook-form-logo.png} & Manages complex form validation and submission state across teaching, administrative, and user settings interfaces {\footnotesize\cite{react-hook-form-docs}}. \\
 \hline
 
-TanStack React Query & \stacklogo{assets/chapter4/react-query-logo.png} & Provides automatic data fetching, caching, and synchronization for API responses across the React frontend \cite{tanstack-query-docs}. \\ % CITATION ADDED
+TanStack React Query & \stacklogo{assets/chapter3/react-query-logo.png} & Provides automatic data fetching, caching, and synchronization for API responses across the React frontend {\footnotesize\cite{tanstack-query-docs}}. \\
 \hline
 
-Recharts & \stacklogo{assets/chapter4/recharts-logo.png} & Renders analytics charts including revenue trends, enrollment funnels, and completion statistics \cite{recharts-docs}. \\ % CITATION ADDED
+Recharts & \stacklogo{assets/chapter3/recharts-logo.png} & Renders analytics charts including revenue trends, enrollment funnels, and completion statistics {\footnotesize\cite{recharts-docs}}. \\
 \hline
 
-Guacamole Common JS & \stacklogo{assets/chapter4/guacamole-logo.png} & Provides the JavaScript implementation of the Guacamole protocol for browser-based remote desktop access \cite{guacamole-manual}. \\ % CITATION ADDED
+Guacamole Common JS & \stacklogo{assets/chapter3/guacamole-logo.png} & Provides the JavaScript implementation of the Guacamole protocol for browser-based remote desktop access {\footnotesize\cite{guacamole-manual}}. \\
 \hline
 
 \multicolumn{3}{|l|}{\textit{\textbf{Data and Persistence Layer}}} \\
 \hline
 
-MySQL & \stacklogo{assets/chapter4/mysql-logo.png} & Stores structured application data such as users, reservations, certificates, quizzes, notifications, sessions, and payments \cite{mysql-docs}. \\ % CITATION ADDED
+MySQL & \stacklogo{assets/chapter3/mysql-logo.png} & Stores structured application data including users, reservations, certificates, quizzes, notifications, sessions, and payments {\footnotesize\cite{mysql-docs}}. \\
 \hline
-
 
 \multicolumn{3}{|l|}{\textit{\textbf{Gateway and Streaming Services}}} \\
 \hline
 
-MediaMTX & \stacklogo{assets/chapter4/mediamtx-logo.png} & Media server that handles RTSP, HLS, and WebRTC streaming for live camera feeds. Exposes ports 8554 (RTSP), 8888 (HLS), 8889 (WebRTC), and 9997 (API) \cite{mediamtx-docs} \cite{rtsp-rfc2326} \cite{hls-rfc8216} \cite{webrtc-w3c}. \\ % CITATION ADDED
+MediaMTX & \stacklogo{assets/chapter3/mediamtx-logo.png} & Media server that handles RTSP, HLS, and WebRTC streaming for live camera feeds. Exposes ports 8554 (RTSP), 8888 (HLS), 8889 (WebRTC), and 9997 (API) {\footnotesize\cite{mediamtx-docs,rtsp-rfc2326,hls-rfc8216,webrtc-w3c}}. \\
 \hline
 
-Frigate & \stacklogo{assets/chapter4/frigate-logo.png} & Network video recorder that manages camera streams, motion detection, and recording for IP and USB cameras \cite{frigate-docs}. \\ % CITATION ADDED
+Frigate & \stacklogo{assets/chapter3/frigate-logo.png} & Network video recorder that manages camera streams, motion detection, and recording for IP and USB cameras {\footnotesize\cite{frigate-docs}}. \\
 \hline
 
-FFmpeg & \stacklogo{assets/chapter4/ffmpeg-logo.png} & Handles video transcoding with three quality profiles (360p, 720p, 1080p), HLS segment generation, thumbnail extraction, format normalization, and camera stream adaptation for browser-compatible playback \cite{ffmpeg-docs} \cite{hls-rfc8216}. \\ % CITATION ADDED
+FFmpeg & \stacklogo{assets/chapter3/ffmpeg-logo.png} & Handles video transcoding across three quality profiles (360p, 720p, 1080p), HLS segment generation, thumbnail extraction, format normalization, and camera stream adaptation for browser-compatible playback {\footnotesize\cite{ffmpeg-docs,hls-rfc8216}}. \\
 \hline
 
-WHEP Proxy & \stacklogo{assets/chapter4/whep-logo.png} & Provides browser-compatible WebRTC streaming for live camera feeds from industrial and IoT equipment through a lightweight HTTP egress proxy \cite{whep-ietf} \cite{webrtc-w3c}. \\ % CITATION ADDED
+WHEP Proxy & \stacklogo{assets/chapter3/whep-logo.png} & Provides browser-compatible WebRTC streaming for live camera feeds from industrial and IoT equipment through a lightweight HTTP egress proxy {\footnotesize\cite{whep-ietf,webrtc-w3c}}. \\
 \hline
 
-Apache Guacamole & \stacklogo{assets/chapter4/guacamole-logo.png} & Enables clientless browser-based remote desktop access to virtual machines without requiring local desktop client installation \cite{guacamole-manual}. \\ % CITATION ADDED
+Apache Guacamole & \stacklogo{assets/chapter3/guacamole-logo.png} & Enables clientless browser-based remote desktop access to virtual machines without requiring local desktop client installation {\footnotesize\cite{guacamole-manual}}. \\
 \hline
 
 \multicolumn{3}{|l|}{\textit{\textbf{Device Integration and Messaging}}} \\
 \hline
 
-Mosquitto & \stacklogo{assets/chapter4/mosquitto-logo.png} & MQTT broker that handles real-time robot command dispatch and telemetry reception using QoS~1 message delivery for reliable industrial control operations \cite{mosquitto-docs} \cite{mqtt-oasis}. \\ % CITATION ADDED
+Mosquitto & \stacklogo{assets/chapter3/mosquitto-logo.png} & MQTT broker that handles real-time robot command dispatch and telemetry reception using QoS~1 message delivery for reliable industrial control operations {\footnotesize\cite{mosquitto-docs,mqtt-oasis}}. \\
 \hline
 
-USB/IP & \stacklogo{assets/chapter4/usbip-logo.png} & Enables physical USB devices to be shared over the network and bound to running lab sessions across the platform \cite{usbip-docs}. \\ % CITATION ADDED
+USB/IP & \stacklogo{assets/chapter3/usbip-logo.png} & Enables physical USB devices to be shared over the network and bound to running lab sessions {\footnotesize\cite{usbip-docs}}. \\
 \hline
 
 \multicolumn{3}{|l|}{\textit{\textbf{Testing and Quality Assurance}}} \\
 \hline
 
-PHPUnit & \stacklogo{assets/chapter4/phpunit-logo.png} & Used to verify backend logic, route behavior, business rules, and Laravel feature flows \cite{phpunit-docs}. \\ % CITATION ADDED
+PHPUnit & \stacklogo{assets/chapter3/phpunit-logo.png} & Used to verify backend logic, route behavior, business rules, and Laravel feature flows {\footnotesize\cite{phpunit-docs}}. \\
 \hline
 
-Vitest & \stacklogo{assets/chapter4/vitest-logo.png} & Used to test React interface logic and component behavior in the frontend codebase \cite{vitest-docs}. \\ % CITATION ADDED
+Vitest & \stacklogo{assets/chapter3/vitest-logo.png} & Used to test React interface logic and component behavior in the frontend codebase {\footnotesize\cite{vitest-docs}}. \\
 \hline
 
 \end{longtable}
 
 \normalsize
+% -----------------------------------------------------------------------
+\section{Implementation}
+\label{sec:implementation}
+
+This section presents the principal interfaces and functional areas implemented in IoT-REAP. The objective is not merely to present isolated screens, but to explain how the platform organizes the complete user experience across public access, technical learning, VM-based practice, teaching workflows, and administrative control. Interfaces are grouped according to the user role they primarily serve.
 
 % ------------------------------------------------------------------
-\subsection{Runtime Deployment Mapping}
-
-The technologies described above are deployed across the hardware components as follows. The Laravel application, MySQL database, and Laravel Reverb run on the compute hosts alongside the Proxmox VE hypervisor. The gateway node hosts MediaMTX, Frigate, FFmpeg, the WHEP proxy, Apache Guacamole, Mosquitto, and USB/IP services. Camera hardware, USB peripherals, and industrial devices connect to the gateway node or the internal lab network. Redis, when enabled, may run on either the compute host or the gateway node depending on deployment requirements \cite{laravel-docs} \cite{mysql-docs} \cite{reverb-docs} \cite{proxmox-ve-api} \cite{redis-docs}. % CITATION ADDED
-\normalsize
-
-\section{Implementation}
-
-This section describes the principal interfaces and functional areas implemented in IoT-REAP. The objective is not merely to present isolated screens, but to explain how the platform organizes the complete user experience across public access, technical learning, VM-based practice, teaching workflows, and administrative control.
-
-\newcommand{\interfaceplaceholder}[1]{%
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\parbox[c][5cm][c]{0.88\textwidth}{%
-\centering \textbf{Placeholder image}\\[0.4cm]
-#1%
-}%
-}
-\caption{#1}
-\end{figure}
-}
-
 \subsection{Landing Page}
 
-The landing page is the public entry point of the platform. It introduces IoT-REAP, presents featured training paths, and guides visitors toward registration, authentication, and course exploration.
+The landing page is the public entry point of the platform, implemented as a React frontend with TypeScript and styled with Tailwind CSS. It fetches featured training paths via Inertia.js shared page props from Laravel Eloquent queries, renders dynamic enrollment calls-to-action, and manages SEO metadata through Inertia's \texttt{Head} API, guiding visitors toward registration or login. A hero section communicates the platform's value proposition, while a curated catalog block presents popular training paths with their title, category, price, and ratings. The interface also exposes navigation toward the full catalog, individual path details, and authentication, providing a clear and frictionless onboarding path for new visitors.
 
 \interfaceplaceholder{Landing page interface}
 
+% ------------------------------------------------------------------
 \subsection{Authentication and Role Selection}
 
-The authentication interface manages user registration, login, email verification, Google OAuth access, two-factor authentication, and role selection. It supports the separation between learners, teachers, engineers, and administrators from the beginning of the user journey \cite{google-oauth-docs}. % CITATION ADDED
+The authentication interface manages the complete identity lifecycle of platform users. Registration collects essential profile information and triggers an email verification step through Laravel Fortify {\footnotesize\cite{fortify-docs}}. Login supports both credential-based and Google OAuth flows via Laravel Socialite {\footnotesize\cite{socialite-docs,google-oauth-docs}}. After successful authentication, users who have not yet committed to a role are presented with a role-selection screen allowing them to self-identify as a learner, teacher, or engineer. Two-factor authentication is available as an optional security layer via TOTP. This separation of roles from the earliest step of the user journey ensures that role-specific dashboards, permissions, and content are correctly applied from the first session.
 
 \interfaceplaceholder{Authentication and role selection interface}
 
+% ------------------------------------------------------------------
 \subsection{Learner Dashboard}
 
-The learner dashboard gives authenticated users a central view of their enrolled training paths, progress, notifications, certificates, and recent activity. It helps learners resume ongoing work and access the practical environment quickly.
+The learner dashboard provides authenticated users with a consolidated view of their active learning context. It displays enrolled training paths alongside a visual progress indicator for each, recent activity entries, unread notifications, and quick access to earned or claimable certificates. A recommended content block surfaces paths related to the learner's existing enrollments, encouraging continued engagement. The dashboard is designed to reduce navigation friction: a learner returning to the platform can resume any ongoing unit or launch a VM session without leaving this central hub. Data is fetched via TanStack React Query with Zustand managing lightweight client-side UI state {\footnotesize\cite{tanstack-query-docs}}.
 
 \interfaceplaceholder{Learner dashboard interface}
 
+% ------------------------------------------------------------------
 \subsection{Training Path Catalog}
 
-The training path catalog allows users to browse, search, filter, and discover available learning content. It organizes technical courses by category, popularity, relevance, and enrollment availability.
+The training path catalog allows authenticated and unauthenticated users to browse, search, and filter the full set of available learning content. Filters operate on category, price range, difficulty level, rating, and enrollment availability. Search is performed against path titles, descriptions, and instructor names. Each catalog card displays a thumbnail, title, instructor, rating summary, learner count, and price, giving users sufficient information to make enrollment decisions without entering the detail view. Pagination and sorting by relevance, popularity, or recency are supported.
 
 \interfaceplaceholder{Training path catalog interface}
 
+% ------------------------------------------------------------------
 \subsection{Training Path Details}
 
-The training path details interface presents the structure of a selected path, including its units, objectives, instructor information, reviews, price, and enrollment actions. It acts as the decision point before a learner starts or purchases a path.
+The training path details interface serves as the primary decision point before a learner purchases or enrolls in a path. It presents the full curriculum structure organized by unit, the learning objectives, the instructor profile and credentials, aggregate ratings with individual review excerpts, and the enrollment or checkout action. For paths with associated VM sessions, the interface indicates the required laboratory access type and estimated session duration. Enrolled learners who revisit this page are redirected to their current unit position, avoiding redundant browsing.
 
 \interfaceplaceholder{Training path details interface}
 
+% ------------------------------------------------------------------
 \subsection{Training Unit Learning Interface}
 
-The training unit interface brings together videos, articles, notes, completion tracking, discussions, and access to practical work. It provides the main learning workspace for progressing through course content.
+The training unit interface is the core learning workspace of the platform. It combines a primary content area --- displaying video content, article text, or embedded external resources --- with a right-hand panel providing unit navigation, completion tracking, and discussion access. Learners can mark units as complete, take personal notes attached to specific content positions, and access the quiz associated with the unit when one is configured. For units linked to a practical VM session, a launch button is presented directly within the interface, allowing seamless transition from theory to hands-on practice without navigating away from the learning context.
 
 \interfaceplaceholder{Training unit learning interface}
 
+% ------------------------------------------------------------------
 \subsection{Quiz Interface}
 
-The quiz interface supports knowledge evaluation through structured questions, attempts, submission handling, and result consultation. It is connected to training units and contributes to learner progress validation.
+The quiz interface supports structured knowledge evaluation within training paths. Questions are presented one at a time or in a paginated set, with support for multiple-choice and single-answer formats. The interface tracks the remaining time when a time limit is configured, and prevents submission until all mandatory questions have been answered. Upon submission, learners receive a results screen showing their score, correct answers, and per-question feedback. Multiple attempts are supported when enabled by the instructor, with attempt history accessible from the learner profile. Quiz completion contributes directly to unit progress and path completion status.
 
 \interfaceplaceholder{Quiz interface}
 
+% ------------------------------------------------------------------
 \subsection{Virtual Machine Session Interface}
 
-The virtual machine session interface enables learners and engineers to access a remote laboratory environment from the browser. It combines VM state information, connection access, session duration, and termination controls.
+The virtual machine session interface gives learners and engineers browser-based access to a provisioned remote laboratory environment. It displays the current VM state, connection status, and session time remaining, and embeds the Apache Guacamole client via Guacamole Common JS to establish a clientless remote desktop tunnel directly within the page {\footnotesize\cite{guacamole-manual}}. Controls allow the user to extend the session within authorized limits, request a full-screen view, and terminate the session explicitly. If a session is lost due to a connectivity interruption, the interface provides a reconnect action without requiring a new reservation. VM-specific metadata --- operating system, assigned resources, and associated training unit --- is displayed in a sidebar to maintain context during the practical activity.
 
 \interfaceplaceholder{Virtual machine session interface}
 
+% ------------------------------------------------------------------
 \subsection{Session Hardware and Camera Panels}
 
-The session hardware and camera panels connect the virtual session with physical laboratory resources. They expose camera streams, device status, binding operations, and control actions when equipment is assigned to a session.
+The session hardware and camera panels extend the VM session interface with access to the physical laboratory resources assigned to the active session. The camera panel renders live video streams from webcams, IP cameras, or ESP32-CAM devices via WebRTC or HLS, depending on the source configuration {\footnotesize\cite{webrtc-w3c,hls-rfc8216}}. The hardware panel exposes USB devices in their current binding state (\textit{available}, \textit{bound}, \textit{attached}, or \textit{dedicated}) and provides attach and detach controls when the session is authorized for peripheral access. Industrial device controls, when applicable, expose MQTT-based command dispatch for robots and sensors connected to the lab network {\footnotesize\cite{mqtt-oasis}}.
 
 \interfaceplaceholder{Session hardware and camera panels}
 
+% ------------------------------------------------------------------
 \subsection{Reservations Interface}
 
-The reservations interface allows users to view and manage scheduled access to laboratory resources. It supports availability planning, reservation status tracking, and coordination between users and administrators.
+The reservations interface allows users to plan and manage scheduled access to laboratory resources. Available time slots are displayed in a calendar-based view, with resource availability derived from the current session schedule and administrator-defined maintenance windows. Users can submit reservation requests specifying the desired resource type, duration, and preferred time range. The interface displays the real-time status of submitted reservations (\textit{pending}, \textit{confirmed}, \textit{active}, \textit{completed}, or \textit{cancelled}), and notifies users of status changes through the platform notification system.
 
 \interfaceplaceholder{Reservations interface}
 
+% ------------------------------------------------------------------
 \subsection{Certificates Interface}
 
-The certificates interface allows learners to consult, claim, download, and verify certificates generated after completing eligible training paths. It also supports public certificate verification through secure identifiers.
+The certificates interface allows learners to consult, claim, and download completion certificates generated upon finishing an eligible training path. Each certificate is identified by a unique, publicly verifiable UUID that can be checked by third parties through a dedicated public URL, without requiring authentication. The interface displays the learner's name, the path title, the completion date, and the issuing organization. Downloaded certificates are rendered as PDF documents. Administrators can configure certificate templates and define the completion threshold required for eligibility at the platform level.
 
 \interfaceplaceholder{Certificates interface}
 
+% ------------------------------------------------------------------
 \subsection{Payment and Refund Interface}
 
-The payment and refund interface manages checkout results, payment history, refund requests, and related user feedback. It connects learning access with the financial workflows of the platform.
+The payment and refund interface manages the financial interactions between learners and the platform. Checkout is handled through Stripe Elements, with the interface displaying order summary, price breakdown, and available payment methods before confirming the transaction {\footnotesize\cite{stripe-docs}}. After checkout, learners receive a confirmation and can access their payment history, which records all transactions with their date, amount, and status. Refund requests can be submitted within the eligible window and are tracked through a status workflow (\textit{requested}, \textit{under review}, \textit{approved}, \textit{rejected}). The interface surfaces refund outcomes directly alongside the relevant payment record. Stripe webhook events are verified server-side through signature validation to ensure asynchronous payment state integrity.
 
 \interfaceplaceholder{Payment and refund interface}
 
+% ------------------------------------------------------------------
 \subsection{Teacher Content Studio}
 
-The teacher content studio allows approved teachers to create and maintain training paths, units, videos, articles, quizzes, and VM assignments. It provides the main authoring environment for educational content.
+The teacher content studio is the primary authoring environment for approved instructors. It allows teachers to create and structure training paths by defining metadata, organizing units in a drag-and-drop sequence, and attaching content items --- videos, articles, and quizzes --- to each unit. Video uploads are processed server-side through FFmpeg transcoding into multiple quality profiles {\footnotesize\cite{ffmpeg-docs}}. Each unit can be linked to a VM session type, defining the practical environment that learners will access. The studio also exposes submission and revision workflows, through which teaching content is proposed for administrator approval before becoming publicly accessible.
 
 \interfaceplaceholder{Teacher content studio interface}
 
+% ------------------------------------------------------------------
 \subsection{Teacher Analytics and Earnings}
 
-The teacher analytics and earnings interface presents teaching performance indicators, learner engagement, revenue evolution, payout requests, and financial summaries. It helps teachers evaluate the impact of their content.
+The teacher analytics and earnings interface presents instructors with a quantitative view of their content's performance. Key indicators include total enrollments per path, active learner count, average quiz scores, unit completion rates, and overall training path rating. Revenue evolution is rendered as a time-series chart using Recharts {\footnotesize\cite{recharts-docs}}, with breakdowns by path and billing period. Teachers can submit payout requests when their accumulated balance exceeds the minimum threshold, and track the status of submitted payout requests from a financial summary panel.
 
 \interfaceplaceholder{Teacher analytics and earnings interface}
 
+% ------------------------------------------------------------------
 \subsection{Administration Dashboard}
 
-The administration dashboard centralizes operational supervision of the platform. It gives administrators access to users, infrastructure, training path approvals, reservations, alerts, maintenance, moderation, and financial monitoring.
+The administration dashboard provides platform operators with centralized control over all operational dimensions of IoT-REAP. It organizes management functions into dedicated panels: user management (creation, role assignment, suspension), training path review and approval, reservation supervision, infrastructure monitoring (VM pool status, gateway connectivity, camera availability), financial oversight (payments, refunds, payout processing), and alert management (system warnings, maintenance scheduling, moderation flags). The dashboard surfaces real-time indicators through WebSocket-delivered notifications powered by Laravel Reverb {\footnotesize\cite{reverb-docs}}, enabling administrators to respond to operational events without manual page refresh.
 
 \interfaceplaceholder{Administration dashboard interface}
 
+% -----------------------------------------------------------------------
 \section{Network Topology and Segmentation}
+\label{sec:network}
 
-To illustrate the practical implementation of the proposed remote access architecture, a network simulation was conducted using Cisco Packet Tracer \cite{cisco-packet-tracer-docs}. The simulated topology reflects a real-world scenario in which strict network segmentation is enforced between the corporate LAN, the virtualization cluster, and external access points.
+To illustrate the practical implementation of the proposed remote access architecture, a network simulation was conducted using Cisco Packet Tracer {\footnotesize\cite{cisco-packet-tracer-docs}}. The simulated topology reflects a real-world scenario in which strict network segmentation is enforced between the corporate LAN, the virtualization cluster, and external access points.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{assets/chapter4/network_topology}
-    \caption{Simulated Network Topology — Cisco Packet Tracer}
-    \label{fig:network_topology}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{assets/chapter3/network_topology}
+  \caption{Simulated Network Topology --- Cisco Packet Tracer}
+  \label{fig:network_topology}
 \end{figure}
 
 The topology is structured into four distinct network segments, each serving a specific security and operational role:
 
 \begin{itemize}
-    \item \textbf{Home/Corporate LAN (192.168.1.0/24):} Represents the end-user environment. Only authorized devices within this segment are permitted to interact with the virtualization layer. Unauthorized devices such as general workstations are explicitly blocked from accessing internal cluster networks through access control lists enforced at the gateway level.
+  \item \textbf{Home/Corporate LAN (192.168.1.0/24):} Represents the end-user environment. Only authorized devices within this segment are permitted to interact with the virtualization layer. Unauthorized devices such as general workstations are explicitly blocked from accessing internal cluster networks through access control lists enforced at the gateway level.
 
-    \item \textbf{VMware NAT Gateway (VNAT-GW):} Acts as the sole entry point between the corporate LAN and the Proxmox cluster network. This device enforces Network Address Translation (NAT) and routing policies, ensuring that the internal cluster addressing scheme (192.168.50.0/24) remains hidden from the broader network, consistent with the principle of least exposure.
+  \item \textbf{VMware NAT Gateway (VNAT-GW):} Acts as the sole entry point between the corporate LAN and the Proxmox cluster network. This device enforces Network Address Translation (NAT) and routing policies, ensuring that the internal cluster addressing scheme (192.168.50.0/24) remains hidden from the broader network, consistent with the principle of least exposure.
 
-    \item \textbf{Proxmox Cluster Network (192.168.50.0/24):} Hosts two Proxmox virtualization servers (PROX1 and PROX2), each managing an isolated VM subnet (192.168.51.0/24 and 192.168.52.0/24 respectively). This segment is entirely unreachable from the public internet and is only accessible through the VNAT-GW, enforcing strict east-west traffic control within the OT-adjacent environment.
+  \item \textbf{Proxmox Cluster Network (192.168.50.0/24):} Hosts two Proxmox virtualization servers (PROX1 and PROX2), each managing an isolated VM subnet (192.168.51.0/24 and 192.168.52.0/24 respectively). This segment is entirely unreachable from the public internet and is only accessible through the VNAT-GW, enforcing strict east-west traffic control within the OT-adjacent environment.
 
-    \item \textbf{External VPN Access:} Remote access is simulated through a dedicated external router (R-EXT) connected via an ISP segment. A VPN tunnel (10.10.10.0/30) is established between the external endpoint and the internal gateway, replicating the behavior of a zero-trust network access tool such as Netbird. This ensures that external clients never directly expose or access internal subnet addresses, and all traffic is encapsulated within the authenticated tunnel.
+  \item \textbf{External VPN Access:} Remote access is simulated through a dedicated external router (R-EXT) connected via an ISP segment. A VPN tunnel (10.10.10.0/30) is established between the external endpoint and the internal gateway, replicating the behavior of a zero-trust network access tool such as Netbird. This ensures that external clients never directly expose or access internal subnet addresses, and all traffic is encapsulated within the authenticated tunnel.
 \end{itemize}
 
-This segmented architecture directly addresses the security concerns outlined in the previous section. By enforcing layer-3 isolation between network zones, applying NAT to conceal internal addressing, and restricting external access exclusively through an encrypted VPN tunnel, the design adheres to the core principles of the Purdue model. No direct path exists between the public internet and the virtualization cluster, and lateral movement between network segments is controlled entirely through explicit routing policies and access control lists.
+This segmented architecture directly addresses the security concerns outlined in the previous chapter. By enforcing layer-3 isolation between network zones, applying NAT to conceal internal addressing, and restricting external access exclusively through an encrypted VPN tunnel, the design adheres to the core principles of the Purdue model. No direct path exists between the public internet and the virtualization cluster, and lateral movement between network segments is controlled entirely through explicit routing policies and access control lists.
 
+% -----------------------------------------------------------------------
 \section{Hosting}
+\label{sec:hosting}
 
-The IoT-REAP platform is deployed on OVH cloud infrastructure at \texttt{iotreap.novationcityapp.com}, providing production-grade hosting with enterprise-level reliability and secure HTTPS access through Let's Encrypt SSL/TLS certificates with automatic renewal \cite{ovh-vps-docs} \cite{letsencrypt-docs}. % CITATION ADDED
+Having defined the network architecture for lab access, this section describes how the platform itself is deployed on a production cloud infrastructure. The IoT-REAP platform is deployed on OVH cloud infrastructure at \texttt{iotreap.novationcityapp.com}, providing production-grade hosting with enterprise-level reliability and secure HTTPS access through Let's Encrypt SSL/TLS certificates with automatic renewal {\footnotesize\cite{ovh-vps-docs,letsencrypt-docs}}.
 
+% ------------------------------------------------------------------
 \subsection{OVH Hosting Infrastructure}
 
-OVH delivers robust infrastructure supporting the platform's operational requirements through Virtual Private Server (VPS) solution with dedicated multi-core CPU, RAM for concurrent sessions, and SSD storage ensuring optimal database performance.
+OVH delivers robust infrastructure supporting the platform's operational requirements through a Virtual Private Server (VPS) solution with a dedicated multi-core CPU, sufficient RAM for concurrent sessions, and SSD storage ensuring optimal database performance.
 
-The server runs Ubuntu 22.04 LTS for long-term stability. Nginx serves as web server and reverse proxy with optimized Laravel settings including gzip compression, browser caching, and rate limiting. PHP 8.4+ with PHP-FPM handles execution using OPcache bytecode caching and optimized memory limits \cite{ubuntu-docs} \cite{nginx-docs} \cite{php-docs}. % CITATION ADDED
+The server runs Ubuntu 22.04 LTS for long-term stability. Nginx serves as the web server and reverse proxy with optimized Laravel settings including gzip compression, browser caching, and rate limiting. PHP 8.4 with PHP-FPM handles execution using OPcache bytecode caching and optimized memory limits {\footnotesize\cite{ubuntu-docs,nginx-docs,php-docs}}.
 
-MySQL 8.4 operates with production-tuned configurations including InnoDB buffer pool optimization and proper indexing, ensuring sub-50ms query response times. Automated daily backups provide disaster recovery and data integrity \cite{mysql-docs}. % CITATION ADDED
+MySQL 8.4 operates with production-tuned configurations including InnoDB buffer pool optimization and proper indexing, delivering sub-50\,ms average query response times. Automated daily backups provide disaster recovery capability and guarantee data integrity {\footnotesize\cite{mysql-docs}}.
 
+% ------------------------------------------------------------------
 \subsection{Domain Configuration and SSL Security}
 
-The domain \texttt{iotreap.novationcityapp.com} points to the OVH server via DNS A records. Let's Encrypt certificates provide HTTPS encryption for all communications, with Certbot handling automatic renewal \cite{letsencrypt-docs} \cite{certbot-docs}. % CITATION ADDED
+The domain \texttt{iotreap.novationcityapp.com} resolves to the OVH server via a DNS A record. Let's Encrypt certificates provide HTTPS encryption for all client-server communications, with Certbot handling automatic renewal before certificate expiry {\footnotesize\cite{letsencrypt-docs,certbot-docs}}.
 
-Nginx is configured to enforce HTTPS redirection, automatically upgrading all HTTP requests to secure HTTPS connections. Security headers including HSTS (HTTP Strict Transport Security), X-Frame-Options, and Content Security Policy are implemented, protecting against common web vulnerabilities such as clickjacking and XSS attacks \cite{nginx-docs} \cite{mdn-hsts} \cite{mdn-csp}. % CITATION ADDED
+Nginx is configured to enforce HTTPS redirection, automatically upgrading all HTTP requests to secure connections. Security headers including HSTS (HTTP Strict Transport Security), \texttt{X-Frame-Options}, and Content Security Policy (CSP) are applied at the reverse proxy level, protecting against common web vulnerabilities such as clickjacking and cross-site scripting (XSS) attacks {\footnotesize\cite{nginx-docs,mdn-hsts,mdn-csp}}.
 
+% -----------------------------------------------------------------------
 \section{Tests and Verification}
+\label{sec:tests}
 
-The verification of IoT-REAP was conducted at a high level across the main platform workflows. The objective was to confirm that the implemented interfaces, access rules, laboratory services, and learning features behaved consistently together, rather than to document every individual test case.
+The verification of IoT-REAP was conducted across four main categories: functional correctness, access control, remote laboratory workflows, and performance. The objective was to confirm that implemented interfaces, authorization rules, laboratory services, and learning features behaved correctly and consistently, both in isolation and as an integrated system.
 
-Functional verification covered the main user journeys, including public navigation, account creation, login, dashboard access, training path discovery, enrollment, unit progression, quiz completion, and certificate consultation. These checks confirmed that learners could move through the platform in a coherent sequence from discovery to practical learning.
+% ------------------------------------------------------------------
+\subsection{Functional Verification}
+\label{sec:tests-functional}
 
-Authentication and authorization were also verified to ensure that each role accessed only the interfaces and actions assigned to it. Particular attention was given to the separation between learners, teachers, engineers, and administrators, especially for teaching tools, VM provisioning, infrastructure management, and administrative controls.
+Functional verification covered the primary user journeys for each role, from public navigation through to certification. Table~\ref{tab:test-cases} presents a representative selection of the test scenarios executed, their preconditions, expected outcomes, and observed results.
 
-The remote laboratory workflow was verified through the creation, access, extension, and termination of VM sessions. The verification also covered the connection between session interfaces and practical resources, including hardware status, camera visibility, gateway availability, and device assignment behavior.
+\begin{longtable}{|p{2.5cm}|p{3.2cm}|p{3.2cm}|p{3.5cm}|p{1.2cm}|}
+\caption{Representative Functional Test Cases}
+\label{tab:test-cases}\\
+\hline
+\textbf{Scenario} & \textbf{Preconditions} & \textbf{Expected Result} & \textbf{Observed Result} & \textbf{Status} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Scenario} & \textbf{Preconditions} & \textbf{Expected Result} & \textbf{Observed Result} & \textbf{Status} \\
+\hline
+\endhead
 
-Financial, certification, notification, and teaching workflows were checked at a general level to confirm that payment states, refund requests, certificate generation, user notifications, content creation, analytics, and earnings pages were correctly integrated into the platform experience.
+Learner registration with email verification & No existing account & Account created; verification email sent; login blocked until verified & Account created; email received within 5\,s; login blocked as expected & \textbf{Pass} \\
+\hline
 
-Automated testing complemented manual verification. Backend behavior was checked with PHPUnit for Laravel routes, business rules, and feature flows, while frontend behavior was checked with Vitest for selected React components and interface logic. Together, these tests helped validate both server-side reliability and client-side consistency \cite{phpunit-docs} \cite{vitest-docs}. % CITATION ADDED
+Google OAuth login & Valid Google account & User authenticated; redirected to role selection or dashboard & Authenticated; redirected to \texttt{/dashboard} within 800\,ms & \textbf{Pass} \\
+\hline
 
+Enrollment in a paid path & Authenticated learner; Stripe test mode active & Payment processed; enrollment created; unit access granted & Stripe Checkout completed; enrollment persisted; access granted immediately & \textbf{Pass} \\
+\hline
 
+Unit completion and progress update & Learner enrolled; unit not yet completed & Completion state persisted; path progress percentage updated & Progress updated from 40\% to 60\% after marking unit complete & \textbf{Pass} \\
+\hline
+
+Quiz submission and result display & Learner enrolled; quiz attached to unit & Score computed; correct answers displayed; attempt recorded & Score 8/10 displayed; attempt logged in history & \textbf{Pass} \\
+\hline
+
+VM session creation and browser access & Active reservation; Proxmox template available & VM provisioned in VMID range 200--999; Guacamole session accessible & VM created with VMID 205; accessible via browser within 35\,s & \textbf{Pass} \\
+\hline
+
+Camera stream display in session & Gateway online; camera attached to session & WebRTC or HLS stream rendered in hardware panel & Stream rendered within 3\,s of panel open & \textbf{Pass} \\
+\hline
+
+Certificate generation on path completion & All required units and quizzes completed & Certificate created with unique UUID; downloadable as PDF & Certificate generated; verified via public URL & \textbf{Pass} \\
+\hline
+
+Teacher submits path for approval & Teacher role; path draft complete & Path enters pending state; administrator notified & Pending status set; notification delivered via Reverb WebSocket channel & \textbf{Pass} \\
+\hline
+
+Administrator approves a training path & Path in pending state & Path published; teacher notified & Path visible in catalog; teacher notified via dashboard alert & \textbf{Pass} \\
+\hline
+
+\end{longtable}
+
+% ------------------------------------------------------------------
+\subsection{Access Control Verification}
+\label{sec:tests-access}
+
+Authorization was verified to confirm that each role could access only the interfaces and actions assigned to it. Learners attempting to access teacher or administration routes received HTTP 403 Forbidden responses. Teachers were blocked from administrative functions such as user management and infrastructure controls. Engineers had access to VM session provisioning and hardware management, but not to course authoring or financial administration. These boundaries were enforced at the Laravel policy layer and validated through both manual browser testing and PHPUnit feature tests targeting route middleware {\footnotesize\cite{phpunit-docs}}.
+
+% ------------------------------------------------------------------
+\subsection{Remote Laboratory Workflow Verification}
+\label{sec:tests-lab}
+
+The remote laboratory workflow was verified through the full lifecycle of a VM session: creation from a Proxmox template, browser-based access via Guacamole, session extension, hardware panel interaction (camera stream and USB device binding), and explicit session termination {\footnotesize\cite{guacamole-manual}}. Gateway availability, device assignment state transitions, and session cleanup after termination were confirmed to behave consistently across multiple test cycles.
+
+% ------------------------------------------------------------------
+\subsection{Performance Observations}
+\label{sec:tests-perf}
+
+Table~\ref{tab:perf-obs} summarizes key performance indicators observed during testing on the production OVH VPS environment. These figures are indicative rather than statistically rigorous and are intended to validate that the platform meets basic operational usability thresholds.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Key Performance Observations (Production Environment)}
+  \label{tab:perf-obs}
+  \begin{tabular}{|p{7.5cm}|p{4.5cm}|}
+    \hline
+    \textbf{Metric} & \textbf{Observed Value} \\
+    \hline
+    Average MySQL query response time & $<$\,50\,ms \\
+    \hline
+    VM session startup time (template clone to Guacamole access) & 25--45\,s \\
+    \hline
+    Camera stream first-frame latency (WebRTC) & $<$\,3\,s \\
+    \hline
+    Dashboard page load time (cold cache) & $<$\,1.5\,s \\
+    \hline
+    Certificate PDF generation time & $<$\,2\,s \\
+    \hline
+  \end{tabular}
+\end{table}
+
+% ------------------------------------------------------------------
+\subsection{Automated Test Coverage}
+\label{sec:tests-auto}
+
+Automated testing complemented manual verification across both application layers. Backend behavior was validated with PHPUnit, covering Laravel route authorization, business rule enforcement (reservation conflict detection, VMID range allocation, quiz attempt limits), and feature-level integration tests for authentication and payment workflows {\footnotesize\cite{phpunit-docs}}. Frontend component behavior was validated with Vitest for selected React components, focusing on form validation logic, state transitions in the session interface, and conditional rendering based on user role {\footnotesize\cite{vitest-docs}}. Together, these automated tests provided a repeatable regression baseline throughout the iterative development process.
+
+% -----------------------------------------------------------------------
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
 
-This chapter presented the technical environment and the main realized modules of IoT-REAP, including authentication, remote sessions, learning interfaces, teaching workflows, administration, reservations, video streaming, quizzes, certificates, payments, and hardware-related features.
+This chapter presented the complete technical realization of IoT-REAP, from the hardware and software environment through to production deployment and verification. The development stack --- centered on Laravel, React, TypeScript, and MySQL --- proved well-suited to the platform's requirements, providing a coherent architecture for user management, content delivery, remote laboratory access, and real-time communication. The full set of implemented interfaces covers the complete range of user roles, and the network topology simulation demonstrated that the proposed segmentation strategy is practically enforceable. Verification activities confirmed that the platform satisfies its core functional requirements: learners can progress through structured content and access physical laboratory resources from the browser; teachers can author and monitor their content; and administrators retain full operational control. The remaining limitations --- principally the absence of a statistically rigorous load test and the reliance on manual performance observation --- constitute areas for future improvement and are discussed in the general conclusion.
 
 \cleardoublepage

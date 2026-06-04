@@ -1004,8 +1004,8 @@ export default function UsersPage() {
                     <div className="space-y-3">
                         <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-muted-foreground">
                             <p>
-                                This action is intended for  compliance and
-                                cannot be undone.
+                                This action is intended for administrative
+                                recordkeeping and cannot be undone.
                             </p>
                         </div>
 
