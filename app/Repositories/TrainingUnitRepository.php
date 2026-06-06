@@ -29,11 +29,11 @@ class TrainingUnitRepository
     }
 
     /**
-     * Find a trainingUnit by ID with module and trainingPath.
+     * Find a trainingUnit by ID with module, trainingPath, and quiz.
      */
     public function findByIdWithContext(int $id): ?TrainingUnit
     {
-        return TrainingUnit::with(['module.trainingPath.instructor', 'video'])->find($id);
+        return TrainingUnit::with(['module.trainingPath.instructor', 'video', 'quiz'])->find($id);
     }
 
     /**

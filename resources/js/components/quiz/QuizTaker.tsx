@@ -2,6 +2,7 @@
  * QuizTaker Component
  * Student-facing quiz taking interface.
  */
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
@@ -13,6 +14,10 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import {
+    startQuizAttempt,
+    submitQuizAttempt,
+} from '@/api/quiz.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,12 +32,15 @@ import type {
     QuizSubmitResponse,
     QuizResult,
 } from '@/types/quiz.types';
+
 interface QuizTakerProps {
     quiz: Quiz;
     onComplete?: (attempt: QuizAttempt, results?: QuizResult[]) => void;
     onCancel?: () => void;
 }
-export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
+
+export function QuizTaker({ quiz: initialQuiz, onComplete, onCancel }: QuizTakerProps) {
+    const [quiz, setQuiz] = useState<Quiz>(initialQuiz);
     const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Map<number, QuizAnswerInput>>(
@@ -42,44 +50,37 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [results, setResults] = useState<QuizSubmitResponse | null>(null);
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+
     const questions = quiz.questions || [];
     const currentQuestion = questions[currentIndex];
-    const progress = ((currentIndex + 1) / questions.length) * 100;
+    const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
+
     // Timer effect is set up after handleSubmit to avoid using handleSubmit before declaration.
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
     const startQuiz = async () => {
         setIsStarting(true);
         try {
-            const response = await fetch(`/quizzes/${quiz.id}/start`, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN':
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
-                },
-                credentials: 'include',
-            });
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to start quiz');
+            const response = await startQuizAttempt(quiz.id.toString());
+            const { attempt: newAttempt, quiz: updatedQuiz } = response.data;
+            setAttempt(newAttempt);
+            if (updatedQuiz) {
+                setQuiz(updatedQuiz);
             }
-            const data = await response.json();
-            setAttempt(data.attempt);
         } catch (error: unknown) {
-            const message =
-                error instanceof Error ? error.message : 'Failed to start quiz';
+            const message = axios.isAxiosError(error)
+                ? error.response?.data?.error || 'Failed to start quiz'
+                : 'Failed to start quiz';
             toast.error(message);
         } finally {
             setIsStarting(false);
         }
     };
+
     const setAnswer = (
         questionId: number,
         answer: Partial<QuizAnswerInput>,
@@ -90,44 +91,28 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
                 question_id: questionId,
                 ...prev.get(questionId),
                 ...answer,
-            });
+            } as QuizAnswerInput);
             return newAnswers;
         });
     };
+
     const handleSubmit = useCallback(async () => {
         if (!attempt) return;
         setIsSubmitting(true);
         try {
             const answersArray = Array.from(answers.values());
-            const response = await fetch(
-                `/quiz-attempts/${attempt.id}/submit`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ answers: answersArray }),
-                },
+            const response = await submitQuizAttempt(
+                attempt.id.toString(),
+                answersArray,
             );
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to submit quiz');
-            }
-            const data: QuizSubmitResponse = await response.json();
+
+            const data = response.data;
             setResults(data);
             onComplete?.(data.attempt, data.results);
         } catch (error: unknown) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to submit quiz';
+            const message = axios.isAxiosError(error)
+                ? error.response?.data?.error || 'Failed to submit quiz'
+                : 'Failed to submit quiz';
             toast.error(message);
         } finally {
             setIsSubmitting(false);
@@ -156,7 +141,7 @@ export function QuizTaker({ quiz, onComplete, onCancel }: QuizTakerProps) {
     // Show start screen
     if (!attempt) {
         return (
-            <Card className="mx-auto max-w-2xl shadow-card">
+            <Card className="mx-auto max-auto shadow-card">
                 <CardHeader className="text-center">
                     <CardTitle className="font-heading text-2xl">
                         {quiz.title}

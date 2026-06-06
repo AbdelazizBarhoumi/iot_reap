@@ -3,20 +3,10 @@
  * Handles article management for trainingUnits (teacher-only)
  */
 
+import type { Article } from '@/types/article.types';
 import client from './client';
 
-export interface Article {
-    id: string;
-    training_unit_id: string;
-    title: string;
-    content: string;
-    preview: string;
-    word_count: number;
-    reading_time_minutes: number;
-    published: boolean;
-    created_at: string;
-    updated_at: string;
-}
+export type { Article };
 
 /**
  * Get article for a trainingUnit

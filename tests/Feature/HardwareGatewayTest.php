@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UsbDeviceStatus;
+use App\Models\Camera;
 use App\Models\GatewayNode;
 use App\Models\ProxmoxServer;
 use App\Models\UsbDevice;
@@ -508,7 +509,7 @@ class HardwareGatewayTest extends TestCase
             'status' => UsbDeviceStatus::BOUND,
             'is_camera' => true,
         ]);
-        $camera = \App\Models\Camera::factory()
+        $camera = Camera::factory()
             ->usb()
             ->inactive()
             ->create([

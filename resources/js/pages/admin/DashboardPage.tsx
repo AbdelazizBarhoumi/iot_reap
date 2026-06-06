@@ -974,10 +974,14 @@ export default function DashboardPage() {
                         {/* Quick links to full monitoring pages */}
                         <div className="flex justify-end gap-3">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={admin.alerts.index.url()}>View All Alerts</Link>
+                                <Link href={admin.alerts.index.url()}>
+                                    View All Alerts
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={admin.activityLogs.index.url()}>View Activity Logs</Link>
+                                <Link href={admin.activityLogs.index.url()}>
+                                    View Activity Logs
+                                </Link>
                             </Button>
                         </div>
                         {/* Metrics Charts */}

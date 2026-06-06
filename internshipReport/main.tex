@@ -26,6 +26,14 @@
 \usepackage[hidelinks,bookmarksdepth=4]{hyperref}
 \usepackage{bookmark}
 \usepackage{tocloft}
+% ==================== LIST OF FIGURES / TABLES ENTRY FORMAT ====================
+\renewcommand{\cftfigpresnum}{Figure~}
+\renewcommand{\cftfigaftersnum}{:}
+\setlength{\cftfignumwidth}{5.5em}   % wide enough for "Figure 17:"
+
+\renewcommand{\cfttabpresnum}{Table~}
+\renewcommand{\cfttabaftersnum}{:}
+\setlength{\cfttabnumwidth}{4.5em}   % wide enough for "Table 10:"
 \usepackage{caption}
 \usepackage{amsmath}
 \usepackage{float}
@@ -41,6 +49,8 @@
 \usepackage{lettrine}
 \usepackage{xparse}
 \usepackage{pdfpages}
+\usepackage[export]{adjustbox}
+\usepackage{xurl}  % Allows URL breaks at any character
 
 % ==================== PDF BUFFER CONFIGURATION ====================
 % Increase PDF object stream buffer to handle complex PDFs
@@ -103,7 +113,7 @@
 
 % Command for proper NOTE formatting per guidelines
 % Usage: \pfeNote{Your note text here}
-\newcommand{\pfeNote}[1]{\textsc{\textbf{note.}}--- #1}
+\newcommand{\pfeNote}[1]{\textsc{\textbf{note.}}- #1}
 
 % Commands for clearing empty pages
 \newcommand{\clearemptydoublepage}{\newpage\thispagestyle{empty}\cleardoublepage}
@@ -233,7 +243,26 @@
 }
 
 
-\begin{document}
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\thetable}{\arabic{table}}
+
+\DeclareCaptionLabelFormat{myformat}{#1~#2:}
+\captionsetup{
+  font={normalsize,rm},
+  labelfont=bf,
+  justification=centering,
+  skip=6pt,
+  labelformat=myformat,
+  labelsep=space        % just a space after the colon, no duplicate punctuation
+}
+
+
+\begin{document}  
+
 
 % ==================== START ROMAN PAGE NUMBERING ====================
 % Preliminary pages use Roman numerals (i, ii, iii, etc.)
@@ -241,7 +270,7 @@
 \setcounter{page}{1}
 
 % ==================== COVER PAGE ====================
-%\includepdf[pages={1}]{assets/DS-Rapport-Stage-Pro-EN}
+\includepdf[pages={1}]{assets/PFE-Licence-DS-En}
 
 
 \newpage
@@ -284,13 +313,15 @@
 \cleardoublepage
 
 % ==================== LIST OF ACRONYMS ====================
-%\input{chapters/acronyms}
+\input{chapters/acronyms}
 
 % ==================== START ARABIC PAGE NUMBERING ====================
 % Main content uses Arabic numerals (1, 2, 3, etc.) starting from Introduction
 \cleardoublepage
 \pagenumbering{arabic}
 \setcounter{page}{1}
+\setcounter{table}{0}
+\setcounter{figure}{0}
 
 % ==================== GENERAL INTRODUCTION ====================
 \include{chapters/introduction}
@@ -304,7 +335,6 @@
 % ==================== CHAPTER 3: REALIZATION AND EXPERIMENTATION ====================
 \include{chapters/chapter3}
 
-
 % ==================== GENERAL CONCLUSION ====================
 \include{chapters/conclusion}
 
@@ -312,7 +342,11 @@
 \input{chapters/bibliography}
 
 % ==================== ABSTRACT ====================
+\phantomsection
 \input{chapters/abstract}
 
 % ==================== END OF DOCUMENT ====================
 \end{document}
+
+
+%add specifi companies to ana and criticism

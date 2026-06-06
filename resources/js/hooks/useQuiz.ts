@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import * as quizApi from '@/api/quiz.api';
+import type { QuizAnswerInput } from '@/types/quiz.types';
 
 export function useQuiz(trainingUnitId: string) {
     const [quiz, setQuiz] = useState<quizApi.Quiz | null>(null);
@@ -39,9 +40,9 @@ export function useQuizAttempt(quizId: string) {
         try {
             setLoading(true);
             const { data } = await quizApi.startQuizAttempt(quizId);
-            setAttempt(data);
+            setAttempt(data.attempt);
             setError(null);
-            return data;
+            return data.attempt;
         } catch (err) {
             const message =
                 err instanceof Error ? err.message : 'Failed to start quiz';
@@ -52,15 +53,15 @@ export function useQuizAttempt(quizId: string) {
         }
     };
 
-    const submitAttempt = async (answers: Record<string, string>) => {
+    const submitAttempt = async (answers: QuizAnswerInput[]) => {
         if (!attempt) throw new Error('No active attempt');
         try {
             setLoading(true);
             const { data } = await quizApi.submitQuizAttempt(
-                attempt.id,
+                attempt.id.toString(),
                 answers,
             );
-            setAttempt(data);
+            setAttempt(data.attempt);
             setError(null);
             return data;
         } catch (err) {

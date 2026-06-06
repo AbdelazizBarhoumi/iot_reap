@@ -1,11 +1,9 @@
 % ==================== CONCLUSION ====================
 % STYLE GUIDELINES:
-% - Maximum 2 pages (750 words maximum)
+% - Maximum 2 pages (550 words maximum)
 % - Summarize work carried out and main contributions
 % - Highlight difficulties encountered
 % - Propose prospects for future development
-% - If a section has subsections, add a short descriptive paragraph immediately after
-%   the parent heading before the first subsection.
 % - Font: Times New Roman 12pt, line spacing 1.5
 % - Section titles: left-aligned, bold (if used)
 % ====================================================================
@@ -14,91 +12,64 @@
 \addcontentsline{toc}{chapter}{General Conclusion}
 \vspace{1cm}
 
-\initial{A}s part of our \textbf{(four-month)} internship at Novation City,
+\initial{A}s part of our \textbf{four-month} internship at Novation City,
 we designed and implemented IoT-REAP, a secure industrial remote operations and training
-platform for Industry~4.0 learning and experimentation. The platform delivers six integrated
-functional domains --- session management, VM provisioning, remote desktop access, camera
-supervision, IoT device control, and structured training management --- under a unified,
-role-differentiated interface serving Engineer, Teacher, and Administrator profiles. The
-objective was to eliminate dependency on physical laboratory presence by providing a coherent
-environment in which users can launch sessions, interact with real equipment, follow guided
-learning paths, and monitor activity from a single web interface.
+platform for Industry~4.0 learning. The platform unifies six functional domains-session
+management, VM provisioning, remote desktop access, camera supervision, IoT device control,
+and structured training management-within a role-differentiated interface serving Engineers,
+Teachers, and Administrators. Our objective was to eliminate physical laboratory dependency
+by enabling users to launch sessions, interact with real equipment, follow guided learning
+paths, and monitor activity from a single web interface.
 
-Our development approach was iterative and architecture-driven, following an Agile-inspired
-process with short delivery cycles. On the backend, Laravel was organized around FormRequest
-validation, thin controllers, service-layer business logic, and repository-based data access.
-On the frontend, React with TypeScript provided typed API integrations and reusable component
-structures that improved maintainability as project scope expanded. Role-based access flows
-ensure that each profile encounters only contextually relevant actions and data, forming a
-solid foundation for integrating complex external
-systems~{\footnotesize\cite{laravel-docs,react-docs,typescript-docs}}.
+Our development approach was iterative and architecture-driven, following Agile-inspired
+delivery cycles. The backend leverages Laravel organized around FormRequest validation,
+thin controllers, service-layer logic, and repository-based data access. The frontend uses
+React with TypeScript for typed API integrations and reusable components. Role-based access
+ensures each profile encounters only contextually relevant actions, forming a solid foundation
+for external system integration~{\footnotesize\cite{laravel-docs,react-docs,typescript-docs}}.
 
-A major contribution was the implementation of the remote lab session lifecycle. Proxmox
-integration enables on-demand VM provisioning and lifecycle control, while Guacamole-based
-browser access allows users to open RDP, VNC, or SSH sessions without local client
-installation. Tokenized access patterns, expiration-aware session handling, and resource
-cleanup mechanisms prevent orphaned VMs and maintain platform stability, establishing a
-bridge between cloud orchestration and practical industrial
-training~{\footnotesize\cite{proxmox-ve-api,guacamole-manual}}.
+A major contribution was the remote lab session lifecycle. Proxmox integration enables
+on-demand VM provisioning and lifecycle control, while Guacamole-based browser access
+supports RDP, VNC, and SSH without local client installation. Tokenized access patterns,
+expiration-aware handling, and resource cleanup prevent orphaned VMs and maintain stability,
+bridging cloud orchestration and industrial training~{\footnotesize\cite{proxmox-ve-api,guacamole-manual}}.
 
-A second major contribution was the integration of real-time hardware context into active
-training sessions. Camera services and gateway integrations allow users to observe physical
-equipment remotely, while PTZ control is routed through MQTT-driven command channels in a
-structured and auditable manner. USB device reservation and assignment workflows enable
-specific hardware to be attached to live sessions in a controlled way, positioning IoT-REAP
-as an operational remote laboratory rather than a conventional e-learning
+A second contribution was integrating real-time hardware context into training sessions.
+Camera services and gateway integrations enable remote equipment observation, while PTZ
+control routes through structured, auditable MQTT command channels. USB device reservation
+workflows attach specific hardware to live sessions in a controlled manner, positioning
+IoT-REAP as an operational remote laboratory rather than a conventional e-learning
 portal~{\footnotesize\cite{mqtt-oasis,usbip-docs}}.
 
-Beyond infrastructure access, the platform supports instructor-driven training path
-management. Teachers can define learning sequences linked to specific VM sessions, ensuring
-that pedagogical structure and practical execution remain synchronized within a single
-workflow. Learners progress through guided material while interacting directly with realistic
-industrial environments, developing operational competencies through practical engagement
-rather than simulated abstractions.
+The platform supports instructor-driven training path management. Teachers define learning
+sequences linked to specific VM sessions, synchronizing pedagogical structure with practical
+execution. Learners progress through guided material while interacting with realistic
+industrial environments, developing operational competencies through direct engagement.
 
-Delivering these capabilities, however, required navigating several significant engineering
-challenges. The first was coordinating heterogeneous technologies with fundamentally different
-operational behaviors: Proxmox operations are asynchronous, remote desktop tunnels are
-state-sensitive, MQTT control requires consistent topic discipline, and camera streaming
-introduces network variability. We addressed this by isolating external provider logic in
-dedicated service classes, standardizing integration contracts, and improving observability
-through explicit logging and defensive checks.
+Delivering these capabilities required navigating significant engineering challenges.
+Coordinating heterogeneous technologies-Proxmox's asynchronous operations, state-sensitive
+remote desktop tunnels, MQTT topic discipline, and variable camera streaming-required
+isolating external provider logic in dedicated service classes, standardizing integration
+contracts, and improving observability through explicit logging. Preserving architectural
+quality amid rapid feature expansion demanded disciplined coding standards and incremental
+API documentation to prevent business logic leakage across layers. Balancing delivery velocity
+with security requirements necessitated explicit authorization boundaries, input validation,
+role scoping, and regression tests on security-critical paths, producing a higher-assurance,
+auditable workflow.
 
-The second challenge was preserving architectural quality as feature scope expanded rapidly.
-Keeping controllers thin, preventing business logic from leaking across layers, and
-maintaining typed frontend contracts required discipline enforced through coding standards,
-incremental API documentation, and targeted refactoring. This reinforced a key engineering
-lesson: in production platforms, maintainability is a first-class deliverable, not a
-post-project cleanup activity.
+Future extensions include completing high-impact API integrations and advancing frontend
+parity for administrative workflows. Deeper analytics on session usage, infrastructure
+efficiency, and learner progression would support data-driven decisions. Predictive scheduling
+and optimized resource allocation could reduce wait times, while enhanced zero-trust controls,
+compliance-oriented audit reporting, and mobile-optimized interfaces would broaden operational
+reach.
 
-The third challenge was balancing delivery velocity with security and reliability
-requirements. Because IoT-REAP handles privileged operations --- VM control, remote access,
-and hardware assignment --- authorization boundaries had to be explicit and verifiable. We
-reinforced input validation and role scoping on sensitive endpoints, tightened resource
-ownership checks, and introduced regression tests on security-critical paths. Combined with
-static type checking and both unit and feature testing, this produced a higher-assurance,
-auditable development workflow.
-
-Looking forward, several directions can extend the platform's capabilities. Completing
-high-impact API integrations and advancing frontend parity for administrative and teaching
-workflows represents the immediate priority. Deeper analytics on session usage, infrastructure
-efficiency, and learner progression would support data-driven operational decisions.
-Predictive scheduling and optimized resource allocation would reduce reservation wait times,
-while enhanced zero-trust controls, compliance-oriented audit reporting, and mobile-optimized
-interfaces would broaden operational reach.
-
-This internship produced tangible technical outcomes while developing engineering competencies
-across full-stack architecture, distributed system integration, and security-aware design.
-Isolating Proxmox asynchrony in service classes, enforcing repository patterns to preserve
-testability, and managing MQTT topic discipline under strict authorization constraints
-represented concrete engineering decisions that extended and deepened the architectural
-foundations of our academic training.
-
-IoT-REAP delivers a technically sound and extensible foundation connecting virtual
-infrastructure, remote hardware interaction, and structured learning within a single platform.
-Core functional requirements were verified through unit and feature tests, confirming
-alignment with the initial specifications. The system demonstrates the feasibility of secure,
-remote Industry~4.0 training at scale, and its architecture is designed to accommodate a
-growing operational roadmap.
+This internship produced tangible technical outcomes while developing competencies across
+full-stack architecture, distributed system integration, and security-aware design. IoT-REAP
+delivers a technically sound foundation connecting virtual infrastructure, remote hardware
+interaction, and structured learning. Core requirements were verified through unit and feature
+tests, confirming specification alignment. The system demonstrates the feasibility of secure,
+remote Industry~4.0 training at scale, with an architecture designed to accommodate a growing
+operational roadmap.
 
 \cleardoublepage

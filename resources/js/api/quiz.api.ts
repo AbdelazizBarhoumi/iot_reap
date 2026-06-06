@@ -3,47 +3,28 @@
  * Handles all quiz-related API calls for both engineers and teachers
  */
 
+import type {
+    Quiz,
+    QuizQuestion,
+    QuizAttempt,
+    QuizStats,
+    QuizAnswerInput,
+    CreateQuestionData,
+    QuizSubmitResponse,
+    QuizResult,
+} from '@/types/quiz.types';
+
+export type {
+    Quiz,
+    QuizQuestion,
+    QuizAttempt,
+    QuizStats,
+    QuizAnswerInput,
+    QuizSubmitResponse,
+    QuizResult,
+};
+
 import client from './client';
-
-export interface QuizQuestion {
-    id: string;
-    quiz_id: string;
-    question_text: string;
-    question_type: 'multiple_choice' | 'true_false' | 'short_answer';
-    options: string[];
-    correct_answer: string;
-    points: number;
-    order: number;
-}
-
-export interface Quiz {
-    id: string;
-    training_unit_id: string;
-    title: string;
-    description: string;
-    passing_score: number;
-    time_limit_minutes: number | null;
-    published: boolean;
-    created_at: string;
-    questions?: QuizQuestion[];
-}
-
-export interface QuizAttempt {
-    id: string;
-    quiz_id: string;
-    user_id: string;
-    answers: Record<string, string>;
-    score: number | null;
-    started_at: string;
-    submitted_at: string | null;
-    status: 'in_progress' | 'submitted' | 'graded';
-}
-
-export interface QuizStats {
-    total_attempts: number;
-    average_score: number;
-    pass_rate: number;
-}
 
 interface TeacherQuizResponse {
     quiz: Quiz | null;
@@ -63,6 +44,12 @@ interface TeacherQuizStatsResponse {
     stats: QuizStats;
 }
 
+export interface StartQuizResponse {
+    message: string;
+    attempt: QuizAttempt;
+    quiz: Quiz;
+}
+
 // ==================== STUDENT ENDPOINTS ====================
 
 /**
@@ -75,16 +62,18 @@ export const getQuiz = (trainingUnitId: string) =>
  * Start a quiz attempt
  */
 export const startQuizAttempt = (quizId: string) =>
-    client.post<QuizAttempt>(`/quizzes/${quizId}/start`, {});
+    client.post<StartQuizResponse>(`/quizzes/${quizId}/start`, {});
 
 /**
  * Submit a quiz attempt
  */
 export const submitQuizAttempt = (
     attemptId: string,
-    answers: Record<string, string>,
+    answers: QuizAnswerInput[],
 ) =>
-    client.post<QuizAttempt>(`/quiz-attempts/${attemptId}/submit`, { answers });
+    client.post<QuizSubmitResponse>(`/quiz-attempts/${attemptId}/submit`, {
+        answers,
+    });
 
 /**
  * Get attempt history for a quiz
@@ -163,10 +152,7 @@ export const unpublishQuiz = (quizId: string) =>
 /**
  * Add question to quiz
  */
-export const addQuizQuestion = (
-    quizId: string,
-    question: Partial<QuizQuestion>,
-) =>
+export const addQuizQuestion = (quizId: string, question: CreateQuestionData) =>
     client
         .post<TeacherQuestionMutationResponse>(
             `/teaching/quizzes/${quizId}/questions`,
@@ -179,7 +165,9 @@ export const addQuizQuestion = (
  */
 export const updateQuizQuestion = (
     questionId: string,
-    question: Partial<QuizQuestion>,
+    question: Partial<Omit<QuizQuestion, 'options'>> & {
+        options?: Partial<QuizQuestion['options'][number]>[];
+    },
 ) =>
     client
         .patch<TeacherQuestionMutationResponse>(
@@ -197,12 +185,12 @@ export const deleteQuizQuestion = (questionId: string) =>
 /**
  * Reorder quiz questions
  */
-export const reorderQuizQuestions = (quizId: string, order: string[]) =>
+export const reorderQuizQuestions = (
+    quizId: string,
+    order: { id: number; sort_order: number }[],
+) =>
     client.post(`/teaching/quizzes/${quizId}/reorder`, {
-        items: order.map((id, index) => ({
-            id,
-            order: index + 1,
-        })),
+        items: order,
     });
 
 /**

@@ -17,17 +17,20 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { saveArticle } from '@/api/article.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import type { Article, TipTapContent, TipTapNode } from '@/types/article.types';
+
 interface ArticleEditorProps {
     trainingUnitId: string;
     article: Article | null;
     onSave?: (article: Article) => void;
 }
+
 export function ArticleEditor({
     trainingUnitId,
     article: initialArticle,
@@ -40,35 +43,23 @@ export function ArticleEditor({
             : '',
     );
     const [isSaving, setIsSaving] = useState(false);
+
     // Word count calculation
     const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
     const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
     const handleSave = async () => {
         setIsSaving(true);
         try {
             // Convert plain text to TipTap-like JSON structure
             const tipTapContent = convertToTipTapContent(content);
-            const response = await fetch(
-                `/teaching/trainingUnits/${trainingUnitId}/article`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ content: tipTapContent }),
-                },
-            );
-            if (!response.ok) throw new Error('Failed to save article');
-            const data = await response.json();
-            setArticle(data.article);
-            onSave?.(data.article);
+            const response = await saveArticle(trainingUnitId, {
+                content: tipTapContent,
+            });
+
+            const data = response.data;
+            setArticle(data);
+            onSave?.(data);
             toast.success('Article saved successfully!');
         } catch {
             toast.error('Failed to save article');

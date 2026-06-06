@@ -3,12 +3,7 @@
  * Revenue tracking with export functionality.
  */
 import { Head, router } from '@inertiajs/react';
-import {
-    Download,
-    DollarSign,
-    TrendingUp,
-    BookOpen,
-} from 'lucide-react';
+import { Download, DollarSign, TrendingUp, BookOpen } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { payoutApi, type PayoutRequestItem } from '@/api/payout.api';
@@ -123,12 +118,12 @@ export default function EarningsPage({
                     activeTab="payouts"
                     header={
                         <>
-                                <div className="space-y-2">
-                                <div >
-                                        <h1 className="font-heading text-3xl font-bold">
+                            <div className="space-y-2">
+                                <div>
+                                    <h1 className="font-heading text-3xl font-bold">
                                         Earnings
                                     </h1>
-                                        <p className="text-muted-foreground">
+                                    <p className="text-muted-foreground">
                                         Track your revenue and download reports
                                     </p>
                                 </div>

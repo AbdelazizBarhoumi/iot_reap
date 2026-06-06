@@ -30,7 +30,6 @@ interface TeacherVMAssignmentsPageProps {
 export default function TeacherVMAssignmentsPage({
     assignments: initialAssignments,
 }: TeacherVMAssignmentsPageProps) {
-
     const [assignments, setAssignments] = useState(initialAssignments);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [deletingAssignmentId, setDeletingAssignmentId] = useState<

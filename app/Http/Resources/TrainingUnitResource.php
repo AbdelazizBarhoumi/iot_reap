@@ -94,6 +94,14 @@ class TrainingUnitResource extends JsonResource
             'resources' => $this->normalizeStringList($this->resources),
             'sort_order' => $this->sort_order,
             'completed' => $completed,
+            'quiz' => $this->whenLoaded('quiz', function () use ($user) {
+                if ($this->quiz->is_published || ($user && ($user->isAdmin() || ($this->relationLoaded('module') && $this->module->relationLoaded('trainingPath') && $this->module->trainingPath->isOwnedBy($user))))) {
+                    return new QuizResource($this->quiz);
+                }
+
+                return null;
+            }),
+            'article' => $this->whenLoaded('article', fn () => new ArticleResource($this->article)),
         ];
     }
 

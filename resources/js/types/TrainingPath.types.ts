@@ -1,20 +1,26 @@
 /**
  * TrainingPath types matching the backend API resources
  */
+import type { Quiz } from './quiz.types';
+
 export type TrainingPathStatus =
     | 'draft'
     | 'pending_review'
     | 'approved'
     | 'rejected'
     | 'archived';
+
 export type TrainingPathLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
 export type TrainingUnitType =
     | 'video'
     | 'reading'
     | 'practice'
     | 'vm-lab'
     | 'quiz';
+
 export type VideoType = 'upload' | 'youtube';
+
 export interface TrainingUnit {
     id: string;
     title: string;
@@ -29,13 +35,16 @@ export interface TrainingUnit {
     resources: string[] | null;
     sort_order: number;
     completed?: boolean;
+    quiz?: Quiz | null;
 }
+
 export interface TrainingPathModule {
     id: string;
     title: string;
     sort_order: number;
     trainingUnits: TrainingUnit[];
 }
+
 export interface TrainingPath {
     id: number;
     title: string;
@@ -62,16 +71,19 @@ export interface TrainingPath {
     created_at: string;
     updated_at: string;
 }
+
 export interface TrainingPathProgress {
     completed: number;
     total: number;
     percentage: number;
 }
+
 export interface TrainingPathEnrollment {
     id: number;
     trainingPath: TrainingPath;
     enrolled_at: string;
 }
+
 export interface TeacherStats {
     totalTrainingPaths: number;
     totalStudents: number;

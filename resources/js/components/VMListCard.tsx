@@ -107,130 +107,130 @@ export function VMListCard({
     }
     return (
         <CardContent className="space-y-3">
-                {vms.map((vm) => (
-                    <div
-                        key={vm.vmid}
-                        className={`space-y-2 rounded-lg border p-3 transition-colors ${
-                            onSelectVm
-                                ? 'cursor-pointer hover:border-info/40 hover:bg-info/5'
-                                : ''
-                        }`}
-                        onClick={() => onSelectVm?.(vm)}
-                        role={onSelectVm ? 'button' : undefined}
-                        tabIndex={onSelectVm ? 0 : undefined}
-                        onKeyDown={(event) => {
-                            if (!onSelectVm) return;
-                            if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                onSelectVm(vm);
-                            }
-                        }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                    {vm.name || `VM ${vm.vmid}`}
-                                </span>
-                                <Badge variant="primary" className="text-xs">
-                                    ID: {vm.vmid}
-                                </Badge>
-                                <Badge
-                                    variant="outline"
-                                    className={`${STATUS_TEXT_COLORS[vm.status]} border-current capitalize`}
-                                >
-                                    <span
-                                        className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_COLORS[vm.status]}`}
-                                    />
-                                    {vm.status}
-                                </Badge>
-                            </div>
+            {vms.map((vm) => (
+                <div
+                    key={vm.vmid}
+                    className={`space-y-2 rounded-lg border p-3 transition-colors ${
+                        onSelectVm
+                            ? 'cursor-pointer hover:border-info/40 hover:bg-info/5'
+                            : ''
+                    }`}
+                    onClick={() => onSelectVm?.(vm)}
+                    role={onSelectVm ? 'button' : undefined}
+                    tabIndex={onSelectVm ? 0 : undefined}
+                    onKeyDown={(event) => {
+                        if (!onSelectVm) return;
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            onSelectVm(vm);
+                        }
+                    }}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                                {vm.name || `VM ${vm.vmid}`}
+                            </span>
+                            <Badge variant="primary" className="text-xs">
+                                ID: {vm.vmid}
+                            </Badge>
+                            <Badge
+                                variant="outline"
+                                className={`${STATUS_TEXT_COLORS[vm.status]} border-current capitalize`}
+                            >
+                                <span
+                                    className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_COLORS[vm.status]}`}
+                                />
+                                {vm.status}
+                            </Badge>
                         </div>
-                        <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
-                            <div>
-                                <span className="block font-medium text-foreground">
-                                    {vm.cpu_usage.toFixed(1)}%
-                                </span>
-                                CPU
-                            </div>
-                            <div>
-                                <span className="block font-medium text-foreground">
-                                    {formatBytes(vm.mem_usage)} /{' '}
-                                    {formatBytes(vm.maxmem)}
-                                </span>
-                                Memory
-                            </div>
-                            <div>
-                                <span className="block font-medium text-foreground">
-                                    {formatUptime(vm.uptime)}
-                                </span>
-                                Uptime
-                            </div>
-                            <div className="flex items-center justify-end gap-1">
-                                {vm.status === 'stopped' ? (
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
+                        <div>
+                            <span className="block font-medium text-foreground">
+                                {vm.cpu_usage.toFixed(1)}%
+                            </span>
+                            CPU
+                        </div>
+                        <div>
+                            <span className="block font-medium text-foreground">
+                                {formatBytes(vm.mem_usage)} /{' '}
+                                {formatBytes(vm.maxmem)}
+                            </span>
+                            Memory
+                        </div>
+                        <div>
+                            <span className="block font-medium text-foreground">
+                                {formatUptime(vm.uptime)}
+                            </span>
+                            Uptime
+                        </div>
+                        <div className="flex items-center justify-end gap-1">
+                            {vm.status === 'stopped' ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onStart(vm.vmid);
+                                    }}
+                                    disabled={actionLoading === vm.vmid}
+                                    title="Start VM"
+                                >
+                                    {actionLoading === vm.vmid ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Play className="h-4 w-4 text-green-600" />
+                                    )}
+                                </Button>
+                            ) : (
+                                <>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={(event) => {
                                             event.stopPropagation();
-                                            onStart(vm.vmid);
+                                            onReboot(vm.vmid);
                                         }}
                                         disabled={actionLoading === vm.vmid}
-                                        title="Start VM"
+                                        title="Reboot VM"
                                     >
                                         {actionLoading === vm.vmid ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                            <Play className="h-4 w-4 text-green-600" />
+                                            <RefreshCw className="h-4 w-4 text-amber-600" />
                                         )}
                                     </Button>
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onReboot(vm.vmid);
-                                            }}
-                                            disabled={actionLoading === vm.vmid}
-                                            title="Reboot VM"
-                                        >
-                                            {actionLoading === vm.vmid ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <RefreshCw className="h-4 w-4 text-amber-600" />
-                                            )}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onShutdown(vm.vmid);
-                                            }}
-                                            disabled={actionLoading === vm.vmid}
-                                            title="Shutdown (graceful)"
-                                        >
-                                            <Power className="h-4 w-4 text-orange-600" />
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onStop(vm.vmid);
-                                            }}
-                                            disabled={actionLoading === vm.vmid}
-                                            title="Stop (force)"
-                                        >
-                                            <Square className="h-4 w-4 text-red-600" />
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            onShutdown(vm.vmid);
+                                        }}
+                                        disabled={actionLoading === vm.vmid}
+                                        title="Shutdown (graceful)"
+                                    >
+                                        <Power className="h-4 w-4 text-orange-600" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            onStop(vm.vmid);
+                                        }}
+                                        disabled={actionLoading === vm.vmid}
+                                        title="Stop (force)"
+                                    >
+                                        <Square className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
-                ))}
-            </CardContent>
+                </div>
+            ))}
+        </CardContent>
     );
 }

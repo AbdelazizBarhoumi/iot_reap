@@ -34,6 +34,7 @@ import { ThreadList } from '@/components/forum/ThreadList';
 import { GuacamoleViewer } from '@/components/GuacamoleViewer';
 import { MarkdownContent } from '@/components/markdown';
 import { NotesPanel } from '@/components/notes/NotesPanel';
+import { QuizTaker } from '@/components/quiz/QuizTaker';
 import VideoPlayer from '@/components/TrainingPaths/VideoPlayer';
 import VirtualMachinePanel from '@/components/TrainingPaths/VirtualMachinePanel';
 import { Button } from '@/components/ui/button';
@@ -332,6 +333,12 @@ function TrainingUnitSidebar({
                                                             <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                                                                 {trainingUnit.duration ||
                                                                     'N/A'}
+                                                                {trainingUnit.quiz && (
+                                                                    <span className="inline-flex items-center gap-0.5 text-primary">
+                                                                        <FileQuestion className="h-3 w-3" />{' '}
+                                                                        Quiz
+                                                                    </span>
+                                                                )}
                                                                 {trainingUnit.vmEnabled && (
                                                                     <span className="inline-flex items-center gap-0.5 text-primary">
                                                                         <Terminal className="h-3 w-3" />{' '}
@@ -1068,6 +1075,23 @@ export default function TrainingUnitPage() {
                                         <div className="mt-6">
                                             <VirtualMachinePanel />
                                         </div>
+                                    </div>
+                                )}
+                                {/* Quiz Section */}
+                                {trainingUnit.quiz && (
+                                    <div className="mb-8">
+                                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                                            <FileQuestion className="h-5 w-5 text-primary" />
+                                            Module Quiz
+                                        </h3>
+                                        <QuizTaker
+                                            quiz={trainingUnit.quiz}
+                                            onComplete={(attempt) => {
+                                                if (attempt.passed) {
+                                                    handleMarkComplete();
+                                                }
+                                            }}
+                                        />
                                     </div>
                                 )}
                                 {/* Discussion Forum Section */}

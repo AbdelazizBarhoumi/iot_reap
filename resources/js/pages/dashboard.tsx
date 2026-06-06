@@ -159,7 +159,9 @@ export default function Dashboard() {
     // Inline session history for dashboard
     const historySessions = sessions.filter(
         (s) =>
-            s.status === 'expired' || s.status === 'failed' || s.status === 'terminated',
+            s.status === 'expired' ||
+            s.status === 'failed' ||
+            s.status === 'terminated',
     );
     const sessionsByDate = useMemo(() => {
         const groups: Record<string, typeof historySessions> = {};
@@ -438,26 +440,25 @@ export default function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
                     >
-                                <Card className="shadow-card transition-shadow hover:shadow-card-hover">
-                                    <CardContent className="p-5">
-                                        <div className="flex w-full items-center gap-4 text-left">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                                <History className="h-6 w-6" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Session History
-                                                </p>
-                                                <p className="text-sm font-medium text-info">
-                                                    Past sessions are shown below
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                        <Card className="shadow-card transition-shadow hover:shadow-card-hover">
+                            <CardContent className="p-5">
+                                <div className="flex w-full items-center gap-4 text-left">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                        <History className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">
+                                            Session History
+                                        </p>
+                                        <p className="text-sm font-medium text-info">
+                                            Past sessions are shown below
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </motion.div>
                 </div>
-               
 
                 {/* ─── Active Sessions ─── */}
                 {!sessionsLoading && hasActiveSessions && (
@@ -770,13 +771,13 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
-                 {/* Inline Session History panel */}
+                {/* Inline Session History panel */}
                 <div className="mt-8">
                     <div className="mb-4 flex items-center gap-2">
                         <h2 className="font-heading text-xl font-semibold text-foreground">
                             Session History
                         </h2>
-                        <Badge className="border-muted text-muted-foreground">
+                        <Badge className="border-primary/30 bg-primary/90 text-primary-foreground hover:bg-primary/80">
                             {historySessions.length} past
                         </Badge>
                     </div>
@@ -784,7 +785,9 @@ export default function Dashboard() {
                     {historySessions.length === 0 ? (
                         <Card className="shadow-card">
                             <CardContent className="py-8 text-center">
-                                <p className="text-muted-foreground">No past sessions yet</p>
+                                <p className="text-muted-foreground">
+                                    No past sessions yet
+                                </p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -796,19 +799,32 @@ export default function Dashboard() {
                                     </h3>
                                     <div className="grid gap-2 sm:grid-cols-1 lg:grid-cols-2">
                                         {dateSessions.map((sess) => (
-                                            <Card key={sess.id} className="shadow-card">
-                                                <CardContent className="py-3 flex items-center justify-between">
+                                            <Card
+                                                key={sess.id}
+                                                className="shadow-card"
+                                            >
+                                                <CardContent className="flex items-center justify-between py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                                                             <Monitor className="h-5 w-5 text-muted-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium">VM #{sess.vm_id}</p>
-                                                            <p className="text-xs text-muted-foreground">{sess.node_name} • {sess.protocol?.toUpperCase()}</p>
+                                                            <p className="font-medium">
+                                                                VM #{sess.vm_id}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {sess.node_name}{' '}
+                                                                •{' '}
+                                                                {sess.protocol?.toUpperCase()}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className="text-right text-sm">
-                                                        <p className="text-muted-foreground">{new Date(sess.created_at).toLocaleString()}</p>
+                                                        <p className="text-muted-foreground">
+                                                            {new Date(
+                                                                sess.created_at,
+                                                            ).toLocaleString()}
+                                                        </p>
                                                     </div>
                                                 </CardContent>
                                             </Card>

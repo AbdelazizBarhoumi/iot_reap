@@ -2,9 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuizQuestionType;
 use App\Enums\TrainingPathLevel;
 use App\Enums\TrainingPathStatus;
 use App\Enums\TrainingUnitType;
+use App\Models\Quiz;
+use App\Models\QuizQuestion;
+use App\Models\QuizQuestionOption;
 use App\Models\TrainingPath;
 use App\Models\TrainingPathModule;
 use App\Models\TrainingUnit;
@@ -20,12 +24,12 @@ class TrainingPathSeeder extends Seeder
     public function run(): void
     {
         $instructors = [
-            ['name' => 'Dr. Sarah Chen', 'email' => 'sarah.chen@example.com'],
-            ['name' => 'James Rodriguez', 'email' => 'james.rodriguez@example.com'],
-            ['name' => 'Dr. Emily Watson', 'email' => 'emily.watson@example.com'],
-            ['name' => 'Alex Thompson', 'email' => 'alex.thompson@example.com'],
-            ['name' => 'Maria Garcia', 'email' => 'maria.garcia@example.com'],
-            ['name' => 'Prof. David Kim', 'email' => 'david.kim@example.com'],
+            ['name' => 'Dr. Sarah Chen', 'email' => 'teacher@example.com'],
+            ['name' => 'James Rodriguez', 'email' => 'teacher.rodriguez@example.com'],
+            ['name' => 'Dr. Emily Watson', 'email' => 'teacher.watson@example.com'],
+            ['name' => 'Alex Thompson', 'email' => 'teacher.thompson@example.com'],
+            ['name' => 'Maria Garcia', 'email' => 'teacher.garcia@example.com'],
+            ['name' => 'Prof. David Kim', 'email' => 'teacher.kim@example.com'],
         ];
 
         $instructorUsers = [];
@@ -43,7 +47,7 @@ class TrainingPathSeeder extends Seeder
 
         $catalog = [
             [
-                'instructor_email' => 'sarah.chen@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'Smart Manufacturing Operations Bootcamp',
                     'description' => 'Master connected production lines, operator dashboards, and MES-ready workflows for the modern factory.',
@@ -64,6 +68,31 @@ class TrainingPathSeeder extends Seeder
                                 'content' => 'Explore how connected machines, sensors, and software keep a factory running as one coordinated system.',
                                 'objectives' => ['Understand the smart factory stack', 'Identify the role of MES and SCADA', 'Explain why connected operations matter'],
                                 'vm_enabled' => false,
+                                'quiz' => [
+                                    'title' => 'Smart Manufacturing Basics',
+                                    'questions' => [
+                                        [
+                                            'question' => 'Which of the following is a key component of Industry 4.0?',
+                                            'type' => QuizQuestionType::MULTIPLE_CHOICE,
+                                            'points' => 5,
+                                            'options' => [
+                                                ['text' => 'Increased manual paperwork', 'correct' => false],
+                                                ['text' => 'Cyber-physical systems', 'correct' => true],
+                                                ['text' => 'Disconnected production silos', 'correct' => false],
+                                                ['text' => 'Removal of all sensors', 'correct' => false],
+                                            ],
+                                        ],
+                                        [
+                                            'question' => 'MES stands for Manufacturing Execution System.',
+                                            'type' => QuizQuestionType::TRUE_FALSE,
+                                            'points' => 2,
+                                            'options' => [
+                                                ['text' => 'True', 'correct' => true],
+                                                ['text' => 'False', 'correct' => false],
+                                            ],
+                                        ],
+                                    ],
+                                ],
                             ],
                             [
                                 'title' => 'PLC, HMI, and SCADA',
@@ -72,6 +101,22 @@ class TrainingPathSeeder extends Seeder
                                 'content' => 'Review the control layers that move from plant-floor automation to operator-facing dashboards.',
                                 'objectives' => ['Distinguish PLC, HMI, and SCADA responsibilities', 'Trace operator feedback loops', 'Map control systems to production lines'],
                                 'vm_enabled' => false,
+                                'quiz' => [
+                                    'title' => 'Control Systems Knowledge Check',
+                                    'questions' => [
+                                        [
+                                            'question' => 'What is the primary role of an HMI?',
+                                            'type' => QuizQuestionType::MULTIPLE_CHOICE,
+                                            'points' => 5,
+                                            'options' => [
+                                                ['text' => 'Low-level machine logic execution', 'correct' => false],
+                                                ['text' => 'Interfacing operators with machine controls', 'correct' => true],
+                                                ['text' => 'Long-term data archiving only', 'correct' => false],
+                                                ['text' => 'Physical emergency stop hardware', 'correct' => false],
+                                            ],
+                                        ],
+                                    ],
+                                ],
                             ],
                         ],
                     ],
@@ -107,7 +152,7 @@ class TrainingPathSeeder extends Seeder
                 ],
             ],
             [
-                'instructor_email' => 'james.rodriguez@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'Industrial IoT and Edge Connectivity',
                     'description' => 'Connect sensors, gateways, and remote assets with reliable industrial networking and edge processing.',
@@ -163,7 +208,7 @@ class TrainingPathSeeder extends Seeder
                 ],
             ],
             [
-                'instructor_email' => 'emily.watson@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'Predictive Maintenance Analytics',
                     'description' => 'Turn vibration, temperature, and runtime data into early warnings that prevent unplanned downtime.',
@@ -219,7 +264,7 @@ class TrainingPathSeeder extends Seeder
                 ],
             ],
             [
-                'instructor_email' => 'alex.thompson@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'OT Cybersecurity Fundamentals',
                     'description' => 'Protect PLCs, HMIs, and industrial networks from intrusion, disruption, and downtime.',
@@ -275,7 +320,7 @@ class TrainingPathSeeder extends Seeder
                 ],
             ],
             [
-                'instructor_email' => 'maria.garcia@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'Robotics & Automation with PLCs',
                     'description' => 'Program automated workcells, orchestrate robots, and coordinate PLC logic for modern production lines.',
@@ -331,7 +376,7 @@ class TrainingPathSeeder extends Seeder
                 ],
             ],
             [
-                'instructor_email' => 'david.kim@example.com',
+                'instructor_email' => 'teacher@example.com',
                 'trainingPath' => [
                     'title' => 'Edge AI & Digital Twin Engineering',
                     'description' => 'Deploy machine vision, anomaly detection, and digital twin workflows to the factory edge.',
@@ -405,7 +450,7 @@ class TrainingPathSeeder extends Seeder
                 ]);
 
                 foreach ($moduleDefinition['trainingUnits'] as $trainingUnitIndex => $trainingUnitDefinition) {
-                    TrainingUnit::create([
+                    $trainingUnit = TrainingUnit::create([
                         'module_id' => $module->id,
                         'title' => $trainingUnitDefinition['title'],
                         'type' => $trainingUnitDefinition['type'],
@@ -415,6 +460,39 @@ class TrainingPathSeeder extends Seeder
                         'vm_enabled' => $trainingUnitDefinition['vm_enabled'],
                         'sort_order' => $trainingUnitIndex,
                     ]);
+
+                    // Seed Quiz if defined
+                    if (isset($trainingUnitDefinition['quiz'])) {
+                        $quizData = $trainingUnitDefinition['quiz'];
+                        $quiz = Quiz::create([
+                            'training_unit_id' => $trainingUnit->id,
+                            'title' => $quizData['title'],
+                            'description' => 'Assessment for '.$trainingUnit->title,
+                            'passing_score' => 70,
+                            'is_published' => true,
+                        ]);
+
+                        foreach ($quizData['questions'] as $qIndex => $qData) {
+                            $question = QuizQuestion::create([
+                                'quiz_id' => $quiz->id,
+                                'type' => $qData['type'],
+                                'question' => $qData['question'],
+                                'points' => $qData['points'] ?? 1,
+                                'sort_order' => $qIndex,
+                            ]);
+
+                            if (isset($qData['options'])) {
+                                foreach ($qData['options'] as $oIndex => $oData) {
+                                    QuizQuestionOption::create([
+                                        'question_id' => $question->id,
+                                        'option_text' => $oData['text'],
+                                        'is_correct' => $oData['correct'],
+                                        'sort_order' => $oIndex,
+                                    ]);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

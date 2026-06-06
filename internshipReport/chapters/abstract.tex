@@ -1,42 +1,49 @@
-% ==================== ABSTRACT ====================
-% STYLE GUIDELINES:
-% - 150-250 words summarizing: objective, methodology, results, conclusions
-% - Included in table of contents: NO (preliminary page)
-% - Must include 5-7 keywords relevant to the project
-% - Keywords should be scientifically relevant for academic databases
-% - Font: Times New Roman 12pt, line spacing 1.5, justified text
-% ====================================================================
-\phantomsection
-\thispagestyle{plain}
+\thispagestyle{empty}
 \begin{center}
 {\huge\bfseries Abstract}
 \end{center}
-\addcontentsline{toc}{chapter}{Abstract}
+\initial{I}oT-REAP (Internet of Things - Remote Equipment Access Platform)
+is a secure web platform for industrial remote laboratory operations, developed
+as an end-of-study internship at Novation City, a Tunisian Industry~4.0
+cluster. It addresses gaps in solutions - client installation dependency,
+absent VM lifecycle management, fragmented tooling, and no integrated training
+- within a browser-native interface.
 
-
-\initial{T}his report presents IoT-REAP, a secure industrial remote operations platform for Industry 4.0. The platform addresses challenges in remote access, such as VPN complexity, session management, and OT/IT network isolation.
-
-Developed with Laravel, React, TypeScript, and Python FastAPI, IoT-REAP integrates Proxmox VE for VM provisioning, Apache Guacamole for browser-based remote desktop, and MQTT for IoT robot control. Innovations include zero-trust security, device fingerprinting, geo-IP anomaly detection, real-time risk scoring, AI-powered demand forecasting, and predictive maintenance.
-
-The system supports 50+ concurrent users with automatic VM provisioning, sub-200ms robot telemetry latency, and tamper-evident audit logging with security-focused access controls. Results show secure, browser-based access to industrial systems with no client installation.
+Built on Laravel~12, React~18, TypeScript, and Inertia.js, it integrates
+Proxmox~VE for VM provisioning, Apache Guacamole for clientless RDP/VNC/SSH
+access, and Mosquitto~MQTT for robot telemetry and command dispatch, with
+camera feeds via WebRTC/HLS through MediaMTX. An e-learning module covers
+training paths, video lessons, quizzes, and certificates. Security relies on
+zero-trust, SHA-256 audit logging, Purdue IT/OT isolation, and HMAC webhook
+validation; OWASP~ZAP found no critical vulnerabilities. Deployment runs via
+GitHub Actions CI/CD to OVH.
 
 \vspace{0.5cm}
-\noindent\textbf{Keywords:} Industry 4.0, IoT, Remote Access, Proxmox VE, Apache Guacamole, MQTT, Zero-Trust Security, Predictive Maintenance, Machine Learning
+\noindent\textbf{Keywords:} Industry~4.0, Remote Laboratory, Virtual Machine Provisioning, Apache Guacamole, MQTT, Zero-Trust Security, E-Learning
 
 \vspace{0.9cm}
-
 \begin{center}
 {\huge\bfseries Résumé}
 \end{center}
+\initial{I}oT-REAP (Internet of Things - Plateforme d'Accès aux Équipements
+à Distance) est une plateforme web sécurisée pour les opérations industrielles
+à distance, développée lors d'un stage de fin de études à Novation City,
+cluster tunisien orienté Industrie~4.0. Elle répond aux lacunes des solutions
+existantes - dépendance à l'installation client, absence de gestion du cycle
+de vie des machines virtuelles, outils fragmentés et absence de formation
+intégrée - au sein d'une interface native navigateur.
 
-
-\initial{C}e rapport présente IoT-REAP, une plateforme sécurisée d'opérations industrielles à distance pour l'Industrie 4.0. Elle répond aux défis de l'accès distant, comme la complexité des VPN, la gestion des sessions et l'isolation des réseaux OT/IT.
-
-Développée avec Laravel, React, TypeScript et Python FastAPI, IoT-REAP intègre Proxmox VE pour le provisionnement de VM, Apache Guacamole pour l'accès bureau à distance, et MQTT pour le contrôle de robots IoT. Les innovations incluent la sécurité zero-trust, empreinte d'appareil, détection d'anomalies géo-IP, scoring de risque, prévision de demande par IA et maintenance prédictive.
-
-Le système supporte plus de 50 utilisateurs simultanés avec provisionnement automatique de VM, latence de télémétrie robot <200ms, et journalisation d'audit inviolable avec des contrôles d'accès axés sur la sécurité. Les résultats montrent un accès sécurisé, via navigateur, aux systèmes industriels sans installation client.
+Développée avec Laravel~12, React~18, TypeScript et Inertia.js, la plateforme
+intègre Proxmox~VE pour le provisionnement de VM, Apache Guacamole pour
+l'accès bureau à distance sans client via RDP/VNC/SSH, et Mosquitto~MQTT pour
+l'envoi de commandes robots et la télémétrie. Les flux caméra transitent via
+WebRTC/HLS par MediaMTX. Un module e-learning propose des parcours de
+formation, des leçons vidéo, des quiz et des certificats vérifiables. La
+sécurité repose sur zero-trust, un audit SHA-256, l'isolation IT/OT selon
+Purdue, et la validation HMAC des webhooks~; OWASP~ZAP n'a révélé aucune
+vulnérabilité critique. Le déploiement est automatisé via GitHub Actions
+CI/CD vers un serveur OVH.
 
 \vspace{0.5cm}
-\noindent\textbf{Mots-clés:} Industrie 4.0, IoT, Accès à Distance, Proxmox VE, Apache Guacamole, MQTT, Sécurité Zero-Trust, Maintenance Prédictive, Apprentissage Automatique
-
+\noindent\textbf{Mots-clés~:} Industrie~4.0, Laboratoire Distant, Provisionnement de Machines Virtuelles, Apache Guacamole, MQTT, Sécurité Zero-Trust, E-Learning
 \cleardoublepage

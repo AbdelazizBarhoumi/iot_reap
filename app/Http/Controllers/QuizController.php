@@ -230,6 +230,15 @@ class QuizController extends Controller
         $attempt = null;
         $canAttempt = $quiz->canAttempt($user);
 
+        // Find next unit
+        $trainingUnit = TrainingUnit::findOrFail($trainingUnitId);
+        $nextUnit = TrainingUnit::where('module_id', $trainingUnit->module_id)
+            ->where('sort_order', '>', $trainingUnit->sort_order)
+            ->orderBy('sort_order', 'asc')
+            ->first();
+
+        $nextUnitUrl = $nextUnit ? "/trainingUnits/{$nextUnit->id}" : null;
+
         if ($request->wantsJson()) {
             // Don't send correct answers to client
             return response()->json([
@@ -237,6 +246,7 @@ class QuizController extends Controller
                 'can_attempt' => $canAttempt,
                 'attempt_count' => $quiz->getAttemptCount($user),
                 'max_attempts' => $quiz->max_attempts,
+                'next_unit_url' => $nextUnitUrl,
             ]);
         }
 
@@ -246,6 +256,7 @@ class QuizController extends Controller
             'canAttempt' => $canAttempt,
             'attemptCount' => $quiz->getAttemptCount($user),
             'maxAttempts' => $quiz->max_attempts,
+            'nextUnitUrl' => $nextUnitUrl,
         ]);
     }
 

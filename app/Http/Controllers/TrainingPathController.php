@@ -122,7 +122,7 @@ class TrainingPathController extends Controller
         }
 
         $trainingUnit = $trainingPath->trainingUnits()
-            ->with('video')
+            ->with(['video', 'quiz', 'article'])
             ->where('training_units.id', $trainingUnitId)
             ->first();
 
@@ -298,7 +298,7 @@ class TrainingPathController extends Controller
 
             if ($trainingPath) {
                 // Load modules and trainingUnits for the trainingPath
-                $trainingPath->load(['modules.trainingUnits.video']);
+                $trainingPath->load(['modules.trainingUnits.video', 'modules.trainingUnits.quiz', 'modules.trainingUnits.article']);
                 $progress = $this->enrollmentService->getTrainingPathProgress($user, $trainingPath);
                 $completedTrainingUnitIds = $this->enrollmentService->getCompletedTrainingUnitIds($user, $trainingPath->id);
 

@@ -76,8 +76,11 @@ function getDedicatedLabel(device: UsbDevice): string | null {
         return null;
     }
 
-    const vmLabel = device.dedicated_vmid != null ? `VM #${device.dedicated_vmid}` : 'VM';
-    const nodeLabel = device.dedicated_node ? ` on ${device.dedicated_node}` : '';
+    const vmLabel =
+        device.dedicated_vmid != null ? `VM #${device.dedicated_vmid}` : 'VM';
+    const nodeLabel = device.dedicated_node
+        ? ` on ${device.dedicated_node}`
+        : '';
 
     return `Dedicated to ${vmLabel}${nodeLabel}`;
 }
@@ -365,8 +368,14 @@ export default function HardwarePage() {
                                         ) : (
                                             <div className="grid gap-3 md:grid-cols-2">
                                                 {devices.map((device) => {
-                                                    const dedicatedLabel = getDedicatedLabel(device);
-                                                    const isDedicated = device.is_dedicated ?? device.dedicated_vmid != null;
+                                                    const dedicatedLabel =
+                                                        getDedicatedLabel(
+                                                            device,
+                                                        );
+                                                    const isDedicated =
+                                                        device.is_dedicated ??
+                                                        device.dedicated_vmid !=
+                                                            null;
 
                                                     return (
                                                         <div
@@ -377,7 +386,9 @@ export default function HardwarePage() {
                                                                 <div>
                                                                     <div className="flex items-center gap-2">
                                                                         <p className="text-sm font-medium">
-                                                                            {device.name}
+                                                                            {
+                                                                                device.name
+                                                                            }
                                                                         </p>
                                                                         {device.has_camera_registration && (
                                                                             <Badge
@@ -392,24 +403,49 @@ export default function HardwarePage() {
 
                                                                     {dedicatedLabel && (
                                                                         <p className="mt-1 text-xs font-medium text-emerald-600">
-                                                                            {dedicatedLabel}
+                                                                            {
+                                                                                dedicatedLabel
+                                                                            }
                                                                         </p>
                                                                     )}
 
                                                                     <p className="text-xs text-muted-foreground">
-                                                                        Bus {device.busid} · VID:PID {device.vendor_id}:{device.product_id}
+                                                                        Bus{' '}
+                                                                        {
+                                                                            device.busid
+                                                                        }{' '}
+                                                                        ·
+                                                                        VID:PID{' '}
+                                                                        {
+                                                                            device.vendor_id
+                                                                        }
+                                                                        :
+                                                                        {
+                                                                            device.product_id
+                                                                        }
                                                                     </p>
 
                                                                     {device.attached_to && (
                                                                         <p className="mt-1 text-xs text-muted-foreground">
-                                                                            Attached to: {device.attached_to}
+                                                                            Attached
+                                                                            to:{' '}
+                                                                            {
+                                                                                device.attached_to
+                                                                            }
                                                                         </p>
                                                                     )}
 
-                                                                    {device.status === 'pending_attach' &&
+                                                                    {device.status ===
+                                                                        'pending_attach' &&
                                                                         device.pending_vmid && (
                                                                             <p className="mt-1 text-xs text-amber-600">
-                                                                                Pending on VM #{device.pending_vmid}
+                                                                                Pending
+                                                                                on
+                                                                                VM
+                                                                                #
+                                                                                {
+                                                                                    device.pending_vmid
+                                                                                }
                                                                             </p>
                                                                         )}
                                                                 </div>
@@ -420,35 +456,47 @@ export default function HardwarePage() {
                                                                         device.status,
                                                                     )}
                                                                 >
-                                                                    {device.status_label}
+                                                                    {
+                                                                        device.status_label
+                                                                    }
                                                                 </Badge>
                                                             </div>
 
                                                             <div className="flex flex-wrap gap-2">
-                                                                {device.status === 'available' && !isDedicated && (
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() =>
-                                                                            void bindDevice(device.id)
-                                                                        }
-                                                                        disabled={actionLoading}
-                                                                    >
-                                                                        <Plug className="mr-1 h-3 w-3" />
-                                                                        Bind
-                                                                    </Button>
-                                                                )}
+                                                                {device.status ===
+                                                                    'available' &&
+                                                                    !isDedicated && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                void bindDevice(
+                                                                                    device.id,
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                actionLoading
+                                                                            }
+                                                                        >
+                                                                            <Plug className="mr-1 h-3 w-3" />
+                                                                            Bind
+                                                                        </Button>
+                                                                    )}
 
-                                                                {device.status === 'bound' && (
+                                                                {device.status ===
+                                                                    'bound' && (
                                                                     <>
                                                                         <Button
                                                                             size="sm"
                                                                             onClick={() =>
-                                                                                openAttachDialog(device)
+                                                                                openAttachDialog(
+                                                                                    device,
+                                                                                )
                                                                             }
                                                                             disabled={
                                                                                 actionLoading ||
-                                                                                attachableSessions.length === 0
+                                                                                attachableSessions.length ===
+                                                                                    0
                                                                             }
                                                                         >
                                                                             <Plug className="mr-1 h-3 w-3" />
@@ -458,9 +506,13 @@ export default function HardwarePage() {
                                                                             size="sm"
                                                                             variant="outline"
                                                                             onClick={() =>
-                                                                                void unbindDevice(device.id)
+                                                                                void unbindDevice(
+                                                                                    device.id,
+                                                                                )
                                                                             }
-                                                                            disabled={actionLoading}
+                                                                            disabled={
+                                                                                actionLoading
+                                                                            }
                                                                         >
                                                                             <Unplug className="mr-1 h-3 w-3" />
                                                                             Unbind
@@ -468,31 +520,42 @@ export default function HardwarePage() {
                                                                     </>
                                                                 )}
 
-                                                                {device.status === 'attached' && (
+                                                                {device.status ===
+                                                                    'attached' && (
                                                                     <Button
                                                                         size="sm"
                                                                         variant="destructive"
                                                                         onClick={() =>
-                                                                            void detachDevice(device.id)
+                                                                            void detachDevice(
+                                                                                device.id,
+                                                                            )
                                                                         }
-                                                                        disabled={actionLoading}
+                                                                        disabled={
+                                                                            actionLoading
+                                                                        }
                                                                     >
                                                                         <Unplug className="mr-1 h-3 w-3" />
                                                                         Detach
                                                                     </Button>
                                                                 )}
 
-                                                                {device.status === 'pending_attach' && (
+                                                                {device.status ===
+                                                                    'pending_attach' && (
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() =>
-                                                                            void cancelPendingAttachment(device.id)
+                                                                            void cancelPendingAttachment(
+                                                                                device.id,
+                                                                            )
                                                                         }
-                                                                        disabled={actionLoading}
+                                                                        disabled={
+                                                                            actionLoading
+                                                                        }
                                                                     >
                                                                         <Clock className="mr-1 h-3 w-3" />
-                                                                        Cancel Pending
+                                                                        Cancel
+                                                                        Pending
                                                                     </Button>
                                                                 )}
 
@@ -501,9 +564,13 @@ export default function HardwarePage() {
                                                                         <Button
                                                                             size="sm"
                                                                             onClick={() =>
-                                                                                void activateCamera(device.id)
+                                                                                void activateCamera(
+                                                                                    device.id,
+                                                                                )
                                                                             }
-                                                                            disabled={actionLoading}
+                                                                            disabled={
+                                                                                actionLoading
+                                                                            }
                                                                         >
                                                                             <Video className="mr-1 h-3 w-3" />
                                                                             Activate
@@ -512,9 +579,13 @@ export default function HardwarePage() {
                                                                             size="sm"
                                                                             variant="outline"
                                                                             onClick={() =>
-                                                                                openCameraSettingsDialog(device)
+                                                                                openCameraSettingsDialog(
+                                                                                    device,
+                                                                                )
                                                                             }
-                                                                            disabled={actionLoading}
+                                                                            disabled={
+                                                                                actionLoading
+                                                                            }
                                                                         >
                                                                             <Settings2 className="mr-1 h-3 w-3" />
                                                                             Settings
@@ -523,12 +594,17 @@ export default function HardwarePage() {
                                                                             size="sm"
                                                                             variant="destructive"
                                                                             onClick={() =>
-                                                                                void removeCamera(device.id)
+                                                                                void removeCamera(
+                                                                                    device.id,
+                                                                                )
                                                                             }
-                                                                            disabled={actionLoading}
+                                                                            disabled={
+                                                                                actionLoading
+                                                                            }
                                                                         >
                                                                             <CameraIcon className="mr-1 h-3 w-3" />
-                                                                            Remove Camera
+                                                                            Remove
+                                                                            Camera
                                                                         </Button>
                                                                     </>
                                                                 ) : node.is_verified ? (
@@ -536,15 +612,20 @@ export default function HardwarePage() {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() =>
-                                                                            void markAsCamera(device.id)
+                                                                            void markAsCamera(
+                                                                                device.id,
+                                                                            )
                                                                         }
                                                                         disabled={
                                                                             actionLoading ||
-                                                                            device.status === 'disconnected'
+                                                                            device.status ===
+                                                                                'disconnected'
                                                                         }
                                                                     >
                                                                         <CameraIcon className="mr-1 h-3 w-3" />
-                                                                        Convert to Camera
+                                                                        Convert
+                                                                        to
+                                                                        Camera
                                                                     </Button>
                                                                 ) : null}
                                                             </div>

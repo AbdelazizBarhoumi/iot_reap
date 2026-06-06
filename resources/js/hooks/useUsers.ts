@@ -168,26 +168,23 @@ export function useUsers(initialData?: PaginatedUsers) {
         usersApi.impersonateUser(userId);
     }, []);
 
-    const DeleteUser = useCallback(
-        async (userId: string): Promise<boolean> => {
-            setLoading(true);
-            setError(null);
+    const DeleteUser = useCallback(async (userId: string): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
 
-            try {
-                await usersApi.DeleteUser(userId);
-                setUsers((prev) => prev.filter((user) => user.id !== userId));
+        try {
+            await usersApi.DeleteUser(userId);
+            setUsers((prev) => prev.filter((user) => user.id !== userId));
 
-                return true;
-            } catch (e) {
-                setError(getHttpErrorMessage(e, 'Failed to delete user data'));
+            return true;
+        } catch (e) {
+            setError(getHttpErrorMessage(e, 'Failed to delete user data'));
 
-                return false;
-            } finally {
-                setLoading(false);
-            }
-        },
-        [],
-    );
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     return {
         users,

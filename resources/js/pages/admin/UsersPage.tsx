@@ -134,9 +134,7 @@ export default function UsersPage() {
         null,
     );
     const [newRole, setNewRole] = useState('');
-    const [TargetUser, setTargetUser] = useState<AdminUser | null>(
-        null,
-    );
+    const [TargetUser, setTargetUser] = useState<AdminUser | null>(null);
     const [Confirmation, setConfirmation] = useState('');
     const handleSearch = useCallback(() => {
         router.get(
@@ -992,12 +990,12 @@ export default function UsersPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-destructive">
-                             Data Deletion
+                            Data Deletion
                         </DialogTitle>
                         <DialogDescription>
                             This action anonymizes personal data for{' '}
-                            <strong>{TargetUser?.name}</strong>. Type the
-                            user email below to confirm.
+                            <strong>{TargetUser?.name}</strong>. Type the user
+                            email below to confirm.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1044,7 +1042,7 @@ export default function UsersPage() {
                             }
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Confirm  Delete
+                            Confirm Delete
                         </Button>
                     </DialogFooter>
                 </DialogContent>

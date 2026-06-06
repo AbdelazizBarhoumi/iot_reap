@@ -155,8 +155,9 @@ export default function TrainingPathDetailPage() {
             return trainingPath.modules;
         }
 
-        const maybeModules =
-            (trainingPath.modules as { data?: unknown } | undefined)?.data;
+        const maybeModules = (
+            trainingPath.modules as { data?: unknown } | undefined
+        )?.data;
 
         return Array.isArray(maybeModules) ? maybeModules : [];
     }, [trainingPath.modules]);
@@ -167,8 +168,9 @@ export default function TrainingPathDetailPage() {
                 return module.trainingUnits;
             }
 
-            const maybeUnits =
-                (module.trainingUnits as { data?: unknown } | undefined)?.data;
+            const maybeUnits = (
+                module.trainingUnits as { data?: unknown } | undefined
+            )?.data;
 
             return Array.isArray(maybeUnits) ? maybeUnits : [];
         },
@@ -196,11 +198,10 @@ export default function TrainingPathDetailPage() {
                 setIsEnrolled(true);
                 setProgress({
                     completed: 0,
-                    total:
-                        trainingModules.reduce(
-                            (a, m) => a + getTrainingUnits(m).length,
-                            0,
-                        ),
+                    total: trainingModules.reduce(
+                        (a, m) => a + getTrainingUnits(m).length,
+                        0,
+                    ),
                     percentage: 0,
                 });
                 trainingPathToasts.enrolled(trainingPath.title);
@@ -224,7 +225,12 @@ export default function TrainingPathDetailPage() {
         } finally {
             setEnrolling(false);
         }
-    }, [getTrainingUnits, trainingModules, trainingPath?.id, trainingPath?.title]);
+    }, [
+        getTrainingUnits,
+        trainingModules,
+        trainingPath?.id,
+        trainingPath?.title,
+    ]);
     const toggleModule = (moduleId: string | number) => {
         setExpandedModules((prev) => {
             const next = new Set(prev);
@@ -266,7 +272,8 @@ export default function TrainingPathDetailPage() {
         (totalTrainingUnits > 0
             ? (completedTrainingUnitsCount / totalTrainingUnits) * 100
             : 0);
-    const firstTrainingUnitId = getTrainingUnits(trainingModules[0] ?? {})[0]?.id;
+    const firstTrainingUnitId = getTrainingUnits(trainingModules[0] ?? {})[0]
+        ?.id;
     const isTrainingUnitCompleted = (trainingUnitId: string | number) => {
         return (
             completedTrainingUnitIds?.some(
@@ -285,10 +292,7 @@ export default function TrainingPathDetailPage() {
         return {
             completed,
             total: units.length,
-            percentage:
-                units.length > 0
-                    ? (completed / units.length) * 100
-                    : 0,
+            percentage: units.length > 0 ? (completed / units.length) * 100 : 0,
         };
     };
     return (
@@ -626,8 +630,8 @@ export default function TrainingPathDetailPage() {
                                                 TrainingPath Curriculum
                                             </h2>
                                             <p className="mt-1 text-sm text-muted-foreground">
-                                                {trainingModules.length}{' '}
-                                                modules · {totalTrainingUnits}{' '}
+                                                {trainingModules.length} modules
+                                                · {totalTrainingUnits}{' '}
                                                 trainingUnits ·{' '}
                                                 {trainingPath.duration}
                                             </p>
@@ -645,7 +649,11 @@ export default function TrainingPathDetailPage() {
                                                     );
                                                 } else {
                                                     setExpandedModules(
-                                                        new Set(trainingModules.map((m) => m.id)),
+                                                        new Set(
+                                                            trainingModules.map(
+                                                                (m) => m.id,
+                                                            ),
+                                                        ),
                                                     );
                                                 }
                                             }}
@@ -660,276 +668,276 @@ export default function TrainingPathDetailPage() {
                                     {/* Modules */}
                                     <div className="space-y-3">
                                         {trainingModules.map((module, mi) => {
-                                            const trainingUnits = getTrainingUnits(module) as Array<{
-                                                id: string | number;
-                                                type: string;
-                                                title: string;
-                                                duration?: string | null;
-                                                vmEnabled?: boolean;
-                                            }>;
-                                                const isExpanded =
-                                                    expandedModules.has(
-                                                        module.id,
-                                                    );
-                                                const moduleProgress =
-                                                    getModuleProgress(module);
-                                                const isModuleComplete =
-                                                    moduleProgress.percentage ===
-                                                    100;
-                                                return (
-                                                    <motion.div
-                                                        key={module.id}
-                                                        initial={{
-                                                            opacity: 0,
-                                                            y: 10,
-                                                        }}
-                                                        animate={{
-                                                            opacity: 1,
-                                                            y: 0,
-                                                        }}
-                                                        transition={{
-                                                            delay: mi * 0.05,
-                                                        }}
-                                                    >
-                                                        <Card className="cursor-pointer overflow-hidden border-border/50">
-                                                            {/* Module header */}
-                                                            <button
-                                                                onClick={() =>
-                                                                    toggleModule(
-                                                                        module.id,
-                                                                    )
-                                                                }
-                                                                className="flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors hover:bg-muted/30"
-                                                            >
-                                                                <div className="flex items-center gap-4">
-                                                                    <div
-                                                                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                                                                            isModuleComplete
-                                                                                ? 'bg-emerald-500/10 text-emerald-500'
-                                                                                : 'bg-muted text-muted-foreground'
-                                                                        }`}
-                                                                    >
-                                                                        {isModuleComplete ? (
-                                                                            <Trophy className="h-5 w-5" />
-                                                                        ) : (
-                                                                            <span className="font-semibold">
-                                                                                {mi +
-                                                                                    1}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="text-left">
-                                                                        <h3 className="font-heading font-semibold text-foreground">
-                                                                            {
-                                                                                module.title
-                                                                            }
-                                                                        </h3>
-                                                                        <p className="mt-0.5 text-xs text-muted-foreground">
-                                                                            {
-                                                                                trainingUnits.length
-                                                                            }{' '}
-                                                                            trainingUnits
-                                                                            {isEnrolled &&
-                                                                                moduleProgress.completed >
-                                                                                    0 && (
-                                                                                    <span className="ml-2 text-primary">
-                                                                                        ·{' '}
-                                                                                        {
-                                                                                            moduleProgress.completed
-                                                                                        }
-
-                                                                                        /
-                                                                                        {
-                                                                                            moduleProgress.total
-                                                                                        }{' '}
-                                                                                        completed
-                                                                                    </span>
-                                                                                )}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-3">
-                                                                    {isEnrolled &&
-                                                                        moduleProgress.percentage >
-                                                                            0 && (
-                                                                            <div className="hidden w-24 sm:block">
-                                                                                <Progress
-                                                                                    value={
-                                                                                        moduleProgress.percentage
-                                                                                    }
-                                                                                    className="h-1.5"
-                                                                                />
-                                                                            </div>
-                                                                        )}
-                                                                    {isExpanded ? (
-                                                                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                                            const trainingUnits =
+                                                getTrainingUnits(
+                                                    module,
+                                                ) as Array<{
+                                                    id: string | number;
+                                                    type: string;
+                                                    title: string;
+                                                    duration?: string | null;
+                                                    vmEnabled?: boolean;
+                                                }>;
+                                            const isExpanded =
+                                                expandedModules.has(module.id);
+                                            const moduleProgress =
+                                                getModuleProgress(module);
+                                            const isModuleComplete =
+                                                moduleProgress.percentage ===
+                                                100;
+                                            return (
+                                                <motion.div
+                                                    key={module.id}
+                                                    initial={{
+                                                        opacity: 0,
+                                                        y: 10,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        y: 0,
+                                                    }}
+                                                    transition={{
+                                                        delay: mi * 0.05,
+                                                    }}
+                                                >
+                                                    <Card className="cursor-pointer overflow-hidden border-border/50">
+                                                        {/* Module header */}
+                                                        <button
+                                                            onClick={() =>
+                                                                toggleModule(
+                                                                    module.id,
+                                                                )
+                                                            }
+                                                            className="flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors hover:bg-muted/30"
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div
+                                                                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                                                                        isModuleComplete
+                                                                            ? 'bg-emerald-500/10 text-emerald-500'
+                                                                            : 'bg-muted text-muted-foreground'
+                                                                    }`}
+                                                                >
+                                                                    {isModuleComplete ? (
+                                                                        <Trophy className="h-5 w-5" />
                                                                     ) : (
-                                                                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                                                        <span className="font-semibold">
+                                                                            {mi +
+                                                                                1}
+                                                                        </span>
                                                                     )}
                                                                 </div>
-                                                            </button>
-                                                            {/* TrainingUnits list */}
-                                                            <AnimatePresence>
-                                                                {isExpanded && (
-                                                                    <motion.div
-                                                                        initial={{
-                                                                            height: 0,
-                                                                            opacity: 0,
-                                                                        }}
-                                                                        animate={{
-                                                                            height: 'auto',
-                                                                            opacity: 1,
-                                                                        }}
-                                                                        exit={{
-                                                                            height: 0,
-                                                                            opacity: 0,
-                                                                        }}
-                                                                        transition={{
-                                                                            duration: 0.2,
-                                                                        }}
-                                                                        className="overflow-hidden"
-                                                                    >
-                                                                        <ul className="divide-y divide-border/50 border-t border-border/50">
-                                                                            {trainingUnits.map(
-                                                                                (
-                                                                                    trainingUnit,
-                                                                                    _li,
-                                                                                ) => {
-                                                                                    const Icon =
-                                                                                        trainingUnitIcons[
-                                                                                            trainingUnit
-                                                                                                .type
-                                                                                        ] ||
-                                                                                        BookOpen;
-                                                                                    const colorClass =
-                                                                                        trainingUnitColors[
-                                                                                            trainingUnit
-                                                                                                .type
-                                                                                        ] ||
-                                                                                        'bg-muted text-muted-foreground';
-                                                                                    const completed =
-                                                                                        isTrainingUnitCompleted(
-                                                                                            trainingUnit.id,
-                                                                                        );
-                                                                                    const canAccess =
-                                                                                        isEnrolled;
-                                                                                    return (
-                                                                                        <li
-                                                                                            key={
-                                                                                                trainingUnit.id
-                                                                                            }
-                                                                                        >
-                                                                                            {canAccess ? (
-                                                                                                <Link
-                                                                                                    href={`/trainingPaths/${trainingPath.id}/trainingUnit/${trainingUnit.id}`}
-                                                                                                    className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/30"
+                                                                <div className="text-left">
+                                                                    <h3 className="font-heading font-semibold text-foreground">
+                                                                        {
+                                                                            module.title
+                                                                        }
+                                                                    </h3>
+                                                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                                                        {
+                                                                            trainingUnits.length
+                                                                        }{' '}
+                                                                        trainingUnits
+                                                                        {isEnrolled &&
+                                                                            moduleProgress.completed >
+                                                                                0 && (
+                                                                                <span className="ml-2 text-primary">
+                                                                                    ·{' '}
+                                                                                    {
+                                                                                        moduleProgress.completed
+                                                                                    }
+
+                                                                                    /
+                                                                                    {
+                                                                                        moduleProgress.total
+                                                                                    }{' '}
+                                                                                    completed
+                                                                                </span>
+                                                                            )}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                {isEnrolled &&
+                                                                    moduleProgress.percentage >
+                                                                        0 && (
+                                                                        <div className="hidden w-24 sm:block">
+                                                                            <Progress
+                                                                                value={
+                                                                                    moduleProgress.percentage
+                                                                                }
+                                                                                className="h-1.5"
+                                                                            />
+                                                                        </div>
+                                                                    )}
+                                                                {isExpanded ? (
+                                                                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                                                                ) : (
+                                                                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                        {/* TrainingUnits list */}
+                                                        <AnimatePresence>
+                                                            {isExpanded && (
+                                                                <motion.div
+                                                                    initial={{
+                                                                        height: 0,
+                                                                        opacity: 0,
+                                                                    }}
+                                                                    animate={{
+                                                                        height: 'auto',
+                                                                        opacity: 1,
+                                                                    }}
+                                                                    exit={{
+                                                                        height: 0,
+                                                                        opacity: 0,
+                                                                    }}
+                                                                    transition={{
+                                                                        duration: 0.2,
+                                                                    }}
+                                                                    className="overflow-hidden"
+                                                                >
+                                                                    <ul className="divide-y divide-border/50 border-t border-border/50">
+                                                                        {trainingUnits.map(
+                                                                            (
+                                                                                trainingUnit,
+                                                                                _li,
+                                                                            ) => {
+                                                                                const Icon =
+                                                                                    trainingUnitIcons[
+                                                                                        trainingUnit
+                                                                                            .type
+                                                                                    ] ||
+                                                                                    BookOpen;
+                                                                                const colorClass =
+                                                                                    trainingUnitColors[
+                                                                                        trainingUnit
+                                                                                            .type
+                                                                                    ] ||
+                                                                                    'bg-muted text-muted-foreground';
+                                                                                const completed =
+                                                                                    isTrainingUnitCompleted(
+                                                                                        trainingUnit.id,
+                                                                                    );
+                                                                                const canAccess =
+                                                                                    isEnrolled;
+                                                                                return (
+                                                                                    <li
+                                                                                        key={
+                                                                                            trainingUnit.id
+                                                                                        }
+                                                                                    >
+                                                                                        {canAccess ? (
+                                                                                            <Link
+                                                                                                href={`/trainingPaths/${trainingPath.id}/trainingUnit/${trainingUnit.id}`}
+                                                                                                className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/30"
+                                                                                            >
+                                                                                                <div
+                                                                                                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                                                                                                        completed
+                                                                                                            ? 'bg-emerald-500/10 text-emerald-500'
+                                                                                                            : colorClass
+                                                                                                    }`}
                                                                                                 >
-                                                                                                    <div
-                                                                                                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                                                                                                    {completed ? (
+                                                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                                                    ) : (
+                                                                                                        <Icon className="h-4 w-4" />
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                <div className="min-w-0 flex-1">
+                                                                                                    <p
+                                                                                                        className={`truncate text-sm font-medium ${
                                                                                                             completed
-                                                                                                                ? 'bg-emerald-500/10 text-emerald-500'
-                                                                                                                : colorClass
-                                                                                                        }`}
+                                                                                                                ? 'text-muted-foreground'
+                                                                                                                : 'text-foreground group-hover:text-primary'
+                                                                                                        } transition-colors`}
                                                                                                     >
-                                                                                                        {completed ? (
-                                                                                                            <CheckCircle2 className="h-4 w-4" />
-                                                                                                        ) : (
-                                                                                                            <Icon className="h-4 w-4" />
+                                                                                                        {
+                                                                                                            trainingUnit.title
+                                                                                                        }
+                                                                                                    </p>
+                                                                                                    <div className="mt-0.5 flex items-center gap-2">
+                                                                                                        <span className="text-xs text-muted-foreground capitalize">
+                                                                                                            {trainingUnit.type.replace(
+                                                                                                                '-',
+                                                                                                                ' ',
+                                                                                                            )}
+                                                                                                        </span>
+                                                                                                        {trainingUnit.duration && (
+                                                                                                            <>
+                                                                                                                <span className="text-muted-foreground/50">
+                                                                                                                    ·
+                                                                                                                </span>
+                                                                                                                <span className="text-xs text-muted-foreground">
+                                                                                                                    {
+                                                                                                                        trainingUnit.duration
+                                                                                                                    }
+                                                                                                                </span>
+                                                                                                            </>
+                                                                                                        )}
+                                                                                                        {trainingUnit.vmEnabled && (
+                                                                                                            <>
+                                                                                                                <span className="text-muted-foreground/50">
+                                                                                                                    ·
+                                                                                                                </span>
+                                                                                                                <span className="flex items-center gap-0.5 text-xs text-violet-500">
+                                                                                                                    <Terminal className="h-3 w-3" />{' '}
+                                                                                                                    VM
+                                                                                                                </span>
+                                                                                                            </>
                                                                                                         )}
                                                                                                     </div>
-                                                                                                    <div className="min-w-0 flex-1">
-                                                                                                        <p
-                                                                                                            className={`truncate text-sm font-medium ${
-                                                                                                                completed
-                                                                                                                    ? 'text-muted-foreground'
-                                                                                                                    : 'text-foreground group-hover:text-primary'
-                                                                                                            } transition-colors`}
-                                                                                                        >
-                                                                                                            {
-                                                                                                                trainingUnit.title
-                                                                                                            }
-                                                                                                        </p>
-                                                                                                        <div className="mt-0.5 flex items-center gap-2">
-                                                                                                            <span className="text-xs text-muted-foreground capitalize">
-                                                                                                                {trainingUnit.type.replace(
-                                                                                                                    '-',
-                                                                                                                    ' ',
-                                                                                                                )}
-                                                                                                            </span>
-                                                                                                            {trainingUnit.duration && (
-                                                                                                                <>
-                                                                                                                    <span className="text-muted-foreground/50">
-                                                                                                                        ·
-                                                                                                                    </span>
-                                                                                                                    <span className="text-xs text-muted-foreground">
-                                                                                                                        {
-                                                                                                                            trainingUnit.duration
-                                                                                                                        }
-                                                                                                                    </span>
-                                                                                                                </>
+                                                                                                </div>
+                                                                                                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                                                                                            </Link>
+                                                                                        ) : (
+                                                                                            <div className="flex items-center gap-4 px-5 py-3 opacity-60">
+                                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                                                                                    <Lock className="h-4 w-4" />
+                                                                                                </div>
+                                                                                                <div className="min-w-0 flex-1">
+                                                                                                    <p className="truncate text-sm font-medium text-foreground">
+                                                                                                        {
+                                                                                                            trainingUnit.title
+                                                                                                        }
+                                                                                                    </p>
+                                                                                                    <div className="mt-0.5 flex items-center gap-2">
+                                                                                                        <span className="text-xs text-muted-foreground capitalize">
+                                                                                                            {trainingUnit.type.replace(
+                                                                                                                '-',
+                                                                                                                ' ',
                                                                                                             )}
-                                                                                                            {trainingUnit.vmEnabled && (
-                                                                                                                <>
-                                                                                                                    <span className="text-muted-foreground/50">
-                                                                                                                        ·
-                                                                                                                    </span>
-                                                                                                                    <span className="flex items-center gap-0.5 text-xs text-violet-500">
-                                                                                                                        <Terminal className="h-3 w-3" />{' '}
-                                                                                                                        VM
-                                                                                                                    </span>
-                                                                                                                </>
-                                                                                                            )}
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                                                                                                </Link>
-                                                                                            ) : (
-                                                                                                <div className="flex items-center gap-4 px-5 py-3 opacity-60">
-                                                                                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                                                                                        <Lock className="h-4 w-4" />
-                                                                                                    </div>
-                                                                                                    <div className="min-w-0 flex-1">
-                                                                                                        <p className="truncate text-sm font-medium text-foreground">
-                                                                                                            {
-                                                                                                                trainingUnit.title
-                                                                                                            }
-                                                                                                        </p>
-                                                                                                        <div className="mt-0.5 flex items-center gap-2">
-                                                                                                            <span className="text-xs text-muted-foreground capitalize">
-                                                                                                                {trainingUnit.type.replace(
-                                                                                                                    '-',
-                                                                                                                    ' ',
-                                                                                                                )}
-                                                                                                            </span>
-                                                                                                            {trainingUnit.duration && (
-                                                                                                                <>
-                                                                                                                    <span className="text-muted-foreground/50">
-                                                                                                                        ·
-                                                                                                                    </span>
-                                                                                                                    <span className="text-xs text-muted-foreground">
-                                                                                                                        {
-                                                                                                                            trainingUnit.duration
-                                                                                                                        }
-                                                                                                                    </span>
-                                                                                                                </>
-                                                                                                            )}
-                                                                                                        </div>
+                                                                                                        </span>
+                                                                                                        {trainingUnit.duration && (
+                                                                                                            <>
+                                                                                                                <span className="text-muted-foreground/50">
+                                                                                                                    ·
+                                                                                                                </span>
+                                                                                                                <span className="text-xs text-muted-foreground">
+                                                                                                                    {
+                                                                                                                        trainingUnit.duration
+                                                                                                                    }
+                                                                                                                </span>
+                                                                                                            </>
+                                                                                                        )}
                                                                                                     </div>
                                                                                                 </div>
-                                                                                            )}
-                                                                                        </li>
-                                                                                    );
-                                                                                },
-                                                                            )}
-                                                                        </ul>
-                                                                    </motion.div>
-                                                                )}
-                                                            </AnimatePresence>
-                                                        </Card>
-                                                    </motion.div>
-                                                );
-                                            },
-                                        )}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </li>
+                                                                                );
+                                                                            },
+                                                                        )}
+                                                                    </ul>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </Card>
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
                                 </TabsContent>
                                 {/* Discussions Tab */}

@@ -28,6 +28,11 @@ class QuizSeeder extends Seeder
 
         // Create 1 quiz per trainingUnit (50% chance)
         foreach ($trainingUnits as $trainingUnit) {
+            // Skip if quiz already exists
+            if ($trainingUnit->quiz()->exists()) {
+                continue;
+            }
+
             if (rand(0, 1) === 0) {
                 continue;
             }

@@ -217,7 +217,7 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-pin-unpin-thread}
 \end{table}
-
+\iffalse
 \subsubsubsection{Specification of the Use Case Lock / Unlock Thread}
 \begin{table}[H]
     \centering
@@ -255,8 +255,8 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-lock-unlock-thread}
 \end{table}
-
-
+\fi
+\iffalse
 \subsubsubsection{Specification of the Use Case Resolve Flag}
 \begin{table}[H]
     \centering
@@ -295,7 +295,7 @@ the following sub-use cases:
     \end{tabular}
     \label{tab:teacher-resolve-flag}
 \end{table}
-
+\fi
 
 
 \subsubsubsection{Specification of the Use Case Request Payout}
@@ -671,9 +671,9 @@ the following sub-use cases:
                 \item System displays threads from all owned training paths with reply counts and timestamps
                 \item Teacher selects a filter to narrow the view:
                 \begin{itemize}
-                    \item \textbf{Flagged} — shows threads or replies that have been reported and require moderation
-                    \item \textbf{Unanswered} — shows threads with no teacher response yet
-                    \item \textbf{Recent} — shows threads sorted by most recent activity
+                    \item \textbf{Flagged}   shows threads or replies that have been reported and require moderation
+                    \item \textbf{Unanswered}   shows threads with no teacher response yet
+                    \item \textbf{Recent}   shows threads sorted by most recent activity
                 \end{itemize}
                 \item System retrieves and displays threads matching the selected filter
                 \item Teacher may select any thread to read, respond, or take a moderation action
@@ -712,10 +712,10 @@ the following sub-use cases:
                 \item Teacher opens a thread from the forum inbox
                 \item Teacher selects a moderation action:
                 \begin{itemize}
-                    \item \textbf{Pin / Unpin} — promotes the thread to the top of the forum listing or returns it to chronological order
-                    \item \textbf{Lock / Unlock} — prevents new replies from engineers or reopens the thread for discussion
-                    \item \textbf{Resolve Flag} — teacher reviews flagged content, takes appropriate action (approve, edit, or delete), then marks the flag as resolved
-                    \item \textbf{Edit / Delete post} — teacher corrects or removes inappropriate content and system logs the action with timestamp and reason
+                    \item \textbf{Pin / Unpin}   promotes the thread to the top of the forum listing or returns it to chronological order
+                    \item \textbf{Lock / Unlock}   prevents new replies from engineers or reopens the thread for discussion
+                    \item \textbf{Resolve Flag}   teacher reviews flagged content, takes appropriate action (approve, edit, or delete), then marks the flag as resolved
+                    \item \textbf{Edit / Delete post}   teacher corrects or removes inappropriate content and system logs the action with timestamp and reason
                 \end{itemize}
                 \item System validates ownership and applies the requested state change
                 \item System confirms the action and notifies affected engineers where applicable
@@ -1398,13 +1398,13 @@ the following sub-use cases:
 
 
 
-% ------------------------------------------------------------------
+% --------
 % 1. Manage Training Path
-% ------------------------------------------------------------------
+% --------
 
-% ------------------------------------------------------------------
+% --------
 % 2. Manage Modules
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Modules}
 \begin{table}[H]
     \centering
@@ -1448,9 +1448,9 @@ the following sub-use cases:
     \label{tab:teacher-manage-modules}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 3. Manage Training Units
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Training Units}
 \begin{table}[H]
     \centering
@@ -1494,9 +1494,9 @@ the following sub-use cases:
     \label{tab:teacher-manage-units}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 4. Manage Quiz
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Quiz}
 \begin{table}[H]
     \centering
@@ -1542,9 +1542,9 @@ the following sub-use cases:
     \label{tab:teacher-manage-quiz}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 5. Manage Quiz Questions
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Quiz Questions}
 \begin{table}[H]
     \centering
@@ -1586,9 +1586,9 @@ the following sub-use cases:
     \label{tab:teacher-manage-questions}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 6. View Quiz Statistics
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case View Quiz Statistics}
 \begin{table}[H]
     \centering
@@ -1627,9 +1627,9 @@ the following sub-use cases:
     \label{tab:teacher-quiz-stats}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 7. Manage Article Content
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Article Content}
 \begin{table}[H]
     \centering
@@ -1671,9 +1671,9 @@ the following sub-use cases:
     \label{tab:teacher-manage-article}
 \end{table}
  
-% ------------------------------------------------------------------
+% --------
 % 8. Manage Video Content
-% ------------------------------------------------------------------
+% --------
 \subsubsubsection{Specification of the Use Case Manage Video Content}
 \begin{table}[H]
     \centering

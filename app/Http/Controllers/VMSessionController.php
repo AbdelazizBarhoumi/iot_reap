@@ -44,7 +44,7 @@ class VMSessionController extends Controller
 
     /**
      * Get all sessions for the authenticated user.
-    * Returns JSON for XHR and redirects browser visits to the VM Dashboard.
+     * Returns JSON for XHR and redirects browser visits to the VM Dashboard.
      */
     public function index(Request $request): JsonResponse|RedirectResponse
     {
@@ -330,7 +330,6 @@ class VMSessionController extends Controller
             'return_snapshot' => $request->getReturnSnapshot(),
         ]);
 
-        // Run termination synchronously — no queue dependency.
         try {
             TerminateVMJob::dispatchSync(
                 session: $session,
@@ -392,7 +391,8 @@ class VMSessionController extends Controller
 
             return response()->json(
                 new VMSessionResource($updatedSession),
-                200
+                200,
+                ['message' => 'Session extended successfully'],
             );
         } catch (\Exception $e) {
             Log::warning('Failed to extend VM session', [

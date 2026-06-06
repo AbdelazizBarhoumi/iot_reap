@@ -10,7 +10,8 @@
 % - Font: Times New Roman 12pt for body, line spacing 1.5
 % - Titles: Left-aligned, numbered decimally (1, 1.1, 1.1.1), bold
 % - No title isolated at bottom of page (avoid orphans/widows)
-% - If a section has subsections, add a short descriptive paragraph immediately after the parent heading before the first subsection.
+% - If a section has subsections, add a short descriptive paragraph immediately
+%   after the parent heading before the first subsection.
 % - Figures/Tables: Numbered consecutively (Figure 1.1, Table 1.1, etc.)
 % - Figure captions: Below figure, 12pt Times, centered, justified
 % - Table captions: Above table, 12pt Times, centered, justified
@@ -25,19 +26,25 @@
 % - Proposed solution and requirements specification
 % - Agile Scrum methodology and project planning
 % ============================================================================
-% ==================== CHAPTER 1: PRELIMINARY STUDY ====================
-\chapter{Preliminary Study}
-\setcounter{section}{0}
 
+\chapter{Preliminary Study}
+
+% =============================================================================
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
+% =============================================================================
 
-\initial{T}his chapter presents the preliminary study of the IoT-REAP project. It
-situates the work within the Novation City organizational context, establishes the
-problem statement motivating the platform, reviews existing industrial remote access
-solutions and their limitations, defines the proposed platform and its requirements,
-and concludes with the Agile Scrum methodology and sprint planning that structured
-the implementation.
+\initial{T}his chapter establishes the foundations of the IoT-REAP
+(Internet of Things - Remote Equipment Access Platform) project by
+developing the argument that motivates its design and implementation. It begins
+by situating the work within its professional and academic context at Novation City,
+then identifies the operational problem driving the platform's development. A
+systematic review of existing industrial remote access solutions exposes the specific
+gaps that no current commercial product addresses. Building on this gap analysis,
+the proposed platform architecture, technology choices, and requirements specification
+are presented. The chapter concludes with the Agile Scrum methodology selected to
+manage the project and the sprint-based development timeline that structured its
+execution.
 
 % =============================================================================
 \section{General Project Context}
@@ -45,11 +52,13 @@ the implementation.
 
 This section situates the IoT-REAP project within its professional and academic
 framework. It describes the host organization, its business units, infrastructure
-strategy, and the academic scope of the internship, all of which explain the context
-in which a secure remote industrial access platform was identified as a necessary
-development.
+strategy, and the academic scope of the end-of-licence internship, all of which
+explain the context in which a secure remote industrial access platform was
+identified as a necessary development.
 
+% ---------------------------
 \subsection{Host Organization}
+% ---------------------------
 
 Novation City is a competitiveness cluster established in 2009 in Sousse, Tunisia,
 as a public-private partnership. The cluster is designed to foster innovation
@@ -64,18 +73,19 @@ Industry 4.0 adoption in the MENA region {\footnotesize\cite{novationcity2026}}.
 \label{fig:novation-logo}
 \end{figure}
 
-\textbf{Mission Statement:} Novation City's mission is to foster an innovation
-ecosystem in the mechatronics sector by bringing together companies, industrial
-entities, research centers, universities, and engineering schools. The cluster aims
-to enhance regional and national competitiveness through technology advancement,
-knowledge transfer, and strategic investment attraction.
+Novation City's mission is to foster an innovation ecosystem in the mechatronics
+sector by bringing together companies, industrial entities, research centers,
+universities, and engineering schools, with the objective of enhancing regional and
+national competitiveness through technology advancement, knowledge transfer, and
+strategic investment attraction. The cluster's long-term strategic vision positions
+it as a leading Industry 4.0 competitiveness hub for North Africa and the broader
+MENA region, pursued through investment in advanced innovation infrastructure,
+highly skilled technical talent development, and sustainable academia-industry
+partnerships.
 
-\textbf{Vision:} The cluster envisions becoming a leading competitiveness hub for
-Industry 4.0 adoption and digital transformation in North Africa and the broader MENA
-region, focusing on advanced innovation infrastructure, highly skilled technical
-talent development, and sustainable academia-industry partnerships.
-
+% ---------------------------
 \subsection{Business Units and Services}
+% ---------------------------
 
 Novation City operates through four specialized business units, each addressing a
 distinct aspect of the innovation ecosystem.
@@ -97,20 +107,20 @@ and innovation methodologies in collaboration with universities and industry par
 collaborative R\&D between academic institutions and industrial partners while
 exploring emerging technologies for the regional ecosystem.
 
+% ---------------------------
 \subsection{Infrastructure and Strategic Focus}
+% ---------------------------
 
-Novation City manages three specialized geographic zones:
-
-\begin{itemize}
-    \item \textbf{Mechatronic City:} Houses companies focused on mechatronics,
-          robotics, and advanced manufacturing, supported by specialized laboratories
-          and testing facilities.
-    \item \textbf{Business City:} Accommodates service-oriented companies and
-          consulting firms with modern office spaces and collaborative environments.
-    \item \textbf{Industrial City:} Dedicated to manufacturing operations with
-          infrastructure supporting advanced manufacturing processes and Industry 4.0
-          technologies.
-\end{itemize}
+Novation City manages three specialized geographic zones: \textbf{Mechatronic City},
+which houses companies focused on mechatronics, robotics, and advanced manufacturing,
+supported by specialized laboratories and testing facilities; \textbf{Business City},
+which accommodates service-oriented companies and consulting firms with modern
+collaborative office environments; and \textbf{Industrial City}, dedicated to
+manufacturing operations with infrastructure supporting advanced manufacturing
+processes and Industry 4.0 technologies. The geographic separation of these zones
+means that engineers, students, and technical partners operating across sites cannot
+rely on physical co-location for equipment access, directly motivating the need for a
+unified remote access platform.
 
 A central pillar of Novation City's strategy is promoting Industry 4.0 principles and
 digital transformation. As documented in the industrial adoption literature
@@ -122,88 +132,216 @@ capabilities with secure remote access platforms that enable engineers to intera
 with industrial systems remotely through the IoT-REAP initiative, combining
 Infrastructure-as-a-Service provisioning with zero-trust security principles.
 
+% ---------------------------
 \subsection{Academic Framework}
+% ---------------------------
 
-This project was carried out as part of a licence-level software engineering
-internship at Novation City. The academic objective was to apply web engineering,
-software architecture, database modeling, remote infrastructure integration, and
-secure system design to a concrete industrial problem. The work required formal
-documentation through UML modeling, requirements analysis, implementation reporting,
-and validation of the delivered platform against specified requirements. The project
-thus bridges academic software engineering practice with real Industry 4.0 operational
-needs.
+This project was carried out as part of an end-of-licence software engineering
+internship (\textit{stage de fin d'études de licence}) at Novation City, conducted
+during the 2025--2026 academic year within the software engineering programme. The
+internship was supervised jointly by an academic advisor and an Advisory Unit
+technical referent, with deliverables including the present technical report, a live
+defense demonstration, and a fully operational platform deployment. The academic
+objective was to apply web engineering, software architecture, database modeling,
+remote infrastructure integration, and secure system design to a concrete industrial
+problem. This required formal documentation through UML modeling, requirements
+analysis, implementation reporting, and systematic validation of the delivered
+platform against specified requirements. The project thus bridges academic software
+engineering practice with real Industry 4.0 operational needs, providing both a
+meaningful professional contribution and a comprehensive vehicle for assessing
+end-of-licence technical competencies.
 
 % =============================================================================
 \section{Problem Statement}
 % =============================================================================
 
-The IoT-REAP project addresses critical operational challenges facing industrial
-companies and training institutions within the Industry 4.0 ecosystem. As
-manufacturing systems become increasingly digitized and interconnected, engineers and
-technicians require hands-on access to specialized industrial equipment---PLCs
-(Programmable Logic Controllers), HMIs (Human-Machine Interfaces), SCADA systems, and
-industrial robots---for training, development, and maintenance purposes.
+As manufacturing systems become increasingly digitized and interconnected under
+the Industry~4.0 paradigm, engineers and technicians working within organizations
+such as Novation City require hands-on access to specialized industrial equipment
+- Programmable Logic Controllers (PLCs), Human-Machine Interfaces (HMIs), SCADA
+systems, and industrial robots - for training, development, and maintenance
+purposes. Meeting this demand through physical presence alone is no longer
+sustainable at scale, yet the available remote access alternatives introduce
+their own operational, security, and logistical challenges. This section
+structures the problem along three complementary axes: the intrinsic limitations
+of remote access approaches, the security vulnerabilities they expose in
+operational technology (OT) environments, and the resource management difficulties
+they create for shared industrial infrastructure.
 
-\textbf{Remote Access Limitations:} Traditional approaches to industrial system
-access present significant challenges:
+% ---------------------------
+\subsection{Remote Access Limitations}
+% ---------------------------
 
-\begin{itemize}[label=-]
-    \item Physical presence requirements limit training scalability and increase
-          travel costs
-    \item VPN-based solutions are complex to configure, difficult to maintain, and
-          often incompatible with OT (Operational Technology) security requirements
-    \item Existing remote desktop tools lack integration with industrial protocols and
-          equipment
-    \item No unified platform exists for VM provisioning, remote desktop access, and
-          IoT device control
-\end{itemize}
+Traditional approaches to providing engineers with access to industrial systems
+impose physical constraints and operational overhead that directly limit training
+scalability and operational agility.
 
-\textbf{Security Concerns in OT Environments:} Industrial networks require strict
-isolation following the Purdue Reference Model (which organizes industrial network
-zones into five hierarchical levels, from field devices at Level 0 through control
-systems at Levels 2--3 to enterprise IT at Level 4--5), yet traditional IT remote
-access tools are not designed for OT security requirements:
+\textbf{Physical Presence Requirements:} Industrial training and maintenance
+activities have historically required engineers to be on-site, in front of the
+equipment. For an organization such as Novation City, which serves engineers,
+students, and industrial partners distributed across multiple sites in the MENA
+region, this model caps the number of simultaneous learners at the laboratory's
+physical seating capacity. Academic literature confirms
+this bottleneck: remote industrial laboratories are specifically motivated by
+the inability to scale equipment access to growing student cohorts and the high
+cost of replicating physical setups at multiple locations
+{\footnotesize\cite{sciencedirect-remote-lab-2024,remote-lab-acm-2021}}.
 
-\begin{itemize}[label=-]
-    \item \textbf{Network Segmentation:} IT remote access solutions often bypass OT
-          network boundaries, creating security vulnerabilities
-    \item \textbf{Session Management:} No automatic session expiration or quota
-          management for shared industrial resources
-    \item \textbf{Audit Trail:} Insufficient logging for industrial
-          security standards
-    \item \textbf{Access Control:} Lack of fine-grained role-based access to
-          different industrial zones
-\end{itemize}
+\textbf{VPN Complexity and Operational Overhead:} Virtual Private Networks
+remain the most widely deployed approach for extending remote access to
+industrial systems. However, VPN deployments require significant IT expertise
+to configure, maintain, and keep patched. Split-tunneling configurations create
+security vulnerabilities, and VPN credentials are prime targets for credential
+theft. According to a 2023 industry survey, nearly half of organizations reported
+being targeted by attackers exploiting VPN vulnerabilities, with one in five
+experiencing a successful breach in the preceding year
+{\footnotesize\cite{vpn-risk-survey-2023}}. The Dragos 2025 OT/ICS Cybersecurity
+Report documented 1,693 ransomware attacks targeting industrial organizations
+in 2024, an increase of 87~percent over the prior year, with threat actors
+explicitly exploiting unpatched VPN appliances and exposed remote desktop
+services as the primary initial access vector
+{\footnotesize\cite{dragos-ot-2025}}. Furthermore, more than 50~percent of
+the ransomware incidents responded to in 2024 involved a remote service such
+as a VPN appliance or an RDP server being leveraged as the entry point
+{\footnotesize\cite{beyondtrust-ot-2025}}.
 
-\textbf{Resource Sharing Challenges:} Educational institutions and industrial
-companies face difficulties in sharing expensive equipment:
+\textbf{Fragmented Tooling:} Organizations attempting to support remote industrial
+access currently deploy separate, disconnected systems for virtual machine
+management, remote desktop sessions, IoT device control, and camera monitoring.
+Each tool carries its own authentication model, logging format, and maintenance
+overhead. Secomea's \textit{State of Industrial Remote Access 2026} report, based
+on a global survey of industrial organizations, confirms that most still depend on
+overlapping combinations of VPNs, OEM-supplied tools, privileged access solutions,
+and newer OT-specific platforms. This fragmentation produces inconsistent audit
+trails and redundant access pathways even where individual tools are individually
+well-configured {\footnotesize\cite{secomea-state-2026}}.
 
-\begin{itemize}[label=-]
-    \item \textbf{Equipment Scarcity:} Industrial robots and specialized virtual
-          machines are costly and limited in quantity
-    \item \textbf{Scheduling Conflicts:} No automated reservation system prevents
-          double-booking of shared resources
-    \item \textbf{Utilization Monitoring:} Inability to track usage patterns and
-          optimize resource allocation
-\end{itemize}
+\textbf{Absence of Browser-Native Access:} All dominant industrial remote
+access tools require client-side software installation - a VPN client,
+a proprietary gateway agent, or a vendor-specific desktop application.
+This dependency increases deployment complexity, raises endpoint security
+exposure in shared training environments, and prevents access from workstations
+where users do not hold administrative rights. No widely adopted commercial
+solution currently provides full interactive access to PLCs, HMIs, and
+virtual machines through an unmodified browser without client installation
+{\footnotesize\cite{secomea-state-2026,forescout-rdp-vnc-2025}}.
+
+% ---------------------------
+\subsection{Security Concerns in OT Environments}
+% ---------------------------
+
+Industrial networks operate under security constraints that are fundamentally
+different from enterprise IT environments. The Purdue Reference Model organizes
+industrial network zones into five hierarchical levels, from field devices at
+Level~0 through control systems at Levels~2--3 to enterprise IT at Levels~4--5.
+Mixing IT remote access tools with OT environments violates these zone boundaries
+and introduces attack surface that cannot be managed by perimeter defenses alone.
+
+\textbf{IT/OT Network Boundary Violations:} Traditional IT remote access
+solutions are designed to provide broad network access once authenticated.
+Once inside a VPN, lateral movement across the OT network is often unrestricted,
+meaning a compromised engineer's credential can expose field devices, safety
+PLCs, and production systems that were never intended as remote access targets.
+Cisco's industrial security guidance confirms that always-on VPNs installed in
+the Industrial Demilitarized Zone (IDMZ) provide all-or-nothing access to OT
+assets, making fine-grained zone isolation impossible without additional
+tooling {\footnotesize\cite{cisco-sea-brief}}. Forescout researchers further
+found that remote access is ``one of the least governed paths into CPS
+environments,'' where VPNs and jump hosts extend network trust rather than
+enforcing granular control, frequently relying on shared or persistent
+credentials {\footnotesize\cite{forescout-rdp-vnc-2025}}.
+
+\textbf{Absence of Session Governance:} Existing solutions provide no automated
+session expiration, resource quotas, or per-session authorization scoping.
+An authenticated engineer retains persistent access until manually disconnected,
+with no platform-enforced idle timeout or automatic revocation when a reservation
+window ends. In shared training environments, this creates security exposure
+extending well beyond the scheduled access period.
+
+\textbf{Insufficient Audit Trail for Industrial Compliance:} Industrial security
+standards and emerging regulations including the NIS2 Directive and the Cyber
+Resilience Act require comprehensive, tamper-evident logging of all access
+and command events. Existing remote access tools provide basic connection logs
+at best, with no cryptographic integrity verification. The Secomea 2026 report
+notes that fragmented access stacks produce ``inconsistent oversight, redundant
+access pathways, and uneven coordination between IT, OT, and external vendors,''
+and that even organizations with high self-reported security confidence frequently
+exhibit audit trail gaps traceable to their multi-tool architectures
+{\footnotesize\cite{secomea-state-2026}}.
+
+\textbf{Lack of Fine-Grained Role-Based Access:} No existing general-purpose
+industrial remote access tool enforces role-aware access policies that
+distinguish between a learner provisioning a safe virtual environment for
+practice, an experienced engineer accessing a live PLC, and an administrator
+managing infrastructure. All authenticated users typically receive equivalent
+network-level access, with access differentiation left to external firewall
+rules.
+
+% ---------------------------
+\subsection{Resource Sharing and Training Challenges}
+% ---------------------------
+
+Beyond connectivity and security, the operational context of a technology
+cluster such as Novation City introduces a third problem dimension: coordinating
+shared access to expensive, limited industrial resources across concurrent users
+with heterogeneous skill levels and training objectives.
+
+\textbf{Equipment Scarcity and Cost:} Industrial robots, specialized PLC
+hardware, and high-fidelity virtual machine images configured for specific
+training scenarios represent significant capital investment. Academic literature
+identifies equipment cost as a leading constraint on the scalability of
+industrial automation education, noting that the inability to replicate physical
+setups across multiple sites or time slots fundamentally limits the number
+of learners who can receive meaningful hands-on experience
+{\footnotesize\cite{plos-plc-lab-2025}}. Virtual environments can extend
+equipment reach, but only when provisioning, lifecycle management, and cleanup
+are automated within the same platform used to schedule access.
+
+\textbf{Scheduling Conflicts and Double-Booking:} Without an integrated
+reservation system that enforces exclusive access to physical devices and
+applies session quotas to virtual machines, concurrent users will conflict
+over shared resources. No current industrial remote access product provides
+automated reservation management with atomic transaction guarantees to prevent
+double-booking. Organizations relying on manual scheduling via shared calendars
+or email coordination cannot guarantee conflict-free access at scale.
+
+\textbf{Lack of Integrated Training Context:} Simulation platforms and remote
+laboratories address the access problem but leave learners without the
+instructional scaffolding needed to make hands-on sessions productive. A learner
+who provisions a virtual PLC environment needs prerequisite theory, guided
+exercises, quizzes, and a record of progress - none of which are provided
+by any existing industrial remote access platform. The result is a pedagogical
+gap between content delivery (managed in a separate LMS) and practical
+laboratory work (managed in a separate remote access tool), creating
+coordination overhead for instructors and context-switching friction for learners.
 
 \begin{table}[H]
 \centering
-\caption{Critical Limitations of Current Industrial Remote Access Solutions}
-\begin{tabular}{|p{3.5cm}|p{5.5cm}|p{5cm}|}
+\caption{Critical Limitations of Current Industrial Remote Access Approaches}
+\begin{tabular}{|p{3.3cm}|p{5.2cm}|p{5cm}|}
 \hline
-\textbf{Limitation Category} & \textbf{Specific Problem} & \textbf{Business Impact} \\
-\hline
-Physical Access & Engineers must be on-site to access equipment & Limited training capacity, high travel costs \\
-\hline
-VPN Complexity & Complex configuration, security vulnerabilities & IT overhead, OT security risks \\
-\hline
-Fragmented Tools & Separate systems for VMs, remote desktop, robots & Context-switching, integration difficulties \\
-\hline
-No Session Management & No automatic expiration or resource quotas & Resource conflicts, security exposure \\
-\hline
-Limited Audit Trail & Insufficient logging for compliance & Industrial security gap \\
-\hline
+\textbf{Limitation Category} & \textbf{Specific Problem} & \textbf{Operational Impact} \\ \hline
+Physical Access Dependency
+    & On-site presence required for all equipment interaction
+    & Training capacity capped by lab seating; high travel costs \\ \hline
+VPN Security Exposure
+    & Credential theft, unpatched appliances, unrestricted lateral movement
+    & 87\% increase in OT ransomware; VPN as primary initial access vector \\ \hline
+Fragmented Tooling
+    & Separate systems for VMs, remote desktop, IoT devices, cameras
+    & Inconsistent audit trails, redundant credentials, governance gaps \\ \hline
+No Browser-Native Access
+    & Client installation required on every engineer's workstation
+    & Deployment overhead; impossible on locked-down training machines \\ \hline
+No Session Governance
+    & No idle timeout, no quota enforcement, no reservation system
+    & Resource conflicts, security exposure beyond scheduled windows \\ \hline
+Insufficient Audit Trail
+    & No cryptographic integrity; basic connection logs only
+    & Non-compliance with NIS2, CRA, and industrial security standards \\ \hline
+Disconnected Training
+    & LMS and remote access are separate, unintegrated systems
+    & Context-switching; no coupling of theory to hands-on practice \\ \hline
 \end{tabular}
 \label{tab:current-limitations}
 \end{table}
@@ -213,151 +351,364 @@ Limited Audit Trail & Insufficient logging for compliance & Industrial security 
 % =============================================================================
 
 The limitations established in Section~2 motivate a systematic examination of
-existing industrial remote access solutions. Before proposing the IoT-REAP
-architecture, it is essential to understand the technical approaches currently in
-use and identify the specific gaps they fail to address. This analysis provides the
-foundation for the design decisions presented in Section~4.
+the industrial remote access solutions currently deployed in the field. Rather
+than describing solution categories in the abstract, this analysis examines four
+representative commercial products that collectively cover the main approaches
+in use: Secomea SiteManager/GateManager, HMS eWON Cosy+ with Talk2M, Siemens
+SINEMA Remote Connect, and TeamViewer Tensor with Agentless Access. Each product
+is analyzed in terms of its architecture, core capabilities, and the specific
+limitations it exhibits relative to the IoT-REAP requirements. The analysis
+then draws a consolidated criticism that identifies the gaps no existing solution
+addresses, justifying the need for a purpose-built platform.
 
+% ---------------------------
 \subsection{Analysis of Existing Industrial Remote Access Solutions}
+% ---------------------------
 
-Industrial remote access has traditionally relied on several established approaches,
-each with distinct characteristics and limitations.
+\subsubsection{Secomea SiteManager / GateManager}
 
-\textbf{Virtual Private Networks (VPNs):} The most common approach for industrial
-remote access involves establishing encrypted tunnels between remote users and
-industrial networks. Organizations deploy VPN concentrators at facility perimeters,
-requiring engineers to install client software, configure connections, and authenticate
-before accessing internal resources.
+Secomea, a Danish industrial networking company founded in 2003, offers one
+of the most widely deployed purpose-built remote access platforms for operational
+technology environments. The solution is structured around three tightly
+integrated components {\footnotesize\cite{secomea-gatemanager}}.
 
-\textbf{Jump Servers / Bastion Hosts:} Some organizations implement intermediate
-servers that act as controlled access points to OT networks. Engineers first connect
-to the jump server, then establish secondary connections to target systems. This adds
-a security layer but increases connection complexity and latency.
+The \textbf{SiteManager} is an edge gateway deployed at the industrial site,
+available either as a DIN-rail-mountable hardware appliance (models 15XX/35XX)
+or as an embeddable software agent installable on Windows, Linux, HMIs, or
+industrial PCs. A single hardware SiteManager aggregates up to 100 industrial
+devices from any vendor via Ethernet, serial, and USB interfaces, using
+pre-defined device agents for PLCs, HMIs, and SCADA systems. The
+\textbf{GateManager} is a cloud or on-premises management server acting as a
+certificate-based rendezvous broker: the SiteManager and the remote engineer
+each initiate outbound connections to the GateManager, which verifies participant
+identities through X.509 certificate exchange before bridging the tunnel. This
+design eliminates the need for inbound firewall rule modifications at the
+industrial site. The \textbf{LinkManager} is the client application installed on
+the engineer's workstation to establish and manage remote sessions.
 
-\textbf{Proprietary Remote Access Tools:} Industrial equipment vendors (Siemens,
-Rockwell, Schneider) offer vendor-specific remote access solutions tied to their
-hardware ecosystems. These tools provide optimized connections to specific PLCs and
-HMIs but create vendor lock-in and fragmentation across multi-vendor environments.
+Secomea integrates with enterprise identity providers (Azure AD, Okta) via SSO,
+offers drag-and-drop user and access-right management on the GateManager portal,
+and holds IEC/PAS~62443-3 compliance certification as well as conformance with
+the Reference Architecture Model Industrie~4.0 (RAMI4.0)
+{\footnotesize\cite{secomea-security-audit}}.
 
-\textbf{Cloud-Based IIoT Platforms:} Emerging platforms such as AWS IoT, Azure IoT
-Hub, and PTC ThingWorx provide cloud connectivity for industrial devices. However,
-these focus primarily on data collection and monitoring rather than interactive remote
-control and desktop access.
+\textbf{Limitations:} Despite its OT pedigree, Secomea exhibits three critical
+constraints for the IoT-REAP context. First, full interactive remote desktop
+access to PLCs and HMIs still requires the LinkManager desktop client installed
+on the engineer's workstation; browser-native access is limited to specific
+supported device types and does not provide generic RDP or VNC capability over
+arbitrary VM targets. Second, the platform is designed exclusively for
+maintenance and teleservice of physical field devices: it provides no virtual
+machine provisioning, template management, or session lifecycle automation.
+Third, the per-device licensing model becomes cost-prohibitive in training
+environments where dozens of concurrent VM sessions must be provisioned and
+cleaned up on demand. There is no integrated resource reservation system, no
+session quota management, and no e-learning content delivery layer.
 
-\textbf{Generic Remote Desktop Solutions:} Tools such as TeamViewer, AnyDesk, and
-Microsoft RDP provide remote desktop capabilities but lack industrial-specific
-features: OT network isolation, session quotas, audit logging for compliance, and
-integration with virtualization platforms.
+\subsubsection{HMS eWON Cosy\,+ and Talk2M}
 
-Recent academic literature has complemented these commercial developments with
-proposals for software-defined perimeters (SDP) in operational technology networks
-and blockchain-based tamper-proof audit frameworks for industrial IoT. While these
-contributions advance specific security or transparency properties, they typically
-address isolated aspects---network isolation or access control---rather than providing
-an integrated platform that unifies VM provisioning, browser-based remote desktop,
-IoT device control, and resource scheduling within a single governed framework.
-IoT-REAP therefore positions itself as an integrated engineering response to this
-fragmented academic and commercial landscape.
+HMS Networks, a Belgian industrial connectivity specialist with over 600,000
+registered gateway devices globally, delivers industrial remote access through
+the \textbf{eWON Cosy+} hardware gateway and the \textbf{Talk2M} cloud service
+{\footnotesize\cite{ewon-industrial-remote-access}}.
 
+The eWON Cosy+ is a compact DIN-rail gateway installed inside a machine's
+control panel, connecting to PLCs and HMIs via Ethernet, serial, or USB. It
+establishes an outbound SSL/TLS-encrypted VPN tunnel to Talk2M using X.509
+certificate-based mutual authentication and hardware secure element tamper
+resistance. Talk2M acts as a secure broker completing the encrypted end-to-end
+tunnel between the remote engineer and the connected machine. The
+\textbf{eCatcher} desktop VPN client manages tunnel establishment and access
+rights on the engineer's workstation, while the \textbf{M2Web} web portal
+provides a browser-accessible interface for machine KPI monitoring and alarm
+review {\footnotesize\cite{ecatcher-docs}}.
+
+Talk2M is offered in three plans: \textbf{Talk2M Free} (included with gateway
+purchase, valid for 12 months per device, single concurrent connection),
+\textbf{Talk2M Light} (two simultaneous VPN connections, 99.5\% SLA-backed
+availability), and \textbf{Talk2M Pro} (configurable concurrent connection
+pools, firmware OTA management, visualization dashboards, and a DataMailbox
+API for multi-device data retrieval) {\footnotesize\cite{talk2m-pro}}.
+Administrators can consult session initiator, duration, and target gateway
+in eCatcher audit reports, and can define user groups and device pools
+for access segmentation on the Pro plan.
+
+\textbf{Limitations:} The eWON/Talk2M solution presents several critical gaps.
+Full remote desktop access to PLCs and HMIs requires eCatcher installed on the
+engineer's workstation; M2Web provides only data visualization and KPI
+monitoring, not interactive remote control sessions. This client installation
+requirement is incompatible with browser-only access for scalable training
+deployments. The concurrent connection limits create a hard scalability
+ceiling: Talk2M Light caps at two simultaneous VPN connections, meaning a
+cohort of 20 engineers cannot access shared equipment concurrently without
+the account being capped until the end of the billing month
+{\footnotesize\cite{talk2m-light-faq}}. There is no virtual machine
+provisioning capability, no automated resource reservation or scheduling
+system, no session quota enforcement, and no training content delivery.
+The solution is optimized for point-to-point maintenance access to physical
+machines, not for coordinating concurrent multi-user access to shared virtual
+laboratory environments.
+
+\subsubsection{Siemens SINEMA Remote Connect}
+
+Siemens AG offers \textbf{SINEMA Remote Connect} (SINEMA~RC) as the dedicated
+remote access management platform within its industrial communication portfolio,
+primarily targeting industrial sites operating Siemens automation infrastructure
+{\footnotesize\cite{siemens-sinema-rc}}.
+
+SINEMA~RC operates as a rendezvous server using OpenVPN: service technicians
+and the SCALANCE hardware router at the machine each establish separate OpenVPN
+connections to the SINEMA~RC Server, which verifies participant identities
+through certificate exchange before bridging the session. The required on-site
+hardware is a \textbf{SCALANCE} industrial router from the M or S series
+(e.g., SCALANCE~S615, SCALANCE~M874). The SINEMA~RC Client software must be
+installed on the technician's workstation to establish the tunnel. The
+management interface provides an address book of registered devices, participant
+group management (grouping users, devices, and subnets), and REST API support
+for automated bulk management tasks {\footnotesize\cite{siemens-sinema-getting-started}}.
+The cloud instance is hosted in an ISO/IEC~27001 certified data center, and
+an on-premises deployment option is available. The platform supports cellular,
+DSL, and private WAN connectivity and handles up to 800~Mbps aggregate
+transfer across an unlimited number of registered devices.
+
+\textbf{Limitations:} SINEMA~RC imposes significant constraints outside of
+its native Siemens ecosystem. The mandatory SCALANCE hardware at the machine
+side creates strong vendor lock-in: facilities running Rockwell, Schneider,
+or third-party PLCs alongside Siemens equipment cannot use SINEMA~RC as a
+unified access layer without deploying SCALANCE routers at every OT segment.
+The platform provides no browser-native remote desktop capability; the SINEMA~RC
+Client must be installed on the technician's workstation. There is no virtual
+machine provisioning or lifecycle management, no resource reservation or
+scheduling system, no MQTT or IoT telemetry integration, and no training
+content delivery layer. The solution was designed for teleservice and remote
+maintenance by qualified automation engineers, not for scalable access
+coordination across a mixed population of learners and instructors.
+
+\subsubsection{TeamViewer Tensor with Agentless Access}
+
+TeamViewer, a German remote support company originally serving IT helpdesk
+scenarios, has progressively extended its \textbf{Tensor} enterprise platform
+toward operational technology. In November~2025, TeamViewer launched
+\textbf{Agentless Access} for Tensor, allowing manufacturers and OEM machine
+builders to access PLCs, HMIs, and other OT endpoints remotely without
+installing agent software on each controlled device
+{\footnotesize\cite{teamviewer-agentless-2025}}.
+
+TeamViewer Tensor for OT provides zero-trust remote access with granular
+role-based access controls, protocol isolation, session audit logging, and
+centralized device management. Manufacturers such as Schw\"{a}bische
+Werkzeugmaschinen GmbH already deploy it for remote PLC programming and
+shop-floor automation control. Agentless Access extends these capabilities
+to legacy devices and closed systems by allowing engineers to work directly
+on OT endpoints from a central location without making software changes to
+the controlled devices {\footnotesize\cite{teamviewer-agentless-2025}}.
+The platform additionally supports terminal access, application control, edge
+management, and integration with third-party services such as IBM~Maximo for
+asset management workflows.
+
+\textbf{Limitations:} TeamViewer's OT capabilities remain recent additions
+to an architecture whose origins and operational model are rooted in IT remote
+support. The platform does not natively enforce industrial network
+segmentation according to the Purdue Reference Model; enforcement of OT/IT
+zone boundaries requires external network configuration and is not managed as
+a first-class platform policy. There is no virtual machine lifecycle management:
+Tensor cannot provision, clone, snapshot, or terminate Proxmox or KVM-based
+VMs on behalf of a user. No resource reservation or scheduling mechanism
+prevents double-booking of shared physical or virtual equipment. Session audit
+logging is present but does not implement cryptographic hash chaining for
+tamper-evident integrity verification. No MQTT command dispatch or robot
+telemetry streaming is supported. No training content delivery layer exists.
+Enterprise Tensor licensing follows a per-seat subscription model at
+significant cost, making it poorly adapted to academic institutions that
+need to provision transient access for large, rotating cohorts of learners.
+Finally, all sessions route through TeamViewer's proprietary cloud relay
+infrastructure rather than institution-controlled servers, which raises data
+sovereignty concerns for OT environments subject to industrial compliance
+obligations.
+
+% ---------------------------
 \subsection{Criticism of the Existing}
+% ---------------------------
 
-The current industrial remote access landscape exhibits several fundamental
-deficiencies that prevent it from meeting Industry 4.0 operational requirements.
+The systematic examination of the four representative solutions reveals a
+consistent structural pattern: each product was designed to address a specific,
+well-defined operational scenario (field maintenance access, OT-compatible VPN
+tunneling, Siemens ecosystem teleservice, or IT helpdesk-style remote support)
+without considering the integrated requirements of a training-oriented,
+multi-user virtual laboratory platform. The following critical deficiencies
+are shared across all reviewed solutions and are directly addressed by IoT-REAP.
 
-\textbf{VPN Complexity and Security Risks:} VPN deployments require significant IT
-expertise for configuration and maintenance. Split tunneling creates security
-vulnerabilities, and VPN credentials are prime targets for attackers. Once inside the
-VPN, lateral movement across the network is often unrestricted, violating zero-trust
-principles.
+\textbf{Client Installation Dependency Across All Solutions:}
+Secomea LinkManager, eWON eCatcher, Siemens SINEMA RC Client, and TeamViewer
+Tensor all require desktop client software installation for full-capability
+access. This dependency increases deployment overhead on training machines
+where users may not hold administrative rights, raises endpoint security
+exposure in shared environments, and eliminates the possibility of zero-friction
+access from an unmodified web browser. IoT-REAP eliminates this barrier entirely
+through Apache Guacamole, which tunnels RDP, VNC, and SSH protocols over
+WebSockets from a standard browser with no client installation whatsoever.
 
-\textbf{Lack of Session Management:} Existing solutions provide no automated session
-expiration, resource quotas, or reservation systems. Shared equipment cannot be
-efficiently scheduled, leading to conflicts and underutilization.
+\textbf{Universal Absence of Virtual Machine Provisioning:}
+None of the four solutions provides any VM lifecycle management capability.
+Engineers cannot self-provision a fresh virtual environment from a template
+catalog, extend an active session, hibernate an idle instance to preserve
+resources, or trigger automated VM cleanup on session expiry. This gap means
+that virtual laboratory infrastructure must be managed through a separate,
+unintegrated tool, reintroducing the fragmentation problem that motivates
+IoT-REAP. The platform integrates directly with Proxmox VE through a REST API
+client to enable on-demand provisioning, extension, hibernation, and cleanup
+within the same unified interface.
 
-\textbf{No OT/IT Network Isolation:} Traditional remote access tools do not enforce
-Purdue model network segmentation. Engineers accessing OT systems from IT networks
-introduce security vulnerabilities that weaken industrial security controls.
+\textbf{No Resource Reservation or Session Quota Management:}
+Secomea, eWON, SINEMA~RC, and TeamViewer Tensor provide no mechanism to prevent
+double-booking of shared physical devices or shared virtual machines. Talk2M's
+concurrent connection cap (two on the Light plan) illustrates the problem
+without solving it: it enforces a hard ceiling on simultaneous users rather
+than providing per-resource reservation with waiting queue management.
+IoT-REAP implements an atomic reservation system using database transaction
+locks, a waiting queue for devices already reserved, and session quota
+enforcement per user and per resource type.
 
-\textbf{Missing Audit Trail:} Industrial security practices require
-comprehensive logging of all access and commands. Existing tools lack tamper-evident
-audit logs with cryptographic integrity verification.
+\textbf{Incomplete OT/IT Network Segmentation as a Platform Policy:}
+All four solutions require network-layer configuration external to the platform
+to enforce Purdue model zone isolation. Secomea and eWON provide machine LAN
+segregation at the gateway level, and SINEMA~RC enforces isolation through
+SCALANCE routing rules, but in all cases zone enforcement is a network
+infrastructure concern rather than a platform access policy applied
+consistently to all session types. IoT-REAP enforces IT/OT zone separation
+through Proxmox cluster VLAN and firewall configuration bound to administrative
+policies that govern which VM session can access which network zone, without
+requiring users to understand or configure the underlying network topology.
 
-\textbf{Fragmented Tooling:} Organizations must deploy separate systems for VM
-management, remote desktop, IoT device control, and camera monitoring. This
-fragmentation increases operational complexity and prevents unified security policies.
+\textbf{No Tamper-Proof Audit Trail:}
+eWON Talk2M logs session initiators and durations; TeamViewer Tensor records
+session events. However, none of the reviewed solutions implements cryptographic
+integrity verification of audit records. In industrial security contexts,
+emerging regulations including NIS2 and the Cyber Resilience Act require
+a verifiable chain of evidence demonstrating that audit records have not been
+modified after the fact. IoT-REAP implements SHA-256 hash chaining across all
+audit log entries, ensuring that any retroactive modification of historical
+records produces a detectable chain break.
+
+\textbf{No Integrated Training Content Delivery in Any Solution:}
+All four reviewed solutions focus exclusively on connectivity. None provides
+any mechanism to associate a remote access session with prerequisite instructional
+content, progress tracking, quizzes, or certificates within the same interface.
+Engineers using any of these tools to access a training PLC or virtual
+laboratory environment must navigate to a separate LMS for theory, then context-
+switch to the remote access tool for practice. IoT-REAP directly couples
+training paths, modules, and practical VM laboratory sessions within a single
+interface, enabling seamless transition from instructional content to hands-on
+practice without leaving the platform.
 
 \begin{table}[H]
     \centering
-    \caption{Comparison of Existing Industrial Remote Access Solutions}
-    \begin{tabular}{|p{2.8cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+    \caption{Comparative Analysis of Existing Industrial Remote Access Solutions}
+    \begin{tabular}{|p{2.9cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|}
         \hline
-        \textbf{Requirement} & \textbf{VPN Solutions} & \textbf{Generic RDP Tools} & \textbf{IIoT Platforms} \\
+        \textbf{Requirement}
+            & \textbf{Secomea SiteManager}
+            & \textbf{HMS eWON / Talk2M}
+            & \textbf{Siemens SINEMA RC}
+            & \textbf{TeamViewer Tensor} \\
         \hline
-        Browser-based Access & Poor: Client installation required & Poor: Client software required & Good: Native web interface \\
+        Browser-Native Full Access
+            & Partial: limited device types only
+            & Poor: eCatcher client required
+            & Poor: SINEMA RC client required
+            & Poor: agent/client required \\
         \hline
-        VM Provisioning      & Poor: Not supported           & Poor: Not supported             & Poor: Data focus only \\
+        VM Lifecycle Management
+            & None & None & None & None \\
         \hline
-        Session Management   & Poor: Manual only             & Poor: No automation             & Partial support \\
+        Resource Reservation \& Quotas
+            & None
+            & Poor: connection caps only
+            & None & None \\
         \hline
-        OT/IT Isolation      & Poor: Bypasses zones          & Poor: No awareness              & Partial support \\
+        OT/IT Zone Enforcement
+            & Good: OT-native gateway design
+            & Good: machine LAN segregation
+            & Good: SCALANCE-enforced zones
+            & Partial: external config required \\
         \hline
-        Audit Logging        & Good: Basic logs              & Poor: Insufficient              & Good: Comprehensive logging \\
+        Session Audit Logging
+            & Partial: access events only
+            & Partial: initiator and duration
+            & Partial: VPN connection logs
+            & Good: full session record \\
         \hline
-        IoT Integration      & Poor: Not supported           & Poor: Not supported             & Good: Core feature \\
+        Tamper-Proof Audit (Hash Chain)
+            & None & None & None & None \\
+        \hline
+        Multi-Vendor Hardware Support
+            & Good: vendor-agnostic agents
+            & Good: any device via Ethernet
+            & Poor: Siemens ecosystem only
+            & Good: agentless OT endpoints \\
+        \hline
+        IoT Command Dispatch (MQTT)
+            & None & None & None & None \\
+        \hline
+        Integrated E-Learning Platform
+            & None & None & None & None \\
         \hline
     \end{tabular}
     \label{tab:solution-comparison}
 \end{table}
 
-The systematic analysis reveals that current solutions were designed for traditional
-IT environments and fail to address the unique requirements of Industry 4.0:
-zero-trust security, OT compliance, resource-efficient scheduling, and unified
-management. These deficiencies collectively justify the development of a purpose-built
-industrial remote access platform.
+The comparative analysis confirms that no existing commercial solution addresses
+the combination of browser-based VM provisioning, remote desktop access,
+IoT command dispatch, resource reservation, tamper-proof audit logging, and
+integrated training content delivery that the Novation City operational context
+requires. Each reviewed product fills a genuine industrial need but leaves the
+multi-dimensional requirements of a training-oriented virtual laboratory platform
+entirely unaddressed. These deficiencies, taken together, constitute a clear and
+specific justification for designing and implementing IoT-REAP as a purpose-built
+platform for Industry~4.0 training and remote laboratory operations.
 
 % =============================================================================
 \section{Proposed Solution}
 % =============================================================================
 
-Based on the deficiencies identified in Section~3, this section presents the IoT-REAP
-platform definition, its architectural approach, the technologies constituting the
-solution, and an overview of the security framework and resource management
-capabilities.
+Based on the deficiencies identified in Section~3, this section presents the
+IoT-REAP platform definition, its architectural approach, the rationale governing
+technology selection, and an overview of the security framework and resource
+management capabilities.
 
+% ---------------------------
 \subsection{Project Definition}
+% ---------------------------
 
-The IoT-REAP (Internet of Things -- Remote Equipment Access Platform) project aims to
-develop an integrated web-based platform that provides secure remote access to
-industrial systems, virtual machines, and IoT devices. The project addresses the
-limitations identified in current industrial remote access solutions by creating a
-unified platform for Industry 4.0 operations.
+The IoT-REAP project aims to develop an integrated web-based platform that provides
+secure remote access to industrial systems, virtual machines, and IoT devices. The
+project addresses the limitations identified in current industrial remote access
+solutions by creating a unified platform for Industry 4.0 operations.
 
 \textbf{Project Scope:} Development of a comprehensive platform enabling engineers to
 provision virtual machines, access them via browser-based remote desktop, control IoT
 robots, monitor camera feeds, and operate within a zero-trust security
-framework---all from a single unified interface, without client-side software
+framework - all from a single unified interface, without client-side software
 installation.
 
-\textbf{Core Problem Addressed:} Existing remote access solutions are fragmented,
-lack OT-specific security controls, provide no resource management, and
-fail to meet industrial compliance requirements. IoT-REAP unifies VM provisioning,
-remote desktop access, IoT device control, and security monitoring into a single
-governed platform.
-
+% ---------------------------
 \subsection{Solution Architecture}
+% ---------------------------
 
 The proposed solution employs a modern web application architecture built on
 established software engineering principles.
 
 \textbf{Separation of Concerns:} Clear architectural boundaries between data
 management, business logic, and presentation layers enable independent development
-and maintenance of each component. The backend follows the Service-Repository
-pattern, ensuring controllers remain thin and business logic is encapsulated in
-dedicated service classes.
+and maintenance of each component. The backend follows a Service Layer pattern over
+a Repository abstraction, ensuring controllers remain thin and business logic is
+encapsulated in dedicated service classes.
 
-\textbf{API-First Integration:} External services (Proxmox VE, Apache Guacamole,
-and MQTT broker) integrate through well-defined REST interfaces,
-ensuring loose coupling and flexibility to adapt to evolving infrastructure
+\textbf{API-First Integration:} External services integrate through well-defined
+interfaces: Proxmox VE and Apache Guacamole expose REST APIs consumed by the
+backend, while the MQTT broker provides a publish-subscribe messaging layer for
+IoT command dispatch and telemetry streaming, ensuring loose coupling and flexibility
+to adapt to evolving infrastructure
 {\footnotesize\cite{proxmox-ve-api,guacamole-manual,mqtt-oasis}}.
 
 \textbf{Event-Driven Architecture:} System components communicate via Laravel Events
@@ -368,32 +719,45 @@ telemetry, and security alerts {\footnotesize\cite{laravel-docs}}.
 authorized regardless of network location, following least-privilege principles
 with role-based policy enforcement.
 
-
+% ---------------------------
 \subsection{Technology Overview}
+% ---------------------------
+
+Technology selection for IoT-REAP was driven by four criteria: availability of a
+mature REST API enabling programmatic integration, native support for the target
+protocols (WebSocket, RDP/VNC, MQTT), suitability for asynchronous and event-driven
+workflows, and alignment with the open-source licensing constraints of an academic
+project. \textbf{Laravel~12} was selected as the backend framework for its native
+broadcasting system (Laravel Echo/Reverb), job queue infrastructure essential for
+asynchronous VM lifecycle operations, and its policy-based authorization layer, which
+maps directly onto the platform's role hierarchy. \textbf{React~18 with TypeScript}
+was chosen for the frontend to leverage the component model for complex UI states
+(session dashboards, Guacamole viewer embedding) and strong typing to reduce
+integration errors at the API boundary. \textbf{Proxmox VE} was preferred over
+commercial hypervisor platforms for its open REST API, KVM-based virtualization, and
+absence of per-socket licensing costs in a training context. \textbf{Apache Guacamole}
+is the only production-grade, open-source gateway that tunnels RDP, VNC, and SSH
+natively over WebSockets without client-side installation, directly resolving the
+browser-native access gap identified in Section~3. \textbf{Mosquitto} was selected as
+the MQTT broker for its lightweight footprint, QoS~1 delivery guarantee support, and
+well-documented PHP client libraries enabling straightforward integration with the
+platform's event-driven backend.
 
 Table~\ref{tab:technology-stack} maps each layer of the IoT-REAP platform to its
-corresponding technology and functional role. This overview provides a consolidated
-reference for understanding the subsequent implementation chapters.
+corresponding technology and functional role.
 
 \begin{table}[H]
 \centering
 \caption{IoT-REAP Technology Stack}
 \begin{tabular}{|p{3.2cm}|p{3.8cm}|p{6cm}|}
 \hline
-\textbf{Layer} & \textbf{Technology} & \textbf{Role in Platform} \\
-\hline
-Backend Framework & Laravel 12 (PHP) & REST API, business logic, event broadcasting, job queues \\
-\hline
-Frontend & React 18 + TypeScript & Reactive user interface; Zustand state management \\
-\hline
-Virtualization & Proxmox VE & VM lifecycle management and node orchestration \\
-\hline
-Remote Access Gateway & Apache Guacamole & Browser-based RDP/VNC/SSH tunneling \\
-\hline
-IoT Messaging & MQTT (Mosquitto) & Robot command publishing and telemetry streaming \\
-\hline
-Relational Database & MySQL 8 & Persistent storage for all platform entities \\
-\hline
+\textbf{Layer} & \textbf{Technology} & \textbf{Role in Platform} \\ \hline
+Backend Framework & Laravel 12 (PHP) & REST API, business logic, event broadcasting, job queues \\ \hline
+Frontend & React 18 + TypeScript & Reactive user interface; Zustand state management \\ \hline
+Virtualization & Proxmox VE & VM lifecycle management and node orchestration \\ \hline
+Remote Access Gateway & Apache Guacamole & Browser-based RDP/VNC/SSH tunneling \\ \hline
+IoT Messaging & MQTT (Mosquitto) & Robot command publishing and telemetry streaming \\ \hline
+Relational Database & MySQL 8 & Persistent storage for all platform entities \\ \hline
 \end{tabular}
 \label{tab:technology-stack}
 \end{table}
@@ -407,14 +771,15 @@ into concrete actors, system services, and quality constraints. It identifies wh
 interacts with the platform, what each actor must be able to do, and the measurable
 quality properties expected from the solution.
 
+% ---------------------------
 \subsection{Identification of Actors}
+% ---------------------------
 
 The platform is organized around role-based access control implemented through three
 application roles: \texttt{engineer}, \texttt{teacher}, and \texttt{admin}. An
 unauthenticated state represents public access. Each actor interacts with the same
 platform from a different operational perspective, and each role is associated with a
-distinct set of services, permissions, and workflows.
-
+distinct set of services, permissions, and workflows. 
 \textbf{Unauthenticated User (Guest)} represents any visitor who has not yet
 authenticated. This actor can browse public training paths, access legal and
 informational pages, consult public discussion threads in read-only mode, view
@@ -473,7 +838,9 @@ laboratory provisioning, and infrastructure governance. This combination disting
 IoT-REAP from a conventional learning management system because educational workflows
 are directly coupled to remote computing resources and physical IoT device access.
 
+% ---------------------------
 \subsection{Functional Requirements}
+% ---------------------------
 
 The platform must support the following functional requirements according to actor
 responsibilities and shared system behavior.
@@ -566,8 +933,9 @@ responsibilities and shared system behavior.
           operations, refund handling, hardware attachment)
 \end{itemize}
 
-
+% ---------------------------
 \subsection{Non-Functional Requirements}
+% ---------------------------
 
 The quality constraints of the platform are defined by its educational,
 infrastructure, and operational nature. Where applicable, measurable thresholds are
@@ -581,8 +949,8 @@ specified to allow objective verification during the testing phase.
           for standard configurations
     \item Remote desktop connection establishment through Guacamole must not exceed
           5 seconds post-authentication
-    \item Video streaming and progress tracking must occur with perceptible latency
-          under 2 seconds
+    \item Video streaming and progress tracking must maintain end-to-end latency under
+          2 seconds
     \item Search, analytics summaries, and notification retrieval must execute within
           acceptable response windows under concurrent demand
 \end{itemize}
@@ -643,13 +1011,15 @@ Agile Scrum methodology selected for the project, the product backlog that gover
 sprint priorities, the associated ceremonies, and the UML modeling language used for
 system documentation.
 
+% ---------------------------
 \subsection{The Agile Scrum Methodology}
+% ---------------------------
 
 Agile Scrum was selected for IoT-REAP because the platform combines evolving
 infrastructure requirements (Proxmox integration, Guacamole, MQTT), camera and
-robot integration, and iterative stakeholder validation---conditions that make fixed,
-waterfall-style planning impractical. This subsection defines the Scrum framework and
-describes its application to the project.
+robot integration, and iterative stakeholder validation - conditions that make
+fixed, waterfall-style planning impractical. This subsection defines the Scrum
+framework and describes its application to the project.
 
 \subsubsection{Definition}
 
@@ -657,9 +1027,9 @@ Agile Scrum is a structured framework for implementing Agile principles in softw
 development {\footnotesize\cite{agile}}. While Agile is a broad philosophy emphasizing
 iterative delivery and adaptability, Scrum is a concrete instantiation that defines
 roles, ceremonies, and artifacts. Scrum organizes work into fixed-duration iterations
-called \textbf{sprints} (typically 1--2 weeks), during which a cross-functional team
-commits to delivering a potentially shippable product increment. Each sprint follows
-a cycle of planning, daily standups, development, review, and retrospective
+called \textbf{sprints} (typically one to four weeks), during which a cross-functional
+team commits to delivering a potentially shippable product increment. Each sprint
+follows a cycle of planning, daily standups, development, review, and retrospective
 ceremonies.
 
 Scrum defines three roles: the \textbf{Product Owner} (prioritizes the backlog and
@@ -709,9 +1079,9 @@ dependency. New requirements (infrastructure changes, the training platform addi
 are incorporated into subsequent sprints without disrupting committed work.
 
 \textbf{Sprint Increments and MVP Validation:} Each sprint produces a working software
-increment. Sprint~3 delivers the MVP (VM provisioning + remote desktop access +
-basic robot control), providing an early validation milestone with stakeholders before
-the platform's full feature set is implemented.
+increment. Sprint~3 delivers the MVP (VM provisioning + remote desktop access),
+providing an early validation milestone with stakeholders before the full IoT control
+layer, camera integration, and training platform are implemented in subsequent sprints.
 
 \textbf{Sprint Review \& Stakeholder Feedback:} At each sprint boundary, completed
 work is demonstrated to stakeholders. Reviewers examine running features, validate
@@ -723,16 +1093,22 @@ retrospectives identify improvements in process, tooling, and code quality. Earl
 retrospectives surfaced the need for more comprehensive API documentation and
 identified infrastructure bottlenecks requiring architectural adjustments.
 
-\textbf{Definition of Done:} For IoT-REAP, a user story is considered complete when:
-code is written and passes automated tests, the feature is
-validated against its acceptance criteria, and any relevant API or user-facing
-behavior is documented.
+\textbf{Definition of Done:} For IoT-REAP, a user story is considered complete when
+the implementation is written and validated against its acceptance criteria by the
+developer and supervisor, and any relevant API or user-facing behavior is documented.
+Automated test coverage is progressively integrated across sprints, with full test
+suite execution and load testing consolidated in Sprint~6 as a dedicated quality
+assurance phase.
 
+% ---------------------------
 \subsection{Product Backlog}
+% ---------------------------
 
 The IoT-REAP platform development followed a prioritized product backlog organized by
-sprint. Table~\ref{tab:product-backlog} presents the key user stories with priorities
-and sprint assignments.
+sprint. Table~\ref{tab:product-backlog} presents the representative user stories per
+sprint with their priorities and assignments. Items 28--40 correspond to granular
+infrastructure hardening and API refinement tasks tracked internally; this table
+presents the principal user-facing stories for conciseness.
 
 \begin{longtable}{|p{0.03\textwidth}|p{0.70\textwidth}|p{0.08\textwidth}|p{0.09\textwidth}|}
 \caption{IoT-REAP Platform Product Backlog}
@@ -754,105 +1130,59 @@ and sprint assignments.
 \hline
 \endlastfoot
 
-\multicolumn{4}{|c|}{\textbf{Sprint 1: Foundation, Authentication \& Audit}} \\
-\hline
-01 & As a user, I want to register and log in securely using session-based authentication & High & Sprint 1 \\
-\hline
-02 & As an admin, I want role-based access control (engineer, teacher, admin) & High & Sprint 1 \\
-\hline
-03 & As a developer, I need a database schema for users with ULID primary keys & High & Sprint 1 \\
-\hline
-04 & As a user, I want password reset functionality via email & Medium & Sprint 1 \\
-\hline
-05 & As a developer, I need a React frontend with TypeScript and Zustand state management {\footnotesize\cite{react-docs,typescript-docs,zustand-docs}} & High & Sprint 1 \\
-\hline
-06 & As a developer, I need a tamper-proof audit log with SHA-256 hash chaining & High & Sprint 1 \\
-\hline
-\multicolumn{4}{|c|}{\textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation}} \\
-\hline
-07 & As a developer, I need a database schema for VM nodes, templates, and sessions & High & Sprint 2 \\
-\hline
-08 & As a developer, I need a Proxmox API client with retry logic and error handling & High & Sprint 2 \\
-\hline
-09 & As an engineer, I want to browse VM templates and launch sessions & High & Sprint 2 \\
-\hline
-10 & As a developer, I need a load balancer to distribute VMs across Proxmox nodes & High & Sprint 2 \\
-\hline
-11 & As an admin, I want to view all nodes with live CPU/RAM statistics & Medium & Sprint 2 \\
-\hline
-12 & As an admin, I want to register multiple Proxmox servers with encrypted credentials & High & Sprint 2 \\
-\hline
-13 & As a developer, I need to extend the Proxmox architecture to support multiple independent clusters & High & Sprint 2 \\
-\hline
-14 & As an engineer, I want to select a target Proxmox cluster when provisioning a VM & High & Sprint 2 \\
-\hline
-15 & As an admin, I want to enforce Purdue model network isolation (IT/OT zone separation) & High & Sprint 2 \\
-\hline
-16 & As an admin, I want a complete dashboard with quota management and activity logs & High & Sprint 2 \\
-\hline
-\multicolumn{4}{|c|}{\textbf{Sprint 3: Guacamole Remote Access --- MVP}} \\
-\hline
-17 & As a developer, I need a Guacamole client service for connection management & High & Sprint 3 \\
-\hline
-18 & As an engineer, I want browser-based RDP/VNC access to my VM session & High & Sprint 3 \\
-\hline
-19 & As an engineer, I want to extend my session duration in 30-minute increments & High & Sprint 3 \\
-\hline
-20 & As an engineer, I want to terminate my session and have the VM cleaned up & High & Sprint 3 \\
-\hline
-21 & As an engineer, I want to save my preferred connection settings (display, audio) & Medium & Sprint 3 \\
-\hline
-\multicolumn{4}{|c|}{\textbf{Sprint 4: Robot, Camera, Session Management \& Integration Hardening}} \\
-\hline
-22 & As a developer, I need an MQTT service for robot command publishing & High & Sprint 4 \\
-\hline
-23 & As an engineer, I want to reserve a robot with atomic transaction locks & High & Sprint 4 \\
-\hline
-24 & As an engineer, I want an emergency stop button that terminates robot motion instantly & High & Sprint 4 \\
-\hline
-25 & As an engineer, I want real-time robot telemetry streamed via WebSocket & High & Sprint 4 \\
-\hline
-26 & As a developer, I need idle session hibernation (suspend after 10 minutes of inactivity) & Medium & Sprint 4 \\
-\hline
-27 & As an engineer, I want a live camera feed from the ESP32-CAM during robot control & High & Sprint 4 \\
-\hline
-\multicolumn{4}{|c|}{\textbf{Sprint 5: Technical Training Platform}} \\
-\hline
-41 & As an instructor, I want to create structured courses with modules, lessons, and prerequisite tracking & High & Sprint 5 \\
-\hline
-42 & As an instructor, I want to upload videos with HLS streaming and multi-quality playback (360p--1080p) {\footnotesize\cite{hls-rfc8216}} & High & Sprint 5 \\
-\hline
-43 & As a learner, I want to enroll in courses and track my progress across lessons and modules & High & Sprint 5 \\
-\hline
-44 & As an instructor, I want to create timed quizzes with auto-grading, passing scores, and retry limits & High & Sprint 5 \\
-\hline
-45 & As a learner, I want hands-on VM lab sessions integrated with course lessons for practical training & High & Sprint 5 \\
-\hline
-46 & As a learner, I want to receive verifiable digital certificates upon course completion & High & Sprint 5 \\
-\hline
-47 & As a learner, I want to take timestamped notes during video lessons for later review & Medium & Sprint 5 \\
-\hline
-48 & As a learner, I want to rate and review courses to help other learners make informed decisions & Medium & Sprint 5 \\
-\hline
-49 & As an instructor, I want an analytics dashboard showing enrollments, completions, and revenue & High & Sprint 5 \\
-\hline
-50 & As an admin, I want to manage course categories and featured course placement & Medium & Sprint 5 \\
-\hline
-\multicolumn{4}{|c|}{\textbf{Sprint 6: Testing \& Delivery}} \\
-\hline
-51 & As a developer, I need to perform tests with mocked external APIs & High & Sprint 6 \\
-\hline
-52 & As a developer, I need load testing: 50 concurrent logins, 25 VMs, 40 Guacamole sessions & High & Sprint 6 \\
-\hline
-53 & As a developer, I need an OWASP ZAP scan with zero critical or high findings {\footnotesize\cite{owasp-zap-docs}} & High & Sprint 6 \\
-\hline
-54 & As a user, I want comprehensive documentation (user manual, API reference) & High & Sprint 6 \\
-\hline
-55 & As a developer, I need to prepare and deliver a 15-minute live defense demonstration & High & Sprint 6 \\
-\hline
+\multicolumn{4}{|c|}{\textbf{Sprint 1: Foundation, Authentication \& Audit}} \\ \hline
+01 & As a user, I want to register and log in securely using session-based authentication & High & Sprint 1 \\ \hline
+02 & As an admin, I want role-based access control (engineer, teacher, admin) & High & Sprint 1 \\ \hline
+03 & As a developer, I need a database schema for users with ULID primary keys & High & Sprint 1 \\ \hline
+04 & As a user, I want password reset functionality via email & Medium & Sprint 1 \\ \hline
+05 & As a developer, I need a React frontend with TypeScript and Zustand state management {\footnotesize\cite{react-docs,typescript-docs,zustand-docs}} & High & Sprint 1 \\ \hline
+06 & As a developer, I need a tamper-proof audit log with SHA-256 hash chaining & High & Sprint 1 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation}} \\ \hline
+07 & As a developer, I need a database schema for VM nodes, templates, and sessions & High & Sprint 2 \\ \hline
+08 & As a developer, I need a Proxmox API client with retry logic and error handling & High & Sprint 2 \\ \hline
+09 & As an engineer, I want to browse VM templates and launch sessions & High & Sprint 2 \\ \hline
+10 & As a developer, I need a load balancer to distribute VMs across Proxmox nodes & High & Sprint 2 \\ \hline
+11 & As an admin, I want to view all nodes with live CPU/RAM statistics & Medium & Sprint 2 \\ \hline
+12 & As an admin, I want to register multiple Proxmox servers with encrypted credentials & High & Sprint 2 \\ \hline
+13 & As a developer, I need to extend the Proxmox architecture to support multiple independent clusters & High & Sprint 2 \\ \hline
+14 & As an engineer, I want to select a target Proxmox cluster when provisioning a VM & High & Sprint 2 \\ \hline
+15 & As an admin, I want to enforce Purdue model network isolation (IT/OT zone separation) & High & Sprint 2 \\ \hline
+16 & As an admin, I want a complete dashboard with quota management and activity logs & High & Sprint 2 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 3: Guacamole Remote Access - MVP}} \\ \hline
+17 & As a developer, I need a Guacamole client service for connection management & High & Sprint 3 \\ \hline
+18 & As an engineer, I want browser-based RDP/VNC access to my VM session & High & Sprint 3 \\ \hline
+19 & As an engineer, I want to extend my session duration in 30-minute increments & High & Sprint 3 \\ \hline
+20 & As an engineer, I want to terminate my session and have the VM cleaned up & High & Sprint 3 \\ \hline
+21 & As an engineer, I want to save my preferred connection settings (display, audio) & Medium & Sprint 3 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 4: Robot, Camera, Session Management \& Integration Hardening}} \\ \hline
+22 & As a developer, I need an MQTT service for robot command publishing & High & Sprint 4 \\ \hline
+23 & As an engineer, I want to reserve a robot with atomic transaction locks & High & Sprint 4 \\ \hline
+24 & As an engineer, I want an emergency stop button that terminates robot motion instantly & High & Sprint 4 \\ \hline
+25 & As an engineer, I want real-time robot telemetry streamed via WebSocket & High & Sprint 4 \\ \hline
+26 & As a developer, I need idle session hibernation (suspend after 10 minutes of inactivity) & Medium & Sprint 4 \\ \hline
+27 & As an engineer, I want a live camera feed from the ESP32-CAM during robot control & High & Sprint 4 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 5: Technical Training Platform}} \\ \hline
+41 & As an instructor, I want to create structured courses with modules, lessons, and prerequisite tracking & High & Sprint 5 \\ \hline
+42 & As an instructor, I want to upload videos with HLS streaming and multi-quality playback (360p-1080p) {\footnotesize\cite{hls-rfc8216}} & High & Sprint 5 \\ \hline
+43 & As a learner, I want to enroll in courses and track my progress across lessons and modules & High & Sprint 5 \\ \hline
+44 & As an instructor, I want to create timed quizzes with auto-grading, passing scores, and retry limits & High & Sprint 5 \\ \hline
+45 & As a learner, I want hands-on VM lab sessions integrated with course lessons for practical training & High & Sprint 5 \\ \hline
+46 & As a learner, I want to receive verifiable digital certificates upon course completion & High & Sprint 5 \\ \hline
+47 & As a learner, I want to take timestamped notes during video lessons for later review & Medium & Sprint 5 \\ \hline
+48 & As a learner, I want to rate and review courses to help other learners make informed decisions & Medium & Sprint 5 \\ \hline
+49 & As an instructor, I want an analytics dashboard showing enrollments, completions, and revenue & High & Sprint 5 \\ \hline
+50 & As an admin, I want to manage course categories and featured course placement & Medium & Sprint 5 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 6: Testing \& Delivery}} \\ \hline
+51 & As a developer, I need to perform unit and integration tests with mocked external APIs & High & Sprint 6 \\ \hline
+52 & As a developer, I need load testing targeting 50 concurrent logins, 25 active VMs, and 40 simultaneous Guacamole sessions & High & Sprint 6 \\ \hline
+53 & As a developer, I need an OWASP ZAP scan with zero critical or high findings {\footnotesize\cite{owasp-zap-docs}} & High & Sprint 6 \\ \hline
+54 & As a user, I want comprehensive documentation (user manual, API reference) & High & Sprint 6 \\ \hline
+55 & As a developer, I need to prepare and deliver a 15-minute live defense demonstration & High & Sprint 6 \\ \hline
 \end{longtable}
 
+% ---------------------------
 \subsection{Agile Scrum Ceremonies and Collaboration}
+% ---------------------------
 
 \textbf{Sprint Planning (2--4 hours):} At the beginning of each 2-week sprint,
 planning sessions engage the developer, supervisors, and Advisory Unit stakeholders.
@@ -882,7 +1212,9 @@ adjustments.
 is continuously refined. New requirements are added, estimated, and prioritized,
 ensuring Sprint Planning sessions remain efficient and focused on high-value delivery.
 
+% ---------------------------
 \subsection{The UML Modeling Language}
+% ---------------------------
 
 \begin{figure}[H]
 \centering
@@ -893,25 +1225,24 @@ ensuring Sprint Planning sessions remain efficient and focused on high-value del
 
 Unified Modeling Language (UML) is a standardized visual modeling language used in
 software engineering to specify, visualize, construct, and document the artifacts of
-software systems {\footnotesize\cite{booch2005}}. Developed by Grady Booch, James
-Rumbaugh, and Ivar Jacobson in the mid-1990s, UML provides a common vocabulary for
-object-oriented design and is the industry standard for software architecture
-documentation.
+software systems {\footnotesize\cite{booch2005}}. UML encompasses two main categories
+of diagram types: \textbf{structural diagrams} (class, component, deployment, and
+package diagrams) and \textbf{behavioral diagrams} (use case, sequence, activity, and
+state machine diagrams).
 
-UML encompasses two main categories of diagram types:
-
-\begin{itemize}
-    \item \textbf{Structural Diagrams:} Class diagrams, component diagrams, deployment
-          diagrams, and package diagrams
-    \item \textbf{Behavioral Diagrams:} Use case diagrams, sequence diagrams, activity
-          diagrams, and state machine diagrams
-\end{itemize}
-
-For the IoT-REAP platform, UML modeling was applied during the design phase to produce use
-case diagrams, class diagrams, and sequence diagrams illustrating critical workflows
-such as VM provisioning and robot command dispatch. These models served as architectural
-contracts between the developer and stakeholders, ensuring shared understanding of system
-boundaries before implementation.
+For the IoT-REAP platform, UML modeling was applied purposefully across the design
+phase to document four distinct concerns. \textbf{Use case diagrams} were produced to
+capture system boundaries and actor interactions, including the global use case diagram
+presented in this chapter and per-feature diagrams developed in subsequent chapters for
+VM provisioning, robot reservation, and training path enrollment. \textbf{Class
+diagrams} model the domain entities and their relationships, covering the core data
+model across the learning, laboratory, and infrastructure domains. \textbf{Sequence
+diagrams} document time-ordered interactions for critical workflows: VM provisioning
+through the Proxmox API, one-time Guacamole token generation and session establishment,
+MQTT command dispatch and telemetry streaming, and SHA-256 hash chain audit log entry
+creation. These models served as architectural contracts between the developer and
+stakeholders, ensuring shared understanding of system boundaries and interaction
+protocols before implementation began.
 
 % =============================================================================
 \section{Project Planning}
@@ -919,53 +1250,145 @@ boundaries before implementation.
 
 The IoT-REAP platform development is organized as a phased timeline from February
 to end of May 2026, following an Agile Scrum sprint-based approach
-{\footnotesize\cite{agile}}. The project reaches 2 key milestones at Sprint~3 (MVP
-Demo) and Sprint 6 (Complete).
+{\footnotesize\cite{agile}}. The project reaches two key milestones: the MVP
+demonstration at the conclusion of Sprint~3 and the complete platform delivery at
+Sprint~5.
+
+% ---------------------------
 \subsection{Sprint-Based Development Phases}
+% ---------------------------
 
-The development timeline is organized into six thematic sprints. The chronological order reflects a deliberate architectural dependency chain: authentication and audit foundations precede infrastructure integration, which precedes remote access validation, which precedes IoT and camera integration, which precedes the training platform, and finally testing and delivery. Durations were allocated based on implementation complexity, external API stability, and the need for stakeholder demonstration buffers.
+The development timeline is organized into five thematic sprints of three weeks each. The chronological
+order reflects a deliberate architectural dependency chain: authentication and audit
+foundations precede infrastructure integration, which precedes remote access
+validation, which precedes IoT and camera integration, which precedes the training
+platform with integrated quality assurance and final delivery. Durations were allocated based on
+implementation complexity, external API stability, and the need for stakeholder
+demonstration buffers.
 
-\textbf{Sprint 1: Foundation, Authentication \& Audit (2 weeks)}
+\textbf{Sprint 1: Foundation, Authentication \& Audit (3 weeks)}
 
-This phase established the technical baseline and security audit foundation. Laravel~12 and React~18 were integrated via Breeze to provide a full-stack scaffold. Session-based authentication with role-based access control (engineer, teacher, admin) was implemented, alongside the user database schema using ULID primary keys. Google OAuth social login was integrated as an alternative authentication path, with account linking logic to merge social and local credentials. Concurrently, a tamper-evident audit log mechanism using SHA-256 hash chaining was implemented to support cryptographic integrity of audit trails. The MySQL development environment was configured to ensure reproducible builds across development and deployment contexts.
+This phase established the technical baseline and security audit foundation.
+Laravel~12 and React~18 were integrated via Breeze to provide a full-stack scaffold.
+Session-based authentication with role-based access control (engineer, teacher, admin)
+was implemented, alongside the user database schema using ULID primary keys. Google
+OAuth social login was integrated as an alternative authentication path, with account
+linking logic to merge social and local credentials. A key architectural decision in
+this sprint was the use of ULID primary keys rather than auto-incremented integers:
+ULIDs provide globally unique, time-sortable identifiers that prevent enumeration
+attacks and simplify future cross-service data merges. Concurrently, a tamper-evident
+audit log mechanism using SHA-256 hash chaining was implemented: each audit record
+stores a hash derived from its content concatenated with the hash of the preceding
+record, producing a verifiable chain that exposes any retroactive modification.
+Development was performed on Ubuntu 24.04 LTS using Visual Studio Code with PHP and
+TypeScript language support, with source control managed through Git and GitLab CI/CD
+pipelines configured for automated linting and build verification. The third week was
+used to write unit and integration tests for the authentication flows, role-based
+access control policies, and audit log hash chain mechanism, establishing the
+platform's test suite baseline.
 
-\textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation (4 weeks)}
+\textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation (3 weeks)}
 
-The virtual laboratory backbone was built during this phase. A Proxmox VE API client was developed with retry logic and structured error handling to tolerate transient node failures. The database schema for VM nodes, templates, and sessions was finalized. An engineer-facing VM template catalog with session launch capability was implemented, alongside an admin dashboard displaying live CPU and RAM statistics per node. A load balancer distributing VM provisioning requests across available nodes was completed. The architecture was extended to support multiple independent Proxmox clusters with encrypted credential storage and cluster selection logic for VM launch. Purdue model network isolation was enforced through VLAN and firewall rule configuration separating IT and OT zones. The administrative dashboard was extended with quota management, VM template catalog governance, and centralized activity logging.
+The virtual laboratory backbone was built during this phase. A Proxmox VE API client
+was developed with retry logic and structured error handling to tolerate transient
+node failures. The database schema for VM nodes, templates, and sessions was finalized.
+An engineer-facing VM template catalog with session launch capability was implemented,
+alongside an admin dashboard displaying live CPU and RAM statistics per node. A load
+balancer distributing VM provisioning requests across available nodes was completed
+using a resource-aware scoring algorithm that accounts for current CPU utilization and
+active session count before selecting a target node. The architecture was extended to
+support multiple independent Proxmox clusters with encrypted credential storage and
+cluster selection logic for VM launch. Purdue model network isolation was enforced
+through VLAN and firewall rule configuration separating IT and OT zones. The
+three-week duration reflects the complexity of multi-cluster orchestration and the
+need to validate the network isolation configuration against the Purdue model topology.
+Unit tests for the Proxmox API client, load balancer scoring algorithm, and cluster
+selection logic were written as part of sprint acceptance.
 
-\textbf{Sprint 3: Guacamole Remote Access --- MVP Demo (2 weeks)}
+\textbf{Sprint 3: Guacamole Remote Access - MVP Demo (2 weeks)}
 
-Apache Guacamole was deployed and integrated with the Laravel backend via its REST API. The implementation covered connection creation, one-time token generation for secure URL distribution, and an embedded React viewer for browser-based RDP and VNC access. Session lifecycle management---extension in configurable increments, explicit termination with automatic VM cleanup, and persistent connection preferences---was delivered. The three-week duration accounts for the complexity of WebSocket-based display protocol tunneling, browser compatibility testing, and the need for a stable MVP demonstration. \textbf{This phase concluded with the MVP demonstration, validating the core value proposition of browser-based remote industrial access.}
+Apache Guacamole was deployed and integrated with the Laravel backend via its REST
+API. The implementation covered connection object creation, one-time token generation
+for secure URL distribution, and an embedded React viewer for browser-based RDP and
+VNC access without client installation. Session lifecycle management - extension in
+configurable increments, explicit termination with automatic VM cleanup, and persistent
+connection preferences - was delivered. \textbf{This sprint concluded with the MVP
+demonstration, validating the core value proposition of browser-based remote industrial
+access.}
 
 \textbf{Sprint 4: Robot, Camera, Session Management \& Integration Hardening (3 weeks)}
 
-The IoT control layer was built on MQTT (Mosquitto) with QoS~1 delivery guarantees for robot command publishing. An atomic reservation system using database transaction locks prevented double-booking of the physical robot unit. Real-time telemetry streaming was implemented via WebSocket for live sensor feedback, with hardened reconnection logic to tolerate network fluctuation. An emergency stop mechanism with immediate command termination was integrated as a safety-critical feature. The ESP32-CAM hardware layer was concurrently integrated to provide live MJPEG video feeds during robot control sessions, with PTZ command relaying and stream proxying through the platform gateway. Idle session hibernation was implemented: VMs are automatically suspended after 10 minutes of inactivity, reducing resource contention without terminating the session context. Camera reservation state was synchronized with active robot sessions to ensure coherent hardware allocation. This phase also addressed residual integration gaps discovered during concurrent usage testing: race conditions in the VM provisioning pipeline were resolved, and Google OAuth account linking edge cases were hardened.
+The IoT control layer was built on MQTT (Mosquitto) with QoS~1 delivery guarantees
+for robot command publishing. An atomic reservation system using database transaction
+locks prevented double-booking of the physical robot unit. Real-time telemetry
+streaming was implemented via WebSocket for live sensor feedback, with hardened
+reconnection logic to tolerate network fluctuation. An emergency stop mechanism with
+immediate command termination was integrated as a safety-critical feature. The
+ESP32-CAM hardware layer was concurrently integrated to provide live MJPEG video feeds
+during robot control sessions, with PTZ command relaying and stream proxying through
+the platform gateway. Idle session hibernation was implemented: VMs are automatically
+suspended after 10 minutes of inactivity, reducing resource contention without
+terminating the session context. This phase also addressed concurrent-load integration
+issues discovered during Sprint~4 testing: race conditions in the VM provisioning
+pipeline surfaced under simultaneous write contention that was not exercised during
+Sprint~2 isolated acceptance validation, and were resolved through pessimistic locking
+at the database transaction boundary. Google OAuth account linking edge cases were
+hardened in parallel.
 
 \textbf{Sprint 5: Technical Training Platform (4 weeks)}
 
-This phase introduced the e-learning dimension in response to stakeholder feedback following the MVP. The course structure---training paths, modules, and training units with prerequisite tracking---was implemented. Instructors gained the ability to upload videos processed into HLS adaptive streams (360p--1080p), create timed quizzes with auto-grading and retry limits, and monitor learner progress through an analytics dashboard. Engineers could enroll in courses, track completion, take timestamped notes, and receive verifiable digital certificates with unique hash-based verification. The four-week duration reflects the substantial scope of a full learning management system: video pipeline integration, progress tracking logic, quiz engine, certificate generation, and course review mechanics.
+This phase introduced the e-learning dimension in response to stakeholder feedback
+following the MVP. The course structure - training paths, modules, and training units
+with prerequisite tracking - was implemented. Instructors gained the ability to
+upload videos processed into HLS adaptive streams (360p--1080p), create timed quizzes
+with auto-grading and retry limits, and monitor learner progress through an analytics
+dashboard. Engineers could enroll in courses, track completion, take timestamped notes,
+and receive verifiable digital certificates with unique hash-based verification links.
+The four-week duration reflects the substantial scope of integrating a full learning
+management system - including video pipeline processing, progress tracking logic,
+quiz engine, certificate generation, and course review mechanics - within the
+existing platform without disrupting its laboratory access features.
 
 \textbf{Sprint 6: Testing \& Delivery (2 weeks)}
 
-The final phase concentrated on quality assurance and documentation. Unit and integration tests were performed with mocked external APIs (Proxmox, Guacamole, Stripe). Load testing validated 15 concurrent logins, 5 active VMs, and 10 simultaneous Guacamole sessions. An OWASP ZAP security scan was executed to identify and remediate vulnerabilities. User manuals, API reference documentation, and the defense demonstration were prepared for final delivery.
+The final phase concentrated on quality assurance and documentation. Unit and
+integration tests were written with mocked external APIs (Proxmox, Guacamole, Stripe)
+to validate business logic in isolation from infrastructure dependencies. Load testing
+targeted the production-scale objectives defined in the backlog: 50 concurrent
+authenticated sessions, 25 active VM provisioning operations, and 40 simultaneous
+Guacamole remote desktop connections; actual test execution was conducted against the
+available development infrastructure, with results documented against these targets in
+Chapter~6. An OWASP ZAP security scan was executed to identify and remediate
+vulnerabilities. User manuals, API reference documentation, and the defense
+demonstration were prepared for final delivery.
+
+\subsection{Gantt Diagram}
+% ---------------------------
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{assets/chapter1/gantt}
-\caption{IoT-REAP Platform Development Timeline --- Sprint Schedule and Key Milestones}
+\caption{IoT-REAP Platform Development Timeline - Sprint Schedule and Key Milestones}
 \label{fig:project-timeline}
 \end{figure}
 
+% =============================================================================
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
+% =============================================================================
 
 This chapter has established the organizational and academic context of the IoT-REAP
-project, identified the operational problem motivating its development, examined the
-limitations of existing industrial remote access solutions, and presented the
-platform's proposed architecture and technology stack. The requirements specification
-defined the actors, functional capabilities, and measurable quality constraints
-governing the platform. Finally, the Agile Scrum methodology and sprint-based
-development timeline were introduced to frame the implementation work presented in
-the following chapters.
+project, identified the operational problem motivating its development, and
+systematically demonstrated - through analysis of four representative commercial
+products - that no existing industrial remote access solution addresses the
+combined requirements of browser-native VM provisioning, IoT command dispatch,
+resource reservation, tamper-proof audit logging, and integrated training content
+delivery. The proposed platform architecture, technology selection rationale, and
+requirements specification were then presented, defining the actors, functional
+capabilities, and measurable quality constraints that govern the implementation.
+Finally, the Agile Scrum methodology, sprint-based development timeline, and
+preliminary risk assessment were introduced, providing the project management
+framework within which the technical work presented in the following chapters was
+executed.
 
 \cleardoublepage

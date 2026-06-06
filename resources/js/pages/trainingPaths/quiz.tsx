@@ -17,6 +17,7 @@ interface QuizPageProps {
     canAttempt: boolean;
     attemptCount: number;
     maxAttempts: number | null;
+    nextUnitUrl?: string | null;
 }
 
 export default function QuizPage({
@@ -25,6 +26,7 @@ export default function QuizPage({
     canAttempt,
     attemptCount,
     maxAttempts,
+    nextUnitUrl,
 }: QuizPageProps) {
     const [completedAttempt, setCompletedAttempt] =
         useState<QuizAttempt | null>(quiz.best_attempt || null);
@@ -89,6 +91,15 @@ export default function QuizPage({
                                     Retake Quiz
                                 </Button>
                             )}
+                        {completedAttempt?.passed && nextUnitUrl && (
+                            <Button
+                                onClick={() =>
+                                    (window.location.href = nextUnitUrl)
+                                }
+                            >
+                                Continue
+                            </Button>
+                        )}
                         <Button variant="outline" onClick={handleCancel}>
                             Back to TrainingUnit
                         </Button>

@@ -36,7 +36,7 @@ class TrainingPathRepository
      */
     public function findByIdWithContent(int $id): ?TrainingPath
     {
-        return TrainingPath::with(['modules.trainingUnits.video', 'instructor'])->find($id);
+        return TrainingPath::with(['modules.trainingUnits.video', 'modules.trainingUnits.quiz', 'modules.trainingUnits.article', 'instructor'])->find($id);
     }
 
     /**
@@ -70,7 +70,7 @@ class TrainingPathRepository
     public function findByInstructor(User $user): Collection
     {
         return TrainingPath::byInstructor($user->id)
-            ->with(['instructor', 'modules.trainingUnits.video'])
+            ->with(['instructor', 'modules.trainingUnits.video', 'modules.trainingUnits.quiz'])
             ->withCount('enrollments as engineer_count')
             ->orderByDesc('created_at')
             ->get();
@@ -106,7 +106,7 @@ class TrainingPathRepository
     public function findPendingReview(): Collection
     {
         return TrainingPath::pendingReview()
-            ->with(['instructor', 'modules.trainingUnits.video'])
+            ->with(['instructor', 'modules.trainingUnits.video', 'modules.trainingUnits.quiz'])
             ->withCount('enrollments as engineer_count')
             ->orderBy('created_at')
             ->get();

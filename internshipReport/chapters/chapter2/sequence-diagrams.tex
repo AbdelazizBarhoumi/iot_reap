@@ -1,18 +1,23 @@
 \section{Sequence Diagrams}
-Sequence diagrams illustrate the temporal interaction and message flow between
-system actors and components, showing how workflows unfold over time. Activity
-diagrams model decision points, parallel flows, and state transitions,
-emphasizing branching conditions and process paths where multiple outcomes are
-possible. Together, these diagram types capture both the choreography and
-decision logic of major platform workflows.
+To complement the class diagram, this section presents sequence diagrams for key IoT-REAP workflows: VM session provisioning and termination, robot reservation and command dispatch, user authentication, and training unit progression. These diagrams illustrate interactions between Controllers, Services, external APIs (Proxmox, Guacamole, MQTT broker), and frontend Views, linking the system architecture to its implementation in Chapter 3.
+
+\newpage
+\vspace{-1.3em}
 \subsection{Manage Session Sequence}
+\vspace{-0.7em}
+
 Figure~\ref{fig:seq-manage-session} illustrates the manage session sequence.
+\vspace{-0.7em}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/chapter2/Sequence-Manage-Session}
+    \includegraphics[width=0.9\textwidth]{assets/chapter2/Sequence-Manage-Session}
     \caption{Sequence Diagram: Manage Session}
     \label{fig:seq-manage-session}
 \end{figure}
+
+\newpage
+
 \subsection{Discover Gateway Node Sequence}
 Figure~\ref{fig:seq-discover-gateway} illustrates the discover gateway node sequence.
 \begin{figure}[H]
@@ -21,6 +26,8 @@ Figure~\ref{fig:seq-discover-gateway} illustrates the discover gateway node sequ
     \caption{Sequence Diagram: Discover Gateway Node}
     \label{fig:seq-discover-gateway}
 \end{figure}
+\newpage
+
 \subsection{Payout Request Sequence}
 Figure~\ref{fig:seq-payout-request} illustrates the payout request sequence.
 \begin{figure}[H]
@@ -29,8 +36,13 @@ Figure~\ref{fig:seq-payout-request} illustrates the payout request sequence.
     \caption{Sequence Diagram: Payout Request}
     \label{fig:seq-payout-request}
 \end{figure}
+\newpage
+\vspace{-0.7em}
 \subsection{Provision VM Session Sequence}
+\vspace{-0.7em}
 Figure~\ref{fig:seq-provision-vm-session} illustrates the provision VM session sequence.
+\vspace{-0.7em}
+
 \begin{figure}[H]
     \centering
     \rotatebox{90}{
@@ -39,6 +51,8 @@ Figure~\ref{fig:seq-provision-vm-session} illustrates the provision VM session s
     \caption{Sequence Diagram: Provision VM Session}
     \label{fig:seq-provision-vm-session}
 \end{figure}
+\newpage
+
 \subsection{User Authentication Sequence}
 Figure~\ref{fig:seq-user-authentication} illustrates the user authentication sequence.
 \begin{figure}[H]

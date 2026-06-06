@@ -134,7 +134,6 @@ export default function TeacherForumInboxPage({
     selectedThreadId: initialSelectedThreadId = null,
     threads: initialThreads,
 }: TeacherForumInboxPageProps) {
-
     const [activeFilter, setActiveFilter] =
         useState<TeacherInboxFilter>(initialFilter);
     const [threadsByFilter, setThreadsByFilter] = useState<
@@ -361,12 +360,16 @@ export default function TeacherForumInboxPage({
                                         >
                                             <Flag className="h-3.5 w-3.5" />
                                             Flagged
-                                            {threadsByFilter.flagged.length > 0 && (
+                                            {threadsByFilter.flagged.length >
+                                                0 && (
                                                 <Badge
                                                     variant="destructive"
                                                     className="ml-1 h-4 px-1 text-[10px]"
                                                 >
-                                                    {threadsByFilter.flagged.length}
+                                                    {
+                                                        threadsByFilter.flagged
+                                                            .length
+                                                    }
                                                 </Badge>
                                             )}
                                         </TabsTrigger>
@@ -376,12 +379,16 @@ export default function TeacherForumInboxPage({
                                         >
                                             <MessageSquare className="h-3.5 w-3.5" />
                                             Unanswered
-                                            {threadsByFilter.unanswered.length > 0 && (
+                                            {threadsByFilter.unanswered.length >
+                                                0 && (
                                                 <Badge
                                                     variant="secondary"
                                                     className="ml-1 h-4 px-1 text-[10px]"
                                                 >
-                                                    {threadsByFilter.unanswered.length}
+                                                    {
+                                                        threadsByFilter
+                                                            .unanswered.length
+                                                    }
                                                 </Badge>
                                             )}
                                         </TabsTrigger>
@@ -391,12 +398,16 @@ export default function TeacherForumInboxPage({
                                         >
                                             <Clock className="h-3.5 w-3.5" />
                                             Recent
-                                            {threadsByFilter.recent.length > 0 && (
+                                            {threadsByFilter.recent.length >
+                                                0 && (
                                                 <Badge
                                                     variant="secondary"
                                                     className="ml-1 h-4 px-1 text-[10px]"
                                                 >
-                                                    {threadsByFilter.recent.length}
+                                                    {
+                                                        threadsByFilter.recent
+                                                            .length
+                                                    }
                                                 </Badge>
                                             )}
                                         </TabsTrigger>

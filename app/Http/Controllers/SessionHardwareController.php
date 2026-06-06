@@ -12,6 +12,7 @@ use App\Repositories\UsbDeviceRepository;
 use App\Services\GatewayService;
 use App\Services\UsbDeviceQueueService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -102,7 +103,7 @@ class SessionHardwareController extends Controller
         $attachedDevices = $reconciledAttachedDevices->values();
 
         // Build available device list after reconciliation to avoid stale states.
-        /** @var \Illuminate\Support\Collection<int, array{device: UsbDevice, can_attach: bool, is_attached_to_me: bool, queue_position: int|null, queue_length: int, attachment_reason: string|null, reserved_until: string|null, gateway_verified: bool}> $availableDevices */
+        /** @var Collection<int, array{device: UsbDevice, can_attach: bool, is_attached_to_me: bool, queue_position: int|null, queue_length: int, attachment_reason: string|null, reserved_until: string|null, gateway_verified: bool}> $availableDevices */
         $availableDevices = $this->queueService->getAvailableDevicesForSession($session);
 
         // Get queue entries for this session

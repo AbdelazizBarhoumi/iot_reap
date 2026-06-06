@@ -891,8 +891,7 @@ function UsbDeviceRow({
     onRemoveDedication,
 }: UsbDeviceRowProps) {
     const hasCameraRegistration = device.has_camera_registration;
-    const isDedicated =
-        device.is_dedicated ?? device.dedicated_vmid != null;
+    const isDedicated = device.is_dedicated ?? device.dedicated_vmid != null;
 
     return (
         <div className="rounded-md border p-3">

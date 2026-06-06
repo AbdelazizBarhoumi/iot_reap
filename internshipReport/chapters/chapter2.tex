@@ -34,202 +34,7 @@ It describes the adopted software architecture, models the system through use
 case diagrams and representative sequence diagrams, and presents
 the class diagram used to guide realization.
 
-% -----------------------------------------------------------------------
-\section{Adopted Software Architecture}
-
-This section describes the architectural choices made for IoT-REAP. It first
-introduces the Model-View-Controller pattern in general terms, then maps each
-architectural layer to the concrete technologies and components of the platform.
-It subsequently justifies the selection of the technology stack and evaluates
-the benefits this structure provides with respect to the project requirements.
-
-\subsection{Architectural Pattern Overview}
-
-The Model-View-Controller (MVC) architectural pattern is a foundational design
-principle in software engineering that promotes separation of concerns,
-maintainability, and scalability {\footnotesize\cite{fowler2003}}. Originally conceived for
-monolithic desktop applications, MVC structures the interaction between data,
-business logic, and presentation by dividing the application into three
-interconnected roles:
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=10cm]{assets/chapter2/mvc-pattern-diagram.png}
-    \caption{MVC Architectural Pattern: Component Interaction Flow}
-    \label{fig:mvc-pattern}
-\end{figure}
-
-\textbf{Model Role:} Represents data structures, business logic, and data
-management rules. Responsible for data persistence, retrieval, validation, and
-enforcing business constraints independently of the user interface.
-
-\textbf{View Role:} Handles the presentation layer and user interface
-rendering. Displays data in appropriate formats and captures user input without
-containing business logic.
-
-\textbf{Controller Role:} Manages data flow between the Model and the View,
-orchestrating application logic. Receives user requests, interacts with the
-Model, applies business rules, and selects the appropriate View for rendering
-responses.
-
-This architectural separation enables independent development, testing, and
-modification of each component, reducing code coupling and improving
-maintainability. In the context of IoT-REAP, the classic MVC pattern is
-extended with Service and Repository layers because the platform's complexity—
-decoupled React frontend, multiple external APIs (Proxmox, Guacamole, MQTT),
-and the need for testable persistence abstraction—requires a finer separation
-of concerns than the original three-role pattern provides.
-
-\subsection{MVC Layers in IoT-REAP Context}
-
-In IoT-REAP, the three conceptual MVC roles are realized through five concrete
-layers. The
-\emph{Model} role is decomposed into three layers: \textbf{Model} (domain
-entities and validation), \textbf{Repository} (persistence abstraction), and
-\textbf{Service} (business workflow orchestration). The \textbf{Controller} role
-is realized by thin HTTP controllers that validate requests and dispatch to
-Services. The \textbf{View} role is realized entirely by the React 18 frontend.
-
-\textbf{The Model Layer} defines data structures, entity relationships, and
-validation rules. IoT-REAP Models use Eloquent ORM to map domain entities
-(users, VM sessions, robots, telemetry, audit logs) to relational tables.
-Models enforce data integrity at the entity level but remain focused on
-structural definition rather than cross-entity workflow logic.
-
-\textbf{The View Layer} in IoT-REAP is implemented as a React 18 frontend with
-TypeScript. Key principles include component-based architecture, typed props
-interfaces, custom hooks for data fetching, and Zustand for state management.
-Views render dashboards, session interfaces, robot control panels, and admin
-consoles {\footnotesize\cite{react-docs}} {\footnotesize\cite{typescript-docs}} {\footnotesize\cite{zustand-docs}}.
-
-\textbf{The Controller Layer} mediates between incoming HTTP requests and the
-Service layer, then returns JSON responses consumed by the View layer.
-IoT-REAP Controllers remain thin—validating input via FormRequests,
-delegating to Services for business logic, and returning structured responses
-via API Resources. Controllers enforce authentication and authorization through
-middleware and manage error responses uniformly.
-
-\textbf{The Service Layer} orchestrates business workflows and coordinates
-integration with external systems. Services such as
-\texttt{VMProvisioningService}, \texttt{GuacamoleClient}, and
-\texttt{MqttService} encapsulate use-case logic that spans multiple Models
-and external APIs, ensuring that Controllers remain free of complex
-business rules {\footnotesize\cite{proxmox-ve-api}} {\footnotesize\cite{guacamole-manual}} {\footnotesize\cite{mqtt-oasis}}.
-
-\textbf{The Repository Layer} abstracts persistence operations and query logic.
-Repositories such as \texttt{VMSessionRepository} and \texttt{UserRepository}
-encapsulate Eloquent queries, returning typed Models or Collections and
-shielding the Service layer from database-specific details.
-
-
-\begin{table}[H]
-    \centering
-    \caption{IoT-REAP Platform Core Controllers and Responsibilities}
-    \begin{tabular}{|p{4cm}|p{10cm}|}
-        \hline
-        \textbf{Controller}     & \textbf{Primary Responsibilities}                                            \\
-        \hline
-        AuthController          & User authentication, registration, password reset, session management        \\
-        \hline
-        VMSessionController     & Session creation, extension, termination; delegates to VMProvisioningService \\
-        \hline
-        VMTemplateController    & Template listing, admin CRUD operations for VM templates                     \\
-        \hline
-        ProxmoxNodeController   & Node stats, VM listing, VM control (start/stop/reboot)                       \\
-        \hline
-        RobotSessionController  & Robot reservation, command dispatch via MqttService                          \\
-        \hline
-        SecurityEventController & Security event listing, active sessions with risk scores                     \\
-        \hline
-        AdminController         & User quota management, activity logs, system configuration                   \\
-        \hline
-    \end{tabular}
-    \label{tab:iotreap-controllers}
-\end{table}
-
-\subsection{Technology Stack Justification}
-
-The technology stack was selected to align each architectural layer with a
-stable, mature ecosystem that reduces integration risk and maximises
-architectural coherence. Laravel 10 provides a robust backend framework with
-built-in ORM, queue management, and authentication scaffolding, reducing
-boilerplate through its convention-over-configuration approach without
-sacrificing architectural rigour. MySQL serves as the relational database
-engine, offering proven transactional guarantees and native support within the
-Laravel Eloquent ORM. React 18 with TypeScript ensures type-safe component
-reusability across a large UI surface, while Zustand provides a lightweight,
-hook-based global state management solution that avoids the overhead of
-heavier alternatives such as Redux. Laravel Echo, backed by a self-hosted
-Soketi server, delivers WebSocket broadcasting without reliance on
-third-party cloud services, which is critical for real-time robot telemetry
-in constrained network environments. Proxmox VE was chosen as the
-open-source hypervisor to avoid proprietary licensing costs while exposing a
-full REST API for automated VM lifecycle management {\footnotesize\cite{proxmox-ve-api}}.
-Apache Guacamole enables browser-native remote desktop access without
-client-side installation, which is essential for accessibility in educational
-contexts {\footnotesize\cite{guacamole-manual}}. MQTT serves as the lightweight
-publish-subscribe broker for IoT telemetry, offering minimal overhead and
-reliable message delivery under constrained network conditions {\footnotesize\cite{mqtt-oasis}}.
-
-\subsection{MVC Benefits for IoT-REAP Platform}
-
-The MVC architectural pattern, extended with Service and Repository layers,
-provides critical advantages for a platform of IoT-REAP's complexity:
-
-\textbf{Separation of Concerns:} Database specialists focus on Model
-optimization, frontend concentrate on React components, and backend work on Services and Controllers—enabling parallel development
-without conflicts.
-
-\textbf{Maintainability:} Database schema changes do not require React
-modifications; UI redesigns do not affect business logic; and the clear
-organizational structure enables rapid onboarding.
-
-\textbf{Testability:} Models and Services can be unit tested independently;
-Controllers are tested through feature tests with mocked external APIs (Proxmox,
-Guacamole); React components are tested with React Testing Library.
-
-\textbf{Reusability:} Services are reused across multiple Controllers (e.g.,
-\texttt{ProxmoxClient} is used by both \texttt{VMSessionController} and
-\texttt{ProxmoxNodeController}); React hooks are shared across pages.
-
-\textbf{Scalability:} Each layer scales independently based on performance
-requirements; external integrations scale independently from the Laravel backend.
-
-\begin{table}[H]
-    \centering
-    \caption{How MVC Architecture Supports IoT-REAP Platform Requirements}
-    \begin{tabular}{|p{4cm}|p{10cm}|}
-        \hline
-        \textbf{Requirement} & \textbf{MVC Architectural Support}                                         \\
-        \hline
-        VM Provisioning      & Service layer encapsulates Proxmox API; Controllers orchestrate workflow   \\
-        \hline
-        Remote Desktop       & GuacamoleClient service handles connection lifecycle; Views embed viewer   \\
-        \hline
-        Robot Control        & MqttService publishes commands; WebSocket broadcasts telemetry to Views    \\
-        \hline
-        Zero-Trust Security  & Middleware layer evaluates security posture; Controllers enforce access policies \\
-        \hline
-        Audit Logging        & Observer pattern on Models; AuditLogger service maintains hash chain       \\
-        \hline
-        Real-Time Updates    & Events broadcast via Laravel Echo; React Views subscribe via WebSocket     \\
-        \hline
-    \end{tabular}
-    \label{tab:mvc-requirements}
-\end{table}
-
-Beyond functional coverage, the layered architecture directly addresses the
-platform's non-functional requirements. The separation of concerns and the
-Service layer facilitate horizontal scaling of external integrations independently
-from the Laravel monolith. The Repository pattern insulates the persistence
-layer, allowing database migration or vendor change without frontend impact.
-Middleware-based security evaluation and hashed audit chains satisfy security
-and traceability constraints, while Laravel Echo with WebSocket support meets the
-real-time latency requirements for robot telemetry streaming. Together, these
-architectural properties establish the structural foundation upon which the
-concrete implementation detailed in Chapter~3 is built.
-
-% -----------------------------------------------------------------------
+% --------
 \section{Use Case Diagram}
 
 After identifying actors and requirements, the conceptual analysis of the
@@ -274,7 +79,7 @@ requirements and subsequent design decisions.
 \input{chapters/chapter2/engineer}
 \clearpage
 
-% -----------------------------------------------------------------------
+% --------
 % A3 landscape page for the class diagram
 \AtBeginShipoutNext{%
     \global\pdfpagewidth=420mm
@@ -305,8 +110,7 @@ platform.
 \begin{figure}[H]
     \centering
     \includegraphics[
-        width=0.85\textwidth,
-        height=0.85\textheight,
+        height=0.87\textheight,
         keepaspectratio
     ]{assets/chapter2/class-diagram.pdf}
     \caption{Class Diagram of the IoT-REAP Platform}
@@ -469,23 +273,12 @@ review status.
 requests to withdraw earned funds; it includes payout amount, recipient details
 and approval state.
 
-% -----------------------------------------------------------------------
-\section{Sequence Diagrams}
+% --------
 
-To complement the static view offered by the class diagram, this section
-presents sequence diagrams for the key workflows of the IoT-REAP
-platform. The selected scenarios cover the most interaction-intensive and
-technically critical paths: VM session provisioning and termination, robot
-reservation and command dispatch, user authentication with session security
-evaluation, and training unit progression. These diagrams expose the dynamic
-collaboration between Controllers, Services, external APIs (Proxmox, Guacamole,
-MQTT broker), and frontend Views, providing the traceability link between the
-architectural choices described in Section~1 and the concrete implementation
-presented in Chapter~3.
 
 \input{chapters/chapter2/sequence-diagrams}
-
-% -----------------------------------------------------------------------
+\newpage
+% --------
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
 

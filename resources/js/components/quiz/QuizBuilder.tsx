@@ -2,6 +2,7 @@
  * QuizBuilder Component
  * Teacher-facing quiz creation and editing interface.
  */
+import axios from 'axios';
 import { Reorder } from 'framer-motion';
 import {
     CheckCircle2,
@@ -15,6 +16,16 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import {
+    saveQuiz,
+    updateQuiz as apiUpdateQuiz,
+    deleteQuiz as apiDeleteQuiz,
+    publishQuiz as apiPublishQuiz,
+    unpublishQuiz as apiUnpublishQuiz,
+    addQuizQuestion,
+    deleteQuizQuestion,
+    reorderQuizQuestions,
+} from '@/api/quiz.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,16 +40,19 @@ import type {
     CreateQuestionData,
 } from '@/types/quiz.types';
 import { QuestionEditor } from './QuestionEditor';
+
 interface QuizBuilderProps {
     trainingUnitId: string;
     quiz: Quiz | null;
     onQuizCreated?: (quiz: Quiz) => void;
 }
+
 const questionTypeIcons: Record<QuizQuestionType, React.ReactNode> = {
     multiple_choice: <ListChecks className="h-4 w-4" />,
     true_false: <ToggleLeft className="h-4 w-4" />,
     short_answer: <Type className="h-4 w-4" />,
 };
+
 export function QuizBuilder({
     trainingUnitId,
     quiz: initialQuiz,
@@ -49,6 +63,7 @@ export function QuizBuilder({
     const [isSaving, setIsSaving] = useState(false);
     const [showAddQuestion, setShowAddQuestion] = useState(false);
     const [isReordering, setIsReordering] = useState(false);
+
     // Quiz form state
     const [title, setTitle] = useState(quiz?.title ?? '');
     const [description, setDescription] = useState(quiz?.description ?? '');
@@ -68,36 +83,23 @@ export function QuizBuilder({
     const [showCorrectAnswers, setShowCorrectAnswers] = useState(
         quiz?.show_correct_answers ?? true,
     );
+
     // Handle question reorder with backend sync
     const handleReorder = async (newOrder: QuizQuestion[]) => {
         if (!quiz) return;
+
         // Optimistically update UI
         setQuiz((prev) => (prev ? { ...prev, questions: newOrder } : null));
+
         // Sync to backend
         setIsReordering(true);
         try {
             const items = newOrder.map((q, index) => ({
                 id: q.id,
-                order: index + 1,
+                sort_order: index + 1,
             }));
-            const response = await fetch(
-                `/teaching/quizzes/${quiz.id}/reorder`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ items }),
-                },
-            );
-            if (!response.ok) throw new Error('Failed to reorder questions');
+
+            await reorderQuizQuestions(quiz.id.toString(), items);
         } catch {
             toast.error('Failed to save question order');
             // Revert to original order on failure
@@ -108,39 +110,23 @@ export function QuizBuilder({
             setIsReordering(false);
         }
     };
+
     const createQuiz = async () => {
         setIsCreating(true);
         try {
-            const response = await fetch(
-                `/teaching/trainingUnits/${trainingUnitId}/quiz`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        title,
-                        description: description || null,
-                        passing_score: passingScore,
-                        time_limit_minutes: timeLimit,
-                        max_attempts: maxAttempts,
-                        shuffle_questions: shuffleQuestions,
-                        shuffle_options: shuffleOptions,
-                        show_correct_answers: showCorrectAnswers,
-                    }),
-                },
-            );
-            if (!response.ok) throw new Error('Failed to create quiz');
-            const data = await response.json();
-            setQuiz(data.quiz);
-            onQuizCreated?.(data.quiz);
+            const data = await saveQuiz(trainingUnitId, {
+                title,
+                description: description || undefined,
+                passing_score: passingScore,
+                time_limit_minutes: timeLimit,
+                max_attempts: maxAttempts,
+                shuffle_questions: shuffleQuestions,
+                shuffle_options: shuffleOptions,
+                show_correct_answers: showCorrectAnswers,
+            });
+
+            setQuiz(data as unknown as Quiz);
+            onQuizCreated?.(data as unknown as Quiz);
             toast.success('Quiz created successfully!');
         } catch {
             toast.error('Failed to create quiz');
@@ -148,36 +134,23 @@ export function QuizBuilder({
             setIsCreating(false);
         }
     };
+
     const updateQuiz = async () => {
         if (!quiz) return;
         setIsSaving(true);
         try {
-            const response = await fetch(`/teaching/quizzes/${quiz.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN':
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    title,
-                    description: description || null,
-                    passing_score: passingScore,
-                    time_limit_minutes: timeLimit,
-                    max_attempts: maxAttempts,
-                    shuffle_questions: shuffleQuestions,
-                    shuffle_options: shuffleOptions,
-                    show_correct_answers: showCorrectAnswers,
-                }),
+            const data = await apiUpdateQuiz(quiz.id.toString(), {
+                title,
+                description: description || undefined,
+                passing_score: passingScore,
+                time_limit_minutes: timeLimit,
+                max_attempts: maxAttempts,
+                shuffle_questions: shuffleQuestions,
+                shuffle_options: shuffleOptions,
+                show_correct_answers: showCorrectAnswers,
             });
-            if (!response.ok) throw new Error('Failed to update quiz');
-            const data = await response.json();
-            setQuiz(data.quiz);
+
+            setQuiz(data as unknown as Quiz);
             toast.success('Quiz updated successfully!');
         } catch {
             toast.error('Failed to update quiz');
@@ -185,72 +158,35 @@ export function QuizBuilder({
             setIsSaving(false);
         }
     };
+
     const publishQuiz = async () => {
         if (!quiz) return;
         try {
-            const response = await fetch(
-                `/teaching/quizzes/${quiz.id}/publish`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                },
-            );
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to publish');
-            }
-            const data = await response.json();
-            setQuiz(data.quiz);
+            const data = await apiPublishQuiz(quiz.id.toString());
+            setQuiz(data as unknown as Quiz);
             toast.success('Quiz published!');
         } catch (error: unknown) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to publish quiz';
+            const message = axios.isAxiosError(error)
+                ? error.response?.data?.error || 'Failed to publish quiz'
+                : 'Failed to publish quiz';
             toast.error(message);
         }
     };
+
     const unpublishQuiz = async () => {
         if (!quiz) return;
         try {
-            const response = await fetch(
-                `/teaching/quizzes/${quiz.id}/unpublish`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                },
-            );
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to unpublish');
-            }
-            const data = await response.json();
-            setQuiz(data.quiz);
+            const data = await apiUnpublishQuiz(quiz.id.toString());
+            setQuiz(data as unknown as Quiz);
             toast.success('Quiz unpublished - now in draft mode');
         } catch (error: unknown) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to unpublish quiz';
+            const message = axios.isAxiosError(error)
+                ? error.response?.data?.error || 'Failed to unpublish quiz'
+                : 'Failed to unpublish quiz';
             toast.error(message);
         }
     };
+
     const deleteQuiz = async () => {
         if (!quiz) return;
         if (
@@ -259,55 +195,27 @@ export function QuizBuilder({
             )
         )
             return;
+
         try {
-            const response = await fetch(`/teaching/quizzes/${quiz.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN':
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
-                },
-                credentials: 'include',
-            });
-            if (!response.ok) throw new Error('Failed to delete quiz');
+            await apiDeleteQuiz(quiz.id.toString());
             setQuiz(null);
             toast.success('Quiz deleted');
         } catch {
             toast.error('Failed to delete quiz');
         }
     };
+
     const addQuestion = async (data: CreateQuestionData) => {
         if (!quiz) return;
         try {
-            const response = await fetch(
-                `/teaching/quizzes/${quiz.id}/questions`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN':
-                            document.cookie
-                                .split('; ')
-                                .find((row) => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] ?? '',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(data),
-                },
-            );
-            if (!response.ok) throw new Error('Failed to add question');
-            const responseData = await response.json();
+            const question = await addQuizQuestion(quiz.id.toString(), data);
             setQuiz((prev) =>
                 prev
                     ? {
                           ...prev,
                           questions: [
                               ...(prev.questions || []),
-                              responseData.question,
+                              question as unknown as QuizQuestion,
                           ],
                           question_count: prev.question_count + 1,
                       }
@@ -319,21 +227,10 @@ export function QuizBuilder({
             toast.error('Failed to add question');
         }
     };
+
     const deleteQuestion = async (questionId: number) => {
         try {
-            const response = await fetch(`/teaching/questions/${questionId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN':
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
-                },
-                credentials: 'include',
-            });
-            if (!response.ok) throw new Error('Failed to delete question');
+            await deleteQuizQuestion(questionId.toString());
             setQuiz((prev) =>
                 prev
                     ? {

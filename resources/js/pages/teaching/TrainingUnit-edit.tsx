@@ -31,7 +31,14 @@ import {
     XCircle,
     Zap,
 } from 'lucide-react';
-import { useState, useMemo, useCallback, useEffect, useRef, type ElementType } from 'react';
+import {
+    useState,
+    useMemo,
+    useCallback,
+    useEffect,
+    useRef,
+    type ElementType,
+} from 'react';
 import { toast } from 'sonner';
 import { getOrCreateQuiz } from '@/api/quiz.api';
 import * as teachingApi from '@/api/teaching.api';
@@ -1968,9 +1975,13 @@ Recap the important points."
                                                         className="w-full justify-start"
                                                         variant={action.tone}
                                                         asChild
-                                                        disabled={!action.active}
+                                                        disabled={
+                                                            !action.active
+                                                        }
                                                     >
-                                                        <Link href={action.href}>
+                                                        <Link
+                                                            href={action.href}
+                                                        >
                                                             <ActionIcon className="mr-2 h-4 w-4" />
                                                             {action.label}
                                                         </Link>
@@ -1980,7 +1991,9 @@ Recap the important points."
                                                         className="w-full justify-start"
                                                         variant={action.tone}
                                                         onClick={openMediaTab}
-                                                        disabled={!action.active}
+                                                        disabled={
+                                                            !action.active
+                                                        }
                                                     >
                                                         <ActionIcon className="mr-2 h-4 w-4" />
                                                         {action.label}

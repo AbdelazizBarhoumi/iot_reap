@@ -238,7 +238,9 @@ describe('TeacherForumInboxPage', () => {
         expect(
             screen.getByRole('tab', { name: /unanswered/i }),
         ).toBeInTheDocument();
-        expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole('tab', { name: /recent/i }),
+        ).toBeInTheDocument();
 
         await user.click(screen.getByRole('tab', { name: /recent/i }));
 
