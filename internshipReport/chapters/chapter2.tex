@@ -17,10 +17,10 @@
 %   after the parent heading before the first subsection.
 %
 % CHAPTER 2 CONTENT:
-% - Adopted software architecture (MVC + service/repository layering)
 % - Use case diagrams and actor-focused refinements
-% - Sequence diagrams for key workflows
 % - Class diagram
+% - Sequence diagrams for key workflows
+
 % ============================================================================
 
 \chapter{Conceptual Study}
@@ -29,13 +29,16 @@
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
 
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
 \initial{T}his chapter presents the conceptual study of the IoT-REAP platform.
-It describes the adopted software architecture, models the system through use
-case diagrams and representative sequence diagrams, and presents
-the class diagram used to guide realization.
+It models the system through use case diagrams and representative sequence
+diagrams, and presents the class diagram used to guide realization.
 
 % --------
 \section{Use Case Diagram}
+\label{sec:usecase}
 
 After identifying actors and requirements, the conceptual analysis of the
 platform is refined through use case modelling. The implemented application
@@ -103,6 +106,7 @@ requirements and subsequent design decisions.
 \setlength{\headwidth}{370mm}
 
 \section{Class Diagram}
+\label{sec:classdiagram}
 
 Figure~\ref{fig:class-diagram} presents the class diagram of the IoT-REAP
 platform.
@@ -283,16 +287,15 @@ and approval state.
 \addcontentsline{toc}{section}{Conclusion}
 
 This chapter established the conceptual foundation of the IoT-REAP platform
-across four complementary dimensions. The architectural analysis in Section~1
-defined the five-layer MVC structure, justified the selection of the
-technology stack, and demonstrated alignment between architectural decisions
-and both functional and non-functional requirements. Section~2 modelled
+across three complementary dimensions. Section~\ref{sec:usecase} modelled
 system behaviour through a general use case diagram and actor-specific
-refinements covering all four user roles. Section~3 provided a comprehensive
-class-level view of the domain model, grouping the thirty-one identified
-classes into five functional clusters. Finally, Section~4 captured the
-dynamic behaviour of critical workflows through sequence diagrams.
-Together, these artefacts form the design contract that guides the
-implementation and validation presented in the following chapter.
+refinements covering all four user roles. Section~\ref{sec:classdiagram}
+provided a comprehensive class-level view of the domain model, grouping the
+thirty-one identified classes into five functional clusters: user management,
+learning content, infrastructure, hardware resources, and financial operations.
+Finally, Section~\ref{sec:sequencediagrams} captured the dynamic behaviour of
+critical workflows through sequence diagrams. Together, these artefacts form
+the design contract that guides the implementation and validation presented
+in the following chapter.
 
 \cleardoublepage

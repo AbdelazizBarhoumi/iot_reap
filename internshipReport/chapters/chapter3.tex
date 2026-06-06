@@ -762,7 +762,7 @@ Verification of IoT-REAP combined black-box functional testing, automated covera
 
 Functional correctness was validated across the complete user lifecycle: registration with email and OAuth, enrollment, progression, quizzes, and certificates. VM session provisioning was verified end-to-end, including template cloning, Guacamole tunnels, USB/IP hardware attachment, camera streams, and cleanup. Teacher authoring workflows were validated from drafts through review. All scenarios passed without regressions.
 
-Role-based access control, enforced via Laravel Policies, was validated by cross-role route attempts. Engineers, teachers, and engineers were correctly restricted to authorized endpoints, confirmed manually and via PHPUnit.
+Role-based access control, enforced via Laravel Policies, was validated by cross-role route attempts. Administrators, teachers, and engineers were correctly restricted to authorized endpoints, confirmed manually and via PHPUnit.
 
 Remote laboratory stability was verified through repeated execution of the full VM session lifecycle, including hardware state transitions and reconciliation resilience against gateway disconnection.
 
