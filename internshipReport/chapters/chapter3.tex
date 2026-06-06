@@ -775,19 +775,6 @@ In summary, IoT-REAP satisfies core requirements under nominal conditions with c
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
 
-This chapter presented the complete technical realization of IoT-REAP, covering
-architecture, backend workflows, interfaces, network segmentation, deployment,
-and verification. The layered monolithic stack-Laravel, React, TypeScript,
-and MySQL-enforces strict separation of concerns across four internal layers
-and an external infrastructure boundary. An asynchronous provisioning pipeline
-and state reconciliation worker coordinate distributed hardware, while backend
-workflows handle reservation conflicts, hardware state transitions, and session
-lifecycle management. Implemented interfaces cover all user roles, and network
-topology simulation validated the segmentation strategy. Automated deployment
-via GitHub Actions CI/CD enforces test gates before release. Verification
-confirmed that engineers, teachers, and administrators can perform their
-respective functions, and security testing revealed no critical vulnerabilities.
-The absence of statistically rigorous load testing remains a noted limitation
-for future work.
+This chapter presented the technical realization of IoT-REAP, covering architecture, backend workflows, interfaces, network segmentation, deployment, and verification. The layered monolithic stack—Laravel, React, TypeScript, and MySQL—enforces separation of concerns across four layers and an infrastructure boundary. An asynchronous provisioning pipeline and state reconciliation worker coordinate distributed hardware, while backend workflows handle reservation conflicts, hardware state transitions, and session lifecycle management. Interfaces cover all user roles, and network topology simulation validated the segmentation strategy. Automated deployment via GitHub Actions CI/CD enforces test gates before release. Verification confirmed that engineers, teachers, and administrators can perform their functions, and security testing revealed no critical vulnerabilities. The absence of statistically rigorous load testing remains a noted limitation for future work.
 
 \cleardoublepage

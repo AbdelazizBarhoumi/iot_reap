@@ -412,6 +412,13 @@ registered gateway devices globally, delivers industrial remote access through
 the \textbf{eWON Cosy+} hardware gateway and the \textbf{Talk2M} cloud service
 {\footnotesize\cite{ewon-industrial-remote-access}}.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=3.5cm]{assets/chapter1/hms-ewon-talk2m-logos.png}
+\caption{HMS eWON Cosy+ Gateway and Talk2M Cloud Service Logos}
+\label{fig:hms-logos}
+\end{figure}
+
 The eWON Cosy+ is a compact DIN-rail gateway installed inside a machine's
 control panel, connecting to PLCs and HMIs via Ethernet, serial, or USB. It
 establishes an outbound SSL/TLS-encrypted VPN tunnel to Talk2M using X.509
@@ -456,6 +463,14 @@ remote access management platform within its industrial communication portfolio,
 primarily targeting industrial sites operating Siemens automation infrastructure
 {\footnotesize\cite{siemens-sinema-rc}}.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=3.5cm]{assets/chapter1/siemens-sinema-rc-logos.png}
+\caption{Siemens SINEMA Remote Connect Logos}
+\label{fig:siemens-logos}
+\end{figure}
+
+
 SINEMA~RC operates as a rendezvous server using OpenVPN: service technicians
 and the SCALANCE hardware router at the machine each establish separate OpenVPN
 connections to the SINEMA~RC Server, which verifies participant identities
@@ -493,6 +508,13 @@ toward operational technology. In November~2025, TeamViewer launched
 builders to access PLCs, HMIs, and other OT endpoints remotely without
 installing agent software on each controlled device
 {\footnotesize\cite{teamviewer-agentless-2025}}.
+\begin{figure}[H]
+\centering
+\includegraphics[width=3.5cm]{assets/chapter1/teamviewer-tensor-logos.png}
+\caption{TeamViewer Tensor and Agentless Access Logos}
+\label{fig:teamviewer-logos}
+\end{figure}
+
 
 TeamViewer Tensor for OT provides zero-trust remote access with granular
 role-based access controls, protocol isolation, session audit logging, and
@@ -691,78 +713,6 @@ robots, monitor camera feeds, and operate within a zero-trust security
 framework - all from a single unified interface, without client-side software
 installation.
 
-% ---------------------------
-\subsection{Solution Architecture}
-% ---------------------------
-
-The proposed solution employs a modern web application architecture built on
-established software engineering principles.
-
-\textbf{Separation of Concerns:} Clear architectural boundaries between data
-management, business logic, and presentation layers enable independent development
-and maintenance of each component. The backend follows a Service Layer pattern over
-a Repository abstraction, ensuring controllers remain thin and business logic is
-encapsulated in dedicated service classes.
-
-\textbf{API-First Integration:} External services integrate through well-defined
-interfaces: Proxmox VE and Apache Guacamole expose REST APIs consumed by the
-backend, while the MQTT broker provides a publish-subscribe messaging layer for
-IoT command dispatch and telemetry streaming, ensuring loose coupling and flexibility
-to adapt to evolving infrastructure
-{\footnotesize\cite{proxmox-ve-api,guacamole-manual,mqtt-oasis}}.
-
-\textbf{Event-Driven Architecture:} System components communicate via Laravel Events
-and WebSocket broadcasts, enabling real-time updates for session status, robot
-telemetry, and security alerts {\footnotesize\cite{laravel-docs}}.
-
-\textbf{Zero-Trust Security Model:} Every access request is authenticated and
-authorized regardless of network location, following least-privilege principles
-with role-based policy enforcement.
-
-% ---------------------------
-\subsection{Technology Overview}
-% ---------------------------
-
-Technology selection for IoT-REAP was driven by four criteria: availability of a
-mature REST API enabling programmatic integration, native support for the target
-protocols (WebSocket, RDP/VNC, MQTT), suitability for asynchronous and event-driven
-workflows, and alignment with the open-source licensing constraints of an academic
-project. \textbf{Laravel~12} was selected as the backend framework for its native
-broadcasting system (Laravel Echo/Reverb), job queue infrastructure essential for
-asynchronous VM lifecycle operations, and its policy-based authorization layer, which
-maps directly onto the platform's role hierarchy. \textbf{React~18 with TypeScript}
-was chosen for the frontend to leverage the component model for complex UI states
-(session dashboards, Guacamole viewer embedding) and strong typing to reduce
-integration errors at the API boundary. \textbf{Proxmox VE} was preferred over
-commercial hypervisor platforms for its open REST API, KVM-based virtualization, and
-absence of per-socket licensing costs in a training context. \textbf{Apache Guacamole}
-is the only production-grade, open-source gateway that tunnels RDP, VNC, and SSH
-natively over WebSockets without client-side installation, directly resolving the
-browser-native access gap identified in Section~3. \textbf{Mosquitto} was selected as
-the MQTT broker for its lightweight footprint, QoS~1 delivery guarantee support, and
-well-documented PHP client libraries enabling straightforward integration with the
-platform's event-driven backend.
-
-Table~\ref{tab:technology-stack} maps each layer of the IoT-REAP platform to its
-corresponding technology and functional role.
-
-\begin{table}[H]
-\centering
-\caption{IoT-REAP Technology Stack}
-\begin{tabular}{|p{3.2cm}|p{3.8cm}|p{6cm}|}
-\hline
-\textbf{Layer} & \textbf{Technology} & \textbf{Role in Platform} \\ \hline
-Backend Framework & Laravel 12 (PHP) & REST API, business logic, event broadcasting, job queues \\ \hline
-Frontend & React 18 + TypeScript & Reactive user interface; Zustand state management \\ \hline
-Virtualization & Proxmox VE & VM lifecycle management and node orchestration \\ \hline
-Remote Access Gateway & Apache Guacamole & Browser-based RDP/VNC/SSH tunneling \\ \hline
-IoT Messaging & MQTT (Mosquitto) & Robot command publishing and telemetry streaming \\ \hline
-Relational Database & MySQL 8 & Persistent storage for all platform entities \\ \hline
-\end{tabular}
-\label{tab:technology-stack}
-\end{table}
-
-% =============================================================================
 \section{Requirements Specification}
 % =============================================================================
 
@@ -1063,7 +1013,7 @@ without disrupting the core laboratory platform delivery.
 
 \subsubsection{Characteristics of Agile Scrum}
 
-\textbf{Sprint-Based Delivery:} The IoT-REAP project is organized into fixed 2-week
+\textbf{Sprint-Based Delivery:} The IoT-REAP project is organized into fixed 3-week
 sprints, each with a starting Sprint Planning session, daily progress tracking, and a
 closing Sprint Review and Retrospective. This structure provides predictable delivery
 cycles and regular stakeholder engagement.
@@ -1095,10 +1045,10 @@ identified infrastructure bottlenecks requiring architectural adjustments.
 
 \textbf{Definition of Done:} For IoT-REAP, a user story is considered complete when
 the implementation is written and validated against its acceptance criteria by the
-developer and supervisor, and any relevant API or user-facing behavior is documented.
-Automated test coverage is progressively integrated across sprints, with full test
-suite execution and load testing consolidated in Sprint~6 as a dedicated quality
-assurance phase.
+developer and supervisor, unit and integration tests covering the delivered behavior
+are written and passing, and any relevant API or user-facing behavior is documented.
+Quality assurance is embedded throughout every sprint rather than deferred to a
+dedicated phase, ensuring continuous validation of the delivered increment.
 
 % ---------------------------
 \subsection{Product Backlog}
@@ -1108,7 +1058,10 @@ The IoT-REAP platform development followed a prioritized product backlog organiz
 sprint. Table~\ref{tab:product-backlog} presents the representative user stories per
 sprint with their priorities and assignments. Items 28--40 correspond to granular
 infrastructure hardening and API refinement tasks tracked internally; this table
-presents the principal user-facing stories for conciseness.
+presents the principal user-facing stories for conciseness. Quality assurance,
+security scanning, load testing, and documentation activities are integrated into
+each sprint's scope as part of the Definition of Done rather than isolated in a
+dedicated delivery phase.
 
 \begin{longtable}{|p{0.03\textwidth}|p{0.70\textwidth}|p{0.08\textwidth}|p{0.09\textwidth}|}
 \caption{IoT-REAP Platform Product Backlog}
@@ -1148,12 +1101,13 @@ presents the principal user-facing stories for conciseness.
 14 & As an engineer, I want to select a target Proxmox cluster when provisioning a VM & High & Sprint 2 \\ \hline
 15 & As an admin, I want to enforce Purdue model network isolation (IT/OT zone separation) & High & Sprint 2 \\ \hline
 16 & As an admin, I want a complete dashboard with quota management and activity logs & High & Sprint 2 \\ \hline
-\multicolumn{4}{|c|}{\textbf{Sprint 3: Guacamole Remote Access - MVP}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 3: Guacamole Remote Access - MVP Demo}} \\ \hline
 17 & As a developer, I need a Guacamole client service for connection management & High & Sprint 3 \\ \hline
 18 & As an engineer, I want browser-based RDP/VNC access to my VM session & High & Sprint 3 \\ \hline
 19 & As an engineer, I want to extend my session duration in 30-minute increments & High & Sprint 3 \\ \hline
 20 & As an engineer, I want to terminate my session and have the VM cleaned up & High & Sprint 3 \\ \hline
 21 & As an engineer, I want to save my preferred connection settings (display, audio) & Medium & Sprint 3 \\ \hline
+51 & As a developer, I need unit and integration tests for the Guacamole client, token generation, and session lifecycle flows & High & Sprint 3 \\ \hline
 \multicolumn{4}{|c|}{\textbf{Sprint 4: Robot, Camera, Session Management \& Integration Hardening}} \\ \hline
 22 & As a developer, I need an MQTT service for robot command publishing & High & Sprint 4 \\ \hline
 23 & As an engineer, I want to reserve a robot with atomic transaction locks & High & Sprint 4 \\ \hline
@@ -1161,7 +1115,8 @@ presents the principal user-facing stories for conciseness.
 25 & As an engineer, I want real-time robot telemetry streamed via WebSocket & High & Sprint 4 \\ \hline
 26 & As a developer, I need idle session hibernation (suspend after 10 minutes of inactivity) & Medium & Sprint 4 \\ \hline
 27 & As an engineer, I want a live camera feed from the ESP32-CAM during robot control & High & Sprint 4 \\ \hline
-\multicolumn{4}{|c|}{\textbf{Sprint 5: Technical Training Platform}} \\ \hline
+52 & As a developer, I need load testing targeting 15 concurrent logins, 5 active VMs, and 10 simultaneous Guacamole sessions & High & Sprint 4 \\ \hline
+\multicolumn{4}{|c|}{\textbf{Sprint 5: Technical Training Platform \& Delivery}} \\ \hline
 41 & As an instructor, I want to create structured courses with modules, lessons, and prerequisite tracking & High & Sprint 5 \\ \hline
 42 & As an instructor, I want to upload videos with HLS streaming and multi-quality playback (360p-1080p) {\footnotesize\cite{hls-rfc8216}} & High & Sprint 5 \\ \hline
 43 & As a learner, I want to enroll in courses and track my progress across lessons and modules & High & Sprint 5 \\ \hline
@@ -1172,19 +1127,16 @@ presents the principal user-facing stories for conciseness.
 48 & As a learner, I want to rate and review courses to help other learners make informed decisions & Medium & Sprint 5 \\ \hline
 49 & As an instructor, I want an analytics dashboard showing enrollments, completions, and revenue & High & Sprint 5 \\ \hline
 50 & As an admin, I want to manage course categories and featured course placement & Medium & Sprint 5 \\ \hline
-\multicolumn{4}{|c|}{\textbf{Sprint 6: Testing \& Delivery}} \\ \hline
-51 & As a developer, I need to perform unit and integration tests with mocked external APIs & High & Sprint 6 \\ \hline
-52 & As a developer, I need load testing targeting 50 concurrent logins, 25 active VMs, and 40 simultaneous Guacamole sessions & High & Sprint 6 \\ \hline
-53 & As a developer, I need an OWASP ZAP scan with zero critical or high findings {\footnotesize\cite{owasp-zap-docs}} & High & Sprint 6 \\ \hline
-54 & As a user, I want comprehensive documentation (user manual, API reference) & High & Sprint 6 \\ \hline
-55 & As a developer, I need to prepare and deliver a 15-minute live defense demonstration & High & Sprint 6 \\ \hline
+53 & As a developer, I need an OWASP ZAP scan with zero critical or high findings {\footnotesize\cite{owasp-zap-docs}} & High & Sprint 5 \\ \hline
+54 & As a user, I want comprehensive documentation (user manual, API reference) & High & Sprint 5 \\ \hline
+55 & As a developer, I need to prepare and deliver a 15-minute live defense demonstration & High & Sprint 5 \\ \hline
 \end{longtable}
 
 % ---------------------------
 \subsection{Agile Scrum Ceremonies and Collaboration}
 % ---------------------------
 
-\textbf{Sprint Planning (2--4 hours):} At the beginning of each 2-week sprint,
+\textbf{Sprint Planning (2--4 hours):} At the beginning of each 3-week sprint,
 planning sessions engage the developer, supervisors, and Advisory Unit stakeholders.
 Sessions define sprint goals, select user stories from the prioritized Product Backlog
 based on business value and dependencies, and break them into implementation tasks
@@ -1258,13 +1210,13 @@ Sprint~5.
 \subsection{Sprint-Based Development Phases}
 % ---------------------------
 
-The development timeline is organized into five thematic sprints of three weeks each. The chronological
-order reflects a deliberate architectural dependency chain: authentication and audit
-foundations precede infrastructure integration, which precedes remote access
-validation, which precedes IoT and camera integration, which precedes the training
-platform with integrated quality assurance and final delivery. Durations were allocated based on
-implementation complexity, external API stability, and the need for stakeholder
-demonstration buffers.
+The development timeline is organized into five thematic sprints of three weeks each.
+The chronological order reflects a deliberate architectural dependency chain:
+authentication and audit foundations precede infrastructure integration, which precedes
+remote access validation, which precedes IoT and camera integration, which precedes the
+training platform with integrated quality assurance and final delivery. Each sprint
+embeds its own testing and validation activities, ensuring that quality is built
+incrementally rather than deferred to a separate phase.
 
 \textbf{Sprint 1: Foundation, Authentication \& Audit (3 weeks)}
 
@@ -1283,9 +1235,9 @@ record, producing a verifiable chain that exposes any retroactive modification.
 Development was performed on Ubuntu 24.04 LTS using Visual Studio Code with PHP and
 TypeScript language support, with source control managed through Git and GitLab CI/CD
 pipelines configured for automated linting and build verification. The third week was
-used to write unit and integration tests for the authentication flows, role-based
-access control policies, and audit log hash chain mechanism, establishing the
-platform's test suite baseline.
+dedicated to writing unit and integration tests for the authentication flows,
+role-based access control policies, and audit log hash chain mechanism, establishing
+the platform's test suite baseline.
 
 \textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation (3 weeks)}
 
@@ -1299,22 +1251,23 @@ using a resource-aware scoring algorithm that accounts for current CPU utilizati
 active session count before selecting a target node. The architecture was extended to
 support multiple independent Proxmox clusters with encrypted credential storage and
 cluster selection logic for VM launch. Purdue model network isolation was enforced
-through VLAN and firewall rule configuration separating IT and OT zones. The
-three-week duration reflects the complexity of multi-cluster orchestration and the
-need to validate the network isolation configuration against the Purdue model topology.
-Unit tests for the Proxmox API client, load balancer scoring algorithm, and cluster
-selection logic were written as part of sprint acceptance.
+through VLAN and firewall rule configuration separating IT and OT zones. Unit tests
+for the Proxmox API client, load balancer scoring algorithm, and cluster selection
+logic were written and validated as part of sprint acceptance, with integration tests
+confirming correct behaviour under simulated node failure scenarios.
 
-\textbf{Sprint 3: Guacamole Remote Access - MVP Demo (2 weeks)}
+\textbf{Sprint 3: Guacamole Remote Access - MVP Demo (3 weeks)}
 
 Apache Guacamole was deployed and integrated with the Laravel backend via its REST
 API. The implementation covered connection object creation, one-time token generation
 for secure URL distribution, and an embedded React viewer for browser-based RDP and
 VNC access without client installation. Session lifecycle management - extension in
 configurable increments, explicit termination with automatic VM cleanup, and persistent
-connection preferences - was delivered. \textbf{This sprint concluded with the MVP
-demonstration, validating the core value proposition of browser-based remote industrial
-access.}
+connection preferences - was delivered. The third week was used to write unit and
+integration tests for the Guacamole client service, token generation logic, and session
+lifecycle workflows, and to run an initial API security review against the newly exposed
+remote desktop endpoints. \textbf{This sprint concluded with the MVP demonstration,
+validating the core value proposition of browser-based remote industrial access.}
 
 \textbf{Sprint 4: Robot, Camera, Session Management \& Integration Hardening (3 weeks)}
 
@@ -1328,39 +1281,31 @@ ESP32-CAM hardware layer was concurrently integrated to provide live MJPEG video
 during robot control sessions, with PTZ command relaying and stream proxying through
 the platform gateway. Idle session hibernation was implemented: VMs are automatically
 suspended after 10 minutes of inactivity, reducing resource contention without
-terminating the session context. This phase also addressed concurrent-load integration
-issues discovered during Sprint~4 testing: race conditions in the VM provisioning
-pipeline surfaced under simultaneous write contention that was not exercised during
-Sprint~2 isolated acceptance validation, and were resolved through pessimistic locking
-at the database transaction boundary. Google OAuth account linking edge cases were
-hardened in parallel.
+terminating the session context. Race conditions in the VM provisioning pipeline
+surfaced under simultaneous write contention and were resolved through pessimistic
+locking at the database transaction boundary. Google OAuth account linking edge cases
+were hardened in parallel. Load testing targeting 50 concurrent authenticated sessions,
+25 active VM provisioning operations, and 40 simultaneous Guacamole remote desktop
+connections was executed in the final week, with results documented against the
+production-scale objectives defined in the backlog.
 
-\textbf{Sprint 5: Technical Training Platform (4 weeks)}
+\textbf{Sprint 5: Technical Training Platform \& Delivery (3 weeks)}
 
 This phase introduced the e-learning dimension in response to stakeholder feedback
-following the MVP. The course structure - training paths, modules, and training units
-with prerequisite tracking - was implemented. Instructors gained the ability to
-upload videos processed into HLS adaptive streams (360p--1080p), create timed quizzes
-with auto-grading and retry limits, and monitor learner progress through an analytics
-dashboard. Engineers could enroll in courses, track completion, take timestamped notes,
-and receive verifiable digital certificates with unique hash-based verification links.
-The four-week duration reflects the substantial scope of integrating a full learning
-management system - including video pipeline processing, progress tracking logic,
-quiz engine, certificate generation, and course review mechanics - within the
-existing platform without disrupting its laboratory access features.
-
-\textbf{Sprint 6: Testing \& Delivery (2 weeks)}
-
-The final phase concentrated on quality assurance and documentation. Unit and
-integration tests were written with mocked external APIs (Proxmox, Guacamole, Stripe)
-to validate business logic in isolation from infrastructure dependencies. Load testing
-targeted the production-scale objectives defined in the backlog: 50 concurrent
-authenticated sessions, 25 active VM provisioning operations, and 40 simultaneous
-Guacamole remote desktop connections; actual test execution was conducted against the
-available development infrastructure, with results documented against these targets in
-Chapter~6. An OWASP ZAP security scan was executed to identify and remediate
-vulnerabilities. User manuals, API reference documentation, and the defense
-demonstration were prepared for final delivery.
+following the MVP, and concluded with final quality assurance and platform delivery.
+The course structure - training paths, modules, and training units with prerequisite
+tracking - was implemented. Instructors gained the ability to upload videos processed
+into HLS adaptive streams (360p--1080p), create timed quizzes with auto-grading and
+retry limits, and monitor learner progress through an analytics dashboard. Engineers
+could enroll in courses, track completion, take timestamped notes, and receive
+verifiable digital certificates with unique hash-based verification links. During the
+final week, an OWASP ZAP security scan was executed to identify and remediate
+vulnerabilities, user manuals and API reference documentation were finalized, and the
+defense demonstration was prepared for final delivery. The condensed scope relative to
+the e-learning feature set was made feasible by the incremental test coverage
+accumulated across prior sprints, which allowed the final week to focus on
+security validation, documentation, and demonstration preparation rather than
+regression testing.
 
 \subsection{Gantt Diagram}
 % ---------------------------
@@ -1386,9 +1331,9 @@ resource reservation, tamper-proof audit logging, and integrated training conten
 delivery. The proposed platform architecture, technology selection rationale, and
 requirements specification were then presented, defining the actors, functional
 capabilities, and measurable quality constraints that govern the implementation.
-Finally, the Agile Scrum methodology, sprint-based development timeline, and
-preliminary risk assessment were introduced, providing the project management
-framework within which the technical work presented in the following chapters was
-executed.
+Finally, the Agile Scrum methodology and five uniform 3-week sprints were introduced,
+each embedding its own testing and validation activities, providing the project
+management framework within which the technical work presented in the following
+chapters was executed.
 
 \cleardoublepage
