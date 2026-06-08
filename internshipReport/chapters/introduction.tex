@@ -20,7 +20,7 @@ requirements; conventional remote desktop tools lack native integration with
 industrial communication protocols; and no standardized platform has emerged to
 consolidate virtual machine~(VM) provisioning, browser-based remote desktop
 access, and IoT device control within a single, coherent system. As the
-comparative analysis presented in Chapter~1 will demonstrate, existing solutions
+comparative analysis presented in Chapter~\ref{chap:preliminary_study} will demonstrate, existing solutions
 address these challenges only partially. This raises a central engineering
 question: \textit{how can industrial engineers and trainers securely access
 remote equipment from any browser, without client-side software installation,
@@ -47,7 +47,7 @@ Platform}) project. The platform provides industrial engineers, technicians, and
 trainers with browser-based access to virtual machines through Proxmox~VE
 integration~{\footnotesize\cite{proxmox-ve-api}}, and clientless remote desktop sessions via
 Apache Guacamole, supporting the RDP, VNC, and SSH
-protocols~{\footnotesize\cite{guacamole-manual}}. Robot commands are dispatched and monitored
+protocols~{\footnotesize\cite{guacamole-manual}}. Camera controls are dispatched and monitored
 via the lightweight MQTT messaging protocol~{\footnotesize\cite{mqtt-oasis}}, enabling
 real-time communication with connected industrial devices. IoT-REAP adheres to
 strong industrial cybersecurity principles, implementing zero-trust access
@@ -67,17 +67,17 @@ and were addressed by Novation City's internal IT operations team as part of the
 broader infrastructure initiative.
 
 The report comprises three chapters documenting the complete development
-lifecycle of IoT-REAP. \textbf{Chapter~1} establishes the professional context
+lifecycle of IoT-REAP. \textbf{Chapter~\ref{chap:preliminary_study}} establishes the professional context
 at Novation City, characterizes the challenges of secure industrial remote
 access, critically reviews existing industrial remote access solutions and their
 limitations, defines the platform requirements and scope, and presents the Agile
-Scrum methodology adopted, including the six-sprint development timeline.
-\textbf{Chapter~2} presents the conceptual study of the platform, modelling
+Scrum methodology adopted, including the five-sprint development timeline.
+\textbf{Chapter~\ref{chap:conceptual_study}} presents the conceptual study of the platform, modelling
 the system through a general use case diagram and actor-specific refinements
 covering all four user roles, a class diagram formalizing the domain model,
 and sequence diagrams capturing the dynamic behaviour of critical workflows
-including VM session provisioning, robot command dispatch, and user
-authentication. \textbf{Chapter~3} covers the realization and experimentation
+including VM session provisioning, camera control, and user
+authentication. \textbf{Chapter~\ref{chap:realization}} covers the realization and experimentation
 phase, describing the software architecture adopted for the platform - its
 layered organization, asynchronous provisioning pipeline, and external
 infrastructure boundary - presenting the hardware and software development

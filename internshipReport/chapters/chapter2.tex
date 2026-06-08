@@ -24,10 +24,8 @@
 % ============================================================================
 
 \chapter{Conceptual Study}
+\label{chap:conceptual_study}
 \setcounter{section}{0}
-
-\section*{Introduction}
-\addcontentsline{toc}{section}{Introduction}
 
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
@@ -68,7 +66,7 @@ presents the general use case diagram of the IoT-REAP platform.
     \caption{General Use Case Diagram of the IoT-REAP Platform}
     \label{fig:general-use-case}
 \end{figure}
-
+\newpage
 \subsection{Actor-Specific Use Case Refinements}
 
 The following subsections present the actor-specific use case refinements
@@ -158,7 +156,7 @@ submissions.
 
 \textbf{Class Engineer}: The class Engineer represents practitioners who consume
 training materials and operate remote laboratory resources. Engineers interact
-with VM sessions, hardware reservations, and robot control features.
+with VM sessions and hardware reservations.
 
 \textbf{Class UserRole}: An enumeration that defines the possible user roles
 (ADMIN, TEACHER, ENGINEER). UserRole is used to gate permissions and to
@@ -261,9 +259,8 @@ reservable entity.
 unavailable USB device, enabling FIFO assignment and notifications when a
 device becomes available.
 
-\textbf{Class Robot}: Robot models a remote or simulated robot endpoint that
-can be reserved or controlled from a VM session; it includes identifiers,
-command interfaces and telemetry endpoints.
+\textbf{Class Robot}: Robot models a remote hardware unit that serves as a container
+for laboratory cameras; it includes identifiers, status, and network addressing.
 
 \textbf{Class Payment}: Payment records financial transactions (amount,
 currency, status, user and training path references) and serves as the source

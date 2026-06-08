@@ -10,7 +10,43 @@ the following sub-use cases:
 \end{figure} 
 
 \subsubsubsection{Specification of the Use Case Create Training Path}
+\begin{table}[H]
+    \centering
+    \caption{Use Case Specification: Create Training Path}
+    \begin{tabular}{|p{2.7cm}|p{12.5cm}|}
+        \hline
+        \textbf{Title}          & Create Training Path \\ \hline
 
+        \textbf{Summary}        & Teacher creates a new training path by providing the basic information needed to define the learning content. \\ \hline
+
+        \textbf{Actor}          & Teacher \\ \hline
+
+        \textbf{Precondition}   & Teacher is authenticated and authorized to create training content. \\ \hline
+
+        \textbf{Post-condition} & A new training path is created and associated with the Teacher in a draft state, ready for further editing. \\ \hline
+
+        \textbf{Basic Scenario} & \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Teacher selects the option to create a new training path.
+            \item System displays the creation form.
+            \item Teacher enters the required information and any optional details.
+            \item Teacher submits the form.
+            \item System validates the submitted information.
+            \item System creates the new training path.
+            \item System confirms successful creation and presents the training path for further editing.
+        \end{enumerate}
+        \end{minipage} \\ \hline
+
+        \textbf{Error Scenario} & \begin{minipage}[t]{\linewidth}
+        \begin{enumerate}[topsep=0pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+            \item Validation failure: system rejects invalid or incomplete input and preserves the entered values for correction.
+            \item Unauthorized access: system denies the action if the Teacher is not allowed to create training content.
+            \item Creation failure: system informs the Teacher that the training path could not be created and allows retrying later.
+        \end{enumerate}
+        \end{minipage} \\ \hline
+    \end{tabular}
+    \label{tab:teacher-create-tp}
+\end{table}
 
 \subsubsubsection{Specification of the Use Case Edit Training Path}
 \begin{table}[H]

@@ -1,5 +1,6 @@
 % ==================== CHAPTER 3: REALIZATION AND EXPERIMENTATION ====================
 \chapter{Realization and Experimentation}
+\label{chap:realization}
 
 % NOTE: Move \providecommand{\stacklogo}, \providecommand{\interfaceplaceholder},
 % and \newcolumntype{C} to your main preamble (main.tex) before final submission.
@@ -25,27 +26,13 @@
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
 
-\initial{T}his chapter presents the practical realization of the IoT-REAP
-platform and provides evidence of its correct operation. It is organized into
-six main parts. Section~\ref{sec:architecture} describes the software
-architecture adopted for the platform, including its layered organization and
-asynchronous provisioning pipeline. Section~\ref{sec:tools} describes the
-hardware resources, development tools, and technology stack used during
-implementation. Section~\ref{sec:implementation} presents the principal
-interfaces realized for each user role, from public visitors to platform
-administrators, together with the backend domain workflows that power them.
-Section~\ref{sec:network} details the network topology and segmentation
-strategy validated through simulation. Section~\ref{sec:hosting} covers the
-production deployment, security configuration, and deployment automation.
-Finally, Section~\ref{sec:tests} reports the verification and testing
-activities conducted to validate functional correctness, role-based access
-control, remote laboratory workflows, platform security, and performance.
+\initial{T}his chapter presents IoT-REAP platform implementation and validates operation. It is organized into six sections. Section~\ref{sec:architecture} describes software architecture, asynchronous provisioning pipeline. Section~\ref{sec:tools} covers hardware, tools, and technology stack. Section~\ref{sec:implementation} presents user interfaces and backend workflows. Section~\ref{sec:network} details network topology and segmentation. Section~\ref{sec:hosting} covers deployment, security, and automation. Finally, Section~\ref{sec:tests} reports verification of functional correctness, access control, remote laboratory workflows, security, and performance.
 
 % --------
 \section{Adopted Software Architecture}
 \label{sec:architecture}
 
-IoT-REAP is implemented as a \textbf{layered monolithic Laravel application} that combines
+IoT-REAP is implemented as a \textbf{layered monolithic Laravel application} combining
 synchronous request-response processing with event-driven asynchronous
 orchestration for infrastructure provisioning and state reconciliation.
 
@@ -60,73 +47,63 @@ inter-layer dependencies.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{assets/chapter3/arch-component}
+  \includegraphics[width=0.9\linewidth]{assets/chapter3/arch-component}
   \caption{IoT-REAP Layered Architecture - Component Overview}
   \label{fig:arch-component}
 \end{figure}
 
-\textbf{Presentation Layer:} React~18 page components with TypeScript
-constitute the user interface for all roles. Inertia.js acts as a transport
-adapter between Laravel routes and React components, enabling single-page
-navigation without a separate REST API. The React layer manages its own UI
-state through Zustand and TanStack React Query and is entirely independent
-of server-side rendering
-  {\footnotesize\cite{react-docs,typescript-docs,inertia-docs,
-      zustand-docs,tanstack-query-docs}}.
+\textbf{Presentation Layer:} React~18 with TypeScript constitutes the user
+interface for all roles. Inertia.js acts as a transport adapter between Laravel
+routes and React components, enabling SPA navigation without a separate API.
+React state is managed by Zustand and TanStack Query, independent of server-side
+rendering {\footnotesize\cite{react-docs,typescript-docs,inertia-docs,
+    zustand-docs,tanstack-query-docs}}.
 
-\textbf{Application Layer (HTTP Boundary):} Laravel controllers receive HTTP
-requests, validate input through FormRequest classes, enforce authentication
-and authorization through middleware and Policy classes, and delegate all
-domain work to the Service layer. Controllers are intentionally kept thin, delegating business logic and persistence operations to lower layers
-.
+\textbf{Application Layer (HTTP Boundary):} Laravel controllers handle HTTP
+requests, validate input, enforce authentication and authorization, and
+delegate domain work to the Service layer. Controllers are intentionally kept
+thin, delegating business logic and persistence to lower layers.
+
 \textbf{Service Layer (\texttt{app/Services}):} Service classes encapsulate
-all domain workflows - session lifecycle management, reservation conflict
-detection, quota enforcement, certificate eligibility, and payment
-processing. This directory also contains the typed client classes that
-communicate with external systems, each isolating its protocol-specific
-details from the rest of the application.
+domain workflows: session management, reservation conflict detection, quota
+enforcement, certificate eligibility, and payment processing. This directory
+also contains typed client classes communicating with external systems,
+isolating protocol-specific details.
 
 \textbf{Data Access Layer (\texttt{app/Repositories}):} Repository classes
-abstract all persistence operations, exposing typed interfaces to the Service
-layer and shielding it from database-specific query construction. Eloquent
-ORM Models define entity relationships, and query
-scopes. The Observer pattern on Models feeds the audit logging pipeline
-without coupling it to business logic.
+abstract persistence operations, exposing typed interfaces and shielding the
+Service layer from database-specific queries. Eloquent ORM Models define entity
+relationships and query scopes. The Observer pattern on Models feeds the audit
+logging pipeline without coupling it to business logic.
 
 \textbf{External Infrastructure:} The platform coordinates with five external
-systems that operate outside the application monolith but are managed through
-the Service Layer: Proxmox VE for VM lifecycle management, Apache Guacamole
-for remote desktop brokering, MediaMTX and Frigate for camera streaming and
-recording, Mosquitto for MQTT telemetry and command dispatch, and the edge
-gateway agents for USB/IP hardware binding. These systems are deployed on
-dedicated hardware or network segments and are accessed exclusively through
-the typed client classes in \texttt{app/Services}, ensuring that
-protocol-specific details and network concerns never leak into the application
-or presentation layers.
+systems: Proxmox VE for VMs, Apache Guacamole for remote desktop, MediaMTX and
+Frigate for camera streaming, Mosquitto for MQTT telemetry, and edge gateways
+for USB/IP hardware. These systems are accessed exclusively through typed client
+classes in \texttt{app/Services}, preventing protocol details from leaking into
+application layers.
 
 % --------
 \subsection{Architectural Benefits}
 
 \textbf{Operational simplicity:} A single deployable unit reduces deployment
-complexity, configuration drift, and cross-service versioning issues compared
-to a distributed or microservice approach.
+complexity and cross-service versioning compared to microservices.
 
-\textbf{Failure isolation:} External API and hardware failures are absorbed
-by the queue worker and retried independently, never reaching the
-user-facing HTTP layer.
+\textbf{Failure isolation:} External API and hardware failures are absorbed by
+the queue worker and retried independently, never reaching the user-facing HTTP
+layer.
 
 \textbf{State consistency:} The reconciliation worker ensures the database
-reflects physical reality, directly addressing the primary operational risk
-of managing distributed hardware from a centralized application.
+reflects physical reality, addressing the risk of managing distributed hardware
+centrally.
 
-\textbf{Testability:} The Service layer is tested in isolation with mocked
-external clients. Provisioning jobs are tested by dispatching events against
-a synchronous queue driver. React components are tested with Vitest and
-React Testing Library {\footnotesize\cite{vitest-docs,phpunit-docs}}.
+\textbf{Testability:} The Service layer is tested with mocked external clients.
+Provisioning jobs are tested against a synchronous queue driver. React
+components are tested with Vitest and React Testing Library
+{\footnotesize\cite{vitest-docs,phpunit-docs}}.
 
-\textbf{Extensibility:} New hardware types or external systems require only
-a new client class in \texttt{app/Services} and a corresponding job handler,
-Existing layers require minimal modification.
+\textbf{Extensibility:} New hardware or external systems require only a new
+client class and job handler; existing layers need minimal modification.
 
 % --------
 \section{Tools and Development Environment}
@@ -141,14 +118,13 @@ React, TypeScript, and MySQL
   {\footnotesize\cite{laravel-docs,react-docs,typescript-docs,mysql-docs}}.
 
 % --------
-\newpage
 \subsection{Hardware Environment}
 
 The hardware environment of IoT-REAP comprises the physical machines, network
 equipment, and tangible devices that provide the computational and operational
 foundation for remote laboratory work. Table~\ref{tab:hardware-env} summarizes
 the hardware components and their respective roles within the platform.
-
+\small
 \begin{longtable}{|p{3cm}|p{3.6cm}|p{8cm}|}
   \caption{Physical Hardware Components of IoT-REAP}
   \label{tab:hardware-env}                                                                                        \\
@@ -195,6 +171,7 @@ the hardware components and their respective roles within the platform.
   reliable connectivity between compute hosts, gateway nodes, cameras, and
   industrial devices within the laboratory network.                                                               \\ \hline
 \end{longtable}
+\normalsize
 
 This hardware structure reflects the layered physical architecture of the
 platform: compute hosts provide processing and storage resources, the gateway
@@ -210,7 +187,7 @@ test, and document the IoT-REAP platform. Since the platform is implemented as
 a Laravel application using Inertia.js and React, both PHP and JavaScript
 tooling were required throughout the development cycle. Table~\ref{tab:dev-env}
 summarizes the main development tools and their roles.
-
+\small
 \begin{longtable}{|C{3.7cm}|C{2.2cm}|C{8.7cm}|}
   \caption{Development Environment}
   \label{tab:dev-env}                                                                                          \\
@@ -218,6 +195,7 @@ summarizes the main development tools and their roles.
   \textbf{Tool}       & \textbf{Logo}                                       & \textbf{Role in the Project}     \\
   \hline
   \endfirsthead
+  \multicolumn{3}{c}{{\tablename\ \thetable{} -- Continued}}                                      \\[0.5em]
   \hline
   \textbf{Tool}       & \textbf{Logo}                                       & \textbf{Role in the Project}     \\
   \hline
@@ -239,8 +217,7 @@ summarizes the main development tools and their roles.
 
   GitHub Actions      & \stacklogo{assets/chapter3/github-actions-logo.png} & Used to
   automate the continuous integration and deployment pipeline, executing test
-  suites on every push to the \texttt{main} branch and deploying verified
-  releases to the OVH production server via SSH.                                                               \\ \hline
+  suites on every push to the \texttt{main} branch.                                                               \\ \hline
 
   Composer            & \stacklogo{assets/chapter3/composer-logo.png}       & Used to install and
   manage Laravel framework packages and backend dependencies
@@ -276,7 +253,7 @@ summarizes the main development tools and their roles.
   including Windows and Linux images with preconfigured software for training
   sessions {\footnotesize\cite{vmware-docs}}.                                                                  \\ \hline
 \end{longtable}
-
+\normalsize
 % --------
 \subsection{Technology Stack}
 
@@ -294,7 +271,7 @@ architectural layer.
   \textbf{Technology} & \textbf{Logo}                                   & \textbf{Role in the Platform}              \\
   \hline
   \endfirsthead
-  \multicolumn{3}{c}{{\tablename\ \thetable{} -- Continued from previous page}}                                      \\[0.5em]
+  \multicolumn{3}{c}{{\tablename\ \thetable{} -- Continued}}                                      \\[0.5em]
   \hline
   \textbf{Technology} & \textbf{Logo}                                   & \textbf{Role in the Platform}              \\
   \hline
@@ -383,7 +360,7 @@ architectural layer.
                                    {\footnotesize\cite{guacamole-manual}}.                                           \\ \hline
 
   Mosquitto           & \stacklogo{assets/chapter3/mosquitto-logo.png}  & MQTT broker that
-  handles real-time robot command dispatch and telemetry reception using QoS~1
+  handles real-time camera control and stream management using QoS~1
   message delivery for reliable industrial control operations
                                                      {\footnotesize\cite{mosquitto-docs,mqtt-oasis}}.                \\ \hline
 
@@ -414,8 +391,7 @@ React~18 with TypeScript ensures type-safe component reusability across a large
 UI surface, while Zustand provides a lightweight, hook-based global state
 management solution that avoids the overhead of heavier alternatives such as
 Redux. Laravel Reverb delivers first-party WebSocket broadcasting without
-reliance on external cloud services, which is essential for real-time robot
-telemetry in constrained network environments
+reliance on external cloud services, which is essential for real-time camera feedback in constrained network environments
   {\footnotesize\cite{reverb-docs}}. Proxmox VE was chosen as the open-source
 hypervisor to avoid proprietary licensing costs while exposing a full REST API
 for automated VM lifecycle management {\footnotesize\cite{proxmox-ve-api}}.
@@ -736,25 +712,6 @@ Strict Transport Security), \texttt{X-Frame-Options}, and Content Security
 Policy (CSP) are applied at the reverse proxy level, protecting against common
 web vulnerabilities such as clickjacking and cross-site scripting (XSS)
   {\footnotesize\cite{nginx-docs,mdn-hsts,mdn-csp}}.
-
-% --------
-\subsection{Deployment Automation}
-\label{subsec:deployment-automation}
-
-Deployment to the OVH production environment is automated through a GitHub
-Actions pipeline. On each push to the \texttt{main} branch, the workflow
-executes the PHPUnit and Vitest test suites as quality gates; the deployment
-step is blocked if any test fails. Verified releases are transferred to the
-server via SSH using the \texttt{appleboy/ssh-action} GitHub Actions action.
-The deployment follows a zero-downtime symlink swap strategy: the new release
-directory is prepared in an isolated path, then atomically promoted by updating
-the \texttt{current} symlink. After promotion, Laravel database migrations are
-executed automatically, and the PHP-FPM pool, queue worker, and scheduler
-daemon are restarted under systemd supervision. This pipeline ensures that only
-verified, tested code reaches production and that rollback to the previous
-release requires only restoring the previous symlink target.
-
-% --------
 \section{Tests and Verification}
 \label{sec:tests}
 
