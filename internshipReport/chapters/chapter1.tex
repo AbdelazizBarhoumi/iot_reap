@@ -262,9 +262,9 @@ extending well beyond the scheduled access period.
 
 \textbf{Insufficient Audit Trail for Industrial Compliance:} Industrial security
 standards and emerging regulations including the NIS2 Directive and the Cyber
-Resilience Act require comprehensive, tamper-evident logging of all access
+Resilience Act require comprehensive logging of all access
 and command events. Existing remote access tools provide basic connection logs
-at best, with no cryptographic integrity verification. The Secomea 2026 report
+at best, with limited session-level granularity. The Secomea 2026 report
 notes that fragmented access stacks produce ``inconsistent oversight, redundant
 access pathways, and uneven coordination between IT, OT, and external vendors,''
 and that even organizations with high self-reported security confidence frequently
@@ -339,7 +339,7 @@ No Session Governance
     & No idle timeout, no quota enforcement, no reservation system
     & Resource conflicts, security exposure beyond scheduled windows \\ \hline
 Insufficient Audit Trail
-    & No cryptographic integrity; basic connection logs only
+    & Limited event granularity; basic connection logs only
     & Non-compliance with NIS2, CRA, and industrial security standards \\ \hline
 Disconnected Training
     & LMS and remote access are separate, unintegrated systems
@@ -547,8 +547,8 @@ a first-class platform policy. There is no virtual machine lifecycle management:
 Tensor cannot provision, clone, snapshot, or terminate Proxmox or KVM-based
 VMs on behalf of a user. No resource reservation or scheduling mechanism
 prevents double-booking of shared physical or virtual equipment. Session audit
-logging is present but does not implement cryptographic hash chaining for
-tamper-evident integrity verification. No MQTT-based camera control is supported. No training content delivery layer exists.
+logging is present but does not provide granular administrative oversight for
+non-administrative actions. No MQTT-based camera control is supported. No training content delivery layer exists.
 Enterprise Tensor licensing follows a per-seat subscription model at
 significant cost, making it poorly adapted to academic institutions that
 need to provision transient access for large, rotating cohorts of trainees.
@@ -810,10 +810,9 @@ locks to guarantee conflict-free scheduling. Users attempting to reserve an alre
 reserved resource enter a waiting queue and are notified upon availability. Session
 quotas per user and per resource type are enforced by the platform, independent of
 network-layer controls. All sensitive operations - session creation, device
-attachment, administrative user actions, and payment events - generate tamper-evident
-audit records using SHA-256 hash chaining: each record stores a hash derived from
-its own content concatenated with the hash of the preceding entry, producing a
-verifiable chain that exposes any retroactive modification. This audit mechanism
+attachment, administrative user actions, and payment events - generate persistent
+audit records: each record captures the initiator, timestamp, and operation details,
+providing a verifiable history of system activity. This audit mechanism
 directly addresses the compliance gaps identified relative to the NIS2 Directive and
 the Cyber Resilience Act.
 
@@ -1194,7 +1193,7 @@ dedicated delivery phase.
 02 & As an admin, I want role-based access control (engineer, teacher, admin) with distinct permissions & High & Sprint 1 \\ \hline
 03 & As a user, I want to enhance my account security using Two-Factor Authentication (2FA) & High & Sprint 1 \\ \hline
 04 & As a developer, I need a database schema for users with ULID primary keys for secure, time-sortable identifiers & High & Sprint 1 \\ \hline
-05 & As a developer, I need a tamper-evident audit log system using SHA-256 hash chaining for security verification & High & Sprint 1 \\ \hline
+05 & As a developer, I need an audit log system to track user and administrative actions for security verification & High & Sprint 1 \\ \hline
 06 & As a user, I want password reset functionality and email verification & Medium & Sprint 1 \\ \hline
 07 & As a developer, I need a React 18 frontend with TypeScript and Inertia.js as the application baseline & High & Sprint 1 \\ \hline
 08 & As a developer, I need automated CI/CD pipelines for linting, testing, and deployment validation & Medium & Sprint 1 \\ \hline
@@ -1295,7 +1294,7 @@ diagrams} model the domain entities and their relationships, covering the core d
 model across the learning, laboratory, and infrastructure domains. \textbf{Sequence
 diagrams} document time-ordered interactions for critical workflows: VM provisioning
 through the Proxmox API, one-time Guacamole token generation and session establishment,
-MQTT command dispatch and camera control, and SHA-256 hash chain audit log entry
+MQTT command dispatch and camera control, and comprehensive audit log entry
 creation. These models served as architectural contracts between the developer and
 stakeholders, ensuring shared understanding of system boundaries and interaction
 protocols before implementation began.
@@ -1333,15 +1332,16 @@ OAuth social login was integrated as an alternative authentication path, with ac
 linking logic to merge social and local credentials. A key architectural decision in
 this sprint was the use of ULID primary keys rather than auto-incremented integers:
 ULIDs provide globally unique, time-sortable identifiers that prevent enumeration
-attacks and simplify future cross-service data merges. Concurrently, a tamper-evident
-audit log mechanism using SHA-256 hash chaining was implemented: each audit record
-stores a hash derived from its content concatenated with the hash of the preceding
-record, producing a verifiable chain that exposes any retroactive modification.
+attacks and simplify future cross-service data merges. Concurrently, a comprehensive
+audit log mechanism was implemented: each critical system event - ranging from
+authentication attempts to resource provisioning - is recorded in a persistent
+log, capturing the initiator, timestamp, and operation details.
 Development was performed on Ubuntu 24.04 LTS using Visual Studio Code with PHP and
 TypeScript language support, with source control managed through Git and GitLab CI/CD
 pipelines configured for automated linting and build verification. The third week was
 dedicated to writing unit and integration tests for the authentication flows,
-role-based access control policies, and audit log hash chain mechanism, establishing
+role-based access control policies, and audit logging mechanism, establishing
+
 the platform's test suite baseline.
 
 \textbf{Sprint 2: Proxmox Integration, Multi-Cluster \& Network Isolation (3 weeks)}
