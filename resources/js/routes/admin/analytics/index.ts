@@ -1,0 +1,163 @@
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+export const kpis = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: kpis.url(options),
+    method: 'get',
+})
+
+kpis.definition = {
+    methods: ["get","head"],
+    url: '/admin/analytics/kpis',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+kpis.url = (options?: RouteQueryOptions) => {
+    return kpis.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+kpis.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: kpis.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: kpis.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+    const kpisForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: kpis.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+        kpisForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: kpis.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::kpis
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:53
+ * @route '/admin/analytics/kpis'
+ */
+        kpisForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: kpis.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    kpis.form = kpisForm
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+export const health = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: health.url(options),
+    method: 'get',
+})
+
+health.definition = {
+    methods: ["get","head"],
+    url: '/admin/analytics/health',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+health.url = (options?: RouteQueryOptions) => {
+    return health.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+health.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: health.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+health.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: health.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+    const healthForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: health.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+        healthForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: health.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Admin\AdminAnalyticsController::health
+ * @see app/Http/Controllers/Admin/AdminAnalyticsController.php:67
+ * @route '/admin/analytics/health'
+ */
+        healthForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: health.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    health.form = healthForm
+const analytics = {
+    kpis: Object.assign(kpis, kpis),
+health: Object.assign(health, health),
+}
+
+export default analytics

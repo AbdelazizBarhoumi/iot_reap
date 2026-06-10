@@ -1,0 +1,1 @@
+import{c as n}from"./client-D-YcqcVo.js";async function i(t){return(await n.post("/checkout/initiate",{training_path_id:t})).data}async function r(t,e){return(await n.post("/checkout/refund",{payment_id:t,reason:e})).data.refund_request}export{i,r};
