@@ -665,7 +665,7 @@ impersonate.post = (args: { user: string | { id: string } } | [user: string | { 
     impersonate.form = impersonateForm
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::deleteMethod
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 export const deleteMethod = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -680,7 +680,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::deleteMethod
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 deleteMethod.url = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -713,7 +713,7 @@ deleteMethod.url = (args: { user: string | { id: string } } | [user: string | { 
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::deleteMethod
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 deleteMethod.delete = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -723,7 +723,7 @@ deleteMethod.delete = (args: { user: string | { id: string } } | [user: string |
 
     /**
 * @see \App\Http\Controllers\Admin\AdminUserController::deleteMethod
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
     const deleteMethodForm = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -738,7 +738,7 @@ deleteMethod.delete = (args: { user: string | { id: string } } | [user: string |
 
             /**
 * @see \App\Http\Controllers\Admin\AdminUserController::deleteMethod
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
         deleteMethodForm.delete = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

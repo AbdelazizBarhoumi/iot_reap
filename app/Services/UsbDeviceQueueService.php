@@ -173,6 +173,12 @@ class UsbDeviceQueueService
         $startAt = $modifiedStartAt ?? $reservation->requested_start_at;
         $endAt = $modifiedEndAt ?? $reservation->requested_end_at;
 
+        $reservation->load('reservable');
+
+        if (! $reservation->reservable) {
+            throw new \DomainException('Reserved device no longer exists');
+        }
+
         // Check for conflicts (excluding this reservation)
         if ($this->reservationRepository->hasConflict($reservation->reservable, $startAt, $endAt, $reservation->id)) {
             throw new \DomainException('Modified time slot conflicts with existing reservation');

@@ -24,12 +24,14 @@ interface EarningsPageProps {
     summary: EarningsSummary;
     revenueByTrainingPath: RevenueByTrainingPath[];
     revenueChart: RevenueChartPoint[];
+    availableBalance: number;
     period: AnalyticsPeriod;
 }
 export default function EarningsPage({
     summary,
     revenueByTrainingPath,
     revenueChart,
+    availableBalance,
     period,
 }: EarningsPageProps) {
     const handlePeriodChange = (newPeriod: string) => {
@@ -69,7 +71,7 @@ export default function EarningsPage({
             return;
         }
 
-        if (amount > summary.total_revenue) {
+        if (amount > availableBalance) {
             toast.error('Requested amount exceeds your available balance.');
             return;
         }
@@ -177,7 +179,7 @@ export default function EarningsPage({
                                     Available balance
                                 </p>
                                 <p className="text-2xl font-semibold">
-                                    {formatCurrency(summary.total_revenue)}
+                                    {formatCurrency(availableBalance)}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-2 sm:flex-row">

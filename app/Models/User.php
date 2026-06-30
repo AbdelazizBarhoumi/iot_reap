@@ -125,6 +125,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Check if the user registered via Google OAuth.
+     */
+    public function isGoogleUser(): bool
+    {
+        return $this->getAttribute('google_id') !== null;
+    }
+
+    /**
      * Check whether the user has any of the supplied roles.
      *
      * @param  array<string|UserRole>  $roles

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TrainingPath;
+use App\Services\PayoutService;
 use App\Services\RevenueService;
 use App\Services\TrainingPathAnalyticsService;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,8 @@ class TeacherAnalyticsController extends Controller
 {
     public function __construct(
         protected TrainingPathAnalyticsService $analyticsService,
-        protected RevenueService $revenueService
+        protected RevenueService $revenueService,
+        protected PayoutService $payoutService
     ) {}
 
     /**
@@ -135,6 +137,7 @@ class TeacherAnalyticsController extends Controller
             'summary' => $summary,
             'revenueByTrainingPath' => $revenueByTrainingPath,
             'revenueChart' => $revenueChart,
+            'availableBalance' => $this->payoutService->getAvailableBalance($teacher) / 100,
             'period' => $period,
         ]);
     }

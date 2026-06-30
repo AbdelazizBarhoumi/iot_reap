@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Http\Requests\Checkout\InitiateCheckoutRequest;
 use App\Http\Requests\Checkout\RequestRefundRequest;
 use App\Http\Resources\PaymentResource;
@@ -10,18 +11,24 @@ use App\Models\Payment;
 use App\Models\TrainingPath;
 use App\Repositories\PaymentRepository;
 use App\Services\CheckoutService;
+use App\Services\EnrollmentService;
 use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Stripe\Checkout\Session as StripeSession;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Stripe;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         protected CheckoutService $checkoutService,
         protected RefundService $refundService,
-        protected PaymentRepository $paymentRepository
+        protected PaymentRepository $paymentRepository,
+        protected EnrollmentService $enrollmentService
     ) {}
 
     /**
@@ -62,9 +69,39 @@ class CheckoutController extends Controller
             ? $this->checkoutService->getPaymentBySessionId($sessionId)
             : null;
 
+        if ($payment && $payment->status === PaymentStatus::PENDING) {
+            $this->confirmPaymentFromStripe($payment);
+        }
+
         return Inertia::render('checkout/success', [
-            'payment' => $payment ? new PaymentResource($payment) : null,
+            'payment' => $payment ? new PaymentResource($payment->fresh()) : null,
         ]);
+    }
+
+    /**
+     * Verify payment with Stripe and enroll user if webhook hasn't fired yet.
+     */
+    protected function confirmPaymentFromStripe(Payment $payment): void
+    {
+        try {
+            Stripe::setApiKey(config('services.stripe.secret'));
+            $session = StripeSession::retrieve($payment->stripe_session_id);
+
+            if ($session->payment_status === 'paid') {
+                $payment->markAsCompleted($session->payment_intent);
+                $this->enrollmentService->enroll($payment->user, $payment->training_path_id);
+
+                Log::info('Payment confirmed via success redirect fallback', [
+                    'payment_id' => $payment->id,
+                    'user_id' => $payment->user_id,
+                ]);
+            }
+        } catch (ApiErrorException $e) {
+            Log::error('Failed to verify payment with Stripe on success redirect', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

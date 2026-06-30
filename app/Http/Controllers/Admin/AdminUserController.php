@@ -178,7 +178,15 @@ class AdminUserController extends Controller
             admin: $request->user(),
         );
 
-        return redirect()->route('dashboard')->with('info', "Now impersonating {$user->name}");
+        $redirect = match (true) {
+            $user->hasRole(UserRole::TEACHER) => $user->isTeacherApproved()
+                ? redirect()->route('teaching.index')
+                : redirect()->route('teacher.pending-approval'),
+            $user->hasRole(UserRole::ADMIN) => redirect()->route('admin.dashboard'),
+            default => redirect()->route('dashboard'),
+        };
+
+        return $redirect->with('info', "Now impersonating {$user->name}");
     }
 
     /**

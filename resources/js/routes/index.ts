@@ -597,7 +597,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     dashboard.form = dashboardForm
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 export const stopImpersonation = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -612,7 +612,7 @@ stopImpersonation.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 stopImpersonation.url = (options?: RouteQueryOptions) => {
@@ -621,7 +621,7 @@ stopImpersonation.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -631,7 +631,7 @@ stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
     /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
     const stopImpersonationForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -641,7 +641,7 @@ stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
             /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
         stopImpersonationForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

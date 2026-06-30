@@ -1,0 +1,49 @@
+ID,"Teacher Name","Teacher Email",Amount,Currency,Status,"Payout Method","Stripe Account ID","Transaction ID","Requested At","Processed At","Admin Notes"
+1,"Dr. Sarah Chen",teacher@example.com,500.00,USD,approved,stripe,,,"2026-06-28 18:24:44",,
+2,"Dr. Sarah Chen",teacher@example.com,525.00,USD,approved,bank_transfer,,,"2026-06-28 18:24:44",,
+3,"Dr. Sarah Chen",teacher@example.com,550.00,USD,processing,paypal,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+4,"Dr. Sarah Chen",teacher@example.com,575.00,USD,completed,stripe,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+5,"Dr. Sarah Chen",teacher@example.com,600.00,USD,rejected,bank_transfer,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+6,"Dr. Sarah Chen",teacher@example.com,625.00,USD,failed,paypal,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+7,"James Rodriguez",teacher.rodriguez@example.com,600.00,USD,approved,bank_transfer,,,"2026-06-28 18:24:44",,
+8,"James Rodriguez",teacher.rodriguez@example.com,625.00,USD,approved,paypal,,,"2026-06-28 18:24:44",,
+9,"James Rodriguez",teacher.rodriguez@example.com,650.00,USD,processing,stripe,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+10,"James Rodriguez",teacher.rodriguez@example.com,675.00,USD,completed,bank_transfer,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+11,"James Rodriguez",teacher.rodriguez@example.com,700.00,USD,rejected,paypal,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+12,"James Rodriguez",teacher.rodriguez@example.com,725.00,USD,failed,stripe,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+13,"Dr. Emily Watson",teacher.watson@example.com,700.00,USD,rejected,paypal,,,"2026-06-28 18:24:44",,
+14,"Dr. Emily Watson",teacher.watson@example.com,725.00,USD,approved,stripe,,,"2026-06-28 18:24:44",,
+15,"Dr. Emily Watson",teacher.watson@example.com,750.00,USD,processing,bank_transfer,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+16,"Dr. Emily Watson",teacher.watson@example.com,775.00,USD,completed,paypal,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+17,"Dr. Emily Watson",teacher.watson@example.com,800.00,USD,rejected,stripe,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+18,"Dr. Emily Watson",teacher.watson@example.com,825.00,USD,failed,bank_transfer,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+19,"Alex Thompson",teacher.thompson@example.com,800.00,USD,pending,stripe,,,"2026-06-28 18:24:44",,
+20,"Alex Thompson",teacher.thompson@example.com,825.00,USD,approved,bank_transfer,,,"2026-06-28 18:24:44",,
+21,"Alex Thompson",teacher.thompson@example.com,850.00,USD,processing,paypal,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+22,"Alex Thompson",teacher.thompson@example.com,875.00,USD,completed,stripe,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+23,"Alex Thompson",teacher.thompson@example.com,900.00,USD,rejected,bank_transfer,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+24,"Alex Thompson",teacher.thompson@example.com,925.00,USD,failed,paypal,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+25,"Maria Garcia",teacher.garcia@example.com,900.00,USD,pending,bank_transfer,,,"2026-06-28 18:24:44",,
+26,"Maria Garcia",teacher.garcia@example.com,925.00,USD,approved,paypal,,,"2026-06-28 18:24:44",,
+27,"Maria Garcia",teacher.garcia@example.com,950.00,USD,processing,stripe,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+28,"Maria Garcia",teacher.garcia@example.com,975.00,USD,completed,bank_transfer,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+29,"Maria Garcia",teacher.garcia@example.com,"1,000.00",USD,rejected,paypal,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+30,"Maria Garcia",teacher.garcia@example.com,"1,025.00",USD,failed,stripe,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+31,"Prof. David Kim",teacher.kim@example.com,"1,000.00",USD,pending,paypal,,,"2026-06-28 18:24:44",,
+32,"Prof. David Kim",teacher.kim@example.com,"1,025.00",USD,approved,stripe,,,"2026-06-28 18:24:44",,
+33,"Prof. David Kim",teacher.kim@example.com,"1,050.00",USD,processing,bank_transfer,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+34,"Prof. David Kim",teacher.kim@example.com,"1,075.00",USD,completed,paypal,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+35,"Prof. David Kim",teacher.kim@example.com,"1,100.00",USD,rejected,stripe,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+36,"Prof. David Kim",teacher.kim@example.com,"1,125.00",USD,failed,bank_transfer,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+37,"Finance Teacher 1",finance.teacher1@example.com,"1,100.00",USD,pending,stripe,,,"2026-06-28 18:24:44",,
+38,"Finance Teacher 1",finance.teacher1@example.com,"1,125.00",USD,approved,bank_transfer,,,"2026-06-28 18:24:44",,
+39,"Finance Teacher 1",finance.teacher1@example.com,"1,150.00",USD,processing,paypal,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+40,"Finance Teacher 1",finance.teacher1@example.com,"1,175.00",USD,completed,stripe,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+41,"Finance Teacher 1",finance.teacher1@example.com,"1,200.00",USD,rejected,bank_transfer,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+42,"Finance Teacher 1",finance.teacher1@example.com,"1,225.00",USD,failed,paypal,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."
+43,"Finance Teacher 2",finance.teacher2@example.com,"1,200.00",USD,pending,bank_transfer,,,"2026-06-28 18:24:44",,
+44,"Finance Teacher 2",finance.teacher2@example.com,"1,225.00",USD,approved,paypal,,,"2026-06-28 18:24:44",,
+45,"Finance Teacher 2",finance.teacher2@example.com,"1,250.00",USD,processing,stripe,,,"2026-06-28 18:24:44","2026-06-26 18:24:44",
+46,"Finance Teacher 2",finance.teacher2@example.com,"1,275.00",USD,completed,bank_transfer,,,"2026-06-28 18:24:44","2026-06-25 18:24:44",
+47,"Finance Teacher 2",finance.teacher2@example.com,"1,300.00",USD,rejected,paypal,,,"2026-06-28 18:24:44",,"Insufficient account verification."
+48,"Finance Teacher 2",finance.teacher2@example.com,"1,325.00",USD,failed,stripe,,,"2026-06-28 18:24:44","2026-06-23 18:24:44","Payment processor returned an error."

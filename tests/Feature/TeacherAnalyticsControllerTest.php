@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\TrainingPath;
 use App\Models\User;
+use App\Services\PayoutService;
 use App\Services\RevenueService;
 use App\Services\TrainingPathAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,6 +42,9 @@ class TeacherAnalyticsControllerTest extends TestCase
 
         $this->revenueServiceMock = Mockery::mock(RevenueService::class);
         $this->app->instance(RevenueService::class, $this->revenueServiceMock);
+
+        $this->payoutServiceMock = Mockery::mock(PayoutService::class);
+        $this->app->instance(PayoutService::class, $this->payoutServiceMock);
     }
 
     public function test_teacher_can_access_analytics_dashboard(): void
@@ -260,6 +264,11 @@ class TeacherAnalyticsControllerTest extends TestCase
             ->shouldReceive('getRevenueByDateRange')
             ->once()
             ->andReturn($revenueChart);
+
+        $this->payoutServiceMock
+            ->shouldReceive('getAvailableBalance')
+            ->once()
+            ->andReturn(27500);
 
         $response = $this->actingAs($this->teacher)
             ->get('/teaching/analytics/earnings');

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CheckoutController::request
- * @see app/Http/Controllers/CheckoutController.php:107
+ * @see app/Http/Controllers/CheckoutController.php:144
  * @route '/checkout/refund'
  */
 export const request = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ request.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::request
- * @see app/Http/Controllers/CheckoutController.php:107
+ * @see app/Http/Controllers/CheckoutController.php:144
  * @route '/checkout/refund'
  */
 request.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ request.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::request
- * @see app/Http/Controllers/CheckoutController.php:107
+ * @see app/Http/Controllers/CheckoutController.php:144
  * @route '/checkout/refund'
  */
 request.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ request.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::request
- * @see app/Http/Controllers/CheckoutController.php:107
+ * @see app/Http/Controllers/CheckoutController.php:144
  * @route '/checkout/refund'
  */
     const requestForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ request.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::request
- * @see app/Http/Controllers/CheckoutController.php:107
+ * @see app/Http/Controllers/CheckoutController.php:144
  * @route '/checkout/refund'
  */
         requestForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

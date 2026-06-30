@@ -81,7 +81,7 @@ class GoogleOAuthTest extends TestCase
 
         $response = $this->get('/auth/oauth/google/callback');
 
-        $response->assertRedirectContains('/dashboard');
+        $response->assertRedirectContains('vmdashboard');
 
         // User should still exist (not duplicated)
         $this->assertEquals(1, User::count());
@@ -116,7 +116,7 @@ class GoogleOAuthTest extends TestCase
 
         $response = $this->get('/auth/oauth/google/callback');
 
-        $response->assertRedirectContains('/dashboard');
+        $response->assertRedirectContains('vmdashboard');
 
         // User should still exist (not duplicated)
         $this->assertEquals(1, User::count());
@@ -171,7 +171,7 @@ class GoogleOAuthTest extends TestCase
             'role' => 'engineer',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard'));
 
         // User should be created with engineer role
         $user = User::where('email', 'engineer@example.com')->first();
@@ -205,7 +205,7 @@ class GoogleOAuthTest extends TestCase
             'role' => 'teacher',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard'));
 
         // User should be created with teacher role
         $user = User::where('email', 'teacher@example.com')->first();
@@ -311,7 +311,7 @@ class GoogleOAuthTest extends TestCase
         ]);
 
         // Should redirect to dashboard
-        $response->assertRedirectContains('/dashboard');
+        $response->assertRedirectContains('vmdashboard');
 
         // User should still be only one
         $this->assertEquals(1, User::count());
@@ -342,7 +342,7 @@ class GoogleOAuthTest extends TestCase
         ]);
 
         // Should redirect to dashboard
-        $response->assertRedirectContains('/dashboard');
+        $response->assertRedirectContains('vmdashboard');
 
         // User should still be only one
         $this->assertEquals(1, User::count());

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 export const stopImpersonation = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ stopImpersonation.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 stopImpersonation.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ stopImpersonation.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
 stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
     /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
     const stopImpersonationForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ stopImpersonation.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
             /**
 * @see \App\Http\Controllers\Admin\AdminUserController::stopImpersonation
- * @see app/Http/Controllers/Admin/AdminUserController.php:187
+ * @see app/Http/Controllers/Admin/AdminUserController.php:195
  * @route '/stop-impersonation'
  */
         stopImpersonationForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -720,7 +720,7 @@ impersonate.post = (args: { user: string | { id: string } } | [user: string | { 
     impersonate.form = impersonateForm
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::Delete
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 export const Delete = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -735,7 +735,7 @@ Delete.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::Delete
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 Delete.url = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -768,7 +768,7 @@ Delete.url = (args: { user: string | { id: string } } | [user: string | { id: st
 
 /**
 * @see \App\Http\Controllers\Admin\AdminUserController::Delete
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
 Delete.delete = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -778,7 +778,7 @@ Delete.delete = (args: { user: string | { id: string } } | [user: string | { id:
 
     /**
 * @see \App\Http\Controllers\Admin\AdminUserController::Delete
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
     const DeleteForm = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -793,7 +793,7 @@ Delete.delete = (args: { user: string | { id: string } } | [user: string | { id:
 
             /**
 * @see \App\Http\Controllers\Admin\AdminUserController::Delete
- * @see app/Http/Controllers/Admin/AdminUserController.php:201
+ * @see app/Http/Controllers/Admin/AdminUserController.php:209
  * @route '/admin/users/{user}'
  */
         DeleteForm.delete = (args: { user: string | { id: string } } | [user: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

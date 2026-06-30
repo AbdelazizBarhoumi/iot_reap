@@ -17,6 +17,16 @@ class ProfileDeleteRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+
+        if ($user && \Illuminate\Support\Facades\DB::table('users')
+            ->where('id', $user->id)
+            ->whereNotNull('google_id')
+            ->exists()
+        ) {
+            return [];
+        }
+
         return [
             'password' => $this->currentPasswordRules(),
         ];

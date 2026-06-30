@@ -110,7 +110,7 @@ class RevenueService
 
         $change = $previousRevenue > 0
             ? round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 1)
-            : ($currentRevenue > 0 ? 100 : 0);
+            : null;
 
         return [
             'total_revenue' => $currentRevenue,

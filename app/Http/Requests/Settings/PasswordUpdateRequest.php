@@ -17,9 +17,20 @@ class PasswordUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'current_password' => $this->currentPasswordRules(),
+        $rules = [
             'password' => $this->passwordRules(),
         ];
+
+        $user = $this->user();
+        $isGoogle = $user && \Illuminate\Support\Facades\DB::table('users')
+            ->where('id', $user->id)
+            ->whereNotNull('google_id')
+            ->exists();
+
+        if (! $isGoogle) {
+            $rules['current_password'] = $this->currentPasswordRules();
+        }
+
+        return $rules;
     }
 }

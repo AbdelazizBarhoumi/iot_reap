@@ -19,7 +19,7 @@ class CameraRepository
      */
     public function findOrFail(int $id): Camera
     {
-        return Camera::findOrFail($id);
+        return Camera::with(['robot', 'gatewayNode', 'activeControl.session'])->findOrFail($id);
     }
 
     /**

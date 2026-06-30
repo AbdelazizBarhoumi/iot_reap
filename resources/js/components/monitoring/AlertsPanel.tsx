@@ -126,7 +126,7 @@ export function AlertsPanel({
                                 {unacknowledgedCount > 0 && (
                                     <Badge
                                         variant="destructive"
-                                        className="h-5 px-1.5 text-xs"
+                                        className="h-5 px-1.5 text-xs text-white"
                                     >
                                         {unacknowledgedCount} new
                                     </Badge>

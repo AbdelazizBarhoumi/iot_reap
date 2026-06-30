@@ -39,7 +39,7 @@ export function KPICard({
         return value;
     };
     const getTrendIcon = () => {
-        if (change === undefined || change === 0) {
+        if (change === undefined || change === null || change === 0) {
             return <Minus className="h-4 w-4 text-muted-foreground" />;
         }
         if (change > 0) {
@@ -48,7 +48,7 @@ export function KPICard({
         return <TrendingDown className="h-4 w-4 text-red-500" />;
     };
     const getTrendColor = () => {
-        if (change === undefined || change === 0)
+        if (change === undefined || change === null || change === 0)
             return 'text-muted-foreground';
         return change > 0 ? 'text-green-500' : 'text-red-500';
     };
@@ -62,9 +62,9 @@ export function KPICard({
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{formatValue()}</div>
-                {(change !== undefined || subtitle) && (
+                {(change != null || subtitle) && (
                     <div className="mt-1 flex items-center gap-1">
-                        {change !== undefined && (
+                        {change != null && (
                             <>
                                 {getTrendIcon()}
                                 <span
@@ -80,7 +80,7 @@ export function KPICard({
                         )}
                         {subtitle && (
                             <span className="text-xs text-muted-foreground">
-                                {change !== undefined ? ' · ' : ''}
+                                {change != null ? ' · ' : ''}
                                 {subtitle}
                             </span>
                         )}

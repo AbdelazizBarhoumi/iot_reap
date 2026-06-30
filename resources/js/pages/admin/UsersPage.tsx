@@ -311,9 +311,9 @@ export default function UsersPage() {
                                 {user.is_suspended && (
                                     <Badge
                                         variant="destructive"
-                                        className="text-xs"
+                                        className="text-xs text-white"
                                     >
-                                        <Ban className="mr-1 h-3 w-3" />{' '}
+                                        <Ban className="mr-1 h-3 w-3 text-white" />{' '}
                                         Suspended
                                     </Badge>
                                 )}
@@ -760,7 +760,7 @@ export default function UsersPage() {
                                         Status
                                     </p>
                                     {detailUser.is_suspended ? (
-                                        <Badge variant="destructive">
+                                        <Badge variant="destructive" className="text-white">
                                             Suspended
                                         </Badge>
                                     ) : (

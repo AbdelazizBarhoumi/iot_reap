@@ -35,7 +35,7 @@ class AuthController
             );
             $request->session()->regenerate();
         } catch (InvalidCredentialsException $e) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
         return response()->json(['data' => new UserResource($user)], 200);

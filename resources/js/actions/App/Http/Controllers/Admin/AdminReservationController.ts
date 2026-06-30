@@ -157,7 +157,7 @@ pending.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     pending.form = pendingForm
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
 export const upcoming = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ upcoming.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
 upcoming.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ upcoming.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
 upcoming.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ upcoming.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
 upcoming.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ upcoming.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
     const upcomingForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ upcoming.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
         upcomingForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ upcoming.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::upcoming
- * @see app/Http/Controllers/Admin/AdminReservationController.php:214
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:216
  * @route '/admin/reservations/upcoming'
  */
         upcomingForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -314,7 +314,7 @@ approve.post = (args: { reservation: number | { id: number } } | [reservation: n
     approve.form = approveForm
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::reject
- * @see app/Http/Controllers/Admin/AdminReservationController.php:145
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:147
  * @route '/admin/reservations/{reservation}/reject'
  */
 export const reject = (args: { reservation: number | { id: number } } | [reservation: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -329,7 +329,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::reject
- * @see app/Http/Controllers/Admin/AdminReservationController.php:145
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:147
  * @route '/admin/reservations/{reservation}/reject'
  */
 reject.url = (args: { reservation: number | { id: number } } | [reservation: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -362,7 +362,7 @@ reject.url = (args: { reservation: number | { id: number } } | [reservation: num
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::reject
- * @see app/Http/Controllers/Admin/AdminReservationController.php:145
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:147
  * @route '/admin/reservations/{reservation}/reject'
  */
 reject.post = (args: { reservation: number | { id: number } } | [reservation: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -372,7 +372,7 @@ reject.post = (args: { reservation: number | { id: number } } | [reservation: nu
 
     /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::reject
- * @see app/Http/Controllers/Admin/AdminReservationController.php:145
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:147
  * @route '/admin/reservations/{reservation}/reject'
  */
     const rejectForm = (args: { reservation: number | { id: number } } | [reservation: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -382,7 +382,7 @@ reject.post = (args: { reservation: number | { id: number } } | [reservation: nu
 
             /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::reject
- * @see app/Http/Controllers/Admin/AdminReservationController.php:145
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:147
  * @route '/admin/reservations/{reservation}/reject'
  */
         rejectForm.post = (args: { reservation: number | { id: number } } | [reservation: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -393,7 +393,7 @@ reject.post = (args: { reservation: number | { id: number } } | [reservation: nu
     reject.form = rejectForm
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::createBlock
- * @see app/Http/Controllers/Admin/AdminReservationController.php:177
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:179
  * @route '/admin/reservations/block'
  */
 export const createBlock = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -408,7 +408,7 @@ createBlock.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::createBlock
- * @see app/Http/Controllers/Admin/AdminReservationController.php:177
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:179
  * @route '/admin/reservations/block'
  */
 createBlock.url = (options?: RouteQueryOptions) => {
@@ -417,7 +417,7 @@ createBlock.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::createBlock
- * @see app/Http/Controllers/Admin/AdminReservationController.php:177
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:179
  * @route '/admin/reservations/block'
  */
 createBlock.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -427,7 +427,7 @@ createBlock.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::createBlock
- * @see app/Http/Controllers/Admin/AdminReservationController.php:177
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:179
  * @route '/admin/reservations/block'
  */
     const createBlockForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -437,7 +437,7 @@ createBlock.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\AdminReservationController::createBlock
- * @see app/Http/Controllers/Admin/AdminReservationController.php:177
+ * @see app/Http/Controllers/Admin/AdminReservationController.php:179
  * @route '/admin/reservations/block'
  */
         createBlockForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

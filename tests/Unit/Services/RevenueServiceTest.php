@@ -447,7 +447,7 @@ class RevenueServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_returns_100_percent_change_when_previous_period_is_zero(): void
+    public function test_returns_null_change_when_previous_period_is_zero(): void
     {
         Carbon::setTestNow('2024-02-15');
 
@@ -462,7 +462,7 @@ class RevenueServiceTest extends TestCase
 
         $result = $this->service->getEarningsSummary($teacher, '30d');
 
-        $this->assertEquals(100, $result['change_percentage']);
+        $this->assertNull($result['change_percentage']);
 
         Carbon::setTestNow();
     }

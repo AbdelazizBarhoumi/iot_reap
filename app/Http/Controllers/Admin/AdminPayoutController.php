@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PayoutRequest;
 use App\Services\PayoutService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -18,7 +17,7 @@ class AdminPayoutController extends Controller
     /**
      * Approve a payout request.
      */
-    public function approve(Request $request, PayoutRequest $payoutRequest): JsonResponse
+    public function approve(Request $request, PayoutRequest $payoutRequest)
     {
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -31,21 +30,16 @@ class AdminPayoutController extends Controller
                 $validated['notes'] ?? null
             );
 
-            return response()->json([
-                'message' => 'Payout approved successfully.',
-                'payout' => $payout,
-            ]);
+            return redirect()->back()->with('success', 'Payout approved successfully.');
         } catch (\DomainException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 422);
+            return redirect()->back()->withErrors(['payout' => $e->getMessage()]);
         }
     }
 
     /**
      * Reject a payout request.
      */
-    public function reject(Request $request, PayoutRequest $payoutRequest): JsonResponse
+    public function reject(Request $request, PayoutRequest $payoutRequest)
     {
         $validated = $request->validate([
             'reason' => ['required', 'string', 'max:1000'],
@@ -58,33 +52,23 @@ class AdminPayoutController extends Controller
                 $validated['reason']
             );
 
-            return response()->json([
-                'message' => 'Payout request rejected.',
-                'payout' => $payout,
-            ]);
+            return redirect()->back()->with('success', 'Payout request rejected.');
         } catch (\DomainException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 422);
+            return redirect()->back()->withErrors(['payout' => $e->getMessage()]);
         }
     }
 
     /**
      * Process an approved payout via Stripe.
      */
-    public function process(PayoutRequest $payoutRequest): JsonResponse
+    public function process(PayoutRequest $payoutRequest)
     {
         try {
             $payout = $this->payoutService->processPayout($payoutRequest);
 
-            return response()->json([
-                'message' => 'Payout processed successfully.',
-                'payout' => $payout,
-            ]);
+            return redirect()->back()->with('success', 'Payout processed successfully.');
         } catch (\DomainException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 422);
+            return redirect()->back()->withErrors(['payout' => $e->getMessage()]);
         }
     }
 

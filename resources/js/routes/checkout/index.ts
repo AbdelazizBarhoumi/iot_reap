@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import refund from './refund'
 /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
 export const success = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ success.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
 success.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ success.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
 success.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ success.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
 success.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ success.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
     const successForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ success.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
         successForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ success.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CheckoutController::success
- * @see app/Http/Controllers/CheckoutController.php:58
+ * @see app/Http/Controllers/CheckoutController.php:65
  * @route '/checkout/success'
  */
         successForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ success.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     success.form = successForm
 /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
 export const cancelled = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ cancelled.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
 cancelled.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ cancelled.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
 cancelled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ cancelled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
 cancelled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ cancelled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
     const cancelledForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ cancelled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
         cancelledForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ cancelled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CheckoutController::cancelled
- * @see app/Http/Controllers/CheckoutController.php:73
+ * @see app/Http/Controllers/CheckoutController.php:110
  * @route '/checkout/cancelled'
  */
         cancelledForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -158,7 +158,7 @@ cancelled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     cancelled.form = cancelledForm
 /**
 * @see \App\Http\Controllers\CheckoutController::initiate
- * @see app/Http/Controllers/CheckoutController.php:30
+ * @see app/Http/Controllers/CheckoutController.php:37
  * @route '/checkout/initiate'
  */
 export const initiate = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -173,7 +173,7 @@ initiate.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::initiate
- * @see app/Http/Controllers/CheckoutController.php:30
+ * @see app/Http/Controllers/CheckoutController.php:37
  * @route '/checkout/initiate'
  */
 initiate.url = (options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ initiate.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::initiate
- * @see app/Http/Controllers/CheckoutController.php:30
+ * @see app/Http/Controllers/CheckoutController.php:37
  * @route '/checkout/initiate'
  */
 initiate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -192,7 +192,7 @@ initiate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::initiate
- * @see app/Http/Controllers/CheckoutController.php:30
+ * @see app/Http/Controllers/CheckoutController.php:37
  * @route '/checkout/initiate'
  */
     const initiateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -202,7 +202,7 @@ initiate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::initiate
- * @see app/Http/Controllers/CheckoutController.php:30
+ * @see app/Http/Controllers/CheckoutController.php:37
  * @route '/checkout/initiate'
  */
         initiateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -213,7 +213,7 @@ initiate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     initiate.form = initiateForm
 /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
 export const payments = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -228,7 +228,7 @@ payments.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
 payments.url = (options?: RouteQueryOptions) => {
@@ -237,7 +237,7 @@ payments.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
 payments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -246,7 +246,7 @@ payments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
 payments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -256,7 +256,7 @@ payments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
     const paymentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -266,7 +266,7 @@ payments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
         paymentsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -275,7 +275,7 @@ payments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CheckoutController::payments
- * @see app/Http/Controllers/CheckoutController.php:89
+ * @see app/Http/Controllers/CheckoutController.php:126
  * @route '/checkout/payments'
  */
         paymentsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -291,7 +291,7 @@ payments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     payments.form = paymentsForm
 /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
 export const refunds = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -306,7 +306,7 @@ refunds.definition = {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
 refunds.url = (options?: RouteQueryOptions) => {
@@ -315,7 +315,7 @@ refunds.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
 refunds.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -324,7 +324,7 @@ refunds.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
 refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -334,7 +334,7 @@ refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
     const refundsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -344,7 +344,7 @@ refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
         refundsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -353,7 +353,7 @@ refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CheckoutController::refunds
- * @see app/Http/Controllers/CheckoutController.php:133
+ * @see app/Http/Controllers/CheckoutController.php:170
  * @route '/checkout/refunds'
  */
         refundsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

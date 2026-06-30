@@ -110,6 +110,8 @@ class AdminReservationController extends Controller
             ], 422);
         }
 
+        $reservation->load('reservable');
+
         $modifiedStart = $request->validated('approved_start_at')
             ? new \DateTime($request->validated('approved_start_at'))
             : null;

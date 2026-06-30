@@ -35,7 +35,7 @@ class GoogleOAuthController extends Controller
             if (! $result['isNewUser']) {
                 Auth::login($result['user'], remember: true);
 
-                return redirect('/dashboard')->with('status', 'Successfully logged in with Google!');
+                return redirect()->route('dashboard')->with('status', 'Successfully logged in with Google!');
             }
 
             // New user — store OAuth data in session and show role selection
@@ -84,7 +84,7 @@ class GoogleOAuthController extends Controller
             if (! $result['isNewUser']) {
                 Auth::login($result['user'], remember: true);
 
-                return redirect('/dashboard')->with('status', 'Successfully logged in with Google!');
+                return redirect()->route('dashboard')->with('status', 'Successfully logged in with Google!');
             }
 
             // New user — store OAuth data in session and show role selection
@@ -158,7 +158,7 @@ class GoogleOAuthController extends Controller
             // Log in the user
             Auth::login($user, remember: true);
 
-            return redirect('/dashboard')->with('status', 'Account created successfully! Welcome to IoT-REAP.');
+            return redirect()->route('dashboard')->with('status', 'Account created successfully! Welcome to IoT-REAP.');
         } catch (\Exception $e) {
             Log::error('OAuth signup completion failed', [
                 'error' => $e->getMessage(),

@@ -25,6 +25,12 @@ class StripeWebhookService
      */
     public function constructEvent(string $payload, string $signature): Event
     {
+        if (app()->environment('local')) {
+            $decoded = json_decode($payload, true);
+
+            return Event::constructFrom($decoded);
+        }
+
         return Webhook::constructEvent(
             $payload,
             $signature,

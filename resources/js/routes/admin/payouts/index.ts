@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::exportMethod
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:94
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:78
  * @route '/admin/payouts/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     exportMethod.form = exportMethodForm
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::approve
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:21
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:20
  * @route '/admin/payouts/{payoutRequest}/approve'
  */
 export const approve = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::approve
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:21
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:20
  * @route '/admin/payouts/{payoutRequest}/approve'
  */
 approve.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -205,7 +205,7 @@ approve.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::approve
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:21
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:20
  * @route '/admin/payouts/{payoutRequest}/approve'
  */
 approve.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -215,7 +215,7 @@ approve.post = (args: { payoutRequest: number | { id: number } } | [payoutReques
 
     /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::approve
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:21
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:20
  * @route '/admin/payouts/{payoutRequest}/approve'
  */
     const approveForm = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -225,7 +225,7 @@ approve.post = (args: { payoutRequest: number | { id: number } } | [payoutReques
 
             /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::approve
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:21
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:20
  * @route '/admin/payouts/{payoutRequest}/approve'
  */
         approveForm.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -236,7 +236,7 @@ approve.post = (args: { payoutRequest: number | { id: number } } | [payoutReques
     approve.form = approveForm
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::reject
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:48
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:42
  * @route '/admin/payouts/{payoutRequest}/reject'
  */
 export const reject = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -251,7 +251,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::reject
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:48
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:42
  * @route '/admin/payouts/{payoutRequest}/reject'
  */
 reject.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ reject.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest:
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::reject
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:48
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:42
  * @route '/admin/payouts/{payoutRequest}/reject'
  */
 reject.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -294,7 +294,7 @@ reject.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest
 
     /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::reject
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:48
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:42
  * @route '/admin/payouts/{payoutRequest}/reject'
  */
     const rejectForm = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +304,7 @@ reject.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest
 
             /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::reject
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:48
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:42
  * @route '/admin/payouts/{payoutRequest}/reject'
  */
         rejectForm.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +315,7 @@ reject.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest
     reject.form = rejectForm
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::process
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:75
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:64
  * @route '/admin/payouts/{payoutRequest}/process'
  */
 export const process = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -330,7 +330,7 @@ process.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::process
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:75
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:64
  * @route '/admin/payouts/{payoutRequest}/process'
  */
 process.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -363,7 +363,7 @@ process.url = (args: { payoutRequest: number | { id: number } } | [payoutRequest
 
 /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::process
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:75
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:64
  * @route '/admin/payouts/{payoutRequest}/process'
  */
 process.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -373,7 +373,7 @@ process.post = (args: { payoutRequest: number | { id: number } } | [payoutReques
 
     /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::process
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:75
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:64
  * @route '/admin/payouts/{payoutRequest}/process'
  */
     const processForm = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -383,7 +383,7 @@ process.post = (args: { payoutRequest: number | { id: number } } | [payoutReques
 
             /**
 * @see \App\Http\Controllers\Admin\AdminPayoutController::process
- * @see app/Http/Controllers/Admin/AdminPayoutController.php:75
+ * @see app/Http/Controllers/Admin/AdminPayoutController.php:64
  * @route '/admin/payouts/{payoutRequest}/process'
  */
         processForm.post = (args: { payoutRequest: number | { id: number } } | [payoutRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::index
- * @see app/Http/Controllers/TeacherAnalyticsController.php:24
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:26
  * @route '/teaching/analytics'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
 export const kpis = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ kpis.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
 kpis.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ kpis.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
 kpis.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ kpis.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
 kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
     const kpisForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
         kpisForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::kpis
- * @see app/Http/Controllers/TeacherAnalyticsController.php:46
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:48
  * @route '/teaching/analytics/kpis'
  */
         kpisForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ kpis.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     kpis.form = kpisForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
 export const enrollmentChart = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ enrollmentChart.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
 enrollmentChart.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ enrollmentChart.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
 enrollmentChart.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ enrollmentChart.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
 enrollmentChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ enrollmentChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
     const enrollmentChartForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ enrollmentChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
         enrollmentChartForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ enrollmentChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::enrollmentChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:59
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:61
  * @route '/teaching/analytics/enrollment-chart'
  */
         enrollmentChartForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ enrollmentChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     enrollmentChart.form = enrollmentChartForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
 export const revenueChart = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ revenueChart.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
 revenueChart.url = (options?: RouteQueryOptions) => {
@@ -259,7 +259,7 @@ revenueChart.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
 revenueChart.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ revenueChart.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
 revenueChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -278,7 +278,7 @@ revenueChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
     const revenueChartForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -288,7 +288,7 @@ revenueChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
         revenueChartForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ revenueChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::revenueChart
- * @see app/Http/Controllers/TeacherAnalyticsController.php:72
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:74
  * @route '/teaching/analytics/revenue-chart'
  */
         revenueChartForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ revenueChart.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     revenueChart.form = revenueChartForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
 export const engineers = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ engineers.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
 engineers.url = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -361,7 +361,7 @@ engineers.url = (args: { trainingPath: number | { id: number } } | [trainingPath
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
 engineers.get = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -370,7 +370,7 @@ engineers.get = (args: { trainingPath: number | { id: number } } | [trainingPath
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
 engineers.head = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -380,7 +380,7 @@ engineers.head = (args: { trainingPath: number | { id: number } } | [trainingPat
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
     const engineersForm = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -390,7 +390,7 @@ engineers.head = (args: { trainingPath: number | { id: number } } | [trainingPat
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
         engineersForm.get = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -399,7 +399,7 @@ engineers.head = (args: { trainingPath: number | { id: number } } | [trainingPat
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::engineers
- * @see app/Http/Controllers/TeacherAnalyticsController.php:85
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:87
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/engineers'
  */
         engineersForm.head = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -415,7 +415,7 @@ engineers.head = (args: { trainingPath: number | { id: number } } | [trainingPat
     engineers.form = engineersForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
 export const funnel = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -430,7 +430,7 @@ funnel.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
 funnel.url = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -463,7 +463,7 @@ funnel.url = (args: { trainingPath: number | { id: number } } | [trainingPath: n
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
 funnel.get = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -472,7 +472,7 @@ funnel.get = (args: { trainingPath: number | { id: number } } | [trainingPath: n
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
 funnel.head = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -482,7 +482,7 @@ funnel.head = (args: { trainingPath: number | { id: number } } | [trainingPath: 
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
     const funnelForm = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -492,7 +492,7 @@ funnel.head = (args: { trainingPath: number | { id: number } } | [trainingPath: 
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
         funnelForm.get = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -501,7 +501,7 @@ funnel.head = (args: { trainingPath: number | { id: number } } | [trainingPath: 
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::funnel
- * @see app/Http/Controllers/TeacherAnalyticsController.php:105
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:107
  * @route '/teaching/analytics/trainingPaths/{trainingPath}/funnel'
  */
         funnelForm.head = (args: { trainingPath: number | { id: number } } | [trainingPath: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -517,7 +517,7 @@ funnel.head = (args: { trainingPath: number | { id: number } } | [trainingPath: 
     funnel.form = funnelForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
 export const earnings = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -532,7 +532,7 @@ earnings.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
 earnings.url = (options?: RouteQueryOptions) => {
@@ -541,7 +541,7 @@ earnings.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
 earnings.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -550,7 +550,7 @@ earnings.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
 earnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -560,7 +560,7 @@ earnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
     const earningsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -570,7 +570,7 @@ earnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
         earningsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -579,7 +579,7 @@ earnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::earnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:117
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:119
  * @route '/teaching/analytics/earnings'
  */
         earningsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -595,7 +595,7 @@ earnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     earnings.form = earningsForm
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
 export const exportEarnings = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -610,7 +610,7 @@ exportEarnings.definition = {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
 exportEarnings.url = (options?: RouteQueryOptions) => {
@@ -619,7 +619,7 @@ exportEarnings.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
 exportEarnings.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -628,7 +628,7 @@ exportEarnings.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
 exportEarnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -638,7 +638,7 @@ exportEarnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
     /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
     const exportEarningsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -648,7 +648,7 @@ exportEarnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
         exportEarningsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -657,7 +657,7 @@ exportEarnings.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
         })
             /**
 * @see \App\Http\Controllers\TeacherAnalyticsController::exportEarnings
- * @see app/Http/Controllers/TeacherAnalyticsController.php:145
+ * @see app/Http/Controllers/TeacherAnalyticsController.php:148
  * @route '/teaching/analytics/earnings/export'
  */
         exportEarningsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             '/browser-log',
+            '/stripe/webhook',
         ]);
 
         $middleware->web(append: [

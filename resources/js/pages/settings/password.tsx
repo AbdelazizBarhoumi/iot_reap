@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { useRef } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -19,6 +19,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const { auth } = usePage().props;
+    const isGoogleUser = Boolean(auth.user?.google_id);
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Password settings" />
@@ -27,8 +29,12 @@ export default function Password() {
                 <div className="space-y-6">
                     <Heading
                         variant="small"
-                        title="Update password"
-                        description="Ensure your account is using a long, random password to stay secure"
+                        title={isGoogleUser ? 'Set password' : 'Update password'}
+                        description={
+                            isGoogleUser
+                                ? 'Set a password so you can also sign in with email and password'
+                                : 'Ensure your account is using a long, random password to stay secure'
+                        }
                     />
                     <Form
                         {...update.form()}
@@ -53,26 +59,30 @@ export default function Password() {
                     >
                         {({ errors, processing, recentlySuccessful }) => (
                             <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
-                                        Current password
-                                    </Label>
-                                    <Input
-                                        id="current_password"
-                                        ref={currentPasswordInput}
-                                        name="current_password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="current-password"
-                                        placeholder="Current password"
-                                    />
-                                    <InputError
-                                        message={errors.current_password}
-                                    />
-                                </div>
+                                {!isGoogleUser && (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="current_password">
+                                            Current password
+                                        </Label>
+                                        <Input
+                                            id="current_password"
+                                            ref={currentPasswordInput}
+                                            name="current_password"
+                                            type="password"
+                                            className="mt-1 block w-full"
+                                            autoComplete="current-password"
+                                            placeholder="Current password"
+                                        />
+                                        <InputError
+                                            message={errors.current_password}
+                                        />
+                                    </div>
+                                )}
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">
-                                        New password
+                                        {isGoogleUser
+                                            ? 'Password'
+                                            : 'New password'}
                                     </Label>
                                     <Input
                                         id="password"
@@ -81,7 +91,11 @@ export default function Password() {
                                         type="password"
                                         className="mt-1 block w-full"
                                         autoComplete="new-password"
-                                        placeholder="New password"
+                                        placeholder={
+                                            isGoogleUser
+                                                ? 'Create password'
+                                                : 'New password'
+                                        }
                                     />
                                     <InputError message={errors.password} />
                                 </div>
@@ -106,7 +120,9 @@ export default function Password() {
                                         disabled={processing}
                                         data-test="update-password-button"
                                     >
-                                        Save password
+                                        {isGoogleUser
+                                            ? 'Set password'
+                                            : 'Save password'}
                                     </Button>
                                     <Transition
                                         show={recentlySuccessful}
